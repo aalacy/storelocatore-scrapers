@@ -49,6 +49,7 @@ def fetch_data():
 		"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
 	all_links = []
+	found_links = []
 
 	for state in states:
 		print("State: " + state)
@@ -69,13 +70,15 @@ def fetch_data():
 			try:
 				result.find_element_by_css_selector(".fd-icon.fd-icon-map-marker.red.Normal.Store.Opened")
 				location_type = "Current Store"
-				if link not in all_links:
+				if link not in found_links:
+					found_links.append(link)
 					all_links.append([link, location_type])
 			except:
 				try:
 					result.find_element_by_css_selector(".fd-icon.fd-icon-map-marker.black.Design.Center.Opened")
 					location_type = "Design Center"
-					if link not in all_links:
+					if link not in found_links:
+						found_links.append(link)
 						all_links.append([link, location_type])
 				except:
 					print("Skipping Upcoming store!")
@@ -87,7 +90,7 @@ def fetch_data():
 		link = raw_link[0]
 
 		driver.get(link)
-		time.sleep(randint(1,2))
+		time.sleep(randint(2,4))
 
 		try:
 			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(

@@ -1,15 +1,12 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
-session = SgRequests()
-
+import sgzip
+import time 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -19,106 +16,93 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = requests.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = requests.post(url,headers=headers,data=data)
+               else:
+                   r = requests.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 
 def fetch_data():
-    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
-    base_url = "https://victoryma.com/"
-    r = session.get(base_url, headers=header)
-    soup = BeautifulSoup(r.text, "lxml")
-    script = soup.find_all('script')[-1]
-    # print(script)
-    script_text = script.text.split('var sites = ')[-2].split(';')[0].split('\n')
-    script_text = [x for x in script_text if x.strip()]
-
-    del script_text[0]
-    del script_text[-1]
-    c =[]
-    for i in script_text :
-        list_i = i.replace('    [','').split('],')
-
-        lat= list_i[0].split(',')[2].replace("'",'')
-        lon = list_i[0].split(',')[3].replace("'",'')
-        c.append(lat)
-        c.append(lon)
-
-
-
-
-
-    for val in soup.find('li', {'class': 'about-school-menu'}).find('ul', {'class': 'program-sub-nav'}).find_all('a'):
-
-
-
-        # print(coord)
-        r = session.get(base_url + val['href'], headers=header)
-        soup = BeautifulSoup(r.text, "lxml")
-        locator_domain = base_url
-        location_name = soup.find('div', {'class': 'school-address'}).find('h2').text.strip()
-        address = soup.find('span', {'class': 'address'}).text.strip()
-        address = re.sub("\s\s+", " ", address).split(',')
-
-        if len(address) ==4:
-            street_address = " ".join(address[:2])
+    address = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 600
+    MAX_DISTANCE = 50
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
+    base_url = "https://www.victoryma.com/"
+    while coord:
+        result_coords = []
+        lat = coord[0]
+        lng = coord[1]
+        #print(search.current_zip)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        location_url = "https://www.victoryma.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=10000&search_radius=5000&autoload=1"
+        r = request_wrapper(location_url,"get",headers=headers)
+        json_data = r.json()
+        for i in json_data:
+            hours_of_operation = " ".join(list(BeautifulSoup( i['hours'],'lxml').stripped_strings))
+            city = i['city'].replace(',',"")
+            store = []
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(i['store'] if i['store'] else "<MISSING>") 
+            store.append(i['address'] if i['address'] else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(i['state'] if i['state'] else "<MISSING>")
+            store.append(i['zip'] if i['zip'] else "<MISSING>")
+            store.append(i['country'] if i['country'] else "<MISSING>")
+            store.append(i['id'] if i['id'] else "<MISSING>")
+            store.append(i['phone'] if i['phone'] else"<MISSING>") 
+            store.append("Victory Martial Arts")
+            store.append(i['lat'] if i['lat'] else "<MISSING>")
+            store.append(i['lng'] if i['lng'] else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(i['url'] if i['url'] else "<MISSING>")
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            yield store
+        if current_results_len < MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            #print("max count update")
+            search.max_count_update(result_coords)
         else:
-            street_address = address[0].strip()
-        # print(city,state,street_address,)
-        city = soup.find('span', {'class': 'address'}).text.strip().split(',')[-2].strip()
-        st = soup.find('span', {'class': 'address'}).text.strip().split(',')[-1].strip().split(' ')[0].replace('\t','')
-        if "Spain".lower() == st.lower():
-            state = "<MISSING>"
-        else:
-            state = st
-        # print(state)
-
-        zip = soup.find('span', {'class': 'address'}).text.strip().split(',')[-1].strip().split(' ')[1].replace('\t','')
-        store_number = '<MISSING>'
-        phone = soup.find('span',{'class':'no'}).text
-        country_code = 'US'
-        location_type = '<MISSING>'
-
-        page_url = base_url + val['href']
-        hour = soup.find('ul',{'class':'working-hours'}).find_all('a')
-        db = []
-        for i in hour:
-
-            db.append(i.text.strip().replace(" ", ""))
-
-        hours_of_operation = ' '.join(db).replace('\n',' ').replace('\t','')
-        latitude = c.pop(0)
-        longitude= c.pop(0)
-        # print(latitude,longitude)
-
-
-
-        store=[]
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-
-
-        store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        store.append(page_url if page_url else '<MISSING>')
-        # print("data == "+str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        return_main_object.append(store)
-
-    return return_main_object
-
-
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 def scrape():
     data = fetch_data()
-
     write_output(data)
-
-
 scrape()

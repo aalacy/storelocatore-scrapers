@@ -13,7 +13,10 @@ base_url = 'https://originalmels.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\xa0', ' ').encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '')
+    #print(item)
+    
+    #return item.replace(u'\xa0', ' ').encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '')
+    return item.replace(u'\xa0', ' ').strip().replace('\n', '')
 
 def get_value(item):
     if item == None :
@@ -56,7 +59,7 @@ def parse_address(address):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -66,7 +69,7 @@ def fetch_data():
     session = requests.Session()
     request = session.get(url)    
     source = validate(request.text.split('var wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_global_settings')[0])[:-1]
-    store_list = etree.HTML(request.text).xpath('//div[contains(@class, "fusion-fullwidth fullwidth-box hundred-percent-fullwidth")]//div[@class="fusion-column-wrapper"]')
+    store_list = etree.HTML(request.text).xpath('//div[contains(@class, "fusion-builder-row-5")]//div[@class="fusion-column-wrapper"]')
     map_list = json.loads(source)
     map_data = {}
     for key, map in map_list.items():
@@ -77,8 +80,10 @@ def fetch_data():
     for idx, store in enumerate(store_list):
         store = store.xpath('.//div[@class="fusion-text"]')
         if store != []:
+            #print(store)
             output = []
-            output.append(base_url) # url
+            output.append(base_url)
+            output.append(url)# url
             output.append(get_value(store[0].xpath('.//text()'))) #location name
             detail = eliminate_space(store[1].xpath('.//text()'))
             address = parse_address(', '.join(detail[:-2]).replace('T:', ''))
@@ -89,7 +94,7 @@ def fetch_data():
             output.append('US') #country code
             output.append('<MISSING>') #store_number
             output.append(detail[-2].replace('T:', '').strip()) #phone
-            output.append("The Original Mels Diners") #location type
+            output.append("<MISSING>") #location type
             key = output[1].lower().replace('-', '').replace(' ', '').replace('nevada', 'nv')
             if  key in map_data:
                 output.append(map_data[key]['latitude']) #latitude
@@ -98,8 +103,19 @@ def fetch_data():
                 output.append('<MISSING>') #latitude
                 output.append('<MISSING>') #longitude
             store_hours = eliminate_space(store[2].xpath('.//text()'))
-            output.append(get_value(', '.join(store_hours[:-1])).replace('Hours', '')[1:]) #opening hours        
+            hours = ''
+            for hour in store_hours:
+                if hour.lower().find('am')> -1 or hour.lower().find('pm') > -1 or hour.lower().find('24/7')> -1:
+                    hours = hours + ' ' + hour
+           
+            hours = hours.lstrip().replace('am',' am').replace('pm',' pm')
+            if len(hours) < 2:
+                hours = '<MISSING>'
+           
+            output.append(hours) #opening hours        
             output_list.append(output)
+            
+            #print(output)
     return output_list
 
 def scrape():

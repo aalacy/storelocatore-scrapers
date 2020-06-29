@@ -1,86 +1,82 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 import re
-import os
+import csv
+import time
 
-# Location URL
-location_url = 'http://www.bkpilates.com/'
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
-# file name of CSV output
-file_name = 'data.csv'
 
-# Function pull webpage content
-def pull_content(url):
-    soup = bs(r.get(url).content,'html.parser')
-    return soup
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-def pull_info(content):
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-    location_data = content.find_all('div', {'class':'widget widget_text grid3'})
+def fetch_data():
 
-    store_data = []
-    for store in location_data:
-        store_name = store.h2.text
-        split_data = store.p.text.split('\n')
-        street_add = re.sub(', $','',split_data[0])
-        city = re.findall('(.*), [A-Za-z]{2}',split_data[1])[0]
-        state = re.findall(', ([A-Za-z]{2}) ', split_data[1])[0]
-        zip = re.findall(', [A-Za-z]{2} (\d{4,5})', split_data[1])[0]
-        phone = ''.join([x for x in split_data[2] if x.isnumeric()])
-        try:
-            hour_lists = [(id) for id,x in enumerate(split_data,1) if '0pm' in x]
-            hours = '; '.join([x.replace('           ',' ').
-                              replace('         ',' ').replace('  ',' ') for x in split_data[min(hour_lists)-1:max(hour_lists)]])
-        except:
-            hours = None
+    session = SgRequests()
 
-        temp_data = [
-            location_url,
-            store_name,
-            street_add,
-            city,
-            state,
-            zip,
-            'US',
-            '<MISSING>',
-            phone,
-            '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
-            hours
-        ]
+    location_url = 'https://bkpilates.com/contact'
+    locator_domain = 'bkpilates.com'
 
-        store_data = store_data + [temp_data]
+    page = session.get(location_url)
+    time.sleep(2)
+    assert page.status_code == 200
 
-    final_columns = [
-        'locator_domain',
-        'location_name',
-        'street_address',
-        'city',
-        'state',
-        'zip',
-        'country_code',
-        'store_number',
-        'phone',
-        'location_type',
-        'latitude',
-        'longitude',
-        'hours_of_operation']
+    content = BeautifulSoup(page.content, 'html.parser')
 
-    final_df = pd.DataFrame(store_data,columns=final_columns)
+    location_data = content.find('div', {'class':'sqs-block-content'}).find_all("p")[1:]
 
-    return final_df
+    data = []
+    last_poi = False
+    for i, store in enumerate(location_data):
+        if not last_poi:
+            store_str = str(store)
+            raw_data = store_str.split("<br/>")
+            try:
+                store_name = raw_data[0][raw_data[0].find("strong")+7:raw_data[0].rfind("<")].strip()
+                street_add = raw_data[1].replace(",","").replace("</p>","").strip()
+            except:
+                continue
+            if "Phone" in store_str:
+                city_line = raw_data[2]
+                phone = raw_data[3].replace(",","").replace("Phone: ","").replace("</p>","").strip()
+            else:
+                city_line = location_data[i+1].text.strip()
+                phone = location_data[i+2].text.replace("Phone: ","").replace("</p>","").strip()
+                last_poi = True
+            state = city_line[city_line.rfind(" ")-3:city_line.rfind(" ")].strip()
+            zip_code = city_line[city_line.rfind(" ")+1:].strip()
+            city = city_line[:city_line.rfind(" ")-3].strip()
+            country_code = "US"
 
-# Pull URL Content
-soup = pull_content(location_url)
+            raw_hours = content.find(class_="Footer-inner clear").text
+            raw_hours = raw_hours[raw_hours.find("Mon "):raw_hours.rfind("00pm")+4]
+            if store_name == "BK Pilates Brooklyn":
+                hours = raw_hours[:raw_hours.find("FLATIRON")].replace("pm","pm ").strip()
+            elif store_name == "BK Pilates Flatiron":
+                hours = raw_hours[raw_hours.find("_Mon")+1:raw_hours.find("TRIBECA")].replace("pm","pm ").strip()
+            elif store_name == "BK Pilates Tribeca":
+                hours = raw_hours[raw_hours.rfind("_Mon")+1:].replace("pm","pm ").strip()
+            else:
+                hours = "<MISSING>"
 
-# Pull all stores and info
-final_df = pull_info(soup)
+            location_type = "<MISSING>"
+            store_number = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-# write to csv
-final_df.to_csv(output_path + '/' + file_name,index=False)
+            data.append([locator_domain, location_url, store_name, street_add, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours])
 
+    return data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
 
 
