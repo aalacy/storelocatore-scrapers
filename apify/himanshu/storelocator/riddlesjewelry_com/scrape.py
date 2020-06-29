@@ -26,20 +26,16 @@ def fetch_data():
     for idx, val in enumerate(k['storesjson']):
         tem_var=[]
         street_address =''
-        street_address1 = val["address"].split(',')
+        street_address1 = val["address"]
         phone = val["phone"]
         latitude = val["latitude"]
         longitude =val["longitude"]
         zipcode = val['zipcode']
         state =val['state']
         city = val['city']
-        # print(city)
-        store_name.append(val['store_name'])
-        if len(street_address1)==2:
-            street_address= (street_address1[0])
-        else:
-            street_address =(street_address1)[0]
-        tem_var.append(street_address)
+        data_new = " IN "+str(city.upper())+","+str(state.upper())
+        store_name.append(val['store_name'].upper()+str(data_new) )
+        tem_var.append(street_address1.replace(', Pueblo, CO 81008, USA',""))
         tem_var.append(city if city else "<MISSING>" )
         tem_var.append(state if state else "<MISSING>" )
         tem_var.append(zipcode if zipcode else "<MISSING>")
@@ -49,16 +45,17 @@ def fetch_data():
         tem_var.append("riddlesjewelry")
         tem_var.append(latitude)
         tem_var.append(longitude)
+        page_url = ''
         data8 = str(city.replace(" ","_"))+"-"+str(state.replace(" ","_"))+"-"+str(zipcode)
-        data =("https://www.riddlesjewelry.com/riddles-jewelry-store"+"-"+str(data8)).replace('Dickinson-North_Dakota-58601',"Dickinson-North-Dakota-58601").replace("North_Dakota-58401",'NorthDakota-58401').replace("s-jewelry-store-Bloomington-Minnesota-55425",'-s-jewelry-mall-of-america').replace("s-jewelry-store-Dubuque-Iowa-52002","-s-jewelry-dubuque-iowa").replace("riddles-jewelry-store-Pueblo-Colorado-81008","pueblo-co-riddles-jewelry")
-        if "2200 N Maple Ave" in street_address:
-            data = data.replace("Dakota-57701","dakota-57701-44")
-        if "2707 Mt Rushmore Rd" in street_address:
-            data = data.replace("Dakota-57701","dakota-57701-45-45")
-        if "202 Disk Drive" in street_address:
-            data = data.replace("Dakota-57701","dakota-57701-45")
-        page_url = data
+        page_url =("https://www.riddlesjewelry.com/riddles-jewelry-store"+"-"+str(data8)).replace('Dickinson-North_Dakota-58601',"Dickinson-North-Dakota-58601").replace("North_Dakota-58401",'NorthDakota-58401').replace("s-jewelry-store-Bloomington-Minnesota-55425",'-s-jewelry-mall-of-america').replace("s-jewelry-store-Dubuque-Iowa-52002","-s-jewelry-dubuque-iowa").replace("riddles-jewelry-store-Pueblo-Colorado-81008","pueblo-co-riddles-jewelry")
+        if "2200 N Maple Ave, Rushmore Mall" in street_address1:
+            page_url = "https://www.riddlesjewelry.com/riddles-jewelry-store-Rapid_City-South_dakota-57701-44"
+        if "2707 Mt Rushmore Rd, Mt. Rushmore Black Hills Gold Outlet" in street_address1:
+            page_url = "https://www.riddlesjewelry.com/riddles-jewelry-store-Rapid_City-South_dakota-57701-45-45"
+        if "202 Disk Drive" in street_address1:
+            page_url = "https://www.riddlesjewelry.com/riddles-jewelry-store-Rapid_City-South_dakota-57701-45"
         r1 = session.get(page_url,headers = headers)
+        #print(page_url)
         soup1= BeautifulSoup(r1.text,"lxml")
         try:
             hours_of_operation = " ".join(list(soup1.find("table",{"class":"table table-hover table-striped"}).stripped_strings))
