@@ -40,7 +40,7 @@ def fetch_data():
                     for sdiv in sdivs:
                         stores=sdiv.find_all('a')
                         for store in stores:
-                            if "factory" in store.text.lower() or if "Dan's Tire Service" in store.text:
+                            if "factory" in store.text.lower() or "Dan's Tire Service" in store.text:
                                 url="https://www.tirefactory.com" + store.get('href')
                                 res = session.get(url)
                                 soup = BeautifulSoup(res.text, 'html.parser')
