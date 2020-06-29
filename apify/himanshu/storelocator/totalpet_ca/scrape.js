@@ -62,7 +62,7 @@ async function handlePageFunction({ request, page }) {
         return {};
       });
       const data = JSON.parse(jsonString);
-      // console.log(data);
+      console.log(data);
 
       data.forEach(async location => {
         const locationName = location.store;
@@ -88,7 +88,7 @@ async function handlePageFunction({ request, page }) {
           hours_of_operation: storedValue ? storedValue.hours : '<MISSING>'
         };
 
-        // console.log(poi);
+        console.log(poi);
         await Apify.pushData(poi);
       });
 
