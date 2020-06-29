@@ -54,7 +54,15 @@ def fetch_data():
             lat = data["latitude"]
             longit = data["longitude"]
 
-            lat_long = lat + "_" + longit            
+            if street_address == "5330 WALZEM":
+                lat = "29.5085296"
+                longit = "-98.389204"
+
+            if street_address == "3205 N CONWAY AVE":
+                lat = "26.2452395"
+                longit = "-98.3239731"
+
+            lat_long = lat + "_" + longit
             if lat_long in found_gps:
                 lat = '<MISSING>'
                 longit = '<MISSING>'
