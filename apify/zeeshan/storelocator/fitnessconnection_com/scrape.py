@@ -1,71 +1,140 @@
-import re 
-import base
-import requests
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import csv
+import time
+from random import randint
+import re
+from random import randint
 
-from lxml import (html, etree,)
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
-from pdb import set_trace as bp
 
-xpath = base.xpath
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
-class FitnessConnection(base.Base):
+def write_output(data):
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    csv_filename = 'data.csv'
-    domain_name = 'fitnessconnection.com'
-    url = 'https://fitnessconnection.com/locations/'
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-    def map_data(self, row):
+def fetch_data():
+    
+    base_link = "https://fitnessconnection.com/locations/"
 
-        street_address = xpath(row, './/span[@class="address-wrapper"]/div/a/text()[following-sibling::br]').strip()
-        region = xpath(row, './/span[@class="address-wrapper"]/div/a/text()[preceding-sibling::br]').strip()
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-        city = xpath(row, './/span[@class="city"]/text()')
+    session = SgRequests()
+    req = session.get(base_link, headers = HEADERS)
+    time.sleep(randint(1,2))
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+    except (BaseException):
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
-        address = '%s, %s' % (street_address, region)
-        geo = self.get_geo(address)
+    main_links = []
+    main_items = base.find_all(class_="club column small-12 medium-4")
+    for main_item in main_items:
+        main_link = main_item.a['href']
+        raw_address = str(main_item.find(class_="address-wrapper").a)
+        raw_address = raw_address[raw_address.find('blank">')+8:raw_address.rfind('<')]
+        main_links.append([main_link,raw_address])
+
+    data = []
+
+    driver = get_driver()
+    time.sleep(2)
+
+    total_links = len(main_links)
+    for i, raw_link in enumerate(main_links):
+        print("Link %s of %s" %(i+1,total_links))
+
+        link = raw_link[0]
+        raw_address = raw_link[1]
+
+        req = session.get(link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            item = BeautifulSoup(req.text,"lxml")
+            print(link)
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+        time.sleep(randint(1,2))
+
+        locator_domain = "fitnessconnection.com"
+
+        location_name = item.find("h3").text.replace("-","- ").replace("– NOW OPEN","").replace("– Now Open!","").strip()
+        if "coming soon" in location_name.lower():
+            continue
+        print(location_name)
+
+        street_address = raw_address[:raw_address.find("<")].strip()
+        city = raw_address[raw_address.find(">")+1:raw_address.rfind(",")].strip()
+        state = raw_address[raw_address.rfind(",")+1:raw_address.rfind(" ")].strip()
+        zip_code = raw_address[raw_address.rfind(" ")+1:].strip()
+        if not zip_code:
+            zip_code = state.split()[1].strip()
+            state = state.split()[0].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
         
-        state, zipcode = region.split(',')[-1].split(' ')
+        location_type = "<MISSING>"
+
+        try:
+            phone = item.find(class_="phone").text.strip()
+        except:
+            phone = "<MISSING>"
+
+        raw_hours = item.find(class_="primary-hours").text
+        hours_of_operation = raw_hours.replace("\n", " ").replace("\r", "").strip()
         
-        return {
-            'locator_domain': self.domain_name
-            ,'location_name': city
-            ,'street_address': street_address
-            ,'city': city 
-            ,'state': state
-            ,'zip': zipcode
-            ,'country_code': self.default_country
-            ,'store_number': '<MISSING>'
-            ,'phone': xpath(row, './/span[@class="phone"]/text()')
-            ,'location_type': '<MISSING>'
-            ,'naics_code': '<MISSING>'
-            ,'latitude': geo.get('lat')
-            ,'longitude': geo.get('lng')
-            ,'hours_of_operation': '<INACCESSIBLE>'
-        }
+        raw_gps = item.find(class_="address-wrapper").a['href']
+        try:
+            print("Opening gmaps..")
+            driver.get(raw_gps)
+            time.sleep(randint(6,8))
 
-    def crawl(self):
-        session = requests.Session()
-        session.headers.update({
-            'authority': 'fitnessconnection.com'
-            ,'method': 'GET'
-            ,'path': '/locations/'
-            ,'scheme': 'https'
-            ,'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
-            ,'accept-encoding': 'gzip, deflate, br'
-            ,'accept-language': 'en-US,en;q=0.9,it;q=0.8'
-            ,'cache-control': 'max-age=0'
-            ,'referer': 'https://fitnessconnection.com/'
-            ,'upgrade-insecure-requests': '1'
-            ,'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-        })
-        request = session.get(self.url)
-        if request.status_code == 200:
-            hxt = html.fromstring(request.text)
-            rows = hxt.xpath('//div[@class="club column small-12 medium-4"]')
-            for row in rows:
-                yield row
+            map_link = driver.current_url
+            at_pos = map_link.rfind("@")
+            latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
+            longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
+        except:
+            print('Map not found..skipping')
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
+        location_data = [locator_domain, link, location_name, street_address, city, state, zip_code,
+                        country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-if __name__ == '__main__':
-    fc = FitnessConnection()
-    fc.run()
+        data.append(location_data)
+    
+    try:
+        driver.close()
+    except:
+        pass
+
+    return data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
