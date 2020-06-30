@@ -66,7 +66,7 @@ def fetch_data():
                         g = next(lines)
                         if '>' not in g:
                             g = next(lines)
-                        day = day + ' ' + g.split('>')[1].split('<')[0]
+                        day = day + ' ' + g.split('>')[1].split('<')[0].strip().replace('AM ','AM-')
                         if hours == '':
                             hours = day
                         else:
