@@ -1,10 +1,13 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
+from bs4 import BeautifulSoup
+import time
+from random import randint
 
 base_url = 'https://www.wyndhamhotels.com'
 
@@ -16,7 +19,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -26,18 +29,10 @@ def get_value(item):
         item = '<MISSING>'    
     return item
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -71,42 +66,75 @@ def parse_address(address):
 def fetch_data():
     output_list = []
     url = "https://www.wyndhamhotels.com/microtel/locations"
-    session = requests.Session()
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
     request = session.get(url)
+    time.sleep(randint(1,2))
+
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="aem-rendered-content"]')[0].xpath('.//div[@class="state-container"]//li[@class="property"]')
-    for detail_url in store_list:
-        detail_url = validate(detail_url.xpath('.//a')[0].xpath('./@href'))
-        detail_request = session.get('https://www.wyndhamhotels.com' + detail_url)
+
+    total_links = len(store_list)
+    for i, detail_url in enumerate(store_list):        
+        print("Link %s of %s" %(i+1,total_links))        
+        detail_url = 'https://www.wyndhamhotels.com' + validate(detail_url.xpath('.//a')[0].xpath('./@href'))
+        detail_request = session.get(detail_url)
+        print(detail_url)
+        time.sleep(randint(1,2))
         detail = etree.HTML(detail_request.text)
-
-        address = validate(detail.xpath('.//div[contains(@class, "property-address")]//text()'))
-        address = parse_address(address)
-
-        phone = validate(detail.xpath('.//div[contains(@class, "property-phone")]')[0].xpath('.//text()')).replace('-', '')
         store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0])
+        
+        base = BeautifulSoup(detail_request.text,"lxml")
 
-        more_detail_url = "https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId=" + store_id + "&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-        detail_request = session.get(more_detail_url)
-        detail = json.loads(detail_request.text)['properties'][0]
-        state = validate(detail['stateCode'])
-        title = validate(detail['name'])
-        latitude = validate(detail['latitude'])
-        longitude = validate(detail['longitude'])
-        country_code = validate(detail['countryCode'])
+        title = base.find("h1").text.strip()
+
+        all_scripts = base.find_all("script")
+        for script in all_scripts:
+            script_str = str(script)
+            if "latitude" in script_str:
+                break
+
+        final_script = script_str[script_str.find("{"):script_str.rfind("}")+1]
+        data_json = json.loads(final_script)
+
+        street_address = data_json['address']['streetAddress'].strip()
+        city = data_json['address']['addressLocality'].strip()
+        try:
+            state = data_json['address']['addressRegion'].strip()
+        except:
+            continue
+        zip_code = data_json['address']['postalCode'].strip()
+
+        if street_address == "724 Great Northern Road":
+            zip_code = "P6B 5G5"
+        country = data_json['address']['addressCountry'].strip()
+        if country == "Canada":
+            country_code = "CA"
+        elif country == "United States":
+            country_code = "US"
+        phone = data_json['telephone']
+
+        latitude = data_json['geo']['latitude']
+        longitude = data_json['geo']['longitude']
+
         hours = "24 hours open"
-        if country_code == 'US':
+
+        if country_code == "US" or country_code == "CA":
             output = []
-            output.append(base_url) # url
+            output.append("wyndhamhotels.com") # locator_domain
+            output.append(detail_url) # page_url
             output.append(title) #location name
-            output.append(address['street']) #address
-            output.append(address['city']) #city
-            output.append(address['state']) #state
-            output.append(address['zipcode']) #zipcode
+            output.append(street_address) #address
+            output.append(city) #city
+            output.append(state) #state
+            output.append(zip_code) #zipcode
             output.append(country_code) #country code
             output.append(store_id) #store_number
             output.append(phone) #phone
-            output.append("Microtel by Wyndham Hotels") #location type
+            output.append("<MISSING>") #location type
             output.append(latitude) #latitude
             output.append(longitude) #longitude
             output.append(hours) #opening hours
