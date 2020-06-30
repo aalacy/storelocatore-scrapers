@@ -53,7 +53,7 @@ def fetch_data():
         hours = ''
         lat = ''
         lng = ''
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
