@@ -40,7 +40,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -54,7 +54,8 @@ def fetch_data():
     store_list = json.loads(data)['all_markers']
     for store in store_list:
         output = []
-        output.append(base_url) # url
+        output.append(base_url)
+        output.append(url)# url
         output.append(validate(etree.HTML(get_value(store['title'])).xpath('.//text()'))) #location name
         output.append(get_value(store['address_1'] + ' ' + store['address_2'])) #address
         output.append(get_value(store['city'])) #city
