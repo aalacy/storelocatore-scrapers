@@ -54,7 +54,7 @@ def fetch_data():
     for main_item in main_items:
         main_link = main_item.a['href']
         raw_address = str(main_item.find(class_="address-wrapper").a)
-        raw_address = raw_address[raw_address.find('blank">')+8:raw_address.rfind('<')]
+        raw_address = raw_address[raw_address.find('blank">')+7:raw_address.rfind('<')]
         main_links.append([main_link,raw_address])
 
     data = []
