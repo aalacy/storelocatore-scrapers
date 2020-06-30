@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.u-swirl.com'
+base_url = 'http://www.u-swirl.com'
 
 def validate(str):
     ret = ' '.join(str).strip();
@@ -22,9 +22,9 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.u-swirl.com/find-a-location?page=1"
+    url = "http://www.u-swirl.com/find-a-location?page=1"
     session = requests.Session()
-    request = session.get(url)
+    request = session.get(url,verify=False)
     response = request.text
     data = response.split('jQuery.extend(Drupal.settings,')[1].split('</script>')[0].strip()[:-2]
     store_list = json.loads(data)['gmap']['auto1map']['markers']
