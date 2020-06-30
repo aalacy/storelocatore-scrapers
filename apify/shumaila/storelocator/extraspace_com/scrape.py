@@ -1,11 +1,15 @@
-# https://orthodontist.smiledoctors.com/
-# https://www.getngo.com/locations/
 
 import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -23,31 +27,53 @@ def fetch_data():
     # Your scraper here
 
     data = []
+    state_list = []
     pattern = re.compile(r'\s\s+')
-    url = 'https://www.extraspace.com/storage/facilities/'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    state_list = soup.findAll('a',{'class':'state-link'})
-    p = 1
+    url = 'https://www.extraspace.com/'
+    try:
+        r = requests.get(url,timeout = 30)
+    except:
+        pass
+    #print(r.text)
+    
+    soup =BeautifulSoup(r.text, "html.parser")
+    #maindiv = soup.find('div',{'id':'self-storage-locations'})
+    #print(maindiv)
+    maindiv = soup.findAll('a')
+    for lt in maindiv:
+        try:
+            if lt['href'].find('SiteMap-') > -1:
+                state_list.append("https://www.extraspace.com" + lt['href'])
+        except:
+            pass
+        
+    print('sitemap',len(state_list))
+    p = 0
     for alink in state_list:
-        links = []
-        statelink = "https://www.extraspace.com" + alink['href']
+       
+        statelink = alink #"https://www.extraspace.com" + alink['href']
         #print(statelink)
-        page1 = requests.get(statelink)
-        soup1 = BeautifulSoup(page1.text, "html.parser")
-        #link_list = soup1.findAll('a', {'class': 'address-link'})
-       # for alink in link_list:s
-        #    links.append("https://www.extraspace.com" + alink['href'])
-        link_list = soup1.findAll('a', {'class': 'cl-other-faclink'})
+        try:
+            r1 = requests.get(statelink,timeout = 30)
+        except:
+            pass
+  
+        soup1 =BeautifulSoup(r1.text, "html.parser")
+        maindiv1 = soup1.find('div',{'id':'acc-main'})
+        #print(maindiv1)
+        link_list = maindiv1.findAll('a')
+        #print("NEXT PAGE",len(link_list))
         for alink in link_list:
-            links.append("https://www.extraspace.com" + alink['href'])
-        print(len(links))
-        for alink in links:
-            try:
-                link = alink #"https://www.extraspace.com" + alink['href']
+            if alink.text.find('Extra Space Storage #') > -1:
+                link = "https://www.extraspace.com" + alink['href']
                 #print(link)
-                page2 = requests.get(link)
-                soup2 = BeautifulSoup(page2.text, "html.parser")
+                #input()
+                try:
+                    r2 = requests.get(link)
+                except:
+                    pass
+  
+                soup2 =BeautifulSoup(r2.text, "html.parser")
                 title = soup2.find('span',{'id': 'FacilityTitle'}).text
                 street = soup2.find('span', {'id': 'ctl00_mContent_lbAddress'}).text
                 city = soup2.find('span', {'id': 'ctl00_mContent_lbCity'}).text
@@ -73,22 +99,10 @@ def fetch_data():
                 start = soup2.find(':', start) + 3
                 end = soup2.find('"', start)
                 longt = soup2[start:end]
-                #print(len(hdet))
-                #print(link)
-                #print(title)
-                #print(store)
-                #print(street)
-                #print(city)
-                #print(state)
-                #print(pcode)
-                #print(phone)
-                #print(hours)
-                #print(lat)
-                #print(longt)
-                print(p)
-
-                p += 1
+            
+                
                 title = title.replace("?","")
+                hours = hours.replace('am', ' am').replace('pm',' pm').replace('-',' - ')
                 flag = True
                 #print(len(data))
 
@@ -110,8 +124,10 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            except:
-                pass
+                    #print(p,data[p])
+                    p += 1
+                    
+            
         print(".................")
 
     return data
