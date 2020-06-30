@@ -38,7 +38,7 @@ def fetch_data():
                     locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        # print('Pulling Location %s...' % loc)
         r = session.get(loc, headers=headers)
         website = 'www.uniprix.com'
         typ = '<INACCESSIBLE>'
