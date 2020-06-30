@@ -16,7 +16,7 @@ def validate(str):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -31,7 +31,8 @@ def fetch_data():
     for store in store_list:
         output = []
         detail = etree.HTML(store['text'])
-        output.append(base_url) # url
+        output.append(base_url)
+        output.append(url)# url
         output.append(store['title']) #location name
         output.append(detail.xpath('.//span[@itemprop="streetAddress"]//text()')[0]) #address
         output.append(detail.xpath('.//span[@itemprop="addressLocality"]//text()')[0]) #city
