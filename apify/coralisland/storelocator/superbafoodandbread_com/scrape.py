@@ -1,11 +1,14 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
+import unidecode
 
 base_url = 'http://www.superbafoodandbread.com'
+
+session = SgRequests()
 
 def validate(item):    
     if item == None:
@@ -39,10 +42,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def sanitize(s):
+    return unidecode.unidecode(s)
+
 def fetch_data():
     output_list = []
     url = "http://www.superbafoodandbread.com"
-    session = requests.Session()
     source = session.get(url).text
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="col sqs-col-4 span-4"]//div[@class="sqs-block html-block sqs-block-html"]')
@@ -54,19 +59,19 @@ def fetch_data():
                 continue
             geo_loc = validate(store.xpath('.//a/@href')).split('/@')[1].split(',17z')[0].split(',')
             output.append(base_url) # url
-            output.append(details[0]) #location name
-            output.append(details[2]) #address
+            output.append(sanitize(details[0])) #location name
+            output.append(sanitize(details[2])) #address
             address = details[3].strip().split(',')
-            output.append(address[0]) #city
-            output.append(address[1].strip().split(' ')[0]) #state
-            output.append(address[1].strip().split(' ')[1]) #zipcode
+            output.append(sanitize(address[0])) #city
+            output.append(sanitize(address[1].strip().split(' ')[0])) #state
+            output.append(sanitize(address[1].strip().split(' ')[1])) #zipcode
             output.append('US') #country code
             output.append("<MISSING>") #details_number
-            output.append(details[4]) #phone
-            output.append(details[1]) #location type
+            output.append(sanitize(details[4])) #phone
+            output.append(sanitize(details[1])) #location type
             output.append(geo_loc[0]) #latitude
             output.append(geo_loc[1]) #longitude
-            output.append(validate(details[6:])) #opening hours
+            output.append(sanitize(validate(details[6:]))) #opening hours
             output_list.append(output)
     return output_list
 
