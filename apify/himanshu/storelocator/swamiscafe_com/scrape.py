@@ -18,40 +18,28 @@ def write_output(data):
 def fetch_data():
     header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
-    base_url = "http://swamiscafe.com/"
+    locator_domain = "http://swamiscafe.com/"
     location_url  = 'http://swamiscafe.com/?hcs=locatoraid&hca=search%3Asearch%2F%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F100'
     r = session.get(location_url ,headers = header)
     soup= BeautifulSoup(r.text,"lxml")
-    data = (soup.find_all("script",{'type':"application/ld+json"}))
-    for i in data:
-        a = (json.loads(i.text))
-        locator_domain = base_url
-        location_name = str(a['address']['addressLocality']).replace("San Diego","Point Loma").replace("Encinitas","Encinitas 101")
-        street_address = a['address']['streetAddress']
-        city = a['address']['addressLocality']
-        state = a['address']['addressRegion']
-        zipp =a['address']['postalCode']
-        if "92104" in zipp:
-            location_name = location_name.replace("Point Loma","North Park")
-        if "92127" in zipp:
-            location_name = location_name.replace("Point Loma","Del Sur")
-        if "1506 Encinitas Blvd" in street_address:
-            location_name = location_name.replace("Encinitas","Encinitas Inland")
-        store_number = '<MISSING>'
-        country_code = "US"
-        phone = a['address']['telephone']
-        location_type = "Swami's Cafe"
-        latitude = ""
-        longitude = ""
-        hours_of_operation = ''
-        # print(i)
-        # hours_of_operation = i['openingHours']
-        if "openingHours" in a :
-            hours_of_operation = " ".join(a['openingHours'])
-            # print(hours_of_operation)
-        else:
-            hours_of_operation = '<MISSING>'
-        page_url = "https://www.swamiscafe.com/"
+    data_12 = (soup.find_all("script",{'type':"application/json"})[-2].text.split('{"__typename":"CustomForm","id":20586,"allowAttachments":false,"description":null,"displayGeneralFeedback":false,"emailCsv":null,"heading":null,"isPhoneRequired":false,"label":"Form","showLocationDropdown":false,"showDateField":false},"customVideoUploadedVideo":null,"galleryImages":[],"locations":')[1].split(',"menus":[],"rootSectionType":null,"sectionColumns":[],"selectedEventTags":[],"selectedLocations":[{"__typename":"CustomPageSelectedLocation","id":7368')[0])
+    latitude = ''
+    longitude = ''
+    json_data12 = json.loads(data_12)
+    for mp in json_data12:
+        latitude = (mp['lat'])
+        longitude = (mp['lng'])
+        store_number = mp['restaurantId']
+        street_address = mp['streetAddress']
+        city = mp['city']
+        state = mp['state']
+        zipp =mp['postalCode']
+        phone = mp['phone']
+        location_type = "<MISSING>"
+        location_name = mp['slug']
+        hours_of_operation = str(mp['schemaHours']).replace("'","").replace("[","").replace("]","")
+        page_url = "https://www.swamiscafe.com/"+str(location_name)
+        country_code = mp['country']
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name.replace('Encinitas Inland 101',"Encinitas Inland") if location_name else '<MISSING>')
