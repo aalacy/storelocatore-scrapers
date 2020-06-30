@@ -4,7 +4,12 @@ import pdb
 import requests
 from lxml import etree
 import json
+from sgrequests import SgRequests
 
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 base_url = 'https://chuzefitness.com'
 
 def validate(item):    
@@ -14,7 +19,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('&#038;', '')
+    return item.encode('ascii', 'ignore').decode('ascii').strip().replace('&#038;', '')
 
 def get_value(item):
     if item == None :
@@ -41,16 +46,11 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://chuzefitness.com/locations/"
-    session = requests.Session()
-    headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        'accept-encoding': 'gzip, deflate, br',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
-    }
-    source = session.get(url, headers=headers).text
+    url = "https://chuzefitness.com/"   
+   
+    source = session.get(url,headers=headers, verify=False).text    
     data = source.split('var chuze_vars = ')[1].split('};')[0] + '}'
+    #print(data)
     store_list = json.loads(data)['all_markers']
     for store in store_list:
         output = []
