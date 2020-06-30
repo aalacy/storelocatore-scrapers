@@ -43,7 +43,7 @@ def fetch_data():
         all.append([
             "https://www.bbtheatres.com/theatres/",
             js["Name"],
-            (js["CinemaInfo"]["Address1"]+" "+js["CinemaInfo"]["Address2"]).strip(),
+            (js["CinemaInfo"]["Address1"]+" "+js["CinemaInfo"]["Address2"]).strip().replace('u0026 ',''),
             js["CinemaInfo"]["City"],
             js["CinemaInfo"]["StateCode"],
             zip,

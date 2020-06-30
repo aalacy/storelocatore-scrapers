@@ -1,6 +1,4 @@
-# How to write a Python3 scraper for SafeGraph (Simple)
-
-Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
+# How to write a Python scraper for SafeGraph
 
 Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 

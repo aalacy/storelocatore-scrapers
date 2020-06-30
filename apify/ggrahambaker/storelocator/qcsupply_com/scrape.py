@@ -88,11 +88,11 @@ def fetch_data():
         print(location_name)
 
         street_address = item.find(class_="address-line").text.strip()
-        city_line = item.find_all(class_="address-line")[1].text.replace("\xa0","").strip()
+        city_line = item.find_all(class_="address-line")[1].text.replace(u'\xa0', u'').strip()
         city = city_line[:city_line.find(",")]
         state = city_line[city_line.find(",")+1:city_line.rfind(" ")].strip()
         zip_code = city_line[city_line.rfind(" ")+1:].strip()
-        phone_number = item.find_all(class_="address-line")[2].a.text.replace("\xa0","").strip()
+        phone_number = item.find_all(class_="address-line")[2].a.text.replace(u'\xa0', u'').strip()
         
         if '/' in phone_number:
             phone_number = phone_number.split('/')[0].strip()
@@ -100,7 +100,7 @@ def fetch_data():
         country_code = 'US'
         location_type = '<MISSING>'
 
-        raw_hours = item.find_all(class_="location-address-inner")[2].text.replace("\xa0","").strip()
+        raw_hours = item.find_all(class_="location-address-inner")[2].text.replace(u'\xa0', u'').strip()
         hours = raw_hours.replace("\n"," ").replace("PM","PM ").strip()
         hours_of_operation = (re.sub(' +', ' ', hours)).strip()
 

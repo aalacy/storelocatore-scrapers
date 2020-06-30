@@ -1,143 +1,55 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
-import os
+import csv
 import re
+import pdb
+import requests
+from lxml import etree
+import json
 
-# Site URL
+base_url = 'http://www.letsyoyogurt.com/'
 
+def validate(str):
+    ret = ' '.join(str).strip();
+    if ret == '':
+        return '<MISSING>'
+    return ret
 
-# Location URL
-location_url = 'https://www.letsyoyogurt.com/find-a-location'
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
 
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
+def fetch_data():
+    output_list = []
+    url = "http://www.letsyoyogurt.com/find-a-location"
+    session = requests.Session()
+    request = session.get(url,verify=False)
+    response = request.text
+    data = response.split('jQuery.extend(Drupal.settings,')[1].split('</script>')[0].strip()[:-2]
+    store_list = json.loads(data)['gmap']['auto1map']['markers']
+    for store in store_list:
+        output = []
+        detail = etree.HTML(store['text'])
+        output.append(base_url)
+        output.append(url)# url
+        output.append(store['title']) #location name
+        output.append(detail.xpath('.//span[@itemprop="streetAddress"]//text()')[0]) #address
+        output.append(detail.xpath('.//span[@itemprop="addressLocality"]//text()')[0]) #city
+        output.append(detail.xpath('.//span[@itemprop="addressRegion"]//text()')[0]) #state
+        output.append(detail.xpath('.//span[@itemprop="postalCode"]//text()')[0]) #zipcode
+        output.append('US') #country code
+        output.append('<MISSING>') #store_number
+        output.append(validate(detail.xpath('.//div[@class="views-field views-field-field-phone"]//text()'))) #phone
+        output.append('Self-serve Yogurt Bar') #location type
+        output.append(store['latitude']) #latitude
+        output.append(store['longitude']) #longitude
+        output.append('<MISSING>') #opening hours
+        output_list.append(output)
+    return output_list
 
-# file name of CSV output
-file_name = 'data.csv'
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-
-# Function pull webpage content
-
-def pull_content(url):
-
-    soup = bs(r.get(url).content,'html.parser')
-
-    return soup
-
-def pull_info(content):
- 
-    store_data = []
-
-    tr_region_list = soup.find('table').tbody.find_all('tr')
-    
-    for tr_region_item in tr_region_list:
-        td_dec_store = tr_region_item.find_all('td')
-        for td_dec_item in td_dec_store:
-            if td_dec_store.index(td_dec_item) == 0:
-                locator_domain = location_url
-                location_name = "Let's Yo"
-                street_address = td_dec_item.find('div',{'class':'street-address'}).text.replace('\n','')
-                store_number = "<MISSING>"
-                city = td_dec_item.find('span',{'class':'locality'}).text
-                state = td_dec_item.find('span',{'class':'region'}).text
-                zip = td_dec_item.find('span',{'class':'postal-code'}).text
-                latitude = td_dec_item.find('div',{'class':'hidden'})['data-lat']
-                longitude = td_dec_item.find('div',{'class':'hidden'})['data-long']
-                country_code = td_dec_item.find('div',{'class':'location-hidden'}).text.replace('\n','').replace(state,'')
-                
-                
-            elif td_dec_store.index(td_dec_item) == 1:
-                phone = td_dec_item.a.text
-            store_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-        temp_data = [
-
-            locator_domain,
-
-            location_name,
-
-            street_address,
-
-            city,
-
-            state,
-
-            zip,
-
-            country_code,
-
-            store_number,
-
-            phone,
-
-            store_type,
-
-            latitude,
-
-            longitude,
-
-            hours_of_operation
-
-        ]
-        store_data = store_data + [temp_data]    
-    final_columns = [
-
-        'locator_domain',
-
-        'location_name',
-
-        'street_address', 
-
-        'city',
-
-        'state',
-
-        'zip',
-
-        'country_code',
-
-        'store_number',
-
-        'phone',
-
-        'location_type',
-
-        'latitude',
-
-        'longitude',
-
-        'hours_of_operation']
-
-    final_df = pd.DataFrame(store_data,columns=final_columns)
-
-    return final_df      
-
-
-                
- 
-   
-         
-            
-  
-
-  
-
-                         
-
-
-
-# # Pull URL Content
-
-soup = pull_content(location_url)
-
-# # Pull all stores and info
-
-final_df = pull_info(soup)
-
-
-
-
-# # write to csv
-
-final_df.to_csv(output_path + '/' + file_name,index=False)
+scrape()
