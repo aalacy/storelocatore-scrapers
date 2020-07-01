@@ -34,7 +34,7 @@ def fetch_data():
                     add = add.strip()
                     lat = item.split('"MAIN_LATITUDE":"')[1].split('"')[0]
                     lng = item.split('"MAIN_LONGITUDE":"')[1].split('"')[0]
-                    phone = item.split(',"SLS_PHONE_NUMBER":"')[1].split('"')[0]
+                    phone = item.split(',"REG_PHONE_NUMBER":"')[1].split('"')[0]
                     if phone == '':
                         phone = '<MISSING>'
                     hours = ''
