@@ -44,7 +44,6 @@ def fetch_data():
                     if full[2:-2][-1]=="32413":
                         del full[-1]
                     city = full[2:-2][-1].split(',')[0].replace("29 ",'')
-                    # print()
                     state = full[2:-2][-1].split(",")[-1].split( )[0]
                     zipp = full[2:-2][-1].split(",")[-1].split( )[-1].replace("FL","32413")
                     if "801 Pier Park Drive" in full[2:-2][:-1] or "301 Mount Hope Avenue" in full[2:-2][:-1]:
@@ -52,7 +51,6 @@ def fetch_data():
                     else:
                         name = full[2:-2][:-1][0]
                         address = " ".join(full[2:-2][:-1][1:])
-                        # print(full[2:-2][:-1][1:])
                 elif len(full[2:-2])==2:
                     state_list = re.findall(r' ([A-Z]{2})', str(full[2:-2][-1]))
                     us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full[2:-2][-1]))
@@ -105,7 +103,6 @@ def fetch_data():
                 store.append( "<MISSING>")     
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 yield store
-                # print(state)
 
 def scrape():
     data = fetch_data()
