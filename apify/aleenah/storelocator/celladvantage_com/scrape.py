@@ -21,33 +21,50 @@ all=[]
 def fetch_data():
     # Your scraper here
 
-    res=session.get("http://celladvantage.com/uscellular-locations.html")
+    res=session.get("https://stores.uscellular.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    divs = soup.find_all('div', {'id': 'location_pic'})
+    sa = soup.find('div', {'id': 'accordionUnitedStates'}).find_all('a')
+    urls=[]
+    for a in sa:
 
-    for div in divs:
-        url ="http://celladvantage.com/" +div.find('a').get('href')
-        res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        stores = soup.find_all('div', {'id': 'location_address'})
-        titles=soup.find_all('div', {'id': 'location_title'})
-        pics=soup.find_all('div', {'id': 'location_pic'})
-        for s in range(len(stores)):
-            street,city,state,zip=re.findall(r'<h5>(.*)<br/>(.*), (.*) ([\d]{5})',str(stores[s]))[0]
-            #print(stores[s])
-            loc,phone=re.findall('<h5>(.*)</h5>(.*)</p>',str(titles[s]))[0]
-            loc=loc.replace('♦','')
-            coord=re.findall(r'll=(-?[\d\.]+),(-?[\d\.]+)',pics[s].find('a').get('href'))
-            if coord==[]:
-                coord = re.findall(r'/@(-?[\d\.]+),(-?[\d\.]+)', pics[s].find('a').get('href'))
-                if coord==[]:
-                    lat=long="<MISSING>"
+        a=str(a.get('href'))
+        if "cellular-advantage" not in a:
+            continue
+        else:
+            url = "https://stores.uscellular.com"+ a
+            print(url)
+            if url not in urls:
+                urls.append(url)
             else:
-                lat=coord[0][0]
-                long=coord[0][1]
+                continue
+            #loc = soup.find('h1', {'class': 'heading'}).text
+            res = session.get(url)
+            soup = BeautifulSoup(res.text, 'html.parser')
+            street = soup.find('div', {'class': 'streetaddress'}).text
+            csz = soup.find('div', {'class': 'citystate'}).text.split(',')
+
+            city = csz[0]
+            csz=csz[1].strip().split(' ')
+
+            state=csz[0]
+            zip=csz[1]
+            phone= soup.find('a', {'class': 'mobile-click'}).text
+            timings = soup.find_all('div', {'class': 'timings'})
+            #print(timings)
+            days = soup.find_all('div', {'class': 'day'})
+            #print(days)
+            tim=""
+            for t in range(len(timings)):
+                tim+= days[t].text.strip()+": "+timings[t].text.strip()+" "
+            if tim=="":
+                tim="<MISSING>"
+            print(tim)
+
+
+
             all.append([
                 "http://celladvantage.com/",
-                loc,
+                city,
                 street,
                 city,
                 state,
@@ -56,9 +73,9 @@ def fetch_data():
                 "<MISSING>",  # store #
                 phone,  # phone
                 "<MISSING>",  # type
-                lat,  # lat
-                long,  # long
-                "<MISSING>",  # timing
+                "<MISSING>",  # lat
+                "<MISSING>",  # long
+                tim,  # timing
                 url])
 
     return all
