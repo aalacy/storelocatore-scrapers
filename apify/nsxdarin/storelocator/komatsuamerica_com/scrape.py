@@ -30,7 +30,12 @@ def fetch_data():
                 if '"PhoneNumber":"' in item:
                     name = item.split('"')[0]
                     phone = item.split('"PhoneNumber":"')[1].split('"')[0]
-                    loc = '<MISSING>'
+                    try:
+                        loc = item.split('"Website":"')[1].split('"')[0]
+                    except:
+                        loc = '<MISSING>'
+                    if loc == '':
+                        loc = '<MISSING>'
                     lng = item.split('"Longitude":')[1].split(',')[0]
                     lat = item.split('"Latitude":')[1].split(',')[0]
                     add = item.split('"Address":"')[1].split('"')[0]

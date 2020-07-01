@@ -3,7 +3,8 @@ import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
+           'X-Requested-With': 'XMLHttpRequest'
            }
 
 def write_output(data):
@@ -14,13 +15,17 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'http://onehourheatandair.com/sitemap.xml'
+    url = 'https://www.onehourheatandair.com/locations/?CallAjax=GetLocations'
     sms = []
     locs = []
-    r = session.get(url, headers=headers)
+    payload = {'CallAjax': 'GetLocations'}
+    r = session.post(url, headers=headers, data=payload)
     for line in r.iter_lines():
-        if '<url><loc>https://www.onehourheatandair.com/locations/' in line:
-            locs.append(line.split('<loc>')[1].split('<')[0])
+        if '"Path":"' in line:
+            items = line.split('"Path":"')
+            for item in items:
+                if '"ExternalDomain":' in item:
+                    locs.append('https://www.onehourheatandair.com' + item.split('"')[0])
     for loc in locs:
         print('Pulling Location %s...' % loc)
         website = 'onehourheatandair.com'
@@ -41,8 +46,11 @@ def fetch_data():
         for line2 in lines:
             if '<title>' in line2:
                 name = line2.split('>')[1].split(' |')[0]
-            if 'class="btn btn-primary">' in line2:
-                phone = line2.split('tel:')[1].split('"')[0].strip()
+            if '<span class="flex-middle margin-right-tiny">' in line2:
+                city = line2.split('<span class="flex-middle margin-right-tiny">')[1].split(',')[0]
+                state = line2.split('<span class="flex-middle margin-right-tiny">')[1].split('<')[0].rsplit(' ',1)[1]
+            if '<a class="phone-link phone-number-style text-color" href="tel:' in line2:
+                phone = line2.split('<a class="phone-link phone-number-style text-color" href="tel:')[1].split('"')[0]
         if name != '':
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
