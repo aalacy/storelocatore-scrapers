@@ -50,8 +50,7 @@ def get_eastern_locations():
     url = 'https://www.prevea.com/providers?searchtype=location&zip=&newsearch=1'
     r = session.get(url, headers=headers)
     print("getting eastern locations")
-    print(r.status_code)
-    print(r.status_message)
+    raise Exception("status code: {}".format(r.status_code))
     return r
 
 
