@@ -55,7 +55,7 @@ def fetch_data():
         all.append([
             "https://renasantbank.com/",
             loc,
-            street,
+            street.replace('&amp;',''),
             city,
             state,
             zip,
