@@ -6,16 +6,11 @@ from lxml import etree
 import json
 import usaddress
 
-
 base_url = 'https://originalmels.com'
-
 
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    #print(item)
-    
-    #return item.replace(u'\xa0', ' ').encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '')
     return item.replace(u'\xa0', ' ').strip().replace('\n', '')
 
 def get_value(item):
@@ -80,7 +75,6 @@ def fetch_data():
     for idx, store in enumerate(store_list):
         store = store.xpath('.//div[@class="fusion-text"]')
         if store != []:
-            #print(store)
             output = []
             output.append(base_url)
             output.append(url)# url
@@ -114,8 +108,6 @@ def fetch_data():
            
             output.append(hours) #opening hours        
             output_list.append(output)
-            
-            #print(output)
     return output_list
 
 def scrape():
