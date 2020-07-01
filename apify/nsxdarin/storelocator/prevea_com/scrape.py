@@ -110,6 +110,7 @@ def parse_locations(response, locs):
     for line in response.iter_lines(decode_unicode=True):
         if '<strong><a href=\\"/locations' in line:
             loc = 'https://www.prevea.com/locations' + line.split('<strong><a href=\\"/locations')[1].split('\\')[0]
+            raise Exception(loc)
             locs.append(loc)
 
 
@@ -117,7 +118,6 @@ def fetch_data():
     locs = []
 
     r = get_eastern_locations()
-    raise Exception(r.content)
     parse_locations(r, locs)
 
     csrf_token = get_crsf_token(r.text)
