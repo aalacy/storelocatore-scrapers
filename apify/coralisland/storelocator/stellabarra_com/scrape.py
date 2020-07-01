@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import time
 from random import randint
-
+from unidecode import unidecode
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -12,6 +12,9 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
+
+def sanitize(x):
+    return unidecode(x)
 
 def fetch_data():
     data = []
@@ -70,7 +73,7 @@ def fetch_data():
             raw_hours = item.find("footer").div.find_all("div")[2].text
             raw_hours = raw_hours[raw_hours.find("Monday"):raw_hours.rfind("\n")].strip()
 
-        hours_of_operation = raw_hours.replace("\r\n"," ").replace("\r\n"," ").replace("\xa0"," ").replace("\n"," ").strip()
+        hours_of_operation = sanitize(raw_hours).replace("\r\n"," ").replace("\r\n"," ").replace("\xa0"," ").replace("\n"," ").strip()
         if "Brunch" in hours_of_operation:
             hours_of_operation = hours_of_operation[:hours_of_operation.find("Brunch")-2].strip()
 
