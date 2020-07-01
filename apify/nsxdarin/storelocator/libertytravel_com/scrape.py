@@ -1,8 +1,8 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 
-session = SgRequests()
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -17,40 +17,11 @@ def fetch_data():
     states = []
     cities = []
     locs = []
-    url = 'https://stores.libertytravel.com/index.html'
+    url = 'https://www.libertytravel.com/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'c-directory-list-content-item-link" href="' in line:
-            items = line.split('c-directory-list-content-item-link" href="')
-            for item in items:
-                if 'item-count">(' in item:
-                    count = item.split('item-count">(')[1].split(')')[0]
-                    if count == '1':
-                        locs.append('https://stores.libertytravel.com/' + item.split('"')[0])
-                    else:
-                        states.append('https://stores.libertytravel.com/' + item.split('"')[0])
-    for state in states:
-        print('Pulling State %s...' % state)
-        rs = session.get(state, headers=headers)
-        for line2 in rs.iter_lines():
-            if '<a class="c-directory-list-content-item-link" href="' in line2:
-                items = line2.split('<a class="c-directory-list-content-item-link" href="')
-                for item in items:
-                    if 'item-count">(' in item:
-                        count = item.split('item-count">(')[1].split(')')[0]
-                        if count == '1':
-                            locs.append('https://stores.libertytravel.com/' + item.split('"')[0])
-                        else:
-                            cities.append('https://stores.libertytravel.com/' + item.split('"')[0])
-    for city in cities:
-        print('Pulling City %s...' % city)
-        rs = session.get(city, headers=headers)
-        for line2 in rs.iter_lines():
-            if '<a class="Link" data-ya-track="view_page" href="..' in line2:
-                items = line2.split('<a class="Link" data-ya-track="view_page" href="..')
-                for item in items:
-                    if '>View Page</a>' in item:
-                        locs.append('https://stores.libertytravel.com/' + item.split('"')[0])
+        if '/stores/' in line:
+            locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
         print('Pulling Location %s...' % loc)
         rs = session.get(loc, headers=headers)
@@ -61,32 +32,38 @@ def fetch_data():
         state = '<MISSING>'
         zc = '<MISSING>'
         phone = '<MISSING>'
-        hours = '<MISSING>'
+        hours = ''
         country = 'US'
         typ = '<MISSING>'
         store = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
         for line2 in rs.iter_lines():
-            if ',"id":' in line2:
-                typ = line2.split('"name":"')[1].split('"')[0]
-                store = line2.split(',"id":')[1].split(',')[0]
-                lat = line2.split('"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split(',')[0]
-            if 'Heading--1 Heading--geomod">' in line2:
-                name = line2.split('Heading--1 Heading--geomod">')[1].split('<')[0]
-                hrs = line2.split('itemprop="openingHours" content="')
-                for hr in hrs:
-                    if '<span class="c-location-hours-today-day-status">' in hr:
-                        if hours == '':
-                            hours = hr.split('"')[0]
-                        else:
-                            hours = hours + '; ' + hr.split('"')[0]
-                add = line2.split('<meta itemprop="streetAddress" content="')[1].split('"')[0]
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
-                state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-                phone = line2.split('data-ya-track="nap_phone_call">')[1].split('<')[0]
+            if 'name="geo.placename" content="' in line2:
+                name = line2.split('name="geo.placename" content="')[1].split('"')[0]
+            if 'name="geo.position" content="' in line2:
+                lat = line2.split('name="geo.position" content="')[1].split(',')[0]
+                lng = line2.split('name="geo.position" content="')[1].split(',')[1].split('"')[0].strip()
+            if 'property="og:street_address" content="' in line2:
+                add = line2.split('property="og:street_address" content="')[1].split('"')[0]
+            if 'property="og:locality" content="' in line2:
+                city = line2.split('property="og:locality" content="')[1].split('"')[0]
+            if 'property="og:region" content="' in line2:
+                state = line2.split('property="og:region" content="')[1].split('"')[0]
+            if 'property="og:postal_code" content="' in line2:
+                zc = line2.split('property="og:postal_code" content="')[1].split('"')[0]
+            if 'property="og:phone_number" content="' in line2:
+                phone = line2.split('property="og:phone_number" content="')[1].split('"')[0]
+            if '<div class="store-open-days">' in line2:
+                hrs = line2.split('<div class="store-open-days">')[1].split('<')[0] + ': '
+            if '<div class="store-open-hours">' in line2:
+                hrs = hrs + line2.split('<div class="store-open-hours">')[1].split('<')[0]
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
