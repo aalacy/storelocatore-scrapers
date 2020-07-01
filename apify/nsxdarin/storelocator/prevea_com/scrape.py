@@ -49,8 +49,6 @@ def get_view_state(html):
 def get_eastern_locations():
     url = 'https://www.prevea.com/providers?searchtype=location&zip=&newsearch=1'
     r = session.get(url, headers=headers)
-    print("getting eastern locations")
-    raise Exception("status code: {}".format(r.status_code))
     return r
 
 
@@ -119,6 +117,7 @@ def fetch_data():
     locs = []
 
     r = get_eastern_locations()
+    raise Exception(r.content)
     parse_locations(r, locs)
 
     csrf_token = get_crsf_token(r.text)
