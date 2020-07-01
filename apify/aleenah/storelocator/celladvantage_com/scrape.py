@@ -32,7 +32,7 @@ def fetch_data():
             continue
         else:
             url = "https://stores.uscellular.com"+ a
-            print(url)
+            #print(url)
             if url not in urls:
                 urls.append(url)
             else:
@@ -58,7 +58,7 @@ def fetch_data():
                 tim+= days[t].text.strip()+": "+timings[t].text.strip()+" "
             if tim=="":
                 tim="<MISSING>"
-            print(tim)
+            #print(tim)
 
 
 
