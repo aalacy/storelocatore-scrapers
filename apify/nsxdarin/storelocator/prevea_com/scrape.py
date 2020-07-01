@@ -49,6 +49,9 @@ def get_view_state(html):
 def get_eastern_locations():
     url = 'https://www.prevea.com/providers?searchtype=location&zip=&newsearch=1'
     r = session.get(url, headers=headers)
+    print("getting eastern locations")
+    print(r.status_code)
+    print(r.status_message)
     return r
 
 
@@ -110,7 +113,6 @@ def parse_locations(response, locs):
     for line in response.iter_lines(decode_unicode=True):
         if '<strong><a href=\\"/locations' in line:
             loc = 'https://www.prevea.com/locations' + line.split('<strong><a href=\\"/locations')[1].split('\\')[0]
-            print(loc)
             locs.append(loc)
 
 
