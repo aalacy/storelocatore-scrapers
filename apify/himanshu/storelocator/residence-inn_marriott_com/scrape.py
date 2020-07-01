@@ -6,6 +6,7 @@ import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
 import time
 import unicodedata
 import platform
@@ -14,7 +15,6 @@ system = platform.system()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
@@ -29,6 +29,8 @@ def get_driver():
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    elif "darwin" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver-mac', options=options)
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
@@ -111,12 +113,12 @@ def fetch_data():
             # print("data === ",str(store))
         # if len(soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)})) <= 0:
         #     break
-        soup = BeautifulSoup(driver.page_source,"lxml")
 
-        if soup.find("a",{"title":"Next"}):
+        try:
             driver.find_element_by_xpath("//a[@title='Next']").click()
-        else:
+        except NoSuchElementException: 
             break
+
     driver.close()
 
 def scrape():

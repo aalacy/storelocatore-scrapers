@@ -100,7 +100,7 @@ def fetch_data():
 		link = raw_link[0]
 		latitude = raw_link[1]
 		longitude = raw_link[2]
-
+		
 		driver.get(link)
 		time.sleep(randint(1,2))
 
@@ -132,15 +132,19 @@ def fetch_data():
 			zip_code = raw_address[-7:].strip()
 			if zip_code == "S9H 5RH":
 				zip_code = "S0N 2Y0"
+				state = "SK"
+				city = "Swift Current"
+			else:
+				state = raw_address[raw_address.find(zip_code)-3:raw_address.find(zip_code)].strip()
+				city = raw_address[raw_address.rfind(",")+1:raw_address.find(zip_code)-3].strip()
 		else:
 			country_code = "US"
 			if "-" in zip_code:
-				zip_code = raw_address[raw_address.rfind(" ")+1:].strip()
-		
-		state = raw_address[raw_address.find(zip_code)-3:raw_address.find(zip_code)].strip()
+				zip_code = raw_address[raw_address.rfind(" ")+1:].strip()		
+			state = raw_address[raw_address.find(zip_code)-3:raw_address.find(zip_code)].strip()
+			city = raw_address[raw_address.rfind(",")+1:raw_address.find(zip_code)-3].strip()
 		if state == "NF":
 			state = "NL"
-		city = raw_address[raw_address.rfind(",")+1:raw_address.find(zip_code)-3].strip()
 
 		store_number = link.split("=")[-1]
 		try:
@@ -152,15 +156,17 @@ def fetch_data():
 		if not location_type:
 		  location_type = "<MISSING>"
 
-		raw_hours = item.find_all(class_="operation-hours")
-		hours = ""
-		hours_of_operation = ""
-
 		try:
-			for hour in raw_hours:
-				hours = hours + " " + hour.text.replace("\t","").replace("\n"," ").replace("PM","PM ")\
-				.replace("day","day ").replace("Hours of Operation ","").replace("Closed", "Closed ").strip()
-			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+			raw_hours = item.find(class_="operation-hours").find_all("tr")[1:]
+			hours = []
+
+			for raw_hour in raw_hours:
+				day = raw_hour.find("th").text.strip()
+				hour = raw_hour.find("td").text.strip()
+				hours.append([day, hour])
+
+			hours_of_operation = [y for x in hours for y in x]
+			hours_of_operation = " ".join(hours_of_operation)
 		except:
 			pass
 		if not hours_of_operation:

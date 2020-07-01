@@ -38,7 +38,7 @@ def fetch_data():
                     locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        # print('Pulling Location %s...' % loc)
         r = session.get(loc, headers=headers)
         website = 'www.uniprix.com'
         typ = '<INACCESSIBLE>'
@@ -53,7 +53,7 @@ def fetch_data():
         hours = ''
         lat = ''
         lng = ''
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
