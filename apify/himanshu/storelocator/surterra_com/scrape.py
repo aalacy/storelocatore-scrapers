@@ -6,6 +6,7 @@ from datetime import datetime
 from sgrequests import SgRequests
 import platform
 from sgselenium import SgSelenium
+from tenacity import retry, stop_after_attempt
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -46,6 +47,7 @@ driver.rewrite_rules = [
     (r'(https?://)(.*)igodigital(.*)', r'https://httpbin.org/status/200')
 ]
 
+ @retry(stop=stop_after_attempt(3))
 def get_hours(page_url):
     driver.get(page_url)
     location_soup = bs(driver.page_source,"lxml")
