@@ -5,7 +5,10 @@ import json
 import sgzip
 import time 
 
-import requests
+from sgrequests import SgRequests
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,38 +18,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = requests.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = requests.post(url,headers=headers,data=data)
-               else:
-                   r = requests.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
 
 def fetch_data():
     base_url ="https://www.mitsubishicars.com/"
@@ -69,8 +40,7 @@ def fetch_data():
         
         try:
             link = "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="+str(zip_code)+'&idealer=false&ecommerce=false'
-            json_data = request_wrapper(link,"get",headers=headers).json()
-        #     json_data = requests.get('').json()
+            json_data = session.get(link, headers=headers).json()
         except:
             pass
         current_results_len = len(json_data)  
@@ -96,7 +66,7 @@ def fetch_data():
                     hours_of_operation = "<INACCESSIBLE>"
                 else:
                     try:
-                        r1 = requests.get(page_url, headers=headers)
+                        r1 = session.get(page_url, headers=headers)
                     except:
                         pass
             
