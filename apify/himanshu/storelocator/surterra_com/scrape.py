@@ -1,16 +1,12 @@
-
-
-
 import csv
 from bs4 import BeautifulSoup as bs
 import re
 import json
 from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import requests
 import platform
-system = platform.system()
+from sgselenium import SgSelenium
+
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,21 +17,10 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('--log-level 3')
-    options.add_argument('--disable-logging')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
-def fetch_data(): 
 
-    driver = get_driver()
+driver = SgSelenium().chrome()
+
+def fetch_data(): 
     base_url = "https://www.surterra.com/"
 
     soup = bs(requests.get("https://www.surterra.com/stores/").text, "lxml")
