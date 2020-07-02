@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgselenium import SgSelenium
 
 driver = SgSelenium().chrome() 
