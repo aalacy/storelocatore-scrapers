@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from datetime import datetime
-import requests
+from sgrequests import SgRequests
 import platform
 from sgselenium import SgSelenium
 from tenacity import retry, stop_after_attempt
@@ -19,6 +19,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+session = SgRequests()
 driver = SgSelenium().chrome()
 
 @retry(stop=stop_after_attempt(5))
@@ -30,7 +31,7 @@ def get_hours(page_url):
 def fetch_data(): 
     base_url = "https://www.surterra.com/"
 
-    soup = bs(requests.get("https://www.surterra.com/stores/").text, "lxml")
+    soup = bs(session.get("https://www.surterra.com/stores/").text, "lxml")
 
     json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and '"zip"' in tag.text).text.split("window.storesLocationData =")[-1])['Florida']
     for key,value in json_data.items():
