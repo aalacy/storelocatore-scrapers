@@ -56,7 +56,6 @@ def get_hours(page_url):
     for i in range(len(lines)):
         if 'openingHours' in lines[i]:
             hours = ', '.join(x.strip('",[] ') for x in lines[i+1].split(',')).strip('",[] ')
-            print(hours)
             return hours
 
 def fetch_data(): 
