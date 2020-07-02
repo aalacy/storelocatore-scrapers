@@ -18,11 +18,13 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if '<loc>http://earthwisepet.com/stores/view/' in line:
-            items = line.split('<loc>http://earthwisepet.com/stores/view/')
+        if '<loc>https://earthwisepet.com/stores/view/' in line:
+            items = line.split('<loc>https://earthwisepet.com/stores/view/')
             for item in items:
                 if '</priority></url><url>' in item:
-                    locs.append('http://earthwisepet.com/stores/view/' + item.split('<')[0])
+                    lurl = 'https://earthwisepet.com/stores/view/' + item.split('<')[0]
+                    if lurl != 'https://earthwisepet.com/stores/view/':
+                        locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
