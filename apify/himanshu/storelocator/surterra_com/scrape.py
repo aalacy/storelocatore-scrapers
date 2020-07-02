@@ -21,6 +21,31 @@ def write_output(data):
 session = SgRequests()
 driver = SgSelenium().chrome()
 
+driver.rewrite_rules = [
+    (r'(https?://)(.*)facebook(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)googleapis(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)contentsquare(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)gstatic(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)twitter(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)pinterest(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)bing(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)google-analytics(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)doubleclick(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)pinimg(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)google(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)adxcel-ec2(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)fontawesome(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)googletagmanager(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)myfonts(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)kustomerapp(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)linkedin(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)ipredictive(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)agkn(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)friendbuy(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)png(.*)', r'https://httpbin.org/status/200'),
+    (r'(https?://)(.*)igodigital(.*)', r'https://httpbin.org/status/200')
+]
+
 def get_hours(page_url):
     driver.get(page_url)
     location_soup = bs(driver.page_source,"lxml")
@@ -29,6 +54,7 @@ def get_hours(page_url):
     for i in range(len(lines)):
         if 'openingHours' in lines[i]:
             hours = ', '.join(x.strip('",[] ') for x in lines[i+1].split(',')).strip('",[] ')
+            print(hours)
             return hours
 
 def fetch_data(): 
