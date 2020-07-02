@@ -54,7 +54,6 @@ def fetch_data():
                             state = 'PR'
                             country = 'US'
                         if storeinfo not in ids and country == 'US' and loc != '<MISSING>':
-                            print('Pulling Store %s...' % name)
                             days = []
                             r2 = session.get(loc, headers=headers)
                             lines = r2.iter_lines()
@@ -99,7 +98,6 @@ def fetch_data():
             latn = float((float(x) / 10) + .2)
             lnge = float(float(y) / 10)
             lngw = float((float(y) / 10) - .2)
-            print(str(lats) + ',' + str(lngw) + ',' + str(latn) + ',' + str(lnge))
             url = 'https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=' + str(lats) + '&sw%5B%5D=' + str(lngw) + '&ne%5B%5D=' + str(latn) + '&ne%5B%5D=' + str(lnge) + '&selected=&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json'
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
@@ -131,7 +129,6 @@ def fetch_data():
                             if phone == '':
                                 phone = '<MISSING>'
                             if storeinfo not in ids and country == 'US' and loc != '<MISSING>':
-                                print('Pulling Store %s...' % name)
                                 days = []
                                 r2 = session.get(loc, headers=headers)
                                 lines = r2.iter_lines()
