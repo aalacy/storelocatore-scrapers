@@ -29,6 +29,7 @@ def get_hours(page_url):
     driver.get(page_url)
     wait = WebDriverWait(driver, 20)
     wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".store-details-info.store-details-hours")))
+    raise Exception(driver.page_source)
     location_soup = bs(driver.page_source,"lxml")
     return " ".join(list(location_soup.find("div",{"class":"store-details-info store-details-hours"}).stripped_strings))
 
