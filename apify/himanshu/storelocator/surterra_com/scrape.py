@@ -7,6 +7,9 @@ from sgrequests import SgRequests
 import platform
 from sgselenium import SgSelenium
 from tenacity import retry, stop_after_attempt
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -22,9 +25,10 @@ def write_output(data):
 session = SgRequests()
 driver = SgSelenium().chrome()
 
-@retry(stop=stop_after_attempt(5))
 def get_hours(page_url):
     driver.get(page_url)
+    wait = WebDriverWait(driver, 20)
+    wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".store-details-info.store-details-hours")))
     location_soup = bs(driver.page_source,"lxml")
     return " ".join(list(location_soup.find("div",{"class":"store-details-info store-details-hours"}).stripped_strings))
 
@@ -48,6 +52,7 @@ def fetch_data():
         store_number = value['pickup_location_id']
 
         page_url = "https://www.surterra.com/stores/"+str(value['slug'])
+        hours = '<MISSING>'
         hours = get_hours(page_url) 
 
         store = []
