@@ -47,7 +47,7 @@ driver.rewrite_rules = [
     (r'(https?://)(.*)igodigital(.*)', r'https://httpbin.org/status/200')
 ]
 
- @retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(3))
 def get_hours(page_url):
     driver.get(page_url)
     location_soup = bs(driver.page_source,"lxml")
