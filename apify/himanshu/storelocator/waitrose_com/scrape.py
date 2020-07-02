@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import sgzip
 import re
 import json
-import phonenumbers
 # import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
