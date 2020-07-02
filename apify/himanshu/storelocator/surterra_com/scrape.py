@@ -6,10 +6,6 @@ from datetime import datetime
 from sgrequests import SgRequests
 import platform
 from sgselenium import SgSelenium
-from tenacity import retry, stop_after_attempt
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -33,7 +29,6 @@ def get_hours(page_url):
     for i in range(len(lines)):
         if 'openingHours' in lines[i]:
             hours = ', '.join(x.strip('",[] ') for x in lines[i+1].split(',')).strip('",[] ')
-            print(hours)
             return hours
 
 def fetch_data(): 
@@ -57,7 +52,10 @@ def fetch_data():
 
         page_url = "https://www.surterra.com/stores/"+str(value['slug'])
         hours = '<MISSING>'
-        hours = get_hours(page_url) 
+        try:
+            hours = get_hours(page_url) 
+        except:
+            print("failed to retrieve hours for {}".format(page_url))
 
         store = []
         store.append(base_url)
