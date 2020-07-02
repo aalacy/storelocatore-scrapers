@@ -19,7 +19,7 @@ MAX_RESULTS = 50
 MAX_DISTANCE = 10
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data2.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
@@ -45,37 +45,40 @@ def fetch_data():
                 items = line.split('{"id":')
                 for item in items:
                     if '"dealerName":"' in item:
-                        name = item.split('"dealerName":"')[1].split('"')[0]
-                        store = item.split(',')[0]
-                        typ = '<MISSING>'
-                        loc = '<MISSING>'
-                        phone = item.split('"phone1":"')[1].split('"')[0]
-                        add = item.split('{"addressLine1":"')[1].split('"')[0]
-                        city = item.split('"cityName":"')[1].split('"')[0]
-                        state = item.split('"countrySubdivisionCode":"')[1].split('"')[0]
-                        zc = item.split(',"postalCode":"')[1].split('"')[0]
-                        country = 'US'
-                        lat = item.split('"latitude":')[1].split(',')[0]
-                        hours = ''
-                        lng = item.split('"longitude":')[1].split('}')[0]
                         try:
-                            days = item.split('"generalOpeningHour":[{')[1].split('}],"serviceOpeningHour":')[0].split('"openFrom":"')
-                            for day in days:
-                                if '"dayOfWeek":' in day:
-                                    dname = day.split('"dayOfWeek":[')[1].split(']')[0]
-                                    dname = dname.replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun')
-                                    hrs = dname + ': ' + day.split('"')[0] + '-' + day.split(',"openTo":"')[1].split('"')[0]
-                                    if hours == '':
-                                        hours = hrs
-                                    else:
-                                        hours = hours + '; ' + hrs
+                            name = item.split('"dealerName":"')[1].split('"')[0]
+                            store = item.split(',')[0]
+                            typ = '<MISSING>'
+                            loc = '<MISSING>'
+                            phone = item.split('"phone1":"')[1].split('"')[0]
+                            add = item.split('{"addressLine1":"')[1].split('"')[0]
+                            city = item.split('"cityName":"')[1].split('"')[0]
+                            state = item.split('"countrySubdivisionCode":"')[1].split('"')[0]
+                            zc = item.split(',"postalCode":"')[1].split('"')[0]
+                            country = 'US'
+                            lat = item.split('"latitude":')[1].split(',')[0]
+                            hours = ''
+                            lng = item.split('"longitude":')[1].split('}')[0]
+                            try:
+                                days = item.split('"generalOpeningHour":[{')[1].split('}],"serviceOpeningHour":')[0].split('"openFrom":"')
+                                for day in days:
+                                    if '"dayOfWeek":' in day:
+                                        dname = day.split('"dayOfWeek":[')[1].split(']')[0]
+                                        dname = dname.replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun')
+                                        hrs = dname + ': ' + day.split('"')[0] + '-' + day.split(',"openTo":"')[1].split('"')[0]
+                                        if hours == '':
+                                            hours = hrs
+                                        else:
+                                            hours = hours + '; ' + hrs
+                            except:
+                                hours = '<MISSING>'
+                            array.append(store)
+                            if store not in sids:
+                                sids.append(store)
+                                print(store)
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
-                            hours = '<MISSING>'
-                        array.append(store)
-                        if store not in sids:
-                            sids.append(store)
-                            print(store)
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            pass
         if len(array) <= MAX_RESULTS:
                     print("max distance update")
                     search.max_distance_update(MAX_DISTANCE)
