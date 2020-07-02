@@ -6,6 +6,7 @@ from datetime import datetime
 import requests
 import platform
 from sgselenium import SgSelenium
+from tenacity import retry, stop_after_attempt
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -19,6 +20,12 @@ def write_output(data):
             writer.writerow(row)
 
 driver = SgSelenium().chrome()
+
+@retry(stop=stop_after_attempt(5))
+def get_hours(page_url):
+    driver.get(page_url)
+    location_soup = bs(driver.page_source,"lxml")
+    return " ".join(list(location_soup.find("div",{"class":"store-details-info store-details-hours"}).stripped_strings))
 
 def fetch_data(): 
     base_url = "https://www.surterra.com/"
@@ -40,9 +47,7 @@ def fetch_data():
         store_number = value['pickup_location_id']
 
         page_url = "https://www.surterra.com/stores/"+str(value['slug'])
-        driver.get(page_url)
-        location_soup = bs(driver.page_source,"lxml")
-        hours = " ".join(list(location_soup.find("div",{"class":"store-details-info store-details-hours"}).stripped_strings))
+        hours = get_hours(page_url) 
 
         store = []
         store.append(base_url)
@@ -59,12 +64,8 @@ def fetch_data():
         store.append(lng)
         store.append(hours.replace('Hours ',''))
         store.append(page_url)     
-    
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        
         yield store
-    
-    
     
 def scrape():
     data = fetch_data()
