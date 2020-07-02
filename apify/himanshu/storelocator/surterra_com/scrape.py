@@ -27,11 +27,14 @@ driver = SgSelenium().chrome()
 
 def get_hours(page_url):
     driver.get(page_url)
-    wait = WebDriverWait(driver, 20)
-    wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".store-details-info.store-details-hours")))
-    raise Exception(driver.page_source)
     location_soup = bs(driver.page_source,"lxml")
-    return " ".join(list(location_soup.find("div",{"class":"store-details-info store-details-hours"}).stripped_strings))
+    ld_json = location_soup.find('script',type="application/ld+json").string
+    lines = ld_json.splitlines()
+    for i in range(len(lines)):
+        if 'openingHours' in lines[i]:
+            hours = ', '.join(x.strip('",[] ') for x in lines[i+1].split(',')).strip('",[] ')
+            print(hours)
+            return hours
 
 def fetch_data(): 
     base_url = "https://www.surterra.com/"
