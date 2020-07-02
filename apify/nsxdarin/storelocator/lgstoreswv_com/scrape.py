@@ -1,9 +1,8 @@
 import csv
 import urllib2
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
-driver = webdriver.Chrome("chromedriver")
+driver = SgSelenium().chrome() 
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
