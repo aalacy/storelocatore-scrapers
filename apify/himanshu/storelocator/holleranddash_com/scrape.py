@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+import unicodedata
 import sgzip
 
 session = SgRequests()
