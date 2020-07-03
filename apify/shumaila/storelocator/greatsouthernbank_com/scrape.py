@@ -33,7 +33,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     r = r.text.split('"branches":')[1].split(']}')[0]+']'
     locations =json.loads(r)
-    print(len(locations))
+    #print(len(locations))
     for loc in locations:
         title = loc['name']
         store = loc['id']
@@ -48,7 +48,7 @@ def fetch_data():
         detail = BeautifulSoup(detail,'html.parser')
         try:
             link = detail.find('a')['href']
-            print(link)
+            #print(link)
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             hourd =soup.find('table',{'class':'hours'})
@@ -87,7 +87,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
         
         
