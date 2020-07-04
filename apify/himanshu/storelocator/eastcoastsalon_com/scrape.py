@@ -53,7 +53,7 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("east coast salon services")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
