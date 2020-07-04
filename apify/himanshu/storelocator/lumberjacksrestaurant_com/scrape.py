@@ -59,7 +59,7 @@ def fetch_data():
         store.append(country_code if country_code else '<MISSING>')
         store.append(store_number if store_number else '<MISSING>')
         store.append(dic1[data_new] if dic1[data_new] else '<MISSING>')
-        store.append('lumberjacksrestaurant')
+        store.append('<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
