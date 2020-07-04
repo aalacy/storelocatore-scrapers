@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,14 +25,13 @@ def fetch_data():
     r = session.get("https://luckybaldwins.pub",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    location_url = []
-    for location in soup.find("div",{'id':"expect"}).find_all("a"):
-        if location["href"] in location_url:
-            continue
-        location_url.append(location["href"])
+    
+    for location in soup.find_all("a",class_="fl-callout-title-link fl-callout-title-text"):
+        
         location_request = session.get(location["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
-        geo_request = session.get(location_soup.find("iframe")["src"],headers=headers)
+        
+        geo_request = session.get(location_soup.find("iframe")["data-src"],headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:
@@ -43,8 +42,8 @@ def fetch_data():
         store = []
         store.append("https://luckybaldwins.pub")
         store.append(geo_data.split(",")[0])
-        store.append(geo_data.split(",")[1])
-        store.append(geo_data.split(",")[2])
+        store.append(geo_data.split(",")[1].strip())
+        store.append(geo_data.split(",")[2].strip())
         store.append(geo_data.split(",")[3].split(" ")[1])
         store.append(geo_data.split(",")[3].split(" ")[2])
         store.append("US")
@@ -53,7 +52,8 @@ def fetch_data():
         store.append("lucky baldwins")
         store.append(lat)
         store.append(lng)
-        store.append(" ".join(location_soup.find("table",{'class':"hours-table"}).stripped_strings))
+        store.append("<MISSING>")
+        store.append(location['href'])
         return_main_object.append(store)
     return return_main_object
 
