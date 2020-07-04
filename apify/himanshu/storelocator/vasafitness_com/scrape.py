@@ -3,10 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,16 +27,18 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("h4",text=re.compile("Coming Soon")):
             continue
-        name = location_soup.find("h1",{'class':"enjoy-the-ride"}).text
+        
         address = list(location_soup.find("div",{'class':"loc-address"}).stripped_strings)
         hours = " ".join(list(location_soup.find("div",{'id':"loc-accordion"}).stripped_strings))
         if location_soup.find("a",{'href':re.compile("tel:")}) == None:
             phone = "<MISSING>"
         else:
             phone = location_soup.find("a",{'href':re.compile("tel:")})["href"].replace("tel: ","")
+        name = address[1].split(",")[-1].split(" ")[-2].upper()
+        name1 = location_soup.find("h1",{"class":"text-uppercase"}).text
         store = []
         store.append("https://vasafitness.com")
-        store.append(name)
+        store.append(name1)
         store.append(address[0])
         store.append(address[1].split(",")[-2])
         store.append(address[1].split(",")[-1].split(" ")[-2])
@@ -55,9 +54,7 @@ def fetch_data():
             continue
         store.append(location.find("a")["href"])
         yield store
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
