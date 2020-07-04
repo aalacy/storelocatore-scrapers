@@ -1,1 +1,2 @@
-python validate.py data.csv --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator
+--ignore StreetAddressHasStateName (Confirmed scraped correctly)
+--ignore LatLngDuplicationValidator (Multiple POI with same address)
