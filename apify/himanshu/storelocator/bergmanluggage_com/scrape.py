@@ -29,8 +29,11 @@ def fetch_data():
             page_request = session.get(base_url + page["href"],headers=headers)
             page_soup = BeautifulSoup(page_request.text,"lxml")
             data = json.loads(page_soup.find("div",{"develic-map":re.compile('{')})["develic-map"])["items"]
+            # print(data)
             for i in range(len(data)):
                 store_data = data[i]
+                if "STORE IS CLOSED" in store_data['t']:
+                    continue
                 address = list(BeautifulSoup(store_data["b"],"lxml").stripped_strings)
                 if "This Location Has Closed" in address:
                     continue
