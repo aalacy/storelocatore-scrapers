@@ -56,10 +56,13 @@ def fetch_data():
                 csz=csz[1].strip().split(" ")
                 state=csz[0]
                 zip=csz[1]
-            if "Ph" in lis[4].text:
-                phone=re.findall(r'([\d \)\(\-]+)',lis[4].text)[0]
+            if "Ph" in lis[3].text:
+                phone=re.findall(r'([\d \)\(\-]+)',lis[3].text)[0]
             else:
-                phone="<MISSING>"
+                if "Ph" in lis[4].text:
+                    phone=re.findall(r'([\d \)\(\-]+)',lis[4].text)[0]
+                else:
+                    phone="<MISSING>"
 
             tim = lis[-1].text.strip()
             all.append([
@@ -71,7 +74,7 @@ def fetch_data():
                 zip,
                 'US',
                 "<MISSING>",  # store #
-                phone,  # phone
+                phone.strip(),  # phone
                 "<MISSING>",  # type
                 lat,  # lat
                 long,  # long
