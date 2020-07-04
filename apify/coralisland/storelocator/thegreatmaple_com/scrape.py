@@ -14,7 +14,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace(u'\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -51,9 +51,13 @@ def fetch_data():
     source = session.get(url, headers=headers).text
     response = etree.HTML(source)
     store_list = response.xpath('//li[@id="menu-item-15359"]')[0].xpath('.//a/@href')[1:]
+
     for store_link in store_list:
+        #print(store_link)
         store = etree.HTML(session.get(store_link, headers=headers).text)
-        details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center   clearfix"]')[0].xpath('.//text()'))
+        details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
+        if store_link =='http://thegreatmaple.com/sandiego':
+            details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
         point = 0
         for idx, de in enumerate(details):
             if 'hours' == de.lower():
@@ -67,6 +71,7 @@ def fetch_data():
             output.append('<MISSING>') #location name
         output.append(details[point-3]) #address
         address = details[point-2].strip().split(',')
+#        print(address)
         output.append(address[0]) #city
         output.append(address[1].strip().split(' ')[0]) #state
         output.append(address[1].strip().split(' ')[1]) #zipcode
