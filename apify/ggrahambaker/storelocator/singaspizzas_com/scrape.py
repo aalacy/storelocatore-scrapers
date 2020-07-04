@@ -27,11 +27,20 @@ def fetch_data():
 
         if len(content) > 1:
             location_name = content[0]
+            print(location_name)
             street_address = content[1]
-            city = content[2]
-            zip_code = content[3]
-            phone_number = content[4]
-            state = '<MISSING>'
+            if "," not in content[2]:
+                city = content[2]
+                zip_code = content[3]
+                phone_number = content[4]
+                state = '<MISSING>'
+            else:
+                 cont=content[2].split(",")
+                 city = cont[0]
+                 cont=cont[1].strip().split(" ")
+                 state=cont[0]
+                 zip_code=cont[1]
+                 phone_number = content[3]
 
             country_code = 'US'
             store_number = '<MISSING>'
