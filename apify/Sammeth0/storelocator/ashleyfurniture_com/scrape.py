@@ -80,8 +80,11 @@ def fetch_data():
 			print('[!] Error Occured. ')
 			print('[?] Check whether system is Online.')
 
+		loc = item.find('h1').text.strip().split(',')[0]
+		if "coming soon" in loc.lower():
+			continue
 		page_urls.append(p)
-		locs.append(item.find('h1').text.strip().split(',')[0])
+		locs.append(loc)
 		streets.append(item.find(class_='address').text.strip())
 		cities.append(item.find(class_='city-postal-code').text.split(',')[0])
 		states.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[:3].strip())
