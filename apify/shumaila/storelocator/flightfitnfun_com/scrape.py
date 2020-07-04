@@ -31,9 +31,9 @@ def fetch_data():
     for divs in li_list:
         link = divs.find('a')
         link = link['href']
-        print(link)
+        #print(link)
         if link.find("flightfitnfun") > -1:
-            print('1')
+            #print('1')
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
             detail = soup.findAll('script', {'type': 'application/ld+json'})
@@ -82,11 +82,12 @@ def fetch_data():
                 pcode = '0' + str(pcode)
             lat = "<MISSING>"
             longt = "<MISSING>"
-
+            
+           
 
 
         else:
-            print('2')
+            #print('2')
             link1 = link + "directions/"
             page = requests.get(link1)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -132,7 +133,7 @@ def fetch_data():
             detail = soup.find('table',{'class': 'table'})
 
             detail = detail.findAll('tr')
-
+           
             hours = ""
             for rows in detail:
                 rows = rows.text
@@ -142,9 +143,11 @@ def fetch_data():
             start = hours.find("Monday")
             hours = hours[start:len(hours)]
             store = "<MISSING>"
+            
+            
 
-
-       
+        if title.find('Sandhill') > -1:
+                hours = 'MON - SUN : 9 AM - 11 PM'
         data.append([
             url,
             link,
