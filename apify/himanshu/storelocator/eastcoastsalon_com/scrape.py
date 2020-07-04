@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,27 +24,41 @@ def fetch_data():
     base_url = "https://www.eastcoastsalon.com"
     r = session.get("https://www.eastcoastsalon.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    hours = " ".join(list(soup.find("div",{'class':"hours"}).stripped_strings))
+    
     return_main_object = []
-    for script in soup.find_all("script"):
-        if "var locations = [" in script.text:
-            location_list = json.loads( "[" + script.text.split("var locations = [")[1].split("];")[0].replace("'",'"') + "]")
-            for store_data in location_list:
-                store = []
-                store.append("https://www.eastcoastsalon.com")
-                store.append(store_data[0])
-                store.append(BeautifulSoup(store_data[1],"lxml").get_text())
-                store.append(store_data[0].split(",")[0])
-                store.append(store_data[0].split(",")[-1])
-                store.append(store_data[2].split(" ")[-1])
-                store.append("US")
-                store.append(store_data[-1])
-                store.append(store_data[3])
-                store.append("east coast salon services")
-                store.append(store_data[-3])
-                store.append(store_data[-2])
-                store.append(hours)
-                return_main_object.append(store)
+    for tr in soup.find("table").find_all("tr"):
+        addr = list(tr.find("td").stripped_strings)
+        if "DuBois, PA" == addr[0] or "McMurray, PA" == addr[0] or "Parsippany, NJ" == addr[0]:
+            location_name = "<MISSING>"
+            street_address = addr[1]
+            city = addr[2].split(",")[0]
+            state = addr[2].split(",")[-1].split()[0]
+            zipp = addr[2].split(",")[-1].split(" ")[-1]
+        else:
+            location_name = addr[1]
+            street_address = addr[2]
+            city = addr[3].split(",")[0]
+            state = addr[3].split(",")[-1].split()[0]
+            zipp = addr[3].split(",")[-1].split(" ")[-1]
+
+        phone = list(tr.find_all("td")[-1].stripped_strings)[1]
+        
+        store = []
+        store.append("https://www.eastcoastsalon.com")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("east coast salon services")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("https://www.eastcoastsalon.com/locations")
+        return_main_object.append(store)
     return return_main_object
 
 def scrape():

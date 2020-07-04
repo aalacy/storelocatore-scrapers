@@ -63,7 +63,7 @@ def fetch_data():
             else:
                 state = "<MISSING>"
                 street_address = " ".join(address[:2]).strip()
-                print(street_address)
+                #print(street_address)
                 city = address[-1].strip()
         elif len(address) == 2:
             state= re.findall(r'([A-Z]{2})', str("".join(address[-1].split()[-1])))[0]
@@ -81,9 +81,9 @@ def fetch_data():
         store = []
         store.append("https://www.townpumpconvenience.com")
         store.append(store_data['name'])
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
+        store.append(street_address.replace("6940 MT-1","6940 MT-1 Suite A").replace("20A Big Timber Loop Rd","20A Big Timber Loop Rd Suite c"))
+        store.append(city.replace("Suite C","Big Timber").replace("Suite A","Anaconda"))
+        store.append(state.replace("Anaconda","MT").replace("Big Timber","MT"))
         store.append(zipp)
         store.append("US")
         store.append(store_data["storeid"])
