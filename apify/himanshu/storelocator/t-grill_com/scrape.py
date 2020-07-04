@@ -20,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_url = "https://t-grill.com/"
+    base_url = "https://t-grill.com"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
@@ -41,7 +41,7 @@ def fetch_data():
         part2 = new_tt[-1].split(" ")
         part22 = part2[0]
         street_address = part1 + " " + part22
-        phone = part2[-1]
+        phone = part2[1]
         city = addr[0]
         state = addr[1].split(" ")[1]
         location_name = "Teriyaki Grill - " + city
@@ -61,7 +61,6 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(location_url)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
 
 

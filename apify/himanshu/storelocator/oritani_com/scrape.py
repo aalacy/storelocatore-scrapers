@@ -1,12 +1,11 @@
 import csv
-from sgrequests import SgRequests
 import requests
 from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
 import time
-session = SgRequests()
+
 
 # def request_wrapper(url,method,headers,data=None):
 #    request_counter = 0
@@ -111,9 +110,9 @@ def fetch_data():
                     
                     hours=''
                     names_hours = (store_soup.find_all("a",{"href":re.compile("#panel")}))
-                    for index,i in enumerate(store_soup.find_all("div",{"class":"tabs-panel"})):
+                    for index,i in enumerate(store_soup.find_all("div",{"id":"panel1"})):
                         if i['id']==names_hours[index]['href'].replace("#",''):
-                            hours = hours + ' '+names_hours[index].text.strip() + ' '+" ".join(list(i.stripped_strings))
+                            hours = hours + ' '+names_hours[index].text.strip().replace("Lobby","") + ' '+" ".join(list(i.stripped_strings))
                     # print(hours)
                     # hours = " ".join(list(store_soup.find("div",{"class":"tabs-content","class":"small-9"}).stripped_strings))
                     # try:
