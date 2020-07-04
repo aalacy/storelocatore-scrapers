@@ -1,101 +1,153 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import csv
+import time
+from random import randint
 import re
-from string import capwords
 
-import base
-import ast
-import requests, json
-import asyncio
-import aiohttp
-from urllib.parse import urljoin
-from lxml import html
-base_url = "https://locations.massageenvy.com/index.html"
-flatten = lambda l: [item for sublist in l for item in sublist]
+def write_output(data):
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-class Scrape(base.Spider):
-    crawled = set()
-    async def _fetch_store(self, session, url):
-        async with session.get(url, timeout=60 * 60) as response:
-            resp = await response.text()
-            res_sel = html.fromstring(resp)
-            i = base.Item(res_sel)
-            i.add_value('locator_domain', base_url)
-            i.add_value('page_url', url)
-            i.add_xpath('location_name', '//h1[@class="info-h1"]//span//text()', lambda x: '- '.join(x), lambda x: x.strip())
-            i.add_xpath('phone', './/span[@id="telephone"]/text()', base.get_first, lambda x: x.strip())
-            i.add_xpath('latitude', '//meta[@itemprop="latitude"]/@content', base.get_first, lambda x: x.strip())
-            i.add_xpath('longitude', '//meta[@itemprop="longitude"]/@content', base.get_first, lambda x: x.strip())
-            lat_lng = (i.as_dict()['latitude'], i.as_dict()['longitude'])
-            i.add_xpath('city', '//address[@class="c-address"]//span[@class="c-address-city"]/span[@itemprop="addressLocality"]/text()', base.get_first, lambda x: x.strip())
-            i.add_xpath('street_address', '//address[@class="c-address"]//span[@class="c-address-street-1"]/text()', base.get_first, lambda x: x.strip())
-            i.add_xpath('state', '//address[@class="c-address"]//abbr[@class="c-address-state"]/text()', base.get_first, lambda x: x.strip())
-            i.add_xpath('zip', '//address[@class="c-address"]//span[@class="c-address-postal-code"]/text()', base.get_first, lambda x: x.strip(), lambda x: x.strip())
-            i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']), lambda x: x.strip())
-            i.add_xpath('hours_of_operation', '//table[@class="c-location-hours-details"]//tr[td]', lambda x: '; '.join([' '.join(s.xpath('.//text()')) for s in x]), lambda x: x.replace('  ', ' ').strip())
-            if lat_lng not in self.crawled:
-                self.crawled.add(lat_lng)
-                return i
+def fetch_data():
+    
+    base_link = "https://locations.massageenvy.com/index.html"
 
-    async def _fetch_stores(self, session, urls):
-        results = []
-        for url in urls:
-            res = await self._fetch_store(session, url)
-            if res:
-                results.append(res)
-        return results
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    async def _fetch_city(self, session, url):
-        async with session.get(url, timeout=60 * 60) as response:
-            resp = await response.text()
-            sel = html.fromstring(resp)
-            stores_urls = [urljoin(base_url, s) for s in sel.xpath('//a[@class="location-title-link"]/@href')]
-            stores = await self._fetch_stores(session, stores_urls)
-            return stores
+    session = SgRequests()
+    req = session.get(base_link, headers = HEADERS)
+    time.sleep(randint(1,2))
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+        print("Got today page")
+    except (BaseException):
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
-    async def _fetch_cities(self, session, urls):
-        results = []
-        for url in urls:
-            res = await self._fetch_city(session, url)
-            results.append(res)
-        return flatten(results)
+    main_links = []
+    final_links = []
 
-    async def _fetch_state(self, session, url):
-        async with session.get(url, timeout=60 * 60) as response:
-            resp = await response.text()
-            sel = html.fromstring(resp)
-            cities_urls = []
-            for href in sel.xpath('//a[@class="c-directory-list-content-item-link"]/@href'):
-                sp = href.split('/')
-                if len(sp) == 3:
-                    href = sp[0]+'/'+sp[1] + '.html'
-                cities_urls.append(urljoin(base_url, href))
-            cities = await self._fetch_cities(session, cities_urls)
-            return cities
+    main_items = base.find_all(class_="Directory-listLink")
+    for main_item in main_items:
+        main_link = "https://locations.massageenvy.com/" + main_item['href']
+        count = main_item['data-count'].replace("(","").replace(")","").strip()
+        if count == "1":
+            final_links.append(main_link)
+        else:
+            main_links.append(main_link)
+    
+    for main_link in main_links:
+        print(main_link)
+        req = session.get(main_link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-    async def _fetch_all_states(self, urls, loop):
-        connector = aiohttp.TCPConnector(limit=100)
-        async with aiohttp.ClientSession(loop=loop, connector=connector) as session:
-            results = await asyncio.gather(
-                    *[self._fetch_state(session, url) for url in urls],
-                    return_exceptions=True
-                )
-        return flatten(results)
+        next_items = base.find_all(class_="Directory-listLink")
+        if next_items:
+            for next_item in next_items:
+                next_link = "https://locations.massageenvy.com/" + next_item['href']
+                count = next_item['data-count'].replace("(","").replace(")","").strip()
 
-    def crawl(self):
-        headers = {
-            "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36"
-        }
-        body = html.fromstring(requests.get(base_url, headers=headers).text)
-        states = []
-        for href in body.xpath('//a[@class="c-directory-list-content-item-link"]/@href'):
-            sp = href.split('/')
-            if len(sp) == 3:
-                href = sp[0] + '.html'
-            states.append(urljoin(base_url, href))
-        loop = asyncio.get_event_loop()
-        stores = loop.run_until_complete(self._fetch_all_states(states, loop))
-        return stores
+                if count == "1":
+                    final_links.append(next_link)
+                else:
+                    next_req = session.get(next_link, headers = HEADERS)
+                    time.sleep(randint(1,2))
+                    try:
+                        next_base = BeautifulSoup(next_req.text,"lxml")
+                    except (BaseException):
+                        print('[!] Error Occured. ')
+                        print('[?] Check whether system is Online.')
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+                    final_items = next_base.find_all(class_="Teaser-titleLink")
+                    for final_item in final_items:
+                        final_link = ("https://locations.massageenvy.com/" + final_item['href']).replace("../","")
+                        final_links.append(final_link)
+        else:
+            final_items = base.find_all(class_="Teaser-titleLink")
+            for final_item in final_items:
+                final_link = ("https://locations.massageenvy.com/" + final_item['href']).replace("../","")
+                final_links.append(final_link)
+
+        
+    data = []
+    total_links = len(final_links)
+    for i, final_link in enumerate(final_links):
+        print("Link %s of %s" %(i+1,total_links))
+        final_req = session.get(final_link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            item = BeautifulSoup(final_req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+
+        locator_domain = "massageenvy.com"
+
+        location_name = item.find(id="location-name").text.strip()
+        if "COMING SOON" in location_name.upper():
+            continue
+        print(location_name)
+
+        street_address = item.find(class_='c-address-street-1').text.strip()
+        try:
+            street_address = street_address + " " + item.find(class_='c-address-street-2').text.strip()
+            street_address = street_address.strip()
+        except:
+            pass
+        
+        city = item.find(class_='c-address-city').text.strip()
+        state = item.find(class_='c-address-state').text.strip()
+        zip_code = item.find(class_='c-address-postal-code').text.strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        
+        location_type = "<MISSING>"
+
+        try:
+            phone = item.find('div', attrs={'itemprop': 'telephone'}).text.strip()
+            if not phone:
+                phone = "<MISSING>"
+        except:
+            phone = "<MISSING>"
+
+        latitude = item.find('meta', attrs={'itemprop': 'latitude'})['content']
+        longitude = item.find('meta', attrs={'itemprop': 'longitude'})['content']
+
+        try:
+            raw_hours = item.find(class_="c-hours-details").find_all('tr')[1:]
+            hours = ""
+            hours_of_operation = ""
+
+            try:
+                for hour in raw_hours:
+                    hours = hours + " " + hour.text.replace("\t","").replace("\n"," ").strip()
+                hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+            except:
+                pass
+            if not hours_of_operation:
+                hours_of_operation = "<MISSING>"
+        except:
+            hours_of_operation = "<MISSING>"
+
+        data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
+    return data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
