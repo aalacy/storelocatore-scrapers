@@ -51,7 +51,7 @@ def fetch_data():
 		time.sleep(randint(2,4))
 
 		try:
-			element = WebDriverWait(driver, 5).until(EC.presence_of_element_located(
+			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
 				(By.CSS_SELECTOR, ".container.mt-3.mb-5")))
 			time.sleep(randint(3,5))
 		except:
@@ -79,7 +79,7 @@ def fetch_data():
 		print(can_zip)
 
 		try:
-			element = WebDriverWait(driver, 5).until(EC.presence_of_element_located(
+			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
 				(By.CSS_SELECTOR, ".container.mt-3.mb-5")))
 			time.sleep(randint(3,5))
 		except:
