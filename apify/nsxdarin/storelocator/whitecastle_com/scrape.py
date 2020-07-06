@@ -41,16 +41,19 @@ def fetch_data():
         if array['open24x7']:
             hours = 'Open 24 Hours'
         else:
-            for hr in array['days']:
-                day = hr['day']
-                if not hr['open24Hours']:
-                    time = hr['hours']
-                else:
-                    time = 'Open 24 Hours'
-                if hours == '':
-                    hours = day + ': ' + time
-                else:
-                    hours = hours + '; ' + day + ': ' + time
+            try:
+                for hr in array['days']:
+                    day = hr['day']
+                    if not hr['open24Hours']:
+                        time = hr['hours']
+                    else:
+                        time = 'Open 24 Hours'
+                    if hours == '':
+                        hours = day + ': ' + time
+                    else:
+                        hours = hours + '; ' + day + ': ' + time
+            except:
+                hours = 'Sun-Sat: Closed'
         typ = 'Restaurant'
         lat = array['lat']
         lng = array['lng']
