@@ -58,7 +58,10 @@ def fetch_data():
                 days = line2.split("data-days='")[1].split("]}]'")[0].split('"day":"')
                 for day in days:
                     if '"intervals"' in day:
-                        hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                        try:
+                            hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                        except:
+                            hrs = day.split('"')[0] + ': Closed'
                         if hours == '':
                             hours = hrs
                         else:
