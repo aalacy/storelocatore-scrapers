@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 
 session = SgRequests()
@@ -19,19 +20,19 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://fcer.com"
-    r = session.get(base_url+"/locations")
+    r = requests.get(base_url+"/locations")
     soup = BeautifulSoup(r.text,"lxml")
     
    
     for location in soup.find_all('a',{"class":"inline-block mt-4 py-4 px-6 uppercase tracking-wide font-bold bg-blue-600 hover:bg-blue-700 text-white text-center w-full"}):
         
         page_url = base_url+location['href']
-        r1 = session.get(session.get(page_url).url.replace("https://firsttexashospitalcyfair.com","https://firsttexashospitalcyfair.com/hospital"))
+        r1 = requests.get(requests.get(page_url).url.replace("https://firsttexashospitalcyfair.com","https://firsttexashospitalcyfair.com/hospital"))
     
         soup1= BeautifulSoup(r1.text,"lxml")
         
         name = location.parent.parent.find("div",{"class":re.compile("font-bold text-2xl")}).get_text()
-        main1=json.loads(soup1.find('script',{'type':"application/ld+json"}).text)
+        main1= json.loads(soup1.find('script',{'type':"application/ld+json"}).text)
 
         store=[]
         store.append("https://fcer.com")
@@ -44,8 +45,13 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(main1['telephone'])
         store.append("<MISSING>")
-        store.append(main1['geo']['latitude'])
-        store.append(main1['geo']['longitude'])
+        if soup1.find(lambda tag: (tag.name == "script") and "smartMap.coords(" in tag.text):
+            coords = soup1.find(lambda tag: (tag.name == "script") and "smartMap.coords(" in tag.text).text
+            store.append(coords.split("smartMap.coords(")[1].split(",")[0])
+            store.append(coords.split("smartMap.coords(")[1].split(",")[1].replace(")",""))
+        else:
+            store.append(main1['geo']['latitude'])
+            store.append(main1['geo']['longitude'])
         store.append(main1['openingHours'].replace("Mo-Su","Open 24 Hours"))
         store.append(page_url)
         yield store

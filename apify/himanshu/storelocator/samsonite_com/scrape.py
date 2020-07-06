@@ -28,6 +28,8 @@ def fetch_data():
     
     for i in range(len(data)):
         store_data = data[i]
+        if "Permanently Closed" in store_data["storeHours"]:
+            continue
         street_address = (store_data['address1'] +" "+ str(store_data['address2'])).replace(",","").strip()
         # if "-" in street_address:
         #     street_address = street_address.split("-")[1]
@@ -41,10 +43,10 @@ def fetch_data():
         store.append("US" if store_data["postalCode"].replace("-","").isdigit() else "CA")
         store.append(store_data["storeid"])
         store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
-        store.append(store_data["storeType"])
+        store.append("Samsonite")
         store.append(store_data['latitude'])
         store.append(store_data['longitude'])
-        store.append(" ".join(list(BeautifulSoup(store_data["storeHours"],"lxml").stripped_strings)).replace("Temporarily Closed","<MISSING>").replace("Opened with Reduced Hours","").replace("Permanently Closed","<MISSING>") if store_data['storeHours'] != "" else "<MISSING>")
+        store.append(" ".join(list(BeautifulSoup(store_data["storeHours"],"lxml").stripped_strings)).replace("Temporarily Closed","<MISSING>").replace("Opened with Reduced Hours","") if store_data['storeHours'] != "" else "<MISSING>")
         store.append("https://shop.samsonite.com/on/demandware.store/Sites-samsonite-Site/default/Stores-Details?StoreID="+str(store_data["storeid"]))
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
