@@ -1,9 +1,20 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import json
 import usaddress
 import re
+import time
+
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def addy_parser(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -45,7 +56,8 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.adventurelanding.com/'
 
-    driver = SgSelenium().chrome()
+    driver = get_driver()
+    time.sleep(2)
     driver.get(locator_domain)
 
     link_list = []
@@ -59,7 +71,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        
+        print(link)
         hours_link = 'plan-your-visit/hours/'
         addy_link = 'plan-your-visit/directions/'
 
@@ -70,7 +82,9 @@ def fetch_data():
         driver.get(link + addy_link)
         driver.implicitly_wait(10)
         js_blocks = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
-        for bloc in js_blocks:
+        for i in range(len(js_blocks)):
+            js_blocks = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
+            bloc = js_blocks[i]
             bloc_text = bloc.get_attribute('innerHTML')
             if 'addresses:' in bloc_text:
                 for line in bloc_text.splitlines():
@@ -92,9 +106,15 @@ def fetch_data():
 
         # hours_link
         driver.get(link + hours_link)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(12)
         
-        hours = driver.find_element_by_css_selector('div.fusion-text').text.replace('\n', ' ')
+        try:
+            hours = driver.find_element_by_css_selector('div.fusion-text').text.replace('\n', ' ')
+        except:
+            try:
+                hours = driver.find_element_by_css_selector('.fusion-column-wrapper').text.replace('\n', ' ')
+            except:
+                hours = '<MISSING>'
         
         country_code = 'US'
 
