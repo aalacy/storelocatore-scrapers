@@ -29,51 +29,65 @@ def fetch_data():
     url = 'https://dougashy.com/locations/'
     r = session.get(url, headers=headers, verify=False)    
     soup =BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll('div',{'class':'fl-rich-text'})    
-    print(len(divlist))  
+    #divlist = soup.findAll('div',{'class':'fl-rich-text'})
+    linklist = soup.find('ul',{'class':'sub-menu'}).findAll('li')
+    print(len(linklist))  
     det = r.text.split('var wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_global_settings =')[0]
     det = re.sub(r'"[1-9]":', "", det)
     det = '['+det.replace(';',']').replace('}]',']')
     det = det.replace('[{','[')   
-    coordlist = json.loads(det)  
+    coordlist = json.loads(det)        
     p = 0
-    for div in divlist:
-        if div.text.find('Address') > -1:
-            title = div.find('h4').text
-            det = div.findAll('p')
-            address = det[0].text.splitlines()
-            street = address[1]
-            city,state = address[2].split(', ')
-            state = state.lstrip()
-            state,pcode = state.split(' ')
-            phone = det[1].find('a').text
-            hours = det[2].text.replace('\n', ' ').replace('Store Hours','').lstrip()
-            lat = '<MISSING>'
-            longt = '<MISSING>'
-            for coord in coordlist:                
-                if coord['address'].replace(',','').replace('.','').find(street.replace(',','').replace('.','')) > -1:
-                    lat = coord['lat']
-                    longt = coord['lng']
-            data.append([
-                        'https://dougashy.com/',
-                        'https://dougashy.com/locations/',                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        '<MISSING>',
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-            #print(p,data[p])
-            p += 1
-            #input()
-        
+    #for div in divlist:
+    for link in linklist:
+        link = link.find('a')['href']
+        #print(link)
+        r = session.get(link, headers=headers, verify=False)
+        soup =BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll('div',{'class':'fl-rich-text'})
+        for div in divlist:
+            if div.text.find('Address') > -1:
+                title = div.find('h2').text
+                det = div.findAll('p')
+                address = det[0].text.splitlines()
+                street = address[1]
+                state = address[2].replace(', , ',', ')
+                #print(state)
+                city,state = state.split(', ',1)
+                state = state.lstrip()
+                #print(state)
+                state,pcode = state.split(' ')
+                phone = div.find('a').text
+                for mp in det:
+                    if mp.text.find('Hours') > -1:
+                        hours = mp.text.replace('\n', ' ').replace('Store Hours','').lstrip()
+
+                lat = '<MISSING>'
+                longt = '<MISSING>'
+                for coord in coordlist:                
+                    if coord['address'].replace(',','').replace('.','').find(street.replace(',','').replace('.','')) > -1:
+                        lat = coord['lat']
+                        longt = coord['lng']
+                data.append([
+                            'https://dougashy.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            '<MISSING>',
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            hours
+                        ])
+                #print(p,data[p])
+                p += 1
+                #input()
+            
     return data
 
 
