@@ -90,7 +90,7 @@ def fetch_data():
             store.append(i['cityCoordinate']['latitude'] if i['cityCoordinate']['latitude'] else "<MISSING>")
             store.append(i['cityCoordinate']['longitude'] if i['cityCoordinate']['longitude'] else "<MISSING>")
             if "hours" in i:
-                data_8 = str(i['hours']).replace("'","").replace(": {openIntervals: [{start: "," - ").replace(", end: "," - ").replace("}","").replace("{","").replace("[","").replace("]","").replace(", isClosed: False","").replace(": is"," - ").replace(': True',"")
+                data_8 = str(i['hours']).replace("'","").replace(": {openIntervals: [{start: "," - ").replace(", end: "," - ").replace("}","").replace("{","").replace("[","").replace("]","").replace(", isClosed: False","").replace(": is"," - ").replace(': True',"").split(", holidayHours:")[0]
                 store.append(data_8 if data_8 else "<MISSING>")
             else:
                 store.append("<MISSING>")

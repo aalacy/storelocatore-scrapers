@@ -1,124 +1,110 @@
-import time
+import requests
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options 
-import re 
+import string
+import re, time
+import json
+from sgrequests import SgRequests
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("--disable-plugins")
-options.add_argument( "--no-experiments")
-options.add_argument( "--disk-cache-dir=null")
-
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    return lat, lon
-
-
-
 def fetch_data():
-    data=[]
-    driver.delete_all_cookies()
-    driver.get("https://www.industriousoffice.com/locations?nabt=1")
-    time.sleep(10)
-    latlnglocations = driver.execute_script("return locationsCords;")
-    list_url=[]
-    k=driver.find_elements_by_xpath("//a[contains(@class,'btn-location')]")
-    for j in k:
-        list_url.append(j.get_attribute('href')) 
-    for x in list_url:
-        driver.get(x)
-        try:
-            globalvar = driver.execute_script("return marketLocations;")
-            for i in range(0,len(globalvar)):
-                location_name = globalvar[i]['title'].replace(",","")
-                latitude = globalvar[i]['latitude']
-                longitude = globalvar[i]['longitude']
-                street_addr = globalvar[i]['address']
-                city = globalvar[i]['city']
-                state= globalvar[i]['state']
-                zipcode = globalvar[i]['zip']
-                phone = globalvar[i]['phone']
+    # Your scraper here
+    data = []    
+    url = 'https://www.industriousoffice.com/locations'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    state_list = soup.findAll('a', {'class': 'btn-location'})
+   # print("states = ",len(state_list))
+    p = 0
+    cleanr = re.compile(r'<[^>]+>')
+    for states in state_list:        
+        states = states['href']
+        #print(states)
+        r = session.get(states, headers=headers, verify=False)
+        ccode = 'US'
+        soup = BeautifulSoup(r.text, "html.parser")       
+        city_list = soup.findAll('div', {'class': 'location-marker-til'})
+        linklist = []
+        for cities in city_list:
+            cities = cities.findAll('div')[1]
+            cities = cities.find('a',{'class':'gtm-view-details'})           
+            link = cities['href']
+            linklist.append(link)       
+        if len(linklist) == 0:
+            linklist.append(states)
+        
+        for link in linklist:
+            #print(p,link)
+            r = session.get(link, headers=headers, verify=False)            
+            soup = BeautifulSoup(r.text, "html.parser")            
+            if soup.text.lower().find('coming soon') == -1 and soup.text.lower().find('opening winter') == -1 :
+                maindiv = soup.find('address')
+                coord = maindiv.find('a')['href']
+                try:
+                    phone = soup.find('a',{'class':'phone'}).text
+                except:
+                    phone = '<MISSING>'
+                maindiv = re.sub(cleanr,' ',str(maindiv)).strip().splitlines()
+                title = maindiv[0].lstrip()
+                street = maindiv[1].lstrip()
+                city,state = maindiv[2].lstrip().split(', ',1)
+                state,pcode = state.lstrip().split(' ',1)
+                try:
+                    lat,longt = coord.split('@')[1].split(',',1)
+                    longt = longt.split(',',1)[0]
+                except:
+                    try:
+                        lat,longt = str(soup).split('"latitude":',1)[1].split(',',1)
+                        longt = longt.split(':',1)[1].split('}',1)[0]
+                    except Exception as e:
+                        print(e)
+                        lat = '<MISSING>'
+                        longt = '<MISSING>'
+                if len(state) > 2 and len(pcode) > 6:
+                    pcode = pcode.split(',')[1]
+                    state,pcode= pcode.lstrip().split(' ')
+                    
                 data.append([
-                    'https://www.industriousoffice.com/',
-                    location_name,
-                    street_addr,
-                    city,
-                    state,
-                    zipcode,
-                    'US',
-                    '<MISSING>',
-                    phone,
-                    '<MISSING>',
-                    latitude,
-                    longitude,
-                    '<MISSING>'
-                ])
-
-        except:
-            try:
-                location_name = driver.find_element_by_xpath("//span[contains(@class,'addressLocality')]").text.replace(",","")
-                phone = driver.find_element_by_xpath("//span[contains(@class,'phone')]").text
-                street_addr = driver.find_element_by_xpath("//span[contains(@class,'streetAddress')]").text
-                city = driver.find_element_by_xpath("//span[contains(@class,'addressLocality')]").text
-                state = driver.find_element_by_xpath("//span[contains(@class,'addressRegion')]").text
-                zipcode = driver.find_element_by_xpath("//span[contains(@class,'postalCode')]").text
-                latitude ='<MISSING>'
-                longitude = '<MISSING>'
-                data.append([
-                    'https://www.industriousoffice.com/',
-                    location_name,
-                    street_addr,
-                    city,
-                    state,
-                    zipcode,
-                    'US',
-                    '<MISSING>',
-                    phone,
-                    '<MISSING>',
-                    latitude,
-                    longitude,
-                    '<MISSING>'
-                ])
-            except:
-                pass
-
-    for i in range(0,len(latlnglocations)):
-        lat = latlnglocations[i]['lat']
-        long = latlnglocations[i]['lng']
-        title =latlnglocations[i]['title']
-        for j in range (0,len(data)):
-            if data[j][1] in title:
-                data[j][10] = lat
-                data[j][11] = long
-                break
-
-    time.sleep(3)
-    driver.quit()
+                            'https://www.industriousoffice.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            '<MISSING>',
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            '<MISSING>'
+                        ])
+                #print(p,data[p])
+                p += 1
+            
+    print(p)  
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-
-
-

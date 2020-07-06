@@ -1,87 +1,70 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+import time
+from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url ="http://t-grill.com"
-    return_main_object=[]
-    r = session.get(base_url+'/locations/')
-    soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('div',id="container-mid-inner").find('table').find_all('tr')
-    # print(len(main))
-    i=0
-    ph=[]
-    nm=[]
-    ad=[]
-    ct=[]
-    for tag in main:
-        if tag.find('td')!=None:
-            if i>0:
-                for val in tag.find_all('td'):
-                    if val.text:
-                        if i==1:
-                            nm.append(val.text)
-                        if i==2:
-                            add=list(val.stripped_strings)
-                            ad.append(add[0])
-                            ct.append(add[1])
-                        if i==3:
-                            ph.append(val.text)
-            i=i+1
-            if i==4:
-                i=0
-    for i in range(len(nm)):
-        name=nm[i]
-        address=ad[i].strip()
-        phone=ph[i].replace('435-67FRESH (','').replace(')','').replace('(','')
-        ctt=ct[i].strip().split(' ')
-        zip=ctt[-1].strip()
-        del ctt[-1]
-        if ctt[-1]=='':
-            del ctt[-1]
-        state=ctt[-1].replace('.','').strip()
-        del ctt[-1]
-        city=' '.join(ctt).replace(',','').strip()
-        lat=''
-        lng=''
-        storeno=''
-        hour=''
-        country='US'
-        store=[]
+
+    base_url = "https://t-grill.com"
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+        }
+
+    location_url = "https://t-grill.com/locations"
+    r = session.get(location_url, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    add = soup.find_all("div",{"typography":"BodyAlpha"})
+
+    for i in add:
+
+        temp = i.text
+        addr = temp.split(",")
+        tt = addr[1].split(" ")[2:]
+        new_tt = [i.replace(u'\xa0', u' ') for i in tt]
+        part1= " ".join(new_tt[:3])
+        part2 = new_tt[-1].split(" ")
+        part22 = part2[0]
+        street_address = part1 + " " + part22
+        phone = part2[1]
+        city = addr[0]
+        state = addr[1].split(" ")[1]
+        location_name = "Teriyaki Grill - " + city
+
+        store = []
         store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
         store.append("<MISSING>")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
-        store.append('http://t-grill.com/locations/')
-        return_main_object.append(store)
-    return return_main_object
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("Restaurant")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(location_url)
+        yield store
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

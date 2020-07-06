@@ -1,9 +1,27 @@
 import csv
 import os
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import datetime
+
+from random import randint
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +33,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-session = SgRequests()
+driver = get_driver()
+time.sleep(2)
 
 def fetch_data():
     data = []
@@ -24,21 +43,47 @@ def fetch_data():
     #CA stores
     url = 'https://www.petsmart.com/stores/us/'
     u='https://www.petsmart.com/'
-    page = session.get(url)
-    soup = BeautifulSoup(page.content, "html.parser")
-    store=soup.find('div',class_='all-states-list container')
-    str=store.find_all("a")
-    for i in str:
+
+    driver.get(url)
+    time.sleep(randint(2,4))
+
+    element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+        (By.CSS_SELECTOR, ".all-states-list.container")))
+    time.sleep(randint(3,5))
+
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    store = soup.find('div',class_='all-states-list container')
+    stores = store.find_all("a")
+    for i in stores:
         newurl=i['href']
-        page = session.get(newurl)
-        soup = BeautifulSoup(page.content, "html.parser")
+        print(newurl)
+
+        driver.get(newurl)
+        time.sleep(randint(2,4))
+
+        element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+            (By.CSS_SELECTOR, ".store-details-link")))
+        time.sleep(randint(1,2))
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         store=soup.find_all('a', class_='store-details-link')
         for j in store:
 
             ul=u+j['href']
-            #print(ul)
-            page = session.get(ul)
-            soup = BeautifulSoup(page.content, "html.parser")
+            print()
+            print(ul)
+
+            driver.get(ul)
+            time.sleep(randint(2,4))
+
+            try:
+                element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, ".store-page-details")))
+                time.sleep(randint(1,2))
+            except:
+                continue
+
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             div = soup.find('div',class_='store-page-details')
             try:
               loc = div.find('h1').text
@@ -62,46 +107,28 @@ def fetch_data():
             addr=addr[1].strip().split(' ')
             sts=addr[0]
             zcode=addr[1]
+
+            got_hours = False
             try:
                 hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md ui-accordion ui-widget ui-helper-reset').text
+                got_hours = True
             except:
-                hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md').text
-            hours=hours.strip().replace('\n\n','').replace('\n','')
-            for day in ['MON','TUE','THU','WED','FRI','SAT','SUN']:
-                if day not in hours:
-                    hours=hours.replace('TODAY',day)
+                try:
+                    hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md').text
+                    got_hours = True
+                except:
+                    pass
+
+            if got_hours: 
+                hours=hours.strip().replace('\n\n','').replace('\n','')
+                for day in ['MON','TUE','THU','WED','FRI','SAT','SUN']:
+                    if day not in hours:
+                        hours=hours.replace('TODAY',day)
+            else:
+                hours = '<MISSING>'
+
             lat,long=re.findall(r'center=([\d\.]+),([\-\d\.]+)',soup.find('div',class_='store-page-map mapViewstoredetail').find('img').get('src'))[0]
 
-            
-            
-            """try:
-                loc=soup.find('h1', class_ ='store-name').text
-            except:
-                print("closed")
-            else:
-                street = soup.find('div', itemprop='streetAddress').text
-                city = soup.find('span',itemprop='addressLocality')
-                cty=city.text
-                sts = city.find_next('span',itemprop='addressLocality').text
-                zcode = soup.find('span',itemprop='postalCode').text
-                num=j['id']
-                ph=soup.find("a",class_="store-contact-info").text
-                lat=soup.find("meta",itemprop='latitude')['content']
-                lng=soup.find("meta",itemprop='longitude')['content']
-                hr=soup.find_all("span",itemprop="dayOfWeek")  
-                op=soup.find_all("time",itemprop='opens')
-                cl=soup.find_all("time",itemprop='closes')
-                DY=['SUN','MON','TUE','WED','THU','FRI','SAT']
-                hours=""
-                for k in range(0,len(op)) :
-                    hours+=hr[k].text+" "
-                    if hr[k].text != 'TODAY':
-                        DY.remove(hr[k].text)
-                    hours+=op[k]['content']+"-"
-                    hours+=cl[k]['content']+" "
-                hours=hours.replace("TODAY",DY[0])
-                hours=hours.replace("-null","")
-                print(hours)"""
             data.append([
                     'https://www.petsmart.com/',
                      ul.replace(u'\u2019',''),
@@ -118,7 +145,12 @@ def fetch_data():
                     long,
                     hours.replace(u'\u2019','')
                     ])
-         
+    
+    try:
+        driver.close()
+    except:
+        pass
+
     return data
     
 def scrape():

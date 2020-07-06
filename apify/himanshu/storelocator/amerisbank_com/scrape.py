@@ -39,7 +39,10 @@ def fetch_data():
                 zipp = json_data['address']['postalCode']    
                 country_code = json_data['address']['addressCountry']
                 store_number = json_data['@id']
-                phone = json_data['telephone']
+                if json_data['telephone']:
+                    phone = json_data['telephone']
+                else:
+                    phone = "866.616.6020"
                 location_type = json_data['@type']
                 lat = json_data['geo']['latitude']
                 lng = json_data['geo']['longitude']

@@ -1,7 +1,9 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
-import json
+import time
+from random import randint
+import re 
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,71 +18,110 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.batteriesplus.com/'
     ext = 'store-locator'
+    location_url = locator_domain + ext
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    main = driver.find_element_by_css_selector('div.locator-states')
-    states = main.find_elements_by_css_selector('a')
+    session = SgRequests()
+
+    req = session.get(location_url, headers = HEADERS)
+    time.sleep(randint(1,2))
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+    except (BaseException):
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
+
+    main = base.find(class_='mobile-collapse')
+    states = main.find_all('a')
     state_list = []
     for state in states:
-        state_list.append(state.get_attribute('href'))
+        state_link = state['href']
+        if state_link:
+            state_list.append("https://www.batteriesplus.com" + state_link)
 
     city_list = []
     for state in state_list:
-        driver.get(state)
-        driver.implicitly_wait(10)
+        req = session.get(state, headers = HEADERS)
+        print(state)
+        time.sleep(randint(1,2))
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+
         
-        cities = driver.find_elements_by_xpath("//a[contains(text(),'More Info')]")
+        cities = base.find_all(class_="map-list-item is-single")
         
         for c in cities:
-        
-            city_list.append(c.get_attribute('href'))
+            city_list.append("https://www.batteriesplus.com" + c.a['href'])
 
     all_store_data = []
     dup_tracker = []
+    total_links = len(city_list)
     for i, link in enumerate(city_list):
-        driver.get(link)
-        driver.implicitly_wait(10)
-        loc_info = driver.execute_script('return storeListJson')[0]
 
-        if loc_info['Address2'] == None:
-            street_address = loc_info['Address1']
-        else:
-            street_address = loc_info['Address1'] + ' ' + loc_info['Address2']
-
-        city = loc_info['City']
-        state = loc_info['State']
-        zip_code = loc_info['ZipCode']
-        
-        store_number = loc_info['StoreId']
-        
-        hours = loc_info['MonThuHours'] + ' ' + loc_info['FriHours'] + ' ' + loc_info['SatHours'] + ' ' + loc_info['SunHours'] 
-        
-        lat = loc_info['Latitude']
-        longit = loc_info['Longitude']
-        phone_number = loc_info['Phone']
         if link not in dup_tracker:
             dup_tracker.append(link)
         else:
             continue
-        
-        if loc_info['IsOpeningSoon']:
 
-            continue
+        print("Link %s of %s" %(i+1,total_links))
+        req = session.get(link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            item = BeautifulSoup(req.text,"lxml")
+            print(link)
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-        country_code = 'US'
+        items = item.find(class_="city-locator").find_all(class_="map-list-item-right")
 
-        location_name = city + ', ' + state
-        location_type = '<MISSING>'
-        page_url = link
+        for item in items:
+            raw_address = item.find(class_="address mt-10").find_all('div')
+            street_address = raw_address[0].text.strip()
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-        
-        all_store_data.append(store_data)
+            city_line = raw_address[1].text.strip()
+            city = city_line[:city_line.find(",")]
+            state = city_line[city_line.find(",")+1:city_line.rfind(" ")].strip()
+            zip_code = city_line[city_line.rfind(" "):].strip()
+            
+            store_number = item.find(class_="map-list-item-header").a['title'].split("#")[-1]
+            
+            try:
+                raw_gps = item.find('a', attrs={'title': 'Directions'})['href']
+                lat = raw_gps[raw_gps.rfind("=")+1:raw_gps.rfind(",")].strip()
+                longit = raw_gps[raw_gps.rfind(",")+1:].strip()
+            except:
+                lat = '<MISSING>'
+                longit = '<MISSING>'
 
-    driver.quit()
+            phone_number = item.find(class_="phone ga-link hover").text.strip()
+
+            country_code = 'US'
+
+            location_name = city + ', ' + state
+            location_type = '<MISSING>'
+            page_url = link
+            
+            try:
+                hours_link = "https://www.batteriesplus.com" + item.find(class_="view-details ga-link btn btn-black ml-10")['href']
+                req = session.get(hours_link, headers = HEADERS)
+                time.sleep(randint(1,2))                
+                hour_page = BeautifulSoup(req.text,"lxml")
+                hours = hour_page.find(class_="hours").text.replace("\n"," ").replace("  "," ").strip()
+                hours = re.sub(' +', ' ', hours)
+            except (BaseException):
+                hours = '<MISSING>'
+
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                            store_number, phone_number, location_type, lat, longit, hours, page_url]
+            
+            all_store_data.append(store_data)
+
     return all_store_data
 
 def scrape():

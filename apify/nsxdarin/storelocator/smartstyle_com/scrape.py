@@ -2,8 +2,6 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -44,6 +42,7 @@ def fetch_data():
         zc = ''
         phone = ''
         HFound = False
+        print('Pulling Location %s...' % loc)
         website = 'smartstyle.com'
         typ = 'Salon'
         PFound = True
@@ -54,6 +53,12 @@ def fetch_data():
                 retries = retries + 1
                 r2 = session.get(loc, headers=headers, timeout=5)
                 for line2 in r2.iter_lines():
+                    if '<meta itemprop="openingHours" content="' in line2:
+                        hrs = line2.split('<meta itemprop="openingHours" content="')[1].split('"')[0].strip()
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
                     if '<h2 class="hidden-xs salontitle_salonlrgtxt">' in line2:
                         name = line2.split('<h2 class="hidden-xs salontitle_salonlrgtxt">')[1].split('<')[0]
                     if 'var salonDetailLat = "' in line2:
@@ -75,17 +80,6 @@ def fetch_data():
                 if stabb in canada:
                     country = 'CA'
                 if add != '':
-                    r3 = session.get('https://info3.regiscorp.com/salonservices/siteid/6/salon/' + store,headers=headers)
-                    for line3 in r3.iter_lines():
-                        if '{"days":"' in line3:
-                            items = line3.split('{"days":"')
-                            for item in items:
-                                if '"hours":' in item:
-                                    hrs = item.split('"')[0] + ': ' + item.split('"open":"')[1].split('"')[0] + '-' + item.split('"close":"')[1].split('"')[0]
-                                    if hours == '':
-                                        hours = hrs
-                                    else:
-                                        hours = hours + '; ' + hrs
                     if phone == '':
                         phone = '<MISSING>'
                     if hours == '':

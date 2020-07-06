@@ -1,37 +1,33 @@
-import requests
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-import pandas as pd 
-from selenium.webdriver.support.ui import Select
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
-import time 
+import time
+from random import randint
 import re 
 
-def get_driver():
-	options = Options()
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
-	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
 
-# Begin scraper
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	HEADERS = {'User-Agent' : user_agent}
+
+	session = SgRequests()
+
+	# Begin scraper
 
 	base_url="https://www.ashleyfurniture.com"
 	location_url ="https://stores.ashleyfurniture.com/store"
+	page_urls = []
 	locs = []
 	streets = []
 	states=[]
@@ -43,51 +39,71 @@ def fetch_data():
 	lats = []
 	timing = []
 	ids=[]
-	pages_url=[]
 	pages=[]
+	pages_url = []
+
+	req = session.get(location_url, headers = HEADERS)
+	time.sleep(randint(1,2))
+	try:
+		item = BeautifulSoup(req.text,"lxml")
+	except (BaseException):
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 	
-	
-	driver = get_driver()
-	driver_page = get_driver()
-	driver.get(location_url)
-	time.sleep(5)
-	
-	link=driver.find_element_by_class_name("state-col")
-	links=link.find_elements_by_tag_name("a")
+	link=item.find(class_="state-col")
+	links=link.find_all("a")
 	
 	for a in range(len(links)):
-		pages_url.append(links[a].get_attribute('href'))
+		pages_url.append("https://stores.ashleyfurniture.com" + links[a]['href'])
 		
 	for u in pages_url:
-		driver_page.get(u)
-		time.sleep(5)
-		stores=driver_page.find_elements_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/div[4]/div")
+		req = session.get(u, headers = HEADERS)
+		time.sleep(randint(1,2))
+		try:
+			item = BeautifulSoup(req.text,"lxml")
+			print(u)
+		except (BaseException):
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
+
+		stores=item.find_all(class_="storeName")
 		for s in stores:
-			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
-			
+			pages.append("https://stores.ashleyfurniture.com" + s.find("a")['href'])
+
 	for p in pages:
-		driver_page.get(p)
-		time.sleep(5)
-		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0])
-		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[1]').text)
-		cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text.split(',')[0])
-		states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1/span').text.split(',')[1])
-		zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text.split(' ')[-1])
+		req = session.get(p, headers = HEADERS)
+		time.sleep(randint(1,2))
+		try:
+			item = BeautifulSoup(req.text,"lxml")
+			print(p)
+		except (BaseException):
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
+
+		loc = item.find('h1').text.strip().split(',')[0]
+		if "coming soon" in loc.lower():
+			continue
+		page_urls.append(p)
+		locs.append(loc)
+		streets.append(item.find(class_='address').text.strip())
+		cities.append(item.find(class_='city-postal-code').text.split(',')[0])
+		states.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[:3].strip())
+		zips.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[3:].strip())
 		ids.append(str(p).split('/')[-2])
 		try:
-			phones.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[3]/a').text)
+			phones.append(item.find_all(class_='phone')[-1].text.strip())
 		except:
 			phones.append("<MISSING>")
-		timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[4]').text.replace('\n',' '))
-		types.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[0]
-		+' '+driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[1])
-		lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lat'))
-		longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lng'))			
-						
-	return_main_object = []	
+		timing.append(item.find(id='storeHours').text.replace('\n',' ').replace('  ',' ').strip())
+		types.append("<MISSING>")
+		lats.append(item.find(id='location-details')['data-lat'])
+		longs.append(item.find(id='location-details')['data-lng'])
+
+	return_main_object = []
 	for l in range(len(locs)):
 		row = []
 		row.append(base_url)
+		row.append(page_urls[l])
 		row.append(locs[l] if locs[l] else "<MISSING>")
 		row.append(streets[l] if streets[l] else "<MISSING>")
 		row.append(cities[l] if cities[l] else "<MISSING>")
@@ -96,11 +112,10 @@ def fetch_data():
 		row.append("US")
 		row.append(ids[l] if ids[l] else "<MISSING>")
 		row.append(phones[l] if phones[l] else "<MISSING>")
-		row.append(types[l] if types[l] else "<MISSING>")
+		row.append(types[l])
 		row.append(lats[l] if lats[l] else "<MISSING>")
 		row.append(longs[l] if longs[l] else "<MISSING>")
 		row.append(timing[l] if timing[l] else "<MISSING>")
-		row.append(pages[l] if pages[l] else "<MISSING>") 
 		
 		return_main_object.append(row)
 	

@@ -3,6 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import urllib3
+import requests
 
 session = SgRequests()
 
@@ -21,86 +23,57 @@ def write_output(data):
 
 
 def fetch_data():
+    headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+        }
 
-    base_url= "https://www.sagebrushsteakhouse.com/north-carolina"
-    r = session.get(base_url,verify=False)
-    soup1= BeautifulSoup(r.text,"lxml")
+    base_url= "https://www.sagebrushsteakhouse.com/"
+    r = session.get(base_url,headers=headers,verify=False)
+    soup= BeautifulSoup(r.text,"lxml")
+
+    for link in soup.find("ul",{"class":"subnavigation"}).find_all("a"):
+        location_soup = BeautifulSoup(session.get(link.get('href')).content,"lxml")
+
+        for data in location_soup.find_all("div",{"class":"t-edit-helper"})[1:]:
+
+            address = list(data.stripped_strings)
+            
+            location_name = address[0]
+            if location_name == "SAGEBRUSH OF":
+                location_name += " "+ address[1]
+                del address[1]
+            if "Temporarily Closed" in address[1]:
+                del address[1]
+            street_address = address[3]
+            if address[4].count(",") == 2:
+                city = address[4].split(",")[0].strip()
+                state = address[4].split(",")[1].strip()
+                zipp = address[4].split(",")[2].strip()
+            else:
+                city = address[4].split(",")[0]
+                state = address[4].split(",")[1].split()[0]
+                zipp = address[4].split(",")[1].split()[1]
+            phone = address[2]
+
+            hours = " ".join(address[6:10])
+
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)   
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours)
+            store.append(link.get('href')) 
     
-
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    hours =[]
-    k1  =soup1.find_all("ul",{"class":"subnavigation"})
-    phone =[]
-    page_url = []
-    for a in k1:
-        a1 = a.find_all("li",{"class":"js-subpage"})
-        for link in a1:
-            if "KENTUCKY" in link.a.text or "NORTH CAROLINA" in link.a.text or "TENNESSEE" in link.a.text or "VIRGINIA" in link.a.text :
-                page_url1=link.a['href']
-                
-                # print(page_url)
-                r = session.get(link.a['href'])
-                soup= BeautifulSoup(r.text,"lxml")
-                k = soup.find_all("div",{"id":"ctl01_pSpanDesc","class":"t-edit-helper"})
-                names =soup.find_all('h4',{"class":"align-left biz-address fp-el"})
-
-                for name in names:
-                    new=(name.text.replace("BOONE","SAGEBRUSH OF BOONE").replace("LENOIR","SAGEBRUSH OF LENOIR").replace("SHELBY","SAGEBRUSH OF SHELBY"))
-                    if "SAGEBRUSH OF" in new:
-                        new1 =new.split("SAGEBRUSH OF")
-                        if new1[-1]:
-                            store_name.append("SAGEBRUSH OF".join(new.split("SAGEBRUSH OF")))
-                    else:
-                        store_name.append(new)
-                        
-
-                for i in k:
-                    p =i.find_all('p')
-                    tem_var =[]
-                    if p != []:
-                        page_url.append(page_url1)
-                        street = (p[1].text)
-                        phone.append(p[0].text.replace("PHONE - ",""))
-                        city = p[2].text.split(',')[0]
-                        state = p[2].text.split(',')[1].split( )[0]
-                        zipcode = p[2].text.split(',')[-1].split( )[-1]
-
-                        tem_var.append(street)
-                        tem_var.append(city)
-                        tem_var.append(state.strip())
-                        tem_var.append(zipcode.strip())
-                        store_detail.append(tem_var)
-
-                    for index,j in enumerate(p[:-4]):
-                        time = ''
-                        if index==4:
-                            if "Catering Menus" in j.text:
-                                time = '<MISSING>'
-                            else:
-                                time = (j.text)
-                            hours.append(time)
-
-   
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.sagebrushsteakhouse.com")
-        store.append(store_name[i].encode('ascii', 'ignore').decode('ascii').strip())
-        store.extend(store_detail[i])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(" ".join(phone[i].split('-')[1:]).encode('ascii', 'ignore').decode('ascii').strip())
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours[i].encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(page_url[i])
-       
-        return_main_object.append(store) 
-
-    return return_main_object
-
+            yield store
 
 def scrape():
     data = fetch_data()

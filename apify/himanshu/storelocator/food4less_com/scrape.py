@@ -12,7 +12,7 @@ import requests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -56,7 +56,10 @@ def fetch_data():
                 phone = phonenumbers.format_number(phonenumbers.parse(str(key['phoneNumber']), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
             else:
                 phone = "<MISSING>"
-            location_type = "store"
+            if key['banner']:
+                location_type = key['banner']
+            else:
+                location_type = "store"
             latitude = key['latitude']
             longitude = key['longitude']
             result_coords.append((latitude, longitude))
@@ -104,7 +107,10 @@ def fetch_data():
             country_code = key1['address']['countryCode']
             store_number = key1['storeNumber']
             phone = key1['phoneNumber']
-            location_type = "fuel"
+            if key['banner']:
+                location_type = key['banner']
+            else:
+                location_type = "fuel"
             latitude = key1['latitude']
             longitude = key1['longitude']
             result_coords.append((latitude, longitude))

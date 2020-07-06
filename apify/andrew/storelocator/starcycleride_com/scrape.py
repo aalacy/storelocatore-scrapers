@@ -23,7 +23,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -47,6 +47,7 @@ def fetch_data():
             store.find_element_by_css_selector('div.location p a').get_attribute('href')
         )
     for store_url in store_urls:
+        print(store_url)
         driver.get(store_url)
         store = driver.find_element_by_css_selector('div.text-center div.text-center')
         location_name = " ".join([
@@ -65,13 +66,20 @@ def fetch_data():
             street_address = " ".join(_address[:2])
             city = _address[2]
             state = _address[3]
-        phone = store.find_element_by_css_selector("a[href*='tel:']").text
+        try:
+            phone = store.find_element_by_css_selector("a[href*='tel:']").text
+            location_type = "Current Location"
+        except:
+            phone = MISSING
+            location_type = "Coming Soon"
+
         google_maps_url = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/@']"))
         ).get_attribute('href')
         lat, lon = parse_google_maps_url(google_maps_url)
         data.append([
             BASE_URL,
+            store_url,
             location_name,
             street_address,
             city,
@@ -80,7 +88,7 @@ def fetch_data():
             'US',
             MISSING,
             phone,
-            MISSING,
+            location_type,
             lat,
             lon,
             MISSING

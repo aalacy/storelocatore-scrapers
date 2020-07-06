@@ -44,6 +44,11 @@ def fetch_data():
         state = '<MISSING>'
         add = '<MISSING>'
         for line2 in lines:
+            if '<span itemprop="streetAddress">' in line2:
+                g = next(lines)
+                add = g.replace('\r','').replace('\t','').replace('\n','').strip()
+            if '<span itemprop="postalCode">' in line2:
+                zc = line2.split('<span itemprop="postalCode">')[1].split('<')[0]
             if '<title>' in line2:
                 name = line2.split('>')[1].split(' |')[0]
             if '<span class="flex-middle margin-right-tiny">' in line2:

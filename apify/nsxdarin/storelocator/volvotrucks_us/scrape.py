@@ -23,7 +23,9 @@ def fetch_data():
             items = line.split(',"SELECT_EMAIL_ADDRESS":""},"')
             for item in items:
                 if '"COMPANY_DBA_NAME":"' in item:
-                    loc = '<MISSING>'
+                    loc = item.split('"WEB_ADDRESS":"')[1].split('"')[0]
+                    if loc == '':
+                        loc = '<MISSING>'
                     store = item.split('"')[0]
                     name = item.split('"COMPANY_DBA_NAME":"')[1].split('"')[0]
                     add = item.split(',"MAIN_ADDRESS_LINE_1_TXT":"')[1].split('"')[0]
@@ -34,7 +36,7 @@ def fetch_data():
                     add = add.strip()
                     lat = item.split('"MAIN_LATITUDE":"')[1].split('"')[0]
                     lng = item.split('"MAIN_LONGITUDE":"')[1].split('"')[0]
-                    phone = item.split(',"SLS_PHONE_NUMBER":"')[1].split('"')[0]
+                    phone = item.split(',"REG_PHONE_NUMBER":"')[1].split('"')[0]
                     if phone == '':
                         phone = '<MISSING>'
                     hours = ''
@@ -43,12 +45,12 @@ def fetch_data():
                     if ',"Sales":{' in item:
                         days = item.split(',"Sales":{')[1].split('}},')[0].split('"Start":"')
                         hours = 'Sun: ' + days[1].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Mon: ' + days[2].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Tue: ' + days[3].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Wed: ' + days[4].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Thu: ' + days[5].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Fri: ' + days[6].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
-                        hours = hours + '; Sat: ' + days[7].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Mon: ' + days[2].split('"')[0] + '-' + days[2].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Tue: ' + days[3].split('"')[0] + '-' + days[3].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Wed: ' + days[4].split('"')[0] + '-' + days[4].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Thu: ' + days[5].split('"')[0] + '-' + days[5].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Fri: ' + days[6].split('"')[0] + '-' + days[6].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Sat: ' + days[7].split('"')[0] + '-' + days[7].split('"End":"')[1].split('"')[0]
                         hours = hours.replace('Closed-Closed','Closed')
                     if country == '' or 'STATE' in country:
                         country = 'US'

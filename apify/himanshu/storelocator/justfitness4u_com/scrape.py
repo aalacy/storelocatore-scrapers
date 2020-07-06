@@ -12,49 +12,58 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     base_url = "http://www.justfitness4u.com/"
-    r = session.get(base_url)
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+        }
+
+    location_url = "https://justfitness4u.com/contact/"
+
+    r = session.get(location_url, headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    main=soup.find('ul',{"id":"primary-menu"}).find_all("a")
     
-    for atag in main:
-        if "find-a-gym" in atag['href']:
-            r1 = session.get(atag['href'])
-            soup1=BeautifulSoup(r1.text,'lxml')
-            name=soup1.find('h1',{"class":'entry-title'}).text.strip()
-            loc=list(soup1.find('div',{"class":'entry-content'}).find_all('p')[0].stripped_strings)
-            address=loc[0].split(',')[0].strip()
-            city=loc[0].split(',')[1].strip()
-            state=loc[0].split(',')[2].strip().split(' ')[0].strip()
-            zip=loc[0].split(',')[2].strip().split(' ')[-1].strip()
-            phone=loc[-1]
-            hour=' '.join(list(soup1.find('div',{"class":'entry-content'}).find_all('p')[1].stripped_strings))         
-            store=[]
-            store.append("http://www.justfitness4u.com")
-            store.append(name)
-            store.append(address)
-            store.append(city)
-            store.append(state)
-            store.append(zip)
-            store.append('US')  
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("justfitness4u")
-            store.append('<MISSING>')
-            store.append('<MISSING>')
-            store.append(hour)
-            return_main_object.append(store)
-    return return_main_object
+    loc = soup.find_all(["div","h4"],{"class":"elementor-heading-title elementor-size-default"})
+    add = soup.find_all("iframe",{"class":"lazyload"})
+    phone_t = soup.find_all("p",{"class":"elementor-icon-box-description"})
+
+    for j,i,k in zip(add,loc,phone_t):
+        phone = k.text
+        location_name = j["aria-label"]
+        raw = i.text
+        sp = raw.split(",")
+        street_address = sp[0].strip()
+        city = sp[1].strip()
+        sp2 = sp[-1].split(" ")
+        state = sp2[-2]
+        zipp = sp2[-1]
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("Gym")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(location_url)
+        yield store
+    
+
+    
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

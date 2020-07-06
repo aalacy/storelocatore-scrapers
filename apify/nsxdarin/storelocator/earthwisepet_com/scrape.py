@@ -18,11 +18,13 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if '<loc>http://earthwisepet.com/stores/view/' in line:
-            items = line.split('<loc>http://earthwisepet.com/stores/view/')
+        if '<loc>https://earthwisepet.com/stores/view/' in line:
+            items = line.split('<loc>https://earthwisepet.com/stores/view/')
             for item in items:
                 if '</priority></url><url>' in item:
-                    locs.append('http://earthwisepet.com/stores/view/' + item.split('<')[0])
+                    lurl = 'https://earthwisepet.com/stores/view/' + item.split('<')[0]
+                    if lurl != 'https://earthwisepet.com/stores/view/':
+                        locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
@@ -73,6 +75,24 @@ def fetch_data():
         if phone == '':
             phone = '<MISSING>'
         if hours == '':
+            hours = '<MISSING>'
+        if 'Woodlands' in loc:
+            add = '3570 FM 1488, Ste 500'
+            city = 'Conroe'
+            state = 'TX'
+            zc = '77384'
+            phone = '936-647-1518'
+            lat = '30.228852'
+            lng = '-95.5184688'
+            hours = '<MISSING>'
+        if 'palmharbor' in loc:
+            add = '3335 Tampa Rd'
+            city = 'Palm Harbor'
+            state = 'FL'
+            zc = '34684'
+            phone = '727-470-9102
+            lat = '28.068362'
+            lng = '-82.7235479'
             hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

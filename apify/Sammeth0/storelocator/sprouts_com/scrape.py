@@ -1,20 +1,10 @@
-import requests
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-import pandas as pd 
-from selenium.webdriver.support.ui import Select
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
-import time 
-import re 
+import time
+import re
+from random import randint
 
-def get_driver():
-	options = Options()
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
-	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,73 +35,91 @@ def fetch_data():
 	ids=[]
 	pages_url=[]
 	urls=[]
-	res = [] 
-	
-	driver = get_driver()
-	driver_page = get_driver()
-	driver_url=get_driver()
-	driver.get(location_url)
-	time.sleep(5)
+	res = []	
 
-	
-	locations=driver.find_elements_by_tag_name("a")
-	for a in range(57,80):
-		pages_url.append(locations[a].get_attribute('href'))
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	HEADERS = {'User-Agent' : user_agent}
+
+	session = SgRequests()
+
+	req = session.get(location_url, headers = HEADERS)
+	time.sleep(randint(1,2))
+	try:
+		item = BeautifulSoup(req.text,"lxml")
+	except (BaseException):
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
+
+	locations = item.find_all(class_="cell small-6 medium-3 store-states")
+	for location in locations:
+		pages_url.append(location.a['href'])
 	
 	for u in pages_url:
-		driver_page.get(u)
-		time.sleep(6)
-		stores=driver_page.find_elements_by_tag_name("h4")
-		#for s in stores:
-		#	if u.find('stores')!=-1:
-		#		url=u.split('stores')[0]+'store'+u.split('stores')[1]
-		#		if str(s.get_attribute('href')).find(url)!=-1:
-		#			urls.append(str(s.get_attribute('href'))[str(s.get_attribute('href')).find(url):])
-		for s in stores:
-			#elements=s.find_elements_by_xpath('/html/body/div[8]/main/div/div/div')
-			#for e in elements:
-			try:
-				urls.append(s.find_element_by_tag_name('a').get_attribute('href'))
-			except:
-				continue
-		
-	for u in urls:
-		driver_url.get(u)
-		time.sleep(6)
-		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text.replace('â€“',''))
+
+		req = session.get(u, headers = HEADERS)
+		time.sleep(randint(1,2))
 		try:
-			streets.append(driver_url.find_element_by_class_name('store-address').text.split('\n')[0])
+			item = BeautifulSoup(req.text,"lxml")
+			print(u)
+		except (BaseException):
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
+
+		stores=item.find_all(class_="cell medium-4 large-3 list-by-state")
+
+		for s in stores:
+			urls.append(s.a['href'])
+
+	total_links = len(urls)
+	for i, u in enumerate(urls):
+		print("Link %s of %s" %(i+1,total_links))
+
+		req = session.get(u, headers = HEADERS)
+		time.sleep(randint(1,2))
+		try:
+			item = BeautifulSoup(req.text,"lxml")
+			print(u)
+		except (BaseException):
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
+
+		locs.append(item.find('h1').text.strip())
+		try:
+			streets.append(item.find(class_='store-address').text.strip().split('\n')[-2].strip())
 		except:
 			streets.append("<MISSING>")
 		try:
-			cities.append(driver_url.find_element_by_class_name('store-address').text.split('\n')[1].split(',')[0])
+			cities.append(item.find(class_='store-address').text.strip().split('\n')[-1].split(',')[0].strip())
 		except:
 			cities.append("<MISSING>")
 		try:
-			states.append(driver_url.find_element_by_class_name('store-address').text.split(',')[-1].split(' ')[1])
+			states.append(item.find(class_='store-address').text.strip().split(',')[-1].split(' ')[1])
 		except:
 			states.append("<MISSING>")
 		try:
-			zips.append(driver_url.find_element_by_class_name('store-address').text.split(',')[-1].split(' ')[2])
+			zips.append(item.find(class_='store-address').text.strip().split(',')[-1].split(' ')[-1])
 		except:
 			zips.append("<MISSING>")
 		try:
-			ids.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[1]').text.split('#')[1])
+			ids.append(item.find(class_='store-number').text.strip().split('#')[1])
 		except:
 			ids.append("<MISSING>")
 		try:
-			phones.append(driver_url.find_element_by_class_name("store-phone").text)
+			phones.append(item.find(class_='store-phone').text.strip())
 		except:
 			phones.append("<MISSING>")
-		types_list=driver_url.find_element_by_xpath('/html/body/main/article/div/section[1]/div/div/div[1]').find_elements_by_tag_name("li")
-		type=''
+
+		types_list=item.find(class_='cell medium-6 store-services').find_all("li")
+		loc_type=''
 		for t in types_list:
-			type=type+' '+t.text.replace('\n',' ')
-		types.append(type.strip())
-		lats.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lat'))	
-		longs.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lon'))
+			loc_type=loc_type+' '+t.text.replace('\n',' ')
+		types.append(loc_type.strip())
+		lats.append(item.find(id='store-map')['lat'])
+		longs.append(item.find(id='store-map')['lon'])
 		try:
-			timing.append(driver_url.find_element_by_class_name("store-hours").text)
+			hours = item.find(id="open-hours").text.replace('\n',' ').strip()
+			hours = (re.sub(' +', ' ', hours)).strip()
+			timing.append(hours)
 		except:
 			timing.append("<MISSING>")
 		
@@ -120,7 +128,7 @@ def fetch_data():
 		row = []
 		row.append(base_url)
 		row.append(locs[l] if locs[l] else "<MISSING>")
-		row.append(streets[l] if streets[l] else "<MISSING>")
+		row.append(streets[l].strip() if streets[l] else "<MISSING>")
 		row.append(cities[l] if cities[l] else "<MISSING>")
 		row.append(states[l] if states[l] else "<MISSING>")
 		row.append(zips[l] if zips[l] else "<MISSING>")

@@ -30,102 +30,148 @@ def fetch_data():
     pattern = re.compile(r'\s\s+')
 
     p = 0
-    url = 'https://www.waxcenter.com/locations/search-by-state'
+    m =0
+    miss = 0
+    #url = 'https://www.waxcenter.com/locations/search-by-state'
+    url = 'https://locations.waxcenter.com/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text,"html.parser")
-    repo_list = soup.findAll("a",{'class':'search-results-name'})
+    repo_list = soup.findAll("a",{'class':'ga-link'})
     for repo in repo_list:
-        print(repo.text)
-        statelink = "https://www.waxcenter.com" + repo['href']
+        #print("STATE",repo.text)
+        statelink = repo['href']
+        #print(statelink)
         page1 = requests.get(statelink)
         soup1 = BeautifulSoup(page1.text,"html.parser")
-        link_list = soup1.findAll("h3", {'class': 'search-results-name'})
-        for link in link_list:
-            link = link.find('a')
-            print(link.text)
-            if link.text.find("Opening Soon") == - 1 and link.text.find("Closed") == - 1:
-                link = "https://www.waxcenter.com" + link['href']
-                page2 = requests.get(link)
-                soup2 = BeautifulSoup(page2.text, "html.parser")
-                title = soup2.find('h1',{'class':'title'}).text
-                phone = soup2.find('span', {'class': 'phoneNumber'}).text
-                hours = soup2.find('div', {'class': 'center-hours'}).text
-                script = soup2.find('script',{'type':'application/ld+json'})
-                script = str(script)
-                start = script.find('"addressRegion"')
-                start = script.find(':',start)
-                start = script.find('"', start)+1
-                end = script.find('"', start)
-                state = script[start:end]
-                start = script.find('"postalCode"')
-                start = script.find(':', start)
-                start = script.find('"', start) + 1
-                end = script.find('"', start) 
-                pcode = script[start:end]
-                start = script.find('"streetAddress"')
-                start = script.find(':', start)
-                start = script.find('"', start) + 1
-                end = script.find('"', start) 
-                street = script[start:end]
-                start = script.find('"addressLocality"')
-                start = script.find(':', start)
-                start = script.find('"', start) + 1
-                end = script.find('"', start) 
-                city = script[start:end]
-                start = script.find('"latitude"')
-                start = script.find(':', start)
-                start = script.find('"', start) + 1
-                end = script.find('"', start)
-                lat = script[start:end]
-                start = script.find('"longitude"')
-                start = script.find(':', start)
-                start = script.find('"', start) + 1
-                end = script.find('"', start) 
-                longt = script[start:end]
-                hours = re.sub(pattern, " ", hours)
-                hours = hours.replace("AM", " AM ")
-                hours = hours.replace("PM", " PM ")
-                hours = hours.replace("-", " - ")
-                hours = hours.replace("  ", " ")
-                start = link.find('-')
-                state = link[start-2:start]
-                state = state.upper()
-                if len(hours) < 5:
-                    hours = "<MISSING>"
-                if len(phone) < 5:
-                    phone = "<MISSING>"
-                if len(lat) < 4:
-                    lat = "<MISSING>"
-                if len(longt) < 4:
-                    longt = "<MISSING>"
-                if len(pcode) < 4:
-                    pcode = "<MISSING>"
-                if len(state) < 2:
-                    state = "<MISSING>"
-                if len(city) < 4:
-                    city = "<MISSING>"
+        maindiv = soup1.find('ul',{'class','map-list'})
+        city_list = maindiv.findAll("div", {'class': 'map-list-item'})
+        
+        for clink in city_list:
+            #link = link.find('a')
+            clink = clink.find('a',{'class','ga-link'})['href']
+            #print(clink)
+            page2 = requests.get(clink)
+            soup2 = BeautifulSoup(page2.text,"html.parser")
+            maindiv = soup2.find('ul',{'class','map-list'})
+            link_list = maindiv.findAll("div", {'class': 'map-list-item'})
+            
+            #print("BRANCHES",len(link_list))
+            for link in link_list:
+                link = link.find('a',{'class','ga-link'})
+                store = link['title'].replace('#','').lstrip()
+                link =  link['href']
+                page3 = requests.get(link)
+                soup3 = BeautifulSoup(page3.text, "html.parser")
+                #print("link",link)
+                try:
+                      mn = soup3.find('div',{'class':'opening-soon'}).text
+                except:
+                      mn = 'error'
+                
+                if mn.lower().find('soon') == -1:
+                      title = soup3.find('span',{'class':'location-name'}).text
+                      phone = soup3.find('a', {'class': 'phone'}).text
+                      #hours = soup2.find('div', {'class': 'center-hours'}).text
+                      script = soup3.find('script',{'type':'application/ld+json'})
+                      script = str(script)
+                      start = script.find('"addressRegion"')
+                      start = script.find(':',start)
+                      start = script.find('"', start)+1
+                      end = script.find('"', start)
+                      state = script[start:end]
+                      start = script.find('"postalCode"')
+                      start = script.find(':', start)
+                      start = script.find('"', start) + 1
+                      end = script.find('"', start) 
+                      pcode = script[start:end]
+                      start = script.find('"streetAddress"')
+                      start = script.find(':', start)
+                      start = script.find('"', start) + 1
+                      end = script.find('"', start) 
+                      street = script[start:end]
+                      start = script.find('"addressLocality"')
+                      start = script.find(':', start)
+                      start = script.find('"', start) + 1
+                      end = script.find('"', start) 
+                      city = script[start:end]
+                      hours = ''
+                      hourlist = soup3.findAll('div',{'class':'day-hour-row'})
+                      
+                      
+                      for hr in hourlist:
+                            hr = hr.text.lstrip().replace('\n','')
+                            hours =hours +  re.sub(pattern, " ", hr)+' '
+                            
+                            
+                          
+                      if len(hours) < 3:
+                            hours = '<MISSING>'
+                      else:
+                            hours = hours.lstrip().replace('\n','').replace('am',' am ').replace('pm',' pm ')
 
-               
-                data.append([
-                    'https://www.waxcenter.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
-                p += 1
+                      
+                      script = str(soup3)
+                      start = script.find('"lat"')
+                      if start == -1:
+                            lat = '<MISSING>'
+                      else:
+                            start = script.find(':', start)+1                
+                            end = script.find(',', start)
+                            lat = script[start:end]
+                      start = script.find('"lng"')
+                      if start == -1:
+                            longt = '<MISSING>'
+                      else:
+                            start = script.find(':', start)+1               
+                            end = script.find(',', start)
+                            longt = script[start:end]
+                      
+                      
+                      
+                      if len(phone) < 5:
+                          phone = "<MISSING>"
+                      if len(lat) < 4:
+                          lat = "<MISSING>"
+                      if len(longt) < 4:
+                          longt = "<MISSING>"
+                      if len(pcode) < 4:
+                          pcode = "<MISSING>"
+                      if len(state) < 2:
+                          state = "<MISSING>"
+                      if len(city) < 4:
+                          city = "<MISSING>"
 
+                     
+                      data.append([
+                          'https://www.waxcenter.com/',
+                          link,
+                          title,
+                          street,
+                          city,
+                          state,
+                          pcode,
+                          "US",
+                          store,
+                          phone,
+                          "<MISSING>",
+                          lat,
+                          longt,
+                          hours
+                      ])
+                      #print(m,data[m])
+                      p += 1
+                      m += 1
+                      
+                else:
+                     miss = miss + 1
+            
+            
+                
+        
 
     print(len(data))
+    print('total =',p)
+    print('mssing= ',miss)
     return data
 
 def scrape():
