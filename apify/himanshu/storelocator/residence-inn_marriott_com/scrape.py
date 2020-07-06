@@ -5,6 +5,8 @@ import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 import time
 import unicodedata
@@ -50,8 +52,9 @@ def get_driver():
 
 
 def initial_search(driver, brand_id):
-    driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" +
-               str(brand_id) + "&destinationAddress.country=US")
+    # driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" +
+    #    str(brand_id) + "&destinationAddress.country=US")
+    driver.get("https://www.marriott.com/search/default.mi")
     element = WebDriverWait(driver, 30).until(
         lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
     element.send_keys("residenceinn")
@@ -71,9 +74,12 @@ def fetch_data():
     if "Our server is being stubborn, please try again" in driver.page_source:
         initial_search(driver, brand_id)
 
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, 'div.js-property-list-container')))
+
     while True:
-        # wait = WebDriverWait(driver, 10)
-        # element = wait.until(lambda x: x.find_element_by_xpath("//div[text()='Destination']"))
+
         soup = BeautifulSoup(driver.page_source, "lxml")
 
         for location in soup.find('div', {'class': 'js-property-list-container'}).find_all("div", {"data-brand": str(brand_id)}, recursive=False):
