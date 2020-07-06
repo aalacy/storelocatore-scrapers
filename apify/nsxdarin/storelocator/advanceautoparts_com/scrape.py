@@ -63,9 +63,11 @@ def fetch_data():
         loc = loc.replace('&#39;','%27').replace('.com//','.com/')
         print('Pulling Location %s...' % loc)
         LFound = True
+        tries = 0
         while LFound:
             try:
                 LFound = False
+                tries = tries + 1
                 typ = 'Advance Auto Parts'
                 r = session.get(loc, headers=headers, timeout=5)
                 name = ''
@@ -120,7 +122,8 @@ def fetch_data():
                         country = 'US'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
-                LFound = True
+                if tries <= 3:
+                    LFound = True
 
 def scrape():
     data = fetch_data()
