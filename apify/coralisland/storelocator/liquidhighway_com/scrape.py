@@ -16,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://liquidhighway.com/"
+    url = "http://liquidhighway.com/"
 
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     HEADERS = {'User-Agent' : user_agent}
@@ -37,7 +37,7 @@ def fetch_data():
 
     driver = SgSelenium().chrome()
     driver.get(url)
-    time.sleep(randint(10,12))
+    time.sleep(randint(15,20))
 
     for i in range(len(stores)):
 
