@@ -92,7 +92,7 @@ def fetch_data():
                                         store.append('<MISSING>')
                                         store.append(phone.replace("619.-40.1-33","619.401.3300").replace("402.-36.7-70","402.367.7014").replace("509.-48.8-33","509.488.3353").replace("618.-59.4-45","<MISSING>") if phone else '<MISSING>')
                                         store.append(location_type if location_type else '<MISSING>')
-                                        store.append(latitude if latitude else '<MISSING>')
+                                        store.append(latitude.replace(",","") if latitude else '<MISSING>')
                                         store.append(longitude if longitude else '<MISSING>')
                                         store.append(hours_of_operation.strip().lstrip() if hours_of_operation.strip().lstrip() else '<MISSING>')
                                         store.append(page_url.strip().lstrip() if page_url.strip().lstrip() else '<MISSING>')
