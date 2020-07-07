@@ -90,7 +90,7 @@ def fetch_data():
             city = 'Palm Harbor'
             state = 'FL'
             zc = '34684'
-            phone = '727-470-9102
+            phone = '727-470-9102'
             lat = '28.068362'
             lng = '-82.7235479'
             hours = '<MISSING>'
