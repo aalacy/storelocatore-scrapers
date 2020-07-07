@@ -2,9 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
-session = SgRequests()
 import requests
+import json
+import time
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +14,40 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = requests.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = requests.post(url,headers=headers,data=data)
+               else:
+                   r = requests.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 def fetch_data():
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "http://cashamerica.com/cashland"
     r = requests.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
     key = r.text.split("&key=")[1].split('");')[0]
@@ -22,21 +56,19 @@ def fetch_data():
     address = []
     addresses = ''
     addresses = []
-    for i in range(1,915):
-        try:
-            location_request = requests.get("http://find.cashamerica.us/api/stores?p="+str(i) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
-            data = location_request.json()
-        except:
-            pass
+    for i in range(1,910):
+        location_request = request_wrapper("http://find.cashamerica.us/api/stores?p="+str(i) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key),"get",headers = headers)
+        data = location_request.json()
+
         #print("http://find.cashamerica.us/api/stores?p="+str(i) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
         if "message" in data:
-            if data["message"] == "An error has occurred.":
-                break
+            continue
         for i in range(len(data)):
             store_data = data[i]
             store = []
             store.append("http://find.cashamerica.us")
             store.append(store_data["brand"])
+            # print(store_data["brand"])
             store.append(store_data["address"]["address1"] +store_data["address"]["address2"] if store_data["address"]["address2"] != None else store_data["address"]["address1"])
             store.append(store_data["address"]["city"])
             store.append(store_data["address"]["state"])

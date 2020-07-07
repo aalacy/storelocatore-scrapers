@@ -20,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_url = "https://t-grill.com"
+    base_url = "https://t-grill.com/"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
@@ -35,9 +35,16 @@ def fetch_data():
 
         temp = i.text
         addr = temp.split(",")
+
         tt = addr[1].split(" ")[2:]
+    
         new_tt = [i.replace(u'\xa0', u' ') for i in tt]
-        part1= " ".join(new_tt[:3])
+    
+        if len(new_tt) == 3:
+            part1 = " ".join(new_tt[:2])
+        else:
+            part1= " ".join(new_tt[:3])
+
         part2 = new_tt[-1].split(" ")
         part22 = part2[0]
         street_address = part1 + " " + part22
@@ -45,6 +52,7 @@ def fetch_data():
         city = addr[0]
         state = addr[1].split(" ")[1]
         location_name = "Teriyaki Grill - " + city
+
 
         store = []
         store.append(base_url)
