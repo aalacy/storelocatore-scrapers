@@ -1,107 +1,150 @@
-import csv
-import os
-from sgselenium import SgSelenium
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-import json
-
-session = SgRequests()
+from bs4 import BeautifulSoup
+import csv
+import time
+from random import randint
+import re
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://local.pharmacy.acmemarkets.com/'
+    base_link = 'https://local.pharmacy.acmemarkets.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    states = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
-    state_list = []
-    for state in states:
-        state_list.append(state.get_attribute('href'))
+    session = SgRequests()
+    req = session.get(base_link, headers = HEADERS)
+    time.sleep(randint(1,2))
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+        print("Got today page")
+    except (BaseException):
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
-    city_list = []
-    loc_list = []
-    for state in state_list:
-        driver.get(state)
-        driver.implicitly_wait(10)
-        cities = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+    main_links = []
+    final_links = []
 
-        for city in cities:
+    main_items = base.find_all(class_="Directory-listLink")
+    for main_item in main_items:
+        main_link = "https://local.pharmacy.acmemarkets.com/" + main_item['href']
+        count = main_item['data-count'].replace("(","").replace(")","").strip()
+        if count == "1":
+            final_links.append(main_link)
+        else:
+            main_links.append(main_link)
     
-            if len(city.get_attribute('href').split('/')) == 6:
-                loc_list.append(city.get_attribute('href'))
-            else:
-                city_list.append(city.get_attribute('href'))
-                
-    for city in city_list:
-        driver.get(city)
-        driver.implicitly_wait(10)
-        locs = driver.find_elements_by_css_selector('a.Teaser-nameLink')
-        for loc in locs:
-            print(loc.get_attribute('href'))
-            loc_list.append(loc.get_attribute('href'))
-        
-    all_store_data = []
+    for main_link in main_links:
+        print(main_link)
+        req = session.get(main_link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-    for i, link in enumerate(loc_list):
-        print('--------------')
-        print(str(i) + '/' + str(len(loc_list)))
-        print(link)   
-        
-        page = session.get(link)
-        assert page.status_code == 200
-        soup = BeautifulSoup(page.content, 'html.parser')
-        lat = soup.find('meta', itemprop="latitude")['content']
-        longit = soup.find('meta', itemprop="longitude")['content']
-        
-        location_name = soup.find('span', {'class': 'LocationName-geo'}).text
-        street_address = soup.find('meta', itemprop="streetAddress")['content']
-        
-        city = soup.find('meta', itemprop='addressLocality')['content']
-        
-        state = soup.find('abbr', itemprop="addressRegion").text
-        
-        zip_code = soup.find('span', itemprop="postalCode").text
-    
-        phone_number = soup.find('span', itemprop="telephone").text
-    
-        hours_json = json.loads(soup.find('div', {'class': 'c-location-hours-details-wrapper'})['data-days'])
-    
-        hours = ''
-        for day_of_week in hours_json:
-            day = day_of_week['day']
-            if len(day_of_week['intervals']) == 0:
-                hours += day + ' Closed '
-                continue
-            start = day_of_week['intervals'][0]['start']
-            end = day_of_week['intervals'][0]['end']
-            
-            hours += day + ' ' + str(start) + ' : ' + str(end) + ' '
-            
-        country_code = 'US'
+        next_items = base.find_all(class_="Directory-listLink")
+        if next_items:
+            for next_item in next_items:
+                next_link = "https://local.pharmacy.acmemarkets.com/" + next_item['href']
+                count = next_item['data-count'].replace("(","").replace(")","").strip()
 
-        location_type = '<MISSING>'
-        page_url = link
-        store_number = '<MISSING>'
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                            store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
+                if count == "1":
+                    final_links.append(next_link)
+                else:
+                    next_req = session.get(next_link, headers = HEADERS)
+                    time.sleep(randint(1,2))
+                    try:
+                        next_base = BeautifulSoup(next_req.text,"lxml")
+                    except (BaseException):
+                        print('[!] Error Occured. ')
+                        print('[?] Check whether system is Online.')
 
-    driver.quit()
-    return all_store_data
+                    final_items = next_base.find_all(class_="Teaser-titleLink")
+                    for final_item in final_items:
+                        final_link = ("https://local.pharmacy.acmemarkets.com/" + final_item['href']).replace("../","")
+                        final_links.append(final_link)
+        else:
+            final_items = base.find_all(class_="Teaser-titleLink")
+            for final_item in final_items:
+                final_link = ("https://local.pharmacy.acmemarkets.com/" + final_item['href']).replace("../","")
+                final_links.append(final_link)
+        
+    data = []
+    total_links = len(final_links)
+    for i, final_link in enumerate(final_links):
+        print("Link %s of %s" %(i+1,total_links))
+        final_req = session.get(final_link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            item = BeautifulSoup(final_req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+
+        locator_domain = "local.pharmacy.acmemarkets.com"
+
+        location_name = item.find("h1").text.strip()
+        print(location_name)
+
+        street_address = item.find(class_='c-address-street-1').text.strip()
+        try:
+            street_address = street_address + " " + item.find(class_='c-address-street-2').text.strip()
+            street_address = street_address.strip()
+        except:
+            pass
+        
+        city = item.find(class_='c-address-city').text.strip()
+        state = item.find(class_='c-address-state').text.strip()
+        zip_code = item.find(class_='c-address-postal-code').text.strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        
+        location_type = "<MISSING>"
+
+        try:
+            phone = item.find(id="phone-main").text.strip()
+            if not phone:
+                phone = "<MISSING>"
+        except:
+            phone = "<MISSING>"
+
+        latitude = item.find('meta', attrs={'itemprop': 'latitude'})['content']
+        longitude = item.find('meta', attrs={'itemprop': 'longitude'})['content']
+
+        try:
+            raw_hours = item.find(class_="c-hours-details").find_all('tr')[1:]
+            hours = ""
+            hours_of_operation = ""
+
+            try:
+                for hour in raw_hours:
+                    hours = hours + " " + hour.text.replace("\t","").replace("\n"," ").strip()
+                hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+            except:
+                pass
+            if not hours_of_operation:
+                hours_of_operation = "<MISSING>"
+        except:
+            hours_of_operation = "<MISSING>"
+
+        data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
+    return data
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
 scrape()
+
