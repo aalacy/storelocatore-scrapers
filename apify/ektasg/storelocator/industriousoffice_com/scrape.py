@@ -51,7 +51,7 @@ def fetch_data():
             #print(p,link)
             r = session.get(link, headers=headers, verify=False)            
             soup = BeautifulSoup(r.text, "html.parser")            
-            if soup.text.lower().find('coming soon') == -1 and soup.text.lower().find('opening winter') == -1 :
+            if soup.text.lower().find('coming soon') == -1 and soup.text.lower().find('opening ') == -1 :
                 maindiv = soup.find('address')
                 coord = maindiv.find('a')['href']
                 try:
