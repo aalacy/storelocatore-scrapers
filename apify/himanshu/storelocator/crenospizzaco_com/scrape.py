@@ -58,7 +58,7 @@ def fetch_data():
         tem_var.append(state)
         tem_var.append(zipp)
         tem_var.append(country_code)
-        tem_var.append(store_number)
+        tem_var.append("<MISSING>")
         tem_var.append(phone)
         tem_var.append(location_type)
         tem_var.append(lat)

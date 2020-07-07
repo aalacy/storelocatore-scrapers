@@ -19,7 +19,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.gbyguess.com/"
+    base_url = "https://www.guessfactory.com/"
 
 
     headers = {

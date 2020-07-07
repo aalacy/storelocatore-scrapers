@@ -3,11 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
 session = SgRequests()
-
-requests.packages.urllib3.disable_warnings()
-
+# requests.packages.urllib3.disable_warnings()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,8 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     base_url= "https://schema.milestoneinternet.com/schema/locations.usbank.com/index.html/schema.json"
     loc = session.get(base_url).json()
@@ -95,7 +90,7 @@ def fetch_data():
                                         store.append(zipp if zipp else '<MISSING>')
                                         store.append(country_code if country_code else '<MISSING>')
                                         store.append('<MISSING>')
-                                        store.append(phone if phone else '<MISSING>')
+                                        store.append(phone.replace("619.-40.1-33","619.401.3300").replace("402.-36.7-70","402.367.7014").replace("509.-48.8-33","509.488.3353").replace("618.-59.4-45","<MISSING>") if phone else '<MISSING>')
                                         store.append(location_type if location_type else '<MISSING>')
                                         store.append(latitude if latitude else '<MISSING>')
                                         store.append(longitude if longitude else '<MISSING>')
@@ -105,14 +100,10 @@ def fetch_data():
                                             continue
                                         addressess.append(store[2])
                                         # print("====================",store)
-                                        yield store
-                                        
-                         
+                                        yield store                    
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
 
 

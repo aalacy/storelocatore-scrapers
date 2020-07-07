@@ -1,5 +1,3 @@
-
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -19,7 +17,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.gbyguess.com/"
+    base_url = "https://guessbymarciano.guess.com/"
 
 
     headers = {

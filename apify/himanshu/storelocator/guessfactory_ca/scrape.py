@@ -19,7 +19,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.gbyguess.com/"
+    base_url = "https://www.guessfactory.ca/"
 
 
     headers = {
@@ -30,7 +30,7 @@ def fetch_data():
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
 
-    for a_link in all_soup.find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
+    for a_link in all_soup.find_all("div",{"aria-labelledby":"browse-title"})[-1].find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
 
         city_soup = bs(session.get(a_link['href']).content, "lxml")
 
