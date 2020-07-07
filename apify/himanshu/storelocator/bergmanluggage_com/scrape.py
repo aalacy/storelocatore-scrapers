@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
 session = SgRequests()
 
 def write_output(data):

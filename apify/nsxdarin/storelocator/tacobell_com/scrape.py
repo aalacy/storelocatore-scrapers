@@ -4,9 +4,7 @@ from sgrequests import SgRequests
 import json
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/json',
-           'X-Requested-With': 'XMLHttpRequest'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
 def write_output(data):
@@ -48,6 +46,7 @@ def fetch_data():
                         else:
                             cities.append(curl)
         for city in cities:
+            print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 if '<a data-ya-track="visit_site" href="../' in line3:
@@ -59,62 +58,57 @@ def fetch_data():
                                 alllocs.append(lurl)
                                 locs.append(lurl)
         for loc in locs:
-            PFound = True
-            while PFound:
-                try:
-                    PFound = False
-                    website = 'tacobell.com'
-                    typ = 'Restaurant'
-                    name = ''
-                    add = ''
-                    city = ''
-                    state = ''
-                    zc = ''
-                    country = 'US'
-                    store = ''
-                    phone = ''
-                    hours = ''
-                    lat = ''
-                    lng = ''
-                    r4 = session.get(loc, headers=headers, verify=False)
-                    for line4 in r4.iter_lines():
-                        if '"c_siteNumber":"' in line4 and store == '':
-                            store = line4.split('"c_siteNumber":"')[1].split('"')[0]
-                        if 'property="og:title" content="' in line4:
-                            name = line4.split('property="og:title" content="')[1].split(' |')[0]
-                            add = line4.split('<span class="c-address-street-1">')[1].split('<')[0].strip()
-                            city = line4.split('<span class="c-address-city">')[1].split('<')[0]
-                            state = line4.split('itemprop="addressRegion">')[1].split('<')[0]
-                            zc = line4.split('itemprop="postalCode">')[1].split('<')[0].strip()
-                            phone = line4.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
-                            lat = line4.split('<meta itemprop="latitude" content="')[1].split('"')[0]
-                            lng = line4.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-                            hrs = line4.split('Restaurant Hours</h2>')[1].split("}]' data-")[0]
-                            days = hrs.split('"day":"')
-                            for day in days:
-                                if '"intervals":' in day:
-                                    if hours == '':
-                                        try:
-                                            hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                        except:
-                                            pass
-                                    else:
-                                        try:
-                                            hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                        except:
-                                            pass
-                    if hours == '':
-                        hours = '<MISSING>'
-                    if lat == '':
-                        lat = '<MISSING>'
-                    if lng == '':
-                        lng = '<MISSING>'
-                    if name != '':
-                        if store == '':
-                            store = '<MISSING>'
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                except:
-                    PFound = True
+            print('Pulling Location %s...' % loc)
+            website = 'tacobell.com'
+            typ = 'Restaurant'
+            name = ''
+            add = ''
+            city = ''
+            state = ''
+            zc = ''
+            country = 'US'
+            store = ''
+            phone = ''
+            hours = ''
+            lat = ''
+            lng = ''
+            r4 = session.get(loc, headers=headers, verify=False)
+            for line4 in r4.iter_lines():
+                if '"c_siteNumber":"' in line4 and store == '':
+                    store = line4.split('"c_siteNumber":"')[1].split('"')[0]
+                if 'property="og:title" content="' in line4:
+                    name = line4.split('property="og:title" content="')[1].split(' |')[0]
+                    add = line4.split('<span class="c-address-street-1">')[1].split('<')[0].strip()
+                    city = line4.split('<span class="c-address-city">')[1].split('<')[0]
+                    state = line4.split('itemprop="addressRegion">')[1].split('<')[0]
+                    zc = line4.split('itemprop="postalCode">')[1].split('<')[0].strip()
+                    phone = line4.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
+                    lat = line4.split('<meta itemprop="latitude" content="')[1].split('"')[0]
+                    lng = line4.split('<meta itemprop="longitude" content="')[1].split('"')[0]
+                    hrs = line4.split('Drive-Thru Hours</h4>')[1].split("}]' data-")[0]
+                    days = hrs.split('"day":"')
+                    for day in days:
+                        if '"intervals":' in day:
+                            if hours == '':
+                                try:
+                                    hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                except:
+                                    pass
+                            else:
+                                try:
+                                    hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                except:
+                                    pass
+            if hours == '':
+                hours = '<MISSING>'
+            if lat == '':
+                lat = '<MISSING>'
+            if lng == '':
+                lng = '<MISSING>'
+            if name != '':
+                if store == '':
+                    store = '<MISSING>'
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

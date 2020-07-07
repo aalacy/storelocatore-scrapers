@@ -76,6 +76,24 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
+        if 'Woodlands' in loc:
+            add = '3570 FM 1488, Ste 500'
+            city = 'Conroe'
+            state = 'TX'
+            zc = '77384'
+            phone = '936-647-1518'
+            lat = '30.228852'
+            lng = '-95.5184688'
+            hours = '<MISSING>'
+        if 'palmharbor' in loc:
+            add = '3335 Tampa Rd'
+            city = 'Palm Harbor'
+            state = 'FL'
+            zc = '34684'
+            phone = '727-470-9102
+            lat = '28.068362'
+            lng = '-82.7235479'
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
