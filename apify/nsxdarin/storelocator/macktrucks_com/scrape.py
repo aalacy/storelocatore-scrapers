@@ -50,6 +50,16 @@ def fetch_data():
                         hours = hours + '; Fri: ' + days[6].split('"')[0] + '-' + days[6].split('"End":"')[1].split('"')[0]
                         hours = hours + '; Sat: ' + days[7].split('"')[0] + '-' + days[7].split('"End":"')[1].split('"')[0]
                         hours = hours.replace('Closed-Closed','Closed')
+                    if '"Leasing":{' in item and hours == '':
+                        days = item.split('"Leasing":{')[1].split('}},')[0].split('"Start":"')
+                        hours = 'Sun: ' + days[1].split('"')[0] + '-' + days[1].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Mon: ' + days[2].split('"')[0] + '-' + days[2].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Tue: ' + days[3].split('"')[0] + '-' + days[3].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Wed: ' + days[4].split('"')[0] + '-' + days[4].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Thu: ' + days[5].split('"')[0] + '-' + days[5].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Fri: ' + days[6].split('"')[0] + '-' + days[6].split('"End":"')[1].split('"')[0]
+                        hours = hours + '; Sat: ' + days[7].split('"')[0] + '-' + days[7].split('"End":"')[1].split('"')[0]
+                        hours = hours.replace('Closed-Closed','Closed')
                     if country == '' or 'STATE' in country:
                         country = 'US'
                     if country == 'CANADA':
