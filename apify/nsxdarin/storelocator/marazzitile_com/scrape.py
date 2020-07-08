@@ -1,13 +1,8 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
-import json
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/json',
-           'x-requested-with': 'XMLHttpRequest',
-           'accept': 'application/json, text/javascript, */*; q=0.01'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
 def write_output(data):
@@ -19,147 +14,84 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://hosted.where2getit.com/marazziusa/rest/locatorsearch?like=0.5591100517070091&lang=en_US'
-    payload = {"request":{"appkey":"D07A672A-3D5E-11EA-9DD6-ABD5D0784D66",
-                          "formdata":{"dynamicSearch":"true","geoip":"false",
-                                      "dataview":"store_default","limit":1000,
-                                      "order":"PREMIERSTATEMENTSDEALER asc, SHOWROOM asc, LOCATION_RATING::numeric desc nulls last, _distance",
-                                      "geolocs":{"geoloc":[{"addressline":"55441","country":"","latitude":"","longitude":""}]},"searchradius":"5000",
-                                      "stateonly":"1","where":{"clientkey":{"distinctfrom":"12345"},
-                                                               "badge":{"distinctfrom":"Not On Locator"},
-                                                               "marazzi":{"eq":"1"},"or":{"showroom":{"eq":"1"},
-                                                                                          "premierstatementsdealer":{"eq":""},
-                                                                                          "authorizeddealer":{"eq":"1"},
-                                                                                          "daltileservicecenter":{"eq":"1"},
-                                                                                          "distributor":{"eq":"1"},
-                                                                                          "tile_mosaics":{"eq":""},
-                                                                                          "stone_slab_countertops":{"eq":""}}},
-                                      "true":"1","false":"0"}}}
-    r = session.post(url, headers=headers, data=json.dumps(payload))
+    states = []
+    cities = []
+    url = 'https://locations.marazziusa.com/'
+    r = session.get(url, headers=headers)
+    website = 'marazzitile.com'
     for line in r.iter_lines():
-        if '"six_packcontent2":' in line:
-            items = line.split('"six_packcontent2":')
-            for item in items:
-                if '{ "response":' not in item:
-                    lat = item.split('"latitude":"')[1].split('"')[0]
-                    lng = item.split('"longitude":"')[1].split('"')[0]
-                    zc = item.split(',"postalcode":"')[1].split('"')[0]
-                    website = 'marazziusa.com'
-                    country = 'US'
-                    name = item.split('"name":"')[1].split('"')[0]
-                    try:
-                        typ = item.split('"storetype":"')[1].split('"')[0]
-                    except:
-                        typ = '<MISSING>'
-                    loc = '<MISSING>'
-                    state = item.split('"state":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    add = item.split('"address1":"')[1].split('"')[0]
-                    try:
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    hours = '<MISSING>'
-                    store = item.split('"clientkey":"')[1].split('"')[0]
-                    if store not in locs:
-                        locs.append(store)
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        line = str(line.decode('utf-8'))
+        if 'data-galoc="State Index page' in line:
+            lurl = line.split('href="')[1].split('"')[0]
+            states.append(lurl)
+    for state in states:
+        print('Pulling State %s...' % state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if 'data-galoc="City Level' in line2:
+                cities.append(line2.split('href="')[1].split('"')[0])
+    for city in cities:
+        print('Pulling City %s...' % city)
+        r2 = session.get(city, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if 'data-gaact="Click_to_ViewLocalPage"' in line2:
+                locs.append(line2.split('href="')[1].split('/"')[0])
+    for loc in locs:
+        print('Pulling Location %s...' % loc)
+        r2 = session.get(loc, headers=headers)
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        zc = ''
+        country = 'US'
+        phone = ''
+        store = loc.rsplit('/',1)[1]
+        typ = '<MISSING>'
+        lat = ''
+        lng = ''
+        hours = ''
+        lines = r2.iter_lines()
+        for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
+            if 'property="og:title" content="' in line2:
+                name = line2.split('property="og:title" content="')[1].split('"')[0]
+            if 'property="business:contact_data:street_address" content="' in line2:
+                add = line2.split('property="business:contact_data:street_address" content="')[1].split('"')[0]
+            if 'property="business:contact_data:locality" content="' in line2:
+                city = line2.split('property="business:contact_data:locality" content="')[1].split('"')[0]
+            if 'property="business:contact_data:region" content="' in line2:
+                state = line2.split('property="business:contact_data:region" content="')[1].split('"')[0]
+            if 'property="business:contact_data:postal_code" content="' in line2:
+                zc = line2.split('property="business:contact_data:postal_code" content="')[1].split('"')[0]
+            if 'property="business:contact_data:phone_number" content="' in line2:
+                phone = line2.split('property="business:contact_data:phone_number" content="')[1].split('"')[0]
+            if 'place:location:latitude" content="' in line2:
+                lat = line2.split('place:location:latitude" content="')[1].split('"')[0]
+            if 'place:location:longitude" content="' in line2:
+                lng = line2.split('place:location:longitude" content="')[1].split('"')[0]
+            if '</style>' in line2:
+                g = next(lines)
+                if '<h3>' in g:
+                    typ = g.split('>')[1].split('<')[0]
+            if 'var hoursArray' in line2:
+                days = line2.split("Array('")
+                for day in days:
+                    if "')," in day:
+                        hrs = day.split("'")[0] + ': ' + day.split(", '")[1].split("'")[0] + '-' + day.split(", '")[2].split("'")[0]
+                        hrs = hrs.replace('CLOSED-CLOSED','Closed')
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+        if hours == '' or 'AM' not in hours:
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
-        payload = {"request":{"appkey":"D07A672A-3D5E-11EA-9DD6-ABD5D0784D66",
-                          "formdata":{"dynamicSearch":"true","geoip":"false",
-                                      "dataview":"store_default","limit":1000,
-                                      "order":"PREMIERSTATEMENTSDEALER asc, SHOWROOM asc, LOCATION_RATING::numeric desc nulls last, _distance",
-                                      "geolocs":{"geoloc":[{"addressline":"85001","country":"","latitude":"","longitude":""}]},"searchradius":"5000",
-                                      "stateonly":"1","where":{"clientkey":{"distinctfrom":"12345"},
-                                                               "badge":{"distinctfrom":"Not On Locator"},
-                                                               "marazzi":{"eq":"1"},"or":{"showroom":{"eq":"1"},
-                                                                                          "premierstatementsdealer":{"eq":""},
-                                                                                          "authorizeddealer":{"eq":"1"},
-                                                                                          "daltileservicecenter":{"eq":"1"},
-                                                                                          "distributor":{"eq":"1"},
-                                                                                          "tile_mosaics":{"eq":""},
-                                                                                          "stone_slab_countertops":{"eq":""}}},
-                                      "true":"1","false":"0"}}}
-    r = session.post(url, headers=headers, data=json.dumps(payload))
-    for line in r.iter_lines():
-        if '"six_packcontent2":' in line:
-            items = line.split('"six_packcontent2":')
-            for item in items:
-                if '{ "response":' not in item:
-                    lat = item.split('"latitude":"')[1].split('"')[0]
-                    lng = item.split('"longitude":"')[1].split('"')[0]
-                    zc = item.split(',"postalcode":"')[1].split('"')[0]
-                    website = 'marazziusa.com'
-                    country = 'US'
-                    name = item.split('"name":"')[1].split('"')[0]
-                    try:
-                        typ = item.split('"storetype":"')[1].split('"')[0]
-                    except:
-                        typ = '<MISSING>'
-                    loc = '<MISSING>'
-                    state = item.split('"state":"')[1].split('"')[0]
-                    try:
-                        city = item.split('"city":"')[1].split('"')[0]
-                    except:
-                        city = '<MISSING>'
-                    add = item.split('"address1":"')[1].split('"')[0]
-                    try:
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    hours = '<MISSING>'
-                    store = item.split('"clientkey":"')[1].split('"')[0]
-                    if store not in locs:
-                        locs.append(store)
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
-        payload = {"request":{"appkey":"D07A672A-3D5E-11EA-9DD6-ABD5D0784D66",
-                          "formdata":{"dynamicSearch":"true","geoip":"false",
-                                      "dataview":"store_default","limit":1000,
-                                      "order":"PREMIERSTATEMENTSDEALER asc, SHOWROOM asc, LOCATION_RATING::numeric desc nulls last, _distance",
-                                      "geolocs":{"geoloc":[{"addressline":"77001","country":"","latitude":"","longitude":""}]},"searchradius":"5000",
-                                      "stateonly":"1","where":{"clientkey":{"distinctfrom":"12345"},
-                                                               "badge":{"distinctfrom":"Not On Locator"},
-                                                               "marazzi":{"eq":"1"},"or":{"showroom":{"eq":"1"},
-                                                                                          "premierstatementsdealer":{"eq":""},
-                                                                                          "authorizeddealer":{"eq":"1"},
-                                                                                          "daltileservicecenter":{"eq":"1"},
-                                                                                          "distributor":{"eq":"1"},
-                                                                                          "tile_mosaics":{"eq":""},
-                                                                                          "stone_slab_countertops":{"eq":""}}},
-                                      "true":"1","false":"0"}}}
-    r = session.post(url, headers=headers, data=json.dumps(payload))
-    for line in r.iter_lines():
-        if '"six_packcontent2":' in line:
-            items = line.split('"six_packcontent2":')
-            for item in items:
-                if '{ "response":' not in item:
-                    lat = item.split('"latitude":"')[1].split('"')[0]
-                    lng = item.split('"longitude":"')[1].split('"')[0]
-                    zc = item.split(',"postalcode":"')[1].split('"')[0]
-                    website = 'marazziusa.com'
-                    country = 'US'
-                    name = item.split('"name":"')[1].split('"')[0]
-                    try:
-                        typ = item.split('"storetype":"')[1].split('"')[0]
-                    except:
-                        typ = '<MISSING>'
-                    loc = '<MISSING>'
-                    state = item.split('"state":"')[1].split('"')[0]
-                    try:
-                        city = item.split('"city":"')[1].split('"')[0]
-                    except:
-                        city = '<MISSING>'
-                    add = item.split('"address1":"')[1].split('"')[0]
-                    try:
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    hours = '<MISSING>'
-                    store = item.split('"clientkey":"')[1].split('"')[0]
-                    if store not in locs:
-                        locs.append(store)
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 def scrape():
     data = fetch_data()
     write_output(data)
