@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
 import json
-
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -16,7 +15,6 @@ def write_output(data):
 		# Body
 		for row in data:
 			writer.writerow(row)
-
 def fetch_data():
     addressess = []
     headers = {
@@ -24,12 +22,10 @@ def fetch_data():
         'accept': '*/*',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
-
     returnres=[]
     base_url="https://jalexanders.com/locations/"
     r = session.get("https://jalexanders.com/locations/",headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
-    
     for link  in soup.find_all("div",{"class":"restaurantCard"}):
         add = list(link.stripped_strings)
         page_url =link.find("a")['href']
@@ -62,9 +58,7 @@ def fetch_data():
         else:
             street_address = add[2]
         location_name = add[0] 
-  
-
-
+        location_type = add[0].split("|")[0].strip()
         store =[]
         store.append("https://jalexanders.com/")
         store.append(location_name)
@@ -75,19 +69,14 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(location_type if location_type else "<MISSING>")
         store.append(latitude if latitude else "<MISSING>")
         store.append(lon if lon else "<MISSING>")
         store.append(hour.replace('Patio Dining Open ','') if hour else "<MISSING>")
         store.append(page_url)
-        # if store[2] in addressess:
-        #     continue
-        # addressess.append(store[2])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
         yield store
-
 def scrape():
-    data = fetch_data();
+    data = fetch_data()
     write_output(data)
 scrape()

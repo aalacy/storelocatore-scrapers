@@ -1,3 +1,5 @@
-sgzip
+lxml==4.3.4
 sgrequests
-tenacity
+beautifulsoup4==4.7.1
+sgzip
+phonenumbers

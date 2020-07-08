@@ -35,7 +35,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print(search.current_zip)
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         base_url = "https://www.waitrose.com/"
@@ -95,7 +95,7 @@ def fetch_data():
             # store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-            print(store)
+            # print(store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
