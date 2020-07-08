@@ -54,7 +54,10 @@ def fetch_data():
                 zipp = data['post_code']
                 country_code = data['country']
                 store_number = data['fid']
-                location_type = data['store_type_cs']
+                if data['store_type_cs']:
+                    location_type = data['store_type_cs']
+                else:
+                    location_type = location_name
                 lat = data['lat']
                 lng = data['lng']
                 phone = location_soup.find("a",{"class":"phone ga-link"}).text
