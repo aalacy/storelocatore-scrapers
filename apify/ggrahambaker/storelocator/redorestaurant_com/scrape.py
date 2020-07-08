@@ -1,89 +1,103 @@
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
+import string
+import re, time
+import usaddress
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://www.redorestaurant.com/'
-    ext = 'locations/'
-
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-
-    locs = driver.find_elements_by_css_selector('div.six.columns')
-    all_store_data = []
-    for loc in locs:
-        cont = loc.text.split('\n')
-        if len(cont) > 30:
-            continue
-        elif len(cont) < 10:
-            continue
-
-        cont = loc.text.split('\n')
-
-        href = loc.find_element_by_css_selector('a').get_attribute('href')
-
-        start_idx = href.find('/@')
-        end_idx = href.find('z/d')
-
-        coords = href[start_idx + 2: end_idx].split(',')
-
-        lat = coords[0]
-        longit = coords[1]
-
-        if len(cont) == 22:
-            street_address = cont[2]
-            city, state, zip_code = addy_ext(cont[3])
-            phone_number = cont[4].replace('Tel:', '').strip()
-            hours = ''
-            for h in cont[8:-3]:
-                hours += h + ' '
-
-        else:
-            if len(cont) == 19:
-                off = 2
+    # Your scraper here
+    data = []
+    p = 0
+    url = 'https://www.redorestaurant.com/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")
+    link_list = soup.findAll('li')
+    det = ''
+    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r'\s\s+') 
+    for li in link_list:
+        if li.text.lower().find('location') > -1:
+            det = li
+            break
+    link_list = li.findAll('a')
+    for link in link_list:
+        if link['href'] != '#':
+            title= link.text
+            link = link['href']
+            r = session.get(link, headers=headers, verify=False)  
+            soup =BeautifulSoup(r.text, "html.parser")                  
+            maindiv = soup.find('div',{'class':'et_pb_row et_pb_row_2'}).text
+            maindiv = re.sub(pattern,'',maindiv).splitlines()
+            address = maindiv[0].replace(',','').lstrip()
+            if address.find('.RED O RESTAURANT') > -1:
+                address = address.split('.RED O RESTAURANT')[1]
             else:
-                off = 0
+                address = address.replace('Red O Restaurant ','')
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                    "USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+            
+            phone = maindiv[1]
+            hours = maindiv[2:]
+            if phone.find('TEL') == -1:
+                #hours = phone
+                phone = '<MISSING>'
+                
+            else:
+                phone = phone.split('TEL ')[1].split(' ')[0]
+            
+            #print(phone)
+            
+            if title.find("O Lounge") == -1:
+                hours = 'Daily 11 am - 11 pm'
+            else:
+                hours = ' '.join(hours).replace('HOURS', 'HOURS ')
+            data.append([
+                        'https://www.redorestaurant.com/',link, title, street.lstrip(), city.lstrip(), state.lstrip(), pcode.lstrip(),'US','<MISSING>',phone,'<MISSING>','<MISSING>','<MISSING>',
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+            
+      
+    return data
 
-            street_address = cont[1]
-            city, state, zip_code = addy_ext(cont[2])
-            phone_number = cont[3].replace('Tel:', '').strip()
-
-            hours = ''
-
-            for h in cont[off + 6:-3]:
-                hours += h + ' '
-
-        location_name = city
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
