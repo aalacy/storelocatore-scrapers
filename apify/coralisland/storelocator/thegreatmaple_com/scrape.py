@@ -54,11 +54,19 @@ def fetch_data():
 
     for store_link in store_list:
         #print(store_link)
+	
         store = etree.HTML(session.get(store_link, headers=headers).text)
-        details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
-        if store_link =='http://thegreatmaple.com/sandiego':
-            details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
+        try:
+           details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
+        except:
+           store = etree.HTML(session.get(store_link, headers=headers).text)
+
+           details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
+
+        #if store_link =='http://thegreatmaple.com/sandiego':
+        #    details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
         point = 0
+        #print(details)
         for idx, de in enumerate(details):
             if 'hours' == de.lower():
                 point = idx

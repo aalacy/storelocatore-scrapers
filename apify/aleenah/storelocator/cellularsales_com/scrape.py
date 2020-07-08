@@ -72,9 +72,12 @@ def fetch_data():
             lat.append(al["lat"])
             long.append(al["lng"])
             phones.append(al["phone"])
-            tim = al["hours"].split('class="wpsl-opening-hours">')[1].replace("</time></td></tr>", " ").replace(
-                "</td><td><time>", " ").replace("</table>", "").replace("<tr><td>", " ").replace("</td></tr>", " ").replace(
-                "</td><td>", " ").strip()
+            try:
+                tim = al["hours"].split('class="wpsl-opening-hours">')[1].replace("</time></td></tr>", " ").replace(
+                    "</td><td><time>", " ").replace("</table>", "").replace("<tr><td>", " ").replace("</td></tr>", " ").replace(
+                    "</td><td>", " ").strip()
+            except:
+                tim="<MISSING>"
             timing.append(tim)
             result_coords.append((al["lat"], al["lng"]))
         if len(allocs) < MAX_RESULTS:

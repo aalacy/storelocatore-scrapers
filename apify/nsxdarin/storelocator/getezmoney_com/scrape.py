@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import usaddress
 
@@ -24,13 +23,19 @@ def fetch_data():
                }
     r = session.post(url, headers=headers, data=payload)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'valign="top">Website</td>' in line:
             items = line.split('valign="top">Website</td>')
             for item in items:
                 if '<div id="content">' not in item:
                     website = 'getezmoney.com'
                     name = item.split('<a href="')[1].split('">')[1].split('<')[0]
-                    rawadd = item.split('>Address</td><td class="referral-value" valign="top">')[1].split('<')[0]
+                    city = item.split('href="')[1].split('>')[1].split('<')[0].split(',')[0]
+                    state = item.split('href="')[1].split('>')[1].split(',')[1].split('<')[0].strip()
+                    try:
+                        rawadd = item.split('>Address</td><td class="referral-value" valign="top">')[1].split('<')[0]
+                    except:
+                        rawadd = ''
                     phone = item.split('<a href="tel:')[1].split('"')[0]
                     country = 'US'
                     typ = 'Location'
@@ -53,14 +58,17 @@ def fetch_data():
                         address = address.encode('utf-8')
                         if address == '':
                             address = '<INACCESSIBLE>'
-                        city = add[0]['PlaceName'].encode('utf-8')
-                        state = add[0]['StateName'].encode('utf-8')
+                        #city = add[0]['PlaceName'].encode('utf-8')
+                        #state = add[0]['StateName'].encode('utf-8')
                         zc = add[0]['ZipCode'].encode('utf-8')
                     except:
                         pass
+                    
                     lat = '<MISSING>'
                     lng = '<MISSING>'
                     store = '<MISSING>'
+                    address = str(address.decode('utf-8'))
+                    address = address.strip().replace('\t','')
                     hours = 'Mon: ' + item.split('<td>Monday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Tue: ' + item.split('<td>Tuesday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Wed: ' + item.split('<td>Wednesday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
@@ -68,6 +76,10 @@ def fetch_data():
                     hours = hours + '; Fri: ' + item.split('<td>Friday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Sat: ' + item.split('<td>Saturday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Sun: ' + item.split('<td>Sunday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
+                    if address == '':
+                        address = '<MISSING>'
+                    if rawadd == '':
+                        rawadd = '<MISSING>'
                     yield [website, name, rawadd, address, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

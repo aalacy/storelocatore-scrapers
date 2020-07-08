@@ -18,22 +18,42 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "http://www.justfitness4u.com/"
+    base_url = "https://justfitness4u.com/"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
         }
 
-    location_url = "https://justfitness4u.com/contact/"
+    url = "https://justfitness4u.com/contact/"
 
-    r = session.get(location_url, headers=headers)
+    r = session.get(url, headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
     
     loc = soup.find_all(["div","h4"],{"class":"elementor-heading-title elementor-size-default"})
-    add = soup.find_all("iframe",{"class":"lazyload"})
+    name = soup.find_all("iframe",{"class":"lazyload"})
     phone_t = soup.find_all("p",{"class":"elementor-icon-box-description"})
 
-    for j,i,k in zip(add,loc,phone_t):
+    r1 = session.get(base_url, headers=headers)
+    soup1 = BeautifulSoup(r1.text,'lxml')
+    loc_url = soup1.find_all("a",{"class":"menu-link"})
+
+      
+    for j,i,k,l in zip(name,loc,phone_t,loc_url[1:4]):
+
+        page_url = l["href"]
+
+        r2 = session.get(page_url, headers=headers)
+        soup2 = BeautifulSoup(r2.text,'lxml')
+        day = soup2.find_all("span",{"class":"heading-date uael-business-day"})
+        time = soup2.find_all("span",{"class":"heading-time uael-business-time"})
+        hoo = []
+
+        for d,t in zip(day,time):
+            dt = d.text.strip() + " : " + t.text.strip()
+            hoo.append(dt)
+
+        hours_of_operation = ", ".join(hoo)
+
         phone = k.text
         location_name = j["aria-label"]
         raw = i.text
@@ -43,6 +63,7 @@ def fetch_data():
         sp2 = sp[-1].split(" ")
         state = sp2[-2]
         zipp = sp2[-1]
+
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -56,13 +77,10 @@ def fetch_data():
         store.append("Gym")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(location_url)
+        store.append(hours_of_operation)
+        store.append(page_url)
         yield store
     
-
-    
-
 def scrape():
     data = fetch_data()
     write_output(data)

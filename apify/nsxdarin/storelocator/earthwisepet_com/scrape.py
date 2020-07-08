@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +17,7 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://earthwisepet.com/stores/view/' in line:
             items = line.split('<loc>https://earthwisepet.com/stores/view/')
             for item in items:
@@ -44,6 +44,7 @@ def fetch_data():
         acount = 0
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<h3 tabindex="0" class="desc-store">' in line2:
                 name = line2.split('<h3 tabindex="0" class="desc-store">')[1].split('<')[0]
             if '<a tabindex="0" href="https://maps.google.com/?q=' in line2:
@@ -90,7 +91,7 @@ def fetch_data():
             city = 'Palm Harbor'
             state = 'FL'
             zc = '34684'
-            phone = '727-470-9102
+            phone = '727-470-9102'
             lat = '28.068362'
             lng = '-82.7235479'
             hours = '<MISSING>'

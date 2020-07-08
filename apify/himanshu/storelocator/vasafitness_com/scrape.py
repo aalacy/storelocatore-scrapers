@@ -27,7 +27,6 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("h4",text=re.compile("Coming Soon")):
             continue
-        
         address = list(location_soup.find("div",{'class':"loc-address"}).stripped_strings)
         hours = " ".join(list(location_soup.find("div",{'id':"loc-accordion"}).stripped_strings))
         if location_soup.find("a",{'href':re.compile("tel:")}) == None:
@@ -40,18 +39,18 @@ def fetch_data():
         store.append("https://vasafitness.com")
         store.append(name1)
         store.append(address[0])
-        store.append(address[1].split(",")[-2])
+        store.append(address[1].split(",")[-2].strip())
         store.append(address[1].split(",")[-1].split(" ")[-2])
         store.append(address[1].split(",")[-1].split(" ")[-1])
         store.append("US")
         store.append("<MISSING>")
-        store.append(phone)
+        store.append(phone.strip())
         store.append("<MISSING>")
         store.append(location["data-latt"])
         store.append(location["data-lngg"])
         store.append(hours)
-        if store[-1].count("Closed") > 6:
-            continue
+        # if store[-1].count("Closed") > 6:
+        #     continue
         store.append(location.find("a")["href"])
         yield store
 def scrape():
