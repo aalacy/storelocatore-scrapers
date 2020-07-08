@@ -32,18 +32,13 @@ def fetch_data():
 	except (BaseException):
 		print('[!] Error Occured. ')
 		print('[?] Check whether system is Online.')
-		stores = base.find_all(class_="store-details__info")
-		if stores == prev_store:
-			time.sleep(randint(4,6))
-		else:
-			prev_store = stores
 		
 	stores = base.find_all(class_="store-details__info")
 
 	script = base.find('script', attrs={'type': "application/json"}).text
 	script = script[script.find("{"):script.rfind("}")+1].strip() 
 	store_data = json.loads(script)['props']['allStores']
-	
+
 	data = []
 	found_poi = []
 	for item in store_data:
