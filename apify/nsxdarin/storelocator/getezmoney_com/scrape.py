@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import usaddress
 
@@ -24,6 +23,7 @@ def fetch_data():
                }
     r = session.post(url, headers=headers, data=payload)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'valign="top">Website</td>' in line:
             items = line.split('valign="top">Website</td>')
             for item in items:
@@ -67,6 +67,7 @@ def fetch_data():
                     lat = '<MISSING>'
                     lng = '<MISSING>'
                     store = '<MISSING>'
+                    address = str(address.decode('utf-8'))
                     address = address.strip().replace('\t','')
                     hours = 'Mon: ' + item.split('<td>Monday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Tue: ' + item.split('<td>Tuesday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
