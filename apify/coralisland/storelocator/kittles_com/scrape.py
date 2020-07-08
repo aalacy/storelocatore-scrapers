@@ -32,7 +32,17 @@ def fetch_data():
         print('[!] Error Occured. ')
         print('[?] Check whether system is Online.')
 
-    store_list = base.find(id="staticpagenav").find_all("li")
+    try:
+        store_list = base.find(id="staticpagenav").find_all("li")
+    except:
+        req = session.get(base_link, headers = HEADERS)
+        print("Retrying page load ..")
+        time.sleep(randint(2,4))
+        try:
+            base = BeautifulSoup(req.text,"lxml")            
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
     for link in store_list:
         link = "https://www.kittles.com" + link.a['href']
