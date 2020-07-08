@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-import unicodedata
 import sgzip
 
 session = SgRequests()
@@ -24,12 +23,13 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 100
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 500
     coord = search.next_coord()
 
 
     base_url = "https://holleranddash.com"
     while coord:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         json_data = session.get("https://maplestreetbiscuits.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(coord[0])+"&lng="+str(coord[1])+"&max_results=100&search_radius=500").json()
         
@@ -40,7 +40,6 @@ def fetch_data():
             city = data['city']
             state = data['state']
             zipp = data['zip']
-            country_code = data['country']
             store_number = data['id']
             phone = data['phone']
             lat = data['lat']
@@ -56,7 +55,7 @@ def fetch_data():
             store.append(city)
             store.append(state)
             store.append(zipp)   
-            store.append(country_code)
+            store.append("US")
             store.append(store_number)
             store.append(phone)
             store.append("<MISSING>")
@@ -71,15 +70,15 @@ def fetch_data():
 
             yield store
 
-    if len(json_data) < MAX_RESULTS:
-        # print("max distance update")
-        search.max_distance_update(MAX_DISTANCE)
-    elif len(json_data) == MAX_RESULTS:
-        # print("max count update")
-        search.max_count_update(result_coords)
-    else:
-        raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-    coord = search.next_coord()
+        if len(json_data) < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(json_data) == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
          
 
 

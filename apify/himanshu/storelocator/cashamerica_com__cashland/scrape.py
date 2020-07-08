@@ -19,12 +19,12 @@ def write_output(data):
 def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     
-    r = session.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
+    r = requests.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
     key = r.text.split("&key=")[1].split('");')[0]
     addresses = []
     page = 1
     while True:
-        location_request = session.get("http://find.cashamerica.us/api/stores?p="+str(page) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key), headers = headers, verify = False)
+        location_request = requests.get("http://find.cashamerica.us/api/stores?p="+str(page) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key), headers = headers, verify = False)
         json_data = location_request.json()
         if "message" in json_data:
             break
@@ -54,6 +54,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
+            # print(store)
             yield store
 def scrape():
     data = fetch_data()
