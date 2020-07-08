@@ -85,20 +85,23 @@ def fetch_data():
                     phone = line4.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
                     lat = line4.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                     lng = line4.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-                    hrs = line4.split('Drive-Thru Hours</h4>')[1].split("}]' data-")[0]
-                    days = hrs.split('"day":"')
-                    for day in days:
-                        if '"intervals":' in day:
-                            if hours == '':
-                                try:
-                                    hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                except:
-                                    pass
-                            else:
-                                try:
-                                    hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                except:
-                                    pass
+                    try:
+                        hrs = line4.split('Drive-Thru Hours</h4>')[1].split("}]' data-")[0]
+                        days = hrs.split('"day":"')
+                        for day in days:
+                            if '"intervals":' in day:
+                                if hours == '':
+                                    try:
+                                        hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                    except:
+                                        pass
+                                else:
+                                    try:
+                                        hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                    except:
+                                        pass
+                    except:
+                        pass
             if hours == '':
                 hours = '<MISSING>'
             if lat == '':
