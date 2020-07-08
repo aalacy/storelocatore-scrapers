@@ -1,69 +1,97 @@
-from selenium import webdriver
-from time import sleep
-import pandas as pd
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
+import usaddress
+from sgrequests import SgRequests
 
-
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
- 
-    
-def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
-    
-    driver.get('http://lightbridgeacademy.com/center-locator/')
-    def data_info():
-        while True:
-            location_data=[i.text for i in driver.find_elements_by_xpath('//div[@id="locator_3"]/div')]
-            try:
-                driver.find_element_by_xpath('//a[@class="more_centers btn"]').click()
-            except:
-                break
-        yield location_data
-    locations=list(data_info())[0]
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    hrs=['<MISSING>' if i.text=='' else i.text for i in driver.find_elements_by_xpath('//div[@class="hours"]')]
-    code = driver.execute_script("return initMap.toString()")
-    markers = driver.execute_script('\n'.join(code.splitlines()[1:-1]) + '\n return markers;')
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone",
+                         "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
+def fetch_data():
+    # Your scraper here
+    data = []
+    p = 0    
+    url = 'https://lightbridgeacademy.com/center-locator'
+    r = session.get(url, headers=headers, verify=False)
+    coords =','+r.text.split('var markers = [')[1].split(';',1)[0].lstrip()    
+    coords = coords.lstrip().replace('[','').replace(']','').replace("'",'').replace('\n','').split('\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t')   
+    coordlist = []
+    for i in range(0,len(coords)):
+        if len(coords[i]) > 2:
+            temp = coords[i].lstrip().replace('\t\t\t\t\t\t\t\t\t\t\t\t','').split(',')[1:]
+            coordlist.append(temp)   
     
-    for ind,i in enumerate(locations):
-            loc=i.split('\n')
-            data['locator_domain'].append('http://lightbridgeacademy.com')
-            data['location_name'].append(loc[0])
-            data['street_address'].append(loc[1])
-            data['city'].append(loc[2].split(',')[0])
-            data['state'].append(loc[2].split(',')[1].split()[0])
-            data['zip'].append(loc[2].split(',')[1].split()[1])
-            data['country_code'].append('US')
-            data['store_number'].append('<MISSING>')
-            data['phone'].append(loc[4].split(':')[-1])
-            data['hours_of_operation'].append(hrs[ind])
-            data['location_type'].append('Lightbridge Academy Center')
-                        
-    for i in data['location_name']:
-        for j in markers:
-            if j[0]==i:
-                data['longitude'].append(j[1])
-                data['latitude'].append(j[2])
-               
-                
-    driver.close()
+    page = 1    
+    while True:
+        url = 'https://lightbridgeacademy.com/center-locator/?page='+str(page)+'&ajax=1'
+        #print(url)
+        r = session.get(url, headers=headers, verify=False)
+        if r.text.find('No additional results found') > -1:
+            break
+        else:
+            soup = BeautifulSoup(r.text,'html.parser')
+            divlist = soup.findAll('div',{'class':'locations'})
+            for div in divlist:
+                title = div.find('h3').text.lstrip()
+                link = 'https://lightbridgeacademy.com'+div.find('a')['href']
+                #print(link)                
+                det = div.find('div',{'class':'info'}).findAll('div')                
+                address = det[0].findAll('span')        
+                street = address[0].text.lstrip().replace('\t\t\t\t\t\t\t','')
+                city=address[1].text.lstrip().replace(',','').replace('\n','')
+                state, pcode = address[2].text.lstrip().split(' ',1)
+                try:
+                    phone = div.find('div',{'class':'phone'}).text.split('P: ')[1].split('F:')[0].replace('\n','').replace('\t\t\t\t\t\t\t','')
+                    hours  = div.find('div',{'class':'hours'}).text.replace('\t','').replace('\n',' ')
+                    lat = '<MISSING>'
+                    longt = '<MISSING>'
+                    for i in range(0,len(coordlist)):                
+                        #print(coordlist[i][0])
+                        if coordlist[i][0].strip().lower().find(title.lstrip().lower().split(',')[0]) > -1:
+                            lat = coordlist[i][2]
+                            longt = coordlist[i][3]
+                            break
+                    if len(hours) < 2:
+                        hours = '<MISSING>'
+                    data.append(['https://lightbridgeacademy.com/',
+                                 link,title,street,city.replace('\t\t\t\t\t\t\t',''),
+                                 state.replace('\t\t\t\t\t\t\t',''),pcode.replace('\t\t\t\t\t\t\t',''),
+                                 'US','<MISSING>',phone,'<MISSING>',
+                                 lat,longt,hours])
+                    
+                    #print(p,data[p])
+                    p += 1
+                    #input("NEXT")
+                except Exception as e:
+                    #print(url)
+                    #input(e)
+                    pass
+
+            page += 1
+            #input("PAGE")
+            
+        
     return data
-    
+
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-scrape()
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
- 
-        
+scrape()
