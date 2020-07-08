@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -19,6 +18,7 @@ def fetch_data():
     url = 'https://www.plainscapital.com/wp-content/themes/plainscapitalbank/core/functions/locationlocator.php?lat=32.7834146&lng=-96.798295&radius=10000&cat=branch'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'link="https://www.plainscapital.com/location/' in line:
             items = line.split('link="https://www.plainscapital.com/location/')
             for item in items:
@@ -45,6 +45,7 @@ def fetch_data():
         HFound = False
         lines = r2.iter_lines()
         for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
             if '<span itemprop="telephone"' in line2:
                 phone = line2.split('tel:')[1].split('"')[0]
             if '"streetAddress">' in line2:
@@ -67,6 +68,7 @@ def fetch_data():
                 day = line2.split('>')[1].split('<')[0]
             if HFound and '<div class="time">' in line2:
                 g = next(lines)
+                g = str(g.decode('utf-8'))
                 if 'Closed' in g:
                     hrs = day + ' Closed'
                     if hours == '':
@@ -75,9 +77,11 @@ def fetch_data():
                         hours = hours + '; ' + hrs
                 else:
                     g = next(lines)
+                    g = str(g.decode('utf-8'))
                     ho = g.split('<')[0].strip().replace('\t','')
                     next(lines)
                     g = next(lines)
+                    g = str(g.decode('utf-8'))
                     hc = g.split('<')[0].strip().replace('\t','')
                     hrs = day + ' ' + ho + '-' + hc
                     if hours == '':
