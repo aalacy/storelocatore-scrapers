@@ -56,9 +56,12 @@ def fetch_data():
                             zc = item.split('"postal_code":"')[1].split('"')[0]
                             hours = '<MISSING>'
                             lurl = '<MISSING>'
+                            if 'United States' in country:
+                                country = 'US'
                             if store not in locs:
-                                locs.append(store)
-                                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                if country == 'CA' or country == 'US':
+                                    locs.append(store)
+                                    yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
