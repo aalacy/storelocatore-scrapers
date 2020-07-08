@@ -56,7 +56,7 @@ def fetch_data():
         if ccode == 'United States':
             ccode = 'US'
         data.append(['https://lightshade.com/', link, title, street, city, state, pcode, 'US', sid, phone, ltype, lat, longt, hours])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
 
  
