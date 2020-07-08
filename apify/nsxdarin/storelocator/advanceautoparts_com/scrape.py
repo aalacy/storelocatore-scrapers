@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import time
 
@@ -27,6 +26,7 @@ def fetch_data():
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
             if '<a class="Directory-listLink" href="' in line:
                 items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
@@ -40,6 +40,7 @@ def fetch_data():
         print('Pulling State %s...' % state)
         r = session.get(state, headers=headers)
         for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
             if '<a class="Directory-listLink" href="' in line:
                 items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
@@ -54,6 +55,7 @@ def fetch_data():
         print('Pulling City %s...' % city)
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
             if '<a class="Teaser-titleLink" href="..' in line:
                 items = line.split('<a class="Teaser-titleLink" href="..')
                 for item in items:
@@ -84,6 +86,7 @@ def fetch_data():
                 LocFound = False
                 NFound = False
                 for line in r.iter_lines():
+                    line = str(line.decode('utf-8'))
                     if NFound is False and '"Nap-heading Heading Heading--h1">' in line:
                         NFound = True
                         name = line.split('"Nap-heading Heading Heading--h1">')[1].split('<')[0].strip().replace('<span>','').replace('  ',' ')
