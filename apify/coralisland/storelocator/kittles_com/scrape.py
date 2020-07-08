@@ -43,6 +43,8 @@ def fetch_data():
         except (BaseException):
             print('[!] Error Occured. ')
             print('[?] Check whether system is Online.')
+            
+        store_list = base.find(id="staticpagenav").find_all("li")
 
     for link in store_list:
         link = "https://www.kittles.com" + link.a['href']
