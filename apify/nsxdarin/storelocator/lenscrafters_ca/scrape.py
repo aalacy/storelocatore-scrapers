@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +17,7 @@ def fetch_data():
     url = 'https://local.lenscrafters.ca/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://local.lenscrafters.ca/' in line and '.html' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             if lurl.count('/') == 5:
@@ -32,8 +32,11 @@ def fetch_data():
         name = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            if 'location-name h1-normal">' in line2 and name == '':
-                name = line2.split('location-name h1-normal">')[1].split('<')[0]
+            line2 = str(line2.decode('utf-8'))
+            if 'id="location-name" itemprop="name">' in line2 and name == '':
+                name = line2.split('id="location-name" itemprop="name">')[1].split('<')[0]
+            if 'id="location-name">' in line2 and name == '':
+                name = line2.split('id="location-name">')[1].split('<')[0]
             if hours == '' and 'data-days=' in line2:
                 days = line2.split('data-days=')[1].split('><')[0].split('"day":"')
                 for day in days:
@@ -49,15 +52,15 @@ def fetch_data():
                             hours = hours + '; ' + dname + ': ' + hrs
             if store == '' and 'storeNumber=' in line2:
                 store = line2.split('storeNumber=')[1].split('&')[0]
-            if 'address-street-1' in line2 and add == '':
-                add = line2.split('address-street-1')[1].split('">')[1].split('<')[0]
-                if 'address-street-2' in line2:
-                    add = add + ' ' + line2.split('address-street-2')[1].split('">')[1].split('<')[0]
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
+            if '<span class="c-address-street-1">' in line2 and add == '':
+                add = line2.split('<span class="c-address-street-1">')[1].split('<')[0]
+                if '<span class="c-address-street-2">' in line2:
+                    add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0]
+                city = line2.split('itemprop="addressLocality" content="')[1].split('"')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-                country = 'US'
+                country = 'CA'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-                phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]
+                phone = line2.split('itemprop="telephone" id="phone-main">')[1].split('">')[1].split('<')[0]
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
@@ -67,7 +70,8 @@ def fetch_data():
             phone = '<MISSING>'
         if store == '':
             store = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
