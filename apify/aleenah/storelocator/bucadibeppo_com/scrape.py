@@ -104,8 +104,8 @@ def fetch_data():
         topens= soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-open'})
         tcloses=soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-close'})
         tim=""
-        print("tdays",len(tdays),"topens",len(topens),"tcloses",len(tcloses))
-        #if len(topens)!=0 and len(tcloses)!=0 :
+        #print("tdays",len(tdays),"topens",len(topens),"tcloses",len(tcloses))
+        if len(topens)!=0 and len(tcloses)!=0 :
             for t in range(7):
                 tim+=tdays[t].text+": "+topens[t].text+" - "+tcloses[t].text+" "
         else:
