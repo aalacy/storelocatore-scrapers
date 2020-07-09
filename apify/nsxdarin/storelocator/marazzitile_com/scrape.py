@@ -74,6 +74,7 @@ def fetch_data():
                 lng = line2.split('place:location:longitude" content="')[1].split('"')[0]
             if '</style>' in line2:
                 g = next(lines)
+                g = str(g.decode('utf-8'))
                 if '<h3>' in g:
                     typ = g.split('>')[1].split('<')[0]
             if 'var hoursArray' in line2:
