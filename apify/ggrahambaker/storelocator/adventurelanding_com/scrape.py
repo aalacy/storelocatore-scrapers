@@ -115,7 +115,18 @@ def fetch_data():
                 hours = driver.find_element_by_css_selector('.fusion-column-wrapper').text.replace('\n', ' ')
             except:
                 hours = '<MISSING>'
-        
+        if "day" in hours:
+        	hours = hours[hours.find("day")-4:hours.rfind("pm")+2].replace("FUN PARK","").strip()
+        else:
+        	hours = hours[hours.find(":")+1:hours.rfind("pm")+2].strip()
+
+        if "-K" in hours:
+        	hours = hours[:hours.find("-K")-3]
+        if "Hours:" in hours:
+        	hours = hours[hours.find("Hours:")+6:].strip()
+
+        hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+
         country_code = 'US'
 
         location_type = '<MISSING>'
@@ -123,7 +134,7 @@ def fetch_data():
         store_number = '<MISSING>'
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+                        store_number, phone_number, location_type, lat, longit, hours_of_operation, page_url]
         all_store_data.append(store_data)
 
     driver.quit()
