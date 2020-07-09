@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import time
 
@@ -10,7 +9,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -19,6 +18,7 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<a class="brand-item-link" href="https://www.shiekh.com/stores/' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if 'online-store' not in line:
@@ -39,6 +39,7 @@ def fetch_data():
         store = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<title>' in line2:
                 name = line2.split('>')[1].split('<')[0].strip()
             if '<p itemprop="streetAddress"' in line2:
@@ -64,7 +65,9 @@ def fetch_data():
         if hours == '':
             hours = '<MISSING>'
         if '404 Not Found' not in name:
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if ',' in add:
+                add = add.split(',')[0].strip()
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         time.sleep(3)
 
 def scrape():
