@@ -49,7 +49,7 @@ def fetch_data():
             lat,  # lat
             long,  # long
             tim,  # timing
-            "https://www.worldwidestereo.com/pages/showrooms"])
+            url])
 
     return all
 
