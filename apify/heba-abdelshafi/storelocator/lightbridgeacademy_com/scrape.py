@@ -35,10 +35,12 @@ def fetch_data():
             temp = coords[i].lstrip().replace('\t\t\t\t\t\t\t\t\t\t\t\t','').split(',')[1:]
             coordlist.append(temp)   
     
-    page = 1    
+    page = 0
+    #print(coordlist)
     while True:
         url = 'https://lightbridgeacademy.com/center-locator/?page='+str(page)+'&ajax=1'
         #print(url)
+        #input()
         r = session.get(url, headers=headers, verify=False)
         if r.text.find('No additional results found') > -1:
             break
@@ -54,16 +56,45 @@ def fetch_data():
                 street = address[0].text.lstrip().replace('\t\t\t\t\t\t\t','')
                 city=address[1].text.lstrip().replace(',','').replace('\n','')
                 state, pcode = address[2].text.lstrip().split(' ',1)
+                #print(title,page,link)
                 try:
-                    phone = div.find('div',{'class':'phone'}).text.split('P: ')[1].split('F:')[0].replace('\n','').replace('\t\t\t\t\t\t\t','')
+                    
+                    try:
+                        phone = div.find('div',{'class':'phone'}).text.split('P: ')[1].split('F:')[0].replace('\n','').replace('\t\t\t\t\t\t\t','')
+                    except:
+                        try:
+                            phone = div.find('div',{'class':'phone'}).text.split('P: ')[1].replace('\n','').replace('\t\t\t\t\t\t\t','')
+                        except:
+                            phone = '<MISSING>'
+                   
+                        
                     hours  = div.find('div',{'class':'hours'}).text.replace('\t','').replace('\n',' ')
                     lat = '<MISSING>'
                     longt = '<MISSING>'
+                    check = ''
+                    flag = 0
+                    
+                    if title.find(',') > -1:
+                        check = title.lstrip().lower().split(',')[0]
+                        #print(check)
+                    else:
+                        #print("ERROR")
+                        check = title.lstrip().lower().split(' ',1)[0]
+                        flag = 1
+                        
+                    #print(title,check,flag)  
                     for i in range(0,len(coordlist)):                
-                        #print(coordlist[i][0])
-                        if coordlist[i][0].strip().lower().find(title.lstrip().lower().split(',')[0]) > -1:
-                            lat = coordlist[i][2]
-                            longt = coordlist[i][3]
+                       
+                        if coordlist[i][0].strip().lower()== check:
+                            if flag == 0:
+                                lat = coordlist[i][2]
+                                longt = coordlist[i][3]
+                            elif flag == 1:
+                                #print(check,coordlist[i][0])
+                                print(coordlist[i][0])
+                                lat = coordlist[i][1]
+                                longt = coordlist[i][2]
+                                
                             break
                     if len(hours) < 2:
                         hours = '<MISSING>'
@@ -76,9 +107,7 @@ def fetch_data():
                     #print(p,data[p])
                     p += 1
                     #input("NEXT")
-                except Exception as e:
-                    #print(url)
-                    #input(e)
+                except Exception as e:                    
                     pass
 
             page += 1
