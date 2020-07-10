@@ -29,7 +29,6 @@ def fetch_data():
 
     base_url = "https://holleranddash.com"
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         json_data = session.get("https://maplestreetbiscuits.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(coord[0])+"&lng="+str(coord[1])+"&max_results=100&search_radius=500").json()
         
@@ -40,7 +39,7 @@ def fetch_data():
             city = data['city']
             state = data['state']
             zipp = data['zip']
-            store_number = data['id']
+            store_number = data['url'].split("=")[-1]
             phone = data['phone']
             lat = data['lat']
             lng = data['lng']
@@ -52,11 +51,11 @@ def fetch_data():
             store.append(base_url)
             store.append(location_name)
             store.append(street_address)
-            store.append(city)
+            store.append(city.replace(",",""))
             store.append(state)
             store.append(zipp)   
             store.append("US")
-            store.append(store_number)
+            store.append(store_number.replace('8#index','8').replace('23#index','23'))
             store.append(phone)
             store.append("<MISSING>")
             store.append(lat)
