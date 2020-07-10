@@ -1,12 +1,14 @@
 import csv
 import re
+import pdb
 import requests
+from lxml import etree
 import json
 import csv
 import requests
 from bs4 import BeautifulSoup
 
-base_url = 'https://marriott.com/'
+base_url = 'https://www.marriott.com/'
 
 def validate(item):    
     if type(item) == list:
@@ -38,7 +40,8 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://pacsys.marriott.com/data/marriott_properties_LC_en-US.json"
+    url = "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json"
+            # "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json"
     session = requests.Session()
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
@@ -55,7 +58,7 @@ def fetch_data():
             for k in j['country_states']:
                 for h in k['state_cities']:
                     for g in (h['city_properties']):
-                        if "USA" in (g['country_name']) or "CA" in (g['country_name']):
+                        if "USA" in (g['country_name']):
                             zipp = (g['postal_code'])
                             location_name = (g['name'])
                             street_address = (g['address'])
@@ -67,7 +70,7 @@ def fetch_data():
                             longitude = (g['longitude'])
                             key = (g['marsha_code'])
                             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-                            #print(page_url)
+                            # print(page_url)
                             output = []
                             output.append(base_url) # url
                             output.append(location_name) #location name
@@ -78,7 +81,43 @@ def fetch_data():
                             output.append(country_code) #country code
                             output.append("<MISSING>") #store_number
                             output.append(phone) #phone
-                            output.append("<MISSING>") #location type
+                            output.append("Marriott Hotel") #location type
+                            output.append(latitude) #latitude
+                            output.append(longitude) #longitude
+                            output.append("<MISSING>") 
+                            output.append(page_url)#opening hours            
+                            yield output
+    for i1 in data_8:
+        # print(i1)
+        for j1 in i1['region_countries']:
+            for k1 in j1['country_states']:
+                # print(k1)
+                for h1 in k1['state_cities']:
+                    for g1 in (h1['city_properties']):
+                        if "CA" in (g1['country_code']):
+                            zipp = (g1['postal_code'])
+                            location_name = (g1['name'])
+                            street_address = (g1['address'])
+                            city = (g1['city'])
+                            state = (g1['state_name'])
+                            country_code = (g1['country_name'])
+                            phone = (g1['phone'])
+                            latitude = (g1['latitude'])
+                            longitude = (g1['longitude'])
+                            key = (g1['marsha_code'])
+                            page_url = "https://www.marriott.com/hotels/travel/"+str(key)
+                            # print(page_url)
+                            output = []
+                            output.append(base_url) # url
+                            output.append(location_name) #location name
+                            output.append(street_address) #address
+                            output.append(city)#city
+                            output.append(state) #state
+                            output.append(zipp) #zipcode
+                            output.append(country_code) #country code
+                            output.append("<MISSING>") #store_number
+                            output.append(phone) #phone
+                            output.append("Marriott Hotel") #location type
                             output.append(latitude) #latitude
                             output.append(longitude) #longitude
                             output.append("<MISSING>") 

@@ -20,7 +20,7 @@ def fetch_data():
     typ = '<MISSING>'
     store = '<MISSING>'
     country = 'US'
-    loc = '<MISSING>'
+    loc = 'redlandsgrill.com/locations/'
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
         if 'pm<' in line and '<div class="socialMediaLinks">' not in line:

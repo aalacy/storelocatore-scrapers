@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -21,6 +20,7 @@ def fetch_data():
     url = 'https://locations.tacobell.com/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<span class="Directory-listLinkText">' in line:
             items = line.split('<span class="Directory-listLinkText">')
             for item in items:
@@ -33,6 +33,7 @@ def fetch_data():
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<a class="Directory-listLink" href="' in line2:
                 items = line2.split('<a class="Directory-listLink" href="')
                 for item in items:
@@ -49,6 +50,7 @@ def fetch_data():
             print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
+                line3 = str(line3.decode('utf-8'))
                 if '<a data-ya-track="visit_site" href="../' in line3:
                     items = line3.split('<a data-ya-track="visit_site" href="../')
                     for item in items:
@@ -74,6 +76,7 @@ def fetch_data():
             lng = ''
             r4 = session.get(loc, headers=headers, verify=False)
             for line4 in r4.iter_lines():
+                line4 = str(line4.decode('utf-8'))
                 if '"c_siteNumber":"' in line4 and store == '':
                     store = line4.split('"c_siteNumber":"')[1].split('"')[0]
                 if 'property="og:title" content="' in line4:

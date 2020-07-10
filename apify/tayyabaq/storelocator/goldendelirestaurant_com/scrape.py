@@ -25,10 +25,9 @@ def fetch_data():
     # Your scraper here
     data = []
     
-    url = 'https://www.thegoldendeli.com/contacts/'
-    r = session.get(url, headers=headers, verify=False)
-  
-    soup =BeautifulSoup(r.text, "html.parser")
+    url = 'https://www.thegoldendeli.com/contacts/'    
+    r = session.get(url, headers=headers, verify=False)    
+    soup =BeautifulSoup(r.text, "html.parser")    
    
     divlist = soup.findAll('div', {'class': 'contact-icon'})
    # print("states = ",len(state_list))
@@ -51,20 +50,20 @@ def fetch_data():
             hour = '<MISSING>'
         lat = '<MISSING>'
         longt  = '<MISSING>'
-        if p == 0:
+        '''if p == 0:
             lat = str(soup).split('"lat":')[1].split(',',1)[0]
             lat = lat[0:9]           
             longt = str(soup).split('"lng":')[1].split(',',1)[0]
-            longt = longt[0:9]    
+            longt = longt[0:9]    '''
         data.append(['https://goldendelirestaurant.com/',url,city,street,city,state,pcode,'US',
                         '<MISSING>',
                         phone,
                        '<MISSING>',
-                        lat,
-                        longt,
+                        '<MISSING>',
+                        '<MISSING>',
                         hours
                     ])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
                 
 
