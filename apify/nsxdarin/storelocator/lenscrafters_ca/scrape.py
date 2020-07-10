@@ -30,6 +30,12 @@ def fetch_data():
         add = ''
         store = ''
         name = ''
+        phone = ''
+        city = ''
+        state = ''
+        zc = ''
+        lat = ''
+        lng = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -60,8 +66,8 @@ def fetch_data():
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 country = 'CA'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-            if 'id="phone-main">' in line2:
-                phone = line2.split('id="phone-main">')[1].split('">')[1].split('<')[0]
+            if 'id="phone-main">' in line2 and phone == '':
+                phone = line2.split('id="phone-main">')[1].split('<')[0]
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
