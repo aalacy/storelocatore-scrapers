@@ -5,24 +5,9 @@ import re
 
 from random import randint
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.keys import Keys
+from sgselenium import SgSelenium
 
-
-def get_driver():
-	options = Options() 
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
-
+driver = SgSelenium().chrome()
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -38,7 +23,6 @@ def fetch_data():
 	
 	base_link = "https://www.kenworth.com/dealers/"
 
-	driver = get_driver()
 	time.sleep(2)
 
 	driver.get(base_link)
