@@ -53,6 +53,8 @@ def fetch_data():
 
 	for item in poi_raw:
 		item = item.replace("\\","")
+		if "COMING SOON" in item:
+			continue
 		
 		locator_domain = "norms.com"
 		
@@ -72,18 +74,15 @@ def fetch_data():
 		except:
 			phone = "<MISSING>"
 
-		location_type = "CURRENT"
+		location_type = "<MISSING>"
 		try:
 			hours_of_operation = re.findall('Hours:.+</p', item)[0].replace('Hours:','')[:-3].strip()
 		except:
 			try:
 				hours_of_operation = re.findall('HOURS:.+</p', item)[0].replace('HOURS:','')[:-3].strip()
-			except:				
-				if "COMING SOON" in item:
-					hours_of_operation = "<MISSING>"
-					location_type = "COMING SOON"
-					street_address = street_address.replace("COMING SOON!<br>rnrn","")
-			
+			except:
+				hours_of_operation = "<MISSING>"
+				
 		store_number = item[item.find(":")+1:item.find(",")].strip()
 
 		geo = re.findall(r'\[[0-9]+\.[0-9]+,-[0-9]+\.[0-9]+\]', item)[0].replace("[","").replace("]","").split(",")
