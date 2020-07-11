@@ -3,6 +3,14 @@ import requests, re
 from bs4 import BeautifulSoup
 from lxml import html
 import usaddress
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,57 +20,71 @@ def write_output(data):
         for row in data:
             if row:
                 writer.writerow(row)
+
+                
 def fetch_data():
+    p = 0
+    data = []
     url="https://zinburger.com/locations/"
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    r = requests.get(url)
-    tree = html.fromstring(r.content)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    script = soup.findAll("script")
-    lat = re.findall(r'latitude.*?\":"[\d.*]*',str(script))
-    lon = re.findall(r'longitude.*?\":"-[\d.*]*',str(script))
-    for n in range(0,len(lat)):
-        latitude.append(lat[n].split('":"')[1])
-        longitude.append(lon[n].split('":"')[1])
-    location = soup.findAll("h6", {"class": "title-heading-left"})
-    for n in range(0,len(location)):
-        if 'MAP IT' in location[n].get_text():
-            location_name.append(location[n].get_text().strip())
-    address = soup.findAll("div", {"class": "fusion-text"})
-    hours = soup.findAll("div", {"class": "panel-body toggle-content fusion-clearfix"})
-    hours_of_operation = [hours[n].get_text().split("$")[0].strip() for n in range(0,len(hours))]
-    address = soup.findAll("div", {"class": "fusion-text"})
-    address2 = [address[n].get_text().split("To Order")[0] for n in range(0,len(address))]
-    for n in range(2,len(address2)):
+    r  = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text,"html.parser")
+    divlist = soup.findAll('div',{'class':'fusion-one-third'})
+    #print(len(divlist))
+                           
+    for div in divlist:
         try:
-            tagged = usaddress.tag(str(address2[n].split("\n")[0:3]))[0]
-        except:
-            tagged = usaddress.tag(str(address2[n].split("\n")[1:3]))[0]
-        if re.findall(r'[\d].*',address2[n].split("\n")[0])!=[]:
-            street_address.append(address2[n].split("\n")[0])
-        else:
-            street_address.append(address2[n].split("\n")[1])
-        city.append(tagged['PlaceName'])
-        state.append(tagged['StateName'])
-        zipcode.append(tagged['ZipCode'].replace("]","").replace("'","").split(",")[0])
-        phone.append(re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}',address2[n])[0])
-    for n in range(0,len(location_name)): 
-        data.append([
-            'https://zinburger.com/',
-            'https://zinburger.com/locations/',
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            latitude[n],
-            longitude[n],
-            hours_of_operation[n]
-        ])
+            check =''
+            check = div.find('i',{'class':'fa-fusion-box'}).text
+            title = div.find('h4').text.split(' ')[0]
+            coord = div.find('h4').find('a')['href']
+            det = div.find('div',{'class':'fusion-text'}).text
+            if det.find('To Order Food for Delivery') > -1:
+                det = det[0:det.find('To Order Food for Delivery')]
+            if det.find('To place an order') > -1:
+                det = det.split('.',1)[1]
+            det = det.lstrip().rstrip().splitlines()
+            #print(det)         
+            m = 0           
+            street = det[m]
+            m += 1
+            if det[m].find(',') == -1 or det[m].find(',') > -1 and det[m].find('#') > -1:
+                street = street + ' ' + det[m]
+                m += 1
+            
+            city, state = det[m].split(', ',1)
+            #print(statem)
+            state = state.lstrip()
+            state,pcode= state.split(' ',1)
+            
+            m += 1
+            phone = det[m]           
+            try:
+                lat,longt = coord.split('@')[1].split(',',1)
+            except:
+                r = session.get(coord)
+                coord = r.url
+                lat,longt = coord.split('@')[1].split(',',1)
+                
+            longt = longt.split(',',1)[0]
+            hourd = div.find('div',{'class':'toggle-content'}).findAll('p')
+            hours = ''            
+            for hr in hourd:
+                if hr.text.find("HAPPY") > -1:
+                    break
+                hours = hours+ hr.text +' '
+            if len(hours) < 3:
+                hours = '<MISSING>'
+            else:
+                hours = hours.replace('\n',' ').replace('HOURS ','').lstrip()
+            
+            data.append(['https://zinburger.com/','https://zinburger.com/locations/',title,street,city,state,pcode,'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
+            #print(p,data[p])         
+            p += 1
+            
+        except Exception as e:
+            #print(e)
+            pass
+     
     return data
 def scrape():
     data = fetch_data()
