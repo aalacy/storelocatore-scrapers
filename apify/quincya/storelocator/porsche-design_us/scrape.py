@@ -67,6 +67,8 @@ def fetch_data():
 		raw_address = str(item.p)[3:].replace("</p>","").replace("\n","").strip().split("<br/>")
 
 		street_address = raw_address[0].strip()
+		if "," in street_address:
+			street_address = street_address[street_address.find(",")+1:].strip()
 		city_line = raw_address[1].strip()
 
 		try:
