@@ -48,7 +48,7 @@ def fetch_data():
 			print('[!] Error Occured. ')
 			print('[?] Check whether system is Online.')
 
-		locator_domain = "drafthouse_com"
+		locator_domain = "drafthouse.com"
 
 		items = base.find(class_="medium-3 columns").find_all("li")
 
