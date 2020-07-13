@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -12,7 +12,8 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
+session = SgRequests()
+            
 def fetch_data():
     # Your scraper here
     locs = []
@@ -27,7 +28,7 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-    res=requests.get("https://locations.bucadibeppo.com/us")
+    res=session.get("https://locations.bucadibeppo.com/us")
     soup = BeautifulSoup(res.text, 'html.parser')
     lis = soup.find_all('li', {'class': 'c-directory-list-content-item'})
 
@@ -38,11 +39,11 @@ def fetch_data():
 
             page_url.append(uli)
         else:
-            res = requests.get("https://locations.bucadibeppo.com/"+li.find("a").get("href").replace("../",""))
+            res = session.get("https://locations.bucadibeppo.com/"+li.find("a").get("href").replace("../",""))
             soup = BeautifulSoup(res.text, 'html.parser')
             llis = soup.find_all('li', {'class': 'c-directory-list-content-item'})
             if llis ==[]:
-                res = requests.get("https://locations.bucadibeppo.com/" + li.find("a").get("href").replace("../", ""))
+                res = session.get("https://locations.bucadibeppo.com/" + li.find("a").get("href").replace("../", ""))
                 soup = BeautifulSoup(res.text, 'html.parser')
                 divs = soup.find_all('div', {'class': 'c-location-grid-col'})
                 for div in divs:
@@ -53,7 +54,7 @@ def fetch_data():
                 if num == 1:
                     page_url.append("https://locations.bucadibeppo.com/" + lli.find("a").get("href").replace("../",""))
                 else:
-                    res = requests.get("https://locations.bucadibeppo.com/" + lli.find("a").get("href").replace("../",""))
+                    res = session.get("https://locations.bucadibeppo.com/" + lli.find("a").get("href").replace("../",""))
                     soup = BeautifulSoup(res.text, 'html.parser')
                     divs = soup.find_all('div', {'class': 'c-location-grid-col'})
                     for div in divs:
@@ -61,7 +62,7 @@ def fetch_data():
 
     for url in page_url:
         #print(url)
-        res = requests.get(url)
+        res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         #print(soup)
         #break
