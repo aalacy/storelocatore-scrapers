@@ -123,18 +123,7 @@ def fetch_data():
         longitude = item.find('meta', attrs={'itemprop': 'longitude'})['content']
 
         try:
-            raw_hours = item.find(class_="c-hours-details").find_all('tr')[1:]
-            hours = ""
-            hours_of_operation = ""
-
-            try:
-                for hour in raw_hours:
-                    hours = hours + " " + hour.text.replace("\t","").replace("\n"," ").strip()
-                hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-            except:
-                pass
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
+           	hours_of_operation = item.find(id="mainStoreHours").table.text.replace("Day of the WeekHours","").replace("PM","PM ").replace("day","day ").strip()
         except:
             hours_of_operation = "<MISSING>"
 
