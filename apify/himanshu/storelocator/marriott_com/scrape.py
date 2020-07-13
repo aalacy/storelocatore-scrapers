@@ -5,9 +5,9 @@ import requests
 from lxml import etree
 import json
 import csv
-import requests
 from bs4 import BeautifulSoup
-
+from sgrequests import SgRequests
+session = SgRequests()
 base_url = 'https://www.marriott.com/'
 
 def validate(item):    
@@ -42,7 +42,7 @@ def fetch_data():
     output_list = []
     url = "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json"
             # "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json"
-    session = requests.Session()
+    #session = requests.Session()
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'upgrade-insecure-requests': '1',
