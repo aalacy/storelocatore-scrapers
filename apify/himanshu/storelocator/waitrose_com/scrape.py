@@ -43,7 +43,7 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36,'
         }
         try:
-            json_data = requests.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
+            json_data = session.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
         except:
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
@@ -61,7 +61,7 @@ def fetch_data():
             longitude = data['longitude']
             page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(store_number)+".html"
             # print(page_url)
-            r1 = requests.get(page_url,headers=headers)
+            r1 = session.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             # addr = soup1.find("div",{"class":"col branch-details"}).text.replace(street_address,"").replace(city,"").replace(zipp,"").replace(phone,"").strip()
             try:
