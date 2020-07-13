@@ -72,7 +72,10 @@ def fetch_data():
                                             hours = hours + '; ' + hrs
                             except:
                                 hours = '<MISSING>'
+                            if 'Mon' in hours and 'Sun' not in hours:
+                                hours = hours + '; Sun: Closed'
                             array.append(store)
+                            zc = zc[:5]
                             if store not in sids:
                                 sids.append(store)
                                 print(store)
