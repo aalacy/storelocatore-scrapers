@@ -57,32 +57,32 @@ def fetch_data():
         for line2 in lines:
             line2 = str(line2.decode('utf-8'))
             if 'property="og:title" content="' in line2:
-                name = line2.split('property="og:title" content="')[1].split('"')[0]
+                name = line2.split('property="og:title" content="')[1].split('"')[0].encode('utf-8')
             if 'property="business:contact_data:street_address" content="' in line2:
-                add = line2.split('property="business:contact_data:street_address" content="')[1].split('"')[0]
+                add = line2.split('property="business:contact_data:street_address" content="')[1].split('"')[0].encode('utf-8')
             if 'property="business:contact_data:locality" content="' in line2:
-                city = line2.split('property="business:contact_data:locality" content="')[1].split('"')[0]
+                city = line2.split('property="business:contact_data:locality" content="')[1].split('"')[0].encode('utf-8')
             if 'property="business:contact_data:region" content="' in line2:
-                state = line2.split('property="business:contact_data:region" content="')[1].split('"')[0]
+                state = line2.split('property="business:contact_data:region" content="')[1].split('"')[0].encode('utf-8')
             if 'property="business:contact_data:postal_code" content="' in line2:
-                zc = line2.split('property="business:contact_data:postal_code" content="')[1].split('"')[0]
+                zc = line2.split('property="business:contact_data:postal_code" content="')[1].split('"')[0].encode('utf-8')
             if 'property="business:contact_data:phone_number" content="' in line2:
-                phone = line2.split('property="business:contact_data:phone_number" content="')[1].split('"')[0]
+                phone = line2.split('property="business:contact_data:phone_number" content="')[1].split('"')[0].encode('utf-8')
             if 'place:location:latitude" content="' in line2:
-                lat = line2.split('place:location:latitude" content="')[1].split('"')[0]
+                lat = line2.split('place:location:latitude" content="')[1].split('"')[0].encode('utf-8')
             if 'place:location:longitude" content="' in line2:
-                lng = line2.split('place:location:longitude" content="')[1].split('"')[0]
+                lng = line2.split('place:location:longitude" content="')[1].split('"')[0].encode('utf-8')
             if '</style>' in line2:
                 g = next(lines)
                 g = str(g.decode('utf-8'))
                 if '<h3>' in g:
-                    typ = g.split('>')[1].split('<')[0]
+                    typ = g.split('>')[1].split('<')[0].encode('utf-8')
             if 'var hoursArray' in line2:
                 days = line2.split("Array('")
                 for day in days:
                     if "')," in day:
                         hrs = day.split("'")[0] + ': ' + day.split(", '")[1].split("'")[0] + '-' + day.split(", '")[2].split("'")[0]
-                        hrs = hrs.replace('CLOSED-CLOSED','Closed')
+                        hrs = hrs.replace('CLOSED-CLOSED','Closed').encode('utf-8')
                         if hours == '':
                             hours = hrs
                         else:
