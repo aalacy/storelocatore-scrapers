@@ -62,4 +62,3 @@ def scrape():
 
 scrape()
 
-fetch_data()
