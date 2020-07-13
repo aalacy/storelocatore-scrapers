@@ -8,13 +8,22 @@ from random import randint
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+
 def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+	options = Options() 
+	options.add_argument('--headless')
+	options.add_argument('--no-sandbox')
+	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+	options.add_argument('--disable-dev-shm-usage')
+	options.add_argument('--window-size=1920,1080')
+	return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -55,7 +64,15 @@ def fetch_data():
 		print(main_link)
 
 		driver.get(main_link)
-		time.sleep(randint(6,8))
+		time.sleep(randint(2,4))
+
+		try:
+			element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+				(By.CSS_SELECTOR, ".TextDataColumn")))
+			time.sleep(randint(2,4))
+		except:
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		count = 0
 		while True and count < 5:
@@ -66,14 +83,14 @@ def fetch_data():
 				final_links.append(main_link)
 			try:
 				driver.find_element_by_id("ctl00_MainContent_lnkNextTop").click()
-				time.sleep(randint(4,5))
+				time.sleep(randint(4,6))
 				count += 1
 			except:
 				break
 
 	data = []
 	total_links = len(final_links)
-	for i, final_link in enumerate(final_links[46:]):
+	for i, final_link in enumerate(final_links):
 		print("Link %s of %s" %(i+1,total_links))
 		print(final_link)
 		final_req = session.get(final_link, headers = HEADERS)
