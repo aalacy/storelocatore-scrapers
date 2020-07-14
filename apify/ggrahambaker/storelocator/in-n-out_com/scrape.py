@@ -1,9 +1,27 @@
 import csv
-import os
-from sgselenium import SgSelenium
 from sgrequests import SgRequests
 import json
 import time
+from random import randint
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 session = SgRequests()
 
@@ -20,26 +38,55 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://in-n-out.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get('https://locations.in-n-out.com/map/')
-    driver.implicitly_wait(30)
-    all_store = driver.find_element_by_css_selector('li#tabAll')
-    driver.execute_script("arguments[0].click();", all_store)
+    driver = get_driver()
+    time.sleep(2)
+
+    driver.get('https://locations.in-n-out.com/map2/')
+
+    try:
+        element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+            (By.ID, "search-form")))
+        time.sleep(randint(2,4))
+    except:
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
+
+    menu_button = driver.find_element_by_id('search-form').find_element_by_tag_name("button")
+    driver.execute_script("arguments[0].click();", menu_button)
+    time.sleep(randint(2,4))
+
+    all_store_button = driver.find_element_by_id('menu').find_elements_by_tag_name("button")[2]
+    driver.execute_script("arguments[0].click();", all_store_button)
     time.sleep(10)
 
-    results = driver.find_elements_by_css_selector('div.result')
     store_numbers = []
-    for res in results:
-        store_number = res.get_attribute('data-storenumber')
-        
-        store_numbers.append(store_number)
+    page = 1
+    while True and page < 200:
+        print('Page: ' + str(page))
+        results = driver.find_element_by_id('search-results').find_elements_by_tag_name('li')
+        for res in results:
+            store_number = res.find_element_by_tag_name('img').get_attribute('data-store')
+            store_numbers.append(store_number)
+
+        try:
+            if not driver.find_element_by_xpath("//button[(@aria-label='Next')]").get_attribute('disabled') == 'true':
+                next_button = driver.find_element_by_xpath("//button[(@aria-label='Next')]")
+                driver.execute_script("arguments[0].click();", next_button)
+                time.sleep(randint(2,4))
+            else:
+                break
+        except:
+            break
+
+        page += 1
+
+    print('Search Complete!')
 
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
     for store_number in store_numbers:
-        response = session.get(api_base + store_number).content
-        cont = json.loads(response)
-        
+        cont = session.get(api_base + store_number).json()
+
         store_number = cont['StoreNumber']
         location_name = cont['Name']
         street_address = cont['StreetAddress']
@@ -55,10 +102,13 @@ def fetch_data():
 
         location_type = '<MISSING>'
         phone_number = '1-800-786-1000'
-        page_url = '<MISSING>'
+        page_url = api_base + str(store_number)
         country_code = 'US'
+        dining_hours = cont['DiningRoomHours']
+        if not dining_hours:
+            dining_hours = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url, cont['DiningRoomHours']]
+                        store_number, phone_number, location_type, lat, longit, hours, page_url, dining_hours]
         all_store_data.append(store_data)
 
     driver.quit()
