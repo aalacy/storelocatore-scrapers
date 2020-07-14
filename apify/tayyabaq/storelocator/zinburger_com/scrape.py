@@ -1,5 +1,5 @@
 import csv
-import requests, re
+import re
 from bs4 import BeautifulSoup
 from lxml import html
 import usaddress
