@@ -1,4 +1,3 @@
-#{"temporarilyClosed":false,"storeId":313,"url":"california/los-angeles/crenshaw-and-29th/","crossStreets":"Crenshaw Blvd & 29th","hours":{"days":{"Monday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0},"Tuesday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0},"Wednesday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0},"Thursday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0},"Friday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0},"Saturday":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0}},"ranges":[{"days":{"startDay":1,"endDay":6},"hours":{"openHour":10,"openMin":0,"closeHour":18,"closeMin":0}}]},"gps":"34.029728,-118.335339","storeOpenDate":"2019-04-23T00:00:00"}
 
 import csv
 from sgrequests import SgRequests
