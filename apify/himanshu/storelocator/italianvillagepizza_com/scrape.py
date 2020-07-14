@@ -9,216 +9,93 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        # print("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
+    with open('data.csv', mode='w',newline="") as output_file:
+        writer = csv.writer(output_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code","store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
 def fetch_data():
+
+
+    url = "https://italianvillagepizza.com/wp-admin/admin-ajax.php"
+
+    payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"address\"\r\n\r\n15012\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"formdata\"\r\n\r\naddressInput=15012\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"lat\"\r\n\r\n40.16454299999999\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"lng\"\r\n\r\n-79.80726109999999\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[bubblelayout]\"\r\n\r\n<div id=\"slp_info_bubble_[slp_location id]\" class=\"slp_info_bubble [slp_location featured]\">\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_name\"><strong>[slp_location name  suffix  br]</strong></span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_address\">[slp_location address       suffix  br]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_address2\">[slp_location address2      suffix  br]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_city\">[slp_location city          suffix  comma]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_state\">[slp_location state suffix    space]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_zip\">[slp_location zip suffix  br]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_country\"><span id=\"slp_bubble_country\">[slp_location country       suffix  br]</span></span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_directions\">[html br ifset directions]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_option label_directions wrap directions]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_website\">[html br ifset url][slp_location web_link][html br ifset url]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_email\">[slp_location email         wrap    mailto ][slp_option label_email ifset email][html closing_anchor ifset email][html br ifset email]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_phone\">[html br ifset phone]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_detail_label\">[slp_option   label_phone   ifset   phone]</span>[slp_location phone         suffix    br]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_fax\"><span class=\"location_detail_label\">[slp_option   label_fax     ifset   fax  ]</span>[slp_location fax           suffix    br]<span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_description\"><span id=\"slp_bubble_description\">[html br ifset description]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location description raw]</span>[html br ifset description]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_hours\">[html br ifset hours]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_detail_label\">[slp_option   label_hours   ifset   hours]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_detail_hours\">[slp_location hours         suffix    br]</span></span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_bubble_img\">[html br ifset img]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location image         wrap    img]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span id=\"slp_tags\">[slp_location tags]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[distance_unit]\"\r\n\r\nmiles\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[ignore_radius]\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[immediately_show_locations]\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[initial_radius]\"\r\n\r\n10000\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[initial_results_returned]\"\r\n\r\n25\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[label_directions]\"\r\n\r\nDirections\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[label_email]\"\r\n\r\nEmail\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[label_fax]\"\r\n\r\nFax\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[label_phone]\"\r\n\r\nPhone\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[label_website]\"\r\n\r\nWebsite\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_center]\"\r\n\r\nPittsburgh\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_center_lat]\"\r\n\r\n40.4406° N\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_center_lng]\"\r\n\r\n79.9959° W\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_domain]\"\r\n\r\nmaps.google.com\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_end_icon]\"\r\n\r\nhttp://italianvillagepizza.com/wp-content/plugins/store-locator-le/images/icons/bulb_azure.png\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_home_icon]\"\r\n\r\nhttp://italianvillagepizza.com/wp-content/plugins/store-locator-le/images/icons/box_yellow_home.png\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_type]\"\r\n\r\nroadmap\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[message_no_results]\"\r\n\r\nNo locations found.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[message_no_api_key]\"\r\n\r\nThis site most likely needs a Google Maps API key.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[no_autozoom]\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[no_homeicon_at_start]\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[radii]\"\r\n\r\n10,25,50,100,(200),500\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[radius_behavior]\"\r\n\r\nalways_use\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[results_layout]\"\r\n\r\n<div id=\"slp_results_[slp_location id]\" class=\"results_entry location_primary [slp_location featured]\">\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_left_column\"   id=\"slp_left_cell_[slp_location id]\"   >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_name\">[slp_location name] [slp_location uml_buttons] [slp_location gfi_buttons]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_distance\">[slp_location distance format=\"decimal1\"] [slp_option distance_unit]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_center_column location_secondary\" id=\"slp_center_cell_[slp_location id]\" >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_street\">[slp_location address]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_street2\">[slp_location address2]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_citystatezip\">[slp_location city_state_zip]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_country\">[slp_location country]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_phone\">[slp_location phone]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_fax\">[slp_location fax]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_right_column location_tertiary\"  id=\"slp_right_cell_[slp_location id]\"  >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_website\">[slp_location web_link raw]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_email\">[slp_location email_link]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_directions\"><a href=\"http\"\r\n\r\n//[slp_option map_domain]/maps?saddr=[slp_location search_address]&amp;daddr=[slp_location location_address]\" target=\"_blank\" class=\"storelocatorlink\">[slp_option label_directions]</a></span>\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_hours\">[slp_location hours format text]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location pro_tags raw]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location iconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location eventiconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location socialiconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[slplus_version]\"\r\n\r\n4.5.09\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[use_sensor]\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[zoom_level]\"\r\n\r\n12\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[zoom_tweak]\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[layout]\"\r\n\r\n<div id=\"sl_div\">[slp_search][slp_map][slp_results]</div>\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[maplayout]\"\r\n\r\n[slp_mapcontent][slp_maptagline]\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[resultslayout]\"\r\n\r\n<div id=\"slp_results_[slp_location id]\" class=\"results_entry location_primary [slp_location featured]\">\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_left_column\"   id=\"slp_left_cell_[slp_location id]\"   >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=primary position=first]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_name\">[slp_location name] [slp_location uml_buttons] [slp_location gfi_buttons]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"location_distance\">[slp_location distance_1] [slp_location distance_unit]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=primary position=last]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_center_column location_secondary\" id=\"slp_center_cell_[slp_location id]\" >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=secondary position=first]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_street\">[slp_location address]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_street2\">[slp_location address2]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_citystatezip\">[slp_location city_state_zip]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_country\">[slp_location country]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_phone\">[slp_location phone]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_address slp_result_fax\">[slp_location fax]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=secondary position=last]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"results_row_right_column location_tertiary\"  id=\"slp_right_cell_[slp_location id]\"  >\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=tertiary position=first]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_website\">[slp_location web_link]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_email\">[slp_location email_link]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_directions\"><a href=\"http\"\r\n\r\n//[slp_option map_domain]/maps?saddr=[slp_location search_address]&daddr=[slp_location location_address]\" target=\"_blank\" class=\"storelocatorlink\">[slp_location directions_text]</a></span>\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<span class=\"slp_result_contact slp_result_hours\">[slp_location hours]</span>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location pro_tags]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location iconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location eventiconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_location socialiconarray wrap=\"fullspan\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_addon section=tertiary position=last]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[searchlayout]\"\r\n\r\n<div id=\"address_search\">\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element add_on location=\"very_top\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element input_with_label=\"name\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element input_with_label=\"address\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"city\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"state\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"country\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element selector_with_label=\"tag\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"category\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"gfl_form_id\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element add_on location=\"before_radius_submit\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"<div class=\"search_item\">\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element dropdown_with_label=\"radius\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element button=\"submit\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element add_on location=\"after_radius_submit\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"[slp_search_element add_on location=\"very_bottom\"]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"</div>\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[theme]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[id]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[hide_search_form]\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[force_load_js]\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"options[map_region]\"\r\n\r\nus\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"radius\"\r\n\r\n500\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"tags\"\r\n\r\n\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"action\"\r\n\r\ncsl_ajax_search\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
+        'content-type': "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        'cache-control': "no-cache",
+        'postman-token': "785a755e-8055-8bdf-4413-cd9eb2870765"
+        }
+    page_url = "https://italianvillagepizza.com/stores/"
+    json_data = session.post( url, data=payload, headers=headers).json()
+    
+    for value in json_data['response']:
+        
+        location_name = "Pizza Shop in " + value['name']
+        street_address = value['address']
+        city = value['city']
+        state = value['state']
+        zipp = value['zip']
+        country_code = "US"
+        store_number = value['id']
+        location_type = "<MISSING>"
+        latitude = value['lat']
+        longitude = value['lng']
 
-    base_url = "https://italianvillagepizza.com/"
-    r = session.get(
-        "https://italianvillagepizza.com/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    # print(soup.prettify())
-
-    return_main_object = []
-
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "italianvillagepizza"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-
-    val = soup.find("div", class_="webcom-wrapper").find('ul',
-                                                         {'id': 'menu-header-menu'}).find('li', {'id': 'menu-item-141'}).find('ul', class_="sub-menu")
-
-    for links in val.find_all('a'):
-        r_loc = session.get(links['href'], headers=headers)
-        r_soup = BeautifulSoup(r_loc.text, "lxml")
-
-        content = r_soup.find('div', {'role': 'main'}).find(
-            'div', class_="entry-content")
-        lname = content .find(lambda tag: (
-            tag.name == "h1" or tag.name == "p") and "Pizza " in tag.text)
-        location_list = list(lname.stripped_strings)
-
-        location_name = "".join(location_list[0].replace(
-            "\xa0", " ").replace('Delivery', "Shop"))
-        address = content .find(lambda tag: (
-            tag.name == "h2") and "Our Pizza Shop in " in tag.text)
-
-        if address is not None:
-            tag_address = address.nextSibling.nextSibling
-            address_list = list(tag_address.stripped_strings)
-            # print("".join(address_list))
-
-            street_address = "".join(address_list).split(',')[0]
-            city = "".join(address_list).split(',')[1]
-            state = "".join(address_list).split(',')[2].split()[0]
-            zipp = "".join(address_list).split(',')[2].split()[1]
-            # print(street_address, city, state, zipp)
-            phone = address.nextSibling.nextSibling.nextSibling.nextSibling.text
-            hours = content .find(lambda tag: (
-                tag.name == "h2") and "Hours of Operation" == tag.text).nextSibling.nextSibling
-            list_hours = list(hours.stripped_strings)
-            hours_of_operation = "".join(list_hours).replace("\xa0", " ")
-            # print(hours_of_operation)
-            # print(location_name + " | " + street_address + " | " + city +
-            #   " | " + state + " | " + zipp + " | " + hours_of_operation)
-
-        else:
-            tag_address = content.find_all('p')[-1]
-            # print(tag_address)
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            list_address = list(tag_address.stripped_strings)
-            # print(list_address)
-            if len(list_address) == 3:
-                del list_address[0]
-            # print(list_address)
-            if len(list_address) == 2:
-                # print(list_address)
-                phone = "".join(list_address[-1])
-                hours_of_operation = "<MISSING>"
-                st_add = list_address[0].split(',')
-                # print(st_add)
-                # print(len(st_add))
-                # print("~~~~~~~~~~~~")
-                if len(st_add) == 4:
-                    street_address = "".join(st_add[0].strip())
-                    city = "".join(st_add[1].strip())
-                    state = "".join(st_add[2].strip())
-                    zipp = "".join(st_add[-1].strip())
-                    # print(street_address + " | " + city +
-                    #       " | " + state + " | " + zipp)
-                elif len(st_add) == 3 and "Clearview" in st_add[0]:
-                    street_address = " ".join(st_add[0].split()[:-1])
-                    city = "".join(st_add[0].split()[-1])
-                    zipp = "".join(st_add[-1].strip())
-                    state = "".join(st_add[-2].strip())
-                    # print(street_address + " | " + city +
-                    #       " | " + state + " | " + zipp)
-                elif len(st_add) == 3 and "Clearview" not in st_add[0]:
-                    # print(st_add)
-                    street_address = "".join(st_add[0].strip())
-                    city = "".join(st_add[1].strip())
-                    state = "".join(st_add[-1].split()[-2].strip())
-                    zipp = "".join(st_add[-1].split()[-1].strip())
-                    # print(street_address + " | " + city +
-                    #       " | " + state + " | " + zipp)
+        page_url = "https://italianvillagepizza.com/"+str(value['name'].lower().replace(" ","-"))
+        
+        soup = BeautifulSoup(session.get(page_url).content, "lxml")
+        try:
+            hours = " ".join(list(soup.find(lambda tag:(tag.name == "h2") and "Hours of Operation" in tag.text).findNext("p").stripped_strings))
+            
+        except:
+            hours = "<MISSING>"
+        
+        try:
+            phone = soup.find(lambda tag:(tag.name == "h2") and "Our Pizza Shop in " in tag.text).findNext("p").findNext("p").text
+        except:
+           
+            phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(soup))
+            if phone_list and len(phone_list) <= 2:
+                phone = phone_list[-1]
+                if ")" in phone and "(" not in phone:
+                    phone = "("+phone
                 else:
-                    list_st_address = "".join(st_add).split()[:-3]
-                    street_address = " ".join(list_st_address)
-                    city = "".join(st_add).split()[-3]
-                    state = "".join(st_add).split()[-2]
-                    zipp = "".join(st_add).split()[-1]
-
-                # print(street_address + " | " + city +
-                #       " | " + state + " | " + zipp)
+                    phone = phone
+            elif phone_list and len(phone_list) > 2:
+                for tele in phone_list:
+                    if ")" in tele and "-" in tele:
+                        if ")" in tele and "(" not in tele:
+                            phone = "("+tele
+                        else:
+                            phone = tele
             else:
-                # print(list_address)
-                if list_address == []:
-                    tag_address = content.find_all('p')[-4:]
-                    st_add = list(tag_address[0].stripped_strings)
-                    # print(st_add)
-                    # print(len(st_add))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~")
-                    if len(st_add) == 2:
-                        # print(st_add)
-                        street_address = "".join(st_add[0].strip())
-                        city = "".join(st_add[-1].split(',')[0].strip())
-                        state = "".join(
-                            st_add[-1].split(',')[-1].split()[0].strip())
-                        zipp = "".join(
-                            st_add[-1].split(',')[-1].split()[-1].strip())
-                        phone1 = list(tag_address[1].stripped_strings)
-                        phone = "".join(phone1)
-                        hours_of_operation = "<MISSING>"
-                        # print(street_address + " | " + city +
-                        # " | " + state + " | " + zipp + ' | ' +phone)
-                    else:
-                        # print(st_add)
-                        st_address = list(tag_address[1].stripped_strings)
-                        street_address = "".join(
-                            st_address[0].split(',')[0].strip())
-                        city = "".join(st_address[0].split(',')[1].strip())
-                        state = "".join(st_address[0].split(
-                            ',')[-1].split()[0].strip())
-                        zipp = "".join(st_address[0].split(
-                            ',')[-1].split()[-1].strip())
-                        phone = "".join(st_address[-1].strip())
-                        # print(street_address + " | " + city +
-                        # " | " + state + " | " + zipp + ' | ' +phone)
-                        hours = list(tag_address[2].stripped_strings)
-                        hours_of_operation = " ".join(hours).encode(
-                            'ascii', 'ignore').decode('ascii').strip()
-                        # print(hours_of_operation)
-                else:
-                    # print(list_address)
-                    tag_address = content.find_all('p')[-2:]
-                    # print(tag_address)
-                    # print(len(tag_address))
-                    # print("~~~~~~~~~~~~~")
-                    st_add = list(tag_address[0].stripped_strings)
-                    # print(st_add)
-                    # print(len(st_add))
-                    if len(st_add) == 1:
-                        street_address = " ".join(st_add[0].split(',')[:2])
-                        city = "".join(st_add[0].split(',')[2].strip())
-                        state = "".join(st_add[0].split(',')[3].strip())
-                        zipp = "".join(st_add[0].split(',')[-1].strip())
-                        # print(street_address + " | " + city +
-                        #       " | " + state + " | " + zipp)
-                        phone1 = st_add = list(tag_address[1].stripped_strings)
-                        phone = "".join(phone1)
-                        hours_of_operation = "<MISSING>"
-                    else:
-                        tag_address = content.find(
-                            'li').nextSibling.nextSibling
-                        address = tag_address.text.split(',')
-                        street_address = "".join(address[0].strip())
-                        city = "".join(address[1].strip())
-                        state = "".join(address[-1].split()[0].strip())
-                        zipp = "".join(address[-1].split()[-1].strip())
-                        phone = tag_address = content.find(
-                            'li').nextSibling.nextSibling.nextSibling.nextSibling.text
-                        hours_of_operation = "<MISSING>"
-                        # print(street_address + " | " + city +
-                        #       " | " + state + " | " + zipp + "|" + phone)
+                phone = "<MISSING>"
+        
+    
+        store = []
+        store.append("https://italianvillagepizza.com/")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours)
+        store.append(page_url)
+        yield store
 
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
-        store = ["<MISSING>" if x ==
-                 "" else x for x in store]
-        return_main_object.append(store)
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    return return_main_object
-
+        
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
