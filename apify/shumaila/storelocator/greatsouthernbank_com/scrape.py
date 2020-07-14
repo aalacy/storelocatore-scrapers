@@ -1,6 +1,3 @@
-#https://www.greatsouthernbank.com/_/api/branches/37.2075589/-93.2605231/25
-
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
