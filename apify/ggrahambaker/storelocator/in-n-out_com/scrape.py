@@ -80,7 +80,7 @@ def fetch_data():
 
         page += 1
 
-    print('Search Complete!')
+    print('Done loading pages..')
 
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
@@ -89,6 +89,7 @@ def fetch_data():
 
         store_number = cont['StoreNumber']
         location_name = cont['Name']
+        print(location_name)
         street_address = cont['StreetAddress']
 
         city = cont['City']
@@ -110,8 +111,12 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url, dining_hours]
         all_store_data.append(store_data)
+        
+    try:
+        driver.close()
+    except:
+        pass
 
-    driver.quit()
     return all_store_data
 
 def scrape():
