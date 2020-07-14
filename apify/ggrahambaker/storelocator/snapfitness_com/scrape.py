@@ -1,9 +1,27 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
-from selenium.common.exceptions import NoSuchElementException
-import usaddress
 import time
+from random import randint
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,137 +33,113 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def parse_can_addy(addy):
-    street_address = addy[0]
-    rest_addy = addy[1].split(' ')
-    city = rest_addy[0]
-    state = rest_addy[1]
-    zip_code = rest_addy[2] + ' ' + rest_addy[3]
-    return street_address, city, state, zip_code
-
-def parse_addy(addy):
-    parsed_add = usaddress.tag(addy)[0]
-
-    street_address = ''
-
-    if 'AddressNumber' in parsed_add:
-        street_address += parsed_add['AddressNumber'] + ' '
-    if 'StreetNamePreDirectional' in parsed_add:
-        street_address += parsed_add['StreetNamePreDirectional'] + ' '
-    if 'StreetNamePreType' in parsed_add:
-            street_address += parsed_add['StreetNamePreType'] + ' '
-    if 'StreetName' in parsed_add:
-        street_address += parsed_add['StreetName'] + ' '
-    if 'StreetNamePostType' in parsed_add:
-        street_address += parsed_add['StreetNamePostType'] + ' '
-    if 'OccupancyType' in parsed_add:
-        street_address += parsed_add['OccupancyType'] + ' '
-    if 'OccupancyIdentifier' in parsed_add:
-        street_address += parsed_add['OccupancyIdentifier'] + ' ' 
-
-    street_address = street_address.strip()
-    city = parsed_add['PlaceName'].strip()
-    state = parsed_add['StateName'].strip()
-    zip_code = parsed_add['ZipCode'].strip()
-    
-    return street_address, city, state, zip_code
-
 def fetch_data():
     locator_domain = 'https://www.snapfitness.com/'
 
-    driver = SgSelenium().chrome()
+    driver = get_driver()
+    time.sleep(2)
+
     urls = ['https://www.snapfitness.com/ca/gyms/?q=canada', 'https://www.snapfitness.com/us/gyms/?q=united%20states']
-    all_store_data = []
+    
+    link_list = []
     for url in urls:
 
         driver.get(url)
-        
-        time.sleep(5)
-        go = driver.find_element_by_xpath("//button[contains(text(),'Go')]")
-        driver.execute_script("arguments[0].click();", go)
+        time.sleep(randint(2,4))
 
-        driver.implicitly_wait(10)
-        time.sleep(3)
-        link_list = []
-        locs = driver.find_elements_by_css_selector('div.club-overview')
+        try:
+            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+                (By.CLASS_NAME, "address")))
+            time.sleep(randint(2,4))
+        except:
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+        
+        locs = driver.find_elements_by_css_selector('.club-overview.Highlight0')
         
         for loc in locs:
             href = loc.find_element_by_css_selector('a.btn.btn-primary').get_attribute('href')
             if href not in link_list:
                 link_list.append(href)
 
-        for i, link in enumerate(link_list):
-            
-            driver.get(link)
-    
-            driver.implicitly_wait(10)
-            
-            main = driver.find_element_by_css_selector('div.location')
-            try:
-                location_name = main.find_element_by_css_selector('h1').text
-                off = 0
-            except NoSuchElementException:
-                location_name = main.find_element_by_css_selector('h3').text
-                off = 1
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-            conts = main.find_elements_by_css_selector('li')
-            phone_number = conts[0 + off].text
+    session = SgRequests()
 
-            addy = conts[1 + off].text
+    all_store_data = []
+    total_links = len(link_list)
+    for i, link in enumerate(link_list):
+        print("Link %s of %s" %(i+1,total_links))
 
-            if '/ca/' in url:
-                country_code = 'CA'
-                addy = addy.split('\n')
-                
-                street_address, city, state, zip_code = parse_can_addy(addy)
-            else:
-                country_code = 'US'
-                
-                if '1433 B (68 Place) Highway 68 North' in addy:
-                    street_address = '1433 B (68 Place) Highway 68 North' 
-                    city = 'Oak Ridge'
-                    state = 'NC'
-                    zip_code = '27310'
-                elif '1515 US-22' in addy:
-                    street_address = '1515 US-22'
-                    city = 'Watchung'
-                    state = 'NJ'
-                    zip_code = '07069'
-                elif '10342 Dyno Dr, North Country Mall' in addy:
-                    street_address = '10342 Dyno Dr, North Country Mall'
-                    city = 'Hayward'
-                    state = 'WI'
-                    zip_code = '54843'
-                elif '107 Waterstradt Commerce Dr' in addy:
-                    street_address = '107 Waterstradt Commerce Dr, Unit A and B'
-                    city = 'Dundee'
-                    state = 'MI'
-                    zip_code = '48131'
+        req = session.get(link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+            print(link)
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
+        
+        main = base.find(class_='location')
+        try:
+            location_name = main.h1.text
+        except:
+            location_name = main.h3.text
 
-                else:
-                    street_address, city, state, zip_code = parse_addy(addy)
-            
-            google_href = driver.find_element_by_css_selector('a#map').get_attribute('href')
-            
-            start = google_href.find('&query=')
-            coords = google_href[start + len('&query='):].split(',')
+        conts = main.find_all('li')
+        phone_number = main.find(class_="link_phonenumber").text.strip()
+        if not phone_number:
+            phone_number = '<MISSING>'
 
-            lat = coords[0]
-            longit = coords[1]
-            try:
-                hours = driver.find_element_by_css_selector('section#overviewSection').find_element_by_css_selector('h2').text
-            except NoSuchElementException:
-                hours = 'Open 24/7 to members'
-            
-            location_type = '<MISSING>'
-            page_url = link
+        addy = str(main.find('span'))
+        addy = addy.replace('<span>',"").replace('</span>',"").strip().split('<br/>')
 
-            store_number = '<MISSING>'
+        if '/ca/' in link:
+            country_code = 'CA'
+        else:
+            country_code = 'US'
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                            store_number, phone_number, location_type, lat, longit, hours, page_url]
-            
-            all_store_data.append(store_data)
+        street_address = addy[0].strip()
+        zip_code = addy[1][-5:]
+        if " " in zip_code:            
+            zip_code = addy[1][-7:].strip()
+
+        else:
+            if not zip_code.isnumeric():
+                zip_code = addy[1][addy[1].rfind(' '):].strip()
+
+        state = addy[1][addy[1].find(zip_code)-3:addy[1].find(zip_code)].strip()
+        city = addy[1][:addy[1].rfind(state)].strip()
+
+        if city == "Cary N":
+            city = "Cary"
+            state = "NC"
+
+        google_href = base.find(id='map')['href']
+        
+        start = google_href.find('&query=')
+        coords = google_href[start + len('&query='):].split(',')
+
+        lat = coords[0]
+        longit = coords[1]
+
+        try:
+            hours = base.find(id='overviewSection').h2.text.replace("to members","").strip()
+            if not hours:
+                hours = '<MISSING>'
+        except:
+            hours = '<MISSING>'
+        
+        location_type = '<MISSING>'
+        page_url = link
+
+        store_number = '<MISSING>'
+
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+        
+        all_store_data.append(store_data)
 
     driver.quit()
     return all_store_data
