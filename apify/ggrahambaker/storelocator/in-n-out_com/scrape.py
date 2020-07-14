@@ -44,9 +44,9 @@ def fetch_data():
     driver.get('https://locations.in-n-out.com/map2/')
 
     try:
-        element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
-            (By.ID, "search-form")))
-        time.sleep(randint(2,4))
+        element = WebDriverWait(driver, 150).until(EC.presence_of_element_located(
+            (By.CLASS_NAME, "icon-search")))
+        time.sleep(randint(4,6))
     except:
         print('[!] Error Occured. ')
         print('[?] Check whether system is Online.')
