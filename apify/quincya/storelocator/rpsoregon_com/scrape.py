@@ -26,7 +26,7 @@ def fetch_data():
 
     session = SgRequests()
     req = session.get(base_link, headers = HEADERS)
-    time.sleep(randint(1,2))
+    time.sleep(randint(2,3))
     try:
         base = BeautifulSoup(req.text,"lxml")
         print("Got today page")
