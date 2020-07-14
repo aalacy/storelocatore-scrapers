@@ -43,11 +43,11 @@ def fetch_data():
     for link in link_list:
         response = session.get(locator_domain + link, headers = HEADERS)
         soup = BeautifulSoup(response.content, 'html.parser')
-        addy = str(soup.find('div', {'class': 'locationaddress'}).find('p')).split('<br/>')
-        street_address = addy[0].strip().replace('<p>', '').strip()
+        addy = soup.find('div', {'class': 'locationaddress'}).find('p').text.replace('\r','').split('\n')
+        street_address = addy[0].strip()
         city, state, zip_code = addy_ext(addy[1].strip())
         
-        phone_number = BeautifulSoup(addy[2].strip(), 'html.parser').text
+        phone_number = addy[2].strip()
         
         hours_ps = soup.find('div', {'class': 'hours'}).find_all('p')
         hours = ''
