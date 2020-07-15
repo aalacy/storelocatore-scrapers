@@ -5,14 +5,14 @@ import re
 import json
 import usaddress
 session = SgRequests()
-import requests
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude","raw_address", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,7 +28,7 @@ def fetch_data():
         'postman-token': "7acdbaf7-3eba-6142-3f10-b97f02cb29ec"
         }
 
-    response = requests.post("https://arena-guide.com/wp-admin/admin-ajax.php", data=payload, headers=headers).json()['data']['raw_data']['markers']
+    response = session.post("https://arena-guide.com/wp-admin/admin-ajax.php", data=payload, headers=headers).json()['data']['raw_data']['markers']
     
     for name in response:
         location_name = name['title']
@@ -52,7 +52,7 @@ def fetch_data():
         address = usaddress.parse(raw_address.replace(zipp,"").replace(", Canada","").replace("Canada,","").replace("Canada","").replace(", USA","").replace("USA",""))
 
         city = []
-        state = ''
+        state = []
         street_address = []
         for info in address:
 
@@ -60,29 +60,37 @@ def fetch_data():
                 city.append(info[0])
 
             if "StateName" in info:
-                state = info[0]
+                state.append(info[0])
             
             if "AddressNumber" in info:
+                street_address.append(info[0])
+            if "StreetNamePreType" in info:
                 street_address.append(info[0])
             if "StreetName" in info:
                 street_address.append(info[0])
             if "StreetNamePostType" in info:
+                street_address.append(info[0])
+            if "StreetNamePostDirectional" in info:
                 street_address.append(info[0])
             if "OccupancyType" in info:
                 street_address.append(info[0])
             if "OccupancyIdentifier" in info:
                 street_address.append(info[0])
         
-        street_address = " ".join(street_address).replace(",","")
+        street_address = " ".join(street_address).replace(",","").replace("Ave.","Avenue")
         city = " ".join(city).replace(",","")
-        state = state.replace(",","").replace("York","New York")
+        state = " ".join(state).replace(",","").replace("PEI","PE").replace("Wisconsin","WI").replace("BC BC","BC").replace("Champlin","").replace("La QC","QC")
 
         if "T-126" in street_address:
             street_address = "T-126, 100 Ramillies Rd."
             city = "Angus"
+
+        if "604 rue 9e " in street_address:
+            street_address = "604 rue 9e (boul. Desrochers)"
+            city = "La Pocatière"
         page_url = soup.find("a")['href']
         try:
-            phone = soup.find("a",{"class":"phone"}).text.split("ext")[0].split("EXT")[0].split("x")[0].split("#")[0].split(",")[0].replace("(Main)","").replace("E","").replace("CITY","").split("/")[0].replace("(Arena)","").split("X")[0].strip()
+            phone = soup.find("a",{"class":"phone"}).text.split("ext")[0].split("EXT")[0].split("x")[0].split("#")[0].split(",")[0].replace("(Main)","").replace("E","").replace("CITY","").split("/")[0].replace("(Arena)","").split("X")[0].replace("819 819-797-7110","819-797-7110").replace("310-398-57819","310-398-5781").strip()
         except:
             phone = "<MISSING>"  
 
@@ -101,7 +109,6 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
-        store.append(raw_address.replace(zipp,""))
         store.append("<MISSING>")
         store.append(page_url)
 

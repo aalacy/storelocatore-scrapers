@@ -62,7 +62,7 @@ def fetch_data():
             json_data = json.loads(script.text.split(
                 "var pinList = ")[1].split("};")[0] + "}")
             for loc in json_data["PushPins"]:
-                print(loc)
+                #print(loc)
                 locator_domain = "https://www.extendedstayamerica.com"
                 latitude = loc['Latitude']
                 longitude = loc["Longitude"]
@@ -73,7 +73,7 @@ def fetch_data():
                 zipp = loc["HotelZip"]
                 # print(zipp)
                 page_url = loc["MinisiteUrl"]
-                #print(page_url)
+                print(page_url)
                 try:
                     r1 = requests.get(page_url)
                     soup = BeautifulSoup(r1.text,"lxml")
