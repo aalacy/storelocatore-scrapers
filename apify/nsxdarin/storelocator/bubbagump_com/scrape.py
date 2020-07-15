@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import re
 
@@ -22,9 +21,10 @@ def fetch_data():
     hours = ''
     HFound = False
     for line in lines:
+        line = str(line.decode('utf-8'))
         if 'style="border-style:none;" align="center"' in line:
             store = line.split('/img/locations/')[1].split('.')[0]
-        if '<!--========= End Locations Hours =========--> ' in line:
+        if '<!--========= End Locations Hours =========-->' in line:
             if country == 'US' or country == 'CA':
                 if hours == '':
                     hours = '<MISSING>'
@@ -52,6 +52,7 @@ def fetch_data():
             lat = line.split('<meta name="ICBM" content="')[1].split(',')[0]
             lng = line.split('<meta name="ICBM" content="')[1].split(',')[1].split('"')[0].strip()
             g = next(lines)
+            g = str(g.decode('utf-8'))
             if country == 'US' or country == 'CA':
                 phone = g.split('<span class="desktop">Ph:')[1].split('<')[0].strip()
                 add = g.split('<strong>')[1].split('<')[0]
