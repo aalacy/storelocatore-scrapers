@@ -82,7 +82,7 @@ def fetch_data():
                 for day in days:
                     if "')," in day:
                         hrs = day.split("'")[0] + ': ' + day.split(", '")[1].split("'")[0] + '-' + day.split(", '")[2].split("'")[0]
-                        hrs = hrs.replace('CLOSED-CLOSED','Closed').encode('utf-8')
+                        hrs = hrs.replace('CLOSED-CLOSED','Closed')
                         if hours == '':
                             hours = hrs
                         else:
