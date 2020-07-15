@@ -17,6 +17,7 @@ def fetch_data():
     url = 'https://www.samsclub.com/sitemap_locators.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.samsclub.com/club/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
@@ -39,6 +40,7 @@ def fetch_data():
         locurl = 'https://www.samsclub.com/api/node/clubfinder/' + store
         r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '"postalCode":"' in line2:
                 Fuel = True
                 name = line2.split('"name":"')[1].split('"')[0]
