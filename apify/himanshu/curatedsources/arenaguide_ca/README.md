@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-it's hard to parse addresses with their respective column so i have added raw address into csv. 
+invalid zip and i checked all data istrue for this site
