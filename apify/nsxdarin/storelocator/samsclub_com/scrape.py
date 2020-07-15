@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -60,14 +59,17 @@ def fetch_data():
                 fcinfo = line2.split('"operationalHours":{')[1].split(',"geoPoint"')[0]
                 days = fcinfo.split('},"')
                 for day in days:
-                    hrs = day.split('"startHr":"')[1].split('"')[0] + '-' + day.split('"endHr":"')[1].split('"')[0]
-                    dname = day.split('Hrs":')[0].replace('"','')
-                    hrs = dname + ': ' + hrs
-                    hrs = hrs.replace('To','-')
-                    if hours == '':
-                        hours = hrs
-                    else:
-                        hours = hours + '; ' + hrs
+                    try:
+                        hrs = day.split('"startHr":"')[1].split('"')[0] + '-' + day.split('"endHr":"')[1].split('"')[0]
+                        dname = day.split('Hrs":')[0].replace('"','')
+                        hrs = dname + ': ' + hrs
+                        hrs = hrs.replace('To','-')
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+                    except:
+                        pass
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
