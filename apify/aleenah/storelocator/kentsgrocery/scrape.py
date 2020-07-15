@@ -6,7 +6,7 @@ from sgselenium import SgSelenium
 import time
 
 def write_output(data):
-    with open('kentsgrocery_data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
