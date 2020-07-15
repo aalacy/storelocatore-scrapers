@@ -3,16 +3,16 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import usaddress
 session = SgRequests()
-
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude","hours_of_operation","raw_address","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude","raw_address", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,7 +28,7 @@ def fetch_data():
         'postman-token': "7acdbaf7-3eba-6142-3f10-b97f02cb29ec"
         }
 
-    response = session.post("https://arena-guide.com/wp-admin/admin-ajax.php", data=payload, headers=headers).json()['data']['raw_data']['markers']
+    response = requests.post("https://arena-guide.com/wp-admin/admin-ajax.php", data=payload, headers=headers).json()['data']['raw_data']['markers']
     
     for name in response:
         location_name = name['title']
@@ -46,11 +46,40 @@ def fetch_data():
             zipp = ca_zip_list[-1]
             country_code = "CA"
 
-        if us_zip_list:
+        elif us_zip_list:
             zipp = us_zip_list[-1]
             country_code = "US"
+        address = usaddress.parse(raw_address.replace(zipp,"").replace(", Canada","").replace("Canada,","").replace("Canada","").replace(", USA","").replace("USA",""))
 
-        address = raw_address.replace(zipp,"")
+        city = []
+        state = ''
+        street_address = []
+        for info in address:
+
+            if 'PlaceName' in info:
+                city.append(info[0])
+
+            if "StateName" in info:
+                state = info[0]
+            
+            if "AddressNumber" in info:
+                street_address.append(info[0])
+            if "StreetName" in info:
+                street_address.append(info[0])
+            if "StreetNamePostType" in info:
+                street_address.append(info[0])
+            if "OccupancyType" in info:
+                street_address.append(info[0])
+            if "OccupancyIdentifier" in info:
+                street_address.append(info[0])
+        
+        street_address = " ".join(street_address).replace(",","")
+        city = " ".join(city).replace(",","")
+        state = state.replace(",","").replace("York","New York")
+
+        if "T-126" in street_address:
+            street_address = "T-126, 100 Ramillies Rd."
+            city = "Angus"
         page_url = soup.find("a")['href']
         try:
             phone = soup.find("a",{"class":"phone"}).text.split("ext")[0].split("EXT")[0].split("x")[0].split("#")[0].split(",")[0].replace("(Main)","").replace("E","").replace("CITY","").split("/")[0].replace("(Arena)","").split("X")[0].strip()
@@ -62,19 +91,23 @@ def fetch_data():
         store = []
         store.append(base_url)
         store.append(location_name)
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
         store.append(zipp)
         store.append(country_code)
         store.append("<MISSING>") 
         store.append(phone)
         store.append("<MISSING>")
         store.append(lat)
-        store.append(lng)        
+        store.append(lng)
+        store.append(raw_address.replace(zipp,""))
         store.append("<MISSING>")
-        store.append(address)
         store.append(page_url)
+
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
 
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store

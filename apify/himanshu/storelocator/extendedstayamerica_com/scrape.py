@@ -3,9 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
+import requests
 session = SgRequests()
 
 def write_output(data):
@@ -64,7 +62,8 @@ def fetch_data():
             json_data = json.loads(script.text.split(
                 "var pinList = ")[1].split("};")[0] + "}")
             for loc in json_data["PushPins"]:
-                locator_domain = base_url
+                print(loc)
+                locator_domain = "https://www.extendedstayamerica.com"
                 latitude = loc['Latitude']
                 longitude = loc["Longitude"]
                 location_name = loc["HotelName"]
@@ -74,10 +73,19 @@ def fetch_data():
                 zipp = loc["HotelZip"]
                 # print(zipp)
                 page_url = loc["MinisiteUrl"]
-                # print(page_url)
+                #print(page_url)
+                try:
+                    r1 = requests.get(page_url)
+                    soup = BeautifulSoup(r1.text,"lxml")
+                    data_8 =  (soup.find("script",{ "type":"application/ld+json"}).text)
+                    json_data = json.loads(data_8)
+                    phone1 = (json_data['telephone'])
+                except:
+                    phone1 = "<MISSING>"
+                # exit()
                 store_number = loc["HotelId"]
                 hours_of_operation = "<MISSING>"
-                location_type = "<MISSING>"
+                location_type = "Extended Stay America"
                 country_code = "US"
                 try:
                     phone_tag = session.get(page_url, headers=headers)
@@ -108,7 +116,7 @@ def fetch_data():
                     hours_of_operation = "Open 24 hours a day, seven days a week"
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                         store_number, phone1, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]
                 if store_number in addresses:
                     continue

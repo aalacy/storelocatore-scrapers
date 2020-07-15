@@ -4,16 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
@@ -34,6 +29,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for store_data in data:
         store = []
+        # print(store_data)
+        # exit()
         location_name = store_data['mallName']
         street_address = store_data['address']
         city = store_data['city']
@@ -42,7 +39,7 @@ def fetch_data():
         if len(store_zip) == 4:
             store_zip = "0" + store_zip
         phone = store_data['phone']
-        store_number = "<MISSING>"
+        store_number = store_data["branch"]
         page_url = store_data["website"]
         if(location_name == '' or location_name is None):
             location_name = "<MISSING>"
