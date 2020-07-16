@@ -41,13 +41,14 @@ def fetch_data():
         if HFound and '<li style="' in line and 'Dining Rooms' not in line:
             HFound = False
         if HFound and 'Dining Rooms:</strong><br />' not in line:
-            if 'day' in line or '&nbsp;' in line:
+            if 'day' in line or '&nbsp;' in line or 'Daily' in line or 'Sun' in line:
                 if hours == '':
-                    hours = line.replace('\t','').replace('\r','').replace('\n','').strip().replace('&nbsp;',' ').replace('<br />','; ').replace('<div class=""float_left desktop"">','').replace('</div>','').strip()
+                    hours = line.replace('\t','').replace('\r','').replace('\n','').strip().replace('&nbsp;',' ').replace('<br />','; ').replace('<div class=""float_left desktop"">','').replace('</div>','').strip().replace('Daily','Daily:')
                 else:
-                    hours = hours + '; ' + line.replace('\t','').replace('\r','').replace('\n','').strip().replace('&nbsp;',' ').replace('<br />','; ').replace('<div class=""float_left desktop"">','').replace('</div>','').strip()
+                    hours = hours + '; ' + line.replace('\t','').replace('\r','').replace('\n','').strip().replace('&nbsp;',' ').replace('<br />','; ').replace('<div class=""float_left desktop"">','').replace('</div>','').strip().replace('Daily','Daily:')
             cleanr = re.compile('<.*?>')
             hours = re.sub(cleanr, '', hours)
+            hours = hours.replace(':;',':')
             hours = hours.replace('day;','day:')
         if '<meta name="ICBM" content="' in line:
             lat = line.split('<meta name="ICBM" content="')[1].split(',')[0]
