@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,11 +16,13 @@ def fetch_data():
     types = ['type0|Retail','type1|Commercial','type2|Commercial Maintenance','type3|Wholesale']
     url = 'https://www.pompstire.com/Locations'
     locs = []
+    tels = []
     r = session.get(url, headers=headers, verify=False)
     lines = r.iter_lines()
     website = 'pompstire.com'
     hours = ''
     for line in lines:
+        line = str(line.decode('utf-8'))
         if 'Use This Location</span><strong>' in line:
             name = line.split('Use This Location</span><strong>')[1].split('<')[0].replace('&apos;',"'")
             website = 'pompstire.com'
@@ -44,10 +45,13 @@ def fetch_data():
             next(lines)
             next(lines)
             g = next(lines)
+            g = str(g.decode('utf-8'))
             h = next(lines)
+            h = str(h.decode('utf-8'))
             if '1' not in g and '.' not in g and '0' not in g and '2' not in g and '7' not in g and ' St' not in g and '9' not in g and '3' not in g and '4' not in g and '5' not in g and '3' not in g and '6' not in g:
                 g = h
                 h = next(lines)
+                h = str(h.decode('utf-8'))
             add = g.split('<')[0].strip().replace('\t','')
             city = h.split(',')[0].strip().replace('\t','')
             state = h.split(',')[1].strip().split(' ')[0]
@@ -64,7 +68,11 @@ def fetch_data():
             lng = line.split('lon="')[1].split('"')[0]
             lat = line.split('lat="')[1].split('"')[0]
             loc = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if 'tel:' in phone:
+                phone = phone.split('tel:')[1].split("'")[0]
+            if phone not in tels:
+                tels.append(phone)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
