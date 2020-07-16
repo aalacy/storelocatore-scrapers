@@ -66,7 +66,7 @@ def fetch_data():
         if 'https://www.redroof.com/property/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    # print('Found %s Locations.' % str(len(locs)))
     q = collections.deque(locs)
     attempts = {}
     while q:
@@ -90,7 +90,7 @@ def fetch_data():
         r2 = None
         try:
             session = SgRequests()
-            print(loc)
+            # print(loc)
             r2 = session.get(loc, headers=headers)
         except (ConnectionError, Exception) as ex:
             print('Failed to connect to ' + loc)
@@ -120,8 +120,8 @@ def fetch_data():
                     zc, country, store, phone, typ, lat, lng, hours]
         location = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in location]
-        print(location)
-        print('---------')
+        # print(location)
+        # print('---------')
         yield location
 
 
