@@ -62,7 +62,7 @@ def fetch_data():
 
         hours = ''
         for i, p in enumerate(ps):
-            if '00pm' in p.text or '00am' in p.text:
+            if '00pm' in p.text or '00am' in p.text or 'Closed' in p.text:
                 hours += p.text + ' '
 
         hours = hours.strip()
