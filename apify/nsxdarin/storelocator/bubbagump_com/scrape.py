@@ -48,6 +48,7 @@ def fetch_data():
                     hours = hours + '; ' + line.replace('\t','').replace('\r','').replace('\n','').strip().replace('&nbsp;',' ').replace('<br />','; ').replace('<div class=""float_left desktop"">','').replace('</div>','').strip()
             cleanr = re.compile('<.*?>')
             hours = re.sub(cleanr, '', hours)
+            hours = hours.replace('day;','day:')
         if '<meta name="ICBM" content="' in line:
             lat = line.split('<meta name="ICBM" content="')[1].split(',')[0]
             lng = line.split('<meta name="ICBM" content="')[1].split(',')[1].split('"')[0].strip()
