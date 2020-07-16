@@ -1,7 +1,6 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import csv
