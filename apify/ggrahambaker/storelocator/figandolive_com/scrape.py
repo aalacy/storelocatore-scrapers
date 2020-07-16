@@ -1,8 +1,13 @@
 import csv
-import os
-from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+
+import time
+from random import randint
+import re
+
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+HEADERS = {'User-Agent' : user_agent}
 
 session = SgRequests()
 
@@ -11,41 +16,48 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.figandolive.com/'
+    base_link = 'https://www.figandolive.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
+    req = session.get(base_link, headers = HEADERS)
+    time.sleep(randint(1,2))
+    try:
+        item = BeautifulSoup(req.text,"lxml")
+    except (BaseException):
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
-    element = driver.find_element_by_css_selector('li.site-nav-submenu').find_element_by_css_selector('button')
-    driver.execute_script("arguments[0].click();", element)
-
-    lis = driver.find_element_by_css_selector('div#SubMenu-1').find_elements_by_css_selector('li')
+    lis = item.find(class_="sub-menu").find_all('li')
     link_list = []
     for li in lis:
-        link_list.append(li.find_element_by_css_selector('a').get_attribute('href'))
+        link_list.append("https://www.figandolive.com" + li.a['href'])
 
     all_store_data = []
 
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        start_idx = link.find('-olive')
 
-        location_name = link[start_idx + 7:-1].replace('-', ' ')
-        phone_number = driver.find_element_by_xpath('//a[@data-bb-track-category="Phone Number"]').get_attribute(
-            'href').replace('tel:', '')
-        address = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-address').split(',')
-        page = session.get(link)
-        assert page.status_code == 200
+        req = session.get(link, headers = HEADERS)
+        print(link)
+        time.sleep(randint(1,2))
+        try:
+            item = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-        soup = BeautifulSoup(page.content, 'html.parser')
-        main = soup.find('section', {'id': 'intro'})
+        locator_domain = "figandolive.com"
+        raw_name = item.find(class_="hero__content container").text
+        location_name = raw_name[:raw_name.find("View")].replace("\n"," ").strip()
+
+        phone_number = item.find('a', attrs={'data-bb-track-category': "Phone Number"})['href'].replace("tel:","")
+        address = item.find(class_="gmaps")['data-gmaps-address'].split(',')
+
+        main = item.find('section', {'id': 'intro'})
         ps = main.find_all('p')
 
         hours = ''
@@ -55,7 +67,8 @@ def fetch_data():
 
         hours = hours.strip()
         if len(address) == 4:
-            street_address = address[1]
+            if address[0].strip():
+                street_address = (address[0] + address[1])
             city = address[2].strip()
             state_zip = address[3].strip().split(' ')
 
@@ -69,17 +82,17 @@ def fetch_data():
             state = state_zip[0]
             zip_code = state_zip[1]
 
-        lat = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-lat')
-        longit = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-lng')
+        street_address = re.findall("[0-9].+", street_address)[0].strip()
+        lat = item.find(class_="gmaps")['data-gmaps-lat']
+        longit = item.find(class_="gmaps")['data-gmaps-lng']
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         country_code = 'US'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():
