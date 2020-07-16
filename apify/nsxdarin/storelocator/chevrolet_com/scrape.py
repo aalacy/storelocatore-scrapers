@@ -1,5 +1,4 @@
 import csv
-import urllib2
 import sgzip
 from sgrequests import SgRequests
 
@@ -41,6 +40,7 @@ def fetch_data():
         array = []
         website = 'chevrolet.com'
         for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
             if '{"id":' in line:
                 items = line.split('{"id":')
                 for item in items:
