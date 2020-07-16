@@ -44,17 +44,26 @@ def fetch_data():
                             city = addinfo.split(',')[1].strip()
                             state = addinfo.split(',')[2].strip()
                             zc = addinfo.split(',')[3].strip()
-                        else:
+                        elif addinfo.count(',') == 4:
                             add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
                             city = addinfo.split(',')[2].strip()
                             state = addinfo.split(',')[3].strip()
                             zc = addinfo.split(',')[4].strip()
+                        else:
+                            add = addinfo.split(',')[1].strip() + ' ' + addinfo.split(',')[1].strip() + ' ' + addinfo.split(',')[2]
+                            city = addinfo.split(',')[3].strip()
+                            state = addinfo.split(',')[4].strip()
+                            zc = addinfo.split(',')[5].strip()
                     if city == 'Kamloops':
                         state = 'BC'
                     if city == 'Garson':
                         state = 'ON'
                     if phone == '':
                         phone = '<MISSING>'
+                    if 'Can' in zc:
+                        zc = '<MISSING>'
+                    if '>' in phone:
+                        phone = phone.split('>')[1].split('<')[0]
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
