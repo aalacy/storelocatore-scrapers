@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,14 +14,18 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    canada = ['alberta','british-columbia','manitoba','nova-scotia','nunavut','ontario','quebec','saskatchewan','yukon','prince-edward-island','new-brunswick']
+    usa = ['alabama','alaska','arizona','arkansas','california','colorado','connecticut','delaware','district-of-columbia','florida','georgia','hawaii','idaho','illinois','indiana','iowa','kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan','minnesota','mississippi','missouri','montana','nebraska','nevada','new-hampshire','new-jersey','new-mexico','new-york','north-carolina','north-dakota','ohio','oklahoma','oregon','pennsylvania','rhode-island','south-carolina','south-dakota','tennessee','texas','utah','vermont','virginia','washington','west-virginia','wisconsin','wyoming']
     url = 'https://www3.hilton.com/sitemapurl-hi-00000.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www3.hilton.com/en/hotels/' in line and 'accommodations/index.html' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     print(len(locs))
     for loc in locs:
+        sname = loc.split('https://www3.hilton.com/en/hotels/')[1].split('/')[0]
         print('Pulling Location %s...' % loc)
         website = 'hilton.com'
         typ = '<MISSING>'
@@ -38,6 +41,7 @@ def fetch_data():
         lng = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<meta name="og:title" content="' in line2:
                 name = line2.split('<meta name="og:title" content="')[1].split('"')[0]
             if '"latitude": "' in line2:
@@ -63,7 +67,11 @@ def fetch_data():
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
         hours = '<MISSING>'
-        if country == 'US' or country == 'CA':
+        if sname in usa:
+            country = 'US'
+        if sname in canada:
+            country = 'CA'
+        if country == 'CA' or country == 'US':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
