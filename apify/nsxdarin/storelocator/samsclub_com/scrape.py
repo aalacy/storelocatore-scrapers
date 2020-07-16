@@ -56,8 +56,8 @@ def fetch_data():
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"state":"')[1].split('"')[0]
                 phone = line2.split('"phone":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split('}')[0]
+                lat = line2.split('"latitude":')[1].split('}')[0]
+                lng = line2.split('"longitude":')[1].split(',')[0]
                 fcinfo = line2.split('"operationalHours":{')[1].split(',"geoPoint"')[0]
                 days = fcinfo.split('},"')
                 for day in days:
@@ -77,6 +77,8 @@ def fetch_data():
         if phone == '':
             phone = '<MISSING>'
         if add != '':
+            if store == '8213':
+                add = '5448 A Whittlesey Blvd'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
