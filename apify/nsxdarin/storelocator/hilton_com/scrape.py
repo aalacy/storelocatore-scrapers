@@ -52,26 +52,34 @@ def fetch_data():
                     name = line2.split('<meta name="og:title" content="')[1].split('"')[0]
                 if '"latitude": "' in line2:
                     lat = line2.split('"latitude": "')[1].split('"')[0]
+                if '"latitude": \'' in line2:
+                    lat = line2.split('"latitude": \'')[1].split("'")[0].strip()
+                if '"longitude": \'' in line2:
+                    lng = line2.split('"longitude": \'')[1].split("'")[0].strip()
                 if '"longitude": "' in line2:
                     lng = line2.split('"longitude": "')[1].split('"')[0]
                 if '"productID":"' in line2:
                     store = line2.split('"productID":"')[1].split('"')[0]
                 if '"streetAddress": "' in line2:
                     add = line2.split('"streetAddress": "')[1].split('"')[0]
+                if '"streetAddress": \'' in line2:
+                    add = line2.split('"streetAddress": \'')[1].split("'")[0].strip()
                 if '"addressLocality": "' in line2:
                     city = line2.split('"addressLocality": "')[1].split('"')[0]
+                if '"addressLocality": \'' in line2:
+                    city = line2.split('"addressLocality": \'')[1].split("'")[0].strip()
                 if '"addressRegion": "' in line2:
                     state = line2.split('"addressRegion": "')[1].split('"')[0]
-                if '"addressCountry": "' in line2:
-                    country = line2.split('"addressCountry": "')[1].split('"')[0]
-                    if country == 'USA':
-                        country = 'US'
-                    if country == 'Canada':
-                        country = 'CA'
+                if '"addressRegion": \'' in line2:
+                    state = line2.split('"addressRegion": \'')[1].split("'")[0].strip()
                 if '"postalCode": "' in line2:
                     zc = line2.split('"postalCode": "')[1].split('"')[0]
+                if '"postalCode": \'' in line2:
+                    zc = line2.split('"postalCode": \'')[1].split("'")[0].strip()
                 if '"telephone": "' in line2:
                     phone = line2.split('"telephone": "')[1].split('"')[0]
+                if '<span class="property-telephone">' in line2 and phone == '':
+                    phone = line2.split('<span class="property-telephone">')[1].split('<')[0].strip()
             hours = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
