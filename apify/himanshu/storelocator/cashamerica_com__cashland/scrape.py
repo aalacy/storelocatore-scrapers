@@ -2,9 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import unicodedata
 import json
-import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -23,8 +21,8 @@ def fetch_data():
         'Accept': 'application/json, text/plain, */*',
     }
     base_url = "http://cashamerica.com/cashland"
-    link = "http://find.cashamerica.us/api/stores?p=1&s=1946&lat=33.5973&lng=-112.1073&d=2020-03-18T12:13:28.997Z&key=D21BFED01A40402BADC9B931165432CD"
-    r = requests.get(link,headers=headers)
+    link = "http://find.cashamerica.us/api/stores?p=1&s=1259&lat=33.5973&lng=-112.1073&d=2020-03-18T12:13:28.997Z&key=D21BFED01A40402BADC9B931165432CD"
+    r = session.get(link,headers=headers)
     json_data = r.json()
     locator_domain = base_url
     location_name = ""
@@ -45,9 +43,10 @@ def fetch_data():
         status =location['hours']['storeStatus']
         store_number =  str(location['storeNumber'])
         location_type = location['brand']
+        #print(location_type)
         page_url = "http://find.cashamerica.us/#/storesdetails/"+store_number+'/'+location_type+'/'+str(distance)+'/'+h+'/'+status
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
-        all_data = requests.get(http, headers=headers).json()
+        all_data = session.get(http, headers=headers).json()
         location_name = location['brand']
         street_address = all_data['address']['address1']
         city = all_data['address']['city']
