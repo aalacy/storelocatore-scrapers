@@ -40,7 +40,6 @@ def fetch_data():
             city = ''
             state = ''
             zc = ''
-            country = ''
             store = '<MISSING>'
             phone = ''
             lat = ''
