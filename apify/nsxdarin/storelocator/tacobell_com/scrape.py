@@ -47,7 +47,7 @@ def fetch_data():
                         else:
                             cities.append(curl)
         for city in cities:
-            print('Pulling City %s...' % city)
+            #print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 line3 = str(line3.decode('utf-8'))
@@ -60,7 +60,7 @@ def fetch_data():
                                 alllocs.append(lurl)
                                 locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
+            #print('Pulling Location %s...' % loc)
             website = 'tacobell.com'
             typ = 'Restaurant'
             name = ''
