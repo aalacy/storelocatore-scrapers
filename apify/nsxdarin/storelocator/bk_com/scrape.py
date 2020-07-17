@@ -18,7 +18,7 @@ def fetch_data():
     Found = False
     while Found is False:
         print('Getting Locations...')
-        r = session.get(url, headers=headers, timeout=30)
+        r = session.get(url, headers=headers, timeout=30, stream=True)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
             if '"_id":"restaurant_' in line:
