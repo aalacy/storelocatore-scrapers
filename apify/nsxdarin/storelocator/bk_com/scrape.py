@@ -27,13 +27,15 @@ def fetch_data():
                     if '"curbsideHours":' in item:
                         website = 'bk.com'
                         typ = '<MISSING>'
-                        store = item.split('"number":"')[1].split('"')[0]
+                        store = item.split('"number":"')[1].split('"')[0].encode('utf-8')
                         country = 'US'
-                        lat = item.split('"latitude":')[1].split(',')[0]
-                        lng = item.split('"longitude":')[1].split(',')[0]
+                        lat = item.split('"latitude":')[1].split(',')[0].encode('utf-8')
+                        lng = item.split('"longitude":')[1].split(',')[0].encode('utf-8')
                         name = item.split('"name":"')[1].split('"')[0].encode('utf-8')
-                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        phone = item.split('"phoneNumber":"')[1].split('"')[0].encode('utf-8')
                         add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
+                        add = add.strip()
+                        add = add.encode('utf-8')
                         city = item.split('"city":"')[1].split('"')[0].encode('utf-8')
                         zc = item.split('"postalCode":"')[1].split('"')[0].encode('utf-8')
                         state = item.split('"stateProvinceShort":"')[1].split('"')[0].encode('utf-8')
@@ -67,6 +69,7 @@ def fetch_data():
                             hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
+                        hours = hours.encode('utf-8')
                         if hours == '':
                             hours = '<MISSING>'
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
