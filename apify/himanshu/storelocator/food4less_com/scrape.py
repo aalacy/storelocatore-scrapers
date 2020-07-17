@@ -5,7 +5,6 @@ import re
 import sgzip
 import json
 import phonenumbers
-import requests
 
 
 

@@ -6,7 +6,6 @@ import json
 # import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
-import requests
 
 
 def write_output(data):
