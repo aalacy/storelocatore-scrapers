@@ -44,7 +44,7 @@ def fetch_data():
 		raw_data = item.ul.find_all('li')
 		raw_address = raw_data[3].text.strip()
 		city = location_name[:location_name.find(',')].strip()
-		street_address = raw_address[:raw_address.find(city)].strip()
+		street_address = raw_address[:raw_address.find(city)].replace("Address:","").strip()[:-1]
 		state = location_name[location_name.find(',')+1:].strip()
 		zip_code = raw_address[-6:].strip()
 		country_code = "US"
