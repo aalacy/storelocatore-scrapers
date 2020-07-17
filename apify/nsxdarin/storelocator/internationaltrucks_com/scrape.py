@@ -15,9 +15,24 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+def post(url, headers, data, attempts=1): 
+    global session
+    if attempts == 10:
+        print(f'could not post after {attempts} tries, giving up')
+        raise SystemExit
+    try: 
+        r = session.post(url, headers=headers, data=data)
+        return r
+    except Exception as ex:
+        print(f'exception getting {url}: {ex}')
+        session = SgRequests() 
+        return post(url, headers, data, attempts+1)
+
+
 def fetch_data():
     locs = []
-    print('Alaska')
+    # print('Alaska')
     locstr = 'Anchorage, AK'
     payload = {"searchType":"Location",
                "searchValue":locstr,
@@ -35,7 +50,7 @@ def fetch_data():
                "isLoves":False,
                "isSpeedCo":False}
     url = 'https://dealerlocator-api.internationaltrucks.com/api/v1/dealers/getdealers/'
-    r = session.post(url, headers=headers, data=json.dumps(payload))
+    r = post(url, headers=headers, data=json.dumps(payload))
     website = 'internationaltrucks.com'
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
@@ -74,7 +89,7 @@ def fetch_data():
                     if store not in locs:
                         locs.append(store)
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    print('Hawaii')
+    # print('Hawaii')
     locstr = 'Honolulu, HI'
     payload = {"searchType":"Location",
                "searchValue":locstr,
@@ -92,7 +107,7 @@ def fetch_data():
                "isLoves":False,
                "isSpeedCo":False}
     url = 'https://dealerlocator-api.internationaltrucks.com/api/v1/dealers/getdealers/'
-    r = session.post(url, headers=headers, data=json.dumps(payload))
+    r = post(url, headers=headers, data=json.dumps(payload))
     website = 'internationaltrucks.com'
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
@@ -133,7 +148,7 @@ def fetch_data():
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(23, 50):
         for y in range(-63, -125, -1):
-            print(str(x) + ', ' + str(y))
+            # print(str(x) + ', ' + str(y))
             locstr = str(x) + ', ' + str(y)
             payload = {"searchType":"Location",
                        "searchValue":locstr,
@@ -151,7 +166,7 @@ def fetch_data():
                        "isLoves":False,
                        "isSpeedCo":False}
             url = 'https://dealerlocator-api.internationaltrucks.com/api/v1/dealers/getdealers/'
-            r = session.post(url, headers=headers, data=json.dumps(payload))
+            r = post(url, headers=headers, data=json.dumps(payload))
             website = 'internationaltrucks.com'
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
@@ -197,7 +212,7 @@ def fetch_data():
 
     for x in range(40, 70):
         for y in range(-52, -141, -1):
-            print(str(x) + ', ' + str(y))
+            # print(str(x) + ', ' + str(y))
             locstr = str(x) + ', ' + str(y)
             payload = {"searchType":"Location",
                        "searchValue":locstr,
@@ -215,7 +230,7 @@ def fetch_data():
                        "isLoves":False,
                        "isSpeedCo":False}
             url = 'https://dealerlocator-api.internationaltrucks.com/api/v1/dealers/getdealers/'
-            r = session.post(url, headers=headers, data=json.dumps(payload))
+            r = post(url, headers=headers, data=json.dumps(payload))
             website = 'internationaltrucks.com'
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
