@@ -59,7 +59,8 @@ def fetch_data():
             country = 'US'
             store = '<MISSING>'
         if 'day: ' in line:
-            hrs = line.split('<')[0].strip().replace('\t','')
+            g = line.replace("<span class='closed'>",'')
+            hrs = g.split('<')[0].strip().replace('\t','')
             if hours == '':
                 hours = hrs
             else:
