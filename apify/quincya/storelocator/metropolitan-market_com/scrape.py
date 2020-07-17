@@ -37,6 +37,8 @@ def fetch_data():
 
 	data = []
 	for item in items:
+		if "Coming Soon" in item.text:
+			continue
 
 		link = "https://metropolitan-market.com" + item.a['href']
 
@@ -81,7 +83,7 @@ def fetch_data():
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
-		if "=" in latitude:			
+		if "=" in latitude:
 			latitude = latitude[latitude.rfind("=")+1:latitude.rfind(",")].strip()
 			longitude = latitude[latitude.rfind(",")+1:].strip()
 
