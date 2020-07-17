@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -25,12 +24,14 @@ def fetch_data():
     lng = '<MISSING>'
     store = '<MISSING>'
     for line in lines:
+        line = str(line.decode('utf-8'))
         if '<!-- END Southeast -->' in line:
             Found = False
         if Found and '</h5></li>' in line:
             name = line.split('<h5>')[1].split('<')[0]
             country = 'US'
             g = next(lines)
+            g = str(g.decode('utf-8'))
             if '<a href="http://maps.google.com/?q' in g:
                 addinfo = g.split('">')[1].split('</a>')[0]
                 if addinfo.count('<br/>') == 2:
@@ -46,13 +47,19 @@ def fetch_data():
             hours = ''
         if '<li>(' in line and Found:
             phone = line.split('<li>')[1].split('<')[0].strip()
-        if '<li>Open' in line and Found:
-            loc = '<MISSING>'
-            city = city.strip()
-            state = state.strip()
-            zc = zc.strip()
-            hours = line.split('<li>Open')[1].split('<')[0].strip()
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if '<li>Open' in line or '<li>TEMPORARILY CLOSED' in line or '<li>Mon-Sat' in line:
+            if Found:
+                loc = '<MISSING>'
+                city = city.strip()
+                state = state.strip()
+                zc = zc.strip()
+                if '<li>Open' in line:
+                    hours = line.split('<li>Open')[1].split('<')[0].strip()
+                elif '<li>TEMPORARILY CLOSED' in line:
+                    hours = 'TEMPORARILY CLOSED'
+                else:
+                    hours = line.split('<li>')[1].strip().replace('\r','').replace('\n','')
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
