@@ -60,11 +60,11 @@ def fetch_data():
                         except:
                             pass
                         try:
-                            hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"satClose":"')[1].split(':00"')[1].split(' ')[0]
+                            hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"satClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
                         try:
-                            hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[0]
+                            hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
