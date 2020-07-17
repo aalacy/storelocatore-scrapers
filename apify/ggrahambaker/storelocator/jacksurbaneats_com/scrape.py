@@ -1,13 +1,15 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+from random import randint
+import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,49 +23,77 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'http://www.jacksurbaneats.com/'
-    ext = 'locations/'
+    
+    base_link = "https://www.jacksurbaneats.com/locations/"
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    headers = {'User-Agent' : user_agent}
 
-    locs = driver.find_elements_by_css_selector('div.et_pb_text_inner')
+    session = SgRequests()
+
+    req = session.get(base_link, headers=headers)
+    time.sleep(randint(1,2))
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+    except (BaseException):
+        print ('[!] Error Occured. ')
+        print ('[?] Check whether system is Online.')
+
+    locator_domain = 'jacksurbaneats.com'
+    locs = base.find_all(class_="et_pb_text_inner")[1:-1]
     all_store_data = []
     for loc in locs:
-        cont = loc.text.split('\n')
-        if len(cont) > 1:
-            location_name = cont[0]
-            street_address = cont[2]
-            city, state, zip_code = addy_ext(cont[3])
-            phone_number = cont[4]
-            if phone_number == '.':
-                phone_number = '<MISSING>'
+        raw_data = str(loc.p).split("<br/>")
+        location_name = loc.h1.text
+        
+        try:
+            street_address = loc.a.text.strip()
+        except:
+            continue
+        print(location_name)
+        city, state, zip_code = addy_ext(raw_data[-1][:-4].replace("\n","").replace("\xa0", " "))
+        phone_number = raw_data[-2].strip()
 
-            hours = ''
-            for h in cont[6:]:
-                hours += h + ' '
+        hours = loc.find_all("p")[1].text.replace("pm", "pm ").replace("\n","").strip()
+        if hours == ".":
+            phone_number = "<MISSING>"
+            hours = loc.find_all("p")[-1].text.replace("pm", "pm ").replace("\n","").strip()
+        if "(" in hours:
+            phone_number = hours
+            hours = loc.find_all("p")[2].text.replace("pm", "pm ").replace("\n","").strip()
+            
+        link = loc.find('a')['href']
 
-            hours = hours.strip()
-            link = loc.find_element_by_css_selector('a').get_attribute('href')
+        coords = link[link.find('/@') + 2:link.find('z/d')].split(',')
 
-            coords = link[link.find('/@') + 2:link.find('z/d')].split(',')
+        if 'google' in coords[0]:
+            req = session.get(link, headers = headers)
+            time.sleep(randint(1,2))
+            try:
+                maps = BeautifulSoup(req.text,"lxml")
+            except (BaseException):
+                print('[!] Error Occured. ')
+                print('[?] Check whether system is Online.')
 
-            if 'google' in coords[0]:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-            else:
-                lat = coords[0]
-                longit = coords[1]
+            try:
+                raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
+                latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
+                longitude = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+        else:
+            latitude = coords[0]
+            longitude = coords[1]
 
-            country_code = 'US'
-            location_type = '<MISSING>'
-            store_number = '<MISSING>'
+        country_code = 'US'
+        location_type = '<MISSING>'
+        store_number = '<MISSING>'
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                          store_number, phone_number, location_type, lat, longit, hours]
-            all_store_data.append(store_data)
+        store_data = [locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code,
+                      store_number, phone_number, location_type, latitude, longitude, hours]
+        all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():
