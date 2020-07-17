@@ -32,8 +32,8 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('%s-%s...' % (llat, llng))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('%s-%s...' % (llat, llng))
         url = 'https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/' + str(llat) + '/' + str(llng) + '/?distance=500&maxResults=50'
         r = session.get(url, headers=headers)
         result_coords = []
@@ -78,12 +78,12 @@ def fetch_data():
                             zc = zc[:5]
                             if store not in sids:
                                 sids.append(store)
-                                print(store)
+                                #print(store)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
         if len(array) <= MAX_RESULTS:
-                    print("max distance update")
+                    #print("max distance update")
                     search.max_distance_update(MAX_DISTANCE)
         ##        elif len(array) == MAX_RESULTS:
         ##            print("max count update")
