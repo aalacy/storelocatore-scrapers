@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,16 +14,18 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     url = 'https://stores.homedepot.ca/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://stores.homedepot.ca/' in line and '.html' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             sid = lurl.rsplit('-',1)[1].split('.')[0]
             if len(sid) == 4:
                 locs.append(lurl)
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'homedepot.ca'
         typ = '<MISSING>'
         hours = ''
@@ -40,6 +41,7 @@ def fetch_data():
         store = loc.rsplit('-',1)[1].split('.')[0]
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<span class="location-name mb-5">' in line2:
                 name = line2.split('<span class="location-name mb-5">')[1].split('<')[0]
             if '"streetAddress": "' in line2:
@@ -65,7 +67,10 @@ def fetch_data():
         hours = hours.replace(' Th','; Thu')
         hours = hours.replace(' Fr','; Fri')
         hours = hours.replace(' Sa','; Sat')
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        info = name + '|' + add
+        if info not in alllocs:
+            alllocs.append(info)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
