@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -34,11 +33,12 @@ def fetch_data():
                         lng = item.split('"longitude":')[1].split(',')[0]
                         name = item.split('"name":"')[1].split('"')[0].encode('utf-8')
                         phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                        add = item.split('"address1":"')[1].split('"')[0].encode('utf-8') + ' ' + item.split('"address2":"')[1].split('"')[0].encode('utf-8')
+                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0].encode('utf-8')
                         zc = item.split('"postalCode":"')[1].split('"')[0].encode('utf-8')
                         state = item.split('"stateProvinceShort":"')[1].split('"')[0].encode('utf-8')
                         days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0].encode('utf-8')
+                        hours = ''
                         try:
                             hours = 'Mon: ' + days.split('"monOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"monClose":"')[1].split(':00"')[0].split(' ')[1]
                         except:
@@ -67,6 +67,8 @@ def fetch_data():
                             hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
+                        if hours == '':
+                            hours = '<MISSING>'
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
