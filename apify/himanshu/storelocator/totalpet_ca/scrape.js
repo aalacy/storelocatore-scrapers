@@ -25,18 +25,15 @@ Apify.main(async () => {
     useChrome: true,
     useApifyProxy: true,
     groups: ['RESIDENTIAL']
-    // groups: ['BUYPROXIES94952']
   };
 
-  // const DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
-  // const proxyPassword = process.env.PROXY_PASSWORD;
-  // if (proxyPassword) {
-  //   const proxyUrl = (process.env.PROXY_URL || DEFAULT_PROXY_URL).replace('{}', proxyPassword);
-  //   launchPuppeteerOptions.proxyUrl = proxyUrl;
-  // }
+  const puppeteerPoolOptions = {
+    retireInstanceAfterRequestCount: 1
+  }
 
   const crawler = new Apify.PuppeteerCrawler({
     launchPuppeteerOptions,
+    puppeteerPoolOptions,
     maxRequestsPerCrawl: 100,
     maxConcurrency: 1,
     requestQueue,
@@ -62,7 +59,7 @@ async function handlePageFunction({ request, page }) {
         return {};
       });
       const data = JSON.parse(jsonString);
-      console.log(data);
+      // console.log(data);
 
       data.forEach(async location => {
         const locationName = location.store;
@@ -88,7 +85,7 @@ async function handlePageFunction({ request, page }) {
           hours_of_operation: storedValue ? storedValue.hours : '<MISSING>'
         };
 
-        console.log(poi);
+        // console.log(poi);
         await Apify.pushData(poi);
       });
 
