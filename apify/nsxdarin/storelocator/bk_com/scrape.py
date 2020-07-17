@@ -42,7 +42,7 @@ def fetch_data():
                         hours = 'Mon: ' + days.split('"monOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"monClose":"')[1].split(':00"')[0].split(' ')[0]
                         hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"tueClose":"')[1].split(':00"')[0].split(' ')[0]
                         hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"wedClose":"')[1].split(':00"')[0].split(' ')[0]
-                        hours = hours + '; Thu: ' + days.split('"thuOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"thuClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Thu: ' + days.split('"thrOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"thrClose":"')[1].split(':00"')[0].split(' ')[0]
                         hours = hours + '; Fri: ' + days.split('"friOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"friClose":"')[1].split(':00"')[0].split(' ')[0]
                         hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"satClose":"')[1].split(':00"')[0].split(' ')[0]
                         hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"sunClose":"')[1].split(':00"')[0].split(' ')[0]
