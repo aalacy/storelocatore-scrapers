@@ -33,7 +33,7 @@ def fetch_data():
                         lng = item.split('"longitude":')[1].split(',')[0]
                         name = item.split('"name":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
                         phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
+                        add = item.split('"address1":"')[1].split('"')[0].encode('utf-8').decode('utf-8') + ' ' + item.split('"address2":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
                         city = item.split('"city":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
                         zc = item.split('"postalCode":"')[1].split('"')[0]
                         state = item.split('"stateProvinceShort":"')[1].split('"')[0]
@@ -66,6 +66,7 @@ def fetch_data():
                             hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
+                        hours = hours.encode('utf-8').decode('utf-8')
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
