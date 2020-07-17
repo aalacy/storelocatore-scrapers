@@ -26,8 +26,11 @@ def fetch_data():
     driver = get_driver()
     driver.get('https://www.grottopizza.com/locations/')
     time.sleep(6)
-    stores=driver.find_elements_by_xpath("//div[@class='menu-hover']/ul/li/a")
+    if 'class="cta-button italia white-text red-bg align-center centered parent-relative' in str(driver.page_source):
+      print('here')
+    stores=re.findall(r'<a href="([^"]+)" class="cta-button italia white-text red-bg align-center centered parent-relative',str(driver.page_source))
     store_links = [stores[n].get_attribute('href') for n in range(0,len(stores))]
+    print(len(stores))
     for n in range(1,len(store_links)):
         driver.get(store_links[n])
         time.sleep(2)
