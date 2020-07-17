@@ -15,34 +15,38 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://czqk28jt.apicdn.sanity.io/v1/data/query/prod_bk?query=*%5B%20_type%20%3D%3D%20%27restaurant%27%20%26%26%20environment%20%3D%3D%20%24environment%20%26%26%20!(%24appEnvironemnt%20in%20coalesce(hideInEnvironments%2C%20%5B%5D))%20%26%26%20latitude%20%3E%20%24minLat%20%26%26%20latitude%20%3C%20%24maxLat%20%26%26%20longitude%20%3E%20%24minLng%20%26%26%20longitude%20%3C%20%24maxLng%20%26%26%20status%20%3D%3D%20%24status%20%5D%20%7Corder((%24userLat%20-%20latitude)%20**%202%20%2B%20(%24userLng%20-%20longitude)%20**%202)%5B%24offset...(%24offset%20%2B%20%24limit)%5D%20%7B_id%2CdeliveryHours%2CdiningRoomHours%2CcurbsideHours%2CdrinkStationType%2CdriveThruHours%2CdriveThruLaneType%2Cemail%2CfranchiseGroupId%2CfranchiseGroupName%2CfrontCounterClosed%2ChasBreakfast%2ChasBurgersForBreakfast%2ChasCurbside%2ChasDineIn%2ChasCatering%2ChasDelivery%2ChasDriveThru%2ChasMobileOrdering%2ChasParking%2ChasPlayground%2ChasTakeOut%2ChasWifi%2Clatitude%2Clongitude%2CmobileOrderingStatus%2Cname%2Cnumber%2CparkingType%2CphoneNumber%2CphysicalAddress%2CplaygroundType%2Cpos%2CposRestaurantId%2CrestaurantPosData-%3E%7B_id%2C%20lastHeartbeatTimestamp%2C%20heartbeatStatus%2C%20heartbeatOverride%7D%2Cstatus%2CrestaurantImage%7B...%2C%20asset-%3E%7D%7D&%24appEnvironemnt=%22prod%22&%24environment=%22prod%22&%24limit=20000&%24maxLat=70.763572273060035&%24maxLng=-60.93888052235278&%24minLat=10.661939543337255&%24minLng=-170.07296274481037&%24offset=0&%24status=%22Open%22&%24userLat=40.7127753&%24userLng=-74.0059728'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        if '"_id":"restaurant_' in line:
-            items = line.split('"_id":"restaurant_')
-            for item in items:
-                if '"curbsideHours":' in item:
-                    website = 'bk.com'
-                    typ = '<MISSING>'
-                    store = item.split('"number":"')[1].split('"')[0]
-                    country = 'USA'
-                    lat = item.split('"latitude":')[1].split(',')[0]
-                    lng = item.split('"longitude":')[1].split(',')[0]
-                    name = item.split('"name":"')[1].split('"')[0]
-                    phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                    add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    zc = item.split('"postalCode":"')[1].split('"')[0]
-                    state = item.split('"stateProvinceShort":"')[1].split('"')[0]
-                    days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
-                    hours = 'Mon: ' + days.split('"monOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"monClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"tueClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"wedClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Thu: ' + days.split('"thuOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"thuClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Fri: ' + days.split('"friOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"friClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"satClose":"')[1].split(':00"')[0].split(' ')[0]
-                    hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"sunClose":"')[1].split(':00"')[0].split(' ')[0]
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    Found = False
+    while Found is False:
+        print('Getting Locations...')
+        r = session.get(url, headers=headers, timeout=30)
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            if '"_id":"restaurant_' in line:
+                Found = True
+                items = line.split('"_id":"restaurant_')
+                for item in items:
+                    if '"curbsideHours":' in item:
+                        website = 'bk.com'
+                        typ = '<MISSING>'
+                        store = item.split('"number":"')[1].split('"')[0]
+                        country = 'USA'
+                        lat = item.split('"latitude":')[1].split(',')[0]
+                        lng = item.split('"longitude":')[1].split(',')[0]
+                        name = item.split('"name":"')[1].split('"')[0]
+                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        state = item.split('"stateProvinceShort":"')[1].split('"')[0]
+                        days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
+                        hours = 'Mon: ' + days.split('"monOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"monClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"tueClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"wedClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Thu: ' + days.split('"thuOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"thuClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Fri: ' + days.split('"friOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"friClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"satClose":"')[1].split(':00"')[0].split(' ')[0]
+                        hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[0] + '-' + days.split('"sunClose":"')[1].split(':00"')[0].split(' ')[0]
+                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
