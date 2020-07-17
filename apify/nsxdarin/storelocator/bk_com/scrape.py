@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,13 +29,13 @@ def fetch_data():
                         website = 'bk.com'
                         typ = '<MISSING>'
                         store = item.split('"number":"')[1].split('"')[0]
-                        country = 'USA'
+                        country = 'US'
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
-                        name = item.split('"name":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
+                        name = item.split('"name":"')[1].split('"')[0]
                         phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                        add = item.split('"address1":"')[1].split('"')[0].encode('utf-8').decode('utf-8') + ' ' + item.split('"address2":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
-                        city = item.split('"city":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
+                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
                         zc = item.split('"postalCode":"')[1].split('"')[0]
                         state = item.split('"stateProvinceShort":"')[1].split('"')[0]
                         days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
@@ -66,7 +67,6 @@ def fetch_data():
                             hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[1].split(' ')[1]
                         except:
                             pass
-                        hours = hours.encode('utf-8').decode('utf-8')
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
