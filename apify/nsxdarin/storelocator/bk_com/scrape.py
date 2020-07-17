@@ -32,10 +32,10 @@ def fetch_data():
                         country = 'USA'
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
-                        name = item.split('"name":"')[1].split('"')[0]
+                        name = item.split('"name":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
                         phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
+                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
+                        city = item.split('"city":"')[1].split('"')[0].encode('utf-8').decode('utf-8')
                         zc = item.split('"postalCode":"')[1].split('"')[0]
                         state = item.split('"stateProvinceShort":"')[1].split('"')[0]
                         days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
