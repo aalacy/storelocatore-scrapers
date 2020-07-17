@@ -58,7 +58,7 @@ def fetch_data():
 		store_number = "<MISSING>"
 		phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", str(base.text))[0]
 		location_type = "<MISSING>"
-		hours_of_operation = base.find('div', attrs={'class': 'normal-hours'}).get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
+		hours_of_operation = base.find('div', attrs={'class': 'normal-hours'}).get_text(separator=u' ').replace("\n"," ").replace("Normal business hours","").replace("\xa0","").strip()
 		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 		
 		try:
