@@ -1,10 +1,8 @@
+import re
 import json
-
 import sgzip
+from sgrequests import SgRequests
 from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
 
 URL = "https://www.vw.com"
 
@@ -15,6 +13,7 @@ class Scraper(Scrape):
         self.data = []
 
     def fetch_data(self):
+        session = SgRequests()
         # store data
         locations_ids = []
         locations_titles = []
@@ -30,21 +29,14 @@ class Scraper(Scrape):
         dealers = []
         seen = []
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
-
         # Fetch stores from location menu
         for zip_search in sgzip.for_radius(50):
-            location_url = (
-                f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{zip_search}.json"
-            )
-            driver.get(location_url)
-            dealers.extend(
-                json.loads(driver.find_element_by_css_selector("pre").text)["dealers"]
-            )
+            location_url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{0}.json".format(zip_search)
+            
+            response = session.get(location_url)
+            if response.status_code == 200:
+                data = response.json()
+                dealers.extend(data.get('dealers', []))
 
         for dealer in dealers:
             # Store ID
@@ -78,7 +70,11 @@ class Scraper(Scrape):
             phone = dealer["phone"]
 
             # hour
-            hour = dealer["hours"]
+            regex = re.compile("sale", re.IGNORECASE)
+            department_hours = dealer["hours"]
+            sale_department = next((x for x in department_hours if regex.match(x.get('departmentName'))), None)
+
+            sale_hours = sale_department.get('departmentHours', '<MISSING>') if sale_department else '<MISSING>'
 
             # Store data
             locations_ids.append(location_id)
@@ -86,7 +82,7 @@ class Scraper(Scrape):
             street_addresses.append(street_address)
             states.append(state)
             zip_codes.append(zipcode)
-            hours.append(hour)
+            hours.append(sale_hours)
             latitude_list.append(lat)
             longitude_list.append(lon)
             phone_numbers.append(phone)
@@ -137,8 +133,6 @@ class Scraper(Scrape):
                     ]
                 )
                 seen.append(location_id)
-
-        driver.quit()
 
 
 scrape = Scraper(URL)
