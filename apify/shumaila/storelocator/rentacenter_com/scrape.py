@@ -1,10 +1,13 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re
 import usaddress
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,107 +25,100 @@ def fetch_data():
     data = []
     p = 0
     url = 'https://locations.rentacenter.com/#contains-place-toggle'
-    
-    page = requests.get(url)
+    page= session.get(url, headers=headers, verify=False)
+    #page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     mainul = soup.find('div',{'id':'contains-place'})
     statelinks = mainul.findAll('a')
     #print(statelinks)
+    cleanr = re.compile(r'<[^>]+>')
     for states in statelinks:
         statelink = 'https://locations.rentacenter.com'+ states['href']+'#contains-place-toggle'
-        print(statelink)
-        page1 = requests.get(statelink)
-        soup1 = BeautifulSoup(page1.text, "html.parser")
-        mainul1 = soup1.find('div', {'id': 'contains-place'})
-        citylinks = mainul1.findAll('a')
-        for cities in citylinks:
-            citylink = 'https://locations.rentacenter.com'+ cities['href']
-            print(citylink)
-            page2 = requests.get(citylink)
-            soup2 = BeautifulSoup(page2.text, "html.parser")
-            mainul2 = soup2.find('ul', {'class': 'list-group'})
-            branchlinks = mainul2.findAll('a',{'itemprop':'address'})
-            if len(branchlinks) > 0:
-                for branch in branchlinks:
-                    branchlink = "https://locations.rentacenter.com" + branch['href']
-                    #print(branchlink)
-                    page3 = requests.get(branchlink)
-                    soup3 = BeautifulSoup(page3.text, "html.parser")
-                    data.append(extract(soup3,branchlink))
-                    print(p,data[p])
-                    p += 1
+        #print(statelink)
+        if True :           
+            page1 = session.get(statelink, headers=headers, verify=False)
+            soup1 = BeautifulSoup(page1.text, "html.parser")
+            mainul1 = soup1.find('div', {'id': 'contains-place'})
+            citylinks = mainul1.findAll('a')
+            for cities in citylinks:
+                citylink = 'https://locations.rentacenter.com'+ cities['href']
+                #print(citylink)
+                page2 = session.get(citylink, headers=headers, verify=False)
+                soup2 = BeautifulSoup(page2.text, "html.parser")
+                #mainul2 = soup2.find('ul', {'class': 'list-group'})
+                mainul2 = soup2.find('div', {'id': 'nearby-locations'})
+                branchlinks = mainul2.findAll('div',{'class':'location-nearby'})
+                #print(len(branchlinks))              
+                if len(branchlinks) > 0:
+                    for branch in branchlinks:
+                        link = 'https://locations.rentacenter.com'+ branch.find('a',{'class':'location-nearby-name'})['href']
+                        #print(link)
+                        phone = '<MISSING>'
+                        lat =  '<MISSING>'
+                        longt =  '<MISSING>'
+                        hours =  '<MISSING>'
 
-            else:
-                data.append(extract(soup2,citylink))
-                #print(p,data[p])
-                p += 1
+                        lat,longt = branch.find('a',{'class':'location-nearby-directions'})['href'].split('/')[-1].split(',')
+                        address = branch.find('div',{'class':'location-nearby-address'})
+                        address = re.sub(cleanr,' ',str(address)).replace('\n','')
+                        address = usaddress.parse(address)
+                        i = 0
+                        street = ""
+                        city = ""
+                        state = ""
+                        pcode = ""
+                        while i < len(address):
+                            temp = address[i]
+                            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                                street = street + " " + temp[0]
+                            if temp[1].find("PlaceName") != -1:
+                                city = city + " " + temp[0]
+                            if temp[1].find("StateName") != -1:
+                                state = state + " " + temp[0]
+                            if temp[1].find("ZipCode") != -1:
+                                pcode = pcode + " " + temp[0]
+                            i += 1
+                        try:
+                            phone = branch.find('a',{'class':'location-nearby-phone-number'}).text
+                        except:
+                            '<MISSING>'
+                        try:
+                            hours = branch.find('div', {'class': 'location-nearby-hours'}).find('dl').text
+                            hours = hours.replace("\n", " ")
+                            hours = hours.strip()
+                        except:
+                            hours = "<MISSING>"
+                        street = street.lstrip()
+                        state = state.lstrip()
+                        city = city.lstrip().replace(',','')
+                        pcode = pcode.lstrip()
+                        title = 'Rent-A-Center at '+street +', '+state+', '+pcode
+                        if len(phone) < 3:
+                            phone = '<MISSING>'
+                        if len(hours) < 3:
+                            hours = '<MISSING>'
+                        if len (lat) < 3 or lat == 'false':
+                            lat = '<MISSING>'
+                        if len(longt) <3 or longt == 'false':
+                            longt = '<MISSING>'
+                        if len(street) <3:
+                            street = '<MISSING>'
+                        if len(city) < 3:
+                            city = '<MISSING>'
+                        if len(pcode) <3:
+                            pcode =  '<MISSING>'
+                        
+                        data.append(['https://www.rentacenter.com/', link, title, street, city, state, pcode,'US', '<MISSING>', phone.lstrip(), '<MISSING>', lat ,longt, hours])
+                        #print(p,data[p])
+                        #input()
+                        p += 1
+
+                else:                   
+                    pass
             
             
     return data
 
-def extract(soup,link):
-    try:
-        hourd = soup.find('div', {'class': 'hours'}).find('dd').text
-        hourd = hourd.replace("\n", " ")
-        hourd = hourd.strip()
-    except:
-        hourd = "<MISSING>"
-    
-    title = soup.find('title').text
-    start = title.find(",")
-    if start != -1:
-        title = title[0:start]
-    start = title.find("|")
-    if start != -1:
-        title = title[0:start]
-
-    try:
-        street = soup.find('div',{'class':'street'}).text.replace('\n','').lstrip().rstrip()
-    except:
-        street = '<MISSING>'
-    try:
-        det = soup.find('div',{'class':'locality'}).text.replace('\n',' ').lstrip()
-        
-        city ,state= det.split(', ')
-        
-        state, pcode = state.lstrip().split(' ',1)
-        pcode = pcode.lstrip().rstrip()
-        state  = state.lstrip().rstrip()
-       
-       
-    except:
-        state= '<MISSING>'
-        city='<MISSING>'
-        pcode ='<MISSING>'
-        
-    try:
-        phone = soup.find('a',{'class':'list-location-phone-number'}).text
-    except:
-        phone = '<MISSING>'
-
-    try:
-        coord = soup.find('a',{'class':'list-location-secondary-anchor'})['href']
-        start = coord.find('+')
-        start = coord.find('/',start)+1
-        end = coord.find(',',start)
-        lat = coord[start:end]
-        start = end +1
-        end = len(coord)
-        longt = coord[start:end]
-    except:
-        lat = '<MISSING>'
-        longt = '<MISSING>'
-    try:    
-        store = soup.find('div',{'id':'location-list'})['data-currentlocation']
-        print(store)
-    except:
-        store ='<MISSING>'
-        
-
-    data = ['https://www.rentacenter.com/', link, title, street, city, state, pcode,'US', store, phone, '<MISSING>', lat ,longt, hourd]
-    #print(data)
-    #input()
-    return data
 
 
 def scrape():
