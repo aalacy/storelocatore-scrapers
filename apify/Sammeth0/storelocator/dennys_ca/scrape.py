@@ -1,20 +1,25 @@
-import requests
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
-import pandas as pd 
-from selenium.webdriver.support.ui import Select
 import csv
-import time 
-import re 
+import time
+from random import randint
+
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 def get_driver():
-	options = Options()
+	options = Options() 
 	options.add_argument('--headless')
 	options.add_argument('--no-sandbox')
+	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
 	options.add_argument('--disable-dev-shm-usage')
 	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
-	return webdriver.Chrome('chromedriver', options=options)
+	return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,32 +51,51 @@ def fetch_data():
 	pages=[]
 	
 	driver = get_driver()
-	driver_page = get_driver()
 	driver.get(location_url)
 	time.sleep(3)
-	link=driver.find_element_by_class_name('locations-list__items')
-	links=link.find_elements_by_tag_name("a")
+	links=driver.find_elements_by_class_name('locations-list__item')
 	for l in links:
-		pages.append(l.get_attribute('href'))		
-			
-	for p in pages:
+		pages.append(l.find_element_by_tag_name("a").get_attribute('href'))
+
+	driver.close()
+	time.sleep(3)
+
+	driver_page = get_driver()
+	for i, p in enumerate(pages):
+		print("Link %s of %s" %(i+1,len(pages)))
+		print(p)
 		driver_page.get(p)
-		time.sleep(3)
+		time.sleep(randint(2,4))
+		try:
+			element = WebDriverWait(driver_page, 30).until(EC.presence_of_element_located(
+				(By.CSS_SELECTOR, ".trailer--half.address")))
+			time.sleep(randint(1,2))
+		except:
+			try:
+				driver_page.get(p)
+				element = WebDriverWait(driver_page, 30).until(EC.presence_of_element_located(
+					(By.CSS_SELECTOR, ".trailer--half.address")))
+			except:
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
+
 		locs.append(driver_page.find_element_by_xpath('/html/body/div/section/div[1]/div/h1').text.replace('â€“',''))
-		streets.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[1]').text)
-		cities.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[0])
-		states.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[1])
+		streets.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd[3]/div').text)
+		cities.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[0].strip())
+		states.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.replace("&","and").split(',')[1].strip())
 		zips.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[3]').text)
 		try:
-			phones.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[1]/dl/dd/a').text)
+			phones.append(driver_page.find_element_by_css_selector(".trailer--half.address").find_element_by_tag_name("a").text.strip())
 		except:
 			phones.append("<MISSING>")
-		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/a').get_attribute('href')
-		driver_page.get(lat_long_link)
-		time.sleep(3)
-		lats.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('center=')[1].split('%2C')[0])
-		longs.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('%2C')[1].split('&zoom')[0])			
-						
+		try:
+			raw_gps = driver_page.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
+			lats.append(raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip())
+			longs.append(raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip())
+		except:
+			lats.append("<MISSING>")
+			longs.append("<MISSING>")
+
 	return_main_object = []	
 	for l in range(len(locs)):
 		row = []
@@ -91,7 +115,10 @@ def fetch_data():
 		row.append(pages[l] if pages[l] else "<MISSING>") 
 		
 		return_main_object.append(row)
-	
+	try:
+		driver_page.close()
+	except:
+		pass
     # End scraper
 	return return_main_object
 
