@@ -42,11 +42,13 @@ def fetch_data():
             # 120
             # data_len = len(r)
             for loc in location:
+               # print(loc)
                 if loc.find('country').text.strip() == 'US' or loc.find('country').text.strip() == 'CA':
                     name=loc.find('name').text.strip()
                     address=loc.find('address1').text.strip()
                     city=loc.find('city').text.strip()
                     state=loc.find('state').text.strip()
+
                     zip = loc.find('postalcode').text.strip().replace('000wa','<MISSING>')
                     if zip  == '00000':
                         zip = ''
@@ -54,9 +56,10 @@ def fetch_data():
 
       
                     phone=loc.find('phone').text.strip().replace('T&#xe9;l.','').replace('&#xa0;','')
-                    storeno=loc.find('sn').text.strip()
-                    if storeno == '0':
-                        storeno = "<MISSING>"
+                    # storeno=loc.find('sn').text.strip()
+
+                    # if storeno == '0':
+                    #     storeno = "<MISSING>"
                     country = loc.find('country').text.strip()
 
                     if country=="US":
@@ -79,7 +82,8 @@ def fetch_data():
                     store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append(zip.replace("O","0").replace('000wa','<MISSING>') if zip.replace("O","0").replace('000wa','<MISSING>') else "<MISSING>")
                     store.append(country if country else "<MISSING>")
-                    store.append(storeno.encode('ascii', 'ignore').decode('ascii').strip() if storeno.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
+                    store.append("<MISSING>")
+                    # store.append(storeno.encode('ascii', 'ignore').decode('ascii').strip() if storeno.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append("<MISSING>")
                     store.append(lat if lat else "<MISSING>")
