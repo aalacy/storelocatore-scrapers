@@ -1,11 +1,13 @@
-#
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
 
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,14 +36,16 @@ def fetch_data():
     miss = 0
     #url = 'https://www.waxcenter.com/locations/search-by-state'
     url = 'https://locations.waxcenter.com/'
-    page = requests.get(url)
+    page = session.get(url, headers=headers, verify=False)#requests.get(url)
     soup = BeautifulSoup(page.text,"html.parser")
-    repo_list = soup.findAll("a",{'class':'ga-link'})
+    maindiv = soup.find('ul',{'id':'bowse-content'})
+    repo_list = maindiv.findAll("a",{'class':'ga-link'})
+    print(len(repo_list))
     for repo in repo_list:
         #print("STATE",repo.text)
         statelink = repo['href']
         #print(statelink)
-        page1 = requests.get(statelink)
+        page1 = session.get(statelink, headers=headers, verify=False)#requests.get(statelink)
         soup1 = BeautifulSoup(page1.text,"html.parser")
         maindiv = soup1.find('ul',{'class','map-list'})
         city_list = maindiv.findAll("div", {'class': 'map-list-item'})
@@ -50,7 +54,7 @@ def fetch_data():
             #link = link.find('a')
             clink = clink.find('a',{'class','ga-link'})['href']
             #print(clink)
-            page2 = requests.get(clink)
+            page2 = session.get(clink, headers=headers, verify=False)#requests.get(clink)
             soup2 = BeautifulSoup(page2.text,"html.parser")
             maindiv = soup2.find('ul',{'class','map-list'})
             link_list = maindiv.findAll("div", {'class': 'map-list-item'})
@@ -60,7 +64,7 @@ def fetch_data():
                 link = link.find('a',{'class','ga-link'})
                 store = link['title'].replace('#','').lstrip()
                 link =  link['href']
-                page3 = requests.get(link)
+                page3 = session.get(link, headers=headers, verify=False)#requests.get(link)
                 soup3 = BeautifulSoup(page3.text, "html.parser")
                 #print("link",link)
                 try:
