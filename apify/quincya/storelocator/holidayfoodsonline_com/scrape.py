@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import requests
 from bs4 import BeautifulSoup
 import csv
 from random import randint
