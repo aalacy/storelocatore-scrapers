@@ -1,1 +1,1 @@
-It is not passing GeoConsistencyValidator because of the data present in the site.
+--ignore CountValidator --ignore StateLevelCountValidator (Validation expected 54 POI, but website has 93 POI)
