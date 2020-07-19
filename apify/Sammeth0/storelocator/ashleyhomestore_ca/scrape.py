@@ -1,4 +1,3 @@
-import requests
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
@@ -44,14 +43,15 @@ def fetch_data():
 	ids=[]
 	pages=[]
 	driver = get_driver()
-	driver_page = get_driver()
 	driver.get(location_url)
 	time.sleep(5)	
 	
-	locations=driver.find_elements_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li')
+	locations=driver.find_element_by_class_name('addresses').find_elements_by_tag_name('li')
 	for l in locations:
 		try:
-			locs.append(l.find_element_by_xpath('./a/span[1]').text.split(' (')[0])
+			loc = l.find_element_by_xpath('./a/span[1]').text.split(' (')[0]
+			print(loc)
+			locs.append(loc)
 		except:
 			locs.append(l.find_element_by_xpath('./a/span[1]').text)
 		streets.append(l.find_element_by_class_name('address').text)
@@ -73,13 +73,14 @@ def fetch_data():
 		l.find_element_by_xpath('./a').click()
 		time.sleep(2)
 		try:
-			timing.append(l.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/div/div/div[1]/div[3]/div/div[4]/div/div/div/div/div/div/div/span[7]').text.replace('\n',' '))
+			hours = driver.find_element_by_id("store_map").find_element_by_class_name("hours").text.replace("\n"," ")
+			if ".ca" in hours:
+				hours = hours[hours.rfind(".ca")+3:].strip()
+			timing.append(hours)
+
 		except:
 			timing.append("<MISSING>")
 
-
-			
-						
 	return_main_object = []	
 	for l in range(len(locs)):
 		row = []
