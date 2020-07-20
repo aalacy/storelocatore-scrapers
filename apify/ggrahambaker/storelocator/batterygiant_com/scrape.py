@@ -41,6 +41,8 @@ def fetch_data():
 
         if 'Panama' in content[0]:
             continue
+        #print(len(content))
+        #print(content)
         if len(content) == 13:
             street_address = content[3]
             city, state, zip_code = addy_ext(content[4])
@@ -51,10 +53,14 @@ def fetch_data():
             hours = hours.strip()
 
         elif len(content) == 16:
-            if 'Louisville' in content[0]:
+            if 'Louisville' in content[0] :
                 street_address = content[5]
                 city, state, zip_code = addy_ext(content[6])
                 phone_number = content[8]
+            elif 'Downers Grove' in content[0]:
+                street_address = content[4]
+                city, state, zip_code = addy_ext(content[5])
+                phone_number = content[7]
             else:
                 street_address = content[6]
                 city, state, zip_code = addy_ext(content[7])
