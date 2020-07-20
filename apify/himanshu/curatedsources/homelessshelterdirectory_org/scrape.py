@@ -32,11 +32,12 @@ def fetch_data():
         for city_link in state_soup.find_all("a",{"title":re.compile("homeless shelters")}):
 
             city_soup = bs(session.get(city_link['href']).content, "lxml")
-
+    
+    
             for url in city_soup.find_all("a",{"class":"btn btn_red"}):
-                
+            
                 page_url = url['href']
-                # print(page_url)
+               # print(page_url)
                 if page_url in url or "homelessshelterdirectory.org" not in page_url:
                     continue
                 url.append(page_url)
@@ -44,7 +45,8 @@ def fetch_data():
                 try:
                     location_name = location_soup.find("h3",{"class":"entry_title"}).text
                 except:
-                    location_name = "<MISSING>"                
+                    location_name = "<MISSING>"
+                
                 addr = list(location_soup.find("div",{"class":"col col_6_of_12"}).find("p").stripped_strings)
                 if len(addr) > 2:
                     if re.sub(r'\s+',"",addr[1].replace(":","").replace("(","").replace(")","").replace("-","")).isdigit():
@@ -67,7 +69,7 @@ def fetch_data():
                         else:
                             zipp = "<MISSING>"
                         phone = addr[2].replace(":","").replace("_","").replace("?","").replace(",","").replace("24hrs","").strip()
-               
+                
                 else:
                     street_address = "<MISSING>"
                     city = city = addr[0].split(",")[0]
@@ -84,7 +86,7 @@ def fetch_data():
                 if "or" in phone:
                     phone = phone.split("or")[0]
                 store_number = page_url.split("=")[1]
-
+            
                 coords = location_soup.find(lambda tag:(tag.name == "script") and "setView" in tag.text).text.split("[")[1].split("]")[0]
                 lat = coords.split(",")[0]
                 lng = coords.split(",")[1].strip()
@@ -94,7 +96,7 @@ def fetch_data():
                 else:
                     update_date = "<MISSING>"
                 
-        
+
                 store = []
                 store.append(base_url)
                 store.append(location_name)
