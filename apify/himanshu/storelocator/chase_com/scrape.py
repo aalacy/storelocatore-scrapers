@@ -16,7 +16,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url","operating_info"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -122,7 +122,6 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                store.append(operating_info if operating_info else '<MISSING>')
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])

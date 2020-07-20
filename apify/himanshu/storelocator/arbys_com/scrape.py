@@ -10,7 +10,7 @@ session = SgRequests()
 base_url = 'https://arbys.com'
 
 
-
+ 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,19 +32,21 @@ def fetch_data():
             for url in ct_soup.find_all("a",{"class":"location-name ga-link"}):
                 page_url = url['href']
                 location_soup = BS(session.get(page_url).text,"lxml")
-
-                json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and '"addressLocality"' in tag.text).text)[0]
+                json_datas =(str(location_soup.find("script",{"type":"application/ld+json"})).split('application/ld+json">')[1].split("</script>")[0])
+                json_data=(json.loads(json_datas))
+                # json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and '"addressLocality"' in tag.text).text)[0]
                 location_name=location_soup.find("span",{"class":"location-name"}).text
-                # location_name = json_data['name']
-                street_address = json_data['address']['streetAddress']
-                city = json_data['address']['addressLocality']
-                state = json_data['address']['addressRegion']
-                zipp = json_data['address']['postalCode']
-                store_number = json_data['name'].split("Arby's")[-1].strip()
-                phone = json_data['address']['telephone']
-                location_type = json_data['@type']
-                lat = json_data['geo']['latitude']
-                lng = json_data['geo']['longitude']
+                location_name = json_data[0]['name']
+               # print(location_name)
+                street_address = json_data[0]['address']['streetAddress']
+                city = json_data[0]['address']['addressLocality']
+                state = json_data[0]['address']['addressRegion']
+                zipp = json_data[0]['address']['postalCode']
+                store_number = json_data[0]['name'].split("Arby's")[-1].strip()
+                phone = json_data[0]['address']['telephone']
+                location_type = json_data[0]['@type']
+                lat = json_data[0]['geo']['latitude']
+                lng = json_data[0]['geo']['longitude']
                 try:
                     hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
                 except:
@@ -64,6 +66,7 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
+               # print(store)
                 yield store
     
 

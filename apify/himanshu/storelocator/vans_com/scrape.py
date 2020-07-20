@@ -8,7 +8,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -42,7 +42,7 @@ def fetch_data():
             # 120
             # data_len = len(r)
             for loc in location:
-               # print(loc)
+                #print(loc)
                 if loc.find('country').text.strip() == 'US' or loc.find('country').text.strip() == 'CA':
                     name=loc.find('name').text.strip()
                     address=loc.find('address1').text.strip()
@@ -55,7 +55,7 @@ def fetch_data():
 
 
       
-                    phone=loc.find('phone').text.strip().replace('T&#xe9;l.','').replace('&#xa0;','')
+                    phone=loc.find('phone').text.strip().replace('T&#xe9;l.','').replace('&#xa0;','').replace('-','').replace('.','').replace(')','').replace('(','').replace(' ','')
                     # storeno=loc.find('sn').text.strip()
 
                     # if storeno == '0':
