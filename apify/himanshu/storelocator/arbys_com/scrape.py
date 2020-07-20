@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup as BS
 import json
 from sgrequests import SgRequests
 session = SgRequests()
+import requests
 
 base_url = 'https://arbys.com'
 
@@ -20,24 +21,31 @@ def write_output(data):
 
 def fetch_data():
     
-    con_soup = BS(session.get("https://locations.arbys.com/browse/").text, "lxml")
+    con_soup = BS(requests.get("https://locations.arbys.com/browse/").text, "lxml")
 
     for st_url in con_soup.find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
         
-        st_soup = BS(session.get(st_url['href']).text, "lxml")
+        st_soup = BS(requests.get(st_url['href']).text, "lxml")
 
         for ct_url in st_soup.find_all("a",{"data-ga":re.compile("Maplist, City")}):
-            ct_soup = BS(session.get(ct_url['href']).text, "lxml")
+            ct_soup = BS(requests.get(ct_url['href']).text, "lxml")
             
             for url in ct_soup.find_all("a",{"class":"location-name ga-link"}):
                 page_url = url['href']
-                location_soup = BS(session.get(page_url).text,"lxml")
-                json_datas =(str(location_soup.find("script",{"type":"application/ld+json"})).split('application/ld+json">')[1].split("</script>")[0])
+                location_soup = BS(requests.get(page_url).text,"lxml")
+                print("page_url:--------- ",page_url)
+                json_datas={}
+                try:
+                    json_datas=(str(location_soup.find("script",{"type":"application/ld+json"})).split('application/ld+json">')[1].split("</script>")[0])
+                except:
+                    json_datas =(str(location_soup.find("script",{"type":"application/ld+json"})).split('application/ld+json">')[1].split("</script>")[0].strip().replace("\\", r"\\").replace("\n",'').split('"additionalType":')[0].strip().lstrip(',')[:-1]+"}]")
+                
+                
                 json_data=(json.loads(json_datas))
                 # json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and '"addressLocality"' in tag.text).text)[0]
                 location_name=location_soup.find("span",{"class":"location-name"}).text
                 location_name = json_data[0]['name']
-               # print(location_name)
+                # print(location_name)
                 street_address = json_data[0]['address']['streetAddress']
                 city = json_data[0]['address']['addressLocality']
                 state = json_data[0]['address']['addressRegion']
@@ -66,7 +74,7 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-               # print(store)
+                # print(store)
                 yield store
     
 

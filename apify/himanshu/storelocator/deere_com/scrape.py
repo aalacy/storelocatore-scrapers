@@ -1,9 +1,12 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
 import requests
+session = SgRequests()
+
 
 
 def write_output(data):
@@ -28,8 +31,8 @@ def fetch_data():
     
     urls ="https://dealerlocator.deere.com/servlet/country=US?locale=en_US#"
     responses= bs(requests.get( urls).text,'lxml')
-    tag_phone = responses.find(lambda tag: (tag.name == "script" or tag.name == "h2") and "var industries" in tag.text.strip())
-    array1 = (responses.text.split("var industries =")[1].split("var productGroups")[0].replace("];","]"))
+    # tag_phone = responses.find(lambda tag: (tag.name == "script" or tag.name == "h2") and "var industries" in tag.text.strip())
+    # array1 = (responses.text.split("var industries =")[1].split("var productGroups")[0].replace("];","]"))
     coord = search.next_coord()
     current_results_len = 0
     response={}
@@ -38,7 +41,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36',
         'Content-Type': 'application/x-www-form-urlencoded',
     }
-    print("url")
+   # print("url")
     while coord:
         result_coords =[]
         print("remaining zipcodes: " + str(len(search.zipcodes)))
@@ -84,7 +87,7 @@ def fetch_data():
 				} ]
         for i in KP:
             url ="https://dealerlocator.deere.com/servlet/ajax/getLocations?lat="+str(coord[0])+"&long="+str(coord[1])+"&locale=en_US&country=US&uom=MI&filterElement="+str(i['id'])
-            print(url)
+          #  print(url)
             try:
                 response = requests.get( url, headers=headers).json()
             except:
@@ -97,7 +100,7 @@ def fetch_data():
                     longitude = data['longitude']
                     location_name = data['locationName']
                     page_url = data['seoFriendlyUrl']
-                    print(page_url)
+                    # print(page_url)
                     response2 = bs(requests.get(page_url, headers=headers).text,'lxml')
                     try:
                         try:
@@ -138,7 +141,7 @@ def fetch_data():
                     if store[2] in dummy:
                         continue
                     dummy.append(store[2])
-                    print(store)  
+                  #  print(store)  
                     yield store
             responses=''
             url ="https://dealerlocator.deere.com/servlet/ajax/getLocations?lat="+str(coord[0])+"&long="+str(coord[1])+"&locale=en_GB&country=CA&uom=KM&filterElement="+str(i['id'])
@@ -164,10 +167,13 @@ def fetch_data():
                     except:
                         pass
                     # print(add)
-                    street_address = " ".join(add[:-2])
-                    city = add[-2].strip()
-                    state = add[-1].strip().split()[0]
-                    zipp = (" ".join(add[-1].strip().split()[1:]))
+                    try:
+                        street_address = " ".join(add[:-2])
+                        city = add[-2].strip()
+                        state = add[-1].strip().split()[0]
+                        zipp = (" ".join(add[-1].strip().split()[1:]))
+                    except:
+                        pass
           
                     phone = data['contactDetail']['phone']
                     store_number = "<MISSING>"
@@ -198,7 +204,7 @@ def fetch_data():
                     if store[2] in adressess1:
                         continue
                     adressess1.append(store[2])
-                    print(store)
+                    # print(store)
                     yield store
              
         if current_results_len < MAX_RESULTS:
