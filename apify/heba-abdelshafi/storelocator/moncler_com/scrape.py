@@ -73,7 +73,7 @@ def fetch_data():
                         city,
                         state,
                         pcode,
-                        'US',
+                        ccode,
                         '<MISSING>',
                         phone,
                         '<MISSING>',
