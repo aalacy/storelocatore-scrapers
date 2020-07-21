@@ -5,10 +5,10 @@ import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import json
+import requests
 session = SgRequests()
 import platform
 system = platform.system()
-import requests
 
 def get_driver():
     options = Options()
@@ -59,7 +59,7 @@ def fetch_data():
 
             response = requests.request("GET", url, headers=headers)            
             json_data = json.loads(response.text.split('pinList =')[1].split("]};")[0]+']}')
-            # print(json_data)
+          #  print(json_data)
             for loc in json_data["PushPins"]:
                 # print(loc)
                 locator_domain = "https://www.extendedstayamerica.com"
@@ -84,7 +84,7 @@ def fetch_data():
                     soup = BeautifulSoup(r1.text,"lxml")
                     data_8 =  (soup.find("span",{"class":"lblPhn"}).text)
                     phone1 = data_8
-               # print(phone1)
+              #  print(phone1)
                 # exit()
                 store_number = loc["HotelId"]
                 hours_of_operation = "<MISSING>"
@@ -121,8 +121,8 @@ def fetch_data():
                 if store_number in addresses:
                     continue
                 addresses.append(store_number)
-                # print("data == " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+               # print("data == " + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 def scrape():
     data = fetch_data()
