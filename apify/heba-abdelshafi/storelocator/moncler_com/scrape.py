@@ -1,62 +1,103 @@
-from selenium import webdriver
-from time import sleep
-import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
 
+from sgrequests import SgRequests
 
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
 def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
+    # Your scraper here
+    data = []
+    p = 0
+    url = 'https://www.moncler.com/us/storeslocator'
+    r = session.get(url, headers=headers, verify=False)
+  
+    soup =BeautifulSoup(r.text, "html.parser")
+   
+    country_list = soup.findAll('a',{'class':'Directory-listLink'})
+    
+    for country in country_list:
+        if country['href'].find('storeslocator/canada') > -1 or country['href'].find('storeslocator/united-states') > -1:            
+            cclink = 'https://www.moncler.com' + country['href'].split('..')[1]
+            ccode = 'US'
+            if country['href'].find('storeslocator/canada') > -1 :
+                ccode = 'CA'
+            r = session.get(cclink, headers=headers, verify=False)  
+            soup =BeautifulSoup(r.text, "html.parser")
+            citylist = soup.findAll('a',{'class':'Directory-listLink'})
+            for city in citylist:
+                clink = 'https://www.moncler.com/us'+city['href'].split('../us')[1]
+                r = session.get(clink, headers=headers, verify=False)  
+                soup =BeautifulSoup(r.text, "html.parser")
+                branchlink = soup.findAll('a',{'class':'Teaser-titleLink'})
+                for branch in branchlink:
+                    link = 'https://www.moncler.com/us'+branch['href'].split('../us')[1]
+                    r = session.get(link, headers=headers, verify=False)  
+                    soup =BeautifulSoup(r.text, "html.parser")
+                    title = soup.find('h1').text
+                    street= soup.find('span',{'class':'c-address-street-1'}).text.replace('\n',' ')
+                    city = soup.find('span',{'class':'c-address-city'}).text
+                    state = soup.find('abbr',{'itemprop':'addressRegion'}).text
+                    pcode = soup.find('span',{'class':'c-address-postal-code'}).text
+                    try:
+                        phone = soup.find('div',{'id':'phone-main'}).text
+                    except:
+                        phone = '<MISSING>'
+                    try:
+                        hours = soup.find('table',{'class':'c-hours-details'}).text
+                        hours = hours.split('Hours')[1].replace('Monday','Monday ').replace('Tuesday',' Tuesday ').replace('Wednesday',' Wednesday ').replace('Thursday',' Thursday ').replace('Friday',' Friday ').replace('Saturday',' Saturday ').replace('Sunday',' Sunday ')
+                    except:
+                        hours = '<MISSING>'
+                    lat = soup.find('meta',{'itemprop':'latitude'})['content']
+                    longt = soup.find('meta',{'itemprop':'longitude'})['content']
+                    data.append([
+                        'https://www.moncler.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+                    #print(p,data[p])
+                    p += 1
+                    
+                    
+                    
+                
+            
+            
 
-    driver.get('https://www.moncler.com/us/storeslocator/')
-    globalvar = driver.execute_script("return SLData;")
-    json_data=globalvar['stores']
-
-    stores_data=[]
-    for i in json_data:
-        if i['countryCode']=='USA' or i['countryCode']=='CAN':
-            stores_data.append(i)
-            data['locator_domain'].append('https://www.moncler.com')
-            data['location_name'].append(i['name'])
-            data['street_address'].append(i['address'])
-            data['city'].append(i['cityLangName'])
-            if len(i['zip'])==4:
-                data['zip'].append('0'+i['zip'])
-            else:
-                if r'&#39;' in i['zip']:
-                    data['zip'].append(i['zip'].replace(r'&#39;',''))
-                else:
-                    data['zip'].append(i['zip'])
-
-            data['country_code'].append(i['countryCode'])
-            if len(i['phone'])>17:
-                data['phone'].append(i['phone'].split('Ext')[0])
-            else:
-                data['phone'].append(i['phone'])
-            data['hours_of_operation'].append(i['openingTimes'][0]['formatted'])
-            data['state'].append('<MISSING>')
-            data['store_number'].append(i['storeId'])
-            data['location_type'].append(i['slug']['type'])
-            data['longitude'].append(i['latLong']['lng'])
-            data['latitude'].append(i['latLong']['lat'])
-
-    driver.close()
     return data
 
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 scrape()
