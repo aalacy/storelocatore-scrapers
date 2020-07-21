@@ -31,7 +31,7 @@ class Scraper(Scrape):
 
         # Fetch stores from location menu
         for zip_search in sgzip.for_radius(50):
-            location_url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{0}.json".format(zip_search)
+            location_url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{zip_search}.json"
             
             response = session.get(location_url)
             if response.status_code == 200:
