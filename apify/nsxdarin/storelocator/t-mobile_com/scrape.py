@@ -1,87 +1,84 @@
 import csv
-import urllib2
+import sgzip
 from sgrequests import SgRequests
-import json
+
+search = sgzip.ClosestNSearch()
+search.initialize()
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'authority': 'www.chevrolet.ca',
+           'accept': 'application/json, text/plain, */*',
+           'clientapplicationid': 'OCNATIVEAPP',
+           'loginin': 'mytest016@outlook.com',
+           'locale': 'en_US'
            }
+
+MAX_RESULTS = 50
+MAX_DISTANCE = 25
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "operating_info", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://www.t-mobile.com/store-locator-sitemap.xml'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '<loc>https://www.t-mobile.com/store-locator/' in line:
-            items = line.split('<loc>https://www.t-mobile.com/store-locator/')
-            for item in items:
-                if '</loc>' in item:
-                    lurl = 'https://www.t-mobile.com/store-locator/' + item.split('<')[0]
-                    if lurl.count('/') == 6:
-                        locs.append(lurl)
-    for loc in locs:
-        #print('Pulling Location %s...' % loc)
+    sids = []
+    ids = []
+    locations = []
+    coord = search.next_coord()
+    while coord:
+        llat = coord[0]
+        llng = coord[1]
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('%s-%s...' % (llat, llng))
+        url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
+        r = session.get(url, headers=headers)
+        result_coords = []
+        array = []
         website = 't-mobile.com'
-        state = loc.split('/')[4]
-        city = loc.split('/')[5]
-        lname = loc.split('/')[6]
-        lurl = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoreByName?state=' + state + '&city=' + city + '&storeName=' + lname + '&ignoreLoadingBar=undefined'
-        typ = '<MISSING>'
-        opinfo = '<MISSING>'
-        hours = ''
-        name = ''
-        city = ''
-        add = ''
-        state = ''
-        zc = ''
-        country = ''
-        store = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            try:
-                cc = line2.count('"description":"Store Closed"')
-                opinfo = '<MISSING>'
-                store = line2.split('"id":"')[1].split('"')[0]
-                name = line2.split(',"name":"')[1].split('"')[0]
-                typ = line2.split('"type":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
-                loc = line2.split('"url":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split(',')[0]
-                country = 'US'
-                hours = 'Mon: ' + line2.split('"day":"Monday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Monday","')[1].split('"closes":"')[1].split('"')[0]
-                hours = hours + '; ' + 'Tue: ' + line2.split('"day":"Tuesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Tuesday","')[1].split('"closes":"')[1].split('"')[0]
-                hours = hours + '; ' + 'Wed: ' + line2.split('"day":"Wednesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Wednesday","')[1].split('"closes":"')[1].split('"')[0]
-                hours = hours + '; ' + 'Thu: ' + line2.split('"day":"Thursday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Thursday","')[1].split('"closes":"')[1].split('"')[0]
-                hours = hours + '; ' + 'Fri: ' + line2.split('"day":"Friday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Friday","')[1].split('"closes":"')[1].split('"')[0]
-                hours = hours + '; ' + 'Sat: ' + line2.split('"day":"Saturday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Saturday","')[1].split('"closes":"')[1].split('"')[0]
-                try:
-                    hours = hours + '; ' + 'Sun: ' + line2.split('"day":"Sunday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Sunday","')[1].split('"closes":"')[1].split('"')[0]
-                except:
-                    hours = hours + '; Sun: Closed'
-                if cc == 7:
-                    opinfo = 'Store Closed'
-            except:
-                store = '<MISSING>'
-        if hours == '':
-            hours = '<MISSING>'
-        if store != '<MISSING>':
-            yield [website, loc, name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            if '{"id":"' in line:
+                items = line.split('{"id":"')
+                for item in items:
+                    if '"type":"' in item:
+                        try:
+                            name = item.split('"name":"')[1].split('"')[0]
+                            store = item.split('"')[0]
+                            typ = item.split('"type":"')[1].split('"')[0]
+                            loc = item.split('"url":"')[1].split('"')[0]
+                            phone = item.split('"telephone":"')[1].split('"')[0]
+                            add = item.split('"streetAddress":"')[1].split('"')[0]
+                            city = item.split('"addressLocality":"')[1].split('"')[0]
+                            state = item.split('"addressRegion":"')[1].split('"')[0]
+                            zc = item.split(',"postalCode":"')[1].split('"')[0]
+                            country = 'US'
+                            lat = item.split('"latitude":')[1].split(',')[0]
+                            hours = ''
+                            lng = item.split('"longitude":')[1].split(',')[0]
+                            days = item.split('"standardHours":[')[1].split(']')[0].split('"day":"')
+                            for day in days:
+                                if '"opens":"' in day:
+                                    hrs = day.split('"')[0] + ': ' + day.split('"opens":"')[1].split('"')[0] + '-' + day.split('"closes":"')[1].split('"')[0]
+                            array.append(store)
+                            if store not in sids:
+                                sids.append(store)
+                                #print(store)
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        except:
+                            pass
+        if len(array) <= MAX_RESULTS:
+                    print("max distance update")
+                    search.max_distance_update(MAX_DISTANCE)
+        ##        elif len(array) == MAX_RESULTS:
+        ##            print("max count update")
+        ##            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()        
 def scrape():
     data = fetch_data()
     write_output(data)
