@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,10 +17,11 @@ def fetch_data():
     url = 'https://www.homedepot.com/sitemap/d/store.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.homedepot.com/l/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'homedepot.com'
         typ = '<MISSING>'
         hours = ''
@@ -38,9 +38,10 @@ def fetch_data():
         phone = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<h1 class="storeDetailHeader' in line2:
                 name = line2.split('<h1 class="storeDetailHeader')[1].split('">')[1].split('<')[0]
-            if 'THD_GLOBAL.JSON_REP' in line2:
+            if '"stores":[{' in line2:
                 add = line2.split('"street":"')[1].split('"')[0]
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"state":"')[1].split('"')[0]
