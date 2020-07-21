@@ -69,7 +69,10 @@ def fetch_data():
 		locator_domain = "stores.staples.ca"
 		location_name = store['name'] + " " + store['branchCode']
 		street_address = store['address']['streetAddress'].replace(',','').strip()
-		city = store['address']['addressLocality']
+		if "475 Grand Blvd" in street_address:
+			city = "L'Ile Perrot"
+		else:
+			city = store['address']['addressLocality']
 		title = item.title.text
 		state = title[title.find("|")-4:title.find("|")].strip()
 		zip_code = store['address']['postalCode']
