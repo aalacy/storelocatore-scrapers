@@ -39,16 +39,34 @@ def fetch_data():
                 ccode = 'CA'
             r = session.get(cclink, headers=headers, verify=False)  
             soup =BeautifulSoup(r.text, "html.parser")
-            citylist = soup.findAll('a',{'class':'Directory-listLink'})
+            maindiv = soup.find('ul',{'class':'Directory-listLinks'})
+            citylist = maindiv.findAll('li',{'class':'Directory-listItem'})
+            #print("CITY",len(citylist))            
             for city in citylist:
-                clink = 'https://www.moncler.com/us'+city['href'].split('../us')[1]
-                r = session.get(clink, headers=headers, verify=False)  
-                soup =BeautifulSoup(r.text, "html.parser")
+                #print(city.find('a').text)                
+                clink = 'https://www.moncler.com/us'+city.find('a')['href'].split('../us')[1]
+                #print(clink)
+                count = city.find('a')['data-count'].replace(')','').replace('(','')
+                count = (int)(count)
+                #print("count=",count)
+                r1 = session.get(clink, headers=headers, verify=False)  
+                soup =BeautifulSoup(r1.text, "html.parser")
                 branchlink = soup.findAll('a',{'class':'Teaser-titleLink'})
-                for branch in branchlink:
-                    link = 'https://www.moncler.com/us'+branch['href'].split('../us')[1]
-                    r = session.get(link, headers=headers, verify=False)  
-                    soup =BeautifulSoup(r.text, "html.parser")
+                flag = 0
+                if count == 1:
+                    branchlink = []
+                    branchlink.append(clink)
+                    flag = 1
+                 
+                for branch in branchlink:                   
+                    if flag == 0:
+                        link = 'https://www.moncler.com/us'+branch['href'].split('../us')[1]
+                        r = session.get(link, headers=headers, verify=False)  
+                        soup =BeautifulSoup(r.text, "html.parser")
+                    else:
+                        soup =BeautifulSoup(r1.text, "html.parser")
+                        link = clink
+            
                     title = soup.find('h1').text
                     street= soup.find('span',{'class':'c-address-street-1'}).text.replace('\n',' ')
                     city = soup.find('span',{'class':'c-address-city'}).text
