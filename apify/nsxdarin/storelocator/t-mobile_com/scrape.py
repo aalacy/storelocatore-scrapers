@@ -63,6 +63,10 @@ def fetch_data():
                             for day in days:
                                 if '"opens":"' in day:
                                     hrs = day.split('"')[0] + ': ' + day.split('"opens":"')[1].split('"')[0] + '-' + day.split('"closes":"')[1].split('"')[0]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
                             array.append(store)
                             if store not in sids:
                                 sids.append(store)
