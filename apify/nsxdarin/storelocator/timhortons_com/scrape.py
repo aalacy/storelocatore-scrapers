@@ -43,7 +43,7 @@ def fetch_data():
                         phone = '<MISSING>'
                     hours = ''
                     if '"diningRoomHours":{"_type":"hoursOfOperation"' in item:
-                        days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('},"drinkStationType":')[0]
+                        days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
                         hours = 'Mon: ' + days.split('"monOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"monClose":"')[1].split(' ')[1].split(':00"')[0]
                         hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"tueClose":"')[1].split(' ')[1].split(':00"')[0]
                         hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"wedClose":"')[1].split(' ')[1].split(':00"')[0]
