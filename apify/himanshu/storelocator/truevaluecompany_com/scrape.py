@@ -1,212 +1,96 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import time
-
-
-
-session = SgRequests()
-
-def request_wrapper(url, method, headers, data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url, headers=headers, data=data)
-                else:
-                    r = session.post(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
-
+from sgrequests import SgRequests
+session = SgRequests() 
 def write_output(data):
-    with open('data.csv', 'w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=",")
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
+        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-
-        # print("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
-
-
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
+        # Body
+        for row in data:
+            writer.writerow(row)
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    # search.initialize(country_codes=[‘us’, ‘ca’])
-    search.initialize(country_codes=["US"])
-    MAX_RESULTS = 1000000
-    MAX_DISTANCE = 25
-    # current_results_len = 0  # need to update with no of count.
-    zip_code = search.next_zip()
-    # coord = search.next_coord()
-    result_coords = []
+    address = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
+    base_url = "https://truevalue.com/"
+    location_url = "https://stores.truevalue.com/"
+    r = session.get(location_url,headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    data = (soup.find_all("div",{"class":"itemlist"}))
+    for i in data:
+        link_1 = (i.find("a")['href'])
+        r1 = session.get(link_1,headers=headers)
+        soup1 = BeautifulSoup(r1.text,"lxml")
+        data1 = (soup1.find_all("div",{"class":"itemlist"}))
+        for i1 in data1:
+            link_2 = (i1.find("a")['href'])
+            r2 = session.get(link_2,headers=headers)
+            soup2 = BeautifulSoup(r2.text,"lxml")
+            data2 = (soup2.find_all("script",{"type":"application/ld+json"})[-1]).text
+            json_data = json.loads(data2)
+            link_3 = (json_data['url'])
+            # print(link_3)
+            r3 = session.get(link_3,headers=headers)
+            soup3 = BeautifulSoup(r3.text,"lxml")
+            try:
+                data_3 = (soup3.find_all("script",{"type":"application/ld+json"})[-1]).text.replace(" //if applied, use the tmpl_var to retrieve the database value","").replace("  // starts services list","").replace(', ]',' ]')
+                data3 = re.sub("\s+"," ", str(data_3))
+                json_data1 = json.loads(data3)
+                location_name = json_data1['name']
+                street_address = (json_data1['address']['streetAddress'])
+                city = (json_data1['address']['addressLocality'])
+                state = (json_data1['address']['addressRegion'])
+                zipp = (json_data1['address']['postalCode'])
+                country_code = (json_data1['address']['addressCountry'])
+                store_number = json_data1['@id']
+                phone = json_data1['telephone']
+                location_type = json_data1['@type']
+                latitude = (json_data1['geo']['latitude'])
+                longitude = (json_data1['geo']['longitude'])
+                hours_of_operation = str(json_data1['openingHoursSpecification']).replace("'","").replace("{","").replace("}","").replace("[","").replace("]","").replace("opens","").replace("closes","").replace("OpeningHoursSpecification","").replace("dayOfWeek","").replace("@type","").replace(": , : ","").replace(", : - "," - ").replace(", :","").replace("Monday, , Tuesday, , Wednesday, , Thursday, , Friday, , Saturday, , Sunday, ","<MISSING>")
+                page_url =json_data1['url']
+            except:
+                location_name = soup3.find("meta",{"property":"og:title"})['content']
+                street_address = soup3.find("meta",{"property":"business:contact_data:street_address"})['content']
+                city = soup3.find("meta",{"property":"business:contact_data:locality"})['content']
+                state = soup3.find("meta",{"property":"business:contact_data:region"})['content']
+                zipp = soup3.find("meta",{"property":"business:contact_data:postal_code"})['content']
+                country_code = soup3.find("meta",{"property":"business:contact_data:country_name"})['content']
+                phone = soup3.find("meta",{"property":"business:contact_data:phone_number"})['content']
+                location_type = "HardwareStore"
+                latitude = soup3.find("meta",{"property":"place:location:latitude"})['content']
+                longitude = soup3.find("meta",{"property":"place:location:longitude"})['content']
+                hours_of_operation = soup3.find("div",{"id":"all_hours"}).text.replace("\n","").replace("\r","").replace("\t","").replace("PM","PM, ").strip().lstrip().rstrip().replace("Sun","Sunday").replace("Sat","Saturday").replace("Fri","Friday").replace("Mon","Monday").replace("Tue","Tuesday").replace("Wed","Wednesday").replace("Thu","Thurseday")
+                page_url =soup3.find("meta",{"property":"business:contact_data:website"})['content']
+                store_number = page_url.split("/")[-1]
+                # print("---------------------done data---------------------------")
 
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        # 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-
-
-    }
-
-    # it will used in store data.
-    locator_domain = "https://www.truevaluecompany.com/"
-    page_url = "<MISSING>"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-
-    while zip_code:
-        result_coords = []
-
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-
-        base_url = "https://www.truevaluecompany.com"
-        # time.sleep(1)
-        try:
-            r = request_wrapper('https://hosted.where2getit.com/truevalue/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E41C97F66-D0FF-11DD-8143-EF6F37ABAA09%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E' + str(zip_code) +
-                                '%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E10%7C25%7C50%7C100%7C250%3C%2Fsearchradius%3E%3Cwhere%3E%3Cor%3E%3Ctv%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftv%3E%3Chg%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fhg%3E%3Cgr%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fgr%3E%3Cds%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fds%3E%3Cja%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fja%3E%3Ctaylorrental%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftaylorrental%3E%3C%2For%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E', "get", headers=headers)
-
-            soup = BeautifulSoup(r.text, 'lxml')
-
-            main = soup.find_all('poi')
-            current_results_len = len(str(main))
-            # print(main)
-            # print(current_results_len)
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            for poi in main:
-                name = poi.find('name').text.strip().capitalize()
-                address = poi.find('address1').text.strip().capitalize()
-                city = poi.find('city').text.strip().capitalize()
-                country = poi.find('country').text.strip()
-                if country not in ["US", "CA"]:
-                    continue
-                # print(country)
-                state = poi.find('state').text.strip()
-                lat = poi.find('latitude').text.strip()
-                lng = poi.find('longitude').text.strip()
-                phone = poi.find('phone').text.strip()
-                zip = poi.find('postalcode').text.strip()
-                if "00000-0000" == zip:
-                    zip = "<MISSING>"
-                else:
-                    zip = zip
-                # print(zip, country)
-                # if "11732-1601" == zip:
-                #     country = "CA"
-
-                hour = ''
-                if poi.find('mon_open_time').text.strip():
-                    hour += " Monday : " + \
-                        poi.find('mon_open_time').text.strip() + \
-                        poi.find('mon_close_time').text.strip()
-                if poi.find('tue_open_time').text.strip():
-                    hour += " Tuesday : " + \
-                        poi.find('tue_open_time').text.strip() + \
-                        poi.find('tue_close_time').text.strip()
-                if poi.find('wed_open_time').text.strip():
-                    hour += " Wednesday : " + \
-                        poi.find('wed_open_time').text.strip() + \
-                        poi.find('wed_close_time').text.strip()
-                if poi.find('thur_open_time').text.strip():
-                    hour += " Thursday : " + \
-                        poi.find('thur_open_time').text.strip() + \
-                        poi.find('thur_close_time').text.strip()
-                if poi.find('fri_open_time').text.strip():
-                    hour += " Friday : " + \
-                        poi.find('fri_open_time').text.strip() + \
-                        poi.find('fri_close_time').text.strip()
-                if poi.find('sat_open_time').text.strip():
-                    hour += " Saturday : " + \
-                        poi.find('sat_open_time').text.strip() + \
-                        poi.find('sat_close_time').text.strip()
-                if poi.find('sun_open_time').text.strip():
-                    hour += " Sunday : " + \
-                        poi.find('sun_open_time').text.strip() + \
-                        poi.find('sun_close_time').text.strip()
-
-                result_coords.append((lat, lng))
-                store = []
-                page_url = "<MISSING>"
-                store.append(base_url)
-                store.append(name if name else "<MISSING>")
-                store.append(address if address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zip if zip else "<MISSING>")
-                store.append(country if country else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(lat if lat else "<MISSING>")
-                store.append(lng if lng else "<MISSING>")
-                store.append(hour if hour else "<MISSING>")
-                store.append(page_url if page_url else "<MISSING>")
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-
-                # print("data = " + str(store))
-                # print(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-        except:
-            pass
-
-        if current_results_len < MAX_RESULTS:
-            #print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            #print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " +
-                            str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-    # return return_main_object
-
-
+            store = []
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(location_name if location_name else "<MISSING>") 
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
+            store.append(store_number if store_number else"<MISSING>") 
+            store.append(phone if phone else "<MISSING>")
+            store.append(location_type if location_type else "<MISSING>")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(page_url if page_url else "<MISSING>")
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
