@@ -37,7 +37,6 @@ def fetch_data():
             for url in city_soup.find_all("a",{"class":"btn btn_red"}):
             
                 page_url = url['href']
-               # print(page_url)
                 if page_url in url or "homelessshelterdirectory.org" not in page_url:
                     continue
                 url.append(page_url)
