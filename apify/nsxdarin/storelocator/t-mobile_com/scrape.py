@@ -68,6 +68,8 @@ def fetch_data():
                                     else:
                                         hours = hours + '; ' + hrs
                             array.append(store)
+                            if hours == '':
+                                hours = '<MISSING>'
                             if store not in sids:
                                 sids.append(store)
                                 #print(store)
