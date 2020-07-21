@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -30,7 +31,7 @@ def fetch_data():
     city = ""
     state = ""
     zipp = ""
-    country_code = "US"
+    country_code = ""
     store_number = ""
     phone = ""
     location_type = ""
@@ -43,7 +44,7 @@ def fetch_data():
         status =location['hours']['storeStatus']
         store_number =  str(location['storeNumber'])
         location_type = location['brand']
-        #print(location_type)
+      #  print(location_type)
         page_url = "http://find.cashamerica.us/#/storesdetails/"+store_number+'/'+location_type+'/'+str(distance)+'/'+h+'/'+status
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
         all_data = session.get(http, headers=headers).json()
@@ -51,10 +52,25 @@ def fetch_data():
         street_address = all_data['address']['address1']
         city = all_data['address']['city']
         state = all_data['address']['state']
+        US_State = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
+ 
+        if state not in US_State:
+            continue
         zipp = all_data['address']['zipCode']
+        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
+        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+        state_list = re.findall(r' ([A-Z]{2}) ', str(zipp))
+        if ca_zip_list:
+            zipp = ca_zip_list[-1]
+            country_code = "CA"
+        if us_zip_list:
+            zipp = us_zip_list[-1]
+            country_code = "US"
         latitude = str(location['latitude'])
         longitude = str(location['longitude'])
         phone = all_data['phone']
+        # print(all_data)
+        # exit()
         hours_of_operation1 ='' 
         if "weeklyHours" in all_data:
             hours_of_operation = all_data['weeklyHours']
