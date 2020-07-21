@@ -42,11 +42,14 @@ def fetch_data():
                         days = item.split(',{"openTime":')
                         for day in days:
                             if '"franchiseNm":"' not in day:
-                                hrs = day.split('"timeString":"')[1].split(',')[1].split('"')[0].strip().split(' ')[0] + '; ' + day.split('"timeString":"')[1].split(',')[0] + '-' + day.split('"timeString":"')[2].split(',')[0]
-                                if hours == '':
-                                    hours = hrs
-                                else:
-                                    hours = hours + '; ' + hrs
+                                try:
+                                    hrs = day.split('"timeString":"')[1].split(',')[1].split('"')[0].strip().split(' ')[0] + '; ' + day.split('"timeString":"')[1].split(',')[0] + '-' + day.split('"timeString":"')[2].split(',')[0]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                                except:
+                                    pass
                         if hours == '':
                             hours = '<MISSING>'
                         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
