@@ -105,7 +105,7 @@ def fetch_data():
                 store.append(zipp)
                 store.append("US")
                 store.append(store_number)
-                store.append(phone.replace("x305","").replace("x 203","").strip())
+                store.append(phone.replace("x305","").replace("x 203","").replace("/","").strip() if phone.replace("-","").replace("(","").replace(")","").replace(".","").replace(",","").replace("/","").strip().isdigit() and len(phone.replace("-","").replace("(","").replace(")","").replace(".","").replace(",","").replace("/","").strip()) == 10  else "<MISSING>")
                 store.append("Shelter")
                 store.append(lat)
                 store.append(lng)
