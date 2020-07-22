@@ -38,17 +38,17 @@ def fetch_data():
         else:
             phone="<MISSING>"
         if 'schedule' in i:
-            hours = (i['schedule'].replace("\\","").replace("/","").replace("\n","").replace("\r","").replace("\t",""))
+            hours = (i['schedule'].replace("\\","").replace("/","").replace("\n","").replace("\r","").replace("\t","").replace("\\u00f4","").replace("\\u00ee",""))
         else:
             hours = "<MISSING>"
        
         if len(i['address'].split(','))==1:
-            st = i['address']
+            st = i['address'].replace("\\u00e9","").replace("\\u00e8","").replace("\\u00c9","").replace(" \\u00ce","").replace("\\u00f4","").replace("\\u00ee","")
         else: 
-            st =(" ".join(i['address'].split(",")[1:]))
+            st =(" ".join(i['address'].split(",")[1:])).replace("\\u00e9","").replace("\\u00e8","").replace("\\u00c9","").replace(" \\u00ce","").replace("\\u00f4","").replace("\\u00ee","")
         tem_var.append("https://hartstores.com")
         tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(st.encode('ascii', 'ignore').decode('ascii').strip())
+        tem_var.append(st.replace("\\u00e9","").replace("\\u00e8","").replace("\\u00c9","").replace(" \\u00ce","").encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(state.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(postal.encode('ascii', 'ignore').decode('ascii').strip())
@@ -60,9 +60,9 @@ def fetch_data():
         tem_var.append(log.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append("<MISSING>")
-        if tem_var[2] in address :
+        if tem_var[1] in address :
             continue
-        address.append(tem_var[2])
+        address.append(tem_var[1])
         yield tem_var
 def scrape():
     data = fetch_data()
