@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -26,8 +24,24 @@ def fetch_data():
     page_url = "https://www.niftyafterfifty.com/locations"
     r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
     exists = soup.findAll('p', {'class', 'font_8'})
+    return_main_object = []
+    store = []
+    store.append(base_url)
+    store.append("FLAMINGO".capitalize())
+    store.append("3041 E Flamingo Rd., Suite B")
+    store.append("Las Vegas".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("NV".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("89121-4308")
+    store.append("US")
+    store.append("<MISSING>")
+    store.append("(702) 473-6026".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("Nifty After Fifty")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append("Hours: Monday - Friday 7:00am - 5:00pm".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append(page_url)
+    yield store
     for data in exists:
         flg = True
         if data.find('span'):
@@ -47,10 +61,12 @@ def fetch_data():
             flg = False
         if flg == True:
             location_name = data.get_text().capitalize()
-            city = location_name.replace('(fitness only)','').replace('(pt only)','')
+            # print(location_name)
+            city = location_name.replace('(fitness only)','').replace('(pt only)','').replace("Brook road","Richmond").replace("Jahnke","Richmond").replace("Robious","Richmond").replace("Corporate office","Fullerton").replace("Cheyenne","Las Vegas").replace("East","").replace("West","").replace("Dt","").replace("- n. stone","").replace("- speedway","").replace("- irvington","")       
             if "," in data.find_next('p').find_next('p').get_text().strip():
                 st_address = data.find_next('p').get_text().strip() + ", " + data.find_next('p').find_next('p').get_text().strip().split(',')[0]
                 street_address=" ".join(st_address.split(',')[:-1])
+                # print(street_address)
 
                 state = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[0].strip()
                 zip = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[1].strip()
@@ -105,7 +121,7 @@ def fetch_data():
                 else:
                     hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip().split('Nifty')[0].strip()
 
-
+            # location_name= 'FLAMINGO'
             store = []
             store.append(base_url)
             store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip())
@@ -121,14 +137,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
             store.append(page_url)
-            # print(store[-2])
-            # print("data== "+ str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            return_main_object.append(store)
-        else:
-            pass
-    return return_main_object
-
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
