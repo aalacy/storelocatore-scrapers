@@ -1,3 +1,4 @@
+import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -94,7 +95,7 @@ def fetch_data():
                         pcode.lstrip().replace(',',''),
                         'US',
                         '<MISSING>',
-                        phone,
+                        phone.replace('+1-',''),
                         '<MISSING>',
                         lat,
                         longt,
