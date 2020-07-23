@@ -44,7 +44,7 @@ def fetch_data():
 	time.sleep(randint(2,3))
 
 	try:
-		element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+		element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
 			(By.ID, "store_locator_filter_radius")))
 		time.sleep(randint(1,2))
 	except:
@@ -90,7 +90,7 @@ def fetch_data():
 	time.sleep(randint(2,3))
 
 	try:
-		element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+		element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
 			(By.ID, "store_locator_filter_radius")))
 		time.sleep(randint(1,2))
 	except:
