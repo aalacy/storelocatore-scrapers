@@ -5,10 +5,8 @@ import re
 import sgzip
 import json
 import phonenumbers
+from tenacity import retry, stop_after_attempt
 
-
-
-session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -21,6 +19,18 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+@retry(stop=stop_after_attempt(7))
+def query_zip(zip_code):
+    session = SgRequests()
+    headers = {
+        'User-Agent': "PostmanRuntime/7.19.0",
+        'content-type' : 'application/json;charset=UTF-8'
+    }
+    data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+str(zip_code)+'","filters":[]},"operationName":"storeSearch"}'
+    r = session.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
+    return r.json()['data']['storeSearch']['stores']        
+
 def fetch_data():
     locator_domain = 'https://www.food4less.com/'
     addresses = []
@@ -30,19 +40,8 @@ def fetch_data():
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
     while zip_code:
+        datas = query_zip(zip_code)
         result_coords = []
-        # print("zip_code === " + str(zip_code))
-        # print("ramiang zip =====" + str(len(search.zipcodes)))
-        headers = {
-            'User-Agent': "PostmanRuntime/7.19.0",
-            'content-type' : 'application/json;charset=UTF-8'
-        }
-        data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+str(zip_code)+'","filters":[]},"operationName":"storeSearch"}'
-        # try:
-        r = session.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
-        # except:
-        #     continue
-        datas = r.json()['data']['storeSearch']['stores']        
         for key in datas:
             location_name = key['vanityName']
             street_address = key['address']['addressLine1'].capitalize()
