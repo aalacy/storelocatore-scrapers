@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 import time
+from tenacity import retry, stop_after_attempt
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -12,6 +13,11 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
+
+@retry(stop=stop_after_attempt(7))
+def fetch_loc(loc):
+    session = SgRequests()
+    return session.get(loc, headers=headers)
 
 def fetch_data():
     url = 'https://www.shiekh.com/store-list'
@@ -37,7 +43,7 @@ def fetch_data():
         website = 'shiekhshoes.com'
         typ = 'Store'
         store = ''
-        r2 = session.get(loc, headers=headers)
+        r2 = fetch_loc(loc)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
             if '<title>' in line2:
@@ -68,7 +74,6 @@ def fetch_data():
             if ',' in add:
                 add = add.split(',')[0].strip()
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        time.sleep(3)
 
 def scrape():
     data = fetch_data()
