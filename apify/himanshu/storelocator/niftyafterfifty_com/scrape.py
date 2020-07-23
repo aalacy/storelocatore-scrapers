@@ -137,6 +137,8 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
             store.append(page_url)
+            if "92831-5205" in zip:
+                continue
             yield store
 def scrape():
     data = fetch_data()
