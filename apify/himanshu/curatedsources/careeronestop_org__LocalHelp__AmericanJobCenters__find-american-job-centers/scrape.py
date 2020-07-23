@@ -5,7 +5,6 @@ import json
 import time
 from sgrequests import SgRequests
 session = SgRequests()
-import requests
  
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -33,7 +32,7 @@ def fetch_data():
         location_url = "https://www.careeronestop.org/localhelp/americanjobcenters/find-american-job-centers.aspx?&location="+str(region)+"&radius=100&ct=0&y=0&w=0&e=0&sortcolumns=Location&sortdirections=ASC&curPage=1&pagesize=500"
 
         try:
-            soup = bs(requests.get(location_url,headers=headers).content,'lxml')
+            soup = bs(session.get(location_url,headers=headers).content,'lxml')
         
 
             for tr in soup.find_all("table")[-1].find("tbody").find_all("tr"):
@@ -54,7 +53,7 @@ def fetch_data():
                     phone = tag[1].replace("1-800-285-WORKS","1-800-285-1155").replace("209-558-WORK (9675)","209-558 (9675)")
                 hours = tag[2].replace("Hours:","")
 
-                location_soup = bs(requests.get(page_url, headers=headers).content, "lxml")
+                location_soup = bs(session.get(page_url, headers=headers).content, "lxml")
 
                 data = json.loads(str(location_soup).split("var locinfo =")[1].split(";")[0].strip())
 
