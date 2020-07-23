@@ -2,13 +2,13 @@ import csv
 from bs4 import BeautifulSoup as bs
 import re
 import json
-import sgzip
 import time
 from sgrequests import SgRequests
 session = SgRequests()
+import requests
  
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -20,113 +20,66 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 50
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    addressess=[]
+   
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
+    base_url = "https://www.careeronestop.org"
+    region_list = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
+    
+    for region in region_list:
+        
+        location_url = "https://www.careeronestop.org/localhelp/americanjobcenters/find-american-job-centers.aspx?&location="+str(region)+"&radius=100&ct=0&y=0&w=0&e=0&sortcolumns=Location&sortdirections=ASC&curPage=1&pagesize=500"
 
-    lens1=0
-    while zip_code:
-        result_coords = []
-       # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        location_url ="https://www.careeronestop.org/localhelp/americanjobcenters/find-american-job-centers.aspx?&location="+str(zip_code)+"&radius=500&sortcolumns=Distance&sortdirections=ASC&curPage=1&pagesize=500"
-        locator_domain = ""
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        raw_address = ""
-        hours_of_operation = ""
-        page_url = ''
-       
-        r = session.get(location_url,headers=headers)
         try:
-            soup = bs(r.text,'lxml').find("tbody").find_all("tr")
-            lens1 = len(soup)
+            soup = bs(requests.get(location_url,headers=headers).content,'lxml')
+        
 
-            current_results_len = lens1       # it always need to set total len of record.
-            for script in soup:
-                try:
-                    url = "https://www.careeronestop.org"+script.find("a")['href']
-                    page_url = "https://www.careeronestop.org"+script.find("a")['href']
-                    # print("~~~~~~~~~~~~  ",url)
-                except:
-                    pass
-                try:
-                    r1= session.get(page_url,headers=headers)
-                    soup1 = bs(r1.text,'lxml')
-                except:
-                    pass
+            for tr in soup.find_all("table")[-1].find("tbody").find_all("tr"):
+
+                page_url = base_url + tr.td.a['href']
+                location_name = tr.td.a.text
                 
-                try:
-                    location_name = soup1.find("div",{"id":"detailsheading"}).text.strip()
-                except:
-                    pass
-                d=''
-                try:
-                    phone =soup1.find("a",{"href":re.compile("tel")}).text.strip()
-                    phone = soup1.find(lambda tag: (tag.name == "b" ) and "Phone" in tag.text.strip()).parent.parent.text.strip().replace("Phone",'').split("or")[0].split("and")[0]
-                    if "ext" in phone:
-                        phone = "-".join(phone.split("-")[:-1])+phone.split("ext")[-1].replace(".",'')
-                except:
-                    phone=''
-                # tag_add = json.loads(soup1.find(lambda tag: (tag.name == "script" ) and "var locinfo" in tag.text.strip()).text.split("var locinfo =")[1].split("var mapapi")[0].strip()[:-1])
-                try:
-                    tag_add = (json.loads(str(soup1).split("var locinfo =")[1].split("var")[0].strip()[:-1]))
-                except:
-                    pass
-                try:
-                    hours_of_operation = " ".join(list(soup1.find(lambda tag: (tag.name == "td" or tag.name == "h2") and "Hours" in tag.text.strip()).parent.stripped_strings)).replace("Hours",'').strip()
-                except:
-                    hours_of_operation=''
+                location_type = tr.td.fieldset.text.replace("programtype","")
+                store_number = tr.find_all("td")[1]['id'].replace("locationtd_","").strip()
 
+                tag = list(tr.find_all("td")[-1].stripped_strings)
+
+                phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(tag[1]))
+
+                if phone_list:
+                    phone = phone_list[-1]
+                else:
+                    phone = tag[1].replace("1-800-285-WORKS","1-800-285-1155").replace("209-558-WORK (9675)","209-558 (9675)")
+                hours = tag[2].replace("Hours:","")
+
+                location_soup = bs(requests.get(page_url, headers=headers).content, "lxml")
+
+                data = json.loads(str(location_soup).split("var locinfo =")[1].split(";")[0].strip())
+
+            
                 store=[]
-                store.append("https://www.careeronestop.org")
+                store.append(base_url)
                 store.append(location_name)
-                store.append(tag_add['ADDRESS1'])
-                store.append(tag_add['CITY'])
-                store.append(tag_add['STATE'])
-                store.append(tag_add['ZIP'] if tag_add['ZIP'] else "<MISSING>")
+                store.append(data['ADDRESS1'])
+                store.append(data['CITY'])
+                store.append(data['STATE'])
+                store.append(data['ZIP'])
                 store.append("US")
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(tag_add['LAT'] if tag_add['LAT'] else "<MISSING>")
-                store.append(tag_add['LON'] if tag_add['LON'] else "<MISSING>")
-                store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+                store.append(store_number)
+                store.append(phone)
+                store.append(location_type)
+                store.append(data['LAT'])
+                store.append(data['LON'])
+                store.append(hours)
                 store.append(page_url)
-                if store[2] in addressess:
-                    continue
-                addressess.append(store[2])
+            
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 yield store
-                
-        except:
-            current_results_len = 0
 
-        if current_results_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+        except:
+            continue  
 
 
 def scrape():
