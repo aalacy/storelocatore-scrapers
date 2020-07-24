@@ -1,7 +1,6 @@
 import csv
-import json
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+import us
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,56 +13,53 @@ def write_output(data):
             writer.writerow(row)
 
 session = SgRequests()
+
+def fetch_state(state):
+    url = "https://ckficms-api.herokuapp.com/api/offices?filter%5Binclude%5D%5B%5D=type&filter%5Binclude%5D%5B%5D=communities&filter%5Bwhere%5D%5Band%5D%5B0%5D%5Bst%5D=" + state + "&filter%5Bwhere%5D%5Band%5D%5B1%5D%5Bdisabled%5D=false&filter%5Border%5D=name%20ASC"
+    return session.get(url).json()['data']
+
 def fetch_data():
-
-    all=[]
-
-    res= session.get("https://www.comfortkeepers.com/offices")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    states = soup.find_all('a', {'class': 'btn btn-flat btn-block ember-view'})  #states
-    print(len(states))
+    data=[]
+    states = us.states.STATES
     for state in states:
-        res = session.get("https://www.comfortkeepers.com/"+state.get('href'))
-        soup = BeautifulSoup(res.text, 'html.parser')
-        stores = soup.find_all('div', {'class': 'col s12 m6 l4'})  # store
+        stores = fetch_state(state.abbr)        
         for store in stores:
-            type=store.find('div', {'class': 'card-office-label'}).text
-            url="https://www.comfortkeepers.com/" + store.find('a', {'title': 'View Website'}).get('href')
-            print(url)
-            res = session.get(url)
-            soup = BeautifulSoup(res.text, 'html.parser')
-            jso = json.loads(soup.find('script', {'type': 'application/ld+json'}).text)  # store
+            location_type=store['type']
+            meta = store['attributes']
+            url="https://www.comfortkeepers.com/offices/" +  '-'.join([word for word in state.name.lower().split(' ')]) + '/' + meta['token']
 
-            addr=jso['address']
-            city = addr["addressLocality"]
-            state = addr["addressRegion"]
-            zip = addr["postalCode"]
-            street = addr["streetAddress"]
-            lat = jso["geo"]["latitude"]
-            long = jso["geo"]["longitude"]
-            loc=jso['name']
-            phone=jso['telephone']
+            city = meta["city"]
+            st = meta["st"]
+            zip_code = meta["zip"]
+            street = meta["street"]
+            lat = meta["geo"]["lat"]
+            lng = meta["geo"]["lng"]
+            loc = meta['name']
+            phone = meta['phone']
             if "MailDropOnly" in phone:
                 phone="<MISSING>"
-            tim=jso['openingHours']
-
-            all.append([
+            hours = '<MISSING>'
+            if 'hours' in meta and meta['hours']:
+                raw = meta['hours']
+                hours = ', '.join([day + ': ' + raw[day] for day in raw])
+            store_number = store['id']
+            data.append([
                 "https://comfortkeepers.com/",
                 loc,
                 street,
                 city,
-                state,
-                zip,
+                st,
+                zip_code,
                 "US",
-                "<MISSING>",  # store #
-                phone,  # phone
-                type.strip(),  # type
-                lat,  # lat
-                long,  # long
-                tim,  # timing
+                store_number,
+                phone,
+                location_type.strip(),
+                lat,
+                lng,
+                hours,
                 url])
 
-    return all
+    return data
 
 def scrape():
     data = fetch_data()
