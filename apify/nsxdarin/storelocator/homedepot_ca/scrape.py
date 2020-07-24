@@ -22,7 +22,7 @@ def fetch_data():
         if '<loc>https://stores.homedepot.ca/' in line and '.html' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             sid = lurl.rsplit('-',1)[1].split('.')[0]
-            if len(sid) == 4:
+            if len(sid) == 4 and '/bricolage-' not in lurl:
                 locs.append(lurl)
     for loc in locs:
         print('Pulling Location %s...' % loc)
