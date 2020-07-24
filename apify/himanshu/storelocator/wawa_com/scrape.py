@@ -25,19 +25,30 @@ def write_output(data):
 def fetch_data():
     urllib3.disable_warnings()
     base_url = "https://www.wawa.com"
-   
+    
     sess = requests.session()
+    base_response = sess.get(base_url)
     response = sess.get("https://www.wawa.com/site-map")
+    print(sess.cookies.get_dict())
     cookies_json = sess.cookies.get_dict()
     cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36',
-    'Content-Type': 'application/json',
-    'Cookie': cookies_string,
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' 
-    }
+    # headers = {
+    # 'User-Agent': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    # 'Cookie': cookies_string,
+    # 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    # }
+    # headers = {
+    headers  = {
+    'Host':'www.wawa.com',
+    'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv':'78.0) Gecko/20100101 Firefox/78.0",
+    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language':'en-US,en;q=0.5',
+    'Accept-Encoding':'gzip, deflate, br',
+    'DNT':'1',
+    'Connection':'keep-alive',
+    'Upgrade-Insecure-Requests':'1'}
+    
     r = session.get("https://www.wawa.com/site-map", headers=headers)
-    print(r.content)
     
     soup = BeautifulSoup(r.text,"lxml")
     addresses = []
