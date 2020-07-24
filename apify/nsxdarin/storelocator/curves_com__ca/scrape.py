@@ -2,7 +2,8 @@ import csv
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'cookie': '__cfduid=d21407db978f6fedfbb877d44bdf3a76c1595344274; _gcl_au=1.1.1927393316.1595344271; _ga=GA1.2.940401805.1595344271; _fbp=fb.1.1595344271687.1837991533; _icl_user_selected_region=ca; _icl_current_language=ca; wp-wpml_current_language=ca; _gid=GA1.2.2064215765.1595601197; _uetsid=b5ddfc3bde6274a8680d6c0406ffe280; _uetvid=c9edbf0d746722fd7ddf3cc4bc1c6708'
            }
 
 def write_output(data):
@@ -15,10 +16,10 @@ def write_output(data):
 def fetch_data():
     ids = []
     canada = ['ON','SK','YT','PEI','PE','NB','NL','NS','AB','MB','BC','QC','NV','NU','NT']
-    for xlat in range(41, 70):
-        print('Pulling Lat %s...' % (str(xlat)))
-        for ylng in range(-141, -52):
+    for xlat in range(44, 70):
+        for ylng in range(-80, -52):
             url = 'https://www.curves.com/ca/find-a-club?location=Toronto,%20ON&lat=' + str(xlat) + '&lng=' + str(ylng)
+            print(url)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
@@ -26,10 +27,11 @@ def fetch_data():
                     phone = line.split('>&#x1F4DE;</i>')[1].split('<')[0]
                 if '<a href="https://www.wellnessliving.com' in line:
                     purl = line.split('href="')[1].split('"')[0]
+                    print(purl)
                     if purl not in ids:
                         ids.append(purl)
                         r2 = session.get(purl, headers=headers)
-                        #print('Pulling Location %s...' % purl)
+                        print('Pulling Location %s...' % purl)
                         name = ''
                         website = 'curves.com'
                         typ = 'Fitness Studio'
