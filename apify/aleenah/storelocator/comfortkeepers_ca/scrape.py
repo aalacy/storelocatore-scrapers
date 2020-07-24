@@ -1,7 +1,6 @@
 import csv
 import json
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import sgzip
 from tenacity import retry, stop_after_attempt
 
