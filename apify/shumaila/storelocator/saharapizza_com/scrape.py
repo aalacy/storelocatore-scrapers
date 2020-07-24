@@ -42,6 +42,7 @@ def fetch_data():
                 #input()
                 if len(address) > 5 and address.find('CLOSED') == -1:
                     address = usaddress.parse(address)
+                    #print(address)
                     i = 0
                     street = ""
                     city = ""
@@ -49,7 +50,7 @@ def fetch_data():
                     pcode = ""
                     while i < len(address):
                         temp = address[i]
-                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Subaddress") != -1  or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
                             street = street + " " + temp[0]
                         if temp[1].find("PlaceName") != -1:
                             city = city + " " + temp[0]
@@ -65,6 +66,9 @@ def fetch_data():
                     pcode = '<MISSING>'
                     state = '<MISSING>'
                 phone = det[2].text
+                if city.find('A ') > -1:
+                    street = street  + ' A'
+                    city = city.replace('A ','')
                 try:
                     phone = phone.split('ORDER ONLINE!')[0]
                 except:
@@ -78,7 +82,7 @@ def fetch_data():
                 data.append([
                         'https://saharapizza.com/',
                         'https://saharapizza.com/locations/',                   
-                        title,
+                        title.replace('\xa0\xa0',''),
                         street.lstrip().replace(',',''),
                         city.lstrip().replace(',',''),
                         state.lstrip().replace(',',''),
@@ -91,6 +95,7 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>'
                     ])
+                #print(city)
                 #print(p,data[p])
                 p += 1
                 
