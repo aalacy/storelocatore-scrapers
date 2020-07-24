@@ -27,20 +27,50 @@ def fetch_data():
     for index,i in enumerate(data,start=0):
         page_url = i.find("a")['href']
         r1 = session.get(page_url)
+        # print(page_url)
         soup1= BeautifulSoup(r1.text,"lxml")
         log = soup1.find("iframe")["src"].split("2d")[1].split("!3d")[0]
         lat = soup1.find("iframe")["src"].split("2d")[1].split("!3d")[1].split("!2m")[0]
         full_address = list(i.stripped_strings)
+        # print(len(full_address))
+        # print(full_address[2])
         tem_var =[]
         if len(full_address)== 4:
             store_name.append(list(i.h1.stripped_strings)[0])
             street_address = list(i.stripped_strings)[1]
             phone =  list(i.stripped_strings)[2]
+            # print(phone)
             city="<MISSING>"
             state = "<MISSING>"
             zipcode="<MISSING>"
             hours="7 Days a Week: 11AM - 9PM"
         if len(full_address)== 5:
+            store_name.append(list(i.h1.stripped_strings)[0])
+            street_address = list(i.stripped_strings)[1]
+            city = list(i.stripped_strings)[2].split(',')[0]
+            state=list(i.stripped_strings)[2].split(',')[1].split( )[0]
+            zipcode  = list(i.stripped_strings)[2].split(',')[1].split( )[1]
+            phone =  list(i.stripped_strings)[3]
+            v =list(i.stripped_strings)
+            v.pop(0)
+            v.pop(0)
+            v.pop(0)
+            v.pop(0)
+            hours = "  ".join(v)
+        if len(full_address)== 7:
+            store_name.append(list(i.h1.stripped_strings)[0])
+            street_address = list(i.stripped_strings)[1]
+            city = list(i.stripped_strings)[2].split(',')[0]
+            state=list(i.stripped_strings)[2].split(',')[1].split( )[0]
+            zipcode  = list(i.stripped_strings)[2].split(',')[1].split( )[1]
+            phone =  list(i.stripped_strings)[3]
+            v =list(i.stripped_strings)
+            v.pop(0)
+            v.pop(0)
+            v.pop(0)
+            v.pop(0)
+            hours = "  ".join(v)
+        if len(full_address)== 6:
             store_name.append(list(i.h1.stripped_strings)[0])
             street_address = list(i.stripped_strings)[1]
             city = list(i.stripped_strings)[2].split(',')[0]

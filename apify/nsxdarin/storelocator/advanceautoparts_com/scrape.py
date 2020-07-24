@@ -52,7 +52,7 @@ def fetch_data():
                             locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                                 
     for city in cities:
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -63,7 +63,7 @@ def fetch_data():
                         locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for loc in locs:
         loc = loc.replace('&#39;','%27').replace('.com//','.com/')
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         LFound = True
         tries = 0
         while LFound:

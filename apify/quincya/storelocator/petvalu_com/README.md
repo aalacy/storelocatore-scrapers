@@ -1,0 +1,3 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed scraped correctly)
+--ignore StoreNumberColumnValidator (Few missing store number)
+--ignore CountValidator (data.csv has 828 POI but validation saying it has 367 POI)

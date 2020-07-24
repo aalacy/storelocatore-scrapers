@@ -23,7 +23,7 @@ base_url = 'https://bellagreen.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)
@@ -79,8 +79,12 @@ def fetch_data():
     for store in store_list:
         output = []
         output.append(base_url) # url
+        #print(get_value(store.xpath('.//h4[@class="location-name"]//text()')))
         output.append(get_value(store.xpath('.//h4[@class="location-name"]//text()'))) #location name
-        detail = eliminate_space(store.xpath('.//p[@class="location-contact small"]//a//text()'))        
+        detail = eliminate_space(store.xpath('.//p[@class="location-contact small"]//a//text()'))  
+        #print(detail)      
+        if len(detail) < 2:
+            detail=eliminate_space(store.xpath('.//p[@class="location-contact small"]//text()'))
         address = parse_address(detail[0])
         output.append(address['street']) #address
         output.append(address['city']) #city
@@ -88,7 +92,10 @@ def fetch_data():
         output.append(address['zipcode']) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(detail[1]) #phone
+        try:
+            output.append(detail[1]) #phone
+        except:
+            output.append("<MISSING>")
         output.append('Bellagreen Restaurants') #location type
         output.append(get_value(store.xpath('.//h4[@class="location-name"]//@data-lat'))) #latitude
         output.append(get_value(store.xpath('.//h4[@class="location-name"]//@data-long'))) #longitude

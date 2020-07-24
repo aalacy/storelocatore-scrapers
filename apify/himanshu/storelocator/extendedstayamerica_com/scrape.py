@@ -5,11 +5,12 @@ import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import json
+import requests
 session = SgRequests()
+import requests
+import json
 import platform
 system = platform.system()
-import requests
-
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -20,9 +21,6 @@ def get_driver():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
-
-
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -39,27 +37,21 @@ def fetch_data():
     }
     addresses = []
     base_url = "https://www.extendedstayamerica.com"
-    r = session.get(
-        "https://www.extendedstayamerica.com/hotels", headers=headers)
+    r = session.get("https://www.extendedstayamerica.com/hotels", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-
     for link in soup.find('table', class_='sm_greytxt').find_all('a'):
         state_url = base_url + link['href']
         r_state = session.get(state_url, headers=headers)
         soup_state = BeautifulSoup(r_state.text, 'lxml')
         for a in soup_state.find('div', class_='links').find_all('a'):
             data_url = base_url + a['href']
-            import requests
-            import json
             url = data_url
-
             headers = {
                 'cache-control': "no-cache",
                 }
-
-            response = requests.request("GET", url, headers=headers)            
+            response = session.get(url, headers=headers)            
             json_data = json.loads(response.text.split('pinList =')[1].split("]};")[0]+']}')
-            # print(json_data)
+          #  print(json_data)
             for loc in json_data["PushPins"]:
                 # print(loc)
                 locator_domain = "https://www.extendedstayamerica.com"
@@ -72,19 +64,19 @@ def fetch_data():
                 zipp = loc["HotelZip"]
                 # print(zipp)
                 page_url = loc["MinisiteUrl"]
-                #print(page_url)
+               # print(page_url)
                 try:
-                    r1 = requests.get(page_url)
+                    r1 = session.get(page_url)
                     soup = BeautifulSoup(r1.text,"lxml")
                     data_8 =  (soup.find("script",{ "type":"application/ld+json"}).text)
                     json_data = json.loads(data_8)
                     phone1 = (json_data['telephone'])
                 except:
-                    r1 = requests.get(page_url)
+                    r1 = session.get(page_url)
                     soup = BeautifulSoup(r1.text,"lxml")
                     data_8 =  (soup.find("span",{"class":"lblPhn"}).text)
                     phone1 = data_8
-               # print(phone1)
+                print(phone1)
                 # exit()
                 store_number = loc["HotelId"]
                 hours_of_operation = "<MISSING>"
@@ -93,8 +85,7 @@ def fetch_data():
                 try:
                     phone_tag = session.get(page_url, headers=headers)
                     soup_phone = BeautifulSoup(phone_tag.text, 'lxml')
-                    phone = soup_phone.find(
-                        'span', {'id': 'cpd_HotelMiniSite_15_lblHotelPhone'}).text.strip()
+                    phone = soup_phone.find('span', {'id': 'cpd_HotelMiniSite_15_lblHotelPhone'}).text.strip()
                     try:
                         hours = list(soup_phone.find(
                             "span", text="Hours of Operation").parent.stripped_strings)
@@ -121,8 +112,8 @@ def fetch_data():
                 if store_number in addresses:
                     continue
                 addresses.append(store_number)
-                # print("data == " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #print("data == " + str(store))
+               # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 def scrape():
     data = fetch_data()

@@ -5,7 +5,6 @@ import re
 import json
 import sgzip
 import time
-import requests
 
 session = SgRequests()
 
@@ -21,52 +20,17 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url, method, headers, data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url, headers=headers, data=data)
-                else:
-                    r = requests.post(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
-
 def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    # search.initialize(include_canadian_fsas = True)   # with canada zip
     MAX_RESULTS = 50
     MAX_DISTANCE = 200
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
 
     headers = {
-        # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         'User-Agent': "PostmanRuntime/7.19.0",
         "content-type": "application/json;charset=UTF-8",
     }
@@ -74,34 +38,15 @@ def fetch_data():
     base_url = "http://marianos.com/"
 
     while zip_code:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
-
-        # print("zip_code === " + zip_code)
-
-        # zip_code = "11576"
-
         data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(zip_code) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
         locations_url = "https://www.marianos.com/stores/api/graphql"
-        r_locations = request_wrapper(
-            locations_url, "post", headers=headers, data=data)
-
-        # print("r_locations.text ==== " + r_locations.text)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
-        
-
-        # it always need to set total len of record.
-        try:
-            locations_json = r_locations.json()["data"]["storeSearch"]["stores"]
-            
-        except:
-            continue
-
-        # print("current_results_len === " + str(current_results_len))
+        r_locations = session.post(locations_url, headers=headers, data=data)
+        locations_json = r_locations.json()["data"]["storeSearch"]["stores"]
+        print(locations_json)            
         current_results_len = len(locations_json)
         for script in locations_json:
-
             locator_domain = base_url
             location_name = ""
             street_address = ""
@@ -118,9 +63,6 @@ def fetch_data():
             page_url = ""
             hours_of_operation = ""
 
-            # do your logic here
-            # print('script["address"] === '+ str(script["address"]))
-
             street_address = script["address"]["addressLine1"]
             if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
                 street_address += " " + script["address"]["addressLine2"]
@@ -135,17 +77,13 @@ def fetch_data():
             location_name = script["vanityName"]
             location_type = "<MISSING>"
             page_url = "https://www.marianos.com/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 ltype = soup_loc.find("div", class_="logo").a["title"].strip()
-                # print(ltype)
                 if "Marianos" in ltype:
                     location_type = "Marianos"
-                    #print("loc_type === ",location_type)
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 else:
-                    #print(ltype)
                     continue
                 hours_of_operation = ""
                 for day_hours in script["ungroupedFormattedHours"]:
@@ -168,8 +106,6 @@ def fetch_data():
                     yield store
             except:
                 search.max_distance_update(MAX_DISTANCE)
-
-
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -180,7 +116,6 @@ def fetch_data():
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-
 
 def scrape():
     data = fetch_data()

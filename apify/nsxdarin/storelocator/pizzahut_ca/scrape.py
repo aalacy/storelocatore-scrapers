@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -18,13 +17,14 @@ def fetch_data():
         url = 'https://www.pizzahut.ca/mobilem8-web-service/rest/storeinfo/distance?_=1579704724574&latitude=43.6802493&longitude=-79.32094169999999&maxResults=2500&radius=5000&statuses=ACTIVE&statuses=TEMP-INACTIVE&tenant=ph-canada'
         r = session.get(url, headers=headers, timeout=60)
         for line in r.iter_lines():
-            if '{"tenantId":"' in line:
-                items = line.split('{"tenantId":"')
+            line = str(line.decode('utf-8'))
+            if '{"storeId":' in line:
+                items = line.split('{"storeId":')
                 for item in items:
-                    if '"franchiseNm":"' in item:
+                    if '"tenantId":"' in item:
                         website = 'pizzahut.ca'
                         hours = ''
-                        store = item.split('"storeName":"')[1].split('"')[0]
+                        store = item.split(',')[0]
                         name = "Pizza Hut"
                         add = item.split('"street":"')[1].split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0]
@@ -42,11 +42,14 @@ def fetch_data():
                         days = item.split(',{"openTime":')
                         for day in days:
                             if '"franchiseNm":"' not in day:
-                                hrs = day.split('"timeString":"')[1].split(',')[1].split('"')[0].strip().split(' ')[0] + '; ' + day.split('"timeString":"')[1].split(',')[0] + '-' + day.split('"timeString":"')[2].split(',')[0]
-                                if hours == '':
-                                    hours = hrs
-                                else:
-                                    hours = hours + '; ' + hrs
+                                try:
+                                    hrs = day.split('"timeString":"')[1].split(',')[1].split('"')[0].strip().split(' ')[0] + '; ' + day.split('"timeString":"')[1].split(',')[0] + '-' + day.split('"timeString":"')[2].split(',')[0]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                                except:
+                                    pass
                         if hours == '':
                             hours = '<MISSING>'
                         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -9,103 +8,55 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    urls = ['https://locations.timhortons.com/us.html','https://locations.timhortons.com/ca.html']
-    for url in urls:
-        locs = []
-        states = []
-        cities = []
-        r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            if '"c-directory-list-content-item-link" href="' in line:
-                items = line.split('"c-directory-list-content-item-link" href="')
-                for item in items:
-                    if '</a></li>' in item:
-                        lurl = 'https://locations.timhortons.com/' + item.split('"')[0]
-                        if lurl.count('/') == 6:
-                            if lurl not in locs:
-                                locs.append(lurl)
-                        if lurl.count('/') == 5:
-                            cities.append(lurl)
-                        if lurl.count('/') == 4:
-                            states.append(lurl)
-        for state in states:
-            print('Pulling State %s...' % state)
-            r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
-                if '<a class="c-directory-list-content-item-link" href="../' in line2:
-                    items = line2.split('<a class="c-directory-list-content-item-link" href="../')
-                    for item in items:
-                        if '</a></li>' in item:
-                            lurl = 'https://locations.timhortons.com/' + item.split('"')[0]
-                            if lurl.count('/') == 6:
-                                if lurl not in locs:
-                                    locs.append(lurl)
-                            else:
-                                cities.append(lurl)
-        for city in cities:
-            print('Pulling City %s...' % city)
-            r2 = session.get(city, headers=headers)
-            for line2 in r2.iter_lines():
-                if '"Teaser-titleLink"data-ya-track="dir_visit_page"href="../../' in line2:
-                    items = line2.split('"Teaser-titleLink"data-ya-track="dir_visit_page"href="../../')
-                    for item in items:
-                        if '<span class="LocationName">' in item:
-                            lurl = 'https://locations.timhortons.com/' + item.split('"')[0]
-                            if lurl not in locs:
-                                locs.append(lurl)
-        for loc in locs:
-            r2 = session.get(loc, headers=headers)
-            website = 'timhortons.com'
-            typ = 'Restaurant'
-            name = ''
-            add = ''
-            city = ''
-            state = ''
-            zc = ''
-            store = ''
-            phone = ''
-            lat = ''
-            lng = ''
-            hours = ''
-            if 'ca.html' in url:
-                country = 'CA'
-            else:
-                country = 'US'
-            for line2 in r2.iter_lines():
-                if '{"ids":' in line2:
-                    store = line2.split('{"ids":')[1].split(',')[0]
-                if '<span class="LocationName-geo">' in line2:
-                    name = line2.split('<span class="LocationName-geo">')[1].split('<')[0]
-                if '<meta itemprop="streetAddress" content="' in line2:
-                    add = line2.split('<meta itemprop="streetAddress" content="')[1].split('"')[0]
-                    city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
-                    state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-                    zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-                    phone = line2.split('id="telephone">')[1].split('<')[0]
-                if '<meta itemprop="latitude" content="' in line2:
-                    lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
-                    lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-                if "data-days='[{" in line2:
-                    days = line2.split("data-days='[{")[1].split("]}]'")[0].split('"day":"')
-                    for day in days:
-                        if '"intervals"' in day:
-                            if hours == '':
-                                try:
-                                    hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                except:
-                                    hours = day.split('"')[0] + ': CLOSED'
-                            else:
-                                try:
-                                    hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                except:
-                                    hours = hours + '; ' + day.split('"')[0] + ': CLOSED'
-            hours = hours.replace(' 0-0',' Open 24 Hours;')
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = 'https://czqk28jt.apicdn.sanity.io/v1/data/query/prod_th_us?query=*%5B%20_type%20%3D%3D%20%27restaurant%27%20%26%26%20environment%20%3D%3D%20%24environment%20%26%26%20!(%24appEnvironemnt%20in%20coalesce(hideInEnvironments%2C%20%5B%5D))%20%26%26%20latitude%20%3E%20%24minLat%20%26%26%20latitude%20%3C%20%24maxLat%20%26%26%20longitude%20%3E%20%24minLng%20%26%26%20longitude%20%3C%20%24maxLng%20%26%26%20status%20%3D%3D%20%24status%20%5D%20%7Corder((%24userLat%20-%20latitude)%20**%202%20%2B%20(%24userLng%20-%20longitude)%20**%202)%5B%24offset...(%24offset%20%2B%20%24limit)%5D%20%7B_id%2CdeliveryHours%2CdiningRoomHours%2CcurbsideHours%2CdrinkStationType%2CdriveThruHours%2CdriveThruLaneType%2Cemail%2CfranchiseGroupId%2CfranchiseGroupName%2CfrontCounterClosed%2ChasBreakfast%2ChasBurgersForBreakfast%2ChasCurbside%2ChasDineIn%2ChasCatering%2ChasDelivery%2ChasDriveThru%2ChasMobileOrdering%2ChasParking%2ChasPlayground%2ChasTakeOut%2ChasWifi%2Clatitude%2Clongitude%2CmobileOrderingStatus%2Cname%2Cnumber%2CparkingType%2CphoneNumber%2CphysicalAddress%2CplaygroundType%2Cpos%2CposRestaurantId%2CrestaurantPosData-%3E%7B_id%2C%20lastHeartbeatTimestamp%2C%20heartbeatStatus%2C%20heartbeatOverride%7D%2Cstatus%2CrestaurantImage%7B...%2C%20asset-%3E%7D%7D&%24appEnvironemnt=%22prod%22&%24environment=%22prod%22&%24limit=2000&%24maxLat=70.38222283530336&%24maxLng=-60.97695885483833&%24minLat=10.2805901091501&%24minLng=-130.11443767350475&%24offset=0&%24status=%22Open%22&%24userLat=42.331427&%24userLng=-83.0457538'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
+        if '{"_id":"restaurant_' in line:
+            items = line.split('{"_id":"restaurant_')
+            for item in items:
+                if '{"ms":' not in item:
+                    loc = '<MISSING>'
+                    website = 'timhortons.com'
+                    store = item.split('"number":"')[1].split('"')[0]
+                    name = item.split('"name":"')[1].split('"')[0]
+                    add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
+                    add = add.strip()
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"stateProvince":"')[1].split('"')[0]
+                    zc = item.split('"postalCode":"')[1].split('"')[0]
+                    country = item.split('"country":"')[1].split('"')[0]
+                    if country == 'Canada':
+                        country = 'CA'
+                    else:
+                        country = 'US'
+                    typ = '<MISSING>'
+                    lat = item.split('"latitude":')[1].split(',')[0]
+                    lng = item.split('"longitude":')[1].split(',')[0]
+                    phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                    if phone == '':
+                        phone = '<MISSING>'
+                    hours = ''
+                    if '"diningRoomHours":{"_type":"hoursOfOperation"' in item:
+                        days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
+                        try:
+                            hours = 'Mon: ' + days.split('"monOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"monClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"tueClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"wedClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Thu: ' + days.split('"thrOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"thrClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Fri: ' + days.split('"friOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"friClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"satClose":"')[1].split(' ')[1].split(':00"')[0]
+                            hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(' ')[1].split(':00"')[0] + '-' + days.split('"sunClose":"')[1].split(' ')[1].split(':00"')[0]
+                        except:
+                            pass
+                    if hours == '':
+                        hours = '<MISSING>'
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

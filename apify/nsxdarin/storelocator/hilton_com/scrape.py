@@ -80,6 +80,8 @@ def fetch_data():
                 if '<span class="property-telephone">' in line2 and phone == '':
                     phone = line2.split('<span class="property-telephone">')[1].split('<')[0].strip()
             hours = '<MISSING>'
+            if state == '':
+                state = 'PR'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

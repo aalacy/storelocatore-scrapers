@@ -1,5 +1,3 @@
-
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -29,9 +27,10 @@ def fetch_data():
     data = []
     state_list = []
     pattern = re.compile(r'\s\s+')
-    url = 'https://www.extraspace.com/'
+    url = 'https://www.extraspace.com/help/accessibility-commitment/'
     try:
-        r = requests.get(url,timeout = 30)
+        r = session.get(url)#requests.get(url,timeout = 30)
+        #time.sleep(8)
     except:
         pass
     #print(r.text)
@@ -54,7 +53,7 @@ def fetch_data():
         statelink = alink #"https://www.extraspace.com" + alink['href']
         #print(statelink)
         try:
-            r1 = requests.get(statelink,timeout = 30)
+            r1 = session.get(statelink, headers=headers, verify=False)#requests.get(statelink,timeout = 30)
         except:
             pass
   
@@ -68,10 +67,9 @@ def fetch_data():
                 link = "https://www.extraspace.com" + alink['href']
                 #print(link)
                 #input()
-                try:
-                    r2 = requests.get(link)
-                except:
-                    pass
+                
+                r2 = session.get(link, headers=headers, verify=False)#requests.get(link)
+                
   
                 soup2 =BeautifulSoup(r2.text, "html.parser")
                 title = soup2.find('span',{'id': 'FacilityTitle'}).text

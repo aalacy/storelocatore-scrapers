@@ -70,7 +70,8 @@ def fetch_data():
 		for s in stores:
 			pages.append("https://stores.ashleyfurniture.com" + s.find("a")['href'])
 
-	for p in pages:
+	for i, p in enumerate(pages):
+		print("Link %s of %s" %(i+1,len(pages)))
 		req = session.get(p, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
@@ -94,7 +95,11 @@ def fetch_data():
 			phones.append(item.find_all(class_='phone')[-1].text.strip())
 		except:
 			phones.append("<MISSING>")
-		timing.append(item.find(id='storeHours').text.replace('\n',' ').replace('  ',' ').strip())
+		try:
+			hours = item.find(id='storeHours').text.replace('\n',' ').replace('  ',' ').strip()
+		except:
+			hours = "<MISSING>"
+		timing.append(hours)
 		types.append("<MISSING>")
 		lats.append(item.find(id='location-details')['data-lat'])
 		longs.append(item.find(id='location-details')['data-lng'])

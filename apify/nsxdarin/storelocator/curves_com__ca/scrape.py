@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,12 +14,14 @@ def write_output(data):
 
 def fetch_data():
     ids = []
+    canada = ['ON','SK','YT','PEI','PE','NB','NL','NS','AB','MB','BC','QC','NV','NU','NT']
     for xlat in range(41, 70):
         print('Pulling Lat %s...' % (str(xlat)))
         for ylng in range(-141, -52):
             url = 'https://www.curves.com/ca/find-a-club?location=Toronto,%20ON&lat=' + str(xlat) + '&lng=' + str(ylng)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
+                line = str(line.decode('utf-8'))
                 if '>&#x1F4DE;</i>' in line:
                     phone = line.split('>&#x1F4DE;</i>')[1].split('<')[0]
                 if '<a href="https://www.wellnessliving.com' in line:
@@ -42,6 +43,7 @@ def fetch_data():
                         lng = ''
                         hours = ''
                         for line2 in r2.iter_lines():
+                            line2 = str(line2.decode('utf-8'))
                             if '<meta name="geo.position" content="' in line2:
                                 lat = line2.split('<meta name="geo.position" content="')[1].split(';')[0]
                                 lng = line2.split('<meta name="geo.position" content="')[1].split(';')[1].split('"')[0]
@@ -78,7 +80,7 @@ def fetch_data():
                             hours = '<MISSING>'
                         if phone == '':
                             phone = '<MISSING>'
-                        if add != '':
+                        if add != '' and state in canada:
                             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -45,20 +45,25 @@ def fetch_data():
     l1 = l1.split('MAP + DIRECTIONS')
     l1 = [k.strip() for k in l1]
     name = [j.split("\n") for j in l1]
+    #print(len(name) )
     name[5].remove('SUITE 3')
     for i in range(len(name) - 1):
+        #print(name[i])
         location_name = name[i][0]
         street_address = name[i][1]
         state = name[i][2].split(" ")[len(name[i][2].split(" ")) - 2]
         zipcode = name[i][2].split(" ")[len(name[i][2].split(" ")) - 1]
         city = name[i][2].split(" ")[:len(name[i][2].split(" ")) - 2]
         if (len(city) == 1):
-            pass
+            city=city[0]
         else:
             city = name[i][2].split(" ")[:len(name[i][2].split(" ")) - 2][0] + " " + \
                    name[i][2].split(" ")[:len(name[i][2].split(" ")) - 2][1]
         phone = name[i][3].split(" ")[1]
-        hours_of_operation = name[i][4] + " " + name[i][5]
+        try:
+            hours_of_operation = name[i][4] + " " + name[i][5]
+        except:
+            hours_of_operation = name[i][4]
         country = 'US'
         data.append([
             'www.pitfirepizza.com',

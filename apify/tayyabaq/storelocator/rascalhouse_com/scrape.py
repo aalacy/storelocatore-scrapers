@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -35,9 +35,9 @@ def fetch_data():
     time.sleep(6)
     # Fetch stores 
     stores = driver.find_elements_by_class_name("title")
-    location_name = [stores[i].text for i in range(0,len(stores))]
+    location_name = [stores[i].get_attribute('innerText') for i in range(0,len(stores))]
     phones = driver.find_elements_by_class_name("phone")
-    phone = [phones[i].text for i in range(0,len(phones))]
+    phone = [phones[i].get_attribute('innerText') for i in range(0,len(phones))]
     address = driver.find_elements_by_class_name("address")
     geomap =driver.find_elements_by_xpath("//script[@type='text/javascript']")
     geomaps = geomap[-2].get_attribute('innerHTML')
@@ -46,8 +46,11 @@ def fetch_data():
         lat,lon = parse_geo(latlon[i])
         latitude.append(lat)
         longitude.append(lon)
+    
     for i in range(0,len(address)):
-        a=address[i].text.split("\n")
+        #print(location_name)
+        a=address[i].get_attribute('innerText').split("\n")
+        #print(a)
         street_address.append(a[0])
         city.append(a[1].split(",")[0])
         state.append(a[1].split(",")[1].strip().split()[0])

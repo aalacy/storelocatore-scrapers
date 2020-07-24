@@ -1,17 +1,20 @@
-# Import libraries
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re
+import re, time
+import usaddress
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,138 +23,83 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    url = 'http://saharapizza.com/store_locations.htm'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    soup = soup.find('table',{'id': 'table2'})
-    repo_list = soup.findAll('tr')
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile('<.*?>')
-    phoner = re.compile('(.*?)')
-    p = 1
-    for repo in repo_list:
-        detail = repo.findAll('td')
-        if len(detail) > 1:
-            td1 = detail[0]
+    p = 0
+    url = 'https://saharapizza.com/locations/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.find('table').findAll('tr')
+    for div in divlist:
+        det = div.findAll('td')
+        if len(det) > 2:
+            try:
+                title = det[0].text.split('(')[0]
+            except:
+                title = det[0].text
+            if title.find('Bolivia') == -1:
+                address = det[1].text
+                if len(address) > 5 and address.find('CLOSED') == -1:
+                    address = usaddress.parse(address)
+                    i = 0
+                    street = ""
+                    city = ""
+                    state = ""
+                    pcode = ""
+                    while i < len(address):
+                        temp = address[i]
+                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                            street = street + " " + temp[0]
+                        if temp[1].find("PlaceName") != -1:
+                            city = city + " " + temp[0]
+                        if temp[1].find("StateName") != -1:
+                            state = state + " " + temp[0]
+                        if temp[1].find("ZipCode") != -1:
+                            pcode = pcode + " " + temp[0]
+                        i += 1
 
-            address = td1['title']
-            address = str(address)
-            address = re.sub(cleanr,"",address)
-
-            start = address.find(",")
-            street = address[0:start]
-            midn = address.find(",", start+2)
-            city = address[start+2:midn]
-            state = address[midn+2:len(address)]
-            start = state.find(" ")
-            if start == -1 or state.find("Sante") > -1:
-                xip = "<MISSING>"
-            else:
-                xip = state[start+1:len(state)]
-                state = state[0:start]
-
-            title = str(td1)
-            title = re.sub(pattern, "", title)
-            title = re.sub(cleanr, "", title)
-            title = re.sub("\n", "", title)
-            start = title.find("(")
-            if start != -1:
-                title = title[0:start]
-            start = title.find("/")
-            if start != -1:
-                title = title[0:start]
-
-            td2 = detail[1]
-            temp = str(td2)
-            start = temp.find("Hours")
-            if start != -1:
-                hours = temp[start+6:len(temp)]
-                hours = re.sub(cleanr, "", hours)
-                hours = re.sub("\r\n", " ", hours)
-                hours = re.sub("\t", "", hours)
-                hours = hours[2:len(hours)]
-            else:
-                hours = "<MISSING>"
-
-
-
-            td3 = detail[2]
-            phone = td3.find('b')
-            phone = str(td3)
-            #start = phone.find("<",3)
-            #phone = phone[0:start]
-            if phone.find("#C") > -1:
-                td3 = detail[3]
-                phone = str(td3)
-
-            phone = re.sub("\n", "", phone)
-
-            phone = re.sub("\t", "", phone)
-            phone = re.sub(cleanr, "", phone)
-            phone = re.sub(pattern, "", phone)
-            if len(phone) < 5:
-                phone = "<MISSING>"
-            if phone.find("ORDER") > -1:
-                phone = phone[0:phone.find("ORDER")]
-            if len(phone) > 15:
-                phone = phone[0:15]
-            if title.find("Delivery") > -1:
-                title = title[0:title.find("Delivery")]
-            if title.find("Download") > -1:
-                title = title[0:title.find("Download")]
-            if title.find("ocal") > -1:
-                title = title[0:title.find("ocal")-1]
-
-            print("<<<<<<<<<<<<<<<<<<<<<")
-            temp = detail[1].text
-            temp = re.sub(pattern, "", temp)
-            start = temp.find("\n")
-            if start > -1:
-                temp = temp[0:start]
-                temp = temp.rstrip()
-                street = street.rstrip()
-                street = street.lstrip()
-            if len(temp) > 3 and street != temp:
-                street = temp
-                xip = "<MISSING>"
-                city = title
-
-            print(temp)
-            print("<<<<<<<<<<<<<<<<<<<<<")
-            print(p)
-            print(title)
-            print(street)
-            print(city)
-            print(state)
-            print(xip)
-            print(phone)
-            print(hours)
-            print("..................")
-            p += 1
-            if title.find("Bolivia") == -1:
+                else:
+                    street = '<MISSING>'
+                    city = '<MISSING>'
+                    pcode = '<MISSING>'
+                    state = '<MISSING>'
+                phone = det[2].text
+                try:
+                    phone = phone.split('ORDER ONLINE!')[0]
+                except:
+                    pass
+                try:
+                    phone = phone.split('Bow')[0]
+                except:
+                    pass
+                if len(phone) < 3:
+                    phone = '<MISSING>'
                 data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    xip,
-                    'US',
-                    '<MISSING>',
-                    phone,
-                    '<MISSING>',
-                    '<MISSING>',
-                    '<MISSING>',
-                    hours
-                ])
+                        'https://saharapizza.com/',
+                        'https://saharapizza.com/locations/',                   
+                        title,
+                        street.lstrip().replace(',',''),
+                        city.lstrip().replace(',',''),
+                        state.lstrip().replace(',',''),
+                        pcode.lstrip().replace(',',''),
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>'
+                    ])
+                #print(p,data[p])
+                p += 1
+                
 
-
+   
     return data
 
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

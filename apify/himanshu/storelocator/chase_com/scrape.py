@@ -16,7 +16,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url","operating_info"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -68,67 +68,66 @@ def fetch_data():
                 store_number = i['profile']['c_rawEntityId']
                 drive_hours = 'Drive-up Hours :'  
                 lobby_hours = 'Lobby :'
+                if "c_driveupHours" in  i['profile']:
+                    for drive in  i['profile']['c_driveupHours']['normalHours']: 
+                        
+                        if drive['isClosed'] == False:
+                            for interval in (drive['intervals']):
+                                value_starttime = datetime.strptime(str(interval['start']), "%H%M")
+                                starttime= value_starttime.strftime("%I:%M %p")
+                                value_endtime = datetime.strptime(str(interval['end']), "%H%M")
+                                endtime= value_endtime.strftime("%I:%M %p")
+                                drive_hours = drive_hours+" "+drive['day']+" "+str(starttime)+"-"+str(endtime)
+                        else:
+                            drive_hours = drive_hours+" "+drive['day']+" "+"closed"
 
-                for drive in  i['profile']['c_driveupHours']['normalHours']: 
-                    
-                    if drive['isClosed'] == False:
-                        for interval in (drive['intervals']):
-                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
-                            starttime= value_starttime.strftime("%I:%M %p")
-                            value_endtime = datetime.strptime(str(interval['end']), "%H%M")
-                            endtime= value_endtime.strftime("%I:%M %p")
-                            drive_hours = drive_hours+" "+drive['day']+" "+str(starttime)+"-"+str(endtime)
-                    else:
-                        drive_hours = drive_hours+" "+drive['day']+" "+"closed"
+                    for lobby in  i['profile']['c_lobbyHours']['normalHours']: 
+                        
+                        if lobby['isClosed'] == False:
+                            for interval in (lobby['intervals']):
+                                value_starttime = datetime.strptime(str(interval['start']), "%H%M")
+                                starttime= value_starttime.strftime("%I:%M %p")
+                                value_endtime = datetime.strptime(str(interval['end']), "%H%M")
+                                endtime= value_endtime.strftime("%I:%M %p")
+                                lobby_hours = lobby_hours+" "+lobby['day']+" "+str(starttime)+"-"+str(endtime)
+                        else:
+                            lobby_hours = lobby_hours+" "+lobby['day']+" "+"closed"
 
-                for lobby in  i['profile']['c_lobbyHours']['normalHours']: 
-                    
-                    if lobby['isClosed'] == False:
-                        for interval in (lobby['intervals']):
-                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
-                            starttime= value_starttime.strftime("%I:%M %p")
-                            value_endtime = datetime.strptime(str(interval['end']), "%H%M")
-                            endtime= value_endtime.strftime("%I:%M %p")
-                            lobby_hours = lobby_hours+" "+lobby['day']+" "+str(starttime)+"-"+str(endtime)
-                    else:
-                        lobby_hours = lobby_hours+" "+lobby['day']+" "+"closed"
-
-                hours_of_operation = lobby_hours+" "+drive_hours
-    
-            else:
-                store_number = "<MISSING>"
-                hours_of_operation = "Open 24 Hours"
-            try:
-                operating_info_tag = i['profile']['c_emergencyMessage'].split(".")[0].strip()
-                if "Temporarily Closed" in operating_info_tag:
-                    operating_info = operating_info_tag
+                    hours_of_operation = lobby_hours+" "+drive_hours
+        
                 else:
+                    store_number = "<MISSING>"
+                    hours_of_operation = "Open 24 Hours"
+                try:
+                    operating_info_tag = i['profile']['c_emergencyMessage'].split(".")[0].strip()
+                    if "Temporarily Closed" in operating_info_tag:
+                        operating_info = operating_info_tag
+                    else:
+                        operating_info = "<MISSING>"
+                except:
                     operating_info = "<MISSING>"
-            except:
-                operating_info = "<MISSING>"
-            store = []
-            # result_coords.append((latitude, longitude))
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url if page_url else '<MISSING>')
-            store.append(operating_info if operating_info else '<MISSING>')
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            # print("data =="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            yield store
+                store = []
+                # result_coords.append((latitude, longitude))
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address if street_address else '<MISSING>')
+                store.append(city if city else '<MISSING>')
+                store.append(state if state else '<MISSING>')
+                store.append(zipp if zipp else '<MISSING>')
+                store.append(country_code if country_code else '<MISSING>')
+                store.append(store_number if store_number else '<MISSING>')
+                store.append(phone if phone else '<MISSING>')
+                store.append(location_type if location_type else '<MISSING>')
+                store.append(latitude if latitude else '<MISSING>')
+                store.append(longitude if longitude else '<MISSING>')
+                store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                store.append(page_url if page_url else '<MISSING>')
+                if store[2] in addresses:
+                    continue
+                addresses.append(store[2])
+                # print("data =="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                yield store
 
        
 

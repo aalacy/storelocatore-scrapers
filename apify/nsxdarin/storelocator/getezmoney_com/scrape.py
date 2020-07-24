@@ -55,19 +55,18 @@ def fetch_data():
                         if 'ZipCode' not in baseadd:
                             baseadd['ZipCode'] = '<INACCESSIBLE>'
                         address = add[0]['AddressNumber'] + ' ' + add[0]['StreetName'] + ' ' + add[0]['StreetNamePostType']
-                        address = address.encode('utf-8')
+                        address = address.encode("ascii").decode()
                         if address == '':
                             address = '<INACCESSIBLE>'
-                        #city = add[0]['PlaceName'].encode('utf-8')
-                        #state = add[0]['StateName'].encode('utf-8')
-                        zc = add[0]['ZipCode'].encode('utf-8')
+                        #city = add[0]['PlaceName']
+                        #state = add[0]['StateName']
+                        zc = add[0]['ZipCode']
                     except:
                         pass
                     
                     lat = '<MISSING>'
                     lng = '<MISSING>'
                     store = '<MISSING>'
-                    address = str(address.decode('utf-8'))
                     address = address.strip().replace('\t','')
                     hours = 'Mon: ' + item.split('<td>Monday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
                     hours = hours + '; Tue: ' + item.split('<td>Tuesday</td><td>')[1].split('</tr>')[0].replace('</td><td>','-').replace('</td>','')
