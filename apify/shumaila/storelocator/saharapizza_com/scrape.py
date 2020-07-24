@@ -22,6 +22,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    cleanr = re.compile(r'<[^>]+>')
     data = []
     p = 0
     url = 'https://saharapizza.com/locations/'
@@ -36,7 +37,9 @@ def fetch_data():
             except:
                 title = det[0].text
             if title.find('Bolivia') == -1:
-                address = det[1].text
+                address = re.sub(cleanr,' ',str(det[1])).strip()
+                #print(address)
+                #input()
                 if len(address) > 5 and address.find('CLOSED') == -1:
                     address = usaddress.parse(address)
                     i = 0
