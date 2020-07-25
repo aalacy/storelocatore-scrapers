@@ -86,7 +86,7 @@ def fetch_data():
                         s=tex[tex.index(te)-2].strip()+s
                     street.append(s)
                 states.append(t[1].strip().split(" ")[0])
-        #print(street)
+        street=street.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)','')
 
 
     all = []
