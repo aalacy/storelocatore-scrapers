@@ -3,7 +3,8 @@ from string import capwords
 
 import base
 import ast
-import requests, json
+from sgrequests import SgRequests
+import json
 import asyncio
 import aiohttp
 from urllib.parse import urljoin
@@ -21,6 +22,7 @@ class Scrape(base.Spider):
             i = base.Item(res_sel)
             i.add_value('locator_domain', base_url)
             i.add_value('page_url', url)
+            print(url)
             i.add_xpath('location_name', '//h1[@class="Core-title"]/text()', base.get_first)
             i.add_xpath('store_number', '//div[@class="Core-storeId"]/text()', base.get_first, lambda x: x.replace('Store #', ''))
             i.add_xpath('phone', '//div[@id="phone-main"]/text()',
@@ -56,7 +58,17 @@ class Scrape(base.Spider):
         async with session.get(url, timeout=60 * 60) as response:
             resp = await response.text()
             sel = html.fromstring(resp)
-            stores_urls = [urljoin(base_url, s) for s in sel.xpath('//h2[@class="Teaser-title"]/a/@href')]
+            stores_urls = []
+            all_s = sel.xpath('//h2[@class="Teaser-title"]/a/@href')
+            if len(all_s) > 0:
+                for s in all_s:
+                    stores_urls.append(urljoin(base_url, s))
+            else:
+                if "coeur-dalene" in url:
+                    url = "https://stores.staples.com/id/coeur-dalene/206-ironwood-dr"
+                elif "baileys-crossroads" in url:
+                    url = "https://stores.staples.com/va/baileys-crossroads/5801-leesburg-pike"
+                stores_urls.append(url)
             stores = await self._fetch_stores(session, stores_urls)
             return stores
 
@@ -93,6 +105,7 @@ class Scrape(base.Spider):
         headers = {
             "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36"
         }
+        requests = SgRequests()
         body = html.fromstring(requests.get(base_url, headers=headers).text)
         states = []
         for href in body.xpath('//a[@class="Directory-listLink"]/@href'):

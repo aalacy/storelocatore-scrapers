@@ -1,5 +1,5 @@
 bs4==0.0.1
-requests==2.11.1
+sgrequests
 w3lib
 sgvalidator==0.0.19
 lxml
