@@ -64,7 +64,7 @@ def fetch_data():
             geos[i][0],  # lat
             geos[i][1],  # long
             tim,  # timing
-            url])
+            "https://www.levinfurniture.com/locations/"locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-').lower()
 
     return all
 
