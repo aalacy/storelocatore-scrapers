@@ -54,7 +54,10 @@ def fetch_data():
         state_tmp = city_tmp[1].split(' ')
         state= state_tmp[1]
         phone= obj['phone'].replace('JOES','')
-        zip =state_tmp[2]
+        if city == 'Brighton':
+            zip = city_tmp[2]
+        else:
+            zip = state_tmp[2]
         hour1=BeautifulSoup( obj['hours'], "lxml" )
         hour =" ".join(list(hour1.stripped_strings)).replace('Online Ordering is not yet available at this location. Please call to place your order. Thank you!','')
         
@@ -72,7 +75,7 @@ def fetch_data():
         tem_var.append(lng[index])
         tem_var.append(hour)
         tem_var.append('https://www.orderjoes.com/locations/') 
-        print(tem_var)
+        # print(tem_var)
 
         return_main_object.append(tem_var)
         

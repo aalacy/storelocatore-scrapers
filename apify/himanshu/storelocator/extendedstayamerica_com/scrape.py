@@ -6,7 +6,6 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import json
 session = SgRequests()
-import requests
 import json
 import platform
 system = platform.system()
