@@ -10,7 +10,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -37,20 +37,23 @@ def fetch_data():
                 location_request = session.get(page_url,headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 json_data = json.loads(str(location_soup.find("script",{"type":"application/ld+json"})).split(">")[1].split("<")[0])['@graph'][-1]
+                addr = list(location_soup.find("address").stripped_strings)[0].split("\n")
+        
+                street_address = re.sub(r'\s+'," "," ".join(addr[:-1]))
+                city = addr[-1].split(",")[0].strip()
+                state = addr[-1].split(",")[1].split()[0].strip()
+                try:
+                    zipp = " ".join(addr[-1].split(",")[1].split()[1:])
+                except:
+                    zipp = "<MISSING>"
                 
-                city = json_data["address"]["addressLocality"]
-                zipp = json_data["address"]["postalCode"]
-                addr = json_data["address"]["streetAddress"].replace(city,"|").replace(zipp,"").strip()
-                street_address = addr.split("|")[0].strip()
-                state = addr.split("|")[1].strip()
-
                 store = []
                 store.append("https://www.wework.com")
                 store.append(location_soup.find("h1",{"id":'heading'}).text.strip())
                 store.append(street_address)
                 store.append(city)
                 store.append(state)
-                store.append(zipp)
+                store.append(zipp.replace("AB T2P 3H9","T2P 3H9"))
                 store.append(json_data["address"]["addressCountry"])
                 store.append("<MISSING>")
                 store.append(json_data["telephone"])
