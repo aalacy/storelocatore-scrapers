@@ -42,15 +42,15 @@ def fetch_data():
     
     #print(coordlist)
     for div in storelist:
-        address = div.find('div',{'class':'locations-footer'}).find('a')['href'].split('dir//')[1].replace('Panini Kabob Grill ','')
-        street = address.split(', ')[0]   
+        
         link = div.find('a',{'class':'location-url'})['href'].strip()
         title = div.find('h3').text.strip()
         phone = div.find('div',{'class':'location-phone'}).text.replace('\t','').replace('\n','').strip()
-        address = div.find('div',{'class':'locations-footer'}).find('a')['href'].split('dir//')[1]
+        address = div.find('div',{'class':'locations-footer'}).find('a')['href'].split('dir//')[1].replace('Panini Kabob Grill','').lstrip()
         #print(address)
         street,city,state= address.split(', ')
         state,pcode = state.lstrip().split(' ',1)
+
         lat = '<MISSING>'
         longt = '<MISSING>'        
         
@@ -58,8 +58,8 @@ def fetch_data():
         store = '<MISSING>'
         for loc in loclist:
             if loc['store'] == title:
-                hourlist = BeautifulSoup(loc['hours'],'html.parser')
-                hours = re.sub(cleanr,' ',str(hourlist)).replace('  ',' ').strip()
+                #hourlist = BeautifulSoup(loc['hours'],'html.parser')
+                #hours = re.sub(cleanr,' ',str(hourlist)).replace('  ',' ').strip()
                 store = loc["id"]
                 lat = loc['lat']
                 longt = loc['lng']
