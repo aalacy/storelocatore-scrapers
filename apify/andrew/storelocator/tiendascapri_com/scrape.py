@@ -1,18 +1,37 @@
 import csv
 import re
 import json
+import time
+from random import randint
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
 BASE_URL = 'http://tiendascapri.com/tiendas'
+
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+HEADERS = {'User-Agent' : user_agent}
+
+session = SgRequests()
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -58,27 +77,13 @@ def create_geo_hours_map(stores):
         geo_hours_map[key] = geo+hours
     return geo_hours_map
 
-def clean_data(data):
-    # When there are duplicate city+zipcode
-    geos = {}
-    duplicates = {}
-    for idx, item in enumerate(data):
-        lat, lon = item[-3], item[-2]
-        key = (lat, lon)
-        if key == ('<INACCESSIBLE>', '<INACCESSIBLE>'): continue
-        if key in geos:
-            geos[key].append(idx)
-            duplicates[key] = geos[key]
-        else:
-            geos[key] = [idx]
-    for key, idxs in duplicates.items():
-        for idx in idxs:
-            data[idx][-3], data[idx][-2] = ['<INACCESSIBLE>']*2
-    return data
-
 def fetch_data():
+
+    driver = get_driver()
+    time.sleep(2)
+
     data = []
-    res = requests.get(BASE_URL)
+    res = session.get(BASE_URL, headers = HEADERS)
     soup = BeautifulSoup(res.content, 'html.parser')
     stores = [
         [h4] + h4.find_next_siblings('p')
@@ -102,8 +107,25 @@ def fetch_data():
             lat, lon, hours = geo_hours_map[geo_key]
         except KeyError:
             lat, lon, hours = ['<INACCESSIBLE>']*3
+        if street_address == "Plaza Guaynabo":
+            lat = "18.3694131"
+            lon = "-66.1107431"
+        if lat == '<INACCESSIBLE>':
+            map_link = store[-1].a['href']
+            driver.get(map_link)
+            time.sleep(8)
+
+            try:
+                map_link = driver.current_url
+                at_pos = map_link.rfind("!3d")
+                lat = map_link[at_pos+3:map_link.find("!", at_pos+3)].strip()
+                lon = map_link[map_link.rfind("-"):].strip()
+            except:
+                pass
+
         data.append([
             'http://tiendascapri.com',
+            BASE_URL,
             location_name,
             street_address,
             city,
@@ -117,7 +139,8 @@ def fetch_data():
             lon,
             hours
         ])
-    data = clean_data(data)
+
+    driver.close()
     return data
 
 def scrape():
