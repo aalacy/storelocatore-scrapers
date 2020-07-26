@@ -22,7 +22,7 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://www.highlandparkmarket.com/'
+    locator_domain = 'https://www.highlandparkmarket.com/contact'
     ext = 'contact'
 
     driver = SgSelenium().chrome()
@@ -30,6 +30,11 @@ def fetch_data():
     driver.implicitly_wait(10)
 
     stores = driver.find_elements_by_css_selector('div.row.sqs-row')
+    del stores[8]
+    del stores[7]
+    del stores[6]
+    del stores[2]
+    del stores[0]
     all_store_data = []
     for store in stores:
         content = store.text.split('\n')
