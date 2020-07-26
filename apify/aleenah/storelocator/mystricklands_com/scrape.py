@@ -78,15 +78,15 @@ def fetch_data():
                     s=t[0].replace(c[-1],"").strip()
                     if "(" in s:
                         s=tex[tex.index(te)-1].strip()+s
-                    street.append(s)
+                    street.append(s.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)',''))
                 else:
                     cities.append(t[0])
                     s=tex[tex.index(te)-1].strip()
                     if "(" in s:
                         s=tex[tex.index(te)-2].strip()+s
-                    street.append(s)
+                    street.append(s.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)',''))
                 states.append(t[1].strip().split(" ")[0])
-        street=street.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)','')
+        
 
 
     all = []
