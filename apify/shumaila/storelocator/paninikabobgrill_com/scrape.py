@@ -50,7 +50,9 @@ def fetch_data():
         #print(address)
         street,city,state= address.split(', ')
         state,pcode = state.lstrip().split(' ',1)
-
+        if city.find('Ste. 101 ') > -1:
+            city = city.replace('Ste. 101 ','').lstrip()
+            street = street + ' Ste. 101'
         lat = '<MISSING>'
         longt = '<MISSING>'        
         
