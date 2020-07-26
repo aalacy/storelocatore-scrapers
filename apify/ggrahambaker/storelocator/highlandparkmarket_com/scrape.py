@@ -1,7 +1,8 @@
 import csv
-import os
+import re
 from sgselenium import SgSelenium
 import json
+from bs4 import BeautifulSoup
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,45 +23,49 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://www.highlandparkmarket.com/contact'
+    locator_domain = 'https://www.highlandparkmarket.com/'
     ext = 'contact'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
-
-    stores = driver.find_elements_by_css_selector('div.row.sqs-row')
+    if '860-674-9536' in str(driver.page_source):
+        print('here')
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    stores = soup.find_all('div', {'class': 'row sqs-row'})
+    #stores = driver.find_elements_by_class_name('row sqs-row')
+    print(len(stores))
     del stores[8]
     del stores[7]
     del stores[6]
     del stores[2]
     del stores[0]
     all_store_data = []
+    coords = soup.find_all('div', {'class': 'sqs-block map-block sqs-block-map'})
     for store in stores:
-        content = store.text.split('\n')
-        if len(content) == 10:
-            location_name = content[0]
-            street_address = content[1]
-            city, state, zip_code = addy_ext(content[2])
-            hours = content[5] + ' ' + content[6]
-            phone_number = content[7].replace('Telephone:', '').strip()
-            coords = store.find_element_by_css_selector('div.sqs-block.map-block.sqs-block-map').get_attribute(
-                'data-block-json')
-            j_coords = json.loads(coords)
+        content = re.sub(r'([a-z])([A-Z])',r'\1 \2',store.text.strip())
+        content = re.sub(r'([a-z])(\d)', r'\1 \2',content)
+        print(len(content))
+        print(content)
+        jc=coords[stores.index(store)].get('data-block-json')
+        j_coords = json.loads(jc)
+        location_name = re.findall(r'([a-zA-Z]+) \d',content.split(',')[0])[0]
+        content=content.replace(str(location_name),'')
+        lat = j_coords['location']['markerLat']
+        longit = j_coords['location']['markerLng']
+        print(lat,longit)
+        country_code = 'US'
+        store_number = '<MISSING>'
+        location_type = '<MISSING>'
+        city=location_name
+        street_address, state, zip_code,hours,phone_number=re.findall(r'(.*), ([A-Z]{2}) ([\d]{5}).*Store Hours:(.*) Telephone: ([\-\d]+)',content)[0]
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                      store_number, phone_number, location_type, lat, longit, hours]
+        all_store_data.append(store_data)
 
-            lat = j_coords['location']['markerLat']
-            longit = j_coords['location']['markerLng']
-
-            country_code = 'US'
-
-            store_number = '<MISSING>'
-            location_type = '<MISSING>'
-
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                          store_number, phone_number, location_type, lat, longit, hours]
-            all_store_data.append(store_data)
 
     driver.quit()
+    print(all_store_data)
     return all_store_data
 
 def scrape():
