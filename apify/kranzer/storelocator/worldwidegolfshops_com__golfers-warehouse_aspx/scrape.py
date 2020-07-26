@@ -3,7 +3,7 @@ from pprint import pprint
 from string import capwords
 
 import base
-import requests, json
+import json
 from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
