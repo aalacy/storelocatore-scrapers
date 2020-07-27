@@ -103,7 +103,7 @@ def fetch_data():
                     if "1108 Western Avenue" in street_address:
                         latitude="<MISSING>"
                         longitude = "<MISSING>"
-                    store.append("https://gpminvestments.com")
+                    store.append("https://gpminvestments.com/roadrunnermarkets")
                     store.append(locatin_name)
                     store.append(street_address)
                     store.append(city)
