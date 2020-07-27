@@ -50,7 +50,8 @@ def fetch_data():
                     lng = '<MISSING>'
                     hours = item.split('<div class="location__hours"><div class="font-weight-bold w-100">')[1].split('<br>')[0].replace('</div>','').replace('<div>','').strip()
                     hours = hours.replace('y9','y 9')
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if 'Soon' not in hours:
+                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
