@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,7 +12,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
+session = SgRequests()
 def fetch_data():
     # Your scraper here
     locs = []
@@ -27,44 +28,53 @@ def fetch_data():
     ids=[]
     page_url=[]
 
-    res=requests.get("https://www.bandier.com/locations")
+    res=session.get("https://www.bandier.com/locations")
     soup = BeautifulSoup(res.text, 'html.parser')
-    uls = soup.find('div', {'class': 'section-content'}).find_all('ul')
+    divs = soup.find_all('div', {'class': 'location-block__item'})
+    all=[]
+    for div in divs:
 
-    for ul in uls:
-        lis= ul.find_all('li')
-        locs.append(lis[0].text)
-        street.append(lis[1].text)
-        addr=lis[2].text.split(",")
-        cities.append(addr[0])
-        addr=addr[1].strip().split(" ")
-        states.append(addr[0])
-        zips.append(addr[1])
-        timing.append(lis[3].text.strip())
-        if len(lis) ==5:
-            phones.append(lis[4].text.replace("T: ","").strip())
-        else:
-            phones.append("<MISSING>")
+        data = div.text.replace('View on Google Maps','').strip().replace('\n\n\n','\n\n').replace('\n\n','\n').replace('Features: Parking, Coffee Dose Café,  and Studio B. Sign up for  workouts here','').replace('. Curbisde pickup only','').replace(' NOW OPEN! Hours of operation ','').replace('Store Hours:','').strip()
+        if "coming soon" in data:
+            continue
+        data=data.split('\n')
 
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.bandier.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
-        row.append(timing[i])  # timing
-        row.append("https://www.bandier.com/locations")  # page url
+        tim= data[-1]
 
-        all.append(row)
+        loc=data[0]
+
+        if'*Currently closed in light of COVID-19.*' in data[0]:
+            tim+=' *Currently closed in light of COVID-19.*'
+            del data[0]
+        addr = str(div.find('address').find('p')).replace('<p>', '').replace('</p>', '').split('<br/>')
+        if '*Currently closed in light of COVID-19.*' in addr[0]:
+            #del
+            addr=str(div.find('address').find_all('p')[1]).replace('<p>','').replace('</p>','').split('<br/>')
+        street=addr[0].strip()
+        phone=re.findall(r'([\d\-]+)',addr[-1])[-1]
+        addr=addr[1].strip().split(',')
+        city=addr[0]
+        addr=addr[1].strip().split(' ')
+        zip=addr[1]
+        state=addr[0]
+
+        print(addr)
+        all.append([
+            "https://www.bandier.com/locations",
+            loc,
+            street,
+            city,
+            state.strip(),
+            zip,
+            "US",
+            "<MISSING>",  # store #
+            phone,  # phone
+            "<MISSING>",  # type
+            "<MISSING>",  # lat
+            "<MISSING>",  # long
+            tim,  # timing
+            "https://www.bandier.com/locations"])
+
     return all
 
 def scrape():
