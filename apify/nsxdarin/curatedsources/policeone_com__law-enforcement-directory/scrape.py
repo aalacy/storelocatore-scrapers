@@ -87,12 +87,7 @@ def fetch_data():
                     g = next(lines)
                     g = str(g.decode('utf-8'))
                     typ = g.split('>')[1].split('<')[0]
-            if country == 'US' or country == 'CA':
-                if phone == '':
-                    phone = '<MISSING>'
-                if typ == '':
-                    typ = '<MISSING>'
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
