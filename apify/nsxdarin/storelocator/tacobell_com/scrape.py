@@ -1,8 +1,8 @@
 import csv
 from sgrequests import SgRequests
 import json
-import requests_random_user_agent
-from requests.exceptions import RequestException
+import requests_random_user_agent # ignore_check
+from requests.exceptions import RequestException # ignore_check
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import random
