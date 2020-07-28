@@ -4,143 +4,106 @@ from bs4 import BeautifulSoup
 import re
 import json
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w', newline='') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
+    # print("start")
+    address = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     }
-    return_main_object = []
-    addresses = []
-    r = session.get(
-        "https://gpminvestments.com/store-locator/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    script = soup.find_all("script",{"type":"text/javascript"})
-    for d in script:
-        if "wpgmaps_localize_marker_data" in d.text:
-            kd=d.text.split("var wpgmaps_localize_cat_ids =")[0].split("wpgmaps_localize_marker_data = ")[1].replace("};","}")
-        
-            # .split("var wpgmaps_localize_marker_data = ")[1].replace('"}}};',"}}}")
-    
-            for data in json.loads(kd):
-                
-                for key in json.loads(kd)[data].keys():
-                    full_address=(json.loads(kd)[data][key]['address'])
-                    if "," in full_address:
-                        addr = full_address.split(",")
-                        if len(addr) == 2:
-                            # print(full_address)
-                            street_address = "233 Main St., PO Box 711"
-                            city = "Preston"
-                            raw_address = full_address
-                            
-                           
-                        elif len(addr) == 4:
-                            street_address = addr[0]
-                            city = addr[1]
-                            raw_address = "<MISSING>"
-                    elif "\t" in full_address:
-                        raw_address = "<MISSING>"
-                        addr = full_address.split("\t")
-                        if len(addr) == 2:
-                        
-                            street_address = " ".join(addr[0].split(" ")[:-1])
-                            city = addr[0].split(" ")[-1]
-                        else :
-                            street_address = addr[0]
-                            city = addr[1]
+    base_url = "https://www.genesishealth.com"
+    for i in range(1,18):
+        r = session.get("https://www.genesishealth.com/facilities/location-search-results/?searchId=25a2f63c-8cd0-ea11-a82f-000d3a611816&sort=13&page="+str(i), headers=headers)
+        # print(r)
+        soup = BeautifulSoup(r.text, "lxml")
+        data = soup.find("div",{"class":"LocationsList"}).find_all("li")
+        for j in data:
+            data_1 = (j.find("a")['href'])
+            link_data = ''
+            if "../../" in data_1:
+                link_data = ("https://www.genesishealth.com/"+str(data_1)).replace("/../../","/")
+                # print(link_data)
+            elif "https:" in data_1:
+                link_data = data_1
+                # print(link_data)
+            else:
+                link_data = ("https://www.genesishealth.com/facilities/"+str(data_1)).replace("/../","/")
+                r1 = session.get(link_data)
+                soup1 = BeautifulSoup(r1.text, "lxml")
+                data_8 = soup1.find("script",{"type":"application/ld+json"}).text
+                a = json.loads(data_8)
+                data_9 = a['url']
+                if "?id" in data_9:
+
+                    store_number = (data_9.split("=")[1])
+                else:
+                    store_number = "<MISSING>"
+                store = []
+                store.append(base_url.encode('ascii', 'ignore').decode('ascii') if base_url else "<MISSING>")
+                store.append(a['name'] if a['name'].encode('ascii', 'ignore').decode('ascii') else "<MISSING>") 
+                store.append(a['address']['streetAddress'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressRegion'] else "<MISSING>")
+                store.append(a['address']['addressLocality'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressLocality'] else "<MISSING>")
+                store.append(a['address']['addressRegion'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressRegion'] else "<MISSING>")
+                zipp = ''
+                if "postalCode" in a['address']:
+                    zipp = a['address']['postalCode']
+                else:
+                    zipp = "<MISSING>"
+                store.append( zipp.encode('ascii', 'ignore').decode('ascii') if zipp else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(store_number.encode('ascii', 'ignore').decode('ascii') if store_number else"<MISSING>") 
+                phone = ''
+                if "telephone" in a:
+                    phone = a['telephone']
+                else:
+                    phone = "<MISSING>"
+                store.append(phone.encode('ascii', 'ignore').decode('ascii') if phone else "<MISSING>")
+                store.append(a['@type'].encode('ascii', 'ignore').decode('ascii'))
+                latitude = ''
+                longitude = ''
+                if "geo" in a:
+                    if "latitude" in a['geo']:
+                        latitude = a['geo']['latitude']
                     else:
-                        raw_address = "<MISSING>"
-                        addr = re.sub(r'\s+'," ",full_address).split(" ")
-                        if len(addr[-1]) == 0:
-                            del addr[-1]
-                        if addr[-1].replace("-","").isdigit():
-                            del addr[-1]
-                        if addr[-1].replace("-","").isdigit():
-                            del addr[-1]
-                        if len(addr[-1]) == 2:
-                            del addr[-1]
-                        street_address = " ".join(addr[:-1])
-                        city = addr[-1]
-
-                    locatin_name = json.loads(kd)[data][key]['title']
-                    latitude = json.loads(kd)[data][key]['lat']
-                    longitude = json.loads(kd)[data][key]['lng']
-
-                    state_list = re.findall(r'([A-Z]{2})', str(full_address.replace(", United States","").replace("US","")))
-                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address).replace(", United States","").replace("US","").replace(", USA",''))
-
-
-                    if state_list:
-                        state = state_list[-1]
-
-                    # print(full_address)
-                    if us_zip_list:
-                        zipp = us_zip_list[-1]
-
+                        latitude = "<MISSING>"
+                    if "longitude" in a['geo']:
+                        longitude = a['geo']['longitude']
                     else:
-                        zipp = "<MISSING>"
-                    # all_data =full_address.replace(state,'').replace(zipp,'').replace(", USA",'').replace(", United States",'').lstrip(",")
-
-                    store = []
-                    if "E-Z Mart" in street_address:
-                        street_address = "15503 Babcock Rd"
-                        city ="Antonio"
-                        zipp="78255"
-                        state = "TX"
-                    if "1108 Western Avenue" in street_address:
-                        latitude="<MISSING>"
                         longitude = "<MISSING>"
-                    store.append("https://gpminvestments.com")
-                    store.append(locatin_name)
-                    store.append(street_address)
-                    store.append(city)
-                   
-                    if "233 Main St., PO Box 711" in street_address:
-                        zipp="21655-2215"
-                    store.append(state)
-                    store.append(zipp)
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")  # phone
-                    store.append("<MISSING>")  # location_type
-                    store.append(latitude)
-                    store.append(longitude)
-                    store.append("<MISSING>")  # hours_of_operation
-                    # store.append(full_address)
-                    store.append("<MISSING>")  # page_url
-                    if store[2] in addresses:
-                        continue
-                    addresses.append(store[2])
-                    return_main_object.append(store)
-                    store = [str(x).encode('ascii', 'ignore').decode(
-                        'ascii').strip() if x else "<MISSING>" for x in store]
-                    store = ["<MISSING>" if x == "" or x == "  " else x for x in store]
-
-                    yield store
-                    # print("data == " + str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                            # print(all_data)
-                        # print(state)
-
-    
-
-
+                else:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                store.append( latitude.encode('ascii', 'ignore').decode('ascii') if latitude else "<MISSING>")
+                store.append(longitude.encode('ascii', 'ignore').decode('ascii') if longitude  else "<MISSING>")
+                hours = ''
+                if "openingHoursSpecification" in a:
+                    hours1 = a['openingHoursSpecification']
+                    # print(hours1)
+                    for i1 in hours1:
+                        hours =hours +" "+ i1['dayOfWeek'].replace("http://schema.org/","")+" "+i1['opens']+" - "+i1['closes']
+                
+                else:
+                    hours = "<MISSING>"
+                # print(hours)
+                store.append(hours.strip().encode('ascii', 'ignore').decode('ascii') if hours else "<MISSING>")
+                store.append(a['url'].encode('ascii', 'ignore').decode('ascii') if a['url'] else "<MISSING>")
+                
+                if store[2] in address :
+                    continue
+                address.append(store[2])
+                yield store 
+                # print(json_data)           
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
