@@ -46,8 +46,8 @@ def fetch_data():
                     typ = '<MISSING>'
                     store = '<MISSING>'
                     loc = '<MISSING>'
-                    lat = '<MISSING>'
-                    lng = '<MISSING>'
+                    lng = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!2d')[1].split('!')[0]
+                    lat = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!3d')[1].split('!')[0]
                     hours = item.split('<div class="location__hours"><div class="font-weight-bold w-100">')[1].split('<br>')[0].replace('</div>','').replace('<div>','').strip()
                     hours = hours.replace('y9','y 9')
                     if 'Soon' not in hours:
