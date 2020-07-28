@@ -19,15 +19,15 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.rememberingalife.com/API/Nfda/Locator/locations/GetByBoundingBox'
-    payload = {"pagination":{"pageSize":2500,"pageNumber":1},
+    payload = {"pagination":{"pageSize":25000,"pageNumber":1},
                "sort":{"sortDirection":"ASC","fieldName":"Distance"},
                "filter":{},
-               "LocationTopRight":{"latitude":45.85349338796558,
-                                   "longitude":-85.16640625000001},
+               "LocationTopRight":{"latitude":65.0,
+                                   "longitude":-60},
                "LocationCenter":{"latitude":44.30204501194119,
                                  "longitude":-90.75295410156251},
-               "LocationBottomLeft":{"latitude":42.70848779961606,
-                                     "longitude":-96.33950195312501},
+               "LocationBottomLeft":{"latitude":10.5,
+                                     "longitude":-175.0},
                "distanceInMiles":5000}
     r = session.post(url, headers=headers, data=json.dumps(payload))
     for line in r.iter_lines():
