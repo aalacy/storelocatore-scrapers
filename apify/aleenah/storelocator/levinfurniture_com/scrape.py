@@ -25,7 +25,7 @@ def fetch_data():
 
     res=session.get("https://www.levinfurniture.com/api/rest/pages/contacts")
     soup = str(BeautifulSoup(res.text, 'html.parser')).replace('\\t','').replace('\\r\\n','').replace('&lt;\/h3&gt;','').replace('&lt;\/span&gt;','').replace('&lt;\/div&gt;','')
-    print(soup)
+    #print(soup)
 
     #divs = soup.find_all('h3', {'class': 'avb-typography__heading dsg-tools-main-heading dsg-tools-color-primary dsg-tools-fw-bold dsg-contact-3__location-name'})
     locs =re.findall(r'dsg-tools-main-heading="">([^<]*)',soup)
@@ -64,7 +64,7 @@ def fetch_data():
             geos[i][0],  # lat
             geos[i][1],  # long
             tim,  # timing
-            "https://www.levinfurniture.com/locations/"locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-').lower()
+            "https://www.levinfurniture.com/locations/"+locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-').lower()])
 
     return all
 
