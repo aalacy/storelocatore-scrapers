@@ -14,6 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    numbers = ['0','1','2','3','4','5','6','7','8','9']
     page = -24
     Found = True
     while Found:
@@ -46,6 +47,15 @@ def fetch_data():
                         name = item.split('"name": "')[1].split('"')[0].replace('\\u2013','-')
                         hours = '<MISSING>'
                         phone = '<MISSING>'
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            line2 = str(line2.decode('utf-8'))
+                            if '"address": "' in line2:
+                                zc = line2.split('"address": "')[1].split('"')[0].rsplit(' ',1)[1].strip()
+                                if zc[-1] not in numbers and zc[0] not in numbers:
+                                    zc = '<MISSING>'
+                            if '"telephone": "' in line2:
+                                phone = line2.split('"telephone": "')[1].split('"')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     page = -24
@@ -80,6 +90,15 @@ def fetch_data():
                         name = item.split('"name": "')[1].split('"')[0].replace('\\u2013','-')
                         hours = '<MISSING>'
                         phone = '<MISSING>'
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            line2 = str(line2.decode('utf-8'))
+                            if '"address": "' in line2:
+                                zc = line2.split('"address": "')[1].split('"')[0].rsplit(' ',1)[1].strip()
+                                if zc[-1] not in numbers and zc[0] not in numbers:
+                                    zc = '<MISSING>'
+                            if '"telephone": "' in line2:
+                                phone = line2.split('"telephone": "')[1].split('"')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
