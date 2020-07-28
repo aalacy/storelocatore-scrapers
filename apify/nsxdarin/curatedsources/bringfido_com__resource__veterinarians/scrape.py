@@ -5,6 +5,8 @@ session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'accept': 'application/json'
            }
+headers1 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -47,15 +49,15 @@ def fetch_data():
                         name = item.split('"name": "')[1].split('"')[0].replace('\\u2013','-')
                         hours = '<MISSING>'
                         phone = '<MISSING>'
-                        r2 = session.get(loc, headers=headers)
+                        r2 = session.get(loc, headers=headers1)
                         for line2 in r2.iter_lines():
                             line2 = str(line2.decode('utf-8'))
                             if '"address": "' in line2:
                                 zc = line2.split('"address": "')[1].split('"')[0].rsplit(' ',1)[1].strip()
                                 if zc[-1] not in numbers and zc[0] not in numbers:
                                     zc = '<MISSING>'
-                            if '"telephone": "' in line2:
-                                phone = line2.split('"telephone": "')[1].split('"')[0]
+                            if '<a href="tel:+' in line2:
+                                phone = line2.split('<a href="tel:+')[1].split('"')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     page = -24
@@ -90,15 +92,15 @@ def fetch_data():
                         name = item.split('"name": "')[1].split('"')[0].replace('\\u2013','-')
                         hours = '<MISSING>'
                         phone = '<MISSING>'
-                        r2 = session.get(loc, headers=headers)
+                        r2 = session.get(loc, headers=headers1)
                         for line2 in r2.iter_lines():
                             line2 = str(line2.decode('utf-8'))
                             if '"address": "' in line2:
                                 zc = line2.split('"address": "')[1].split('"')[0].rsplit(' ',1)[1].strip()
                                 if zc[-1] not in numbers and zc[0] not in numbers:
                                     zc = '<MISSING>'
-                            if '"telephone": "' in line2:
-                                phone = line2.split('"telephone": "')[1].split('"')[0]
+                            if '<a href="tel:+' in line2:
+                                phone = line2.split('<a href="tel:+')[1].split('"')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
