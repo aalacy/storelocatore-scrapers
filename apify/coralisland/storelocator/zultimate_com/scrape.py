@@ -1,7 +1,7 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import ast
@@ -15,14 +15,14 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -36,28 +36,36 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
     output_list = []
     url = "http://zultimate.com/locations"
-    session = requests.Session()
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
     link_list = response.xpath('//ul[@class="locations-list"]//a/@href')
     for link in link_list:
-        data = etree.HTML(session.get(link).text)     
-        store = json.loads(validate(data.xpath('.//script[@class="yoast-schema-graph yoast-schema-graph--main"]//text()')))['@graph']
+        if link == "http://zultimate.com/locations/denver-south":
+            continue
+        print(link)
+        data = etree.HTML(session.get(link).text)
+        store = json.loads(validate(data.xpath('.//script[@class="yoast-schema-graph"]//text()')))['@graph']
         output = []
-        output.append(base_url) # url
-        output.append(get_value(store[0]['name'])) #location name
+        output.append("zultimate.com") # locator_domain
+        output.append(link) # url
+        output.append(get_value(store[-1]['name'])) #location name
         if len(store) > 3:
-            store = store[5]
+            store = store[4]            
             output.append(get_value(store['address']['streetAddress'])) #address
             output.append(get_value(store['address']['addressLocality'])) #city
-            output.append(get_value(store['address']['addressRegion'])) #state
+            output.append(get_value(store['address']['addressRegion']).replace(" - California","")) #state
             output.append(get_value(store['address']['postalCode'])) #zipcode
             output.append('US') #country code
             output.append('<MISSING>') #store_number
