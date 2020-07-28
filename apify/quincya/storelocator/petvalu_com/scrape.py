@@ -4,8 +4,7 @@ import time
 from random import randint
 import re
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,15 +12,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
 
-
-def get_driver():
-	options = Options() 
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +25,7 @@ def write_output(data):
 
 def fetch_data():
 
-	driver = get_driver()
+	driver = SgSelenium().chrome()
 	time.sleep(2)
 
 	base_link = "https://petvalu.com/store-locator/?location=ON,&radius=100"
@@ -59,8 +49,11 @@ def fetch_data():
 		search_element = driver.find_element_by_id("store_locator_province")
 		search_element.clear()
 		time.sleep(randint(1,2))
-		search_element.send_keys(ca_state)
-		time.sleep(randint(1,2))
+		try:
+			search_element.send_keys(ca_state)
+			time.sleep(randint(1,2))
+		except:
+			continue
 		select_radius = Select(driver.find_element_by_id('store_locator_filter_radius'))
 		select_radius.select_by_visible_text('100 km')
 		time.sleep(randint(1,2))
@@ -73,8 +66,20 @@ def fetch_data():
 				(By.ID, "store_locator_result_list")))
 			time.sleep(randint(1,2))
 		except:
-			print("Timeout waiting on results..skipping")
-			continue
+			try:
+				search_element.clear()
+				time.sleep(randint(1,2))
+				search_element.send_keys(ca_state)
+				time.sleep(randint(1,2))
+				search_button = driver.find_element_by_id('store_locator_find_stores_button')
+				driver.execute_script('arguments[0].click();', search_button)
+				time.sleep(randint(4,6))
+				element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+					(By.ID, "store_locator_result_list")))
+				time.sleep(randint(1,2))
+			except:
+				print("Error..skipping")
+				continue
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		raw_data = base.find(id="store_locator_result_list")
@@ -107,8 +112,11 @@ def fetch_data():
 		search_element = driver.find_element_by_id("store_locator_province")
 		search_element.clear()
 		time.sleep(randint(1,2))
-		search_element.send_keys(us_state)
-		time.sleep(randint(1,2))
+		try:
+			search_element.send_keys(us_state)
+			time.sleep(randint(1,2))
+		except:
+			continue
 		select_radius = Select(driver.find_element_by_id('store_locator_filter_radius'))
 		select_radius.select_by_visible_text('100 mi')
 		time.sleep(randint(1,2))
@@ -121,8 +129,20 @@ def fetch_data():
 				(By.ID, "store_locator_result_list")))
 			time.sleep(randint(1,2))
 		except:
-			print("Timeout waiting on results..skipping")
-			continue
+			try:
+				search_element.clear()
+				time.sleep(randint(1,2))
+				search_element.send_keys(ca_state)
+				time.sleep(randint(1,2))
+				search_button = driver.find_element_by_id('store_locator_find_stores_button')
+				driver.execute_script('arguments[0].click();', search_button)
+				time.sleep(randint(4,6))
+				element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+					(By.ID, "store_locator_result_list")))
+				time.sleep(randint(1,2))
+			except:
+				print("Error..skipping")
+				continue
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		raw_data = base.find(id="store_locator_result_list")
@@ -140,12 +160,20 @@ def fetch_data():
 		time.sleep(randint(2,4))
 
 		try:
-			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+			element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
 				(By.CLASS_NAME, "address_info")))
 			time.sleep(randint(1,2))
 		except:
-			print("Timeout waiting on results..skipping")
-			continue
+			print("Timeout..retrying..")
+			driver.refresh()
+			time.sleep(randint(2,4))
+			try:
+				element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+					(By.CLASS_NAME, "address_info")))
+				time.sleep(randint(1,2))
+			except:
+				print("Timeout again..skipping")
+				continue
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		
@@ -204,16 +232,9 @@ def fetch_data():
 
 		# Maps
 		try:
-			frame = driver.find_element_by_tag_name("iframe")
-			driver.switch_to.frame(frame)
-			raw_gps = driver.find_element_by_class_name("navigate-link").get_attribute('href')
-			if "maps" in raw_gps:
-				try:
-					latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-					longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
-				except:
-					latitude = "<MISSING>"
-					longitude = "<MISSING>"
+			raw_gps = base.find('iframe')['src']
+			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
+			longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
