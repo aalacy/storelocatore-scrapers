@@ -119,8 +119,12 @@ def fetch_data():
         for de in details:
             if 'Phone:' in de:
                 phone = validate(de.replace('Phone:', ''))
-            if 'from'  in de:
-                store_hours = validate(de)
+        raw_hours = store_info.xpath('.//div[@class="location-info-text"]//p')[-1].xpath('text()')
+        store_hours = ""
+        for raw_hour in raw_hours:
+            if "Phone:" not in raw_hour:
+                if " pm" in raw_hour or "-" in raw_hour:
+                    store_hours = (store_hours + " " + raw_hour.strip()).strip()
         output.append(get_value(phone)) #phone
         output.append(location_type) #location type
         output.append(get_value(geo_loc[0])) #latitude
