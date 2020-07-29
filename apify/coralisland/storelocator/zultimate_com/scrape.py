@@ -50,36 +50,61 @@ def fetch_data():
     session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
-    link_list = response.xpath('//ul[@class="locations-list"]//a/@href')
-    for link in link_list:
-        if link == "http://zultimate.com/locations/denver-south":
-            continue
+    link_list = response.xpath('//div[@class="wpseo-location"]/h3/a/@href')
+    list_data = response.xpath('//div[@class="wpseo-location"]')
+    
+    for i, link in enumerate(link_list):
         print(link)
+        store_num = link.split("=")[-1]
+        if not store_num.isnumeric():
+            store_num = '<MISSING>'
         data = etree.HTML(session.get(link).text)
         store = json.loads(validate(data.xpath('.//script[@class="yoast-schema-graph"]//text()')))['@graph']
-        output = []
-        output.append("zultimate.com") # locator_domain
-        output.append(link) # url
-        output.append(get_value(store[-1]['name'])) #location name
-        if len(store) > 3:
-            store = store[4]            
-            output.append(get_value(store['address']['streetAddress'])) #address
-            output.append(get_value(store['address']['addressLocality'])) #city
-            output.append(get_value(store['address']['addressRegion']).replace(" - California","")) #state
-            output.append(get_value(store['address']['postalCode'])) #zipcode
+        location_name = get_value(store[-1]['name'])
+        data_loc_name = list_data[i].xpath('.//*[@class="wpseo-business-name"]//text()')[0].strip()
+
+        if location_name == data_loc_name:
+            output = []
+            output.append("zultimate.com") # locator_domain
+            output.append(link) # url
+            output.append(location_name) #location name
+            if len(store) > 3:
+                store = store[4]
+                output.append(get_value(store['address']['streetAddress'])) #address
+                output.append(get_value(store['address']['addressLocality'])) #city
+                output.append(get_value(store['address']['addressRegion']).replace(" - California","")) #state
+                output.append(get_value(store['address']['postalCode'])) #zipcode
+                output.append('US') #country code
+                output.append(store_num) #store_number
+                output.append(get_value(store['telephone'])) #phone
+                output.append('<MISSING>') #location type
+                output.append(get_value(store['geo']['latitude'])) #latitude
+                output.append(get_value(store['geo']['longitude'])) #longitude
+                store_hours = []
+                if store['openingHoursSpecification']:
+                    for hour in store['openingHoursSpecification']:
+                        for day in hour['dayOfWeek']:
+                            store_hours.append(day + ' ' + hour['opens']+'-'+hour['closes'])
+                output.append(get_value(store_hours)) #opening hours
+        else:
+            data = list_data[i]
+
+            output = []
+            output.append("zultimate.com") # locator_domain
+            output.append(url) # url
+            output.append(data_loc_name) #location name
+            output.append(data.xpath('.//*[@class="street-address"]//text()')[0].strip()) #address
+            output.append(data.xpath('.//*[@class="locality"]//text()')[0].strip()) #city
+            output.append(data.xpath('.//*[@class="region"]//text()')[0].strip()) #state
+            output.append(data.xpath('.//*[@class="postal-code"]//text()')[0].strip()) #zipcode
             output.append('US') #country code
             output.append('<MISSING>') #store_number
-            output.append(get_value(store['telephone'])) #phone
-            output.append('Best Martial Arts Lessons & Karate Classes for Self Defense') #location type
-            output.append(get_value(store['geo']['latitude'])) #latitude
-            output.append(get_value(store['geo']['longitude'])) #longitude
-            store_hours = []
-            if store['openingHoursSpecification']:
-                for hour in store['openingHoursSpecification']:
-                    for day in hour['dayOfWeek']:
-                        store_hours.append(day + ' ' + hour['opens']+'-'+hour['closes'])
-            output.append(get_value(store_hours)) #opening hours
-            output_list.append(output)
+            output.append(data.xpath('.//*[@class="wpseo-phone"]//a//text()')[0].strip()) #phone
+            output.append('<MISSING>') #location type
+            output.append('<MISSING>') #latitude
+            output.append('<MISSING>') #longitude
+            output.append('<MISSING>') #opening hours
+        output_list.append(output)
     return output_list
 
 def scrape():
