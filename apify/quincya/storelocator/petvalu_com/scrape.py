@@ -64,7 +64,7 @@ def fetch_data():
 		try:
 			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
 				(By.ID, "store_locator_result_list")))
-			time.sleep(randint(1,2))
+			time.sleep(randint(2,4))
 		except:
 			try:
 				search_element.clear()
@@ -127,7 +127,7 @@ def fetch_data():
 		try:
 			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
 				(By.ID, "store_locator_result_list")))
-			time.sleep(randint(1,2))
+			time.sleep(randint(2,4))
 		except:
 			try:
 				search_element.clear()
@@ -177,7 +177,7 @@ def fetch_data():
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		
-		location_name = base.find(class_="location_name").text.strip()
+		location_name = base.find(class_="location_name").text.replace(" – ", "-").strip()
 		
 		if "us.pet" in final_link:
 			locator_domain = "us.petvalu.com"
@@ -189,7 +189,7 @@ def fetch_data():
 		raw_address = str(base.find(class_='address_info'))
 		raw_address = raw_address[raw_address.find(">")+1:].strip().split("<br/>")
 
-		street_address = raw_address[0].strip()
+		street_address = raw_address[0].replace(" – ", "-").strip()
 		if "," in raw_address[2]:
 			city_line = raw_address[2].strip().split(",")
 			street_address = (street_address + " " + raw_address[1].strip()).strip()
