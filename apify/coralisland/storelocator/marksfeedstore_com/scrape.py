@@ -41,7 +41,10 @@ def fetch_data():
         city,state = text[3].split(', ')
         state,pcode = state.lstrip().split(' ',1)
         phone = text[4]
-        hours = text[5]
+        try:
+            hours = text[5]+' '+text[6]
+        except:
+            hours = text[5]
         data.append(['https://marksfeedstore.com/','https://marksfeedstore.com/locations',title,street,city,state,pcode,'US',
                         '<MISSING>',phone,'<MISSING>','<MISSING>','<MISSING>',hours])
         #print(p,data[p])
