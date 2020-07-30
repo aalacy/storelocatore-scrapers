@@ -27,7 +27,7 @@ def fetch_data():
         for y in range(17, -82, -1):
             xlat = float(float(x) / 30)
             ylng = float(float(y) / 10)
-            print(str(xlat) + ', ' + str(ylng))
+            #print(str(xlat) + ', ' + str(ylng))
             url = 'https://www.starbucks.co.uk/bff/locations?lat=' + str(xlat) + '&lng=' + str(ylng)
             r = session.get(url, headers=headers)
             try:
