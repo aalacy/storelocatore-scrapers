@@ -21,11 +21,11 @@ def fetch_data():
     country = 'CA'
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if '<div class="location__title h2 text-uppercase">' in line:
-            items = line.split('<div class="location__title h2 text-uppercase">')
+        if 'data-rocket-lazyload="fitvidscompatible"' in line:
+            items = line.split('data-rocket-lazyload="fitvidscompatible"')
             for item in items:
                 if 'class="location__address">' in item:
-                    name = item.split('<')[0].strip()
+                    name = item.split('"location__title h2 text-uppercase">')[1].split('<')[0].strip()
                     if '<span class="location__subtitle text-light h5"' in name:
                         name = name + ' ' + name.split('<span class="location__subtitle text-light h5"')[1].split('>')[1].split('<')[0].strip()
                     addinfo = item.split('"location__address">')[1].split('iv>')[0].replace('<br /></d','').replace('</d','')
@@ -46,8 +46,12 @@ def fetch_data():
                     typ = '<MISSING>'
                     store = '<MISSING>'
                     loc = '<MISSING>'
-                    lng = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!2d')[1].split('!')[0]
-                    lat = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!3d')[1].split('!')[0]
+                    try:
+                        lng = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!2d')[1].split('!')[0]
+                        lat = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!3d')[1].split('!')[0]
+                    except:
+                        lat = '<MISSING>'
+                        lng = '<MISSING>'
                     hours = item.split('<div class="location__hours"><div class="font-weight-bold w-100">')[1].split('<br>')[0].replace('</div>','').replace('<div>','').strip()
                     hours = hours.replace('y9','y 9')
                     if 'Soon' not in hours:
