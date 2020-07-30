@@ -29,6 +29,8 @@ def fetch_data():
         data = soup.find("div",{"class":"LocationsList"}).find_all("li")
         for j in data:
             data_1 = (j.find("a")['href'])
+   
+            # print(street_address)
             link_data = ''
             if "../../" in data_1:
                 link_data = ("https://www.genesishealth.com/"+str(data_1)).replace("/../../","/")
@@ -42,15 +44,15 @@ def fetch_data():
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 data_8 = soup1.find("script",{"type":"application/ld+json"}).text
                 a = json.loads(data_8)
-                data_9 = a['url']
-                if "?id" in data_9:
-
-                    store_number = (data_9.split("=")[1])
+                data_9 = link_data
+                store_number = ''
+                if "&id" in data_9:
+                    store_number = (data_9.split("=")[-1])
                 else:
                     store_number = "<MISSING>"
                 store = []
                 store.append(base_url.encode('ascii', 'ignore').decode('ascii') if base_url else "<MISSING>")
-                store.append(a['name'] if a['name'].encode('ascii', 'ignore').decode('ascii') else "<MISSING>") 
+                store.append(a['name'].encode('ascii', 'ignore').decode('ascii') if a['name'] else "<MISSING>") 
                 store.append(a['address']['streetAddress'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressRegion'] else "<MISSING>")
                 store.append(a['address']['addressLocality'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressLocality'] else "<MISSING>")
                 store.append(a['address']['addressRegion'].encode('ascii', 'ignore').decode('ascii') if a['address']['addressRegion'] else "<MISSING>")
@@ -60,7 +62,7 @@ def fetch_data():
                 else:
                     zipp = "<MISSING>"
                 store.append( zipp.encode('ascii', 'ignore').decode('ascii') if zipp else "<MISSING>")
-                store.append("<MISSING>")
+                store.append("US")
                 store.append(store_number.encode('ascii', 'ignore').decode('ascii') if store_number else"<MISSING>") 
                 phone = ''
                 if "telephone" in a:
@@ -96,13 +98,71 @@ def fetch_data():
                     hours = "<MISSING>"
                 # print(hours)
                 store.append(hours.strip().encode('ascii', 'ignore').decode('ascii') if hours else "<MISSING>")
-                store.append(a['url'].encode('ascii', 'ignore').decode('ascii') if a['url'] else "<MISSING>")
+                store.append(link_data.encode('ascii', 'ignore').decode('ascii') if link_data else "<MISSING>")
                 
-                if store[2] in address :
+                if "https://www.genesishealth.com/care-treatment/vna/" in  link_data:
+                    pass
+                else:
+                    if store[-1] in address :
+                        continue
+                    address.append(store[-1])
+                yield store   
+                # print(json_data)  
+            link_data = ''
+            data_1 = (j.find("a")['href'])
+            if "../../" in data_1:
+                link_data = ("https://www.genesishealth.com/"+str(data_1)).replace("/../../","/")
+                # print(link_data)
+            elif "https:" in data_1:
+                link_data = data_1
+                # print(link_data)
+            else:
+                link_data = ("https://www.genesishealth.com/facilities/"+str(data_1)).replace("/../","/")
+            data_2 = (j.find("div",{"class":"Address"}).find("div",{"class":"Headline"}).text)
+            data_3 = list((j.find("div",{"class":"Address"}).find("div",{"class":"MajorDetails"})).stripped_strings)
+            city = (data_3[-1].split(",")[0].replace(",",""))
+            state = (data_3[-1].split(",")[1].strip().split(" ")[0])
+            zipp = (data_3[-1].split(" ")[-1])
+            street_address = data_3[0]
+            street_address1 = data_2.replace("\n"," ").replace("\t"," ").replace("\r"," ").replace("\br"," ").strip()
+            ph = street_address1.split(" ")[0]
+            phone = ''
+            if len(ph) == 12:
+                phone = (ph)
+            else:
+                phone = "<MISSING>"
+            location_name = " ".join(street_address1.split(" ")[1:])
+            store_number = ''
+            data_9 = link_data
+            # print(data_9)
+            if "&id" in data_9:
+                store_number = (data_9.split("=")[-1])
+            else:
+                store_number = "<MISSING>"
+            store = []
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(location_name.encode('ascii', 'ignore').decode('ascii') if location_name else "<MISSING>") 
+            store.append(street_address.encode('ascii', 'ignore').decode('ascii') if street_address else "<MISSING>")
+            store.append(city.encode('ascii', 'ignore').decode('ascii') if city else "<MISSING>")
+            store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
+            store.append(zipp.encode('ascii', 'ignore').decode('ascii') if zipp else "<MISSING>")
+            store.append("US")
+            store.append(store_number.encode('ascii', 'ignore').decode('ascii')) 
+            store.append(phone.encode('ascii', 'ignore').decode('ascii') if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(link_data.encode('ascii', 'ignore').decode('ascii') if link_data else "<MISSING>")
+            # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if "https://www.genesishealth.com/care-treatment/vna/" in  link_data:
+                pass
+            else:
+                if store[-1] in address :
                     continue
-                address.append(store[2])
-                yield store 
-                # print(json_data)           
+                address.append(store[-1])
+            yield store   
+                
 def scrape():
     data = fetch_data()
     write_output(data)
