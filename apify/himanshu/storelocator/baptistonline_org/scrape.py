@@ -72,9 +72,9 @@ def fetch_data():
 					store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 			store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 			
-			if store[2] in addressesess:
-				continue
-			addressesess.append(store[2])
+			# if store[2] in addressesess:
+			# 	continue
+			# addressesess.append(store[2])
 
 			yield store
 
