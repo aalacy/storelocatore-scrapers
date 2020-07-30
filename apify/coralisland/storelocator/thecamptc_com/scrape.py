@@ -1,10 +1,12 @@
+from bs4 import BeautifulSoup
 import csv
+import time
+from random import randint
 import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
-import json
-import usaddress
+
+from sgselenium import SgSelenium
 
 base_url = 'https://www.thecamptc.com'
 
@@ -15,14 +17,14 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -33,72 +35,92 @@ def eliminate_space(items):
             rets.append(item)
     return rets
 
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     output_list = []
     url = "https://www.thecamptc.com/locations.php"
-    session = requests.Session()
-    source = session.get(url).text    
+    source = session.get(url).text
     response = etree.HTML(source)
-    store_list = response.xpath('//div[@class="col-md-3 col-sm-6"]//a')
-    for store_link in store_list[:-2]:
-        city_state = eliminate_space(validate(store_link.xpath('.//text()')).split(', '))
-        store_link = base_url + '/' + validate(store_link.xpath('./@href'))
+    store_list = response.xpath('//a[@class="location-btn"]')
+    for store_link in store_list:
+        city_state = eliminate_space(validate(store_link.xpath('.//text()')).split(' '))
+        store_link = validate(store_link.xpath('./@href'))
+        if "mexicali" in store_link:
+            continue
+        print(store_link)
         store = etree.HTML(session.get(store_link).text)
-        details = eliminate_space(store.xpath('.//div[@class="container content"]//text()'))
         output = []
-        phone = get_value(re.findall("\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4}", ', '.join(details))[0])
-        output.append(base_url) # url
-        output.append(', '.join(city_state)) #location name
-        address = details[1]
-        if '@' not in details[2] and '-' not in details[2]:
-            address += ', ' + details[2]
-        address = parse_address(address)
-        output.append(address['street'].replace(phone, '')) #address
-        if address['city'] == '<MISSING>':
-            output.append(city_state[0])
-            output.append(city_state[1])
+        raw_address = eliminate_space(store.xpath('.//div[@class="location-details"][1]//text()'))
+        if raw_address:
+            raw_hours = eliminate_space(store.xpath('.//div[@class="location-details"][2]//text()'))[1:]
+            phone = get_value(re.findall("\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4}", ', '.join(raw_address))[0])                
+            zipcode = get_value(re.findall("\d{5}", ', '.join(raw_address))[-1])
+            output.append(base_url) # url
+            output.append(store_link) # page_url
+            output.append(', '.join(city_state)) #location name
+            output.append(raw_address[1]) #address
+            output.append(raw_address[2].split('\n')[0].replace(",","")) # city
+            output.append(raw_address[2].split('\n')[1].strip()) # state
+            output.append(zipcode) #zipcode 
+            output.append('US') #country code
+            output.append("<MISSING>") #store_number
+            output.append(phone) #phone
+            output.append("<MISSING>") #location type
+            geo_loc = validate(store.xpath('.//iframe/@src')).split('!2d')[1].split('!2m')[0].split('!3d')
+            lat = geo_loc[1]
+            if len(lat) > 30:
+                lat = lat[:lat.find("!")]
+            output.append(lat) #latitude
+            output.append(geo_loc[0]) #longitude
+            output.append(validate(' '.join(raw_hours))) #opening hours            
         else:
-            output.append(address['city']) #city
-            output.append(address['state']) #state            
-        output.append(address['zipcode']) #zipcode 
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(phone) #phone
-        output.append("TheCampTC") #location type
-        geo_loc = validate(store.xpath('.//div[@class="container content"]//iframe/@src')).split('!2d')[1].split('!2m')[0].split('!3d')
-        output.append(geo_loc[0]) #latitude
-        output.append(geo_loc[1]) #longitude
-        output.append(validate(details[5:])) #opening hours            
+            if store_link == "https://thecamptc.com/locations/cool-springs-tennessee":
+                driver = SgSelenium().chrome()
+                time.sleep(2)
+
+                driver.get(store_link)
+                time.sleep(randint(6,8))
+
+                base = BeautifulSoup(driver.page_source,"lxml")
+                raw_address = base.footer.find(id="text-2").text.split("\n")
+                phone = raw_address[0].replace("CONTACT US","").strip()
+                raw_hours = base.footer.find(id="text-3").text.replace("CLASS HOURS","").replace("\n"," ").replace("\xa0","")
+                if "Pandemic" in raw_hours:
+                    raw_hours = raw_hours[raw_hours.find(":")+1:].strip()
+                zipcode = get_value(re.findall("\d{5}", ', '.join(raw_address))[-1])
+                output.append(base_url) # url
+                output.append(store_link) # page_url
+                output.append(', '.join(city_state)) #location name
+                output.append(raw_address[1].strip()) #address
+                output.append(raw_address[2].split(',')[0].replace(",","")) # city
+                output.append(raw_address[2].split(' ')[1].strip()) # state
+                output.append(zipcode) #zipcode
+                output.append('US') #country code
+                output.append("<MISSING>") #store_number
+                output.append(phone) #phone
+                output.append("<MISSING>") #location type
+                geo_loc = base.find("iframe")['src'].split('!2d')[1].split('!2m')[0].split('!3d')
+                lat = geo_loc[1]
+                if len(lat) > 30:
+                    lat = lat[:lat.find("!")]
+                output.append(lat) #latitude
+                output.append(geo_loc[0]) #longitude
+                output.append(raw_hours) #opening hours
+                driver.close()
         output_list.append(output)
+
     return output_list
 
 def scrape():
