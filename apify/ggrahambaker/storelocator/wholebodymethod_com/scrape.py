@@ -7,7 +7,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,7 +22,7 @@ def addy_ext(addy):
 
 def fetch_data():
     locator_domain = 'https://www.wholebodymethod.com/'
-    ext = 'locations-3'
+    ext = 'location'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
@@ -56,7 +56,7 @@ def fetch_data():
         lat = '<MISSING>'
         longit = '<MISSING>'
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        store_data = [locator_domain,'https://www.wholebodymethod.com/location', location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
