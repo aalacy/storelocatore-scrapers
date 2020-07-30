@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -22,6 +21,7 @@ def fetch_data():
         page = page + 1
         print('Page: ' + str(page))
         url = 'https://www.policeone.com/law-enforcement-directory/search/page-' + str(page)
+        session = SgRequests()
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -32,6 +32,7 @@ def fetch_data():
                     locs.append(lurl)
                     alllocs.append(lurl)
         for loc in locs:
+            session = SgRequests()
             r = session.get(loc, headers=headers)
             #print(loc)
             country = 'US'
