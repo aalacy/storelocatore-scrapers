@@ -35,7 +35,7 @@ def fetch_data():
 
 	for item in items:
 		store = json.loads(item.text)
-
+		link = store['url'].split("?")[0]
 		location_name = store['name'] + " " + store['address']['addressLocality']
 		print(location_name)
 
@@ -62,7 +62,7 @@ def fetch_data():
 		latitude = store['geo']['latitude']
 		longitude = store['geo']['longitude']
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	try:
 		driver.close()
