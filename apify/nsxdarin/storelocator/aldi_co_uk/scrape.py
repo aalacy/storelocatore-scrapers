@@ -1,7 +1,8 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import time
+import re
+import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -14,21 +15,37 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+def get_json_data(html):
+    re_get_json = re.compile('window\.dataLayer\.push\((.+?)\)')
+    match = re.search(re_get_json, html)
+    json_text = match.group(1)
+    return json.loads(json_text)['seoData']
+
+
+def get_geo_data(html):
+    re_get_json = re.compile('<script class=\"js-store-finder-initial-state\" type=\"application/json\">\s\S?(.+?)</script>')
+    match = re.search(re_get_json, html)
+    json_text = match.group(1).strip()
+    return json.loads(json_text)
+
+
 def fetch_data():
     locs = []
     sm = ''
     url = 'https://www.aldi.co.uk/sitemap.xml'
+    
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.aldi.co.uk/sitemap/store' in line:
             sm = line.split('<loc>')[1].split('<')[0]
     r = session.get(sm, headers=headers)
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.aldi.co.uk/store/' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
         time.sleep(3)
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s ...' % loc)
         website = 'aldi.co.uk'
         store = loc.split('s-uk-')[1]
         typ = 'Store'
@@ -42,23 +59,25 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"seoData":{"name":"' in line2:
-                name = line2.split('"seoData":{"name":"')[1].split('"')[0]
-                try:
-                    hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
-                except:
-                    hours = '<MISSING>'
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                state = '<MISSING>'
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '{"store":' in line2:
-                lat = line2.split('"lat":')[1].split(',')[0]
-                lng = line2.split('"lng":')[1].split('}')[0]
+        data = get_json_data(r2.text)
+        name = data['name']
+        try:
+            hours = "; ".join(data['openingHours'])
+        except:
+            hours = '<MISSING>'
+        city = data['address']['addressLocality']   
+        state = '<MISSING>'
+        add = data['address']['streetAddress']
+        zc = data['address']['postalCode']
+
+        geo_data = get_geo_data(r2.text)
+        lat = geo_data['store']['latlng']['lat']
+        lng = geo_data['store']['latlng']['lng']
+
         if hours == '':
             hours = '<MISSING>'
         phone = '<MISSING>'
+    
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
