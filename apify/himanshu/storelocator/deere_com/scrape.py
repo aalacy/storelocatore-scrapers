@@ -126,9 +126,9 @@ def fetch_data():
                     
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    if store[-1] in dummy:
+                    if store_number in dummy:
                         continue
-                    dummy.append(store[-1])
+                    dummy.append(store_number)
 
                     yield store
             else:
