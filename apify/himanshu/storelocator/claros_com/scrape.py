@@ -3,23 +3,10 @@ import os
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 session = SgRequests()
-from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium import webdriver
-import platform
-system = platform.system()
+from sgselenium import SgSelenium
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 
 
@@ -46,7 +33,7 @@ def addy_ext(addy):
 def fetch_data():
     locator_domain = 'https://www.claros.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get(locator_domain)
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'contact-')]")

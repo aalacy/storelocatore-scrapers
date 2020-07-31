@@ -4,24 +4,11 @@ import requests
 import time
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
-system = platform.system()
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
@@ -70,7 +57,7 @@ def fetch_data():
 	lng_list = []
 	street_list =[]
 	loc_type_list = []
-	driver = get_driver()
+	driver = SgSelenium().firefox()
 	 # it will used in store data.
 	addresses = []
 	addresses1 = []
