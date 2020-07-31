@@ -25,7 +25,6 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
     MAX_DISTANCE = 200
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
@@ -44,7 +43,6 @@ def fetch_data():
         locations_url = "https://www.marianos.com/stores/api/graphql"
         r_locations = session.post(locations_url, headers=headers, data=data)
         locations_json = r_locations.json()["data"]["storeSearch"]["stores"]
-        print(locations_json)            
         current_results_len = len(locations_json)
         for script in locations_json:
             locator_domain = base_url
@@ -74,47 +72,23 @@ def fetch_data():
             store_number = script["storeNumber"]
             latitude = script["latitude"]
             longitude = script["longitude"]
+            result_coords.append((latitude, longitude))
             location_name = script["vanityName"]
-            location_type = "<MISSING>"
+            location_type = script['banner']
             page_url = "https://www.marianos.com/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-            r_loc = session.get(page_url, headers=headers)
-            soup_loc = BeautifulSoup(r_loc.text, "lxml")
-            try:
-                ltype = soup_loc.find("div", class_="logo").a["title"].strip()
-                if "Marianos" in ltype:
-                    location_type = "Marianos"
-                else:
-                    continue
-                hours_of_operation = ""
-                for day_hours in script["ungroupedFormattedHours"]:
-                    hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
-
-                # print("hours_of_operation == "+ hours_of_operation)
-
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-                if str(store[2]) not in addresses and country_code:
-                    addresses.append(str(store[2]))
-
-                    store = [str(x).encode('ascii', 'ignore').decode(
-                        'ascii').strip() if x else "<MISSING>" for x in store]
-
-                    #print("data = " + str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-            except:
-                search.max_distance_update(MAX_DISTANCE)
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            hours_of_operation = ""
+            for day_hours in script["ungroupedFormattedHours"]:
+                hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            if location_type == 'MARIANOS' and str(store[2]) not in addresses and country_code:
+                addresses.append(str(store[2]))
+                store = [str(x).encode('ascii', 'ignore').decode(
+                    'ascii').strip() if x else "<MISSING>" for x in store]
+                yield store
+        if current_results_len == 0:
             search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " +
-                            str(MAX_RESULTS) + " results")
+            search.max_count_update(result_coords)
         zip_code = search.next_zip()
 
 def scrape():

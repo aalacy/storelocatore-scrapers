@@ -1,0 +1,4 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+--ignore GeoConsistencyValidator (Matches link to google maps)
+--ignore StoreNumberColumnValidator (Few missing store #)
+--ignore StateLevelCountValidator --ignore LatLngDuplicationValidator (Confirmed on website)

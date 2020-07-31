@@ -10,7 +10,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -32,12 +32,10 @@ def fetch_data():
     }
     addresses = []
     for cord in coords:
-        r = session.get("https://www.bestwestern.com/bin/bestwestern/proxy?gwServiceURL=HOTEL_SEARCH&distance=250&latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]),headers=headers)
-        location_list = r.json()
+        location_list = session.get("https://www.bestwestern.com/bin/bestwestern/proxy?gwServiceURL=HOTEL_SEARCH&distance=250&latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]),headers=headers).json()
         
         for location in location_list:
-            print(location)
-            exit()
+
             store_data = location["resortSummary"]
             if store_data["countryCode"] not in ["US","CA"]:
                 continue
@@ -54,12 +52,13 @@ def fetch_data():
             store.append(store_data["countryCode"])
             store.append(location["resort"])
             store.append(store_data["phoneNumber"] if store_data["phoneNumber"] else "<MISSING>")
-            store.append("<MISSING>")
+            store.append(store_data['propertyType'])
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             store.append("<MISSING>")
-            store.append("<MISSING>")
-            # print(store)
+            page_url = "https://www.bestwestern.com/en_US/book/hotels-in-"+str(store_data["city"].replace(" ","-").lower())+"/"+str(store_data["name"].replace(" ","-").replace("'","-").replace("A.F.B.","a-f-b-").replace("&","").replace(".","").replace("/","").replace(",","").lower())+"/propertyCode."+str(location["resort"])+".html"
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
 
 def scrape():

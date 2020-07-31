@@ -1,67 +1,62 @@
+from bs4 import BeautifulSoup
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+import string
+import re, time
 
-base_url = 'https://www.marksfeedstore.com'
+from sgrequests import SgRequests
 
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
-
-def get_value(item):
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "https://www.marksfeedstore.com/locations"
-    session = requests.Session()
-    request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[@class="location col-xs-12"]//div[@class="info"]')
-    for store in store_list:        
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store.xpath('.//h2//text()'))) #location name
-        detail = eliminate_space(store.xpath('.//p[contains(@class, "address")]//text()'))
-        output.append(detail[0]) #address
-        address = detail[1].strip().split(',')
-        output.append(address[0]) #city
-        output.append(address[1].strip().split(' ')[0]) #state
-        output.append(address[1].strip().split(' ')[1]) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(detail[2]) #phone
-        output.append("Mark's Feed Store") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(', '.join(eliminate_space(store.xpath('.//p[contains(@class, "hours")]//text()')))) #opening hours        
-        output_list.append(output)
-    return output_list
+   
+    data = []
+    p = 0
+    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r'\s\s+') 
+    url = 'https://marksfeedstore.com/locations'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    store_list = soup.findAll('div', {'class': 'image-caption'})
+    print(len(store_list))
+    for store in store_list:
+        text = re.sub(cleanr,'\n',str(store).lstrip())
+        text = re.sub(pattern,'\n',text).splitlines()
+        print(text)
+        #input()
+        title = text[1]
+        street = text[2]
+        city,state = text[3].split(', ')
+        state,pcode = state.lstrip().split(' ',1)
+        phone = text[4]
+        try:
+            hours = text[5]+' '+text[6]
+        except:
+            hours = text[5]
+        data.append(['https://marksfeedstore.com/','https://marksfeedstore.com/locations',title,street,city,state,pcode,'US',
+                        '<MISSING>',phone,'<MISSING>','<MISSING>','<MISSING>',hours])
+        #print(p,data[p])
+        p += 1
+
+        
+    return data
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -1,71 +1,129 @@
+from bs4 import BeautifulSoup
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
+import string
+import re, time
+import json
+import usaddress
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            if row:
-                writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+            writer.writerow(row)
+
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    driver = get_driver()
-    driver.get('https://www.chickensaladchick.com/locations/')
-    phones=driver.find_elements_by_xpath('//div[contains(@class,"phone")]/a')
-    phone=[str(phones[n].get_attribute('href')).split("tel:")[1] for n in range(0,len(phones))]
-    name = driver.find_elements_by_xpath("//li[@class='location']")
-    location_name = [name[n].get_attribute('data-name') for n in range(0,len(name))]
-    latitude = [name[n].get_attribute('data-longitude') for n in range(0,len(name))]
-    longitude = [name[n].get_attribute('data-latitude') for n in range(0,len(name))]
-    city = [name[n].get_attribute('data-city') for n in range(0,len(name))]
-    state = [str(name[n].get_attribute('data-state')).upper() for n in range(0,len(name))]
-    zipcode = [name[n].get_attribute('data-zip').replace('university',"") for n in range(0,len(name))]
-    time.sleep(5)
-    address = driver.find_elements_by_tag_name('address')
-    for n in range(0,len(address)):
-        street_address.append(address[n].text.split("\n")[0])
-    hours = driver.find_elements_by_xpath('//div[@class="hours-container"]')
-    for n in range(0,len(hours)):
-        if hours[n].text!="":
-            hours_of_operation.append(hours[n].text)
-        else:
-            hours_of_operation.append('<INACCESSIBLE>')
-    for n in range(0,len(street_address)):
-        if street_address[n]!="":
-            data.append([
-                'https://www.chickensaladchick.com',
-                '<MISSING>',
-                street_address[n],
-                city[n],
-                state[n],
-                zipcode[n],
-                'US',
-                '<MISSING>',
-                phone[n],
-                '<MISSING>',
-                latitude[n],
-                longitude[n],
-                hours_of_operation[n]
-            ])
-    driver.quit()
+    # Your scraper here
+    data = []
+    p = 0
+    pattern = re.compile(r'\s\s+') 
+    url = 'https://www.chickensaladchick.com/locations/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")
+    det = soup.find('div',{'class':'results-wrapper'})
+    divlist = soup.findAll('li', {'class': 'location'})
+    print(len(divlist))
+  
+    for div in divlist:
+        
+        lat = div['data-latitude']
+        longt = div['data-longitude']
+        title = div.find('h4').text       
+        #store = div['data-Loc-id']
+        address =re.sub(pattern,' ',div.find('address').text)
+        phone = div.find('div',{'class':'phone'}).text.replace('\n','')    
+       
+        address = address.lstrip()
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+
+        try:
+            hourlist = div.find('ul',{'class':'hours'})['data-hours'].replace('[','[{').replace('][','},').replace(']','},')
+            hourlist = hourlist[0:len(hourlist)-1]+']'
+            hourlist =json.loads(hourlist)
+            
+            hours = ''
+            for hr in hourlist:
+                check = hr['Notes']
+                opentime = hr['OpenTime'].split(':')
+                start = (int)(opentime[0])
+                ttype = 'am'
+                if start < 12:
+                    pass
+                else:
+                    ttype = 'pm'
+                    start = start - 12
+                closetime = hr['CloseTime'].split(':')
+                end = (int)(closetime[0])
+                ttype = 'am'
+                if end < 12:
+                    pass
+                else:
+                    ttype = 'pm'
+                    end = end - 12
+                midpart = str(start) + ':' + opentime[1] + " " + ttype +' - ' + str(end) + ':' + closetime[1] + " " + ttype +' '+check
+                if hr['Closed'] == '1':
+                    midpart = 'Closed'
+                    
+                hours = hours + hr['Interval'] + ' : ' +  midpart + ' '
+        except:
+            hours = '<MISSING>'
+
+        link = 'https://www.chickensaladchick.com'+div['data-href']
+        store = div['data-loc-id']
+        if len(street) < 4:
+            street = '<MISSING>'
+        data.append([
+                        'https://www.chickensaladchick.com/',
+                        link,                   
+                        title,
+                        street.lstrip().replace(',',''),
+                        city.lstrip().replace(',',''),
+                        state.lstrip().replace(',',''),
+                        pcode.lstrip().replace(',',''),
+                        'US',
+                        store,
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours.rstrip()
+                    ])
+        #print(p,data[p])
+        p += 1
+        
+ 
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-   
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 scrape()

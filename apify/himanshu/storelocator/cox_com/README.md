@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-addresses with no number, and i checkd data true on the website.
+i checked data true for this website.

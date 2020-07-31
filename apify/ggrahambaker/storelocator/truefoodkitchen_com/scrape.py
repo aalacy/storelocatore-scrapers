@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-
 session = SgRequests()
 HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -12,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -58,25 +57,44 @@ def fetch_data():
                 temp = hr.split(',')
                 if len(temp) == 1:
                     continue
-                
+               
+                #print(temp)
                 day = hours_map[temp[0]]
-                start = (int)(temp[1].split('00')[0])
+                n = 2
+                start = [temp[1][i:i+n] for i in range(0, len(temp[1]), n)]
+                
+                start1 = (int)(start[0])
+                start2 = start[1]
+               
+                #start = (int)(temp[1].split('00')[0])
                 part = ''
-                if start < 12:
+                if start1 < 12:
                     part = ' am '
                     pass
                 else:
-                    start = start - 12
+                    start1 = start1 - 12
                     part = ' pm '
-                startstr = str(start)+':00' + part
-                end = (int)(temp[2].split('00')[0])
-                if end < 12:
+                    
+                startstr = str(start1)+' : ' + start2 +' '+ part
+                #print("STR+",startstr)
+                
+                
+                n = 2
+                end = [temp[2][i:i+n] for i in range(0, len(temp[2]), n)]
+                
+                end1 = (int)(end[0])
+                end2 = end[1]
+               
+                #start = (int)(temp[1].split('00')[0])
+                part = ''
+                if  end1 < 12:
                     part = ' am '
                     pass
                 else:
-                    end = end - 12
+                    end1 = end1 - 12
                     part = ' pm '
-                endstr = str(end)+':00' + part
+                    
+                endstr = str(end1)+' : ' + end2 +' '+ part
                 hours = hours + day + ' ' + startstr + '- ' + endstr + ' '
                 
             if len(hours) < 3:

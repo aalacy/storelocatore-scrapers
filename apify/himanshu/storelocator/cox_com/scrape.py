@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -59,25 +59,26 @@ def fetch_data():
 
     for address_list in json_data['locations']:
         # print("address_list ==== " + str(address_list['hours']))
+        if "hours" in address_list:
+            
+            hour_list = address_list['hours'].split(',')
 
-        hour_list = address_list['hours'].split(',')
+            hours_of_operation = ""
 
-        hours_of_operation = ""
+            for hour_item in hour_list:
+                day = hour_item.split(':')[0]
 
-        for hour_item in hour_list:
-            day = hour_item.split(':')[0]
+                if hours_of_operation == "":
+                    for i in range(int(day))[1:]:
+                        # print("day === "+ str(i))
+                        hours_of_operation += str(day_list[i-1]) +" - Closed, "
 
-            if hours_of_operation == "":
-                for i in range(int(day))[1:]:
-                    # print("day === "+ str(i))
-                    hours_of_operation += str(day_list[i-1]) +" - Closed, "
-
-            morning = ":".join(hour_item.split(':')[1:3])
-            evening = ":".join(hour_item.split(':')[3:])
-            if day != "":
-                hours_of_operation += str(day_list[int(day)-1]) +" - "+ morning +" to "+evening +", "
-            else:
-                hours_of_operation = "<MISSING>"
+                morning = ":".join(hour_item.split(':')[1:3])
+                evening = ":".join(hour_item.split(':')[3:])
+                if day != "":
+                    hours_of_operation += str(day_list[int(day)-1]) +" - "+ morning +" to "+evening +", "
+                else:
+                    hours_of_operation = "<MISSING>"
 
         # print("hour_item ==== "+ str(hours_of_operation) )
         city = address_list['city']
@@ -89,12 +90,18 @@ def fetch_data():
             street_address += ", "+address_list['address2']
 
         location_name = address_list['locationName']
-        phone = address_list['phone']
+        phone = ''
+        if "phone" in address_list :
+            phone = address_list['phone']
         latitude = str(address_list['displayLat'] if "displayLat" in address_list else address_list["yextRoutableLat"])
         longitude = str(address_list['displayLng'] if "displayLng" in address_list else address_list["yextRoutableLng"])
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+        page_url = address_list['displayWebsiteUrl']
+        store_number = address_list['id']
+        location_type =  location_name.split(" (Military")[0].split(" - ")[0].split(" , ")[0]
+        if "Cox Business" in location_type:
+            store_number = "<MISSING>"
+        store = [locator_domain, location_name +" "+ city , street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("SUNDAY - 0:00 to 0:00, MONDAY - 0:00 to 0:00, TUESDAY - 0:00 to 0:00, WEDNESDAY - 0:00 to 0:00, THURSDAY - 0:00 to 0:00, FRIDAY - 0:00 to 0:00, SATURDAY - 0:00 to 0:00,","<MISSING>"), page_url.replace("http://coxbusiness.com","<MISSING>").replace("[[Pages URL]]","<MISSING>")]
 
         if store[2] + store[-3] not in addresses:
             addresses.append(store[2] + store[-3])

@@ -19,12 +19,14 @@ def fetch_data():
     states = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'style="width: 100%; margin-bottom: 10px;" href="' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<tr><td><a href="' in line2:
                 locs.append('https://www.smartstyle.com' + line2.split('href="')[1].split('"')[0])
     print('Found %s Locations.' % str(len(locs)))
@@ -52,6 +54,7 @@ def fetch_data():
                 retries = retries + 1
                 r2 = session.get(loc, headers=headers, timeout=5)
                 for line2 in r2.iter_lines():
+                    line2 = str(line2.decode('utf-8'))
                     if '<meta itemprop="openingHours" content="' in line2:
                         hrs = line2.split('<meta itemprop="openingHours" content="')[1].split('"')[0].strip()
                         if hours == '':

@@ -1,76 +1,59 @@
+from bs4 import BeautifulSoup
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+import string
+import re, time
 
-base_url = 'https://www.famoussamsarizona.com'
+from sgrequests import SgRequests
 
-def validate(item):
-    if type(item) == list:
-        item = ' '.join(item)
-    while True:
-        if item[-1:] == ' ':
-            item = item[:-1]
-        else:
-            break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "https://www.famoussamsarizona.com/locations"
-    request = requests.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[@data-packed="true"]')[4:]
-    hours = validate(eliminate_space(response.xpath('//div[@data-packed="true"]')[1].xpath('.//text()')))
+   
+    data = []    
+    url = 'https://www.famoussamsarizona.com/locations'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    store_list = soup.findAll('div', {'class': 'txtNew'})[2:]
+    print(len(store_list))
+    hours = ''
+    t = 0
     for store in store_list:
-        info = eliminate_space(store.xpath(".//text()"))
+        if store.text.find('BUSINESS HOURS') > -1:
+            hours = store.text.split('BUSINESS HOURS')[1].replace('\n',' ').lstrip().split('LIKE US ON FACEBOOK')[0].replace('\u200b','')
+            break
+        t += 1      
+      
+    for p in range(0,t):        
+        text = store_list[p].text.splitlines()
+        title = text[0]
+        street = text[1]
+        city,state = text[2].split(', ')
+        state,pcode = state.lstrip().split(' ',1)
+        phone = text[3]
+        data.append(['https://www.famoussamsarizona.com/','https://www.famoussamsarizona.com/locations',title,street,city,state,pcode,'US',
+                        '<MISSING>',phone,'<MISSING>','<INACCESSIBLE>','<INACCESSIBLE>',hours])
+        #print(p,data[p])               
 
-        output = []
-        output.append(base_url) # url
-        output.append(info[0]) #location name
-        output.append(info[1]) #address
-        output.append(info[2].split(', ')[0]) #city
-        output.append(info[2].split(', ')[1].split(' ')[0]) #state
-        output.append(info[2].split(', ')[1].split(' ')[1]) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(info[3]) #phone
-        output.append("FAMOUS SAM'S - Fun, Food and Spirits") #location type
-        output.append("<INACCESSIBLE>") #latitude
-        output.append("<INACCESSIBLE>") #longitude
-        output.append(hours) #opening hours
-
-        output_list.append(output)
-
-    return output_list
+        
+    return data
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -5,9 +5,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import json
-import requests
 session = SgRequests()
-import requests
 import json
 import platform
 system = platform.system()

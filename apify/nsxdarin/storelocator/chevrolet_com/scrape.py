@@ -15,7 +15,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 MAX_RESULTS = 50
-MAX_DISTANCE = 10
+MAX_DISTANCE = 500
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,8 +32,8 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print('%s-%s...' % (llat, llng))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print('%s-%s...' % (llat, llng))
         url = 'https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/' + str(llat) + '/' + str(llng) + '/?distance=500&maxResults=50'
         r = session.get(url, headers=headers)
         result_coords = []
@@ -59,6 +59,7 @@ def fetch_data():
                             lat = item.split('"latitude":')[1].split(',')[0]
                             hours = ''
                             lng = item.split('"longitude":')[1].split('}')[0]
+                            result_coords.append((lat,lng))
                             try:
                                 days = item.split('"generalOpeningHour":[{')[1].split('}],"serviceOpeningHour":')[0].split('"openFrom":"')
                                 for day in days:
@@ -82,14 +83,13 @@ def fetch_data():
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
-        if len(array) <= MAX_RESULTS:
-                    #print("max distance update")
-                    search.max_distance_update(MAX_DISTANCE)
-        ##        elif len(array) == MAX_RESULTS:
-        ##            print("max count update")
-        ##            search.max_count_update(result_coords)
+        print('array len', len(array))
+        if len(array) >= MAX_RESULTS:
+            print("max count update")
+            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()        
 def scrape():
     data = fetch_data()

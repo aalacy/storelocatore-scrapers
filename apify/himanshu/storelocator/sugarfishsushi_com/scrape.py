@@ -2,14 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-# import json
-# import sgzip
-# import time
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -22,137 +15,127 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     return_main_object = []
-    addresses = []
-
-
-
+    address = []
     headers = {
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
         "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-
-    # it will used in store data.
-    locator_domain = "https://sugarfishsushi.com/"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-
-
-    r= session.get('https://sugarfishsushi.com/our-locations/',headers = headers)
+    r= session.get('https://sugarfishsushi.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
-    a= soup.find('div',class_="container")
-    for x in a.find_all('strong'):
-        # page_url = x.a['href']
-        if x.a is not None:
-            page_url = x.a['href']
-            r_loc = session.get(x.a['href'],headers = headers)
-            soup_loc = BeautifulSoup(r_loc.text,'lxml')
-            info = soup_loc.find('div',class_='entry-content').h6
-            # print(info.prettify())
-
-            list_info = list(info.stripped_strings)
-            list_info = [el.replace('\xa0',' ') for el in list_info]
-            if len(list_info) ==4:
-                location_name = list_info[0]
-                street_address = list_info[1]
-                city = list_info[2].split(',')[0]
-                state = list_info[2].split(',')[1].split()[0]
-                zipp = list_info[2].split(',')[1].split()[-1]
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_info[-1]))
-                phone= phone_list[0]
-            elif len(list_info) == 5:
-                location_name = list_info[0]
-                street_address = " ".join(list_info[1:3])
-                city = list_info[3].split(',')[0]
-                state = list_info[3].split(',')[1].split()[0]
-                zipp = list_info[3].split(',')[1].split()[-1]
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_info[-1]))
-                phone= phone_list[0]
-            elif list_info ==[]:
-
-                info = soup_loc.find('div',class_='entry-content').find('div',class_='column4').h6
-                list_info = list(info.stripped_strings)
-
-                location_name =list_info[0]
-                street_address = list_info[1]
-                city = list_info[2].split(',')[0]
-                state = list_info[2].split(',')[1].split()[0]
-                zipp = list_info[2].split(',')[1].split()[-1]
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_info[-1]))
-                phone= phone_list[0]
-
+    a= soup.find_all("div",{"class","text-box-inner none"})
+    for i in a:
+        d = (i.find_all("p"))
+        for j in d:
+            link = (j.find("a")['href'])
+            # print(link)
+            r1 = session.get(link,headers = headers)
+            soup1 = BeautifulSoup(r1.text,'lxml')
+            a1 = soup1.find_all("h1",{"class","none entry-title section-title"})[1]
+            location_name = ''
+            for h in a1:
+                location_name = (h)
+            a2 = soup1.find("div",{"class","section-description none section-style-none"})
+            zipp = (a2.text.split(" ")[-1].replace("\n",""))
+            city = a2.text.split(",")[1].replace("\n","").replace("CA 91604",'Studio City').replace("#150","Los Angeles")
+            state = a2.text.split(" ")[-2]
+            street_address = a2.text.split(",")[0].replace(" Studio City",'').replace("600 W. 7th St","600 W. 7th St #150")
+            hours_of_operation = ''
+            if "CA" in state:
+                hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[0].text.replace("\n","").replace("Los Angeles","").replace("Sat","Sat ").replace("SUNNoon"," SUN Noon"))
             else:
+                hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[-1].text.replace("\n","").replace("New York","").replace("Thu","Thu ").replace("SUNNoon"," SUN Noon").replace("Fri"," Fri").replace("Sat","Sat "))
+            phone = soup1.find("h3",{"class","photocard-subtitle none"}).text.replace("\n","").strip().lstrip().rstrip()
+            # print(phone)
+            #  < class="photocard-subtitle none">
+            store = []
+            store.append("https://sugarfishsushi.com/")
+            store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>") 
+            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
+            store.append(city.strip().encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
+            store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else "<MISSING>")
+            store.append(zipp.encode('ascii', 'ignore').decode('ascii').strip() if zipp else "<MISSING>")
+            store.append("US")
+            store.append("<MISSING>") 
+            store.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
+            store.append(link.encode('ascii', 'ignore').decode('ascii').strip() if link else "<MISSING>")
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            yield store 
+    r1 = session.get('https://sugarfishsushi.com/pasadena/',headers = headers)
+    soup1 = BeautifulSoup(r1.text,'lxml')
+    a1 = soup1.find_all("h1",{"class","none entry-title section-title"})[1]
+    location_name = ''
+    for h in a1:
+        location_name = (h)
+    a2 = soup1.find("div",{"class","section-description none section-style-none"})
+    zipp = (a2.text.split(" ")[-1].replace("\n",""))
+    city = a2.text.split(",")[1].replace("\n","").replace("CA 91604",'Studio City').replace("#150","Los Angeles")
+    state = a2.text.split(" ")[-2]
+    street_address = a2.text.split(",")[0].replace(" Studio City",'').replace("600 W. 7th St","600 W. 7th St #150")
+    hours_of_operation = ''
+    if "CA" in state:
+        hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[0].text.replace("\n","").replace("Los Angeles","").replace("Sat","Sat ").replace("SUNNoon"," SUN Noon"))
+    else:
+        hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[-1].text.replace("\n","").replace("New York","").replace("Thu","Thu ").replace("SUNNoon"," SUN Noon").replace("Fri"," Fri").replace("Sat","Sat "))
+    phone = soup1.find("h3",{"class","photocard-subtitle none"}).text.replace("\n","").strip().lstrip().rstrip()
+    store = []
+    store.append("https://sugarfishsushi.com/")
+    store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>") 
+    store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
+    store.append(city.strip().encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
+    store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else "<MISSING>")
+    store.append(zipp.encode('ascii', 'ignore').decode('ascii').strip() if zipp else "<MISSING>")
+    store.append("US")
+    store.append("<MISSING>") 
+    store.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone else "<MISSING>")
+    store.append("SUGAR FISH")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
+    store.append("https://sugarfishsushi.com/pasadena/")
+    yield store 
 
-                info = soup_loc.find('div',class_='entry-content').find('div',class_='column4').find_all('h6')[2]
-                list_info = list(info.stripped_strings)
-                location_name =list_info[0]
-                street_address = list_info[1]
-                city = list_info[2].split(',')[0]
-                state = list_info[2].split(',')[1].split()[0]
-                zipp = list_info[2].split(',')[1].split()[-1]
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_info[-1]))
-                phone= phone_list[0]
-
-            hours = info = soup_loc.find('div',class_='entry-content').find_all('h6')[1]
-            list_hours = list(hours.stripped_strings)
-            list_hours = [el.replace('\xa0',' ') for el in list_hours]
-            if list_hours !=[]:
-                if "Monday through " in list_hours[0] :
-                    if len(list_hours) ==4 or len(list_hours) == 6:
-                        hours_of_operation = " ".join(list_hours)
-
-                    else:
-
-                        hours_of_operation = " ".join(list_hours[:4])
-                else:
-                    hours = info = soup_loc.find('div',class_='entry-content').find('div',class_ = 'column4').find_all('h6')[1]
-                    list_hours = list(hours.stripped_strings)
-                    hours_of_operation = " ".join(list_hours)
-            else:
-                hours = soup_loc.find('div',class_='entry-content').find('div',class_='column4').find_all('h6')[3]
-                list_hours = list(hours.stripped_strings)
-                hours_of_operation = " ".join(list_hours)
-
-
-
-
-
-
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" else x for x in store]
-
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-
-    return return_main_object
-
-
-
-
+    r1 = session.get('https://sugarfishsushi.com/locations/midtown-west/',headers = headers)
+    soup1 = BeautifulSoup(r1.text,'lxml')
+    a1 = soup1.find_all("h1",{"class","none entry-title section-title"})[1]
+    location_name = ''
+    for h in a1:
+        location_name = (h)
+    a2 = soup1.find_all("h5",{"class","entry-sub-title none section-sub-title"})[-1]
+    zipp = (a2.text.split(" ")[-1].replace("\n",""))
+    city = "NEW YORK"
+    state = "NY"
+    street_address = a2.text.split(",")[0].replace("1740 Broadway","1740 Broadway, #001")
+    hours_of_operation = ''
+    if "CA" in state:
+        hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[0].text.replace("\n","").replace("Los Angeles","").replace("Sat","Sat ").replace("SUNNoon"," SUN Noon"))
+    else:
+        hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[-1].text.replace("\n","").replace("New York","").replace("Thu","Thu ").replace("SUNNoon"," SUN Noon").replace("Fri"," Fri").replace("Sat","Sat "))
+    phone = soup1.find("h3",{"class","photocard-subtitle none"}).text.replace("\n","").strip().lstrip().rstrip()
+    store = []
+    store.append("https://sugarfishsushi.com/")
+    store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>") 
+    store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
+    store.append(city.strip().encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
+    store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else "<MISSING>")
+    store.append(zipp.encode('ascii', 'ignore').decode('ascii').strip() if zipp else "<MISSING>")
+    store.append("US")
+    store.append("<MISSING>") 
+    store.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone else "<MISSING>")
+    store.append("SUGAR FISH")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
+    store.append("https://sugarfishsushi.com/locations/midtown-west/")
+    yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

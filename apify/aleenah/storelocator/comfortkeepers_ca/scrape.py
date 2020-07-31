@@ -1,8 +1,10 @@
 import csv
 import json
-import requests
-from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 import sgzip
+from tenacity import retry, stop_after_attempt
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,12 +16,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes = [ 'ca'])
-    MAX_COUNT = 25
-    MAX_DISTANCE = 500
-    all=[]
+@retry(stop = stop_after_attempt(7))
+def query_zip(postcode):
     headers={'accept': '*/*',
             'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en-US,en;q=0.9',
@@ -32,28 +30,29 @@ def fetch_data():
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
             'x-requested-with': 'XMLHttpRequest'}
+    data = "action=csl_ajax_onload&address=&formdata=addressInput%3D&lat="+str(postcode[0])+"&lng="+str(postcode[1])+"&options%5Bdistance_unit%5D=km&options%5Bdropdown_style%5D=none&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=500&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax%3A+&options%5Blabel_phone%5D=Phone%3A+&options%5Blabel_website%5D=Website&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=245+Fairview+Mall+Drive++Toronto%2C+Ontario+Canada&options%5Bmap_center_lat%5D="+str(postcode[0])+"&options%5Bmap_center_lng%5D="+str(postcode[1])+"&options%5Bmap_domain%5D=maps.google.ca&options%5Bmap_end_icon%5D=https%3A%2F%2Fwww.comfortkeepers.ca%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_azure.png&options%5Bmap_home_icon%5D=https%3A%2F%2Fwww.comfortkeepers.ca%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_yellow.png&options%5Bmap_region%5D=ca&options%5Bmap_type%5D=roadmap&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=12&options%5Bzoom_tweak%5D=0&radius=500"
+    return session.post("https://www.comfortkeepers.ca/wp-admin/admin-ajax.php", data=data, headers=headers).json()['response']
+
+def fetch_data():
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes = [ 'ca'])
+    MAX_COUNT = 25
+    MAX_DISTANCE = 500
+    all=[]
 
     postcode = search.next_coord()
     key_set=set([])
     count=0
     while postcode:
-        print(postcode)
-        data = "action=csl_ajax_onload&address=&formdata=addressInput%3D&lat="+str(postcode[0])+"&lng="+str(postcode[1])+"&options%5Bdistance_unit%5D=km&options%5Bdropdown_style%5D=none&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=500&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax%3A+&options%5Blabel_phone%5D=Phone%3A+&options%5Blabel_website%5D=Website&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=245+Fairview+Mall+Drive++Toronto%2C+Ontario+Canada&options%5Bmap_center_lat%5D="+str(postcode[0])+"&options%5Bmap_center_lng%5D="+str(postcode[1])+"&options%5Bmap_domain%5D=maps.google.ca&options%5Bmap_end_icon%5D=https%3A%2F%2Fwww.comfortkeepers.ca%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_azure.png&options%5Bmap_home_icon%5D=https%3A%2F%2Fwww.comfortkeepers.ca%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_yellow.png&options%5Bmap_region%5D=ca&options%5Bmap_type%5D=roadmap&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=12&options%5Bzoom_tweak%5D=0&radius=500"
-
-        res = requests.post("https://www.comfortkeepers.ca/wp-admin/admin-ajax.php", data=data, headers=headers)
-        # soup = BeautifulSoup(res.text, 'html.parser')
-        # sa = soup.find_all('a', {'class': 'Directory-listLink'})
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        results = query_zip(postcode)
         result_coords=[]
-        jso=res.json()
-        print(res.json())
-        results=jso['response']
         for r in results:
             coords=(r['lat'],r['lng'])
             result_coords.append(coords)
             key=r['city']+r['address']+r['lat']+r['lng']+r['zip']
             if key in key_set:
                 continue
-
             else:
                 key_set.add(key)
                 count += 1
