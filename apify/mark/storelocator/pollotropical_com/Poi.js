@@ -1,20 +1,20 @@
-const noDataLabel = '<MISSING>';
+const MISSING = '<MISSING>';
 
 class Poi {
   constructor({
-    locator_domain = noDataLabel,
-    location_name = noDataLabel,
-    street_address = noDataLabel,
-    city = noDataLabel,
-    state = noDataLabel,
-    zip = noDataLabel,
-    country_code = noDataLabel,
-    store_number = noDataLabel,
-    phone = noDataLabel,
-    location_type = noDataLabel,
-    latitude = noDataLabel,
-    longitude = noDataLabel,
-    hours_of_operation = noDataLabel,
+    locator_domain = MISSING,
+    location_name = MISSING,
+    street_address = MISSING,
+    city = MISSING,
+    state = MISSING,
+    zip = MISSING,
+    country_code = MISSING,
+    store_number = MISSING,
+    phone = MISSING,
+    location_type = MISSING,
+    latitude = MISSING,
+    longitude = MISSING,
+    hours_of_operation = MISSING,
   }) {
     /* eslint-disable camelcase */
     this.locator_domain = locator_domain;
