@@ -23,9 +23,8 @@ def fetch_data():
 
     dummy =[]
     search = sgzip.ClosestNSearch()
-    search.initialize(country_codes=['CA'])
-    MAX_RESULTS = 140
-    MAX_DISTANCE = 30
+    search.initialize(country_codes=['US', 'CA'])
+
     coord = search.next_coord()
     base_url = "https://www.deere.com/"
     headers = {
@@ -135,22 +134,11 @@ def fetch_data():
             else:
                 continue
         
-        if current_results_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+
+        search.max_count_update(result_coords)
         coord = search.next_coord()
                
-    
 
-    
-        
-        
-            
-        
-    
 def scrape():
     data = fetch_data()
     write_output(data)
