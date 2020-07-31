@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "apify": "^0.21.3",
     "iltorb": "^2.4.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.4"

@@ -1,76 +1,55 @@
 const Apify = require('apify');
 const request = require('request-promise');
 
-const renameKeys = (keysMap, obj) => {
-  return Object.keys(obj).reduce((acc, key) => {
-    if (!keysMap[key]) {
-      return acc
-    }
-    if (obj[key] === "") {
-      obj[key] = '<MISSING>';
-    }
-    return {
-      ...{ [keysMap[key] || key]: obj[key]},
-      ...acc
-    }
-  },
-  {}
-  )
+const MISSING = '<MISSING>';
+
+function getOrDefault(value) {
+  if (Array.isArray(value)) {
+    return value.length ? JSON.stringify(value) : MISSING;
+  }
+
+  return value || MISSING;
 }
 
-// store ids are in a range from 1280 to 1429 (non-contiguous)
-let i = 1280;
-const sources = [];
-while (i <= 1429) {
-	sources.push({ url: `https://bumpertobumper.ca/en/getInfo/${i}` });
-	i++
-}
+Apify.main(async () => {
+  const response = await request.get('https://www.bumpertobumper.ca/json/stores.json');
+  data = JSON.parse(response);
 
-(async() => {
-	const requestList = new Apify.RequestList({sources});
-  await requestList.initialize();
-  const records =[];
-  const failedUrls = [];
+  const records = data.map((garage) => {
+    const {
+      city,
+      phone,
+      country,
+      hours,
+      region: state,
+      id: store_number,
+      name: location_name,
+      address: street_address,
+      postal_code: zip,
+      garage_type: location_type,
+      lat: latitude,
+      long: longitude,
+    } = garage;
 
-	const crawler = new Apify.BasicCrawler({
-		requestList,
-		handleRequestFunction: async ({ request: requestObj }) => {
-      await request.get(requestObj.url)
-      .then(json => {
-        const locationData = JSON.parse(json);
-        const keys_map = {
-          name: 'location_name',
-          address: 'street_address',
-          city: 'city',
-          province: 'state',
-          postal_code: 'zip',
-          garage_id: 'store_number',
-          phone: 'phone',
-          garage_type: 'location_type',
-          lat: 'latitude',
-          long: 'longitude',
-          schedule: 'hours_of_operation',
-          locator_domain: 'locator_domain',
-          country_code: 'country_code',
-        }
-        locationData.locator_domain = 'bumpertobumper.ca';
-        locationData.country_code = 'CA';
-        locationData.schedule = JSON.stringify(locationData.schedule);
-        records.push(renameKeys(keys_map, locationData));
-      })
-      // catch ids in range that don't correspond to a store
-      .catch(error => {
-        // console.log(`Domain: ${requestObj.url} returned error: ${error}`)
-        failedUrls.push(requestObj.url);
-      })
-    }
-	});
+    const poi = {
+      locator_domain: 'bumpertobumper.ca',
+      city: getOrDefault(city),
+      phone: getOrDefault(phone.replace(/-/g, '')),
+      location_name: getOrDefault(location_name),
+      street_address: getOrDefault(street_address),
+      state: getOrDefault(state),
+      zip: getOrDefault(zip),
+      store_number: getOrDefault(store_number),
+      location_type: getOrDefault(location_name),
+      latitude: getOrDefault(latitude),
+      longitude: getOrDefault(longitude),
+      store_number: getOrDefault(store_number),
+      hours_of_operation: getOrDefault(hours),
+      country_code: country.match(/canada/i) ? 'CA' : country,
+    };
 
-  await crawler.run();
+    return poi;
+  });
+
   await Apify.pushData(records);
-  // console.log("These urls in range don't exist:")
-  // console.log(failedUrls);
-
-
-	// End scraper
-})();
+});
