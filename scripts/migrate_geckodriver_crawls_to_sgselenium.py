@@ -5,7 +5,7 @@ def replace_files(base_path):
     os.remove('{}/scrape.py'.format(base_path))
     os.remove('{}/requirements.txt'.format(base_path))
     os.remove('{}/Dockerfile'.format(base_path))
-    copyfile('{}/../../../../templates/python3/Dockerfile'.format(base_path), '{}/Dockerfile'.format(base_path))
+    copyfile('{}/../../../../templates/python3_simple/Dockerfile'.format(base_path), '{}/Dockerfile'.format(base_path))
     os.rename('{}/scrape-tmp.py'.format(base_path), '{}/scrape.py'.format(base_path))
     os.rename('{}/requirements-tmp.txt'.format(base_path), '{}/requirements.txt'.format(base_path))
 
