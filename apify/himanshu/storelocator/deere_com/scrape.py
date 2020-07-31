@@ -35,7 +35,7 @@ def fetch_data():
 
     while coord:
         result_coords =[]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         filterElement=[
 				{
 					"id":7,
@@ -126,9 +126,9 @@ def fetch_data():
                     
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    if store[2] in dummy:
+                    if store[-1] in dummy:
                         continue
-                    dummy.append(store[2])
+                    dummy.append(store[-1])
 
                     yield store
             else:
