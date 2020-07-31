@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,9 +14,10 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.abrazohealth.com/location/GetFacilities'
+    url = 'https://www.abrazohealth.com//locations/GetFacilities'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '"LocationCode":' in line:
             items = line.split('"LocationCode":')
             for item in items:
@@ -41,6 +41,7 @@ def fetch_data():
                         r2 = session.get(loc, headers=headers)
                         Found = False
                         for line2 in r2.iter_lines():
+                            line2 = str(line2.decode('utf-8'))
                             if '<div class="w-5/6">' in line2:
                                 Found = True
                             if Found and '</div>' in line2:

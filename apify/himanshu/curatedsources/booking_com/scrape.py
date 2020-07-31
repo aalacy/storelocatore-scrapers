@@ -2,10 +2,8 @@ import csv
 from bs4 import BeautifulSoup as bs
 import re
 import json
-from concurrent.futures import ThreadPoolExecutor
 from sgrequests import SgRequests
 session = SgRequests()
-
 
 
 def write_output(data):
@@ -19,21 +17,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_url(url):
-    data = json.loads(str(bs(session.get(url).content, "lxml").find("script",{"type":"application/ld+json"})).split(">")[1].split("<")[0])
-    try:
-        return data
-    except:
-        pass
 
-def _send_multiple_rq(vk):
-    with ThreadPoolExecutor(max_workers=len(vk)) as pool:
-        # for data in list(pool.map(get_url,list_of_urls)):
-        return list(pool.map(get_url,vk))
 
 def fetch_data():
     ca_address = []
-    ca_url = []
     base_url = "https://www.booking.com"
 
     soup = bs(session.get("https://www.booking.com/country.html").content, "lxml")
@@ -51,7 +38,7 @@ def fetch_data():
                 region_soup = bs(session.get(base_url + region_link['href']).content, "lxml")
                 
                 region_id = region_soup.find("a",{"title":re.compile("All ")})['href'].split("region=")[1].split(";")[0]
-
+                
                 offset = 0
                 while True:
 
@@ -68,72 +55,67 @@ def fetch_data():
                             continue
                         
                         page_url = base_url + url['href'].strip()
-                        ca_url.append(page_url)
+                        soup = bs(session.get(page_url).text,'lxml')
+                        data = json.loads(str(soup.find("script",{"type":"application/ld+json"})).split(">")[1].split("<")[0])
+                       
+                        location_name = data['name']
 
-                        # location_soup = bs(session.get(page_url).content, "lxml")
-                    
-                        # json_data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and'"streetAddress"'in tag.text).text)
-            
+                        try:
+                            street_address = data['address']['addressLocality']
+                        except:
+                            street_address = "<MISSING>"
+                        try:
+                            state = data['address']['addressRegion']
+                        except:
+                            state = "<MISSING>"
+                        try:
+                            zipp = data['address']['postalCode']
+                        except:
+                            zipp = "<MISSING>"
+                        city = str(soup).split("city_name:")[1].split("',")[0].replace("'",'').strip()
+                        try:
+                            location_type = data['@type']
+                        except:
+                            location_type = "<MISSING>"
+                        try:
+                            lat = data['hasMap'].split("center")[1].split(",")[0].replace("=",'')
+                            lng = data['hasMap'].split("center")[1].split(",")[1].split("&")[0].replace("=",'')
+                        except:
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
 
+                        store = []
+                        store.append(base_url)
+                        store.append(location_name)
+                        store.append(street_address)
+                        store.append(city)
+                        store.append(state)
+                        store.append(zipp)
+                        store.append("CA")
+                        store.append("<MISSING>")
+                        store.append("<MISSING>")
+                        store.append(location_type)
+                        store.append(lat)
+                        store.append(lng)
+                        store.append("<MISSING>")
+                        store.append(page_url)
+                        if store[2] in ca_address:
+                            continue
+                        ca_address.append(store[2])
+                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        
+                        yield store
+                        
                     offset += 25
+           
         except Exception as e:
             # print(e)
             continue   
     
-    for data in _send_multiple_rq(ca_url):
-    
-        location_name = data['name']
-
-        try:
-            street_address = data['addressLocality']
-        except:
-            street_address = "<MISSING>"
-        try:
-            state = data['addressRegion']
-        except:
-            state = "<MISSING>"
-        try:
-            zipp = data['postalCode']
-        except:
-            zipp = "<MISSING>"
-        city = "<INACCESSIBLE>"
-        try:
-            location_type = data['@type']
-        except:
-            location_type = "<MISSING>"
-        try:
-            lat = data['hasMap'].split("center")[1].split(",")[0].replace("=",'')
-            lng = data['hasMap'].split("center")[1].split(",")[1].split("&")[0].replace("=",'')
-        except:
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("CA")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(location_type)
-        store.append(lat)
-        store.append(lng)
-        store.append("<MISSING>")
-        store.append(page_url)
-        if store[2] in ca_address:
-            continue
-        ca_address.append(store[2])
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        
-        yield store
-
     addressess=[]
-    
+    return_main_object = []
     base_url = "https://www.booking.com/city.html?label=gen173nr-1FCAEoggI46AdIM1gEaKQCiAEBmAExuAEXyAEM2AEB6AEB-AECiAIBqAIDuAKD2ez3BcACAdICJDE1OGMwODM2LWRmMjgtNDdjYS1hNTZhLWQ2ZGU3OGRkZWEzOdgCBeACAQ;sid=987a93e4bbb5e033adbcca4ed721e65f"
-    
+    list1=[]
     dummy =[]
     soup1 = bs(session.get(base_url).text,'lxml')
     for i in soup1.find_all("div",{"class":"block_third"}):
@@ -156,6 +138,7 @@ def fetch_data():
                     dummy.append(tag.find("a")['href'])
                     soup5 = bs(session.get("https://www.booking.com"+tag.find("a")['href'].strip()).text,'lxml')
                     page_url = "https://www.booking.com"+tag.find("a")['href'].strip()
+                    # print(page_url)
                     zipps=''
                     street_address=''
                     states=''

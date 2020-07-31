@@ -1,17 +1,13 @@
-import time
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import re
+import string
+import re, time
 import usaddress
+from sgrequests import SgRequests
 
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,85 +20,76 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    return lat, lon
-
-
 def fetch_data():
     # Your scraper here
-    data=[]
-    driver.get("https://www.cnbbank.bank/who-we-are/locations/")
-    time.sleep(10)
-    stores = driver.find_elements_by_css_selector('div.col-sm-4.col-md-3.map-item')
-    count=0
-    for store in stores:
-        page_url ="https://www.cnbbank.bank/who-we-are/locations/"
-        location_name = store.find_element_by_css_selector('h3 > a').text
-        lat = store.get_attribute('data-lat')
-        lon = store.get_attribute('data-lng')
-        phone = store.find_element_by_css_selector('p:nth-child(3) > a').text
-        raw_address =  store.get_attribute('data-locname')
-        tagged = usaddress.tag(raw_address)[0]
+    data = []
+    pattern = re.compile(r'\s\s+')
+    p = 0
+    url = 'https://www.cnbbank.bank/locations-atms'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    storelist = soup.findAll('div', {'class': 'map-item'})
+    for store in storelist:
+        lat = store['data-lat']
+        longt = store['data-lng']
+        link = 'https://www.cnbbank.bank' + store.find('h3').find('a')['href']
+        address = store['data-locname'].replace('<br>','')
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        
+        title = store.find('h3').find('a').text
+        phone = store.findAll('p')[1].find('a').text
+        r = session.get(link, headers=headers, verify=False)  
+        soup =BeautifulSoup(r.text, "html.parser")
+        hours = re.sub(pattern,' ',soup.find('table').text).replace('\n',' ').replace('\xa0',' ')
         try:
-            street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType']
+            ltype,temp = soup.text.split('ATM Available')
+            ltype = 'Branch | ATM'
         except:
-             try:
-                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostDirectional'] + " " +tagged['StreetNamePostType']
-             except:
-                 try:
-                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostDirectional']
-                 except:
-                     try:
-                         street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType']
-                     except:
-                         street_addr = tagged['BuildingName'] + " " + tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'] + " " + tagged['StreetNamePreType'].split('br>')[0] + " " + " " + tagged['StreetNamePreType'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType']
-
-        street_addr = street_addr.replace('br>' ,'')
-        state = tagged['StateName']
-        city = tagged['PlaceName']
-        zipcode = tagged['ZipCode']
+            ltype = 'Branch'
         data.append([
-             'https://www.cnbbank.bank/',
-              page_url,
-              location_name,
-              street_addr,
-              city,
-              state,
-              zipcode,
-              'US',
-              '<MISSING>',
-              phone,
-              '<MISSING>',
-              lat,
-              lon,
-              '<MISSING>'
-            ])
-        count+=1
-        print(count)
-
-    name = [stores[i].find_element_by_css_selector('h3 > a').get_attribute('href') for i in range(0, len(stores))]
-    for i in range(0, len(name)):
-        driver.get(name[i])
-        time.sleep(10)
-        try:
-            hours_of_ops = driver.find_elements_by_css_selector('div.col-sm-4')
-            if hours_of_ops == []:
-                hours_of_ops = driver.find_elements_by_css_selector('table.table.table-hours')
-            hours_of_op = ""
-            for j in range(0,len(hours_of_ops)):
-                hours_of_op = hours_of_op + hours_of_ops[j].text
-        except:
-            hours_of_op = '<MISSING>'
-        data[i][13] = hours_of_op
-
-    time.sleep(3)
-    driver.quit()
+                        'https://www.cnbbank.bank',
+                        link,                   
+                        title,
+                        street.lstrip().replace(',',''),
+                        city.lstrip().replace(',',''),
+                        state.lstrip().replace(',',''),
+                        pcode.lstrip().replace(',',''),
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        ltype,
+                        lat,
+                        longt,
+                        hours.replace('*','')
+                    ])
+        #print(p,data[p])
+        p += 1
+        
+        
+   
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
