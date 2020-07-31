@@ -44,7 +44,7 @@ def process_get_driver_scraper(base_path):
             for line in content:
                 if 'from selenium import webdriver' in line:
                     newfile.write(get_padding(line) + 'from sgselenium import SgSelenium\n')
-                elif 'from selenium.webdriver.chrome.options import Options' in line:
+                elif 'from selenium.webdriver.firefox.options import Options' in line:
                     continue
                 elif 'import platform' in line:
                     continue
