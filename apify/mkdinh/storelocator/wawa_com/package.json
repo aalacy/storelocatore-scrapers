@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "apify": "^0.21.1",
+    "modern-random-ua": "^1.0.3"
   },
   "devDependencies": {
     "apify-cli": "^0.3.9",
