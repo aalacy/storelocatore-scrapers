@@ -1,7 +1,10 @@
 import csv
-
-from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import re
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -13,25 +16,40 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+def get_json_data(html):
+    re_get_json = 'var location_data[\s\S]*?=[\s\S]*?(.+?);$'
+    match = re.search(re_get_json, html, re.MULTILINE)
+    json_text = match.group(1)
+    return json.loads(json_text)
+
+
 driver = SgSelenium().chrome()
 
 def fetch_data():
 
     all=[]
-
     driver.get('https://parisbaguette.com/locations/')
-    driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    #print(soup)
-    stores = soup.find_all('div', {'class': 'com_locator_address'})
+
+    iframe = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.ID, "locator_iframe10764"))
+    )
+    driver.switch_to.frame(iframe)
+    json_stores = get_json_data(driver.page_source)
+
     #print(len(stores))
-    for store in stores:
-        loc=store.find('h2').find('a').text.strip()
-        street = store.find('span', {'class': 'line_item address'}).text.strip().strip(',')
-        city=store.find('span', {'class': 'line_item city'}).text.strip()
-        state=store.find('span', {'class': 'line_item state'}).text.strip()
-        zip=store.find('span', {'class': 'line_item postalcode'}).text.strip()
-        phone=store.find('span', {'class': 'line_item phone'}).text.strip()
+    for store in json_stores:
+        loc=store['name']
+        street = store['address']
+        city=store['city']
+        state=store['state']
+        zc = store['postalcode'] if 'postalcode' in store else "<MISSING>"
+        phone=store['phone']
+        store_num = store['id']
+        lat = store['lat']
+        lng = store['lng']
+        hours = store['storehours1'] if 'storehours1' in store else "<MISSING>"
+        hours = hours + (", " + store['storehours2']) if 'storehours2' in store else ""
 
         all.append([
             "https://parisbaguette.com/",
@@ -39,14 +57,14 @@ def fetch_data():
             street,
             city,
             state,
-            zip,
+            zc,
             "US",
-            "<MISSING>",  # store #
+            store_num,
             phone,  # phone
             "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            "<MISSING>",  # timing
+            lat,
+            lng,
+            hours,  # timing
             "https://parisbaguette.com/locations/"])
 
     return all
