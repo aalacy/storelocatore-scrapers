@@ -86,18 +86,17 @@ def process(base_path):
                 has_firefox = True
             if 'geckodriver.exe' in line:
                 has_windows_gecko = True
-        print("has_get_driver: {}, has_firefox: {}, has_windows_gecko: {}".format(has_get_driver, has_firefox,has_windows_gecko))
         if has_get_driver and has_firefox and has_windows_gecko:
             process_get_driver_scraper(base_path)
 
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs:
+        for dir in dirs[0:100]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/himanshu/storelocator/worldmarkbywyndham_com')
+run('/Users/tenzing/code/crawl-service/apify/himanshu/storelocator')
