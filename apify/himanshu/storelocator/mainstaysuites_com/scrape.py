@@ -29,7 +29,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["US", "CA"])
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 75
     coord = search.next_coord()
     while coord:
         result_coords = []
@@ -83,7 +83,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("https://www.choicehotels.com/" + str(store_data["id"]))
             yield store
-        search.max_distance_update(MAX_DISTANCE)
+        search.max_count_update(result_coords)
         coord = search.next_coord()
 
 def scrape():
