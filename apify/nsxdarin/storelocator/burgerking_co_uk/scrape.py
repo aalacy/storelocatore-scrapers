@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -14,60 +13,73 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://locations.burgerking.co.uk/sitemap.xml'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if 'rel="alternate" hreflang="en_GB" href="https://locations.burgerking.co.uk/' in line:
-            lurl = line.split('href="')[1].split('"')[0]
-            if lurl.count('/') == 4:
-                locs.append(lurl)
-    for loc in locs:
-        print('Pulling Location %s...' % loc)
-        website = 'burgerking.co.uk'
-        typ = 'Restaurant'
-        hours = ''
-        country = 'GB'
-        r2 = session.get(loc, headers=headers)
-        name = ''
-        add = ''
-        city = ''
-        state = '<MISSING>'
-        zc = ''
-        phone = ''
-        store = ''
-        lat = ''
-        lng = ''
-        for line2 in r2.iter_lines():
-            if name == '' and '<span class="LocationName-geo">' in line2:
-                name = line2.split('<span class="LocationName-geo">')[1].split('<')[0]
-                days = line2.split("data-days='[")[1].split("}]'")[0].split('"day":"')
-                for day in days:
-                    if '"intervals":' in day:
-                        if '"intervals":[]' in day:
-                            hrs = day.split('"')[0] + ': Closed'
-                        else:
-                            hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+    url = 'https://czqk28jt.api.sanity.io/v1/data/query/prod_bk_gb?query=*%5B%20_type%20%3D%3D%20%27restaurant%27%20%26%26%20environment%20%3D%3D%20%24environment%20%26%26%20!(%24appEnvironemnt%20in%20coalesce(hideInEnvironments%2C%20%5B%5D))%20%26%26%20latitude%20%3E%20%24minLat%20%26%26%20latitude%20%3C%20%24maxLat%20%26%26%20longitude%20%3E%20%24minLng%20%26%26%20longitude%20%3C%20%24maxLng%20%26%26%20status%20%3D%3D%20%24status%20%5D%20%7Corder((%24userLat%20-%20latitude)%20**%202%20%2B%20(%24userLng%20-%20longitude)%20**%202)%5B%24offset...(%24offset%20%2B%20%24limit)%5D%20%7B_id%2CdeliveryHours%2CdiningRoomHours%2CcurbsideHours%2CdrinkStationType%2CdriveThruHours%2CdriveThruLaneType%2Cemail%2CfranchiseGroupId%2CfranchiseGroupName%2CfrontCounterClosed%2ChasBreakfast%2ChasBurgersForBreakfast%2ChasCurbside%2ChasDineIn%2ChasCatering%2ChasDelivery%2ChasDriveThru%2ChasMobileOrdering%2ChasParking%2ChasPlayground%2ChasTakeOut%2ChasWifi%2Clatitude%2Clongitude%2CmobileOrderingStatus%2Cname%2Cnumber%2CparkingType%2CphoneNumber%2CphysicalAddress%2CplaygroundType%2Cpos%2CposRestaurantId%2CrestaurantPosData-%3E%7B_id%2C%20lastHeartbeatTimestamp%2C%20heartbeatStatus%2C%20heartbeatOverride%7D%2Cstatus%2CrestaurantImage%7B...%2C%20asset-%3E%7D%7D&%24appEnvironemnt=%22prod%22&%24environment=%22prod%22&%24limit=5000&%24maxLat=65&%24maxLng=20&%24minLat=40&%24minLng=-20&%24offset=0&%24status=%22Open%22&%24userLat=53.4807593&%24userLng=-2.2426305'
+    Found = False
+    while Found is False:
+        print('Getting Locations...')
+        r = session.get(url, headers=headers, timeout=30, stream=True)
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            if '"_id":"restaurant_' in line:
+                Found = True
+                items = line.split('"_id":"restaurant_')
+                for item in items:
+                    if '"curbsideHours":' in item:
+                        website = 'burgerking.co.uk'
+                        typ = '<MISSING>'
+                        store = item.split('"number":"')[1].split('"')[0]
+                        loc = 'https://www.bk.com/store-locator/store/restaurant_' + store
+                        country = 'GB'
+                        lat = item.split('"latitude":')[1].split(',')[0]
+                        lng = item.split('"longitude":')[1].split(',')[0]
+                        name = item.split('"name":"')[1].split('"')[0]
+                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
+                        add = add.strip()
+                        add = add
+                        city = item.split('"city":"')[1].split('"')[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        state = item.split('"stateProvinceShort":"')[1].split('"')[0]
+                        days = item.split('"diningRoomHours":{"_type":"hoursOfOperation"')[1].split('}')[0]
+                        hours = ''
+                        try:
+                            hours = 'Mon: ' + days.split('"monOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"monClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Tue: ' + days.split('"tueOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"tueClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Wed: ' + days.split('"wedOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"wedClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Thu: ' + days.split('"thrOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"thrClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Fri: ' + days.split('"friOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"friClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Sat: ' + days.split('"satOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"satClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
+                        try:
+                            hours = hours + '; Sun: ' + days.split('"sunOpen":"')[1].split(':00"')[0].split(' ')[1] + '-' + days.split('"sunClose":"')[1].split(':00"')[0].split(' ')[1]
+                        except:
+                            pass
                         if hours == '':
-                            hours = hrs
-                        else:
-                            hours = hours + '; ' + hrs
-            if '<meta itemprop="streetAddress" content="' in line2:
-                add = line2.split('<meta itemprop="streetAddress" content="')[1].split('"')[0]
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
-                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-            if 'id="telephone">' in line2:
-                phone = line2.split('id="telephone">')[1].split('<')[0]
-            if '"ids":' in line2:
-                store = line2.split('"ids":')[1].split(',')[0]
-            if '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
-                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]            
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            hours = '<MISSING>'
+                        if state == '':
+                            state = '<MISSING>'
+                        phone = phone.encode("ascii", errors="ignore").decode()
+                        if phone == '':
+                            phone = '<MISSING>'
+                        if zc == '':
+                            zc = '<MISSING>'
+                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
