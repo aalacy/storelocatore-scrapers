@@ -93,7 +93,7 @@ def fetch_data():
             else:
                 keys.add(key)
             locator_domain = 'tesco.com'
-            page_url = '<MISSING>'
+            page_url = 'https://www.tesco.com/store-locator/uk/?bid={}'.format(store_number)
             location_name = handle_missing(store['name'])
             address1_list = [x for x in store['contact']['address']['lines'] if x['lineNumber'] == 1]
             street_address = '<MISSING>'
