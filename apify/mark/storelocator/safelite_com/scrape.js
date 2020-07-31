@@ -26,8 +26,6 @@ Apify.main(async () => {
   const promises = storeUrls.map((store) => requestQueue.addRequest({ url: store.loc }));
   await Promise.all(promises);
 
-  // await requestQueue.addRequest({ url: "https://www.safelite.com/stores/trinidad-mobile-auto-glass"})
-
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
     launchPuppeteerOptions: {
