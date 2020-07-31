@@ -34,6 +34,7 @@ def fetch_data():
     locator_domain = 'https://www.claros.com/'
 
     driver = SgSelenium().firefox()
+    driver.set_page_load_timeout(60)
     driver.get(locator_domain)
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'contact-')]")
