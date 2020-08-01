@@ -92,7 +92,7 @@ def process(base_path):
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs[0:900]:
+        for dir in dirs[0:1100]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
