@@ -3,14 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import platform
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 
 session = SgRequests()
 
-system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,16 +19,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     headers = {
@@ -58,7 +45,7 @@ def fetch_data():
         if store[-1] == "":
             store[-1] = '<MISSING>'
         if store[-1] == "<MISSING>":
-            driver = get_driver()
+            driver = SgSelenium().firefox()
             driver.get("http://maps.google.com/maps?q=" + str(store[2]))
             time.sleep(10)
             soup = BeautifulSoup(driver.page_source,"lxml")

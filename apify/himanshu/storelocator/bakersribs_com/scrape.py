@@ -28,8 +28,12 @@ def fetch_data():
     driver = SgSelenium().firefox()
     driver.get("http://bakersribs.com/#locations")
     soup = BeautifulSoup(driver.page_source, "lxml")
+    print(driver.page_source)
     return_main_object = []
-    for location in soup.find_all("div",{'class':"et_pb_blurb_container"}):
+    locations = soup.find_all("div",{'class':"et_pb_blurb_container"})
+    print(locations)
+    for location in locations:
+        print(location)
         len1 = list(location.stripped_strings)
         if len(len1)!= 1:
             city = location.find("h4").text.replace("Caddo Mills","Greenville") 

@@ -5,12 +5,9 @@ import re
 import json
 import time
 import urllib3
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium import webdriver
-import platform
+from sgselenium import SgSelenium
 
-system = platform.system()
 urllib3.disable_warnings()
 
 
@@ -26,20 +23,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     addresses = []
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver1 = get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     locator_domain = "https://kwiktrip.com"
