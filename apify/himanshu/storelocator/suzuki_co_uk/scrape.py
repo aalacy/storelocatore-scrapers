@@ -2,8 +2,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import re
 import json
@@ -11,8 +10,6 @@ import time
 import sgzip
 import requests
 session = SgRequests()
-import platform
-system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -25,16 +22,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data(): 
     base_url = "https://www.suzuki.co.uk/"
@@ -46,7 +33,7 @@ def fetch_data():
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
 
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     while zip_code:
         
         result_coords = []
