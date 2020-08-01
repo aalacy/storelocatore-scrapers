@@ -27,7 +27,7 @@ def write_output(data):
 def fetch_data():
     addresses = []
     driver = SgSelenium().firefox()
-    driver1 = get_driver()
+    driver1 = SgSelenium().firefox()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     locator_domain = "https://kwiktrip.com"
     hours_of_operation ="<MISSING>"
