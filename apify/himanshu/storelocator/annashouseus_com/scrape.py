@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sgselenium import SgSelenium
 import json
 import time
 from selenium.webdriver.support.wait import WebDriverWait
