@@ -3,10 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
 import time
 import html
-import platform
 
 session = SgRequests()
 
