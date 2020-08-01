@@ -53,7 +53,7 @@ def process_get_driver_scraper(base_path):
                     continue
                 elif 'platform.system()' in line:
                     continue
-                elif 'driver = get_driver()' in line:
+                elif 'driver = get_driver()' in line or 'driver =get_driver()' in line:
                     newfile.write(get_padding(line) + 'driver = SgSelenium().firefox()\n')
                 elif 'def get_driver():' in line:
                     in_get_driver_method = True
@@ -84,7 +84,7 @@ def process(base_path):
                 has_get_driver = True
             if 'webdriver.Firefox' in line:
                 has_firefox = True
-            if 'geckodriver.exe' in line:
+            if './geckodriver' in line:
                 has_windows_gecko = True
         if has_get_driver and has_firefox and has_windows_gecko:
             process_get_driver_scraper(base_path)

@@ -1,15 +1,13 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 import re
 import json
 import time
 from random import randrange
-import platform
 import time
 import sgzip
 import unicodedata
@@ -17,7 +15,6 @@ import unicodedata
 
 session = SgRequests()
 
-system = platform.system()
 
 
 def write_output(data):
@@ -33,21 +30,10 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('disable-infobars')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver', options=options)
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get("https://www.la-z-boy.com/storeLocator/storeLocator.jsp")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'

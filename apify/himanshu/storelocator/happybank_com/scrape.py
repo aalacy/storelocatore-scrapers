@@ -4,17 +4,14 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 # from selenium.common.exceptions import StaleElementReferenceException
 import time
 import html
-import platform
 
 session = SgRequests()
 
-system = platform.system()
 
 
 def write_output(data1, data2):
@@ -143,17 +140,6 @@ def fetch_data1():
         break
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-
-    else:
-        return webdriver.Firefox(executable_path='geckodriver', options=options)
 
 
 def fetch_data2():
@@ -175,7 +161,7 @@ def fetch_data2():
     #             '\\"', '"').replace(r"\n", "")[:-2].replace("\\", " "))[1]  # [1][6]  # [0][12][0][13][0]
     #         print(location_list)
 
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     addresses = []
     driver.get(iframe_link)
     time.sleep(3)

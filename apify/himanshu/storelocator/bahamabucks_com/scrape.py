@@ -3,25 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
-
-system = platform.system()
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver', options=options)
+
 
 
 def write_output(data):
@@ -37,7 +24,7 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     return_main_object = []
     addresses = []
 

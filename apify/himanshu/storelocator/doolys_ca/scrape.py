@@ -3,16 +3,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
-import platform
 
 session = SgRequests()
 
-system = platform.system()
 
 
 def write_output(data):
@@ -28,17 +25,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-
-    else:
-        return webdriver.Firefox(executable_path='geckodriver', options=options)
 
 
 def fetch_data():
@@ -57,7 +43,7 @@ def fetch_data():
                 for location in locations:
                     geo_location[location[5][0][0].replace(
                         " u0027s", "'s").strip().lstrip()] = location[4][0][1]
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     addresses = []
     driver.get(iframe_link)
     time.sleep(3)
