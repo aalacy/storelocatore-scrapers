@@ -54,7 +54,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://unikwax.com/' 
     ext = 'studio-locations/'
-    driver =get_driver()
+    driver = SgSelenium().firefox()
     driver.get(locator_domain + ext)
     states = driver.find_elements_by_css_selector('div.a')
     link_list = []
