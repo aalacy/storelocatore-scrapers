@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,22 +27,26 @@ def fetch_data():
     r = session.get(base_url+'salons/',headers = header)
     soup = BeautifulSoup(r.text,"lxml")
     v  = soup.find('select',{'id':'market_id'}).find_all('option')
+   
+   
     for idx, val in enumerate(v):
         if idx > 0:
-            r = session.get(val['value'],headers = header)
+            # print(+val['value'])
+            r = session.get("https://salonlofts.com"+val['value'],headers = header)
             soup = BeautifulSoup(r.text,"lxml")
             vk = soup.find('ul',{'class':'stores'}).find_all('div',{'class':'store'})
             
             for key, value in enumerate(vk):
 
                 locator_domain = base_url
+                page_url = value['data-store-uri'].strip()
                 location_name = value['data-store-name'].strip()
                 street_address = value['data-store-address'].strip()
                 city = value['data-store-city'].strip()
                 state = value['data-store-state'].strip()
                 zip = value['data-store-zip'].strip()
                 country_code = 'US'
-                location_type = 'salonlofts'
+                location_type = '<MISSING>'
                 store_number = value['data-store-id'].strip()
                 phone = '<MISSING>'
                 latitude = value['data-store-latitude'].strip()
@@ -64,6 +68,8 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 
                 store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
+                store.append("https://salonlofts.com"+page_url  if page_url else '<MISSING>')
+
 
                 return_main_object.append(store)  
     return return_main_object        

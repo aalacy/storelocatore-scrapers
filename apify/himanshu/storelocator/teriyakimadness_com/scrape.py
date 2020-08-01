@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,9 +28,9 @@ def fetch_data():
 
        
         if len(val['street']) > 0:
-            
+
             locator_domain = base_url
-            location_name = val['title'].strip().split('|')[1].strip()
+            location_name =  val['title'].replace("<br>"," ")
             street_address = val['street'].strip()
             city = val['city'].strip()
             state = val['state'].strip()
@@ -38,11 +38,11 @@ def fetch_data():
             store_number = '<MISSING>'
             country_code = val['country'].strip()
             phone = val['phone'].strip()
-            location_type = 'teriyakimadness'
+            location_type = '<MISSING>'
             latitude = val['lat'].strip()
             longitude = val['lng'].strip()
             ck = json.loads(val['open_hours'])
-                
+            page_url = val['website']
             gb = []
             for idx, bk in enumerate(ck):
                 
@@ -56,10 +56,10 @@ def fetch_data():
             
             store=[]
             store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
+            store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else '<MISSING>')
+            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else '<MISSING>')
+            store.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else '<MISSING>')
+            store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else '<MISSING>')
             store.append(zip if zip else '<MISSING>')
             store.append(country_code if country_code else '<MISSING>')
             store.append(store_number if store_number else '<MISSING>')
@@ -69,6 +69,8 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             
             store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
+            store.append(page_url  if page_url else '<MISSING>')
+
             
 
             return_main_object.append(store)
