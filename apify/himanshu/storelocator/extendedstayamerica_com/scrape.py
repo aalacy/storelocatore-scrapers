@@ -2,23 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import json
 session = SgRequests()
 import json
-import platform
-system = platform.system()
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -29,6 +16,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
