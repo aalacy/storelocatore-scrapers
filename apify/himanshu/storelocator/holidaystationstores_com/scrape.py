@@ -3,11 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 session = SgRequests()
-import platform
-system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -18,17 +15,10 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path='geckodriver', options=options)        
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     base_url = "https://www.holidaystationstores.com/"
     data = {"Lat": 40.4172871,
             "Lng": -82.90712300000001,
