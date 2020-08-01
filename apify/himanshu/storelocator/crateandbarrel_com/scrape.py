@@ -3,12 +3,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import unicodedata
 import time
 from random import choice
 import html5lib
 import pprint
-import requests
 from sgselenium import SgSelenium
 import http.client
 session = SgRequests()
@@ -31,7 +29,7 @@ def proxy_request(request_type, url, **kwargs):
         try:
             proxy = get_proxy()
             #print("Using Proxy {}".format(proxy))
-            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
+            r = session.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
             break
         except:
             pass

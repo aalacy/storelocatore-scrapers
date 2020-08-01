@@ -1,5 +1,4 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -21,7 +20,7 @@ def request_wrapper(url,method,headers,data=None):
    if method == "get":
        while True:
            try:
-               r = requests.get(url,headers=headers)
+               r = session.get(url,headers=headers)
                return r
                break
            except:
@@ -34,9 +33,9 @@ def request_wrapper(url,method,headers,data=None):
        while True:
            try:
                if data:
-                   r = requests.post(url,headers=headers,data=data)
+                   r = session.post(url,headers=headers,data=data)
                else:
-                   r = requests.post(url,headers=headers)
+                   r = session.post(url,headers=headers)
                return r
                break
            except:
@@ -55,7 +54,7 @@ def fetch_data():
     location_url = "https://www.nissan.co.uk/dealer-locator.html"
     r = request_wrapper(location_url,"get",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    data = (soup.find("script",{"type":"text/javascript"}).text.split('{"totalResults":197,"dealers":')[1].split("};")[0])
+    data = (soup.find("script",{"type":"text/javascript"}).text.split('{"totalResults":195,"dealers":')[1].split("};")[0])
     json_data = json.loads(data)
     for i in json_data:
         page5 = ((i['id']).replace("gb_nissan_05","").replace("51894","1894").replace("1780","1932").replace("1700","1931").replace("1004","51004"))
