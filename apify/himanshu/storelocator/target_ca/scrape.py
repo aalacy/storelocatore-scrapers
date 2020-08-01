@@ -37,7 +37,7 @@ def minute_to_hours(time):
 def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 20
+    MAX_RESULTS = 50
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
 
@@ -75,8 +75,10 @@ def fetch_data():
         if k != None and k !=[]:
             
             for i in k:
+               
                 current_results_len = len(i['locations'])  # need to update with no of count.
-
+                
+    
                 for j in i['locations']:
 
                     tem_var=[]
@@ -103,15 +105,17 @@ def fetch_data():
                         tem_var.append('US')
                     else:
                         tem_var.append('US')
-                    tem_var.append("<MISSING>")
+                    tem_var.append(j['location_id'] if j['location_id'] else "<MISSING>")
                        
                     tem_var.append(j['contact_information']['telephone_number'] if j['contact_information']['telephone_number'] else "<MISSING>")
-                    tem_var.append("<MISSING>")
+                    tem_var.append('target ' + j['type_description'] if 'target ' + j['type_description'] else "<MISSING>")
                     result_coords.append((j['geographic_specifications']['latitude'], j['geographic_specifications']['longitude']))
                     tem_var.append(j['geographic_specifications']['latitude'] if j['geographic_specifications']['latitude'] else "<MISSING>" )
                     tem_var.append(j['geographic_specifications']['longitude'] if j['geographic_specifications']['longitude'] else "<MISSING>" )
                     tem_var.append(time if time else "<MISSING>" )
-                    tem_var.append('https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer' )
+                    page_url = 'https://www.target.com/sl/' + j['location_names'][0]['name'].lower().replace(' ','-') + '/' + str(j['location_id'])
+                    #print(page_url)
+                    tem_var.append(page_url if page_url else "<MISSING>")
                     
                     
 

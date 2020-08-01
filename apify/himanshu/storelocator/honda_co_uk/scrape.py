@@ -6,6 +6,7 @@ import re
 import json
 from datetime import datetime
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,9 +27,9 @@ def fetch_data():
 
     for url in soup.find_all("td",{"class":"wrapperInner"}):
         page_url = base_url + url.a['href']
-        if "https://www.honda.co.uk/cars/dealers/DON342.html" in page_url:
+        if session.get(page_url).status_code == 404:
             continue
-        
+    
         location_soup = bs(session.get(page_url).text, "lxml")
 
         location_name = location_soup.find("h1",{"itemprop":"name"}).text
