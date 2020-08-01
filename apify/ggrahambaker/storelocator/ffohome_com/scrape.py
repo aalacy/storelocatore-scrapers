@@ -13,58 +13,53 @@ def write_output(data):
             writer.writerow(row)
 
 def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
+    street_address = addy[0]
+    city = addy[1].strip()
+    state_zip = addy[-1].strip().split(' ')
     state = state_zip[0]
     zip_code = state_zip[1]
-    return city, state, zip_code
+    return street_address, city, state, zip_code
 
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://ffohome.com/' 
+    locator_domain = 'https://ffohome.com/'
     ext = 'allshops'
     r = session.get(locator_domain + ext, headers = HEADERS)
     soup = BeautifulSoup(r.content, 'html.parser')
 
-    locs = soup.find_all('div', {'class': 'info-wrap'})
+    locs = soup.find_all(class_="store_website")
 
     all_store_data = []
-    for loc in locs:
-        location_name = loc.find('a', {'class': 'shop-link'}).text
-        page_url = locator_domain[:-1] + loc.find('a', {'class': 'shop-link'})['href']
-        
-        google_href = loc.find('a', {'class': 'show-directions'})['href'].split('+')
-        lat = google_href[1].replace('/', '').replace(',', '').strip()
-        longit = google_href[2]
-        
-        addy = loc.find('div', {'class': 'ffo-store-loc'}).find_all('span')
-    
-        if len(addy) == 1:
-            street_address = '1 Furniture Ln'
-            city, state, zip_code = addy_ext(addy[0].text)
-        else:
-            street_address = addy[0].text
-            city, state, zip_code = addy_ext(addy[1].text)
-    
-        phone_number = loc.find('p', {'class': 'phone-number'}).find('a').text
-        if 'Bryant, AR' in location_name:
-            phone_number = '(501) 651-0778'
-        
-        hours_div = loc.find_all('div', {'class': 'ffo-store-hours'})
-        if len(hours_div) > 0:
-            hours = hours_div[0].find('p').text.replace('mS', 'm S').replace('dS', 'd S')
-        else:
-            hours = loc.find('div', {'class': 'ffo_store_address'}).find_all('p')[1].text.replace('mS', 'm S').replace('dS', 'd S')
+    for raw_loc in locs:
+        page_url = raw_loc.a['href']
+        print(page_url)
+        req = session.get(page_url, headers = HEADERS)
+        loc = BeautifulSoup(req.content, 'html.parser')
+        location_name = loc.h1.text.strip()
+        raw_address = loc.find(class_="custom-field--value").text.strip().replace("\r\n",",").replace("KY,","KY").split(",")
+        street_address, city, state, zip_code = addy_ext(raw_address)
+
+        phone_number = loc.find_all(class_="custom-field--value")[1].text.strip()
+        hours = loc.find_all(class_="custom-field--value")[2].text.replace("\r\n"," ").strip()
 
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
+
+        try:
+            map_link = loc.find("iframe")['src']
+            lat_pos = map_link.rfind("q=")
+            latitude = map_link[lat_pos+2:map_link.find(",",lat_pos+5)].strip()
+            lng_pos = map_link.find(",",lat_pos+5)
+            longitude = map_link[lng_pos+1:map_link.find("&",lng_pos+5)].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+                    store_number, phone_number, location_type, latitude, longitude, hours, page_url]
 
         all_store_data.append(store_data)
         
