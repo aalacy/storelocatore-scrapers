@@ -30,10 +30,14 @@ def fetch_data():
         if len(val['street']) > 0:
 
             locator_domain = base_url
+            if "Coming Soon!" in val['title']:
+                continue
             location_name =  val['title'].replace("<br>"," ")
             street_address = val['street'].strip()
             city = val['city'].strip()
             state = val['state'].strip()
+            if "03920" in val['postal_code']:
+                continue
             zip = val['postal_code'].strip()
             store_number = '<MISSING>'
             country_code = val['country'].strip()
