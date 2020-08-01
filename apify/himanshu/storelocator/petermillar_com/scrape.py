@@ -7,29 +7,15 @@ from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
 
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
 
 
 session = SgRequests()
 
-system = platform.system()
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-
-    else:        
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 # import sgzip
 
@@ -69,7 +55,7 @@ def getplace(lat, lon):
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     getcountrygeo()
     # zips = sgzip.for_radius(100)
     return_main_object = []

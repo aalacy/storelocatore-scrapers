@@ -3,25 +3,12 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ssl
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
 import unicodedata
 
-system = platform.system()
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -36,7 +23,7 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     base_url = "https://www.godandy.com/"
 
     soup = BeautifulSoup(driver.page_source, "lxml")
