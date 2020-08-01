@@ -84,7 +84,7 @@ def fetch_data():
 		longitude = "<INACCESSIBLE>"
 
 	data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
+	driver.close()
 	return data
 
 def scrape():
