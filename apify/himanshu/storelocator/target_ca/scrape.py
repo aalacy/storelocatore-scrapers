@@ -85,7 +85,11 @@ def fetch_data():
                     page_url = 'https://www.target.com/sl/' + j['location_names'][0]['name'].lower().replace(' ','-') + '/' + str(j['location_id'])
 
                     h1 = j['rolling_operating_hours']['regular_event_hours']['days'][0]['hours'][0]
-                    hours_of_operation = h1['begin_time'] + " - " + h1['end_time']
+                    if 'begin_time' in h1 and 'end_time' in h1:
+                        hours_of_operation = h1['begin_time'] + " - " + h1['end_time']
+                    else:
+                        hours_of_operation = "<MISSING>"
+
                     # for h in h1:
                     #     if 'begin_time' in h['hours'][0] and 'end_time' in  h['hours'][0]['end_time']:
                     #         time = h['hours'][0]['begin_time']+ ' '+ h['hours'][0]['end_time']
