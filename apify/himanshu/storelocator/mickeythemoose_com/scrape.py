@@ -3,27 +3,14 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
 
 
 session = SgRequests()
 
-system = platform.system()
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +23,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get("http://mickeythemoose.com/store-locator/")
     soup = BeautifulSoup(driver.page_source, "lxml")
     script = soup.find(lambda tag: (tag.name == "script") and "WPGMZA_localized_data" in tag.text).text.split("var WPGMZA_localized_data = ")[1].replace("/* ]]> */",'').replace("};","}")
