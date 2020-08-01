@@ -80,7 +80,7 @@ def process(base_path):
         has_get_driver, has_firefox, has_windows_gecko = False, False, False
         content = f.readlines()
         for line in content:
-            if 'driver = get_driver()' in line:
+            if 'driver = get_driver()' in line or 'driver =get_driver()' in line:
                 has_get_driver = True
             if 'webdriver.Firefox' in line:
                 has_firefox = True
