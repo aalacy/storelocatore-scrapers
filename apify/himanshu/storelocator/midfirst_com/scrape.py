@@ -3,22 +3,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import sgzip
 
-
-
 session = SgRequests()
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path="./geckodriver", options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,17 +20,14 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
 
     addresses = []
     base_url = "https://www.midfirst.com"
 
     driver.get('https://www.midfirst.com/locations')
 
-    # -----------------------------token and cookies----------------------------------------
-
     cookies_list = driver.get_cookies()
-    # print("cookies_list === " + str(cookies_list))
     cookies_json = {}
     for cookie in cookies_list:
         cookies_json[cookie['name']] = cookie['value']

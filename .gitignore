@@ -258,3 +258,6 @@ venv.bak/
 !.vscode/extensions.json
 
 # End of https://www.gitignore.io/api/macos,python,pycharm,visualstudiocode
+*.exe
+chromedriver
+geckodriver

@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import csv
@@ -10,8 +9,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import platform
-system = platform.system() 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,6 +19,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def request_wrapper(url,method,headers,data=None):
    request_counter = 0
    if method == "get":
@@ -52,16 +51,7 @@ def request_wrapper(url,method,headers,data=None):
                    break
    else:
        return None
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 def fetch_data():
     addressess = []
     main_array=[]
@@ -103,7 +93,7 @@ def fetch_data():
         # yield store
     locator_domain = 'http://singaspizzas.com/'
     ext = 'locations/'
-    driver =get_driver()
+    driver = SgSelenium().firefox()
     driver.get(locator_domain + ext)
     stores = driver.find_elements_by_css_selector('div.et_pb_text.et_pb_module.et_pb_text_align_left')
     all_store_data = []

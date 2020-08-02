@@ -1,12 +1,10 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
-system = platform.system()
+from sgselenium import SgSelenium
 import usaddress
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,20 +14,11 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 def fetch_data():
     locator_domain = 'http://www.freshieslobsterco.com/'
     ext = 'locations'
-    driver =get_driver()
+    driver = SgSelenium().firefox()
     driver.get(locator_domain + ext)
     ids = ['#block-yui_3_17_2_1_1534822643996_26234', '#block-yui_3_17_2_1_1534822643996_5344']
     all_store_data = []
@@ -51,8 +40,12 @@ def fetch_data():
         zip_code = parsed_add['ZipCode']
         hours = content[2] + ' ' + content[3]
         if "84111" in zip_code:
-            phone_number = hours.split("11-8")[1]
-            hours =  hours.split(" 801")[0]
+            try:
+                phone_number = hours.split("11-8")[1]
+                hours =  hours.split(" 801")[0]
+            except:
+                phone_number = '<MISSING>'
+                hours = '<MISSING>'
         else:
             phone_number = "435.631.9861"
         country_code = 'US'
@@ -66,6 +59,7 @@ def fetch_data():
         all_store_data.append(store_data)
     driver.quit()
     return all_store_data
+
 def scrape():
     data = fetch_data()
     write_output(data)

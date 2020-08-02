@@ -3,13 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import unicodedata
-import platform
-system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,22 +19,12 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     addresses =[]
     base_url= "https://www.worldmarkbywyndham.com/resorts/index.html"
     driver.get(base_url)

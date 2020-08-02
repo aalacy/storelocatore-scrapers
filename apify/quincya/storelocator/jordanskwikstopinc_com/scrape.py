@@ -45,8 +45,7 @@ def fetch_data():
 	for item in items:
 
 		raw_data = str(item.p).replace("<p>","").replace("</p>","").replace(" AR ", ",AR ").replace(",,", ",").split("<br/>")
-
-		location_name = item.a.text
+		location_name = item.a.text.strip()
 		print(location_name)
 
 		street_address = raw_data[0].replace(",","").strip()

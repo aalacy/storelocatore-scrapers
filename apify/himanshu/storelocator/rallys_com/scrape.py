@@ -18,15 +18,28 @@ def write_output(data):
             writer.writerow(row)
 
 def parser(location_soup):
-    street_address = " ".join(list(location_soup.find("div",{'class':"c-AddressRow"}).stripped_strings))
-    name = " ".join(list(location_soup.find("span",{'class':"LocationName"}).stripped_strings))
-    city = location_soup.find("span",{'class':"c-address-city"}).text
-    state = location_soup.find("abbr",{'class':"c-address-state"}).text
-    store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
-    phone = location_soup.find("span",{'itemprop':"telephone"}).text
-    hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
-    lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
-    lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
+    if location_soup.find("div",{'class':"c-AddressRow"}) != None:
+        street_address = " ".join(list(location_soup.find("div",{'class':"c-AddressRow"}).stripped_strings))
+        name = " ".join(list(location_soup.find("span",{'class':"LocationName"}).stripped_strings))
+        city = location_soup.find("span",{'class':"c-address-city"}).text
+        state = location_soup.find("abbr",{'class':"c-address-state"}).text
+        store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
+        phone = location_soup.find("span",{'itemprop':"telephone"}).text
+        hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
+        lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
+        lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
+    else:
+        street_address = "<MISSING>"
+        name = "<MISSING>"
+        city = "<MISSING>"
+        state = "<MISSING>"
+        store_zip = "<MISSING>"
+        phone = "<MISSING>"
+        hours = "<MISSING>"
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+
+    
     store = []
     store.append("https://rallys.com")
     store.append(name)

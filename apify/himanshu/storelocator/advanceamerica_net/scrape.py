@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,10 +26,13 @@ def fetch_data():
         'Host': 'www.advanceamerica.net',
         'Referer': 'https://www.advanceamerica.net/store-locations/alabama'
     }
+    # print(base_url + "/api/posts/filter")
+    # exit()
     r = session.post(base_url + "/api/posts/filter",data=data,headers=headers)
     data = r.json()['posts']
     return_main_object = []
     for i in range(len(data)):
+        page_url =base_url+ (data[i]['url'])
         store_data = data[i]
         store = []
         store.append("https://www.advanceamerica.net")
@@ -40,8 +43,11 @@ def fetch_data():
         store.append(store_data["fields"]["zip"])
         store.append("US")
         store.append(store_data['fields']['store_id'])
-        store.append(store_data['fields']['phone'])
-        store.append("advance america")
+        if 'phone' in store_data['fields']:
+            store.append(store_data['fields']['phone'])
+        else:
+            store.append("<MISSING>")
+        store.append("<MISSING>")
         store.append(store_data["fields"]['latitude'])
         store.append(store_data["fields"]['longitude'])
         store_hours = store_data["fields"]["hours"]
@@ -52,6 +58,8 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         store.append(hours)
+        store.append(page_url)
+
         return_main_object.append(store)
     return return_main_object
 

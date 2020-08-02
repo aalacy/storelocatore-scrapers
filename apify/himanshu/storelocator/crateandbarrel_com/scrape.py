@@ -3,18 +3,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import unicodedata
 import time
 from random import choice
 import html5lib
 import pprint
-import requests
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import http.client
-import platform
 session = SgRequests()
-system = platform.system()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,16 +19,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def get_proxy():
     url = "https://www.sslproxies.org/"
     r = session.get(url)
@@ -44,7 +29,7 @@ def proxy_request(request_type, url, **kwargs):
         try:
             proxy = get_proxy()
             #print("Using Proxy {}".format(proxy))
-            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
+            r = session.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
             break
         except:
             pass
@@ -82,7 +67,7 @@ def fetch_data():
         longitude = i['StoreLong']
         page_url = "https://www.crateandbarrel.com/stores/"+str(location_name.lower().replace(',','').replace(' ','-'))+"/str"+str(store_number)
         # print(page_url)
-        driver = get_driver()
+        driver = SgSelenium().firefox()
         driver.get(page_url)
         cookies_list = driver.get_cookies()
         # print("cookies_list === " + str(cookies_list))

@@ -3,27 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
 
 session = SgRequests()
-
-system = platform.system()
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -41,11 +25,15 @@ def fetch_data():
     }
     base_url = "http://bakersribs.com"
     addresses = []
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get("http://bakersribs.com/#locations")
     soup = BeautifulSoup(driver.page_source, "lxml")
+    print(driver.page_source)
     return_main_object = []
-    for location in soup.find_all("div",{'class':"et_pb_blurb_container"}):
+    locations = soup.find_all("div",{'class':"et_pb_blurb_container"})
+    print(locations)
+    for location in locations:
+        print(location)
         len1 = list(location.stripped_strings)
         if len(len1)!= 1:
             city = location.find("h4").text.replace("Caddo Mills","Greenville") 
@@ -81,50 +69,6 @@ def fetch_data():
             store.append(" ".join(hours1).encode('ascii', 'ignore').decode('ascii').strip())
             store.append("<MISSING>")
             yield store
-            # return_main_object.append(store)
-            # print("-----------------------",store)
-    # return return_main_object
-
-
-        # print(phone_list)
-
-        # print(list(location.stripped_strings)[0] )
-        # print(list(location.stripped_strings))
-        # .find_all("a")
-    #     location_request = session.get(location["href"],headers=headers)
-    #     location_soup = BeautifulSoup(location_request.text,"lxml")
-    #     location_details = list(location_soup.find("div",{'class':"et_pb_blurb_description"}).stripped_strings)
-    #     geo_request = session.get(location_soup.find("iframe",{'src':re.compile("google")})["src"],headers=headers)
-    #     geo_soup = BeautifulSoup(geo_request.text,"lxml")
-    #     for script in geo_soup.find_all("script"):
-    #         if "initEmbed" in script.text:
-    #             geo_data = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][1]
-    #             lat = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][0]
-    #             lng = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][1]
-    #     for i in range(len(location_details)):
-    #         if "Phone:" == location_details[i]:
-    #             phone = location_details[i+1]
-    #         elif "Phone:" in location_details[i]:
-    #             phone = location_details[i].split("Phone:")[1]
-    #     for i in range(len(location_details)):
-    #         if "HOURS" == location_details[i]:
-    #             hours = " ".join(location_details[i+1:])
-    #     store = []
-    #     store.append("http://bakersribs.com")
-    #     store.append(location.text)
-    #     store.append(geo_data.split(",")[1])
-    #     store.append(geo_data.split(",")[2])
-    #     store.append(geo_data.split(",")[-1].split(" ")[-2])
-    #     store.append(geo_data.split(",")[-1].split(" ")[-1])
-    #     store.append("US")
-    #     store.append("<MISSING>")
-    #     store.append(phone.replace("\xa0",""))
-    #     store.append("baker's ribs")
-    #     store.append(lat)
-    #     store.append(lng)
-    #     store.append(hours)
-    #     return_main_object.append(store)
-    # return return_main_object
 
 def scrape():
     data = fetch_data()

@@ -3,17 +3,14 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
-import platform
 
 
 session = SgRequests()
 
-system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,16 +22,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 
 def fetch_data():
@@ -50,7 +37,7 @@ def fetch_data():
             for location in location_list:
                 geo_location[location[2].replace(" u0027s","'s")] = location[4][0][4][0][1]
     hours = " ".join(list(main_soup.find("b",text=re.compile("Store Hours")).parent.stripped_strings)).replace("\n","").replace("\r","")
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     addresses = []
     driver.get(iframe_link)
     time.sleep(3)

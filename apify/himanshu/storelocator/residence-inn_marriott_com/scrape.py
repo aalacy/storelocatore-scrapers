@@ -2,16 +2,13 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 import time
 import unicodedata
-import platform
-system = platform.system()
 
 
 def write_output(data):
@@ -26,29 +23,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_driver():
-
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    # options.log.level = "trace"
-
-    executable_path = None
-    system = platform.system()
-    if "linux" in system.lower():
-        executable_path = './geckodriver'
-    elif "darwin" in system.lower():
-        executable_path = './geckodriver-mac'
-    else:
-        executable_path = 'geckodriver.exe'
-
-    driver = webdriver.Firefox(
-        executable_path=executable_path,
-        options=options)
-
-    return driver
 
 
 def initial_search(driver, brand_id):
@@ -68,7 +42,7 @@ def fetch_data():
     brand_id = "RI"
     domain_url = "https://residence-inn.marriott.com"
 
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     initial_search(driver, brand_id)
     # attempt to handle server error on initial search
     if "Our server is being stubborn, please try again" in driver.page_source:

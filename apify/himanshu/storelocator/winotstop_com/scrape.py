@@ -3,10 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from sgselenium import SgSelenium
 import time
-
 
 session = SgRequests()
 
@@ -20,14 +18,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path="./geckodriver", options=options)
-
 def fetch_data():
     r = session.get("http://www.winotstop.com/locations.html")
     soup = BeautifulSoup(r.text,"lxml")
@@ -40,7 +30,7 @@ def fetch_data():
             location_list = json.loads(script.text.split('var _pageData = "')[1].split('\n";')[0].replace('\\"','"').replace(r"\n","")[:-2].replace("\\"," "))[1][6][0][12][0][13][0]
             for location in location_list:
                 geo_location[location[5][0][1][0]] = location[1][0][0]
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     addresses = []
     base_url = "https://www.trumphotels.com/"
     driver.get(iframe_link)

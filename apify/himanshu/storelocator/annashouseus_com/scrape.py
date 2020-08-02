@@ -2,12 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sgselenium import SgSelenium
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-
 
 session = SgRequests()
 
@@ -21,17 +19,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path='./geckodriver', options=options)
-
-
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox() 
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }

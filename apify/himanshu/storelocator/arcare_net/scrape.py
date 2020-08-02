@@ -1,20 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-import platform
-system = platform.system()
+from sgselenium import SgSelenium
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w', newline="") as output_file:
@@ -31,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     locator_domain = base_url = "https://www.arcare.net/"
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get("https://www.arcare.net/locations/")
     soup = BeautifulSoup(driver.page_source, "lxml")
 

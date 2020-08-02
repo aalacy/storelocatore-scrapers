@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
+from sgselenium import SgSelenium
 from selenium.webdriver.firefox.options import Options
 import urllib
 import html
@@ -18,16 +18,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(options=options,executable_path="./geckodriver")
-
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().firefox()
     driver.get("https://www.citgo.com/locator/store-locators/store-locator")
     cookies = driver.get_cookies()
     s = requests.Session()

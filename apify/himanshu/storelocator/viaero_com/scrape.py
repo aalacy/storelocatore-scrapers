@@ -3,10 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,39 +16,30 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.viaero.com"
-    r = session.get("https://info.viaero.com/store-directory")
-    soup = BeautifulSoup(r.text,"lxml")
+    state_list = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
+    
     addressess = []
-    for location in soup.find_all("div",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_inline_rich_text"}):
-        data = list(location.stripped_strings)
-        if data != []:
-            street_address = data[2]
-            city = data[3].split(",")[0]
-            state = data[3].split(",")[1].split(" ")[1]
-            
-            zipp = data[3].split(",")[1].split(" ")[2]
-            if '820 W 1st St' in street_address:
-                zipp='69153'
-            if '2485 N Diers Ave' in street_address:
-                zipp='68803'    
-            phone = data[-2]
-            if "https" in location.find("a")['href']:
-                page_url = location.find("a")['href']
-            else:
-                page_url = 'https://info.viaero.com'+location.find("a")['href']
-        
-            location_request = session.get(page_url)
-            location_soup = BeautifulSoup(location_request.text,"lxml")
-            data = list(location_soup.find_all("span",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text"})[1].stripped_strings)
-            if "@context" in data[-1]:
-                del data[-1]
-            location_name = data[1]
-            hour=' '.join((list(location_soup.find("table").stripped_strings)))
-            location_script = location_soup.find("script",{"type":"application/ld+json"}).text
-             
-            latitude = location_script.split('"latitude":')[1].split('"longitude":')[0].strip().replace(",","")
-            longitude = location_script.split('"longitude":')[1].split('},')[0].strip()
-      
+    for region in state_list:
+        json_data = session.get("https://stores.viaero.com/modules/multilocation/?near_location="+str(region)+"&services__in=&within_business=true").json()['objects']
+
+        for data in json_data:
+
+            location_name = data['location_name']
+            street_address = data['street']
+            city = data['city']
+            state = data['state']
+            zipp = data['postal_code']
+            country_code = data['country']
+            store_number = data['id']
+            phone = data['phonemap']['phone']
+            lat = round(float(data['lat']),6)
+            lng = round(float(data['lon']),6)
+            hours = ""
+            for label in data['formatted_hours']['primary']['days']:
+                hours+= " "+label['label']+" "+label['content']+" "
+           
+    
+            page_url = data['location_url']
 
             store = []
             store.append(base_url)
@@ -60,18 +48,19 @@ def fetch_data():
             store.append(city)
             store.append(state)
             store.append(zipp)
-            store.append("US")
-            store.append("<MISSING>")
+            store.append(country_code)
+            store.append(store_number)
             store.append(phone)
             store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hour)
+            store.append(lat)
+            store.append(lng)
+            store.append(hours.strip())
             store.append(page_url)
-            # if store[2] in addressess:
-            #     continue
-            # addressess.append(store[2])
-            # print(store)
+
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])  
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]          
             yield store
 
 def scrape():
