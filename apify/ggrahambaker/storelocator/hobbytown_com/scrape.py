@@ -36,9 +36,14 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
+    element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+        (By.ID, "CityState")))
+    time.sleep(randint(1,2))
+
+    print("Page loaded!")
     cityinput = driver.find_element_by_id('CityState')
     cityinput.clear()
-    cityinput.send_keys( "Iowa City" )
+    cityinput.send_keys("Iowa City")
 
     time.sleep(5)
 
@@ -57,13 +62,25 @@ def fetch_data():
     for h in hrefs:
         link = h.get_attribute('href')
         link_list.append(link)
+
+    print("Got %s links" %len(link_list))
       
     all_store_data = []
     for link in link_list:
         print(link)
         driver.get(link)
-        driver.implicitly_wait(5)
         time.sleep(1)
+
+        try:
+            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "h1.titlebar")))
+            time.sleep(randint(1,2))
+        except:
+            print("Page failed to load..retrying")
+            driver.get(link)
+            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "h1.titlebar")))
+            time.sleep(randint(1,2))
         
         location_name = driver.find_element_by_css_selector('h1.titlebar').find_element_by_css_selector('span').text
         
