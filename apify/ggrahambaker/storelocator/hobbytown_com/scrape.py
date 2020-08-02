@@ -2,7 +2,14 @@ import csv
 import os
 from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 import time
+from random import randint
+import re
+
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -53,6 +60,7 @@ def fetch_data():
       
     all_store_data = []
     for link in link_list:
+        print(link)
         driver.get(link)
         driver.implicitly_wait(5)
         time.sleep(1)
@@ -60,25 +68,42 @@ def fetch_data():
         location_name = driver.find_element_by_css_selector('h1.titlebar').find_element_by_css_selector('span').text
         
         addy = driver.find_element_by_css_selector('div.address').text.split('\n')
-        street_address = addy[0]
-        city, state, zip_code = addy_ext(addy[1])
+        street_address = ' '.join(addy[:-1])
+        city, state, zip_code = addy_ext(addy[-1])
         
         phone_number = driver.find_element_by_css_selector('div.phone').text.replace('+1', '').strip()
         
         hour_tds = driver.find_element_by_css_selector('div.hours').find_element_by_css_selector('tbody').find_elements_by_css_selector('td')#.replace('\n', ' ')
         hours = ''
         for td in hour_tds:
-            hours += td.text + ' ' 
+            hours += td.text + ' '
             
         hours = hours.strip()
         
-        country_code = '<MISSING>'
+        country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
         page_url = link
-        
+
+        try:
+            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+                (By.ID, "map")))
+            time.sleep(randint(1,2))
+            try:
+                map_frame = driver.find_element_by_id("map").find_element_by_tag_name("iframe")
+                driver.switch_to.frame(map_frame)
+                time.sleep(randint(1,2))
+                map_str = driver.page_source
+                geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2}\.[0-9]+\]', map_str)[0].replace("[","").replace("]","").split(",")
+                lat = geo[0]
+                longit = geo[1]
+            except:
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+        except:
+            lat = "<MISSING>"
+            longit = "<MISSING>"
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
