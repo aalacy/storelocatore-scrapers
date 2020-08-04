@@ -29,9 +29,10 @@ def parser(location_soup,url):
         lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
         lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
         page_url = url
-        #print(page_url)
+        
 
     else:
+        
         street_address = "<MISSING>"
         name = "<MISSING>"
         city = "<MISSING>"
@@ -41,7 +42,7 @@ def parser(location_soup,url):
         hours = "<MISSING>"
         lat = "<MISSING>"
         lng = "<MISSING>"
-        page_url = "<MISSING>"
+        page_url = url
 
     
     store = []
@@ -91,7 +92,10 @@ def fetch_data():
                     city_request = session.get("https://locations.rallys.com/" + city.find("a")["href"] )
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("li",{'class':"c-LocationGridList-item"}):
+
                         location_request = session.get("https://locations.rallys.com/" + location.find("a")["href"].replace("../",""))
+                        if location_request.status_code != 200:
+                            continue
                         url = "https://locations.rallys.com/" + location.find("a")["href"].replace("../","")
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,url)
