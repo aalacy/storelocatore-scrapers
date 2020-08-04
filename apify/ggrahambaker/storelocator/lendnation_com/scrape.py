@@ -1,7 +1,15 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import os
 from sgselenium import SgSelenium
 import json
+import time
+from random import randint
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,10 +36,15 @@ def fetch_data():
 
     url_list = []
     for link in state_links:
+        print(link)
         driver.get(link)
-        driver.implicitly_wait(10)
+
+        time.sleep(randint(2,4))
+        element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+            (By.CLASS_NAME, "js-map-config")))
+        time.sleep(randint(1,2))
         
-        locs = driver.find_element_by_css_selector('script#js-map-config-dir-map-2')
+        locs = driver.find_element_by_css_selector('.js-map-config')
         loc_json = json.loads(locs.get_attribute('innerHTML'))
         for location in loc_json['locs']:
             lat = location['latitude']
@@ -39,51 +52,40 @@ def fetch_data():
             url = location['url']
             
             url_list.append([url, lat, longit])
-            
+
     link_list = []
     for url_ext in url_list:
-        
         url = 'https://www.lendnation.com/location/' + url_ext[0]
-        driver.get(url)
-        driver.implicitly_wait(10)
+        link_list.append(url)
+        
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-        store_links = driver.find_elements_by_css_selector('a.Teaser-titleLink')
-        for link in store_links:
-            link_list.append(link.get_attribute('href'))
+    session = SgRequests()
 
     all_store_data = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+        print(link)
+        req = session.get(link, headers = HEADERS)
+        time.sleep(randint(1,2))
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-        location_name = driver.find_element_by_css_selector('h1.Hero-title').text
+        location_name = base.h1.text.strip()
         
-        lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
-        longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
+        lat = base.find('meta', attrs={'itemprop': "latitude"})['content']
+        longit = base.find('meta', attrs={'itemprop': "longitude"})['content']
 
-        city = driver.find_element_by_xpath('//meta[@itemprop="addressLocality"]').get_attribute('content')
-        street_address = driver.find_element_by_xpath('//meta[@itemprop="streetAddress"]').get_attribute('content')
+        city = base.find('meta', attrs={'itemprop': "addressLocality"})['content']
+        street_address = base.find('meta', attrs={'itemprop': "streetAddress"})['content']
+        state = base.find('abbr', attrs={'itemprop': "addressRegion"}).text
+        zip_code = base.find('span', attrs={'itemprop': "postalCode"}).text
+        phone_number = base.find('span', attrs={'itemprop': "telephone"}).text
 
-        state = driver.find_element_by_xpath('//abbr[@itemprop="addressRegion"]').text
-        zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-
-        phone_number = driver.find_element_by_css_selector('span#telephone').text
-
-        days_json = json.loads(driver.find_element_by_css_selector('div.c-location-hours-details-wrapper.js-location-hours').get_attribute('data-days'))
-        hours = ''
-        for week_day in days_json:
-            day_name = week_day['day']
-            if len(week_day['intervals']) == 0:
-                day_string = day_name + ': Closed'
-            else:
-                start = week_day['intervals'][0]['start']
-                end = week_day['intervals'][0]['end']
-
-                day_string = day_name + ' : ' + str(start) + ' - ' + str(end)
-
-            hours += day_string + ' '
-
-        hours = hours.strip()
+        hours = base.find(class_="c-location-hours-details").text.replace("Day of the WeekHours","").replace("PM", "PM ").strip()
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'

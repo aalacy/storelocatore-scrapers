@@ -1,14 +1,8 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
-import re
-import json
-import time
-import urllib3
-from selenium.webdriver.support.wait import WebDriverWait
 from sgselenium import SgSelenium
-
-urllib3.disable_warnings()
+from sgrequests import SgRequests
+session = SgRequests()
 
 
 
@@ -26,27 +20,29 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    driver = SgSelenium().firefox()
-    driver1 = SgSelenium().firefox()
+    driver = SgSelenium().chrome()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     locator_domain = "https://kwiktrip.com"
     hours_of_operation ="<MISSING>"
-    # print(soup.find_all("table",{"id":"tablepress-4"}))
     while True:
         soup = BeautifulSoup(driver.page_source,"lxml")
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
-                # print("https://www.kwiktrip.com/locator/store?id="+str(store_number))
-                driver1.get("https://www.kwiktrip.com/locator/store?id="+str(store_number))
-                soup1 = BeautifulSoup(driver1.page_source,"lxml")
-
-                try:
-                    h = soup1.find("div",{"class":"Store__dailyHours"})
-                    if h != None:
-                        hours_of_operation =  " ".join(list(h.stripped_strings))
-                except:
-                    h = soup1.find("div",{"class":"Store__open24Hours"})
+                page_url="https://www.kwiktrip.com/locator/store?id="+str(store_number)
+                payload = {}
+                headers = {
+                'Referer': 'https://www.kwiktrip.com/Maps-Downloads/Store-List',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
+                }
+                response = session.get( page_url, headers=headers, data = payload)
+                soup1 = BeautifulSoup(response.text,'lxml')
+                h = soup1.find("div",{"class":"Store__dailyHours"})
+                if h != None:
+                    hours_of_operation =  " ".join(list(h.stripped_strings))
+               
+                h = soup1.find("div",{"class":"Store__open24Hours"})
+                if h != None:                   
                     hours_of_operation = " ".join(list(h.stripped_strings))
                 # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
                 page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
@@ -56,9 +52,11 @@ def fetch_data():
                 state = list(tr.stripped_strings)[4]
                 zipp = list(tr.stripped_strings)[5]
                 phone = list(tr.stripped_strings)[6]
-                latitude = list(tr.stripped_strings)[7]
+                latitude = list(tr.stripped_strings)[7].replace("-93.22204",'<MISSING>').replace("Yes",'<MISSING>')
                 longitude = list(tr.stripped_strings)[8]
-                # page_url ="<MISSING>"
+                if "Yes" in latitude or "Yes" in longitude:
+                    latitude="<MISSING>"
+                    longitude="<MISSING>"
                 location_type = "<MISSING>"
                 country_code = "US"
                 store =[]
@@ -66,17 +64,13 @@ def fetch_data():
                     hours_of_operation1= hours_of_operation
                 else:
                     hours_of_operation1 = "<MISSING>"
-
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation1, page_url]
-
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
+                #print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
                 yield store
-                # print(list(tr.stripped_strings))
-
         soup1 = BeautifulSoup(driver.page_source,"lxml")
         if soup1.find("a",{"id":"tablepress-4_next"}):
             driver.find_element_by_xpath("//a[@id='tablepress-4_next']").click()
@@ -84,8 +78,6 @@ def fetch_data():
             break
         if soup1.find("a",{"class":"paginate_button current"}).text=="15":
             driver.quit()
-            driver1.quit()
-
             break
    
 

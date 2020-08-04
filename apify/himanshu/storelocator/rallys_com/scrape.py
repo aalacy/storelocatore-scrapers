@@ -12,12 +12,12 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def parser(location_soup):
+def parser(location_soup,url):
     if location_soup.find("div",{'class':"c-AddressRow"}) != None:
         street_address = " ".join(list(location_soup.find("div",{'class':"c-AddressRow"}).stripped_strings))
         name = " ".join(list(location_soup.find("span",{'class':"LocationName"}).stripped_strings))
@@ -28,7 +28,11 @@ def parser(location_soup):
         hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
         lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
         lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
+        page_url = url
+        
+
     else:
+        
         street_address = "<MISSING>"
         name = "<MISSING>"
         city = "<MISSING>"
@@ -38,6 +42,7 @@ def parser(location_soup):
         hours = "<MISSING>"
         lat = "<MISSING>"
         lng = "<MISSING>"
+        page_url = url
 
     
     store = []
@@ -50,10 +55,12 @@ def parser(location_soup):
     store.append("US")
     store.append("<MISSING>")
     store.append(phone if phone != "" else "<MISSING>")
-    store.append("rally's")
+    store.append("<MISSING>")
     store.append(lat)
     store.append(lng)
     store.append(hours)
+    store.append(page_url)
+
     return store
 
 def fetch_data():
@@ -68,7 +75,8 @@ def fetch_data():
         if states.find("a")["href"].count("/") == 2:
             location_request = session.get("https://locations.rallys.com/" + states.find("a")["href"])
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            store_data = parser(location_soup)
+            url = "https://locations.rallys.com/" + states.find("a")["href"].replace("../","")
+            store_data = parser(location_soup,url)
             return_main_object.append(store_data)
         else:
             state_request = session.get("https://locations.rallys.com/" + states.find("a")["href"])
@@ -77,15 +85,20 @@ def fetch_data():
                 if city.find("a")["href"].count("/") == 2:
                     location_request = session.get("https://locations.rallys.com/" + city.find("a")["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
-                    store_data = parser(location_soup)
+                    url = "https://locations.rallys.com/" + city.find("a")["href"].replace("../","")
+                    store_data = parser(location_soup,url)
                     return_main_object.append(store_data)
                 else:
                     city_request = session.get("https://locations.rallys.com/" + city.find("a")["href"] )
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("li",{'class':"c-LocationGridList-item"}):
+
                         location_request = session.get("https://locations.rallys.com/" + location.find("a")["href"].replace("../",""))
+                        if location_request.status_code != 200:
+                            continue
+                        url = "https://locations.rallys.com/" + location.find("a")["href"].replace("../","")
                         location_soup = BeautifulSoup(location_request.text,"lxml")
-                        store_data = parser(location_soup)
+                        store_data = parser(location_soup,url)
                         return_main_object.append(store_data)
     return return_main_object
 
