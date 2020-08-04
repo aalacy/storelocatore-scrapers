@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,6 +33,7 @@ def fetch_data():
                 geo_object[location_details["Title"]] = location_details["LatLng"]
     for location in soup.find("div",{'id':"all_locations"}).find_all("li"):
         phone = list(location.stripped_strings)[-1]
+        page_url = base_url + location.find("a")["href"]        
         location_request = session.get(base_url + location.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,'lxml')
         location_details = list(location_soup.find("div",{'id':'location_address'}).stripped_strings)[:-1]
@@ -53,6 +54,12 @@ def fetch_data():
         store.append(geo_object[location_details[0]][0])
         store.append(geo_object[location_details[0]][1])
         store.append(location_details[-1] if "Tel" not in location_details[-1] else "<MISSING>")
+
+        # r1 = session.get("https://eatphillysbest.com/store-locations/",headers=headers)
+        # soup1 = BeautifulSoup(r1.text,"lxml")
+        # for link in soup1.find('div',{'id':'all_locations'}).find_all('li'):
+        #     page_url
+        store.append(page_url)
         return_main_object.append(store)
     return return_main_object
 
