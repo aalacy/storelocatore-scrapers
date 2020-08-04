@@ -13,8 +13,8 @@ function getOrDefault(value) {
 
 function parseHours(hours) {
   return hours.map((day) => ({
-    start: day.close ? '' : day.start,
-    end: day.close ? '' : day.end,
+    start: day.close ? null : day.start,
+    end: day.close ? null : day.end,
     day: day.label_en,
     close: day.close,
   }));
