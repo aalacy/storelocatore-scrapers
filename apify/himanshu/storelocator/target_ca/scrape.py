@@ -4,10 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -21,18 +17,16 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def minute_to_hours(time):
-    am = "AM"
-    hour = int(time / 60)
-    if hour > 12:
-        am = "PM"
-        hour = hour - 12
-    if int(str(time / 60).split(".")[1]) == 0:
-        return str(hour) + ":00" + " " + am
-    else:
-        return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
-
+# def minute_to_hours(time):
+#     am = "AM"
+#     hour = int(time / 60)
+#     if hour > 12:
+#         am = "PM"
+#         hour = hour - 12
+#     if int(str(time / 60).split(".")[1]) == 0:
+#         return str(hour) + ":00" + " " + am
+#     else:
+#         return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
 
 def fetch_data():
     search = sgzip.ClosestNSearch()
@@ -40,19 +34,14 @@ def fetch_data():
     MAX_RESULTS = 50
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
-
-    
     return_main_object = []
     addresses = []
     store_name=[]
     store_detail=[]
   
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "content-type": "application/json;charset=UTF-8",
-  
-        
     }
     address=[]
     while zip_code:
@@ -60,15 +49,12 @@ def fetch_data():
             r = session.get(
                 'https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer',
                 headers=headers,
-        
             )
             soup= BeautifulSoup(r.text,"lxml")
             result_coords = []
             k = json.loads(soup.text)
         except:
             continue
-
-
 
         # if k !=[]:
         time =''
@@ -78,7 +64,6 @@ def fetch_data():
                
                 current_results_len = len(i['locations'])  # need to update with no of count.
                 
-    
                 for j in i['locations']:
 
                     tem_var=[]
@@ -86,7 +71,22 @@ def fetch_data():
 
                     h1 = j['rolling_operating_hours']['regular_event_hours']['days'][0]['hours'][0]
                     if 'begin_time' in h1 and 'end_time' in h1:
-                        hours_of_operation = h1['begin_time'] + " - " + h1['end_time']
+                        if h1['begin_time'] == '08:00:00':
+                            start = '8:00 am'
+                        else:
+                            start = '7:00 am'
+
+                        if h1['end_time'] == '22:00:00':
+                            stop = '10:00 pm'
+                        sat = 'Sat ' + start + ' - ' + stop + ', '
+                        sun = 'Sun ' + start + ' - ' + stop + ', '
+                        mon = 'Mon ' + start + ' - ' + stop + ', '
+                        tue = 'Tue ' + start + ' - ' + stop + ', '
+                        wed = 'Wed ' + start + ' - ' + stop + ', '
+                        thu = 'Thu ' + start + ' - ' + stop + ', '
+                        fri = 'Fri ' + start + ' - ' + stop
+
+                        hours_of_operation = sat + sun + mon + tue + wed + thu + fri
                     else:
                         hours_of_operation = "<MISSING>"
 
@@ -119,9 +119,6 @@ def fetch_data():
                     tem_var.append(j['geographic_specifications']['longitude'] if j['geographic_specifications']['longitude'] else "<MISSING>" )
                     tem_var.append(hours_of_operation if hours_of_operation else "<MISSING>" )
                     tem_var.append(page_url if page_url else "<MISSING>")
-                    
-                    
-
                     yield tem_var
 
                     # yield store
