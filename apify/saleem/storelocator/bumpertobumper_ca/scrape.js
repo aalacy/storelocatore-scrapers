@@ -16,6 +16,7 @@ function parseHours(hours) {
     start: day.close ? '' : day.start,
     end: day.close ? '' : day.end,
     day: day.label_en,
+    close: day.close,
   }));
 }
 
