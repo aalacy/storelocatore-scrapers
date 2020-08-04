@@ -29,7 +29,7 @@ def fetch_data():
     for script in soup.find_all("script"):
         if 'address_objects.push(' in script.text:
             for location in script.text.split('address_objects.push(')[1:]:
-                location_details = json.loads(location.split(");")[0])
+                location_details = json.loads(location.split(");")[0].replace('[,]','["<MISSING>","<MISSING>"]'))
                 geo_object[location_details["Title"]] = location_details["LatLng"]
     for location in soup.find("div",{'id':"all_locations"}).find_all("li"):
         phone = list(location.stripped_strings)[-1]
