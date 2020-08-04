@@ -11,6 +11,14 @@ function getOrDefault(value) {
   return value || MISSING;
 }
 
+function parseHours(hours) {
+  return hours.map((day) => ({
+    start: day.close ? '' : day.start,
+    end: day.close ? '' : day.end,
+    day: day.label_en,
+  }));
+}
+
 Apify.main(async () => {
   const response = await request.get('https://www.bumpertobumper.ca/json/stores.json');
   data = JSON.parse(response);
@@ -44,7 +52,7 @@ Apify.main(async () => {
       latitude: getOrDefault(latitude),
       longitude: getOrDefault(longitude),
       store_number: getOrDefault(store_number),
-      hours_of_operation: getOrDefault(hours),
+      hours_of_operation: getOrDefault(parseHours(hours)),
       country_code: country.match(/canada/i) ? 'CA' : country,
     };
 
