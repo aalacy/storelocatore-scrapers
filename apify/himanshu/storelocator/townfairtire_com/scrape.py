@@ -23,6 +23,7 @@ def fetch_data():
     r = session.get(base_url+'/store/tires/connecticut/branford/')
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
+    addressess=[]
     output=[]
     main=soup.find('div',{'class':"storeLocations"}).find_all('a')
     for atag in main:
@@ -59,16 +60,20 @@ def fetch_data():
             store.append(country if country else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone.replace("Call ",'') if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("townfairtire")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
             store.append(hour if hour else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            yield store
 
-            if zip not in output:
-                output.append(zip)
-                return_main_object.append(store)
-    return return_main_object
+            # if zip not in output:
+            #     output.append(zip)
+            #     return_main_object.append(store)
+    # return return_main_object
 
 def scrape():
     data = fetch_data()
