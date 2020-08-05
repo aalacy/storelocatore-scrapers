@@ -54,9 +54,13 @@ def fetch_data():
 			continue
 		else:
 			poi_found.append(link)
-
 		print("Link %s of %s" %(i+1,len(items)))
 		print(link)
+
+		if ".bncollege.com" not in link:
+			print("No results found..skipping")
+			continue
+
 		req = session.get(link, headers = HEADERS)
 		try:
 			base = BeautifulSoup(req.text,"lxml")
