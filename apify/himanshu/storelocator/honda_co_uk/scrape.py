@@ -22,69 +22,69 @@ def fetch_data():
     
     
     base_url = "https://www.honda.co.uk"
-    
-    soup = bs(session.get("https://www.honda.co.uk/cars/dealer-list.html").text, "lxml")
+    for link in ['https://www.honda.co.uk/cars/dealer-list.html','https://www.honda.co.uk/motorcycles/dealer-list.html','https://www.honda.co.uk/marine/dealer-list.html']:
+        soup = bs(session.get(link).text, "lxml")
 
-    for url in soup.find_all("td",{"class":"wrapperInner"}):
-        page_url = base_url + url.a['href']
-        if session.get(page_url).status_code == 404:
-            continue
-    
-        location_soup = bs(session.get(page_url).text, "lxml")
-
-        location_name = location_soup.find("h1",{"itemprop":"name"}).text
+        for url in soup.find_all("td",{"class":"wrapperInner"}):
+            page_url = base_url + url.a['href']
+            if session.get(page_url).status_code == 404:
+                continue
         
-        street_address = ''
+            location_soup = bs(session.get(page_url).text, "lxml")
 
-        for address in location_soup.find_all("span",{"itemprop":"streetAddress"}):
-            street_address+= " "+ address.text
-        city = location_soup.find("span",{"itemprop":"addressLocality"}).text
-        try:
-            state = location_soup.find("span",{"itemprop":"addressRegion"}).text.replace(".","")
-        except:
-            state = "<MISSING>"
-        zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
-        try:
-            phone = location_soup.find("span",{"itemprop":"telephone"}).text.strip()
-        except:
-            phone = "<MISSING>"
+            location_name = location_soup.find("h1",{"itemprop":"name"}).text
+            
+            street_address = ''
 
-        coord = location_soup.find("div",{"class":"dealerMap"})['data-mapdata']
-        store_number = coord.split("/")[-1].split(".")[0][3:]
-        lat = coord.split("lat=")[1].split("&")[0]
-        lng = coord.split("lng=")[-1]
-        try:
-            hours = " ".join(list(location_soup.find("div",{"class":"wrapperInner dealerColDetails"}).stripped_strings))
-        except:
-            hours = "<MISSING>"
+            for address in location_soup.find_all("span",{"itemprop":"streetAddress"}):
+                street_address+= " "+ address.text
+            city = location_soup.find("span",{"itemprop":"addressLocality"}).text
+            try:
+                state = location_soup.find("span",{"itemprop":"addressRegion"}).text.replace(".","")
+            except:
+                state = "<MISSING>"
+            zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
+            try:
+                phone = location_soup.find("span",{"itemprop":"telephone"}).text.strip()
+            except:
+                phone = "<MISSING>"
+
+            coord = location_soup.find("div",{"class":"dealerMap"})['data-mapdata']
+            store_number = coord.split("/")[-1].split(".")[0][3:]
+            lat = coord.split("lat=")[1].split("&")[0]
+            lng = coord.split("lng=")[-1]
+            try:
+                hours = " ".join(list(location_soup.find("div",{"class":"wrapperInner dealerColDetails"}).stripped_strings))
+            except:
+                hours = "<MISSING>"
+            
+            if "Erdington" in street_address:
+                street_address = street_address.replace("Erdington","").strip()
+                city = "Erdington"
+                state = "Birmingham"
+            if "Wandsworth" in street_address:
+                street_address = "60-62 West Hill Road"
+                city = "Wandsworth"
+                state = "London"
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)   
+            store.append("UK")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            store.append(hours)
+            store.append(page_url)     
         
-        if "Erdington" in street_address:
-            street_address = street_address.replace("Erdington","").strip()
-            city = "Erdington"
-            state = "Birmingham"
-        if "Wandsworth" in street_address:
-            street_address = "60-62 West Hill Road"
-            city = "Wandsworth"
-            state = "London"
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)   
-        store.append("UK")
-        store.append(store_number)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hours)
-        store.append(page_url)     
-    
-        store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        
-        yield store
+            store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            
+            yield store
       
     
     
