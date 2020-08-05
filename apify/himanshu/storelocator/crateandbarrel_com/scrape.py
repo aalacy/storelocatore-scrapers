@@ -6,7 +6,6 @@ import json
 import time
 from random import choice
 import html5lib
-import pprint
 from sgselenium import SgSelenium
 import http.client
 session = SgRequests()
@@ -67,7 +66,7 @@ def fetch_data():
         longitude = i['StoreLong']
         page_url = "https://www.crateandbarrel.com/stores/"+str(location_name.lower().replace(',','').replace(' ','-'))+"/str"+str(store_number)
         # print(page_url)
-        driver = SgSelenium().firefox()
+        driver = SgSelenium().chrome()
         driver.get(page_url)
         cookies_list = driver.get_cookies()
         # print("cookies_list === " + str(cookies_list))
