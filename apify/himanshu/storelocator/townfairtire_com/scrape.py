@@ -60,7 +60,7 @@ def fetch_data():
             store.append(country if country else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone.replace("Call ",'') if phone else "<MISSING>")
-            store.append("townfairtire")
+            store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
             store.append(hour if hour else "<MISSING>")
