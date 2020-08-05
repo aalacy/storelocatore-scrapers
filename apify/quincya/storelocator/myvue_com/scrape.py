@@ -77,8 +77,8 @@ def fetch_data():
 			street_address = (raw_address[-4].strip() + " " + street_address).strip()
 		except:
 			pass
-		state = raw_address[-2].strip()
-		city = "<MISSING>"
+		state = "<MISSING>"
+		city = raw_address[-2].strip()
 		zip_code = raw_address[-1].strip()
 		country_code = "UK"
 		
