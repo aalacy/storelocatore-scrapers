@@ -18,22 +18,13 @@ def write_output(data):
 			writer.writerow(row)
 
 def fetch_data():
-	
-	base_link = "https://www.myvue.com/london-cinema"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
 
 	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
 
-	link = base.find("a",string="Get directions")['href'].replace("getting-here","whats-on")
+	link = "https://www.myvue.com/cinema/bromley/whats-on"
 
 	driver = SgSelenium().chrome()
 	time.sleep(randint(2,4))
@@ -80,7 +71,7 @@ def fetch_data():
 		state = "<MISSING>"
 		city = raw_address[-2].strip()
 		zip_code = raw_address[-1].strip()
-		country_code = "UK"
+		country_code = "GB"
 		
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
