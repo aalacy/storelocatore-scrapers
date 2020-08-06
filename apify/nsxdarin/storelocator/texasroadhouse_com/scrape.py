@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -15,66 +14,57 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.texasroadhouse.com/locations/'
+    url = 'https://www.texasroadhouse.com/sitemap.xml'
+    locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'window.__locations__' in line:
-            items = line.split('{"address1":"')
-            for item in items:
-                if '"address2"' in item:
-                    add = item.split('"')[0]
-                    if ',"address2":[]' not in item:
-                        add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
-                    try:
-                        city = item.split(',"city":"')[1].split('"')[0]
-                    except:
-                        city = '<MISSING>'
-                    try:
-                        state = item.split('"state":"')[1].split('"')[0]
-                    except:
-                        state = '<MISSING>'
-                    country = item.split('"country":"')[1].split('"')[0]
-                    try:
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    lat = item.split('"gps_lat":')[1].split(',')[0]
-                    lng = item.split('"gps_lon":')[1].split(',')[0]
-                    typ = 'Restaurant'
-                    name = item.split(',"name":"')[1].split('"')[0]
-                    if 'selectsite=' in item.lower():
-                        store = item.lower().split('selectsite=')[1].split('"')[0]
-                    else:
-                        store = '<MISSING>'
-                    try:
-                        zc = item.split('"zip":"')[1].split('"')[0]
-                    except:
-                        zc = '<MISSING>'
-                    website = 'texasroadhouse.com'
-                    if name == '':
-                        name = 'Texas Roadhouse'
-                    if lat == '0':
-                        lat = '<MISSING>'
-                        lng = '<MISSING>'
-                    if '"schedule":[]' in item:
-                        hours = '<MISSING>'
-                    else:
-                        hours = 'Mon: ' + item.split('"day":"Monday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Monday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Tue: ' + item.split('"day":"Tuesday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Tuesday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Wed: ' + item.split('"day":"Wednesday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Wednesday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Thu: ' + item.split('"day":"Thursday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Thursday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Fri: ' + item.split('"day":"Friday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Friday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Sat: ' + item.split('"day":"Saturday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Saturday","hours":')[1].split('"close":"')[1].split('"')[0]
-                        hours = hours + '; Sun: ' + item.split('"day":"Sunday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Sunday","hours":')[1].split('"close":"')[1].split('"')[0]
-                    purl = 'https://www.texasroadhouse.com' + item.split(',"url":"')[1].split('"')[0].replace('\\','')
-                    if country == 'USA':
-                        country = 'US'
-                    if country == 'CAN':
-                        country = 'CA'
-                    if store == '':
-                        store = '<MISSING>'
-                    if country == 'US' or country == 'CA' and ',"Opened":false' not in item:
-                        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        line = str(line.decode('utf-8'))
+        if '<loc>https://www.texasroadhouse.com/locations/' in line and '/intl' not in line:
+            lurl = line.split('<loc>')[1].split('<')[0]
+            locs.append(lurl)
+    for loc in locs:
+        r2 = session.get(loc, headers=headers)
+        print(loc)
+        name = ''
+        add = ''
+        website = 'texasroadhouse.com'
+        country = 'US'
+        add = ''
+        store = '<MISSING>'
+        city = ''
+        typ = '<MISSING>'
+        state = ''
+        zc = ''
+        lat = ''
+        lng = ''
+        phone = ''
+        hours = ''
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if 'itemprop="name">' in line2:
+                name = line2.split('itemprop="name">')[1].split('<')[0]
+            if '"address1":"' in line2:
+                add = line2.split('"address1":"')[1].split('"')[0]
+                city = line2.split('"city":"')[1].split('"')[0]
+                state = line2.split('"state":"')[1].split('"')[0]
+                zc = line2.split('"zip":"')[1].split('"')[0]
+                phone = line2.split('"phone":"')[1].split('"')[0]
+                lat = line2.split('"gps_lat":')[1].split(',')[0]
+                lng = line2.split(',"gps_lon":')[1].split(',')[0]
+                days = line2.split('"schedule":[')[1].split(']')[0].split('"day":"')
+                for day in days:
+                    if '"hours":' in day:
+                        hrs = day.split('"')[0] + ': ' + day.split('"open":"')[1].split('"')[0] + '-' + day.split('"close":"')[1].split('"')[0]
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+        if phone == '':
+            phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
