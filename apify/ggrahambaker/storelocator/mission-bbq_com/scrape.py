@@ -1,8 +1,11 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import os
 from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
+from random import randint
 import usaddress
 
 def parse_addy(addy):
@@ -44,6 +47,11 @@ def fetch_data():
     locator_domain = 'https://mission-bbq.com/'
     ext = 'locations'
 
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
@@ -61,11 +69,11 @@ def fetch_data():
     for opt in options:
         if 'Select State' in opt.text:
             continue
-
         states.append(opt.text)
 
     all_store_data = []
     for state in states:
+        print(state)
         driver.get(locator_domain + ext)
         driver.implicitly_wait(10)
         drop_down = driver.find_element_by_id('categories-1')
@@ -73,12 +81,6 @@ def fetch_data():
         # select by visible text
         select.select_by_visible_text(state)
         driver.find_element_by_css_selector('button.button.button-primary.mission-search-button').click()
-        driver.implicitly_wait(10)
-        ## get store info
-
-        drop_down = driver.find_element_by_id('limit')
-        select = Select(drop_down)
-        select.select_by_value('0')
         driver.implicitly_wait(10)
 
         locs = driver.find_elements_by_css_selector('div.grid-item.span4')
@@ -111,16 +113,37 @@ def fetch_data():
                 longit = '<MISSING>'
 
             if '.' not in longit:
-                longit = '<MISSING>'
-            if longit == '':
-                longit = '<MISSING>'
+                req = session.get(href, headers = HEADERS)
+                time.sleep(randint(1,2))
+                try:
+                    maps = BeautifulSoup(req.text,"lxml")
+                except (BaseException):
+                    print('[!] Error Occured. ')
+                    print('[?] Check whether system is Online.')
 
-            phone_number = divs[2].text.replace('Restaurant', '').strip()
+                try:
+                    raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
+                    lat = raw_gps[raw_gps.rfind("=")+1:raw_gps.rfind(",")].strip()
+                    longit = raw_gps[raw_gps.rfind(",")+1:].strip()
+
+                    if len(lat) > 20:
+                        lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
+                        longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+                    if len(lat) > 20:
+                        lat = "<MISSING>"
+                        longit = "<MISSING>"
+                except:
+                    lat = "<MISSING>"
+                    longit = "<MISSING>"
+            if longit == "-77.2":
+                longit = "-77.2704962"
+
+            phone_number = divs[2].text.replace('Restaurant :', '').strip()
 
             country_code = 'US'
 
             location_type = '<MISSING>'
-            page_url = '<MISSING>'
+            page_url = driver.current_url
             store_number = '<MISSING>'
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
