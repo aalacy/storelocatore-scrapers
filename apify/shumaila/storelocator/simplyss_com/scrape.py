@@ -1,10 +1,13 @@
 # Import libraries
 
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sgrequests import SgRequests
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -23,25 +26,26 @@ def fetch_data():
     data = []
     p = 0
     url = 'https://www.simplyss.com'
-    page = requests.get(url)
+    page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     repo_list = soup.findAll('div',{'class': 'column'})
     cleanr = re.compile('<.*?>')
     phoner = re.compile('(.*?)')
-    #print(len(repo_list))
+    print(len(repo_list))
     for repo in repo_list:
         link = repo.find('a')
         link = link['href']
         #print('state=',link)
-        page = requests.get(link)
+        page = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
-        nextlist = soup.findAll('a',{'class':'btn-blue'})
+        maindiv = soup.find('div',{'id':'state-locations'})
+        nextlist = maindiv.findAll('div',{'class':'location-display-new-box'})
         #print("CITY COUNT =",len(nextlist))
         for nextlink in nextlist:
-            
-            link = nextlink['href']
-            #print('city=',link)
-            page = requests.get(link)
+            store = nextlink['id'].split('-')[-1]
+            link = nextlink.find('a')['href']
+            print('city=',link)
+            page = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(page.text, "html.parser")
             soup = str(soup)
             start = soup.find("@context")
@@ -106,6 +110,7 @@ def fetch_data():
             phone = re.sub("\r", "", phone)
             phone = re.sub("\n", "", phone)
             phone = re.sub('"', "", phone)
+            phone = phone.replace('+1 ','').lstrip()
             #print(phone)
             #print("....................................")
             ccode = ccode.rstrip()
@@ -120,14 +125,14 @@ def fetch_data():
                         state,
                         pcode,
                         ccode,
-                        "<MISSING>",
+                        store,
                         phone,
                         "<MISSING>",
                         lat,
                         longt,
                         hours
                 ])
-                print(p,data[p])
+                #print(p,data[p])
                 p += 1
 
     print(p)
