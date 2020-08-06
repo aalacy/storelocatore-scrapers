@@ -4,24 +4,12 @@ import json
 import time
 from random import randint
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 session = SgRequests()
 
@@ -38,9 +26,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://in-n-out.com/'
 
-    driver = get_driver()
-    time.sleep(2)
-
+    driver = SgSelenium().chrome()
     driver.get('https://locations.in-n-out.com/map2/')
 
     try:
@@ -85,11 +71,15 @@ def fetch_data():
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
     for store_number in store_numbers:
-        cont = session.get(api_base + store_number).json()
+        try:
+            print("Store: " + store_number)
+            cont = session.get(api_base + store_number).json()
+        except:
+            continue
 
         store_number = cont['StoreNumber']
         location_name = cont['Name']
-        print(location_name)
+        # print(location_name)
         street_address = cont['StreetAddress']
 
         city = cont['City']
