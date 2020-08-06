@@ -1,4 +1,8 @@
-lxml==4.3.4
-requests==2.11.1
+lxml==4.5.2
+sgrequests==0.0.15
+sgvalidator==0.0.70
+sgzip==0.0.40
+simplejson==3.13.2
+
 # uncomment if you use selenium
 # selenium==3.141.0
