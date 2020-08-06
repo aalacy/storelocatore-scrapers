@@ -1,9 +1,17 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
+import time
+from random import randint
+
+from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 base_url = 'https://blomedry.com'
 
@@ -15,7 +23,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace(u'\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -36,7 +44,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -45,72 +53,72 @@ def replace_last(source_string, replace_what, replace_with):
     return head + replace_with + tail
 
 def fetch_data():
+
+    driver = SgSelenium().chrome()
+    time.sleep(randint(2,4))
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    headers = {'User-Agent' : user_agent}
+
+    session = SgRequests()
     output_list = []
     url = "https://blomedry.com/locations/"
-    request = requests.get(url)
+    request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
-    store_list = response.xpath('//article')
+    store_list = response.xpath('//li[contains(@class, "article-location")]')
 
-    geoinfo_tmp = json.loads(request.text.split('var mapdeatils = ')[1].split(';')[0])
-    geoinfo = {}
-    for tmp in geoinfo_tmp:
-        lat = validate(tmp[1])
-        lng = validate(tmp[2])
-        title = validate(tmp[0])
-        geoinfo[title] = {"lat": lat, "lng": lng}
+    for i, store in enumerate(store_list):
+        print("Link %s of %s" %(i+1,len(store_list)))
+        detail_url = store.xpath(".//h2/a/@href")[0]
+        print(detail_url)
+        latitude = store.xpath("@data-lat")[0]
+        longitude = store.xpath("@data-lng")[0]
 
-    state_titles_tmp = eliminate_space(response.xpath('//h2[contains(@class, "state-title")]//text()'))
-    state_titles = []
-    for state_title in state_titles_tmp:
-        tmp = validate(state_title.title())
-        if tmp == "Dc":
-            tmp = "DC"
-        state_titles.append(tmp)
-
-    for store in store_list:
-        highlight = store.xpath(".//p[@class='location-highlight']//text()")
-        if len(highlight) > 0 and validate(highlight) == "coming soon!":
+        title = store.xpath(".//h2/a/text()")[0]
+        address = store.xpath(".//p/text()")
+        try:
+            street_address = get_value(address[-3]).replace(","," ").strip() + " " + get_value(address[-2]).replace(","," ").strip()
+        except:
+            street_address = get_value(address[-2]).replace(","," ").strip()
+        city_state = validate(address[-1])
+        city = city_state.split(",")[0]
+        state = city_state.split(",")[1][:-6].strip()
+        zipcode = city_state.split(",")[1][-6:].strip()
+        if zipcode == "90595" and city == "Torrance":
+            zipcode = "90505"
+        try:
+            phone = store.xpath(".//p/a/text()")[0]
+        except:
             continue
-        detail_url = get_value(store.xpath(".//h3[contains(@class, 'entry-title')]/a/@href"))
-        detail_request = requests.get(detail_url)
-        detail = etree.HTML(detail_request.text)
 
-        title = get_value(store.xpath(".//h3[contains(@class, 'entry-title')]//text()"))
+        driver.get(detail_url)
+        time.sleep(randint(2,4))
 
-        address = store.xpath(".//p[@class='location-address']//text()")
-        hours = get_value(detail.xpath(".//p[contains(@class, 'location-hours')]//text()") or highlight).replace('\n', '')
-
-        if get_value(address[2]) == "<MISSING>":
-            continue
-        if len(get_value(address[2]).split(' ')) > 1:
-            country = 'CA'
-        else:
-            country = 'US'
-        city_state = validate(address[1]);
-        state = ""
-        city = ""
-
-        for state_title in state_titles:
-            if state_title in city_state:
-                state = state_title
-                city = replace_last(city_state, state, '')
+        try:
+            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+                (By.CLASS_NAME, "schedule__body")))
+            time.sleep(randint(1,2))
+            hours = driver.find_element_by_class_name("schedule__body").find_element_by_tag_name("ul").text.replace("\n"," ")
+        except:
+            hours = "<INACCESSIBLE>"
 
         output = []
         output.append(base_url) # url
+        output.append(detail_url) # page_url
         output.append(title) #location name
-        output.append(get_value(address[0])) #address
-        output.append(get_value(city)) #city
-        output.append(get_value(state)) #state
-        output.append(get_value(address[2])) #zipcode
-        output.append(country) #country code
+        output.append(street_address) #address
+        output.append(city) #city
+        output.append(state) #state
+        output.append(zipcode) #zipcode
+        output.append("US") #country code
         output.append("<MISSING>") #store_number
-        output.append(get_value(store.xpath(".//span[contains(@class, 'phone')]//text()"))) #phone
-        output.append("The Original Blow Dry Bar | Blo Blow Dry Bar") #location type
-        output.append(geoinfo[title]['lat']) #latitude
-        output.append(geoinfo[title]['lng']) #longitude
+        output.append(phone) #phone
+        output.append("<MISSING>") #location type
+        output.append(latitude) #latitude
+        output.append(longitude) #longitude
         output.append(hours) #opening hours
         output_list.append(output)
-
+    driver.close()
     return output_list
 
 def scrape():
