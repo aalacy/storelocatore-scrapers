@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,36 +19,35 @@ def fetch_data():
     url = 'https://locations.dignityhealth.org/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
-                if '</a><span class="Directory-listLinkCount' in item:
+                if '</a><span class="Directory-listLinkCount' in item and 'arizona' in item:
                     states.append('https://locations.dignityhealth.org/' + item.split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a class="Directory-listLink" href="' in line2:
-                items = line2.split('<a class="Directory-listLink" href="')
+            line2 = str(line2.decode('utf-8'))
+            if '"c_pagesURL":"' in line2:
+                items = line2.split('"c_pagesURL":"')
                 for item in items:
-                    if '</a><span class="Directory-listLinkCount">(' in item:
-                        count = item.split('</a><span class="Directory-listLinkCount">(')[1].split(')')[0]
-                        lurl = 'https://locations.dignityhealth.org/' + item.split('"')[0]
-                        if count == '1':
-                            locs.append(lurl)
-                        else:
-                            cities.append(lurl)
+                    if '"c_redesignSAPCTA1"' in item:
+                        lurl = item.split('"')[0]
+                        cities.append(lurl)
     for city in cities:
         print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a class="Teaser-titleLink" href="' in line2:
-                items = line2.split('<a class="Teaser-titleLink" href="')
+            line2 = str(line2.decode('utf-8'))
+            if '"c_pagesURL":"' in line2:
+                items = line2.split('"c_pagesURL":"')
                 for item in items:
-                    if 'data-ya-track="businessname">' in item:
-                        locs.append('https://locations.dignityhealth.org/' + item.split('"')[0])
+                    if ',"c_primaryCTAText":"' in item:
+                        locs.append(item.split('"')[0])
     for loc in locs:
-        loc = loc.replace('&#39;','%27').replace('&amp;','%26')
+        loc = loc.replace('\\u0026','&')
         print('Pulling Location %s...' % loc)
         website = 'dignityhealth.org'
         typ = '<MISSING>'
@@ -66,8 +64,11 @@ def fetch_data():
         lng = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            if 'id="location-name" itemprop="name">' in line2:
-                name = line2.split('id="location-name" itemprop="name">')[1].split('<')[0]
+            line2 = str(line2.decode('utf-8'))
+            if 'property="og:title" content="' in line2:
+                name = line2.split('property="og:title" content="')[1].split('"')[0]
+                if ' |' in name:
+                    name = name.split(' |')[0]
             if '[{"altTagText":"' in line2 and add == '':
                 add = line2.split('"address":')[1].split('"line1":"')[1].split('"')[0]
                 city = line2.split('{"city":"')[1].split('"')[0]
