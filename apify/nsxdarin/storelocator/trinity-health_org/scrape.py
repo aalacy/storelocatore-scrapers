@@ -13,6 +13,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    locinfo = []
     locs = []
     for x in range(0, 20):
         print(x)
@@ -65,7 +66,10 @@ def fetch_data():
                 lng = line2.split('Longitude\\\\\\":')[1].split(',')[0]
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        info = add + ':' + city
+        if info not in locinfo:
+            locinfo.append(info)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
