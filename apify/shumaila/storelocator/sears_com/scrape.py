@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-import requests
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -33,25 +32,32 @@ def fetch_data():
     k =0
     pattern = re.compile(r'\s\s+')
     url = "https://www.sears.com/stores.html"
-    page = requests.get(url)
-    #page = session.get(url, headers=headers, verify=False)
+    #page = requests.get(url)
+    page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
-    mainul = soup.find('ul',{'id':'stateList'})
+    mainul = soup.find('ul',{'class':'shc-search-by-state__list'})
     statelist = mainul.findAll('a')
+    #print("LEN+",len(statelist))
     for state in statelist:
         if state['href'].find('404') == -1:
             statelink = "https://www.sears.com" + state['href']
             #print(statelink)
+            state1 = state.text
             flag1 = True
             while flag1:
                 try:
-                    page1 = requests.get(statelink)
-                    #page1 = session.get(statelink, headers=headers, verify=False)
+                    #page1 = requests.get(statelink)
+                    page1 = session.get(statelink, headers=headers, verify=False)
+                    #print("ENTER:")
                     soup1 = BeautifulSoup(page1.text, "html.parser")
-                    maindiv = soup1.find('div', {'id': 'cityList'})
-                    linklist = maindiv.findAll('a',{'itemprop':'url'})
+                    maindiv = soup1.find('div', {'class': 'shc-quick-links'})
+                    linklist = soup1.findAll('li',{'class':'shc-quick-links--store-details__list--stores'})
+                    #linklist = maindiv.findAll('a',{'itemprop':'url'})
+                    #print(len(linklist))
                     for blinks in linklist:
-                        link = blinks['href']
+                        link = blinks.find('a')['href']
+                        state1 = blinks.find('a').text.split(',')[1].split('\n',1)[0]
+                        
                         if link.find("http") == -1 and blinks.text.find("Sears Store") > -1 :
                             #print("enter")
                             link = "https://www.sears.com" + link
@@ -60,52 +66,63 @@ def fetch_data():
                             while flag:
                                 try:
                                     #link = 'https://www.sears.com/stores/texas/crp-chrsti/0001217.html'
+                                    #link = 'https://www.sears.com/stores/maine/s-portland/0002183.html'
                                     #page2 = requests.get(link)
-                                    page2 = session.get(link, headers=headers, verify=False)
+                                    page2 = session.get(link,headers= headers,verify=False)
                                     time.sleep(2)
+                                    #print(page2.url)
                                     if page2.url.find('closed') > -1:
                                         print('closed',link,page2.url)
                                         break
                                     else:
-                                        page2 = requests.get(link)
+                                        #page2 = requests.get(link)
                                         soup2 = BeautifulSoup(page2.text, "html.parser")
+                                        #print(soup2.text)
                                         try:
-                                            title = soup2.find('h1').text
+                                            title = soup2.find('h1',{'class':'shc-save-store__title'})['data-store-title']+soup2.find('h1',{'class':'shc-save-store__title'})['data-unit-number']
                                         except:
+                                            print("HERE")
                                             title = soup2.find('small', {'itemprop': 'name'}).text
 
+                                        title = title.replace('\n',' ').replace('000',' # ')
+                                        
                                         title = re.sub(pattern, " ", title)
+                                        #print(title)
                                         start = title.find("#")
                                         if start != -1:
-                                            start = start + 2
-                                            store = title[start:len(title)]
+                                           
+                                            store = title.split('#',1)[1].lstrip()
                                         else:
                                             store = "<MISSING>"
+                                        #print(store)
+                                        mainp = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')
+                                        #print(len(mainp))
                                         try:
-                                            street = soup2.find('span',{'itemprop':'streetAddress'}).text
+                                            street = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')[0].text
                                             street = street.lstrip()
-                                        except:
+                                        except Exception as e:
+                                            #print(e)
                                             street = "<MISSING>"
+                                        #print(street)
                                         try:
-                                            city = soup2.find('span', {'itemprop': 'addressLocality'}).text
+                                            city = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')[1].text.split(', ')[0]
                                             city = city.lstrip()
                                         except:
                                             city = "<MISSING>"
+                                            
+                                        pcode = "<MISSING>"  
                                         try:
-                                            state = soup2.find('span', {'itemprop': 'addressRegion'}).text
-                                            state = state.lstrip()
+                                            pcode = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')[1].text.split(', ')[1]
+                                           # state,pcode = state.lstrip().split(' ',1)
                                         except:
                                             state = "<MISSING>"
+                                       
                                         try:
-                                            pcode = soup2.find('span', {'itemprop': 'postalCode'}).text
-                                        except:
-                                            pcode = "<MISSING>"
-                                        try:
-                                            phone = soup2.find('span', {'itemprop': 'telephone'}).text
+                                            phone = soup2.find('strong', {'class': 'shc-store-location__details--tel'}).text
                                         except:
                                             phone = "<MISSING>"
                                         try:
-                                            hourd = soup2.findAll('tr',{'itemprop':'openingHoursSpecification'})
+                                            hourd = soup2.find('div',{'class':'shc-store-hours__details'}).findAll('li')
                                             hours = ""
                                             for hour in hourd:
 
@@ -114,16 +131,9 @@ def fetch_data():
                                         except:
                                             hours = "<MISSING>"
                                         try:
-                                            soup2 = str(soup2)
-                                            start = soup2.find('lat =')
-                                            start = soup2.find('=',start) + 2
-                                            #print(start)
-                                            end = soup2.find(',',start)
-                                            lat = soup2[start:end]
-                                            start = soup2.find('lon =')
-                                            start = soup2.find('=',start) + 2
-                                            end = soup2.find(',', start)
-                                            longt = soup2[start:end]
+                                           coord = soup2.find('div',{'class':'shc-store-location'})
+                                           lat = coord['data-latitude']
+                                           longt = coord['data-longitude']
                                         except:
                                             lat =  "<MISSING>"
                                             longt =  "<MISSING>"
@@ -147,7 +157,7 @@ def fetch_data():
                                             title,
                                             street,
                                             city,
-                                            state,
+                                            state1,
                                             pcode,
                                             'US',
                                             store,
