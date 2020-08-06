@@ -1,7 +1,7 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace(u'\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -59,20 +59,25 @@ def parse_address(address):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    headers = {'User-Agent' : user_agent}
+
+    session = SgRequests()
     output_list = []
     url = "https://www.mirabito.com/locations/"
-    session = requests.Session()
-    source = session.get(url).text    
-    data = source.split('var maplistScriptParamsKo = ')[1].split('};')[0] + '}'    
+    source = session.get(url).text
+    data = source.split('var maplistScriptParamsKo = ')[1].split('};')[0] + '}'
     store_list = json.loads(data)['KOObject'][0]['locations']
     for store in store_list:
         output = []
         output.append(base_url) # url
+        output.append(url) # page_url
         output.append(get_value(store['title'])) #location name
         details = eliminate_space(etree.HTML(store['description']).xpath('.//text()'))
         address = ''
@@ -91,17 +96,34 @@ def fetch_data():
             for de in details:
                 if '-' not in de:
                     address.append(de)
+
             address = parse_address(validate(address))
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode  
+        street = address['street']
+        if street == "16 Business Blvd.":
+            city = "Castleton-On-Hudson"
+            state = "NY"
+            zipcode = "12033"
+        else:
+            city = address['city']
+            state = address['state']
+            zipcode = address['zipcode']
+            if street == "8536 Seneca Turnpike":
+                zipcode = "13413"
+            if street == "54 Elm St.":
+                zipcode = "13753"            
+        output.append(street) #address
+        output.append(city) #city
+        output.append(state) #state
+        output.append(zipcode) #zipcode
         output.append('US') #country code
-        output.append('<MISSING>') #store_number
+        store_number = store['title'].split("#")[-1]
+        if not store_number.isnumeric():
+            store_number = '<MISSING>'
+        output.append(store_number) #store_number
         output.append(get_value(phone)) #phone
-        output.append('Mirabito Locations | Convenience Stores & Gas Stations') #location type
+        output.append('<MISSING>') #location type
         output.append(get_value(store['latitude'])) #latitude
-        output.append(get_value(store['longitude'])) #longitude        
+        output.append(get_value(store['longitude'])) #longitude
         output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
     return output_list
