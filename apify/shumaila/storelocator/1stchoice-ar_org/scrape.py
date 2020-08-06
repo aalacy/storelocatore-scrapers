@@ -49,9 +49,12 @@ def fetch_data():
         hourstr = loc['days_str'].split(',')
         hours = ''
         for i in range(0,len(hourstr)):
-            start = loc['start_time_'+str(i)]
-            end = loc['end_time_'+str(i)]
+            start = loc['start_time_'+str(i+1)]
+            end = loc['end_time_'+str(i+1)]
             hours = hours + hourstr[i] +' ' + start +' : ' + end +' '
+
+        if link.find('http') == -1:
+            link = 'http://www.1stchoice-ar.org' + link
         
         if title.find('Coming Soon') == -1:
             data.append([
