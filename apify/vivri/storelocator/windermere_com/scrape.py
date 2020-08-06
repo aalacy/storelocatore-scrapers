@@ -69,12 +69,19 @@ def phone_number_extract(raw: str, which_index=0):
     except ValueError:
         return ""
 
+def page_url_from_slug(slug: str):
+    """
+    Prepends the location root to the page slug, under which the location could be found.
+    """
+    return "https://www.windermere.com/offices/" + slug
+
 def scrape():
     """
     The main entrypoint into the program.
     """
 
     record_mapping = {
+        "page_url": [["url_slug"]],
         "location_name": [["name"]],
         "street_address": [["location", "address"], ["location", "address2"]],
         "city": [["location", "city"]],
@@ -90,7 +97,6 @@ def scrape():
 
     constant_fields = {
         "locator_domain": "https://windermere.com",
-        "page_url": "<MISSING>",
         "hours_of_operation": "<MISSING>"
     }
 
@@ -101,7 +107,8 @@ def scrape():
     ]
 
     field_transformers = {
-        "phone": lambda s: phone_number_extract(s)
+        "phone": lambda s: phone_number_extract(s),
+        "page_url": lambda s: page_url_from_slug(s)
     }
 
     scrape_pipeline.define_and_run( data_fetcher= lambda: fetch_data(),
