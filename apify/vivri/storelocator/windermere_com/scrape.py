@@ -4,11 +4,9 @@ import urllib.parse
 import simplejson as json
 import simple_scraper_pipeline as scrape_pipeline
 
-### LIBRARY INVOCATION CODE ###
-
 def fetch_data():
     """
-    Fetches the data from an external source, conforming to the signature described in `scrape_pipeline(data_fetcher)`
+    Fetches the data from an external source, conforming to the signature described in `scrape_pipeline.define_and_run`
     :return:
         A list of dicts, each of which is the raw data field.
     """
@@ -48,6 +46,9 @@ def fetch_data():
     return json_result['data']['result_list']
 
 def strip_extension(phone: str):
+    """
+    Strips the phone's extension (after and including the "x"), and returns the phone number.
+    """
     return phone.split("x")[0]
 
 def phone_number_extract(raw: str, which_index=0):
@@ -70,7 +71,7 @@ def phone_number_extract(raw: str, which_index=0):
 
 def scrape():
     """
-    The main entrypoint into the program; uses the above "library" to invoke the scraper functionality.
+    The main entrypoint into the program.
     """
 
     record_mapping = {

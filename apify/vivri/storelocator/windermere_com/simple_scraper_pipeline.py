@@ -1,7 +1,10 @@
 """
-This is a simple scraper library that uses a fetcher function, and some configuration to write data to a CSV file.
+This is a simple scraper library that builds on successive utility methods and user-defined lambdas and config,
+to generate and run a full scraper.
 
-The main entrypoint is `define_and_run`, but you can feel free to use any of the utilities therein.
+It is generic in the sense it doesn't care about the source of data, nor how the fields are transformed.
+
+The main entrypoint is `define_and_run`, but you can feel free to use any of the utilities therein individually.
 """
 
 import csv
