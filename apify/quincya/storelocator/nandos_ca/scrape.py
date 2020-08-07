@@ -1,27 +1,18 @@
 from bs4 import BeautifulSoup
-import requests
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.proxy import Proxy,ProxyType
+from sgselenium import SgSelenium
 import time
 import re #for regular expression
 
-hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
+hed=["locator_domain","page_url","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
            "longitude","hours_of_operation"]
-opts=Options()
-opts.add_argument('disable-infobars')
-opts.add_argument("user-agent="+"sara")
-opts.add_argument("ignore-certificate-errors")
-opts.add_argument("--headless")
-opts.add_argument('--no-sandbox')
-opts.add_argument('--disable-dev-shm-usage')
-capabilities = webdriver.DesiredCapabilities.CHROME
-driver=webdriver.Chrome('chromedriver',options=opts,desired_capabilities=capabilities)
+
+driver = SgSelenium().chrome()
+time.sleep(2)
+
 url = "https://www.nandos.ca/eat/restaurants"
-driver.implicitly_wait(60)
 driver.get(url)
-time.sleep(10)
+time.sleep(20)
 html = driver.execute_script("return document.body.innerHTML")
 soup = BeautifulSoup(html,"html.parser")
 all_rec = soup.find_all("div",attrs={"class":"state"})
@@ -55,6 +46,8 @@ with open("data.csv",mode="w") as file:
                     latitude        =   y["data-lat"]
                     langitude       =   y["data-lng"]
                     contact_number  =   y["data-tel"]
+                    if not contact_number:
+                    	contact_number = "<MISSING>"
                     hours_of_operation =y["data-ropen"] +","+ y["data-rclose"]
                     
                 tt = x.find_all(name="h3",attrs={"class":"title"})
@@ -73,7 +66,7 @@ with open("data.csv",mode="w") as file:
                     if "T8H0W6" in zip_code:
                         zip_code = "T8H 0W6" #one case is there
                     city = tem[len(tem)-2]
-                data=["nandos_ca",location_name,street_address,city,state,zip_code,"CA","<MISSING>",contact_number,
+                data=["nandos_ca",url,location_name,street_address,city,state,zip_code,"CA","<MISSING>",contact_number,
                       "<MISSING>",latitude,langitude,hours_of_operation]
                 fl_writer.writerow(data)
 driver.quit()
