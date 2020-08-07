@@ -38,11 +38,12 @@ def fetch_data():
         #print(locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-'))
         url="https://www.levinfurniture.com/api/rest/pages/locations%2F"+locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-')
         print(url)
-        res = session.get(url)
-        soup = str(BeautifulSoup(res.text, 'html.parser')).replace('\\t', '').replace('\\r\\n', '').replace('&lt;\/h3&gt;', '').replace('&lt;\/span&gt;', '').replace('&lt;\/div&gt;', '').replace('&lt;\/li&gt;','').replace('&lt;\/ul&gt;','')
-        print(soup)
-        tim=re.findall(r'"avb-list__item\\"\'>([^<]+)<li class=\'\\"avb-list__item\\"\'>([^<]+)',soup)[0]
-        tim=' '.join(tim)
+        res = session.get(url, headers={'content-type': 'application/json'}).json()
+        souper = BeautifulSoup(res['content'], 'html.parser')
+        soup = str(souper).replace('\\t', '').replace('\\r\\n', '').replace('&lt;\/h3&gt;', '').replace('&lt;\/span&gt;', '').replace('&lt;\/div&gt;', '').replace('&lt;\/li&gt;','').replace('&lt;\/ul&gt;','')
+        metadata = souper.findAll("li", {"class": "avb-list__item"})
+        tim = [x.getText().strip() for x in metadata if ' - ' in x.getText()]
+        tim=', '.join(tim)
         street=str(addrs[i][0]).strip()
         csz=str(addrs[i][1]).strip().split(',')
         city=csz[0]
