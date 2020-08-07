@@ -10,9 +10,9 @@ ids = []
 
 
 def log(*args, **kwargs):
-  if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
-    print("")
+    if (show_logs == True):
+        print(" ".join(map(str, args)), **kwargs)
+        print("")
 
 
 def write_output(data):
