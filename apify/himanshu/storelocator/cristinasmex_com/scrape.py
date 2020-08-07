@@ -1,10 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-import ast
-
 
 
 session = SgRequests()
@@ -14,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -30,10 +26,11 @@ def fetch_data():
     base_url = "http://cristinasmex.com"
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    parts = soup.find("li", {"class": "dropdown"})
+    parts = soup.find_all("li", {"class": "dropdown"})[1]
     for semi_parts in parts.find_all("ul", {"class": "dropdown-menu"}):
         for semi_in_parts in parts.find_all("li"):
-            store_request = session.get(base_url + semi_in_parts.find("a")['href'])
+            link = base_url + semi_in_parts.find("a")['href']
+            store_request = session.get(link)
             store_soup = BeautifulSoup(store_request.text, "lxml")
             for inner_part in store_soup.find_all("div", {"id": "course-contact"}):
                 temp_storeaddresss = list(inner_part.stripped_strings)
@@ -48,6 +45,7 @@ def fetch_data():
                 phone= temp_storeaddresss[6]
                 location_name= temp_storeaddresss[7]
                 return_object.append(base_url)
+                return_object.append(link)
                 return_object.append(location_name)
                 return_object.append(street_address)
                 return_object.append(city)
@@ -56,7 +54,7 @@ def fetch_data():
                 return_object.append("US")
                 return_object.append("<MISSING>")
                 return_object.append(phone)
-                return_object.append("Cristinas Mex")
+                return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_object.append(hour)
