@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,12 +18,14 @@ def fetch_data():
     url = 'https://www.enterprise.com/en/car-rental/locations/us.html'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<h3 class="state-title"><a class="heading-link" href="' in line:
             lurl = 'https://www.enterprise.com' + line.split('href="')[1].split('"')[0]
             states.append(lurl + '|US')
     url = 'https://www.enterprise.com/en/car-rental/locations/canada.html'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<h3 class="state-title"><a class="heading-link" href="' in line:
             lurl = 'https://www.enterprise.com' + line.split('href="')[1].split('"')[0]
             states.append(lurl + '|CA')
@@ -34,6 +35,7 @@ def fetch_data():
         locs = []
         r2 = session.get(surl, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<a href="https://www.enterprise.com/en/car-rental/locations/' in line2:
                 lurl = line2.split('href="')[1].split('"')[0]
                 if lurl not in alllocs:
@@ -52,9 +54,10 @@ def fetch_data():
             lat = ''
             lng = ''
             hours = ''
-            #print('Pulling Location %s...' % loc)
+            print('Pulling Location %s...' % loc)
             r3 = session.get(loc, headers=headers)
             for line3 in r3.iter_lines():
+                line3 = str(line3.decode('utf-8'))
                 if '<meta property="og:title" content="' in line3:
                     name = line3.split('<meta property="og:title" content="')[1].split(' |')[0].replace('Car Rental ','')
                 if '"streetAddress" : "' in line3:

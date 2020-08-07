@@ -67,7 +67,7 @@ def fetch_data():
                 store_number = i['linkUrl'].split('?')[0].split('/stores/search/')[1]
                 lt = i['linkUrl'].split('=')[1]
                 lg = i['linkUrl'].split('=')[2]
-                href = "https://www.hobbylobby.com/"+str(i['linkUrl'].split('=')[0])+"="+str(lt[:5])+"&long="+str(lg[:6])
+                href = "https://www.hobbylobby.com"+str(i['linkUrl'].split('=')[0])+"="+str(lt[:5])+"&long="+str(lg[:6])
                 try:
                     r1 = session.get(href, headers=headers)
                 except:
