@@ -1,15 +1,27 @@
 import csv
 import os
-from sgselenium import SgSelenium
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+
 import time
 from random import randint
 import re
 
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -33,7 +45,9 @@ def fetch_data():
     locator_domain = 'https://www.hobbytown.com/'
     ext = 'store-locations'
 
-    driver = SgSelenium().chrome()
+    driver = get_driver()
+    time.sleep(3)
+
     driver.get(locator_domain + ext)
 
     element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
@@ -43,13 +57,13 @@ def fetch_data():
     print("Page loaded!")
     cityinput = driver.find_element_by_id('CityState')
     cityinput.clear()
+    time.sleep(2)
     cityinput.send_keys("Iowa City")
-
     time.sleep(5)
 
-    to_click = driver.find_element_by_css_selector('div.ui-menu-item-wrapper')
+    to_click = driver.find_element_by_id('find-stores').find_element_by_tag_name('button')
     driver.execute_script("arguments[0].click();", to_click)
-    time.sleep(2)
+    time.sleep(5)
 
     select = Select(driver.find_element_by_id('radius'))
     select.select_by_value('3000')
@@ -78,7 +92,7 @@ def fetch_data():
         except:
             print("Page failed to load..retrying")
             driver.get(link)
-            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "h1.titlebar")))
             time.sleep(randint(1,2))
         
@@ -111,7 +125,7 @@ def fetch_data():
                 driver.switch_to.frame(map_frame)
                 time.sleep(randint(1,2))
                 map_str = driver.page_source
-                geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2}\.[0-9]+\]', map_str)[0].replace("[","").replace("]","").split(",")
+                geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]', map_str)[0].replace("[","").replace("]","").split(",")
                 lat = geo[0]
                 longit = geo[1]
             except:
