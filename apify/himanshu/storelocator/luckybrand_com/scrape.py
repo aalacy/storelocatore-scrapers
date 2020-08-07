@@ -19,6 +19,15 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def get_hours(raw_hours):
+    hours = []
+    for day in raw_hours.keys():
+        if 'openIntervals' in raw_hours[day]:
+            start = raw_hours[day]['openIntervals'][0]['start']
+            end = raw_hours[day]['openIntervals'][0]['end']
+            hours.append('{}: {}-{}'.format(day, start, end))
+    return ', '.join(hours)
+
 def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -50,19 +59,21 @@ def fetch_data():
             zipp = data['address']['postalCode']
             store_number = data['meta']['id']
             location_type = data['meta']['schemaTypes'][0]
-            r = session.get(page_url)
-            soup = BeautifulSoup(r.text, "lxml")
-            location_name = soup.find("title").text
-            try:
-                hours = " ".join(list(soup.find("tbody",{"class":"hours-body"}).stripped_strings))
-            except:
-                hours = "<MISSING>"
-            info = json.loads(soup.find(lambda tag:(tag.name == "script") and "latitude" in tag.text).text)
-            latitude = info['geo']['latitude']
-            longitude = info['geo']['longitude']
-            phone = info['telephone']
+            hours = get_hours(data['hours'])
+            latitude = '<MISSING>'
+            longitude = '<MISSING>'
+            phone = '<MISSING>'
+            location_name = '<MISSING>'
+            if page_url != base_url:
+                r = session.get(page_url)
+                soup = BeautifulSoup(r.text, "lxml")
+                location_name = soup.find("title").text
+                info = json.loads(soup.find(lambda tag:(tag.name == "script") and "latitude" in tag.text).text)
+                latitude = info['geo']['latitude']
+                longitude = info['geo']['longitude']
+                result_coords.append((latitude,longitude))
+                phone = info['telephone']
 
-            result_coords.append((latitude,longitude))
             store = []
             store.append(base_url)            
             store.append(location_name)
@@ -84,19 +95,14 @@ def fetch_data():
             addresses.append(store[2])
             yield store
            
-        if current_result_len < MAX_RESULTS:
+        if current_result_len == 0:
             search.max_distance_update(MAX_DISTANCE)
-        elif current_result_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            search.max_count_update(result_coords)
         coord = search.next_coord()
-    
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
