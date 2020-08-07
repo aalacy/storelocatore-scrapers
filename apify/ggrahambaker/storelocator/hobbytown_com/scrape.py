@@ -1,8 +1,7 @@
 import csv
 import os
+from sgselenium import SgSelenium
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,15 +12,6 @@ import time
 from random import randint
 import re
 
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -45,8 +35,8 @@ def fetch_data():
     locator_domain = 'https://www.hobbytown.com/'
     ext = 'store-locations'
 
-    driver = get_driver()
-    time.sleep(3)
+    driver = SgSelenium().chrome()
+    time.sleep(randint(2,4))
 
     driver.get(locator_domain + ext)
 

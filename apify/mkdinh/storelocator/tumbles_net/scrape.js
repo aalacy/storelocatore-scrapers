@@ -43,8 +43,9 @@ async function enqueueLocationLinks({ $, requestQueue }) {
 }
 
 async function extractDataFromPage({ $, request }) {
+  const locator_domain = 'tumbles.net';
   const location_type = 'tumbles';
-  const locator_domain = extractLocatorDomain(request.url);
+  const page_url = extractLocatorDomain(request.url);
   const detailsComponent = $('address');
   const location_name = detailsComponent.find('p:nth-child(1)').text();
   const address = detailsComponent.find('p:nth-child(2)').text();
@@ -57,6 +58,7 @@ async function extractDataFromPage({ $, request }) {
 
   return {
     locator_domain,
+    page_url,
     location_name,
     location_type,
     street_address,
