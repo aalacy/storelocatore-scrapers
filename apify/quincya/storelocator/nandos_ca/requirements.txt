@@ -1,3 +1,2 @@
-selenium==3.141.0
-bs4
-requests
+sgselenium
+beautifulsoup4==4.7.1

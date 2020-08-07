@@ -64,7 +64,7 @@ def fetch_data():
                 phone = i['phone']
                 latitude = round(float(i['latitude']),6)
                 longitude = round(float(i['longitude']),6)
-                store_number = i['linkUrl'].split('?')[0].split('/store/')[1]
+                store_number = i['linkUrl'].split('?')[0].split('/stores/search/')[1]
                 lt = i['linkUrl'].split('=')[1]
                 lg = i['linkUrl'].split('=')[2]
                 href = "https://www.hobbylobby.com/"+str(i['linkUrl'].split('=')[0])+"="+str(lt[:5])+"&long="+str(lg[:6])
