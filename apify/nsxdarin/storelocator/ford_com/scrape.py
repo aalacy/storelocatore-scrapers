@@ -2,8 +2,8 @@ import csv
 from sgrequests import SgRequests
 import sgzip
 import json
+from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -13,6 +13,11 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
+
+@retry(stop=stop_after_attempt(10))
+def fetch_zip_code(url):
+    session = SgRequests()
+    return session.get(url, headers=headers, timeout=10).json()
 
 def fetch_data():
     ids = []
@@ -24,7 +29,7 @@ def fetch_data():
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         url = 'https://www.ford.com/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode=' + code
-        js = session.get(url, headers=headers, timeout=10).json()
+        js = fetch_zip_code(url)
         if 'Dealer' in js['Response']:
             dealers = js['Response']['Dealer'] if type(js['Response']['Dealer']) == type([]) else [js['Response']['Dealer']]
             for item in dealers:
