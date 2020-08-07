@@ -2,10 +2,15 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 import json
+from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+
+@retry(stop=stop_after_attempt(10))
+def api_call(url):
+    session = SgRequests()
+    return session.get(url, headers=headers, timeout=10).json()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +31,7 @@ def fetch_data():
         while LocFound:
             try:
                 LocFound = False
-                r = session.get(url, headers=headers, timeout=10)
+                r = api_cal(url)
                 if '"Dealer":[{' in r.content:
                     for item in json.loads(r.content)['Response']['Dealer']:
                         lng = item['Longitude']
