@@ -41,7 +41,7 @@ def fetch_data():
         phone = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
-        hours = '<MISSING>'
+        hours = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -64,9 +64,13 @@ def fetch_data():
                 lat = line2.split('Latitude\\\\\\":')[1].split(',')[0]
             if 'Longitude\\\\\\":' in line2:
                 lng = line2.split('Longitude\\\\\\":')[1].split(',')[0]
+            if '"Values\\":[\\"' in line2:
+                hours = line2.split('"Values\\":[\\"')[1].split('\\"],\\"')[0].replace('",\\"','; ').replace('"','')
         if phone == '':
             phone = '<MISSING>'
         info = add + ':' + city
+        if hours == '':
+            hours = '<MISSING>'
         if info not in locinfo:
             locinfo.append(info)
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
