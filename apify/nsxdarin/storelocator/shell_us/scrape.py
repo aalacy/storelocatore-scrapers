@@ -2,18 +2,9 @@ import csv
 from sgrequests import SgRequests
 import sgzip
 
-
-show_logs = False
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
 ids = []
-
-
-def log(*args, **kwargs):
-    if show_logs:
-        print(" ".join(map(str, args)), **kwargs)
-        print("")
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -67,19 +58,16 @@ def scrape_url(url):
                             if zc == '':
                                 zc = '<MISSING>'
                             poi = [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                            log(poi, '\n')                   
                             stores.append(poi)
     return stores
 
 
 def parse_coords(stores): 
-    log('parsing coords ... ')
     result_coords = []
     for store in stores: 
         lat = store[-3]
         lng = store[-2]
         url = store[1]
-        log(url, lat, lng)
         result_coords.append((lat,lng))
     return result_coords
 
@@ -90,9 +78,7 @@ def fetch_data():
     search.initialize(country_codes=['US'])
     coord = search.next_coord()
     while coord:
-        log("remaining zipcodes: " + str(len(search.zipcodes)))
         url = f"https://shellgsllocator.geoapp.me/api/v1/locations/nearest_to?lat={str(coord[0])}&lng={str(coord[1])}&selected=&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=true&format=json"
-        log(f'searching: {url}')
         stores = scrape_url(url)
 
         for store in stores: 
