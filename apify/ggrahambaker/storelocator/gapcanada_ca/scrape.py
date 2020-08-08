@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +34,6 @@ def fetch_data():
         for link in links:
             if '?bc=true' in link:
                 continue
-         
             city_links.append(locator_domain[:-1] + link)
 
     link_list = []
@@ -44,49 +44,65 @@ def fetch_data():
         for link in links:
             if '?bc=true' in link:
                 continue
-    
             link_list.append(locator_domain[:-1] + link)
         
     dup_tracker = set()
     all_store_data = []
-    for link in link_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        
-        location_name = ' '.join(soup.find('div', {'class': "location-name"}).text.split()) 
-        
-        addy = soup.find('p', {'class': 'address'}).find_all('span')
-        street_address = ' '.join(addy[0].text.split())
-  
-        city, state, zip_code = addy_ext(' '.join(addy[1].text.split()))
+    for i, link in enumerate(link_list):
+        print("Link %s of %s" %(i+1,len(link_list)))
+        print(link)
+        if link != "https://www.gapcanada.ca/stores/on/london/":
+            r = session.get(link, headers = HEADERS)
+            soup = BeautifulSoup(r.content, 'html.parser')
             
-        google_link = soup.find('a', {'class': 'directions'})['href']
+            location_name = ' '.join(soup.find('div', {'class': "location-name"}).text.split()) 
+            
+            addy = soup.find('p', {'class': 'address'}).find_all('span')
+            street_address = ' '.join(addy[0].text.split())
+      
+            city, state, zip_code = addy_ext(' '.join(addy[1].text.split()))
+                
+            google_link = soup.find('a', {'class': 'directions'})['href']
+            
+            start = google_link.find('daddr=')
+            coords = google_link[start + 6:].split(',')
+            
+            phone_number = soup.find('a', {'class': 'phone'}).text.strip()
+            if phone_number == '':
+                phone_number = '<MISSING>'
         
-        start = google_link.find('daddr=')
-        coords = google_link[start + 6:].split(',')
-        
-        phone_number = soup.find('a', {'class': 'phone'}).text.strip()
-        if phone_number == '':
-            phone_number = '<MISSING>'
-    
-        hours_div = soup.find('div', {'class': 'hours'})
-        dayparts = hours_div.find_all('span', {'class': 'daypart'})
-        times = hours_div.find_all('span', {'class': 'time'})
-        hours = ''
-        for i, day in enumerate(dayparts):
-            hours += dayparts[i].text.strip() + ' ' + times[i].text.strip() + ' ' 
-        
-        country_code = 'CA'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        
-        lat = coords[0]
-        longit = coords[1]
-        
-        page_url = link
+            hours_div = soup.find('div', {'class': 'hours'})
+            dayparts = hours_div.find_all('span', {'class': 'daypart'})
+            times = hours_div.find_all('span', {'class': 'time'})
+            hours = ''
+            for i, day in enumerate(dayparts):
+                hours += dayparts[i].text.strip() + ' ' + times[i].text.strip() + ' ' 
+            hours = hours.replace("\n","").strip()
+            hours = (re.sub(' +', ' ', hours)).strip()
+
+            country_code = 'CA'
+            store_number = link.split("-")[-1]
+            location_type = '<MISSING>'
+
+            lat = coords[0]
+            longit = coords[1]
+            
+            page_url = link
+        else:
+            location_name = "Wellington Commons Gap Factory Store"
+            street_address = "1230 Wellington Road Suite 111"
+            city, state, zip_code = "London", "ON", "N6E 1M3"
+            phone_number = "(548) 482-5796"
+            hours = 'Mon 10:00am - 9:00pm Tue 10:00am - 9:00pm Wed 10:00am - 9:00pm Thu 10:00am - 9:00pm Fri 10:00am - 9:00pm Sat 10:00am - 9:00pm Sun 11:00am - 6:00pm'
+            country_code = 'CA'
+            store_number = '<MISSING>'
+            location_type = '<MISSING>'
+            lat = "42.9284123"
+            longit = "-81.2175352"
+            page_url = link
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-
         all_store_data.append(store_data)
 
     return all_store_data
