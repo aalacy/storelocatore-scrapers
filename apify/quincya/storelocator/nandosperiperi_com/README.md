@@ -1,0 +1,1 @@
+--ignore StreetAddressHasStateName (Confirmed scraped correctly)

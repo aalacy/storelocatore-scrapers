@@ -54,7 +54,7 @@ def fetch_data():
     location_url = "https://www.nissan.co.uk/dealer-locator.html"
     r = request_wrapper(location_url,"get",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    data = (soup.find("script",{"type":"text/javascript"}).text.split('{"totalResults":195,"dealers":')[1].split("};")[0])
+    data = (soup.find("script",{"type":"text/javascript"}).text.split(',"dealers":')[1].split("};")[0])
     json_data = json.loads(data)
     for i in json_data:
         page5 = ((i['id']).replace("gb_nissan_05","").replace("51894","1894").replace("1780","1932").replace("1700","1931").replace("1004","51004"))
