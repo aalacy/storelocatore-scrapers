@@ -1,4 +1,3 @@
-#https://stockist.co/api/v1/u5383/locations/all.js?callback=_stockistAllStoresCallback
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -68,7 +67,7 @@ def fetch_data():
             hours = '<MISSING>'
         #print(hours)
         data.append(['https://www.zpizza.com/',link,title,street,city,state,pcode,ccode,store,phone,"<MISSING>",lat,longt,hours])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
         
     
