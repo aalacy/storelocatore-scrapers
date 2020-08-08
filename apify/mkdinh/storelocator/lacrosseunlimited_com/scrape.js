@@ -36,7 +36,7 @@ Apify.main(async () => {
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
     async handlePageFunction({ $ }) {
-      const promises = data.map(async (location) => {
+      const pois = data.map((location) => {
         return {
           locator_domain: 'lacrosseunlimited.com',
           page_url: locationUrl,
@@ -55,7 +55,6 @@ Apify.main(async () => {
         };
       });
 
-      const pois = await Promise.all(promises);
       await Apify.pushData(pois);
     },
   });
