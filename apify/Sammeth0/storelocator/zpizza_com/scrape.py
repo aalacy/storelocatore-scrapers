@@ -48,7 +48,7 @@ def fetch_data():
         hours = ''
         hourd= []
         hourd.append('none')
-        print(title)
+        #print(title)
         try:
             for hr in hourlist:
                 dt = hr.split(' ',1)[0]
