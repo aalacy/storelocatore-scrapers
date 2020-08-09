@@ -42,7 +42,7 @@ def fetch_data():
         else:
 
             phone = phone[0].text
-        tim= div.find('div', {'data-aid': 'CONTACT_HOURS_CUST_MSG_REND'}).text.replace('pm','pm ').strip().replace('\xa0','')
+        tim= div.find('div', {'data-aid': 'CONTACT_HOURS_CUST_MSG_REND'}).text.replace('pm','pm ').strip().replace(u'\xa0',u'')
 
         all.append([
             "https://thaibbqla.com/",
