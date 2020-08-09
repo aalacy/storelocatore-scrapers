@@ -64,13 +64,21 @@ def fetch_data():
 		location_type = "<MISSING>"
 		phone = "<MISSING>"
 		try:
-			hours_of_operation = base.find(id="opening-times").text.replace("Opening Times","").strip()
+			hours_of_operation = base.find(id="opening-times").text.replace("Opening Times","").replace("each day.","").replace("every day and close around","-").strip()
 		except:
 			hours_of_operation = "<MISSING>"
 		if "Downstairs" in hours_of_operation:
 			hours_of_operation = hours_of_operation[:hours_of_operation.find("Downstairs")].strip()
 		if "Due" in hours_of_operation:
 			hours_of_operation = hours_of_operation[:hours_of_operation.find("Due")].strip()
+		if "Mon-Sat" in hours_of_operation:
+			hours_of_operation = hours_of_operation[hours_of_operation.find("Mon-Sat"):].strip()
+		if "before" in hours_of_operation:
+			hours_of_operation = "<MISSING>"
+		if "at " in hours_of_operation:
+			hours_of_operation = hours_of_operation[hours_of_operation.find("at")+2:].strip()
+		if hours_of_operation[-1:] == ".":
+			hours_of_operation = hours_of_operation[:-1]
 		try:
 			raw_gps = base.find(class_="location_map").iframe['src']
 			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
