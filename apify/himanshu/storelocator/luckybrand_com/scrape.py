@@ -54,7 +54,7 @@ def fetch_data():
             page_url = data['websiteUrl']['url']
             street_address = data['address']['line1']
             if 'line2' in data['address']:
-                street_address += " "+ str(data['address']['line2'])).strip()
+                street_address += " "+ str(data['address']['line2']).strip()
             city = data['address']['city']
            
             state = data['address']['region']
