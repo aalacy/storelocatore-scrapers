@@ -9,6 +9,8 @@ The main entrypoint is `define_and_run`, but you can feel free to use any of the
 
 import csv
 import simplejson as json
+from simple_utils import *
+from typing import *
 
 MISSING = "<MISSING>"
 
@@ -33,46 +35,7 @@ def write_output(data: list, header: list):
         for row in data:
             writer.writerow(row)
 
-def sorted_keys(the_dict: dict):
-    """
-    :returns
-        The keys of the dict as a sorted list.
-    """
-    keys = []
-    for k in the_dict.keys():
-        keys.append(k)
-    keys.sort()
-    return keys
-
-def sort_values_dict(the_dict: dict):
-    """
-    :returns
-        The values in the dict as a list, sorted by the dict keys.
-    """
-    values = []
-    for k in sorted_keys(the_dict):
-        values.append(the_dict[k])
-
-    return values
-
-def drill_down_into(record: dict, field_chain: list):
-    """
-    Follows a `field_path` in the `record` dictionary.
-    :returns
-        The value in the `record` after traversing the `field_path`.
-        If `field_path` == [], returns the record.
-        If some key in the chain isn't found, returns `None`.
-    """
-    result = record
-    for step in field_chain:
-        try:
-            result = result[step]
-        except KeyError:
-            result = None
-            break
-    return result
-
-def missing_if_empty(field: str):
+def missing_if_empty(field: str) -> str:
     """
     Convenience function that defaults an empty field to `MISSING`
     """
@@ -81,7 +44,47 @@ def missing_if_empty(field: str):
     else:
         return field
 
-def decode_record (record: dict, decode_map: dict, fail_on_outlier: bool, constant_fields: dict, required_fields: list, field_transform=None):
+
+def sg_record(page_url: str = MISSING,
+              location_name: str = MISSING,
+              street_address: str = MISSING,
+              city: str = MISSING,
+              state: str = MISSING,
+              zip_postal: str = MISSING,
+              country_code: str = MISSING,
+              store_number: str = MISSING,
+              phone: str = MISSING,
+              location_type: str = MISSING,
+              latitude: str = MISSING,
+              longitude: str = MISSING,
+              locator_domain: str = MISSING,
+              hours_of_operation: str = MISSING) -> dict:
+    """
+    Conveniently populates the fields in a SG record
+    Defaults all fields to `MISSING`
+    :rtype: dict
+    """
+    return {
+        "page_url": page_url,
+        "location_name": location_name,
+        "street_address": street_address,
+        "city": city,
+        "state": state,
+        "zip": zip_postal,
+        "country_code": country_code,
+        "store_number": store_number,
+        "phone": phone,
+        "location_type": location_type,
+        "latitude": latitude,
+        "longitude": longitude,
+        "locator_domain": locator_domain,
+        "hours_of_operation": hours_of_operation
+    }
+
+
+def decode_record (record: Dict[str, Dict], decode_map: dict, fail_on_outlier: bool, constant_fields: dict,
+                   required_fields: list,
+                   field_transform: dict = None) -> Optional[dict]:
     """
     Decodes a record, and returns a list of decoded string values, sorted by the record's own keys
 
@@ -112,6 +115,10 @@ def decode_record (record: dict, decode_map: dict, fail_on_outlier: bool, consta
 
         field_value = field_value.strip() # remove prefixed space
 
+        transformer = field_transform.get(field)
+        if transformer is not None:
+            field_value = transformer(field_value)
+
         if field_value == "":
             try:
                 required_fields.index(field) # will only succeed if it's there
@@ -123,17 +130,20 @@ def decode_record (record: dict, decode_map: dict, fail_on_outlier: bool, consta
             except ValueError:
                 # it's not in the required_field list, ergo it's defaultable.
                 field_value = MISSING
-        else:
-            transformer = field_transform.get(field)
-            if transformer is not None:
-                field_value = transformer(field_value)
 
         result[field] = missing_if_empty(field_value)
 
-    return sort_values_dict(result)
+    return result
 
 
-def parse_data(locations: list, record_mapping: dict, constant_fields: dict, required_fields: list, fail_on_outlier: bool, field_transform: list):
+def parse_data(locations: List[Dict[str, str]],
+               record_mapping: Dict[str, str],
+               constant_fields: Dict[str, str],
+               required_fields: List[str],
+               fail_on_outlier: bool,
+               field_transform: Dict[str, object],
+               record_identity_fields: List[str],
+               ) -> List[List[str]]:
     """
     Parses the raw location data
 
@@ -149,13 +159,17 @@ def parse_data(locations: list, record_mapping: dict, constant_fields: dict, req
         A map keyed on the logical field name, of a string->string lambda that transforms the field
     :param fail_on_outlier:
         Should the function except on missing a mandatory field, or just record an absence and skip it?
+    :param record_identity_fields:
+        Fields, which together would create a unique identity for a record.
+        Example: ["street_address", "city", "state"]
+        If fields are empty, no deduping happens.
     :return:
         A list of location data, each record being a list of parsed string values, sorted by key.
     """
 
-    print("Number of locations in resultset: " + str(len(locations)))
-
     result = []
+    identities = set()
+
     for record in locations:
         decoded = decode_record(
             record=record,
@@ -165,13 +179,28 @@ def parse_data(locations: list, record_mapping: dict, constant_fields: dict, req
             field_transform=field_transform,
             fail_on_outlier=fail_on_outlier)
 
-        if decoded is not None:
-            # only append successfully decoded fields.
-            result.append(decoded)
+        if decoded is not None: # only append successfully decoded fields.
+
+            # if we want to dedup based on identities
+            if len(record_identity_fields) > 0:
+                identity = record_id_function(record_identity_fields, decoded)
+                if identity not in identities:
+                    result.append(sort_values_dict(decoded))
+                    identities.add(identity)
+                else:
+                    stderr(f"Duplicate record found with identity: {identity}")
+            else:
+                result.append(sort_values_dict(decoded))
 
     return result
 
-def define_and_run(data_fetcher: lambda: list, record_mapping: dict, constant_fields=None, required_fields=None, field_transform=None, fail_on_outlier=False):
+def define_and_run(data_fetcher: lambda: List[Dict[str, str]],
+                   record_mapping: dict,
+                   constant_fields=None,
+                   required_fields=None,
+                   field_transform=None,
+                   record_identity_fields=None,
+                   fail_on_outlier=False):
     """
     Creates and executes the scraper pipeline.
     Writes `data.csv` to the current dir, and logs out useful info/errors.
@@ -197,6 +226,11 @@ def define_and_run(data_fetcher: lambda: list, record_mapping: dict, constant_fi
     :param fail_on_outlier:
         Should the function except on missing a mandatory field, or just record an absence and skip it?
         Default is False.
+    :param record_identity_fields:
+        Fields, which together would create a unique identity for a record.
+        Example: ["street_address", "city", "state"]
+        If fields are empty, no deduping happens.
+        Defaults to empty list.
     :return:
         Nothing, as it simply writes to a file.
     """
@@ -207,18 +241,27 @@ def define_and_run(data_fetcher: lambda: list, record_mapping: dict, constant_fi
         required_fields = ["street_address", "city", "state"]
     if field_transform is None:
         field_transform = {}
-
+    if record_identity_fields is None:
+        record_identity_fields = []
 
     csv_header = sorted_keys(record_mapping)
     csv_header.extend(sorted_keys(constant_fields))
     csv_header.sort()
 
+    initial_data = data_fetcher()
+
+    print(f"Number of initial records: {str(len(initial_data))}")
+
     data = parse_data(
-        locations=data_fetcher(),
+        locations=initial_data,
         record_mapping=record_mapping,
         constant_fields=constant_fields,
         required_fields=required_fields,
         field_transform=field_transform,
-        fail_on_outlier=fail_on_outlier)
+        fail_on_outlier=fail_on_outlier,
+        record_identity_fields=record_identity_fields
+    )
+
+    print(f"Number of valid records in resultset: {str(len(data))}")
 
     write_output(data, csv_header)
