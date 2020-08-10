@@ -81,6 +81,7 @@ def scrape():
             "t": str(ms_since_epoch)
         },
         headers={},
+        data_params={},
         root_node_name="store",
         location_node_name="item",
         location_parser=xml_to_dict_one_level_deep
