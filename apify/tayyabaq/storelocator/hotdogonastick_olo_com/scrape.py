@@ -1,76 +1,62 @@
+from bs4 import BeautifulSoup
 import csv
-import os
-import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import string
 import re, time
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            if row:
-                writer.writerow(row)
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\&ll=(--?[\d\.]*)', url)[0]
-    return lat,lon
-                     
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+            writer.writerow(row)
+
+
 
 def fetch_data():
-    data=[]; page_url=[];location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    driver = get_driver()
-    driver.get('https://hotdogonastick.olo.com/locations')
-    location = driver.find_elements_by_xpath('//a[contains(@href,"/locations/")]')
-    location_href=[location[n].get_attribute('href') for n in range(0,len(location))]
-    for m in range(0,len(location_href)):
-        driver.get(location_href[m])
-        time.sleep(3)
-        loc = driver.find_elements_by_xpath('//li[@class="vcard"]/h2')
-        address =driver.find_elements_by_xpath('//div[contains(@class,"streetaddress")]')
-        cities = driver.find_elements_by_class_name('locality')
-        states = driver.find_elements_by_class_name('region')
-        phones = driver.find_elements_by_class_name('location-tel-number')
-        hours = driver.find_elements_by_class_name('location-hours')
-        lat = driver.find_elements_by_xpath('//span[@class="latitude"]/span')
-        lon = driver.find_elements_by_xpath('//span[@class="longitude"]/span')
-        for n in range(0,len(address)):
-            location_name.append(loc[n].text)
-            page_url.append(location_href[m])
-            street_address.append(address[n].text.split("\n")[0])
-            city.append(cities[n].text)
-            state.append(states[n].text)
-            phone.append(phones[n].text)
-            latitude.append(lat[n].get_attribute('title'))
-            longitude.append(lon[n].get_attribute('title'))
-            hours_of_operation.append(hours[n].text)
-    for n in range(0,len(street_address)): 
-        data.append([
-            'https://hotdogonastick.olo.com/',
-            page_url[n],
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            '<MISSING>',
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            latitude[n],
-            longitude[n],
-            hours_of_operation[n]
-        ])
-    driver.quit()
+    data = []
+    pattern = re.compile(r'\s\s+') 
+    p = 0    
+    url = 'https://hotdogonastick.olo.com/locations'    
+    r = session.get(url, headers=headers, verify=False)  
+    soup = BeautifulSoup(r.text, "html.parser")
+    maindiv = soup.find('ul',{'id':'ParticipatingStates'})
+    slinklist = maindiv.findAll('a')
+    for statelink in slinklist:
+        slink = 'https://hotdogonastick.olo.com' + statelink['href']
+        r = session.get(slink, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll('li',{'class':'vcard'})
+        for div in divlist:
+            title = div.find('h2').text.replace('\r','').replace('\n','').strip()
+            #print(title)
+            try:
+                link = div.find('h2').find('a')['href']
+            except:
+                link = '<MISSING>'
+            street = div.find('span',{'class':'street-address'}).text.replace('\r','').replace('\n','').strip()
+            city = div.find('span',{'class':'locality'}).text.replace('\r','').replace('\n','').strip()
+            state = div.find('span',{'class':'region'}).text.replace('\r','').replace('\n','').strip()
+            phone = div.find('div',{'class':'location-tel-number'}).text.replace('\r','').replace('\n','').strip()
+            hours = div.find('span',{'class':'location-hours'}).text.replace('\r','').replace('\n','').strip()
+            hours = re.sub(pattern,' ',hours)
+            lat = div.find('span',{'class':'latitude'}).find('span')['title']
+            longt = div.find('span',{'class':'longitude'}).find('span')['title']
+            data.append(['https://hotdogonastick.olo.com//',link,title,street,city,state,"<MISSING>",'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
+            #print(p,data[p])
+            p += 1
+            
+        
+            
+    
     return data
 
 def scrape():

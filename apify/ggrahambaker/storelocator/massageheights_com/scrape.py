@@ -37,21 +37,26 @@ def fetch_data():
         longit = a['Longitude']
 
         location_hours = a['LocationHours']
-        page_url = locator_domain + a['Path'] 
-        if location_hours == '':
+        
+        
+        page_url = locator_domain + a['Path']
+        try:
+            if location_hours == '':
+                hours = '<MISSING>'
+            else:
+                hours = ''
+                location_hours = location_hours[1:-1].split('][')
+                for a in location_hours:
+                    temp = '{' + a + '}'
+                    hours_json = json.loads(temp)
+                    day = hours_json['Interval']
+                    open_start = hours_json['OpenTime']
+                    close_start = hours_json['CloseTime']
+                    day_info = day + ' ' + open_start + ' - ' + close_start
+                    hours += day_info + ' '
+        except:
             hours = '<MISSING>'
-        else:
-            hours = ''
-            location_hours = location_hours[1:-1].split('][')
-            for a in location_hours:
-                temp = '{' + a + '}'
-                hours_json = json.loads(temp)
-                day = hours_json['Interval']
-                open_start = hours_json['OpenTime']
-                close_start = hours_json['CloseTime']
-                day_info = day + ' ' + open_start + ' - ' + close_start
-                hours += day_info + ' '
-
+        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'

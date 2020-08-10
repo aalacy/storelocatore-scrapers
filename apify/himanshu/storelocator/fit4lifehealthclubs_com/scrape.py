@@ -53,25 +53,38 @@ def fetch_data():
             continue
         link = i.find_all("a")[-1]['href']
         print(link)
-        location_name= i.find_all("a")[-2].text
-        raw_address = i.find(class_="wpgmp_locations_content").text.strip().split("\n")
-        try:
-            address = (raw_address[-5] + " " + raw_address[-4]).strip()
-        except:
-            address = raw_address[-4]
+        if link != "https://fit4lifehealthclubs.com/fayetteville-2/":
+            location_name= i.find_all("a")[-2].text
+            raw_address = i.find(class_="wpgmp_locations_content").text.strip().split("\n")
+            try:
+                address = (raw_address[-5] + " " + raw_address[-4]).strip()
+            except:
+                address = raw_address[-4]
 
-        city, state, zip1 = addy_ext(raw_address[-3])
-        phone = raw_address[-2]
+            city, state, zip1 = addy_ext(raw_address[-3])
+            phone = raw_address[-2]
 
-        r1 = session.get(link, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        try:
-            lng = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[0]
-            lat = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[1].split('!')[0]
-        except:
-            continue
-        raw_hours = soup1.find_all('div', {'class': re.compile(r'wpb_text_column wpb_content_element vc_custom_[0-9]+')})[-2].p.text.strip()
-        hour = raw_hours.replace('\n','').strip().replace('\xa0','').replace("pm","pm ").strip()
+            r1 = session.get(link, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            try:
+                lng = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[0]
+                lat = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[1].split('!')[0]
+            except:
+                continue
+            raw_hours = soup1.find_all('div', {'class': re.compile(r'wpb_text_column wpb_content_element vc_custom_[0-9]+')})[-2].p.text.strip()
+            hour = raw_hours.replace('\n','').strip().replace('\xa0','').replace("pm","pm ").strip()
+        else:
+            location_name = "Fayetteville - Owens Dr."
+            address = "210 Owen Dr"
+            city = "Fayetteville"
+            state = "NC"
+            zip1 = "28304"
+            phone = "910-527-0042"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            hour = "<MISSING>"
+            link = base_link
+
         store.append('https://fit4lifehealthclubs.com/')
         store.append(location_name)
         store.append(address)

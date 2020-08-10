@@ -2,7 +2,8 @@ lxml==4.5.2
 sgrequests==0.0.15
 sgvalidator==0.0.70
 sgzip==0.0.40
-simplejson==3.13.2
+simplejson==3.17.2
+requests_toolbelt==0.9.1
 
 # uncomment if you use selenium
 # selenium==3.141.0

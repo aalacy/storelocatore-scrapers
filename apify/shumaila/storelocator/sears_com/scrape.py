@@ -72,7 +72,7 @@ def fetch_data():
                                     time.sleep(2)
                                     #print(page2.url)
                                     if page2.url.find('closed') > -1:
-                                        print('closed',link,page2.url)
+                                        #print('closed',link,page2.url)
                                         break
                                     else:
                                         #page2 = requests.get(link)
@@ -81,7 +81,7 @@ def fetch_data():
                                         try:
                                             title = soup2.find('h1',{'class':'shc-save-store__title'})['data-store-title']+soup2.find('h1',{'class':'shc-save-store__title'})['data-unit-number']
                                         except:
-                                            print("HERE")
+                                            #print("HERE")
                                             title = soup2.find('small', {'itemprop': 'name'}).text
 
                                         title = title.replace('\n',' ').replace('000',' # ')
@@ -171,15 +171,15 @@ def fetch_data():
                                             k += 1
                                             flag = False
                                 except Exception as e:
-                                    print(link)
-                                    print("error",e)
+                                    #print(link)
+                                    #print("error",e)
                                     pass
 
                     flag1 = False
 
                 except Exception as e:
-                    print(statelink)
-                    print("error",e)
+                    #print(statelink)
+                    #print("error",e)
                     pass
 
 

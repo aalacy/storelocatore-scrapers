@@ -17,6 +17,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     base_url = "https://guessbymarciano.guess.com/"
 
 
@@ -28,7 +29,7 @@ def fetch_data():
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
 
-    for a_link in all_soup.find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
+    for a_link in all_soup.find("div",{"id":"browse-expand"}).find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
 
         city_soup = bs(session.get(a_link['href']).content, "lxml")
 
@@ -39,6 +40,7 @@ def fetch_data():
             for url in store_soup.find_all("a",{"title":re.compile("#")}):
                 
                 page_url = url['href']
+                
                 if session.get(page_url).status_code != 200:
                     continue
                 location_soup = bs(session.get(page_url).content, "lxml")
@@ -58,7 +60,7 @@ def fetch_data():
                     location_type = location_name
                 lat = data['lat']
                 lng = data['lng']
-                phone = location_soup.find("a",{"class":"phone ga-link"}).text
+                phone = location_soup.find("a",{"title":"Call Store"}).text
                 hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
         
                 store = []
@@ -76,6 +78,9 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
+                if store[2] in addressess:
+                    continue
+                addressess.append(store[2])
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 
