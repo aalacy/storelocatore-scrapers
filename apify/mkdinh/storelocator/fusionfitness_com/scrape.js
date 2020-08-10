@@ -17,6 +17,28 @@ function parseLocation(location) {
   };
 }
 
+function parseAddress(address) {
+  const components = address.split(/,/g);
+  const isCitySplitted = components.length > 2;
+  const cityStateZip = components.pop().split(' ');
+  const zip = cityStateZip.pop();
+  const state = cityStateZip.pop();
+  const city = isCitySplitted ? components.pop() : cityStateZip.join(' ').replace(/,$/, '');
+
+  const street_address = components.join(' ');
+  return { street_address, city, state, zip };
+}
+
+function extractLocationInfo(locInfo) {
+  const REMOVE_BREAK_TAG_REGEX = /<br>/g;
+  const TRIM_COMMA_REGEX = /^,|,$/g;
+  const location_name = locInfo.find('strong').text();
+  const address = locInfo.find('p').clone().find('strong').remove().end().html();
+  const cleaned = address.trim().replace(REMOVE_BREAK_TAG_REGEX, ',').replace(TRIM_COMMA_REGEX, '');
+  const { street_address, city, state, zip } = parseAddress(cleaned);
+  return { location_name, street_address, city, state, zip };
+}
+
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
   requestQueue.addRequest({
@@ -33,19 +55,20 @@ Apify.main(async () => {
 
       const pois = locations
         .map(function () {
-          const location_name = $(this).prev().find('strong').text();
+          const locInfo = $(this).prev();
 
           const serializedData = $(this).attr('data-block-json');
           const { location } = JSON.parse(serializedData);
           const {
-            street_address,
-            city,
-            state,
-            zip,
+            street_address: data_street_address,
+            zip: data_zip,
             country_code,
             latitude,
             longitude,
           } = parseLocation(location);
+
+          const { location_name, street_address, city, state, zip } = extractLocationInfo(locInfo);
+          const isSameData = data_zip === zip;
 
           return {
             locator_domain: 'fusionfitness.com',
@@ -56,8 +79,8 @@ Apify.main(async () => {
             state,
             zip,
             country_code,
-            latitude,
-            longitude,
+            latitude: isSameData ? latitude : MISSING,
+            longitude: isSameData ? longitude : MISSING,
             phone: MISSING,
             store_number: MISSING,
             location_type: MISSING,
