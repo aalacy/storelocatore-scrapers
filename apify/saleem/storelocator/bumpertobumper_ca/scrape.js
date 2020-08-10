@@ -12,12 +12,13 @@ function getOrDefault(value) {
 }
 
 function parseHours(hours) {
-  return hours.map((day) => ({
-    start: day.close ? null : day.start,
-    end: day.close ? null : day.end,
-    day: day.label_en,
-    close: day.close,
-  }));
+  return JSON.stringify(
+    hours.map((day) => ({
+      start: day.close ? null : day.start,
+      end: day.close ? null : day.end,
+      day: day.label_en,
+    }))
+  );
 }
 
 Apify.main(async () => {
@@ -49,7 +50,7 @@ Apify.main(async () => {
       state: getOrDefault(state),
       zip: getOrDefault(zip),
       store_number: getOrDefault(store_number),
-      location_type: getOrDefault(location_name),
+      location_type: getOrDefault(location_type),
       latitude: getOrDefault(latitude),
       longitude: getOrDefault(longitude),
       store_number: getOrDefault(store_number),
