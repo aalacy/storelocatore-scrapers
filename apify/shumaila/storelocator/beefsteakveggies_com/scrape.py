@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -43,7 +42,9 @@ def fetch_data():
         address = address.lstrip()
         address = address.replace('\n','')
         #print(address)
+        address = address.replace(',',' ')
         address = usaddress.parse(address)
+        #print(address)
         i = 0
         street = ""
         city = ""
@@ -51,7 +52,7 @@ def fetch_data():
         pcode = ""
         while i < len(address):
             temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("Occupancy") != -1 or  temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
                 "USPSBoxID") != -1:
                 street = street + " " + temp[0]
             if temp[1].find("PlaceName") != -1:
@@ -62,6 +63,7 @@ def fetch_data():
                 pcode = pcode + " " + temp[0]
             i += 1
 
+        #print(city)
         street = street.lstrip()
         street = street.replace(',','')
         city = city.lstrip()
@@ -70,6 +72,7 @@ def fetch_data():
         state = state.replace(',','')
         pcode = pcode.lstrip()
         pcode = pcode.replace(',','')
+       
 
         #print(street)
         try:
@@ -82,7 +85,11 @@ def fetch_data():
         #print(lat)
         hours = soup.find('div',{'class':'col-md-6'})
         hours = hours.findAll('p')
-        hours = hours[1].find('strong').text
+        try:
+            hours = hours[2].text.replace('\xa0','')
+        except:
+            hours = hours[1].text.split('.',1)[0]
+            
         #print(hours)
         data.append(['http://beefsteakveggies.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
         #print(p,data[p])

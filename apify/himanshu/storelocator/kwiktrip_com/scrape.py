@@ -1,8 +1,12 @@
 import csv
 from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
+import time
 from sgselenium import SgSelenium
 from sgrequests import SgRequests
 session = SgRequests()
+
+
 
 
 
@@ -20,12 +24,17 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    driver = SgSelenium().chrome()
+    # driver = SgSelenium().chrome()
+    
+    driver = SgSelenium().firefox()
+    # driver =get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
+    
     locator_domain = "https://kwiktrip.com"
     hours_of_operation ="<MISSING>"
     while True:
         soup = BeautifulSoup(driver.page_source,"lxml")
+        # print(soup)
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
@@ -35,6 +44,7 @@ def fetch_data():
                 'Referer': 'https://www.kwiktrip.com/Maps-Downloads/Store-List',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
                 }
+                # print(headers)
                 response = session.get( page_url, headers=headers, data = payload)
                 soup1 = BeautifulSoup(response.text,'lxml')
                 h = soup1.find("div",{"class":"Store__dailyHours"})
@@ -69,7 +79,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                #print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
+                # print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
                 yield store
         soup1 = BeautifulSoup(driver.page_source,"lxml")
         if soup1.find("a",{"id":"tablepress-4_next"}):

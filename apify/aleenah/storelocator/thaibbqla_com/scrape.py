@@ -1,9 +1,7 @@
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,32 +20,47 @@ all=[]
 def fetch_data():
     # Your scraper here
 
-    res=session.get("https://www.aloyoga.com/pages/stores")
+    res=session.get("https://thaibbqla.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    divs = re.findall(r'slideshowDataJson[\d] = ([^;]+)',str(soup))
-    print(len(divs))
+    divs = soup.find_all('div', {'data-ux': 'Content'})
+
     for div in divs:
-        js = json.loads(div)
-        city=js['city'].split(',')[0]
-        state=js['city'].split(',')[1]
-        zip = js['address'].split(',')[-1].replace(state,'').replace('.','').strip()
-        street=js['address'].split('<br>')[0].strip()
+        loc = div.find('h4').text
+        addr=div.find('p', {'data-ux': 'ContentText'}).text.strip().split(',')
+        del addr[-1]
+        sz=addr[-1].strip().split(' ')
+        zip=sz[-1]
+        del sz[-1]
+        state= ' '.join(sz)
+        del addr[-1]
+        city=addr[-1]
+        del addr[-1]
+        street=' '.join(addr)
+        phone = div.find_all('a', {'data-aid': 'CONTACT_INFO_PHONE_REND'})
+        if phone==[]:
+            phone="<MISSING>"
+        else:
+
+            phone = phone[0].text
+        tim= div.find('div', {'data-aid': 'CONTACT_HOURS_CUST_MSG_REND'}).text.replace('pm','pm ').strip().replace(u'\xa0',u'')
 
         all.append([
-            "https://www.aloyoga.com",
-            js['name'],
+            "https://thaibbqla.com/",
+            loc,
             street,
             city,
             state.strip(),
             zip,
             "US",
             "<MISSING>",  # store #
-            js['phone'],  # phone
+            phone,  # phone
             "<MISSING>",  # type
             "<MISSING>",  # lat
             "<MISSING>",  # long
-            ' '.join(js['hours']),  # timing
-            "https://www.aloyoga.com/pages/stores"])
+            tim,  # timing
+            "https://thaibbqla.com/"])
+
+    print(all)
     return all
 
 def scrape():

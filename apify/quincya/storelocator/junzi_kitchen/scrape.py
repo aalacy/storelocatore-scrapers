@@ -63,6 +63,7 @@ def fetch_data():
 			hours_of_operation = str(item.p).split("<br/>")[-1].replace("</p>","")
 		if "temporarily closed" in item.text:
 			hours_of_operation = "temporarily closed"
+		hours_of_operation = hours_of_operation.replace(" –","-").replace("–","-").replace(" - ","-")
 		latitude = raw_address['mapLat']
 		longitude = raw_address['mapLng']
 
