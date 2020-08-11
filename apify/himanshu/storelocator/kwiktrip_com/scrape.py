@@ -24,9 +24,9 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    # driver = SgSelenium().chrome()
+    driver = SgSelenium().chrome()
     
-    driver = SgSelenium().firefox()
+   # driver = SgSelenium().firefox()
     # driver =get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     

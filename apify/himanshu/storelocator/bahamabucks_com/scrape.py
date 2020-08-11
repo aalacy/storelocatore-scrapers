@@ -21,7 +21,7 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().chrome()
     return_main_object = []
     addresses = []
 
