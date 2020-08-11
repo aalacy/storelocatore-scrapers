@@ -2,11 +2,8 @@ import csv
 from bs4 import BeautifulSoup
 from bs4 import BeautifulSoup as bs
 import time
+import requests
 from sgselenium import SgSelenium
-from sgrequests import SgRequests
-session = SgRequests()
-
-
 
 
 
@@ -25,9 +22,6 @@ def write_output(data):
 def fetch_data():
     addresses = []
     driver = SgSelenium().chrome()
-    
-   # driver = SgSelenium().firefox()
-    # driver =get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     
     locator_domain = "https://kwiktrip.com"
@@ -44,16 +38,21 @@ def fetch_data():
                 'Referer': 'https://www.kwiktrip.com/Maps-Downloads/Store-List',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
                 }
-                # print(headers)
-                response = session.get( page_url, headers=headers, data = payload)
-                soup1 = BeautifulSoup(response.text,'lxml')
-                h = soup1.find("div",{"class":"Store__dailyHours"})
-                if h != None:
-                    hours_of_operation =  " ".join(list(h.stripped_strings))
-               
-                h = soup1.find("div",{"class":"Store__open24Hours"})
-                if h != None:                   
-                    hours_of_operation = " ".join(list(h.stripped_strings))
+                response = requests.get(page_url,headers=headers,data = payload)
+                if response.status_code==200:
+                    if response != None:
+                        soup1 = BeautifulSoup(response.text,'lxml')
+                        h = soup1.find("div",{"class":"Store__dailyHours"})
+                        if h != None:
+                            hours_of_operation =  " ".join(list(h.stripped_strings))
+                    
+                        h = soup1.find("div",{"class":"Store__open24Hours"})
+                        if h != None:                   
+                            hours_of_operation = " ".join(list(h.stripped_strings))
+                else:
+                    hours_of_operation="<MISSING>"
+                
+                
                 # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
                 page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
                 location_name = list(tr.stripped_strings)[1]
@@ -70,6 +69,7 @@ def fetch_data():
                 location_type = "<MISSING>"
                 country_code = "US"
                 store =[]
+                hours_of_operation1=''
                 if hours_of_operation.strip():
                     hours_of_operation1= hours_of_operation
                 else:
