@@ -8,6 +8,7 @@ import time
 import bs4
 import urllib.parse
 from typing import *
+from dill.source import getsource
 
 def stderr(*args, **kwargs):
     """
@@ -150,3 +151,24 @@ def dedup_records(data: List[dict], record_identity: lambda r: str) -> List[dict
         if id not in identities:
             deduped.append(record)
     return deduped
+
+
+def remove_non_ascii(s: str) -> str:
+    return s.encode('ascii', 'ignore').decode('ascii').strip()
+
+def or_else(cond: str, default: str) -> str:
+    return cond if cond else default
+
+def t (op: lambda: object, threshold: float = 0.5):
+    """
+    Time the lambda execution, and print out the function (via magic!) if the time is over the threshold (in secs)
+    :return whatever `op` returns.
+    """
+    src = getsource(op).strip().replace("\n", " ")[0:77] + "..."
+    t1 = time.clock_gettime(0)
+    ret = op()
+    t2 = time.clock_gettime(0)
+    took = t2-t1
+    if took > threshold:
+        print (f"Took: {took} [{src}]")
+    return ret
