@@ -22,57 +22,103 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    data = []
-    name =[]
-    cleanr = re.compile(r'<[^>]+>')
-    name.append('none')
-    url = 'https://www.peoplesjewellers.com/store-finder'
+    data = []    
+    p = 0
+    cleanr = re.compile(r'<[^>]+>')    
+    url = 'https://www.peoplesjewellers.com/store-finder/view-all-states'
     r = session.get(url, headers=headers, verify=False)    
     soup =BeautifulSoup(r.text, "html.parser")   
-    state_list = soup.findAll('div', {'class': 'accordion clearfix test-1'})
-   # print("states = ",len(state_list))
-    p = 0
-    for states in state_list:
-        divlist = states.findAll('div',{'class':'col-md-3'})
-        for div in divlist:
-            #print(div)
-            det = re.sub(cleanr,'\n',str(div))
-            #print(det)
-            det = det.splitlines()
-            #print(det)
-            title = ''
-            street = ''
-            city = ''
-            state = ''
-            phone = ''
-            
-            for dt in det:
-                if dt == '' or dt.find('Curbside') > -1 or dt == 'Open To Public' or (dt.find('2020') > -1 and dt.find('on ') > -1) :
-                    pass
-                else:
-                    if title == '':
-                        title = dt.lstrip()
-                    elif street == '':
-                        street = dt.lstrip().replace(' &amp;','&')
-                    elif city == '':
-                        #print(street,dt)
-                        city,state = dt.lstrip().split(', ')
-                    elif phone == '':
-                        phone = dt.lstrip()
+    state_list = soup.find('div', {'id': '0'}).findAll('a')
+    #print(len(state_list))
+    for slink in state_list:
+        slink = 'https://www.peoplesjewellers.com/store-finder/' + slink['href']
+        #print(slink)
+        r = session.get(slink, headers=headers, verify=False)    
+        soup =BeautifulSoup(r.text, "html.parser")
+        branchlist = soup.findAll('div',{'class':'viewstoreslist'})
+        #print(len(branchlist))
+        pattern = re.compile(r'\s\s+')
+        cleanr = re.compile(r'<[^>]+>')
+        for branch in branchlist:
+            #print(branch.find('a')['href'])
+            if branch.find('a')['href'].find('/null') == -1:
+                link  = 'https://www.peoplesjewellers.com' + branch.find('a')['href']
+                #print(link)
+                r = session.get(link, headers=headers, verify=False)    
+                soup =BeautifulSoup(r.text, "html.parser")
+                title = soup.find('h1',{'itemprop':'name'}).text
+                street = soup.find('span',{'itemprop':'streetAddress'}).text
+                city = soup.find('span',{'itemprop':'addressLocality'}).text
+                state = soup.find('span',{'itemprop':'addressRegion'}).text
+                pcode = soup.find('span',{'itemprop':'postalCode'}).text
+                ccode = soup.find('span',{'itemprop':'addressCountry'}).text
+                phone = soup.find('span',{'itemprop':'telephone'}).text
+                coord = soup.find('a',{'class':'link-directions'})['href']
+                lat, longt = coord.split('Location/')[1].split(',',1)            
+                store = link.split('-peo')[1]
+                soup = str(soup)
+                hours = soup.split('detailSectionHeadline">Hours</div>')[1].split('{',1)[1].split('}',1)[0]
+                hours = hours.replace('"','').replace('\n',' ').replace('::',' ')
+                hours = re.sub(pattern,' ',hours).lstrip()
+            else:               
+                det = re.sub(cleanr, '\n',str(branch))
+                det = re.sub(pattern,'\n',det).splitlines()
+                #print(det)
+                i = 1
+                title = det[i]
+                i = i + 1
+                street = det[i]
+                i = i + 1
+                state = ''
+                try:
+                    city,state = det[i].split(', ',1)
                     
+                except:
+                    street = street + ' ' + det[i]
+                    i = i + 1
+                    city,state = det[i].split(', ',1)
+
+                state,pcode= state.lstrip().replace('\xa0',' ').split(' ',1)
+                    
+                i = i+ 1
+                try:
+                    phone = det[i]
+                except:
+                    phone = '<MISSING>'
+
+                store = '<MISSING>'
+                ccode = 'CA'
+                lat = '<MISSING>'
+                longt = '<MISSING>'
+                hours = '<MISSING>'
+                link =  '<MISSING>'  
+
+            if len(pcode.replace(' ','')) > 7:
+                temp,pcode = pcode.split(' ',1)
+                state =state + ' ' + temp
                 
-           
-            if title == 'Rideau Centre':
-                street = '50 Rideau Street 262'
-                city = 'Ottawa'
-                state = 'ON'
-                phone = '613-237-4587'
-            else:                
-                pass
-            data.append(['https://www.peoplesjewellers.com/','https://www.peoplesjewellers.com/store-finder',title,street,city,state,'<MISSING>','CA','<MISSING>',phone,'<MISSING>','<MISSING>','<MISSING>','<MISSING>'])
+                
+            data.append([
+                            'https://www.peoplesjewellers.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            ccode,
+                            store,
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            hours
+                        ])
             #print(p,data[p])
             p += 1
-            
+
+    
+   
     return data
 
 

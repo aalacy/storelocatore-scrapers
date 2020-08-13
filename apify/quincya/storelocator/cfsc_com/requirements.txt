@@ -1,5 +1,3 @@
-lxml==4.3.4
+lxml==4.3.3
 sgrequests
 beautifulsoup4==4.7.1
-sgzip
-dill==0.3.2
