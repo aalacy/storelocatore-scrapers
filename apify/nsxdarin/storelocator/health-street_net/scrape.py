@@ -89,6 +89,10 @@ def fetch_data():
                     hours = '<MISSING>'
                 store = '<MISSING>'
                 hours = hours.replace('&#8211;','-')
+                if lat == '':
+                    lat = '<MISSING>'
+                if lng == '':
+                    lng = '<MISSING>'
                 yield [website, ploc, aname, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
