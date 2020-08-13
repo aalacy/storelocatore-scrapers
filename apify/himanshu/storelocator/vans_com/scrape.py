@@ -60,7 +60,7 @@ def or_missing(s: str) -> str:
 def fetch_data():
     base_url ="https://www.vans.com/"
 
-    latlong_identities=set()
+    encountered_identities=set()
 
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['us', 'ca'])
@@ -80,7 +80,6 @@ def fetch_data():
 
         for loc in location:
             country = loc.find('country').text.strip()
-            # print(loc)
             if country == 'US' or country == 'CA':
                 name=loc.find('name').text.strip()
                 address=loc.find('address1').text.strip()
@@ -88,27 +87,19 @@ def fetch_data():
                 state=loc.find('state').text.strip()
                 raw_sn = loc.find('clientkey').text.strip()
                 hours_of_operation = get_hours(loc)
-                # print(address)
-                # print(raw_sn)
+
                 sn = raw_sn.split('-')
                 if len(sn) == 2:
                     store_number = sn[1]
                 else:
                     store_number = sn[0]
-                # print("store: ", store_number)
                 page_url = 'https://stores.vans.com/' + state.lower() + '/' + city.lower().replace(' ','-') + '/' + raw_sn + '/'
 
 
                 zip_code = loc.find('postalcode').text.strip().replace('000wa',MISSING)
-                # print(zip)
-                # if zip  == '00000':
-                #     zip = ''
 
                 phone=loc.find('phone').text.strip().replace('T&#xe9;l.', '').replace('&#xa0;', '').replace('-', '').replace('.', '').replace(')', '').replace('(', '').replace(' ', '')
-                # storeno=loc.find('sn').text.strip()
 
-                # if storeno == '0':
-                #     storeno = MISSING
 
                 if country=="US":
                     if len(zip_code) != 5 and zip_code != '':
@@ -119,15 +110,13 @@ def fetch_data():
                 lat=loc.find('latitude').text
                 lng=loc.find('longitude').text
 
-                # truncating to a reasonable precision, to avoid data-entry mismatches.
-                latlong = f"{lat[0:8]}:{lng[0:8]}"
-
-                # disregard duplicates
-                if latlong in latlong_identities:
-                    print (f"Encountered duplicate lat:long: {latlong}; skipping.")
+                # disregard duplicates (within a reasonable radius)
+                identity = f"{lat[0:8]}:{lng[0:8]}"
+                if identity in encountered_identities:
+                    print (f"Encountered duplicate: [{identity}]; skipping.")
                     continue
-
-                latlong_identities.add(latlong)
+                else:
+                    encountered_identities.add(identity)
 
                 result_coords.append((lat, lng))
 
@@ -140,7 +129,6 @@ def fetch_data():
                 store.append(zip_code.replace("O","0").replace('000wa',MISSING) if zip_code.replace("O","0").replace('000wa',MISSING) else MISSING)
                 store.append(or_missing(country))
                 store.append(store_number if country else MISSING)
-                # store.append(or_missing(ascii_strip(storeno)))
                 store.append(or_missing(remove_non_ascii(phone)))
                 store.append("Van Stores")
                 store.append(or_missing(lat))
