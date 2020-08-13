@@ -125,7 +125,7 @@ def fetch_data():
             store = []
             result_coords.append((latitude,longitude))
             store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>")
+            store.append(location_name if location_name else "SPAR")
             store.append(street_address.replace("Ettington",'').replace(",",''))
             store.append(city)
             store.append(state)
