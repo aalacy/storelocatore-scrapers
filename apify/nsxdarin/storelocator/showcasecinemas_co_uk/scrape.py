@@ -41,6 +41,11 @@ def fetch_data():
                         city = '<MISSING>'
                     if state == '':
                         state = '<MISSING>'
+                    if state == 'Batley':
+                        state = '<MISSING>'
+                        city = 'Batley'
+                    if 'Dudley' in name:
+                        city = 'Dudley'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

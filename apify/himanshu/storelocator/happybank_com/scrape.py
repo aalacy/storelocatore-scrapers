@@ -5,8 +5,6 @@ import re
 import json
 import sgzip
 from sgselenium import SgSelenium
-from selenium.webdriver.support.wait import WebDriverWait
-# from selenium.common.exceptions import StaleElementReferenceException
 import time
 import html
 
@@ -32,6 +30,7 @@ def write_output(data1, data2):
 def fetch_data1():
     return_main_object = []
     addresses = []
+    
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 50
@@ -48,7 +47,7 @@ def fetch_data1():
     while zip_code:
         result_coords = []
         #print("zip_code === " + zip_code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         try:
             location_url = "https://www.happybank.com/Locations?bh-sl-address=" + \
                 str(zip_code) + "&locpage=search"
@@ -92,29 +91,16 @@ def fetch_data1():
                     longitude = data['lng']
                     page_url = data['web']
                     phone = data['phone'].replace("BANK ", "")
-                    # phone1 = ''.join(filter(lambda x: x.isdigit(), data['phone']))
-                    # index = 3
-                    # char = '-'
-                    # phone2 = phone1[:index] + char + phone1[index + 1:]
-
-                    # index = 7
-                    # char = '-'
-                    # phone = phone2[:index] + char + phone2[index + 1:]
-                    # print(phone)
-                    # print("-----------------------------",phone)
-                    # print("https://www.happybank.com/Locations"+page_url)
                     try:
                         r1 = session.get("https://www.happybank.com/Locations" +
                                           page_url.replace("/Locations", ""), headers=headers)
                     except:
-                        #print("https://www.happybank.com/Locations" +
-                            # page_url.replace("/Locations", ""))
                         continue
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     hours_of_operation = " ".join(
                         list(soup1.find("div", {"id": "hours"}).stripped_strings)).split("Special")[0]
                     result_coords.append((latitude, longitude))
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                    store = [locator_domain, location_name, street_address, city, state, zipp, "US",
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, "https://www.happybank.com/Locations" + page_url]
                     if store[2] in addresses:
                         continue
@@ -137,31 +123,20 @@ def fetch_data1():
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-        break
+        # break
 
 
 
 
 def fetch_data2():
+    addressesess = []
     r = session.get("https://www.happybank.com/Locations/FindUs/FindanATM")
     soup = BeautifulSoup(r.text, "lxml")
-    # div = soup.find("div",class_="Normal")
-    # print(div)
     iframe_link = soup.find(
         "iframe", {"title": "Happy State Bank ATM Locations"})["src"]
-    # print(iframe_link)
-
     r = session.get(iframe_link)
     soup = BeautifulSoup(r.text, "lxml")
-    # print(soup.prettify())
-    # geo_location = {}
-    # for script in soup.find_all("script"):
-    #     if "_pageData" in script.text:
-    #         location_list = json.loads(script.text.split('var _pageData = "')[1].split('\n";')[0].replace(
-    #             '\\"', '"').replace(r"\n", "")[:-2].replace("\\", " "))[1]  # [1][6]  # [0][12][0][13][0]
-    #         print(location_list)
-
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().chrome()
     addresses = []
     driver.get(iframe_link)
     time.sleep(3)
@@ -240,6 +215,9 @@ def fetch_data2():
                 'https://www.happybank.com/Locations/FindUs/FindanATM')
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
+            if store[2] in addressesess:
+                continue
+            addressesess.append(store[2])
             if store[1] != "<MISSING>":
                 # print('data == ' + str(store))
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -250,7 +228,6 @@ def fetch_data2():
         except Exception as e:
             # print(e)
             continue
-
             time.sleep(3)
 
 

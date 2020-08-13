@@ -50,29 +50,25 @@ def fetch_data():
 		link = item.a['href'].replace(".com%20",".com")
 		if link == "https://depaul.bncollege.com/":
 			link = "http://depaul-lincolnpark.bncollege.com/"
-		if link in poi_found:
+		if link in poi_found or link == "https://www.cpcc-harriscampusbookstore.com":
 			continue
 		else:
 			poi_found.append(link)
 		print("Link %s of %s" %(i+1,len(items)))
 		print(link)
-
-		if ".bncollege.com" not in link:
+		
+		try:
+			req = session.get(link, headers = HEADERS)
+			base = BeautifulSoup(req.text,"lxml")
+		except:
 			print("No results found..skipping")
 			continue
-
-		req = session.get(link, headers = HEADERS)
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
 
 		try:
 			final_link = base.find(class_="mapInnerUl campusHours right wid44p").a['href']
 		except:
 			try:
-				final_link = (link + base.find_all(class_="primaryBtn")[-1]['href']).replace(".com//",".com/")
+				final_link = (req.url.split(".com/")[0] + ".com/" + base.find_all(class_="primaryBtn")[-1]['href']).replace(".com//",".com/")
 			except:
 				print("No results found..skipping")
 				continue
