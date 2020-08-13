@@ -1,148 +1,116 @@
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
 import json
+from sgrequests import SgRequests
 
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
-URL = "https://www.myidealdental.com/"
-
-
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
-        self.seen = []
-
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        location_types = []
-
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
-
-        location_url = 'https://www.myidealdental.com/dentist-offices/'
-        driver.get(location_url)
-        stores = [info.get_attribute('href') for info in driver.find_elements_by_css_selector('div.cta-wrapper > a.no-print')]
-
-        for store in stores:
-            driver.get(store)
-            data = json.loads([info.get_attribute('outerHTML') for info in driver.find_elements_by_css_selector('script') if info.get_attribute('type') == 'application/ld+json'][0].replace('<script type="application/ld+json">', '').replace('</script>', ''))
-
-            # Store ID
-            location_id = '<MISSING>'
+def fetch_data():
+    # Your scraper here
+    output = []
+    
+    url = 'https://www.myidealdental.com/locations/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser") 
+    divlist = soup.find('div',{'class':'locations-list-wrapper'}).findAll('li', {'class': 'locations-list-item'})
+    print("states = ",len(divlist))
+    p = 0
+    for div in divlist:
+        link = div.find('div', {'class': 'location-links'}).find('a')['href']
+        r = session.get(link, headers=headers, verify=False)
+        r = r.text.split('<script type="application/ld+json">',1)[1].split('</script>')[0]
+        data = json.loads(r)
+        location_id = div['data-office-id']
 
             # Type
-            location_type = data['@type']
+        location_type = data['@type']
 
             # Name
-            location_title = data['name']
+        location_title = data['name']
 
             # Street
-            street_address = data['address']['streetAddress']
+        street_address = data['address']['streetAddress']
+        print(street_address)
 
             # city
-            city = data['address']['addressLocality']
+        city = data['address']['addressLocality']
 
             # zip
-            zipcode = data['address']['postalCode']
+        zipcode = data['address']['postalCode']
 
             # State
-            state = data['address']['addressRegion']
+        state = data['address']['addressRegion']
 
             # Phone
-            phone = data['contactPoint'][0]['telephone']
+        phone = data['telephone']
+        phone = data['telephone'][0:3] + '-' + data['telephone'][3:6]+ '-' + data['telephone'][6:len(data['telephone'])]
+        
 
             # Lat
-            lat = data['geo']['latitude']
+        lat = data['geo']['latitude']
 
             # Long
-            lon = data['geo']['longitude']
+        lon = data['geo']['longitude']
 
             # Hour
-            hour = ' '.join([f"{info['dayOfWeek']}: Opens at {info['opens']}, Closes at {info['closes']}" for info in data['openingHoursSpecification'] if 'opens' in info.keys()])
-
+        hours = ''        
+        hourlist = json.loads(str(data['openingHoursSpecification']).replace("'",'"'))
+        for hr in hourlist:
+            day  = (int)(hr["closes"].split(':')[0])
+            if day > 12:
+                day = day -12
+            #print(day)
+            hours = hours + hr["dayOfWeek"] + ' ' + hr["opens"] + ' am - ' + str(day)+ ':' + hr["closes"].split(':')[1] + ' pm '
             # Country
-            country = data['address']['addressCountry']
-
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
-
-        for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type,
-        ) in zip(
-            locations_titles,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-            location_types,
-        ):
-            if country == "<MISSING>":
-                pass
-            else:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
+        country = data['address']['addressCountry']
+        if len(hours) < 4:
+            hours = 'Monday - Sunday : Closed'
+        output.append([
+                        'https://www.myidealdental.com/',
+                        link,                   
+                        location_title,
                         street_address,
                         city,
                         state,
                         zipcode,
                         country,
-                        location_id,
-                        phone_number,
+                        location_id ,
+                        phone,
                         location_type,
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
+                        lat,
+                        lon,
+                        hours
+                    ])
+        print(p,output[p])
+        p += 1
 
-        driver.quit()
+        
+    
+                
+            
+        
+    return output
 
 
-scrape = Scraper(URL)
-scrape.scrape()
+def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    data = fetch_data()
+    write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+scrape()
