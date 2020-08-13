@@ -96,7 +96,7 @@ def fetch_data():
                         lon,
                         hours
                     ])
-        print(p,output[p])
+        #print(p,output[p])
         p += 1
 
         
