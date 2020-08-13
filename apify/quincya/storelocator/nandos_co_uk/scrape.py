@@ -55,7 +55,7 @@ def fetch_data():
 		store = json.loads(script)
 
 		location_name = store['name']
-		street_address = store['address']['streetAddress']
+		street_address = store['address']['streetAddress'].replace("amp;","")
 		city = store['address']['addressLocality']
 		state = store['address']['addressRegion']
 		if not state:
