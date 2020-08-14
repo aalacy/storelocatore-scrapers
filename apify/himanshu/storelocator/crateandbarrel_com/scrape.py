@@ -42,7 +42,6 @@ def fetch_data():
     keys = set()
     zip_code = search.next_zip()
     while zip_code:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
         stores = session.post("https://www.crateandbarrel.com/stores/locator", headers=headers, data="SearchKeyword={}&hdnHostUrl=https%3A%2F%2Fwww.crateandbarrel.com".format(zip_code)).json()['storeList']
         result_coords = []
         for i in stores:
@@ -66,7 +65,6 @@ def fetch_data():
             result_coords.append((latitude, longitude))
             page_url = "https://www.crateandbarrel.com/stores/"+str(location_name.lower().replace(',','').replace(' ','-'))+"/str"+str(store_number)
             hours = parse_hours(i)
-            print(hours)
             store = []
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>")
@@ -83,7 +81,6 @@ def fetch_data():
             store.append(hours if hours else "<MISSING>")
             store.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
             yield store
-        print(len(result_coords))
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
