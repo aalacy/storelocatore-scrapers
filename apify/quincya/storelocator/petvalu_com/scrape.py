@@ -46,10 +46,6 @@ def fetch_data():
             for store in stores:
                 location_name = store['na']
                 store_number = store['ID']
-                if store_number in keys:
-                    continue
-                else:
-                    keys.add(store_number)
                 street_address = store['st']
                 if '<' in street_address:
                     street_address = street_address.split('<')[0].strip()
@@ -57,6 +53,11 @@ def fetch_data():
                 state = store['rg'].strip()
                 zipp = store['zp'].strip()
                 country_code = store['co'].strip()
+                key = "|".join([location_name, street_address, city, state, zipp, country_code])
+                if key in keys:
+                    continue
+                else:
+                    keys.add(store_number)
                 if country_code.lower() not in ['us', 'ca']:
                     continue
                 phone = store['te'] if 'te' in store else '<MISSING>' 
