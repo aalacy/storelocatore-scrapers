@@ -73,7 +73,7 @@ Apify.main(async () => {
     puppeteerPoolOptions,
     proxyConfiguration,
     maxConcurrency: 10,
-		maxRequestsPerCrawl: 50
+		maxRequestsPerCrawl: 50,
     async handlePageFunction({ request, page }) {
       const serializedJSON = await page.evaluate(() => {
         const selected = document.body.querySelector('pre');
