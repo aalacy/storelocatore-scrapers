@@ -64,7 +64,7 @@ def fetch_data():
                 result_coords.append((latitude, longitude))
                 page_url = store['gu']
                 hours = parse_hours(store)
-                res = []
+                res = [base_url]
                 res.append(location_name if location_name else "<MISSING>")
                 res.append(street_address if street_address else "<MISSING>")
                 res.append(city if city else "<MISSING>")
