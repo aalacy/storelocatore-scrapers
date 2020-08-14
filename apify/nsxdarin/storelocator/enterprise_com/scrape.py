@@ -94,7 +94,7 @@ def fetch_data():
                     lng = line3.split('longitude" : "')[1].split('"')[0]
             if hours == '':
                 hours = '<MISSING>'
-            name = name.replace('&amp;','&')
+            name = name.replace('&amp;','&').replace('&#39;',"'")
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

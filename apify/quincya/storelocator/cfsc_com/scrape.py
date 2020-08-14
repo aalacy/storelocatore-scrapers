@@ -58,7 +58,7 @@ def fetch_data():
 			state = store["address"]["region"]
 			zip_code = store["address"]["postalCode"]
 			country_code = store["address"]["countryCode"]
-			store_number = "<MISSING>"
+			store_number = page_url.split("-")[-1]
 			try:
 				location_type = ','.join(store["services"])
 			except:
