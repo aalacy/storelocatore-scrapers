@@ -1,4 +1,4 @@
-FROM safegraph/apify-node:latest
+FROM safegraph/apify-node-update:latest
 
 COPY . ./
 
