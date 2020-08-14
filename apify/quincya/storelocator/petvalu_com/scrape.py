@@ -34,55 +34,56 @@ def fetch_data():
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',     
     }
     base_url = "petvalu.com"
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes = ['us', 'ca'])
     keys = set()
-    coord = search.next_coord()
-    while coord:
-        lat, lng = coord[0], coord[1]
-        stores = session.post("https://store.petvalu.com/us/wp-admin/admin-ajax.php", headers=headers, data="action=get_stores&lat={}&lng={}&radius=100&store=&states=&cities=&adds=&zip=".format(lat, lng)).json().values()
-        result_coords = []
-        for store in stores:
-            location_name = store['na']
-            store_number = store['ID']
-            if store_number in keys:
-                continue
-            else:
-                keys.add(store_number)
-            street_address = store['st']
-            if '<' in street_address:
-                street_address = street_address.split('<')[0].strip()
-            city = store['ct'].strip()
-            state = store['rg'].strip()
-            zipp = store['zp'].strip()
-            country_code = store['co'].strip() 
-            phone = store['te'] 
-            location_type = '<MISSING>'
-            latitude = store['lat']
-            longitude = store['lng']
-            result_coords.append((latitude, longitude))
-            page_url = store['gu']
-            hours = parse_hours(store)
-            res = []
-            res.append(location_name if location_name else "<MISSING>")
-            res.append(street_address if street_address else "<MISSING>")
-            res.append(city if city else "<MISSING>")
-            res.append(state if state else "<MISSING>")
-            res.append(zipp if zipp else "<MISSING>")
-            res.append(country_code if country_code else "<MISSING>")
-            res.append(store_number if store_number else "<MISSING>")
-            res.append(phone if phone else "<MISSING>")
-            res.append(location_type if location_type else "<MISSING>")
-            res.append(latitude if latitude else "<MISSING>")
-            res.append(longitude if longitude else "<MISSING>")
-            res.append(hours if hours else "<MISSING>")
-            res.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
-            yield res
-        if len(result_coords) > 0:
-            search.max_count_update(result_coords)
-        else:
-            search.max_distance_update(100)
+    for ctry in ['us', 'ca']:
+        search = sgzip.ClosestNSearch()
+        search.initialize(country_codes = [ctry])
         coord = search.next_coord()
+        while coord:
+            lat, lng = coord[0], coord[1]
+            stores = session.post("https://store.petvalu.com/{}/wp-admin/admin-ajax.php".format(ctry), headers=headers, data="action=get_stores&lat={}&lng={}&radius=100&store=&states=&cities=&adds=&zip=".format(lat, lng)).json().values()
+            result_coords = []
+            for store in stores:
+                location_name = store['na']
+                store_number = store['ID']
+                if store_number in keys:
+                    continue
+                else:
+                    keys.add(store_number)
+                street_address = store['st']
+                if '<' in street_address:
+                    street_address = street_address.split('<')[0].strip()
+                city = store['ct'].strip()
+                state = store['rg'].strip()
+                zipp = store['zp'].strip()
+                country_code = store['co'].strip() 
+                phone = store['te'] if 'te' in store else '<MISSING>' 
+                location_type = '<MISSING>'
+                latitude = store['lat']
+                longitude = store['lng']
+                result_coords.append((latitude, longitude))
+                page_url = store['gu']
+                hours = parse_hours(store)
+                res = []
+                res.append(location_name if location_name else "<MISSING>")
+                res.append(street_address if street_address else "<MISSING>")
+                res.append(city if city else "<MISSING>")
+                res.append(state if state else "<MISSING>")
+                res.append(zipp if zipp else "<MISSING>")
+                res.append(country_code if country_code else "<MISSING>")
+                res.append(store_number if store_number else "<MISSING>")
+                res.append(phone if phone else "<MISSING>")
+                res.append(location_type if location_type else "<MISSING>")
+                res.append(latitude if latitude else "<MISSING>")
+                res.append(longitude if longitude else "<MISSING>")
+                res.append(hours if hours else "<MISSING>")
+                res.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
+                yield res
+            if len(result_coords) > 0:
+                search.max_count_update(result_coords)
+            else:
+                search.max_distance_update(100)
+            coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
