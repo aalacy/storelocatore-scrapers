@@ -51,7 +51,6 @@ Apify.main(async () => {
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
-		password: process.env.APIFY_PROXY_PASSWORD
   });
 
   const puppeteerPoolOptions = {
