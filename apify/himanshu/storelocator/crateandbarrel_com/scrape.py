@@ -38,7 +38,6 @@ def fetch_data():
     keys = set()
     zip_code = search.next_zip()
     while zip_code:
-        zip_code = "T2J"
         response = session.post("https://www.crateandbarrel.com/stores/locator", headers=headers, data="SearchKeyword={}&hdnHostUrl=https%3A%2F%2Fwww.crateandbarrel.com".format(zip_code)).json()
         stores = response['storeList']
         result_coords = []
@@ -53,11 +52,9 @@ def fetch_data():
             city = i['city']
             state = i['state']
             zipp = i['zip']
-            if "Philippines" in i['country']:
+            if 'USA' not in i['country']:
                 continue
             country_code = i['country'].replace("USA","US").replace("CAN","CA")
-            if country_code != 'US':
-                continue
             phone = "("+i['phoneAreaCode']+")"+" "+i['phonePrefix']+"-"+i['phoneSuffix']
             location_type = 'Store'
             if i['distributionCenter']:
