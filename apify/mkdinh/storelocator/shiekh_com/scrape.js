@@ -91,7 +91,7 @@ Apify.main(async function () {
     },
   });
 
-  const proxyPassword = process.env.PROXY_PASSWORD || 'HKT2ZAHSvokX3hLibngLgo5nT';
+  const proxyPassword = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
@@ -121,7 +121,6 @@ Apify.main(async function () {
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
         case 'locations':
-          console.log(await page.content());
           await enqueueStoreLinks({ page, requestQueue });
           break;
         default:
