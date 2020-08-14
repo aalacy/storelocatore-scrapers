@@ -51,10 +51,14 @@ def fetch_data():
                 # data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and "RLS.defaultData" in tag.text).text.split(">")[1].split("<")[0].replace("\\",""))
                 location_name = location_soup.find("div",{"class":"location-name-wrap flex"}).find("h2").text
                 raw_addr = location_soup.find("p",{"class":"address ft-14 underline"})['aria-label'].replace("This location is located at ","").split(",")
-                street_address = raw_addr[0]
-                city = raw_addr[1]
-                state = raw_addr[2].split(" ")[0]
-                zipp = raw_addr[2].split(" ")[1]
+                # print(raw_addr)
+                street_address = raw_addr[0].strip()
+                city = raw_addr[1].strip()
+                # print(city)
+                state = raw_addr[2].split(" ")[1]
+                # print(state)
+                zipp = raw_addr[2].split(" ")[2]
+               # print(zipp)
                 country_code = "US"
                 store_number = "<MISSING>"
                 phone = location_soup.find("a",{"title":"Call Store"}).text
@@ -63,6 +67,7 @@ def fetch_data():
                 latitude = raw_loc[0]
                 longitude = raw_loc[1]
                 hours_of_operation = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
+
         
 
                 store = []
