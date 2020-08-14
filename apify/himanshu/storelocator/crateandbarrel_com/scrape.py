@@ -40,7 +40,6 @@ def fetch_data():
     while zip_code:
         zip_code = "T2J"
         response = session.post("https://www.crateandbarrel.com/stores/locator", headers=headers, data="SearchKeyword={}&hdnHostUrl=https%3A%2F%2Fwww.crateandbarrel.com".format(zip_code)).json()
-        print(response)
         stores = response['storeList']
         result_coords = []
         for i in stores:
