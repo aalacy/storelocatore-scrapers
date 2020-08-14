@@ -1,7 +1,8 @@
 import csv
-import os
+import os, re
 from sgrequests import SgRequests
 import json
+from bs4 import BeautifulSoup
 
 session = SgRequests()
 
@@ -24,7 +25,8 @@ def fetch_data():
 
     locs = json.loads(page.content)
     all_store_data = []
-
+    
+    pattern = re.compile(r'\s\s+') 
     for a in locs:
         location_name = a['FranchiseLocationName']
         street_address = a['Address1']
@@ -40,30 +42,28 @@ def fetch_data():
         
         
         page_url = locator_domain + a['Path']
+        #print(page_url)
+        page = session.get(page_url)
+        soup = BeautifulSoup(page.text,'html.parser')
+        flag = 0 
         try:
-            if location_hours == '':
-                hours = '<MISSING>'
-            else:
-                hours = ''
-                location_hours = location_hours[1:-1].split('][')
-                for a in location_hours:
-                    temp = '{' + a + '}'
-                    hours_json = json.loads(temp)
-                    day = hours_json['Interval']
-                    open_start = hours_json['OpenTime']
-                    close_start = hours_json['CloseTime']
-                    day_info = day + ' ' + open_start + ' - ' + close_start
-                    hours += day_info + ' '
+            hours = soup.find('div',{'class':'hero-hours'}).text
+            hours = re.sub(pattern,'' ,hours).replace('Hours','').replace('PM','PM ').replace('\n','')
         except:
-            hours = '<MISSING>'
+            if soup.find('h4').text == 'Coming Soon!':
+                flag = 1
+            else:
+                hours = '<MISSING>'
+                
+            
         
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
+        if flag == 0:
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+            all_store_data.append(store_data)
 
     return all_store_data
 

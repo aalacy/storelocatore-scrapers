@@ -20,10 +20,10 @@ def write_output(data):
 def fetch_data():
     sids = []
     cities = ['Toronto','Montreal','Calgary','Ottawa','Edmonton','Mississauga','Winnipeg','Vancouver','Brampton','Hamilton','Quebec','Surrey','Laval','Halifax','London','Markham','Vaughan','Gatineau','Saskatoon','Longueuil','Kitchener','Burnaby','Windsor','Regina','Richmond','Richmond Hill','Oakville','Burlington','Greater Sudbury','Sherbrooke','Oshawa','Saguenay','Levis','Barrie','Abbotsford','Coquitlam','Trois Rivieres','St Catharines','Guelph','Cambridge','Whitby','Kelowna','Kingston','Ajax','Langley','Saanich','Terrebonne','Milton','St Johns','Thunder Bay','Waterloo','Delta','Chatham Kent','Red Deer','Strathcona County','Brantford','St Jean sur Richelieu','Cape Breton','Lethbridge','Clarington','Pickering','Nanaimo','Kamloops','Niagara Falls','North Vancouver','Victoria','Brossard','Repentigny','Newmarket','Chilliwack','Maple Ridge','Peterborough','Kawartha Lakes','Drummondville','St Jerome','Prince George','Sault Ste Marie','Moncton','Sarnia','Wood Buffalo','New Westminster','St John','Caledon','Granby','St Albert','Norfolk County','Medicine Hat','Grande Prairie','Airdrie','Halton Hills','Port Coquitlam','Fredericton','Blainville','St Hyacinthe','Aurora','North Vancouver','Welland','North Bay','Belleville','Mirabel','Shawinigan','Dollard Des Ormeaux','Brandon','Rimouski','Chateauguay','Mascouche','Cornwall','Victoriaville','Whitchurch Stouffville','Haldimand County','Georgina','St Eustache','Quinte West','West Vancouver','Rouyn Noranda','Timmins','Boucherville','Woodstock','Salaberry de Valleyfield','Vernon','St Thomas','Mission','Vaudreuil Dorion','Brant','Lakeshore','Innisfil','Charlottetown','Prince Albert','Langford','Bradford West Gwillimbury','Sorel Tracy','New Tecumseth','Spruce Grove','Moose Jaw','Penticton','Port Moody','West Kelowna','Campbell River','St Georges','Val dOr','Cote St Luc','Stratford','Pointe Claire','Orillia','Alma','Fort Erie','LaSalle','Leduc','Ste Julie','North Cowichan',
-              'Dartmouth','Port Hope','Grimsby','Summerside','Edmundston','Middleton']
+              'Dartmouth','Port Hope','Grimsby','Summerside','Edmundston','Middleton','Sussex','Digby','Saint John','St John']
     for city in cities:
         print(city)
-        url = 'https://www.chevrolet.ca/OCRestServices/dealer/city/v1/chevrolet/' + city + '?distance=100&maxResults=25'
+        url = 'https://www.chevrolet.ca/OCRestServices/dealer/city/v1/chevrolet/' + city + '?distance=200&maxResults=25'
         r = session.get(url, headers=headers)
         website = 'chevrolet.ca'
         for line in r.iter_lines():
@@ -36,6 +36,10 @@ def fetch_data():
                         store = item.split(',')[0]
                         typ = '<MISSING>'
                         loc = '<MISSING>'
+                        try:
+                            loc = item.split('"dealerUrl":"')[1].split('"')[0]
+                        except:
+                            loc = '<MISSING>'
                         phone = item.split('"phone1":"')[1].split('"')[0]
                         add = item.split('{"addressLine1":"')[1].split('"')[0]
                         city = item.split('"cityName":"')[1].split('"')[0]

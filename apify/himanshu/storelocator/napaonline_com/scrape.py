@@ -190,6 +190,10 @@ def scrape_store_number(soup):
     match = re.search(r'\[\"entityId\"\] = \"(\d+?)\"', html_content)
     return match.group(1) if match else '<MISSING>'
 
+def get_store_key(store): 
+    # use the page_url as unique key
+    return f'{store[-1]}'.lower()
+
 
 def scrape_html(soup, page_url): 
     name_elem = soup.find(id="location-name")
@@ -267,9 +271,10 @@ def scrape_one_in_city(url):
     else:
         store = scrape_html(soup, r.url)
 
-    if store[2] in addresses:
+    store_key = get_store_key(store)
+    if store_key in addresses:
         return None
-    addresses.append(store[2])
+    addresses.append(store_key)
     return [store]
 
 
@@ -300,9 +305,10 @@ def scrape_multiple_in_city(url):
         else:
             store = scrape_html(soup, r.url)
 
-        if store[2] in addresses:
+        store_key = get_store_key(store)
+        if store_key in addresses:
             continue
-        addresses.append(store[2])
+        addresses.append(store_key)
         stores.append(store)
     return stores
 

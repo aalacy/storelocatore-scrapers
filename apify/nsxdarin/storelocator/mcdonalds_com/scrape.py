@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -17,7 +16,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=40.0&longitude=-95.0&radius=5000&maxResults=30000&country=us&language=en-us&showClosed=&hours24Text=Open%2024%20hr'
+    url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=40.0&longitude=-95.0&radius=10000&maxResults=30000&country=us&language=en-us&showClosed=&hours24Text=Open%2024%20hr'
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
     for item in array['features']:

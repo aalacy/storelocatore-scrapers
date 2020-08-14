@@ -1,92 +1,51 @@
 const Apify = require('apify');
 const randomUA = require('modern-random-ua');
+const { lookupByState, states } = require('zipcodes');
 
-const MISSING_DATA = '<MISSING>';
-const BASE_URL = 'https://www.wawa.com';
-const SITEMAP = 'site-map';
+const MISSING = '<MISSING>';
+function getOrDefault(value) {
+  return value || MISSING;
+}
 
-async function handlePageFunction(requestQueue, { request, page }) {
-  switch (request.userData.pageType) {
-    case 'stores':
-      await getStores({ page, requestQueue });
-      break;
+function formatPhone(phone) {
+  return phone ? phone.replace(/\-/g, '') : null;
+}
 
-    case 'storeDetails':
-      await getStoreDetails({ page, request });
-      break;
+function formatHoursOfOperation(start, end) {
+  if (!start && !end) {
+    return null;
   }
+
+  return end ? `${start}-${end}` : start;
 }
 
-async function getStores({ page, requestQueue }) {
-  // find links to store details
-  await Apify.utils.enqueueLinks({
-    page,
-    requestQueue,
-    selector: 'a.CMSSiteMapLink',
-    pseudoUrls: [`${BASE_URL}/stores/[.*]`],
-    transformRequestFunction(request) {
-      request.userData.pageType = 'storeDetails';
-      return request;
-    },
-  });
-}
+function getLocationUrls() {
+  const stateAbbrs = Object.keys(states.abbr);
+  return stateAbbrs
+    .map((state) => {
+      try {
+        const loc = lookupByState(state);
+        if (!loc || !loc[0]) return;
 
-async function getStoreDetails({ page }) {
-  const info = await getBasicInfo(page);
-  const location = await getGeolocation(page);
-
-  const poi = {
-    location_domain: BASE_URL,
-    page_url: page.url(),
-    location_name: info.name,
-    store_number: info.storeNumber,
-    hours_of_operation: info.hours,
-    street_address: location.street,
-    city: location.city,
-    state: location.state,
-    zip: location.zip,
-    country_code: location.countryCode,
-    phone: info.phoneNumber,
-    location_type: location.type,
-    latitude: location.latitude,
-    longitude: location.longitude,
-  };
-
-  await Apify.pushData([poi]);
-}
-
-async function getBasicInfo(page) {
-  const name = await page.$('span[itemprop="name"]');
-  console.log(name.jsonValue());
-  return {
-    name,
-    // storeNumber,
-    // phoneNumber,
-    // hours,
-  };
-}
-
-async function getGeolocation(page) {
-  return {
-    // street,
-    // city,
-    // zip,
-    // countryCode,
-    // type,
-    // latitude,
-    // longitude,
-  };
+        const { latitude, longitude, country } = loc[0];
+        const url = `https://www.wawa.com/Handlers/LocationByLatLong.ashx?limit=500&lat=${latitude}&long=${longitude}`;
+        return {
+          url,
+          userData: {
+            country_code: country,
+          },
+        };
+      } catch (err) {
+        console.log(err);
+      }
+    })
+    .filter((url) => url);
 }
 
 Apify.main(async () => {
-  const url = `${BASE_URL}/${SITEMAP}`;
-  const requestQueue = await Apify.openRequestQueue();
-  requestQueue.addRequest({
-    url,
-    userData: {
-      pageType: 'stores',
-    },
-  });
+  const locationUrls = getLocationUrls();
+  const locationMap = {};
+  const requestList = await Apify.openRequestList('location-data', locationUrls);
 
   const useProxy = process.env.USE_PROXY;
   const proxyConfiguration = await Apify.createProxyConfiguration({
@@ -94,15 +53,12 @@ Apify.main(async () => {
     countryCode: 'US',
   });
 
-  // Getting proxyInfo object by calling class method directly
-  const proxyInfo = proxyConfiguration.newProxyInfo();
-
   const puppeteerPoolOptions = {
     retireInstanceAfterRequestCount: 1,
   };
 
   const launchPuppeteerOptions = {
-    headless: false,
+    headless: true,
     stealth: true,
     useChrome: true,
     useApifyProxy: !!useProxy,
@@ -111,13 +67,58 @@ Apify.main(async () => {
   };
 
   const crawler = new Apify.PuppeteerCrawler({
-    requestQueue,
-    handlePageFunction: handlePageFunction.bind(this, requestQueue),
-    puppeteerPoolOptions,
+    requestList,
     launchPuppeteerOptions,
+    puppeteerPoolOptions,
     proxyConfiguration,
-    maxConcurrency: 1,
-    maxRequestsPerCrawl: 1,
+    maxConcurrency: 10,
+    maxRequestsPerCrawl: 50,
+    async handlePageFunction({ request, page }) {
+      const serializedJSON = await page.evaluate(() => {
+        const selected = document.body.querySelector('pre');
+        return selected ? selected.textContent : null;
+      });
+
+      if (!serializedJSON) return;
+
+      try {
+        data = JSON.parse(serializedJSON);
+
+        const pois = data.locations.map((location) => {
+          // validate that there is no duplicate
+          if (locationMap[location.locationID]) {
+            return;
+          }
+
+          const { storeNumber, storeName, telephone, storeOpen, storeClose, addresses } = location;
+          const [friendly, physical] = addresses;
+
+          const poi = {
+            locator_domain: 'wawa.com',
+            page_url: request.url,
+            location_name: getOrDefault(storeName),
+            store_number: getOrDefault(storeNumber),
+            street_address: getOrDefault(friendly.address),
+            city: getOrDefault(friendly.city),
+            state: getOrDefault(friendly.state),
+            zip: getOrDefault(friendly.zip),
+            country_code: request.userData.country_code,
+            latitude: physical.loc[0],
+            longitude: physical.loc[1],
+            phone: getOrDefault(formatPhone(telephone)),
+            hours_of_operation: getOrDefault(formatHoursOfOperation(storeOpen, storeClose)),
+            location_type: MISSING,
+          };
+
+          locationMap[location.locationID] = 1;
+          return poi;
+        });
+        const nullRemoved = pois.filter((poi) => poi);
+        await Apify.pushData(nullRemoved);
+      } catch (err) {
+        console.log(err);
+      }
+    },
   });
 
   await crawler.run();

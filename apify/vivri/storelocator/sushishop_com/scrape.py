@@ -104,7 +104,7 @@ def scrape():
 
     constant_fields = {
         "locator_domain": "https://sushishop.com",
-        "location_type": "Sushi Shop Restaurant", # only one type of location
+        "location_type": MISSING, # only one type of location
     }
 
     one_offs = lambda s: s\

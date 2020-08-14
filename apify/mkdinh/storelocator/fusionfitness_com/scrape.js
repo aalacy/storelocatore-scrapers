@@ -59,16 +59,9 @@ Apify.main(async () => {
 
           const serializedData = $(this).attr('data-block-json');
           const { location } = JSON.parse(serializedData);
-          const {
-            street_address: data_street_address,
-            zip: data_zip,
-            country_code,
-            latitude,
-            longitude,
-          } = parseLocation(location);
+          const { country_code, latitude, longitude } = parseLocation(location);
 
           const { location_name, street_address, city, state, zip } = extractLocationInfo(locInfo);
-          const isSameData = data_zip === zip;
 
           return {
             locator_domain: 'fusionfitness.com',
@@ -79,8 +72,8 @@ Apify.main(async () => {
             state,
             zip,
             country_code,
-            latitude: isSameData ? latitude : MISSING,
-            longitude: isSameData ? longitude : MISSING,
+            latitude: latitude,
+            longitude: longitude,
             phone: MISSING,
             store_number: MISSING,
             location_type: MISSING,

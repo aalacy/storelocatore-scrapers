@@ -47,8 +47,8 @@ def fetch_data():
 		raw_address = str(base.find(class_="cinemaAdrass"))
 		raw_address = raw_address[raw_address.find("</i>")+4:].replace("</div>","").split("<br/>")
 
-		location_name = raw_address[0]
-		street_address = raw_address[1].strip()
+		location_name = raw_address[0].replace("amp;","")
+		street_address = raw_address[1].replace("–","-").strip()
 		city = raw_address[-2].strip()
 		if "Street" in city:
 			street_address = raw_address[-2].strip()
@@ -79,6 +79,8 @@ def fetch_data():
 			hours_of_operation = hours_of_operation[hours_of_operation.find("at")+2:].strip()
 		if hours_of_operation[-1:] == ".":
 			hours_of_operation = hours_of_operation[:-1]
+		if "m" not in hours_of_operation.lower():
+			hours_of_operation = "Mon-Sun: " + hours_of_operation
 		try:
 			raw_gps = base.find(class_="location_map").iframe['src']
 			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()

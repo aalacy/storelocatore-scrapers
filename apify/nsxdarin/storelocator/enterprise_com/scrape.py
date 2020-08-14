@@ -48,7 +48,7 @@ def fetch_data():
             city = ''
             state = ''
             zc = ''
-            store = loc.rsplit('-',1)[1].split('.')[0]
+            store = ''
             phone = ''
             typ = '<MISSING>'
             lat = ''
@@ -58,6 +58,24 @@ def fetch_data():
             r3 = session.get(loc, headers=headers)
             for line3 in r3.iter_lines():
                 line3 = str(line3.decode('utf-8'))
+                if 'enterprise.locationDetail.locationmap.locationId = "' in line3:
+                    store = line3.split('enterprise.locationDetail.locationmap.locationId = "')[1].split('"')[0]
+                    surl = 'https://prd-west.webapi.enterprise.com/enterprise-ewt/location/' + store
+                    r4 = session.get(surl, headers=headers)
+                    for line4 in r4.iter_lines():
+                        line4 = str(line4.decode('utf-8'))
+                        if '"hours":[{"type":"STANDARD","days":[{' in line4:
+                            days = line4.split('"hours":[{"type":"STANDARD","days":[{')[1].split(']}]},')[0].split('"day":"')
+                            for day in days:
+                                if '"date":"' in day:
+                                    if '"closed_all_day":true' in day:
+                                        hrs = day.split('"')[0] + ': Closed'
+                                    else:
+                                        hrs = day.split('"')[0] + ': ' + day.split('{"open_time":"')[1].split('"')[0] + '-' + day.split('"close_time":"')[1].split('"')[0]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
                 if '<meta property="og:title" content="' in line3:
                     name = line3.split('<meta property="og:title" content="')[1].split(' |')[0].replace('Car Rental ','')
                 if '"streetAddress" : "' in line3:
@@ -76,6 +94,7 @@ def fetch_data():
                     lng = line3.split('longitude" : "')[1].split('"')[0]
             if hours == '':
                 hours = '<MISSING>'
+            name = name.replace('&amp;','&')
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

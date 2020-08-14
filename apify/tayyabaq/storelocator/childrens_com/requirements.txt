@@ -1,3 +1,5 @@
-requests==2.11.1
-beautifulsoup4
+selenium==3.141.0
+bs4==0.0.1
+usaddress
+sgrequests
 lxml
