@@ -115,6 +115,9 @@ def fetch_data():
 		hours_of_operation = base.find_all(class_="elementor-text-editor elementor-clearfix")[5].text.replace("\n"," ").strip()
 		if not hours_of_operation or "events" in hours_of_operation:
 			hours_of_operation = "<MISSING>"
+
+		hours_of_operation = hours_of_operation.replace("–","-")
+		
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 
