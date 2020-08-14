@@ -25,6 +25,7 @@ def fetch_data():
         loc = item['permalink'].replace('\\','')
         name = item['store']
         add = item['address']
+        add = add.replace('"','')
         store = item['id']
         city = item['city']
         state = item['state']
@@ -38,6 +39,8 @@ def fetch_data():
             hours = hours.split('wpsl-opening-hours')[1].split('<td>',1)[1].split('<\/td><\/tr><\/table>')[0]
         except:
             hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
