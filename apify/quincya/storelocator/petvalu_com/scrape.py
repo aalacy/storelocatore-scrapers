@@ -56,7 +56,9 @@ def fetch_data():
                 city = store['ct'].strip()
                 state = store['rg'].strip()
                 zipp = store['zp'].strip()
-                country_code = store['co'].strip() 
+                country_code = store['co'].strip()
+                if country_code.lower() not in ['us', 'ca']:
+                    continue
                 phone = store['te'] if 'te' in store else '<MISSING>' 
                 location_type = '<MISSING>'
                 latitude = store['lat']
