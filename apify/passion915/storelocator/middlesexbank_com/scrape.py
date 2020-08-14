@@ -1,151 +1,98 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
-import os
-import re
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
 
-# Site URL
-site_url = 'https://www.middlesexbank.com'
-# Location URL
-location_url = 'https://www.middlesexbank.com/locations'
+from sgrequests import SgRequests
 
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
-# file name of CSV output
-file_name = 'data.csv'
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
-# Function pull webpage content
-
-def pull_content(url):
-
-    soup = bs(r.get(url).content,'html.parser')
-
-    return soup
-
-def pull_info(content):
- 
-    store_data = []
+def fetch_data():
+    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    url = 'https://www.middlesexbank.com/locations'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    state_list = soup.findAll('div', {'class': 'itemlist'})  
+    p = 0
     store_list = soup.find_all('li',{'class':'branch'})
-    
-    for store_item in store_list:
-
-        test = store_item.find('a',{'class':'ext'})
+    print(len(store_list))
+    for store_item in store_list:        
+        test = store_item.find('a',{'class':'ext'})       
+            
+        address = store_item['data-address']
+        lat = store_item['data-lat']
+        longt = store_item['data-lng']        
+        location_name = store_item.find('a',{'class':'location-title'}).text
+        #link = 'https://www.middlesexbank.com' + store_item.find('a',{'class':'visit-page'})['href']
+        # if str(str(address).split(' ')[len(str(address).split(' ')) - 2]).strip() == 'MA':
+        street,city = address.split(', ',1)
+        city,state,pcode = city.lstrip().split(' ',2)        
+        country_code = "US"
+        #city = str(address.split(',')[1]).replace(zip,'').replace(state,'').strip()        
+        store_number = "<MISSING>"
         if test is None:
-            address = store_item['data-address']
-            latitude = store_item['data-lat']
-            longitude = store_item['data-lng']
-
-            
-            location_name = store_item.find('a',{'class':'location-title'}).text
-            # if str(str(address).split(' ')[len(str(address).split(' ')) - 2]).strip() == 'MA':
-            state = str(str(address).split(' ')[len(str(address).split(' ')) - 2]).strip()
-            
-            
-            zip = str(str(address).split(' ')[len(str(address).split(' ')) - 1]).strip()
-            street_address = str(address).replace(state,'').replace(zip,'').replace(',','')
-            store_type = "<MISSING>"
-            country_code = "US"
-            city = str(address.split(',')[1]).replace(zip,'').replace(state,'').strip()
-            locator_domain = site_url + store_item.find('a',{'class':'visit-page'})['href']
-            href_data = pull_content(locator_domain)
-            phone = href_data.find('span',{'property':'telephone'}).a.text
-            store_number = "<MISSING>"
+            locator_domain = 'https://www.middlesexbank.com' + store_item.find('a',{'class':'visit-page'})['href']
+            r = session.get(locator_domain, headers=headers, verify=False)                
+            href_data =BeautifulSoup(r.text, "html.parser")   
+            phone = href_data.find('span',{'property':'telephone'}).a.text        
             hours_of_operation = href_data.find('div',{'property':'openingHours'}).text.strip()
-        else:
-            break
-     
-
-        temp_data = [
-
-            locator_domain,
-
-            location_name,
-
-            street_address,
-
-            city,
-
-            state,
-
-            zip,
-
-            country_code,
-
-            store_number,
-
-            phone,
-
-            store_type,
-
-            latitude,
-
-            longitude,
-
-            hours_of_operation
-
-        ]
-        store_data = store_data + [temp_data]
-    final_columns = [
-
-        'locator_domain',
-
-        'location_name',
-
-        'street_address', 
-
-        'city',
-
-        'state',
-
-        'zip',
-
-        'country_code',
-
-        'store_number',
-
-        'phone',
-
-        'location_type',
-
-        'latitude',
-
-        'longitude',
-
-        'hours_of_operation']
-
-    final_df = pd.DataFrame(store_data,columns=final_columns)
-
-    return final_df        
-
-
-        
+            ltype = 'Branch | ATM'
+            hours_of_operation = hours_of_operation.replace('\r',' ').replace('\n',' ')
+            hours_of_operation = re.sub(pattern, ' ', hours_of_operation)
+            try:
+                hours_of_operation = hours_of_operation.split('Drive')[0]
+            except:
+                pass
+        else:            
+            ltype = 'ATM'
+            phone = '<MISSING>'
+            hours_of_operation = '<MISSING>'
+            locator_domain= '<MISSING>'           
     
+        data.append([
+                        'https://www.middlesexbank.com',
+                        locator_domain,                   
+                        location_name,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        store_number,
+                        phone,
+                        ltype,
+                        lat.lstrip(),
+                        longt.lstrip(),
+                        hours_of_operation
+                    ])
+        #print(p,data[p])
+        p += 1
 
-   
-   
-       
+
+            
         
-
-       
-
-
-                         
+    return data
 
 
+def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    data = fetch_data()
+    write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
-
-# # Pull URL Content
-
-soup = pull_content(location_url)
-
-# # Pull all stores and info
-
-final_df = pull_info(soup)
-
-
-
-# # write to csv
-
-final_df.to_csv(output_path + '/' + file_name,index=False)
+scrape()
