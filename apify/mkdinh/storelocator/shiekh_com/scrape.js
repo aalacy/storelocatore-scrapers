@@ -112,7 +112,7 @@ Apify.main(async function () {
     launchPuppeteerOptions,
     useSessionPool: true,
     maxRequestRetries: 5,
-    maxConcurrency: 10,
+    maxConcurrency: 1,
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
