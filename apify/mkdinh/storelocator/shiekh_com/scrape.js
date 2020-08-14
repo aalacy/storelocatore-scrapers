@@ -60,10 +60,6 @@ async function fetchData({ page, request }) {
   const phone = formatPhone(parser.getTextByItemProp('telephone'));
   const hours_of_operation = extractHoursOfOperation(parser.$);
 
-  if (!latitude || !longitude) {
-    console.log(request.url);
-  }
-
   return {
     locator_domain: 'shiekh.com',
     page_url: request.url,
