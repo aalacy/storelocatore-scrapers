@@ -51,6 +51,7 @@ Apify.main(async () => {
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
+		password: process.env.APIFY_PROXY_PASSWORD
   });
 
   const puppeteerPoolOptions = {
@@ -64,7 +65,6 @@ Apify.main(async () => {
     useApifyProxy: !!useProxy,
     userAgent: randomUA.generate(),
 		ignoreHTTPSErrors: true,
-		password: process.env.APIFY_PROXY_PASSWORD
   };
 
   const crawler = new Apify.PuppeteerCrawler({
@@ -73,7 +73,7 @@ Apify.main(async () => {
     puppeteerPoolOptions,
     proxyConfiguration,
     maxConcurrency: 10,
-    maxRequestsPerCrawl: 50,
+		maxRequestsPerCrawl: 50
     async handlePageFunction({ request, page }) {
       const serializedJSON = await page.evaluate(() => {
         const selected = document.body.querySelector('pre');
