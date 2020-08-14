@@ -47,7 +47,7 @@ Apify.main(async () => {
   const locationMap = {};
   const requestList = await Apify.openRequestList('location-data', locationUrls);
 
-  const useProxy = process.env.USE_PROXY;
+  const useProxy = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
@@ -63,7 +63,8 @@ Apify.main(async () => {
     useChrome: true,
     useApifyProxy: !!useProxy,
     userAgent: randomUA.generate(),
-    ignoreHTTPSErrors: true,
+		ignoreHTTPSErrors: true,
+		password: process.env.APIFY_PROXY_PASSWORD
   };
 
   const crawler = new Apify.PuppeteerCrawler({
