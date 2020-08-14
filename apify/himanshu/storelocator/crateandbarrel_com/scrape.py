@@ -55,7 +55,13 @@ def fetch_data():
                 continue
             country_code = i['country'].replace("USA","US").replace("CAN","CA")
             phone = "("+i['phoneAreaCode']+")"+" "+i['phonePrefix']+"-"+i['phoneSuffix']
-            location_type = "Store"
+            location_type = 'Store'
+            if i['distributionCenter']:
+                location_type = 'Distribution Center'
+            elif i['outlet']:
+                location_type = 'Outlet'
+            elif i['corporate']:
+                location_type = 'Corporate'
             latitude = i['storeLat']
             longitude = i['storeLong']
             result_coords.append((latitude, longitude))
