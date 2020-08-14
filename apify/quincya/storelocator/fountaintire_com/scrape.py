@@ -48,9 +48,16 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		search_element.send_keys(ca_state)
 		time.sleep(randint(1,2))
-
-		search_button = driver.find_element_by_id("locationForm").find_elements_by_xpath("//button[(@type='submit')]")[-1]
-		search_button.click()
+		
+		try:
+			search_button = driver.find_element_by_id("locationForm").find_elements_by_xpath("//button[(@type='submit')]")[-1]
+			search_button.click()
+		except:
+			try:
+				search_button = driver.find_element_by_id("locationForm").find_elements_by_xpath("//button[(@type='submit')]")[-2]
+				search_button.click()
+			except:
+				continue
 		time.sleep(randint(4,6))
 		try:
 			element = WebDriverWait(driver, 100).until(EC.invisibility_of_element_located(
