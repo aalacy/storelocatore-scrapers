@@ -15,6 +15,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     sms = []
+    alllocs = []
     url = 'https://www.health-street.net/sitemap_index.xml'
     r = session.get(url, headers=headers)
     website = 'health-street.net'
@@ -93,7 +94,10 @@ def fetch_data():
                     lat = '<MISSING>'
                 if lng == '':
                     lng = '<MISSING>'
-                yield [website, ploc, aname, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                info = add + '|' + city
+                if info not in alllocs:
+                    alllocs.append(info)
+                    yield [website, ploc, aname, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
