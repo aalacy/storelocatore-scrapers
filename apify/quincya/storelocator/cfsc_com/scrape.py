@@ -31,7 +31,6 @@ def fetch_data():
 		link = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=100&location=%s&limit=50&api_key=7620f61553e8f9aac3c03e159d2d8072&v=20181201&resolvePlaceholders=true&entityTypes=location" %zip_code
 		
 		req = session.get(link, headers = HEADERS)
-		time.sleep(1)
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 			print(zip_code)
