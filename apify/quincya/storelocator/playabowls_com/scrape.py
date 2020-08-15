@@ -47,7 +47,7 @@ def fetch_data():
 		print(location_name)
 		
 		raw_data = item.text.replace("Order Ahead","").replace("Get directions","").strip().split("\n")
-		street_address = raw_data[-4].strip()
+		street_address = raw_data[-4].replace("Sea Isle City, NJ 08243","").replace("Doylestown PA 18901","").replace("Easton, PA 18045","").strip()
 		city_line = raw_data[-3].split(",")
 		city = city_line[0].strip()
 		state = city_line[-1].strip()[:-6].strip()
@@ -67,25 +67,23 @@ def fetch_data():
 
 		try:
 			map_link = item.find("a", string = "Get directions")["href"]
-			req = session.get(map_link, headers = HEADERS)
-			maps = BeautifulSoup(req.text,"lxml")
+			driver.get(map_link)
+			time.sleep(7)
 
-			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-			longitude = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-
-			if not latitude[:2].isnumeric():
-				driver.get(map_link)
-				time.sleep(7)
-
-				try:
-					map_link = driver.current_url
-					at_pos = map_link.rfind("@")
-					latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
-					longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
-				except:
-					latitude = "<INACCESSIBLE>"
-					longitude = "<INACCESSIBLE>"
+			try:
+				map_link = driver.current_url
+				at_pos = map_link.rfind("@")
+				latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
+				longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
+			except:
+				latitude = "<INACCESSIBLE>"
+				longitude = "<INACCESSIBLE>"
+			try:
+				if "we could not calculate" in driver.find_element_by_class_name("section-directions-error-primary-text").text:
+					latitude = "<MISSING>"
+					longitude = "<MISSING>"
+			except:
+				pass
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
