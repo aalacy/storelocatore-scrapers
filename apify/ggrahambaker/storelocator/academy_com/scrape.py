@@ -52,15 +52,18 @@ def fetch_data():
         soup = BeautifulSoup(r.content, 'html.parser')
         try:
             loc = soup.find('input', {'id': 'params'})
+            street_address = loc['data-address']
         except:
             time.sleep(10)
             r = session.get(link, headers = HEADERS)
             soup = BeautifulSoup(r.content, 'html.parser')
             loc = soup.find('input', {'id': 'params'})
 
-        if len(soup) < 5:
+        try:
+            street_address = loc['data-address']
+        except:
             driver.get(link)
-            driver.implicitly_wait(10)
+            driver.implicitly_wait(30)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             loc = soup.find('input', {'id': 'params'})
 
