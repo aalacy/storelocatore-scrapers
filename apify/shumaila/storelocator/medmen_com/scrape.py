@@ -86,7 +86,7 @@ def fetch_data():
             
                 
             data.append([
-                        ':https://www.medmen.com',
+                        'https://www.medmen.com',
                         link,                   
                         title,
                         street.replace('"',''),
