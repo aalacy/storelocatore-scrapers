@@ -45,21 +45,20 @@ def fetch_data():
             if '<h1 itemprop="name">' in line2:
                 name = line2.split('<h1 itemprop="name">')[1].split('<')[0]
             if '<span itemprop="address">' in line2:
-                add = line2.split('<span itemprop="address">')[1].split('<')[0]
+                add = line2.split('<span itemprop="address">')[1].split('<span itemprop="addressLocality">')[0].replace('<br/>','').replace('</span>','').strip()
             if '<span itemprop="addressLocality">' in line2:
                 city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
                 state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('<span itemprop="postalCode">')[1].split('<')[0]
-                try:
-                    phone = line2.split('itemprop="telephone" content="')[1].split('">')[1].split('<')[0]
-                except:
-                    phone = '<MISSING>'
+            if 'itemprop="telephone" content="' in line2:
+                phone = line2.split('itemprop="telephone" content="')[1].split('">')[1].split('<')[0]
             if 'itemprop="openingHours">' in line2:
                 hours = line2.split('itemprop="openingHours">')[1].split('<')[0]
         if phone == '':
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
+        name = name.replace('&#8217;',"'")
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
