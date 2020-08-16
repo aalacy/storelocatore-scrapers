@@ -36,9 +36,14 @@ def fetch_data():
         
         try:
             hours_obj = loc['workingHours']['general']
-            hours = ''
-            for h in hours_obj:
-                hours += h + ' ' + hours_obj[h] + ' '
+            mon = "Mon " + hours_obj["monOpenTime"] + "-" + hours_obj["monCloseTime"]
+            tue = " Tue " + hours_obj["tueOpenTime"] + "-" + hours_obj["tueCloseTime"]
+            wed = " Wed " + hours_obj["wedOpenTime"] + "-" + hours_obj["wedCloseTime"]
+            thu = " Thu " + hours_obj["thuOpenTime"] + "-" + hours_obj["thuCloseTime"]
+            fri = " Fri " + hours_obj["friOpenTime"] + "-" + hours_obj["friCloseTime"]
+            sat = " Sat " + hours_obj["satOpenTime"] + "-" + hours_obj["satCloseTime"]
+            sun = " Sun " + hours_obj["sunOpenTime"] + "-" + hours_obj["sunCloseTime"]
+            hours = mon+tue+wed+thu+fri+sat+sun
         except:
             hours = '<MISSING>'
             
