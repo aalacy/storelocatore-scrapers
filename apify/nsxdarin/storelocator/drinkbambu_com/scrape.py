@@ -15,6 +15,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    canada = ['AB','BC','ON','QC','PEI','SK','NB','NL','NS','PE']
     url = 'https://www.drinkbambu.com/find-bambu/'
     r = session.get(url, headers=headers)
     website = 'drinkbambu.com'
@@ -59,6 +60,8 @@ def fetch_data():
         if hours == '':
             hours = '<MISSING>'
         name = name.replace('&#8217;',"'")
+        if state in canada:
+            country = 'CA'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
