@@ -20,7 +20,7 @@ def fetch_data():
     url = 'https://api-triangle.canadiantire.ca/dss/services/v4/stores?lang=en&radius=1000000&maxCount=1000&lat=43.653226&lng=-79.3831843&storeType=store'
 
     r = session.get(url, headers = HEADERS)
-    locs = json.loads(r.content)
+    locs = json.loads(r.text)
     all_store_data = []
     for loc in locs:
         location_name = loc['storeName']
@@ -34,10 +34,13 @@ def fetch_data():
         phone_number = loc['storeTelephone']
         location_type = loc['storeType']
         
-        hours_obj = loc['workingHours']['general']
-        hours = ''
-        for h in hours_obj:
-            hours += h + ' ' + hours_obj[h] + ' '
+        try:
+            hours_obj = loc['workingHours']['general']
+            hours = ''
+            for h in hours_obj:
+                hours += h + ' ' + hours_obj[h] + ' '
+        except:
+            hours = '<MISSING>'
             
         page_url = '<MISSING>'
 

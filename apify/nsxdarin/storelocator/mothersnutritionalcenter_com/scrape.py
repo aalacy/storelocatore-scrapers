@@ -26,6 +26,10 @@ def fetch_data():
         name = item['store']
         add = item['address']
         add = add.replace('"','')
+        try:
+            add = add + ' ' + item['address2']
+        except:
+            pass
         store = item['id']
         city = item['city']
         state = item['state']
@@ -35,12 +39,17 @@ def fetch_data():
         phone = item['phone']
         hours = item['hours']
         try:
-            hours = hours.replace('<\/td><td><time>',': ').replace('<\/time><\/td><\/tr><tr><td>','; ')
-            hours = hours.split('wpsl-opening-hours')[1].split('<td>',1)[1].split('<\/td><\/tr><\/table>')[0]
+            hours = hours.replace('<\\/td><td><time>',': ').replace('<\\/time><\\/td><\\/tr><tr><td>','; ')
+            hours = hours.split('wpsl-opening-hours')[1].split('<td>',1)[1].split('<\\/td><\\/tr><\\/table>')[0]
         except:
             hours = '<MISSING>'
+        hours = hours.replace('</td><td><time>',': ')
+        hours = hours.replace('</tr></table>','').replace('dayClosed','day: Closed').replace('</time>','')
+        hours = hours.replace('</tr><tr>','; ').replace('<td>','').replace('</td>','')
         if phone == '':
             phone = '<MISSING>'
+        name = name.replace('&#8211;','-')
+        city = city.replace(',','')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

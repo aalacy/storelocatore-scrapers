@@ -14,6 +14,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    coords = []
     url = 'https://app.mapply.net/front-end/iframe.php?api_key=mapply.1912a876a35b8b709f3f1be5fa28f2b2&id=6eae593f-03dd-4dd6-bd8d-12e94a173fdf&ga=0&msid=00000000-0000-0000-0000-000000000000&spmid=51fbe951-f66f-43e9-99cc-0e98d060d71c&pgid=6eae593f-03dd-4dd6-bd8d-12e94a173fdf&siteid=7316a0f9-bfb1-420e-bf72-c4cd78ecedec&locale=en&pid=3426a993-ea79-433c-a715-d4493d114760'
     r = session.get(url, headers=headers)
     website = 'deli-delicious.com'
@@ -26,6 +27,14 @@ def fetch_data():
     lng = '<MISSING>'
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
+        if '{lat: ' in line and 'id:2503388, marker_colour' in line:
+            items = line.split('{lat: ')
+            for item in items:
+                if ', lng:' in item:
+                    lid = item.split(', id:')[1].split(',')[0]
+                    lidlat = item.split(',')[0]
+                    lidlng = item.split(', lng: ')[1].split(',')[0]
+                    coords.append(lid + '|' + lidlat + '|' + lidlng)
         if "onmouseover='hoverStart(" in line:
             items = line.split("onmouseover='hoverStart(")
             for item in items:
@@ -33,6 +42,10 @@ def fetch_data():
                     locs.append(item.split(')')[0])
     for loc in locs:
         print(loc)
+        for coord in coords:
+            if coord.split('|')[0] == loc:
+                lat = coord.split('|')[1]
+                lng = coord.split('|')[2]
         lurl = 'https://app.mapply.net/front-end//get_store_info.php?api_key=mapply.1912a876a35b8b709f3f1be5fa28f2b2&data=detailed&store_id=' + loc
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
