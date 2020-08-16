@@ -87,6 +87,9 @@ def fetch_data():
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
+		if street_address == "99 Westwood Ave":
+			latitude = "40.9916482"
+			longitude = "-74.031694"
 
 		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	driver.close()
