@@ -104,8 +104,8 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-                    print(p,data[p])
-                    print(datalink)
+                    #print(p,data[p])
+                    #print(datalink)
                     p += 1
                     #input()
                                 
