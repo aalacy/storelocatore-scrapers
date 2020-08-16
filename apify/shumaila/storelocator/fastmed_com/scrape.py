@@ -35,13 +35,16 @@ def fetch_data():
     for state in statelist:
         print(state.text)
         state = state.find('a')['href']
+        #print(state)
         r = session.get(state, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
-        branchlist = soup.findAll('h3')
-        print(len(branchlist))
+        branchlist = soup.find('div',{'id':'all-locations'}).findAll('h3')
+        #print(len(branchlist))
         for branch in branchlist:
-            
-            branch = branch.find('a')['href']
+            try:
+                branch = branch.find('a')['href']
+            except:
+                continue
             #print(branch)
             r = session.get(branch, headers=headers, verify=False)
             soup =BeautifulSoup(r.text, "html.parser")
