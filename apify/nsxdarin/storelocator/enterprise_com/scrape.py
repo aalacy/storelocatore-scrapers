@@ -33,6 +33,7 @@ def fetch_data():
         surl = state.split('|')[0]
         country = state.split('|')[1]
         locs = []
+        session = SgRequests()
         r2 = session.get(surl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -54,7 +55,6 @@ def fetch_data():
             lat = ''
             lng = ''
             hours = ''
-            print('Pulling Location %s...' % loc)
             r3 = session.get(loc, headers=headers)
             for line3 in r3.iter_lines():
                 line3 = str(line3.decode('utf-8'))
