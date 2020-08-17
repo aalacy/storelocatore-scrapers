@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -16,6 +15,7 @@ def fetch_data():
     alllocs = []
     states = []
     url = 'https://www.enterprise.com/en/car-rental/locations/us.html'
+    session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
@@ -23,6 +23,7 @@ def fetch_data():
             lurl = 'https://www.enterprise.com' + line.split('href="')[1].split('"')[0]
             states.append(lurl + '|US')
     url = 'https://www.enterprise.com/en/car-rental/locations/canada.html'
+    session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
