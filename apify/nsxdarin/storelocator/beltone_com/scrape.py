@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,18 +19,21 @@ def fetch_data():
     url = 'https://locations.beltone.com/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'href="http://locations.beltone.com/' in line:
+        line = str(line.decode('utf-8'))
+        if 'href="http://locations.beltone.com/' in line and 'Alabama' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if 'linktrack="City index page - ' in line2:
                 cities.append(line2.split('href="')[1].split('"')[0])
     for city in cities:
         print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if 'Location page -' in line2:
                 lurl = line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
@@ -54,6 +56,7 @@ def fetch_data():
         lng = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '<title>' in line2 and name == '':
                 name = line2.split('<title>')[1].split('<')[0]
                 if 'Beltone Hearing Aid Center on ' in name:
@@ -79,7 +82,7 @@ def fetch_data():
                 store = line2.split('"@id":"')[1].split('"')[0]
             if 'hours_label">' in line2:
                 day = line2.split('hours_label">')[1].split('<')[0]
-            if '<span class="open' in line2 and 'hoursAlt' not in line2:
+            if '<span class="open' in line2 and 'hoursAlt' not in line2 and 'document.' not in line2:
                 hrs = day + ' ' + line2.split('<span class="open')[1].split('"')[0] + '-' + line2.split('class="hideifclosed')[1].split('"')[0]
                 if 'Closed' in hrs:
                     hrs = day + ' Closed'
