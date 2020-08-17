@@ -50,6 +50,7 @@ def fetch_data():
             phone = '<MISSING>'
         name = name.replace('&#8211;','-')
         city = city.replace(',','')
+        hours = hours.replace('dayClosed','day: Closed')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
