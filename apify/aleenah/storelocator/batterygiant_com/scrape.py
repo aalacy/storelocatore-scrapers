@@ -1,4 +1,3 @@
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
@@ -23,22 +22,9 @@ all=[]
 
 def fetch_data():
     # Your scraper here
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'en-US,en;q=0.9,ms;q=0.8,ur;q=0.7,lb;q=0.6',
-        'Cache-Control': 'max-age=0',
-        'Connection': 'keep-alive',
-        'Host': 'www.batterygiant.com',
 
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36'}
 
-    res=session.get("https://www.batterygiant.com/sitemap.htm",headers=headers)
+    res=session.get("https://www.batterygiant.com/sitemap.htm")
     soup = BeautifulSoup(res.text, 'html.parser')
 #    print(soup)
     sa = soup.find_all('td', {'class': 'storeLink'})
@@ -55,7 +41,7 @@ def fetch_data():
 
         loc=soup.find('div', {'class': 'grid_92'}).find('h1').text
         divs = soup.find_all('div', {'style': 'width:200px; float:left;'})
-        print(len(divs))
+        #print(len(divs))
         addr=divs[0].text.replace('Address:','').replace('\r','').strip().split('\n')
         csz=addr[-1]
         del addr[-1]
@@ -69,22 +55,28 @@ def fetch_data():
         else:
             zip=zip[0]
             state=csz[1].replace(zip,'').strip()
-
+        if 'Panama' in state:
+            continue
         phone=re.findall(r'Phone:([\d\-]+)',divs[1].text.replace('\n',''))
         if phone==[]:
             phone="<MISSING>"
         else:
             phone=phone[0]
 
-        tim=soup.find('div', {'style': 'float:left; padding:8px; padding-top:0px;'}).prettify()
-        #tim=tims[sa.index(a)]
-        print("hours:")
-        print(tim)
+        tim=soup.find('div', {'style': 'float:left; padding:8px; padding-top:0px;'}).prettify().replace('<p>','').replace('</p>','').replace('</div>','').replace('</span>','').replace('<span style="font-weight:bold;">','').replace('<strong>','').replace('Hours:','').replace('<br/>','').replace('</strong>','').replace('<div style="float:left; padding:8px; padding-top:0px;">','').replace('\n',' ').strip()
+        tim=re.sub(r'[ ]+',r' ',tim)
+        if tim=="":
+            tim="<MISSING>"
+        if 'Closed. Thank you for your business.' in tim:
+            continue
+
+        lat,long=re.findall(r'LatLng\((.*),(.*)\)',str(soup))[0]
 
 
-        """
+
+
         all.append([
-            "https://grottopizza.com",
+            "https://www.batterygiant.com/sitemap.htm",
             loc,
             street,
             city,
@@ -94,10 +86,10 @@ def fetch_data():
             "<MISSING>",  # store #
             phone,  # phone
             "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            tim.replace('Äì','').replace('¬†',''),  # timing
-            a.get('href')])"""
+            lat,  # lat
+            long,  # long
+            tim,  # timing
+            url])
 
 
 
