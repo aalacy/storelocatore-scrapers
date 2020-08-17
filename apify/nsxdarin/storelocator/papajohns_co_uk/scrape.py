@@ -14,6 +14,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    addresses = []
     locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=G43%202XS')
     locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=PA1%203PW')
     locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=G11%207BN')
@@ -83,7 +84,10 @@ def fetch_data():
                 hours = hours + ': ' + line2.split('<span class="hour">')[1].split('<')[0]
         if hours == '':
             hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]    
+        info = name + '|' + add
+        if info not in addresses:
+            addresses.append(info)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]    
 
 def scrape():
     data = fetch_data()
