@@ -51,10 +51,9 @@ def fetch_data():
                         hours = ''
                         cname = item.split('</span>')[0].replace('|','-')
                         try:
-                            days = item.split('</span><span>')
+                            days = item.split('<span>')
                             for day in days:
                                 if 'day:' in day:
-                                    #print(day)
                                     if '<' in day:
                                         hrs = day.split('<')[0]
                                     else:
