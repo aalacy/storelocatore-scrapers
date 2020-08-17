@@ -1,5 +1,6 @@
 import csv
 from sgrequests import SgRequests
+import requests_random_user_agent # ignore_check
 import json
 import re
 import time
@@ -24,7 +25,7 @@ post_headers = {
   'sec-fetch-site': 'same-origin',
   'sec-fetch-user': '?1',
   'upgrade-insecure-requests': '1',
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+#   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
   'content-type': 'application/x-www-form-urlencoded' 
 }
 get_headers = {
@@ -35,7 +36,7 @@ get_headers = {
   'sec-fetch-mode': 'navigate',
   'sec-fetch-site': 'none',
   'upgrade-insecure-requests': '1',
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+#   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
 }
 
 re_get_json = re.compile('map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);')
@@ -46,7 +47,7 @@ re_get_hours_days = re.compile(
     '<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>')
 
 
-def sleep(min=2, max=5):
+def sleep(min=2, max=10):
     duration = random.randint(min, max)
     # log('sleeping ', duration)
     time.sleep(duration)
@@ -137,6 +138,8 @@ def search_zip(zip, reset=False, attempts=1):
                 'dwfrm_storelocator_maxdistance': '500',
                 'dwfrm_storelocator_findbyzip': 'Search'}
     session = get_session(reset=reset)
+    # get the home page before each search to avoid captcha
+    session.get('https://www.gnc.com/', headers=get_headers)
     sleep()
     try: 
         r = session.post(url, headers=post_headers, data=payload)
@@ -204,8 +207,8 @@ def fetch_data():
     with ThreadPoolExecutor(max_workers=32) as executor:
         futures = [executor.submit(search_zip, zipcode) for zipcode in zips]
         done, not_done = wait(futures, return_when=ALL_COMPLETED)
-        log(f'\nDone futures: {len(done)}')
-        log(f'\nNot Done futures: {len(not_done)}')
+        log(f'Done futures: {len(done)}')
+        log(f'Not Done futures: {len(not_done)}')
         for result in futures:
             locations = result.result()
             for loc in locations: 
@@ -251,6 +254,7 @@ def scrape():
     # }
     # data = get_location(search_result)
     # write_output([data])
+    # raise SystemExit
     
     data = fetch_data()
     write_output(data)
