@@ -33,7 +33,7 @@ def fetch_data():
 
 		stores = json.loads(base.text)
 		for store in stores:
-			location_name = store["store"]
+			location_name = store["store"].replace("&#8217;","'").replace("–","-").replace("’","'")
 			if location_name in found_poi:
 				continue
 			else:
@@ -48,7 +48,7 @@ def fetch_data():
 			location_type = store["24HourLocation"]
 			if location_type == "Yes":
 				location_type = "24Hour Location"
-			else:				
+			else:
 				location_type = "Not 24Hour Location"
 			phone = store["phone"]
 			hours_of_operation = store["hours"]
