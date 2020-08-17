@@ -1,6 +1,6 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
+from requests.exceptions import RequestException # ignore_check
 import sgzip
 import json
 
@@ -27,6 +27,34 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def post(url, headers, data, attempts=1):
+    global session
+    if attempts > 10: 
+        print(f'failed post to {url} after 10 tries. giving up')
+        raise SystemExit
+    try: 
+        # print(f'attept {attempts} posting to {url}')
+        r = session.post(url, headers=headers, data=data)
+        return r
+    except RequestException as ex:
+        # reset session and try again
+        session = SgRequests()
+        return post(url, headers, data, attempts+1)
+
+def get(url, headers, attempts=1):
+    global session
+    if attempts > 10: 
+        print(f'failed get {url} after 10 tries. giving up')
+        raise SystemExit
+    try: 
+        r = session.get(url, headers=headers)
+        return r
+    except RequestException as ex:
+        # reset session and try again
+        session = SgRequests()
+        return get(url, headers, attempts+1)
+
+
 def fetch_data():
     ids = set()
     locations = []
@@ -34,15 +62,16 @@ def fetch_data():
     while coord:
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'kroger.com/fuel'
-        #print('%s...' % coord)
+        # print('%s...' % coord)
         url = 'https://www.kroger.com/stores/api/graphql'
         data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(coord) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
-        r = session.post(url, headers=headers, data=data)
+        
+        r = post(url, headers=headers, data=data)
         result_coords = []
         purl = '<MISSING>'
         typ = 'Gas'
         array = []
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '"fuel":' in line and '"fuel":[],' not in line:
                 items = line.split('"fuel":')[1].split('"banner":')
                 for item in items:
@@ -76,8 +105,8 @@ def fetch_data():
                             array.append(info)
                             hours = ''
                             purl = 'https://www.kroger.com/stores/details/' + division + '/' + store
-                            r2 = session.get(purl, headers=headers1)
-                            for line2 in r2.iter_lines():
+                            r2 = get(purl, headers=headers1)
+                            for line2 in r2.iter_lines(decode_unicode=True):
                                 if 'Store Hours:</span>' in line2:
                                     sinfo = line2.split('Store Hours:</span>')[1].split('></div></div></div>')[0]
                                     days = sinfo.split('class="StoreInformation-day font-medium">')
