@@ -62,6 +62,11 @@ def fetch_data():
         name = name.replace('&#8217;',"'")
         if state in canada:
             country = 'CA'
+        else:
+            country = 'US'
+        if '<' in add:
+            add = add.split('<')[0]
+        add = add.strip()
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
