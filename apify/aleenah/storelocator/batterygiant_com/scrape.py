@@ -76,8 +76,9 @@ def fetch_data():
         else:
             phone=phone[0]
 
-        #tim=str(soup.find('div', {'style': 'float:left; padding:8px; padding-top:0px;'}))
-        tim=tims[sa.index(a)]
+        tim=soup.find('div', {'style': 'float:left; padding:8px; padding-top:0px;'}).prettify()
+        #tim=tims[sa.index(a)]
+        print("hours:")
         print(tim)
 
 
