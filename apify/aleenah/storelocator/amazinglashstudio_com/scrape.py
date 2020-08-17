@@ -37,7 +37,7 @@ def fetch_data():
     for yrl in urls:
 
         url = "https://www.amazinglashstudio.com" + re.findall('(/studios/.*)', yrl)[0]
-        print(url)
+        #print(url)
         if url == 'https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont': #redirects
             continue
         res = session.get(url)
