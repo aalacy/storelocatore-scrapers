@@ -45,7 +45,10 @@ def fetch_data():
                 print('Pulling Location %s...' % loc)
                 website = 'bananarepublic.com'
                 typ = '<MISSING>'
-                store = loc.rsplit('-',1)[1].replace('.html','')
+                try:
+                    store = loc.rsplit('-',1)[1].replace('.html','')
+                except:
+                    store = '<MISSING>'
                 hours = ''
                 name = ''
                 add = ''
