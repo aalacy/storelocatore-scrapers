@@ -21,7 +21,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://guess.com/"
 
-
+    addressess=[]
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -64,7 +64,6 @@ def fetch_data():
                 hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
         
                 store = []
-                addressess = []
                 store.append(base_url)
                 store.append(location_name)
                 store.append(street_address)
@@ -84,7 +83,7 @@ def fetch_data():
                 addressess.append(str(store[2]+store[9]+store[-1]))
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("store:----------  ",store)
+               # print("store:----------  ",store)
                 yield store
 
 

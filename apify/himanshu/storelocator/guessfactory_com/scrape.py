@@ -21,12 +21,12 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.guessfactory.com/"
 
-
+    addressess=[]
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    location_url = "https://stores.guess.com.prod.rioseo.com/"
+    location_url = "https://stores.guessfactory.com/en/"
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
 
@@ -60,7 +60,7 @@ def fetch_data():
                     location_type = location_name
                 lat = data['lat']
                 lng = data['lng']
-                phone = location_soup.find("a",{"class":"phone ga-link"}).text
+                phone = location_soup.find("a",{"data-ga":re.compile("Phone - "+str(store_number))}).text
                 hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
         
                 store = []
@@ -77,10 +77,15 @@ def fetch_data():
                 store.append(lat)
                 store.append(lng)
                 store.append(hours)
-                store.append(page_url)
+                store.append(data['website'])
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                
+                if str(store[2]+store[9]+store[-1]) in addressess:
+                    continue
+                addressess.append(str(store[2]+store[9]+store[-1]))
+
+
+                # print("store:------------- ",store)
                 yield store
 
 
