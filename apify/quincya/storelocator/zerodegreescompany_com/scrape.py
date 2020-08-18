@@ -4,6 +4,7 @@ import csv
 import time
 from random import randint
 import re
+from sgselenium import SgSelenium
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -16,6 +17,9 @@ def write_output(data):
 			writer.writerow(row)
 
 def fetch_data():
+
+	driver = SgSelenium().chrome()
+	time.sleep(2)
 	
 	base_link = "https://www.zerodegreescompany.com/locations"
 
@@ -32,14 +36,18 @@ def fetch_data():
 		print('[!] Error Occured. ')
 		print('[?] Check whether system is Online.')
 
-	data = []
-	found_poi = []
 	items = base.find(id="rda7cinlineContent-gridContainer").find_all('div', {'class': re.compile(r'style-.+inlineContent')})
 	locator_domain = "zerodegreescompany.com"
 
+	data = []
+	found_poi = []
+
 	for item in items:
 		location_name = item.h6.text
-		raw_address = item.a.span.text.replace("Las Vegas ","Las Vegas, ").replace(location_name,"|").split("|")
+		try:
+			raw_address = item.a.span.text.replace("Las Vegas ","Las Vegas, ").replace(location_name,"|").split("|")
+		except:
+			continue
 		street_address = raw_address[0].strip()
 		if street_address in found_poi:
 			continue
@@ -59,6 +67,8 @@ def fetch_data():
 				street_address = raw_address[-3].strip()
 			street_address = street_address.replace("  "," ")
 			zip_code = raw_address[-1].strip().split()[-1]
+		if street_address[-1:] == ",":
+			street_address = street_address[:-1]
 		country_code = "US"
 		location_name = "Zero Degrees - " + location_name
 		store_number = "<MISSING>"
@@ -71,7 +81,6 @@ def fetch_data():
 			phone = item.find('a', attrs={'data-type': "phone"})["data-content"]
 		except:
 			phone = item.find_all("p")[-1].text
-		hours_of_operation = "<MISSING>"
 
 		try:
 			map_url = item.a['href']
@@ -94,8 +103,32 @@ def fetch_data():
 		if street_address == "11401 Broadway St #101":
 			latitude = "29.556159"
 			longitude = "-95.3969614"
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
+		link = item.find_all('a', attrs={'data-type': "external"})[1]["href"].replace("s/order","")
+		driver.get(link)
+		time.sleep(randint(2,4))
+		base = BeautifulSoup(driver.page_source,"lxml")
+		hours_of_operation = "<MISSING>"
+
+		if "yelp" in link:
+			hours = base.find(class_="lemon--tbody__373c0__2T6Pl").text.replace("pm","pm ").replace("PM","PM ").replace("Closed","Closed ").strip()
+			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+		else:
+			raw_hours = base.find_all(class_="font--step-0 text-component w-text--rendered")
+			for raw_hour in raw_hours:
+				try:
+					if "day " in raw_hour.text.lower() or "am" in raw_hour.text.lower() or " pm" in raw_hour.text.lower():
+						hours = raw_hour.text.replace("pm","pm ").replace("PM","PM ").replace("Closed","Closed ").strip()
+						hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+						break
+				except:
+					continue
+		if hours_of_operation == "11:00AM-10:00PM":
+			hours_of_operation = "Mon-Sun 11:00AM-10:00PM"
+		if "ubereats" in link or "postmates" in link or "zdkaty." in link:
+			link = base_link
+		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+	driver.close()
 	return data
 
 def scrape():
