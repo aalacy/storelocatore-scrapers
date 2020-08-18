@@ -1,3 +1,4 @@
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import time
@@ -17,6 +18,11 @@ def write_output(data):
 			writer.writerow(row)
 
 def fetch_data():
+
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	HEADERS = {'User-Agent' : user_agent}
+
+	session = SgRequests()
 
 	driver = SgSelenium().chrome()
 	time.sleep(2)
@@ -67,8 +73,21 @@ def fetch_data():
 				except:
 					phone = "<MISSING>"
 			hours_of_operation = "<MISSING>"
+
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
+
+			req = session.get(link, headers = HEADERS)
+			base = BeautifulSoup(req.text,"lxml")
+			all_scripts = base.find_all('script')
+			for script in all_scripts:
+				if "lat=" in str(script):
+					script = str(script)
+					lat_pos = script.find('lat=') + 4
+					latitude = script[lat_pos:script.find('&',lat_pos)]
+					long_pos = script.find('lon=') + 4
+					longitude = script[long_pos:script.find('&',long_pos)]
+					break
 				
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	driver.close()
