@@ -88,6 +88,9 @@ def fetch_data():
 					long_pos = script.find('lon=') + 4
 					longitude = script[long_pos:script.find('&',long_pos)]
 					break
+			if street_address == "22993 PROFESSIONAL LN":
+				latitude = "37.665968"
+				longitude = "-92.6307749"
 				
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	driver.close()
