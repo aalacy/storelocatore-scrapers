@@ -89,7 +89,7 @@ def fetch_data():
                             tem_var.append(zip1.strip())
                             tem_var.append("US")
                             tem_var.append("<MISSING>")
-                            tem_var.append(phone)
+                            tem_var.append(phone if phone else "<MISSING>")
                             tem_var.append("<MISSING>")
                             tem_var.append(latitude)
                             tem_var.append(longitude)
