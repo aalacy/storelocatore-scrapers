@@ -17,6 +17,21 @@ def fetch_data():
     ids = []
     states = []
     url = 'https://bananarepublic.gap.com/stores/'
+    website = 'bananarepublic.com'
+    loc = 'https://bananarepublic.gap.com/stores/hi/waipahu/'
+    name = 'WAIKELE CENTER'
+    add = '94-815a Lumiaina'
+    city = 'Waipahu'
+    state = 'HI'
+    country = 'US'
+    phone = '(808) 638-2603'
+    hours = 'Mon-Sat: 11:00am - 7:00pm; Sun: 12:00pm - 6:00pm'
+    typ = '<MISSING>'
+    store = '<MISSING>'
+    lat = '21.4007488'
+    lng = '-158.001703'
+    zc = '96797-5025'
+    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
@@ -27,7 +42,6 @@ def fetch_data():
                 states.append('https://bananarepublic.gap.com/stores/' + stname)
     for state in states:
         cities = []
-        locs = []
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
@@ -35,6 +49,7 @@ def fetch_data():
             if '<a href="/stores/' in line2:
                 cities.append('https://bananarepublic.gap.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
+            locs = []
             print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
@@ -85,7 +100,7 @@ def fetch_data():
                         zc = line4.split('"postalCode": "')[1].split('"')[0]
                 if hours == '':
                     hours = '<MISSING>'
-                if store not in ids:
+                if store not in ids and name != '':
                     ids.append(store)
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
