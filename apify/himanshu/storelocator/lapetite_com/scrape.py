@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,8 +24,12 @@ def fetch_data():
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.lapetite.com"
-    data = 'location=11756&range=10000'
-    r = session.post("https://www.lapetite.com/locations/",headers=headers,data=data)
+    # data = {
+    #     'location': '11756',
+    #     'range': '1000'
+
+    # }
+    r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location=11756&range=1000",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{'class':"locationCard"}):
@@ -40,6 +44,20 @@ def fetch_data():
         else:
             phone = "<MISSING>"
         hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))
+
+        if name.split(" ")[0] == "Childtime":
+            page_url = location.find("a",{'class':"schoolNameLink"})['href']
+            location_type = "Childtime"
+        elif name.split(" ")[0] == "Tutor":
+            page_url = location.find("a",{'class':"schoolNameLink"})['href']
+            location_type = "Tutor Time"
+        elif name.split(" ")[0] == "Everbrook":
+            page_url = location.find("a",{'class':"schoolNameLink"})['href']
+            location_type = "Everbrook Academy"
+        else:
+            page_url = "https://www.lapetite.com" + location.find("a",{'class':"schoolNameLink"})['href']
+            location_type = "lapetite"
+
         store = []
         store.append("https://www.lapetite.com")
         store.append(name)
@@ -50,10 +68,11 @@ def fetch_data():
         store.append("US")
         store.append(store_id)
         store.append(phone if phone != "" else "<MISSING>")
-        store.append("lapetite")
+        store.append(location_type)
         store.append(location.find("span",{"class":"addr"})["data-latitude"])
         store.append(location.find("span",{"class":"addr"})["data-longitude"])
         store.append(hours)
+        store.append(page_url)
         return_main_object.append(store)
     return return_main_object
 
