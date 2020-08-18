@@ -8,4 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-Zip,phone invalid this website
+addresss with no number,zipcode not in a state,invalid phone and i checked all data true for this site
