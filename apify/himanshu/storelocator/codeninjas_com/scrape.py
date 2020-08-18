@@ -38,11 +38,16 @@ def fetch_data():
         phone=''
         soup1 = bs(session.get(page_url,headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"}).text,'lxml')
         phone = data['phone']
-        hours=''
+        hours = ""
         try:
-            hours=" ".join(list(soup1.find("div",{"id":"centerHours"}).find("ul",{"class":"list mb-0"}).stripped_strings)).replace("Program hours may vary. Contact us for details.",'')
+            for index,data in enumerate(soup1.find("div",{"id":"centerHours"}).find_all("ul",{"class":"list mb-0"})):
+                if index==0:
+                    hours = "Center Hours " + " ".join(list(data.find("li").stripped_strings)).split(" (Summer Hours May Vary)")[0].split("; Birthday")[0].split("or by appointment")[0]
+                else:
+                    hours =hours + " Student Hours " + " ".join(list(data.find("li").stripped_strings)).split(" (Summer Hours May Vary)")[0].split("; Birthday")[0].split("or by appointment")[0]
         except:
-            hours=''
+            hours=""
+     
         store_number = "<MISSING>"
         store = []
         store.append("https://www.codeninjas.com")
@@ -57,13 +62,18 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(latitude)
         store.append(longitude)
-        store.append(hours.replace("             ",' ').replace('     ','').replace("Monday-Friday (by appointment)","<MISSING>").replace(" by Appointment",'').replace("By Appointment",'<MISSING>').replace("   *See Camp Schedule for Camp hours",'').replace("(Note: Last check-in one hour before close)",'').replace("By Appt",'<MISSING>').replace("Coming Real Soon !","<MISSING>").replace("By Appointment Only (due to COVID-19)","<MISSING>").replace(" // ",'').replace("/",' ').replace(" | ",' ').replace(";           ",' ').replace("            ",' ').replace("     ",' ').replace("<MISSING> Only",'<MISSING>').replace("By appointment only","<MISSING>").replace("By appointments only.",'<MISSING>').replace("Regular Hours  ",'').replace("<MISSING> Only: ",'').replace("Stay safe! Currently offering Virtual sessions",'').replace("Virtual Camps available. Tentative re-open in August",'').replace(",           ",'').replace("<MISSING> Only (due to COVID-19)",'').replace("; Birthday parties on Saturday afternoons",'').replace("Summer Hours:  ",'').replace("<MISSING> (due to COVID-19)",'').replace("<MISSING>: ",'').replace(" (<MISSING>)",'').replace("To Schedule Tours https:  calendly.com mncodeninjas",'').replace("only",'').replace(" (Summer Hours May Vary)",'').replace("; Birthday parties on Saturday afternoons",'').replace("By appointment",'').replace("Open <MISSING>",'<MISSING>').replace("; Birthday Parties on Weekends",'').replace(" Appointments Only",'').replace("Virtual (",'').replace(")",'').replace("  or by appointment",'').replace("Saturday 10am-1pm <MISSING>",'Saturday 10am-1pm').replace(" on appointment basis",'').replace("; Birthday Parties on Weekends",'').replace(" - Email for online options",'').replace("; or by appointment",'').replace("Temporarily Shuttered due to COVID-19",'').split("or")[0].replace("Temp",''))
+        hours = re.sub(r"\s+", " ", hours)
+        if "https://www.codeninjas.com/ca-folsom" in page_url or "https://www.codeninjas.com/ca-rocklin" in page_url:
+            hours ="<MISSING>"
+        if "Center Hours Open By Appointment Only Student Hours Open By Appointment Only" in hours or "Center Hours Temporarily Shuttered due to COVID-19 Student Hours Temporarily Shuttered due to COVID-19" in hours or "Center Hours Stay safe! Currently offering Virtual sessions Student Hours Please check our Summer Camps schedule" in hours or "Center Hours Virtual Camps available. Tentative re-open in August Student Hours Virtual Camps available. Tentative re-open in August" in hours or "Center Hours By Appt Student Hours By Appt" in hours or "Center Hours Coming Real Soon ! Student Hours Coming Real Soon !" in hours or "Center Hours  (due to COVID-19) Student Hours  (due to COVID-19)" in hours or "Center Hours Temporarily Closed - Email for online options Student Hours Temporarily Closed - Email for online options" in hours or "Center Hours  (due to COVID-19) Student Hours  (due to COVID-19)" in hours or "Center Hours  due to COVID-19 Student Hours  due to COVID-19" in hours:
+            hours ="<MISSING>"
+        store.append(hours.replace("By Appointment Only",'').replace("Center Hours By appointment only Student",'Student').replace("Center Hours Monday-Friday (by appointment)",'').replace("Center Hours By appointments only.",'').replace("/",' ').replace(": Mon",'Mon').replace("To Schedule Tours https://calendly.com/mncodeninjas",'').replace("Center Hours By Appointment Student",'Student').replace("s only. Student",'Student').replace("by Appointment Student",'Student').replace("*See Camp Schedule for Camp hours ","Student").replace("|",' ').replace("Student Hours CREATE Appointments:",'Student Hours').replace("Appointments Only Student","Student").replace("(Note: Last check-in one hour before close)",'').replace("By-Appointment only for Drop-Ins (Due to Covid-19)",'').replace("Center Hours  Student Hours","Student Hours").replace("Center Hours By appointment Student",'Student').replace(")","").replace("(","").replace("Student Hours By Appointment",'').replace("Virtual",'').replace("Center Hours By Appointment only Student",'Student').replace(" To Schedule Tours https:  calendly.com mncodeninjas",'').replace("*See Camp Schedule for Camp hours",'').replace("Appointments Only",'').strip())
         store.append(page_url if page_url else "<MISSING>")     
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-       # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
      
