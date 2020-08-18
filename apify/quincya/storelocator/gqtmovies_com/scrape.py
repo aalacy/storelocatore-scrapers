@@ -16,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "https://www.gqtmovies.com/florida/riverview-14-gdx/theater-info"
+	base_link = "https://www.gqtmovies.com/michigan/ada-lowell-5"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -37,9 +37,8 @@ def fetch_data():
 	for page in pages:
 		locator_domain = "gqtmovies.com"
 
-		link = "https://www.gqtmovies.com" + page['value']
+		link = "https://www.gqtmovies.com" + page['value'] + "/theater-info"
 		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
 			print(link)
@@ -48,7 +47,7 @@ def fetch_data():
 			print('[?] Check whether system is Online.')
 
 		location_name = page.text.strip()
-		raw_address = item.find(class_="cinAdress").text.split("\n\t") 
+		raw_address = item.find(class_="cinAdress").text.split("\n\t")
 		street_address = raw_address[0].replace(location_name,"").strip()
 		city = raw_address[-3].replace(",","").strip()
 		state = raw_address[-2].replace(",","").strip()

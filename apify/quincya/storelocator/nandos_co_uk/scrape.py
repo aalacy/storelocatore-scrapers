@@ -58,6 +58,9 @@ def fetch_data():
 		street_address = store['address']['streetAddress'].replace("amp;","")
 		city = store['address']['addressLocality']
 		state = store['address']['addressRegion']
+
+		if "Dublin" in state or state == "County Kildare" or state == "Cork":
+			continue
 		if not state:
 			state = "<MISSING>"
 		zip_code = store['address']['postalCode']

@@ -35,14 +35,17 @@ def fetch_data():
     for state in statelist:
         print(state.text)
         state = state.find('a')['href']
+        #print(state)
         r = session.get(state, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
-        branchlist = soup.findAll('h3')
-        print(len(branchlist))
+        branchlist = soup.find('div',{'id':'all-locations'}).findAll('h3')
+        #print(len(branchlist))
         for branch in branchlist:
-            
-            branch = branch.find('a')['href']
-            #print(branch)
+            try:
+                branch = branch.find('a')['href']
+            except:
+                continue
+            print(branch)
             r = session.get(branch, headers=headers, verify=False)
             soup =BeautifulSoup(r.text, "html.parser")
             hours = ''
@@ -59,12 +62,9 @@ def fetch_data():
             
             title = soup.find('h1').text
             title = re.sub(pattern, " ", str(title))
-            soup = str(soup)
-            start = soup.find('"streetAddress"')
-            start = soup.find(':',start)
-            start = soup.find('"',start)+1
-            end = soup.find('"',start)
-            street = soup[start:end]
+            street = soup.find('div',{'class':'location-street-address'}).text.splitlines()[1].lstrip()
+           
+            soup = str(soup)           
             start = soup.find('"addressLocality"')
             start = soup.find(':',start)
             start = soup.find('"',start)+1

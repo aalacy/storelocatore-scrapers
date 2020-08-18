@@ -14,6 +14,10 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    addresses = []
+    locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=G43%202XS')
+    locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=PA1%203PW')
+    locs.append('https://www.papajohns.co.uk/store-locator.aspx?postcode=G11%207BN')
     url = 'https://www.papajohns.co.uk/store-locator.aspx'
     r = session.get(url, headers=headers)
     website = 'papajohns.co.uk'
@@ -41,37 +45,9 @@ def fetch_data():
     name = 'Belfast'
     add = 'Maxol Spar, 756 Upper Newtownards Road'
     zc = 'BT16 1LA'
-    phone = '00 28 9041 9000'    
-    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    lat = '55.824300'
-    lng = '-4.287900'
-    city = 'Glasgow'
-    state = 'Glasgow'
+    phone = '00 28 9041 9000'
+    loc = 'https://papajohns.ie/'
     hours = '<MISSING>'
-    name = 'Glasgow - Shawlands'
-    add = '315 Kilmarnock Road'
-    zc = 'G43 2XS'
-    phone = '0141 632 1122'    
-    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    lat = '-4.409145'
-    lng = '55.846845'
-    city = 'Glasgow'
-    state = 'Glasgow'
-    hours = '<MISSING>'
-    name = 'Paisley'
-    add = '58 Glasgow Road'
-    zc = 'PA1 3PW'
-    phone = '0141 8870077'    
-    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    lat = '-4.325636'
-    lng = '55.875978'
-    city = 'Glasgow'
-    state = 'Glasgow'
-    hours = '<MISSING>'
-    name = 'Glasgow - Broomhill'
-    add = 'Broomhill Shopping Centre, Norby Rd'
-    zc = 'G11 7BN'
-    phone = '0141 339 8999'    
     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     loc = '<MISSING>'
     store = '<MISSING>'
@@ -106,7 +82,12 @@ def fetch_data():
                 Found = False
             if '<span class="hour">' in line2 and Found:
                 hours = hours + ': ' + line2.split('<span class="hour">')[1].split('<')[0]
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]    
+        if hours == '':
+            hours = '<MISSING>'
+        info = name + '|' + add
+        if info not in addresses:
+            addresses.append(info)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]    
 
 def scrape():
     data = fetch_data()

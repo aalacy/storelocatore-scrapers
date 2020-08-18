@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -14,12 +13,13 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&is_selectable=true&limit=50&token=3aa6cd184a21a87f1751c558befbd133'
+    url = 'https://api-3.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&limit=50&token=8c23d8214e3c2890e67277f58e81acae'
     r = session.get(url, headers=headers)
     website = 'foodlandstores.com'
     country = 'US'
     typ = '<MISSING>'
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '{"id":"' in line:
             items = line.split('{"id":"')
             for item in items:

@@ -1,8 +1,12 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
-import string
+import json
 import re, time
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -20,113 +24,75 @@ def fetch_data():
     # Your scraper here
 
     data = []
-    p = 1
+    p = 0
     pattern = re.compile(r'\s\s+')
-    url = 'https://parknationalbank.com/locations/?place&latitude&longitude&type=location#038;latitude&longitude&type=location'
+    url = 'https://parknationalbank.com/about/locations/'
     flag = True
     while flag:
-        #print(url)
-        page = requests.get(url)
-        soup = BeautifulSoup(page.text, "html.parser")
+        print(url)
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        r = r.text.split('var markers =',1)[1].split('}]')[0]
+        r = r + '}]'
+        loclist = json.loads(r)       
+        
         divlist = soup.findAll('div',{'class':'location-list-result'})
-        coord = str(soup.find('div', {'class':'map_container'}))
-        lats = []
-        longts = []
-        start = 0
-        while True:
-            start = coord.find('"lat"', start)
-            if start == -1:
-                break
-            else:
-                start = coord.find(':', start) + 2
-                end = coord.find('"', start)
-                lat = coord[start:end]
-                lats.append(lat)
-                start = coord.find('"lng"', end)
-                start = coord.find(':', start) + 2
-                end = coord.find('"', start)
-                longt = coord[start:end]
-                longts.append(longt)
-
-
-        i = 0
+       
         for div in divlist:
-            title = div.find('span',{'class':'sub-head fw-light'}).text
-            address= str(div.find('span',{'class':'branch-address fw-light'}))
-            address = re.sub(pattern,"",address)
-            phone = div.find('div', {'class': 'large-8 columns'}).find('a').text
+            title = div.find('h4').text.replace('\n','').lstrip()
+            link = div.find('h4').find('a')['href']
+            phonelinks = div.findAll('a')
+            phone  = '<MISSING>'
+            lat  = '<MISSING>'
+            longt  = '<MISSING>'
+            
+            address= str(div.find('span',{'class':'branch-address'}).text)
+            
+            #input()
+            address = re.sub(pattern," ",address).lstrip()
+            phone = address.split(' ')[-1].replace('\n','')
+            
+            
+            if phone.find('-') == -1:
+                phone ='<MISSING>'
+
+            else:
+                address = address.replace(phone,'')
+            print(address)
             try:
-                hours = div.find('div', {'class': 'large-6 small-6 columns'}).text
+                street,city,state = address.split(', ')
+            except:
+                street,temp,city,state = address.split(', ')
+                street = street +' '+ temp
+                
+            state,pcode= state.lstrip().split(' ',1)
+            pcode =pcode.replace('\n','')
+            try:
+                hours = div.find('div', {'class': 'col-3-flex'}).text.replace('\n', ' ').split(' Lobby Hours  ')[1]
             except:
                 hours = "<MISSING>"
-            stored = div.find('div', {'class': 'links fw-light'})
-            stored = stored.findAll('a')
-            store = stored[1]['data-locationid']
-
-            lat = lats[i]
-            longt = longts[i]
-            i += 1
-            title = re.sub(pattern,"",title)
-            hours = hours.replace("\n","")
-            title = title.replace("\n", " ")
-            title = title.strip()
-            start = address.find(">")+1
-            end = address.find("<br",start)
-            street = address[start:end]
-            start = address.find(">",end)+1
-            end = address.find(",", start)
-            city = address[start:end]
-            start = end + 2
-            end = address.find(" ", start)
-            state = address[start:end]
-            start = end + 1
-            end = address.find("<br", start)
-            pcode = address[start:end]
-            if phone.find("Get Directions") > -1:
-                phone = "<MISSING>"
+            stored = div.find('div', {'class': 'links'})
+            stored= str(stored)            
+            store = stored.split('data-locationID="')[1].split('"')[0]
+            for loc in loclist:
+                if loc["title"] == title:
+                    lat = loc['lat']
+                    longt = loc['lng']
+                    break
+            ltype = ''
             try:
-                ltyped = div.find('div',{'class':'large-4 columns'}).text
-                ltyped = ltyped.replace("\n","|")
-                ltype= ltyped[1:len(ltyped)]
-
-                m = 0
-                temp = ""
-                while m <len(ltype):
-                    end =  ltype.find("|",m)
-                    if ltype[m:end].find("Branch") > - 1 or ltype[m:end].find("ATM") > - 1:
-                        if len(temp) > 1:
-                            temp = temp + "|"
-                        temp = temp + ltype[m:end]
-                    m = end + 1
-
-                ltype = temp
-                #print(ltype)
+                ltype = div.find('li',{'class':'feature-branch'}).text + ' '
             except:
-                ltype = "<MISSING>"
-            if len(pcode)<5:
-                pcode = '0' + pcode
-
-
-            #print(url)
-            #print(title)
-            #print(store)
-            #print(ltype)
-            #print(address)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(hours)
-            #print(phone)
-            #print(lat)
-            #print(longt)
-            #print(ltype)
-            #print(p)
-            #print(".......................")
-            p += 1
+                pass
+            try:
+                ltype = ltype + '| '+ div.find('li',{'class':'feature-atm'}).text 
+            except:
+                pass
+            if ltype == '':
+                ltype = '<MISSING>'
             data.append([
                 'https://parknationalbank.com',
-                url,
+                link,
                 title,
                 street,
                 city,
@@ -140,6 +106,9 @@ def fetch_data():
                 longt,
                 hours
             ])
+            print(p,data[p])
+            p += 1
+            #input()
 
         next = soup.find('a', {'class': 'next page-numbers'})
         try:

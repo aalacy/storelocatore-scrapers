@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import unicodedata
-import requests
 import time
 session = SgRequests()
 
@@ -25,8 +23,8 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     }
     base_url = "http://ladbrokes.com"
-    r_list = ["https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=54.630057&lng=-3.550830&type=nearest&value=1000&keyword=&max=1000&sp=CA14%203QB&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1969129058158794",
-            "https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=51.5284541234394&lng=-0.154586637827429&type=nearest&value=1000&keyword=&max=1000&sp=NW1&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1874606795247602"]
+    r_list = ["https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=54.630057&lng=-3.550830&type=nearest&value=100000&keyword=&max=10000&sp=CA14%203QB&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1969129058158794",
+            "https://viewer.blipstar.com/searchdbnew?uid=2470030&lat=51.5284541234394&lng=-0.154586637827429&type=nearest&value=100000&keyword=&max=100000&sp=NW1&ha=no&htf=1&son=&product=&product2=&product3=&cnt=&acc=&mb=false&state=&ooc=0&r=0.1874606795247602"]
     for r_loc in r_list:
         
         r = session.get(r_loc,headers=headers).json()
@@ -38,13 +36,18 @@ def fetch_data():
                 state = soup.find("span",{"class":"storecity"}).text.lower()
                 zipp = soup.find("span",{"class":"storepostalcode"}).text
                 
-                street_address = anchor['ad'].split(",")[0]
-                city = anchor['ad'].split(",")[1].strip().lower()
+                adr = BeautifulSoup(anchor['a'],'lxml')
+                city = adr.find("span",class_="storecity").text.strip()
+                zipp  = adr.find("span",class_="storepostalcode").text.strip()
+                state = anchor['c']
+                street_address =(adr.text.strip().replace(city,"").replace(zipp,''))
+                # print(state)
+                # city = anchor['ad'].split(",")[1].strip().lower()
                 location_name = anchor['n']
                 store_number = location_name.split()[-1].strip()
-                if "BS16 5UJ" in zipp :
-                    street_address = city
-                    city = state
+                # if "BS16 5UJ" in zipp :
+                #     street_address = city
+                #     city = state
 
                 # print(store_number)
                 # if anchor["w"]:

@@ -1,14 +1,9 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import time
-from random import choice
-import html5lib
-from sgselenium import SgSelenium
-import http.client
+import sgzip 
+
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,21 +13,16 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = session.get(url)
-    soup = BeautifulSoup(r.content, "html5lib")
-    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-def proxy_request(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            #print("Using Proxy {}".format(proxy))
-            r = session.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
-            break
-        except:
-            pass
-    return r
+
+def parse_hours(store):
+    days = ['mon', 'tues', 'wed', 'thurs', 'fri', 'sat', 'sun']
+    hours = []
+    for day in days:
+        start = store['{}Open'.format(day)]
+        end = store['{}Close'.format(day)]
+        hours.append('{}: {}-{}'.format(day, start, end))
+    return ', '.join(hours)
+
 def fetch_data():    
     headers ={
         'authority': 'www.crateandbarrel.com',
@@ -43,73 +33,67 @@ def fetch_data():
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',     
     }
     base_url = "https://www.crateandbarrel.com/"
-    r = proxy_request('POST', "https://www.crateandbarrel.com/stores/locator", headers=headers, data="SearchKeyword=85251&hdnHostUrl=https%3A%2F%2Fwww.crateandbarrel.com")
-    soup = BeautifulSoup(r.text, "lxml")
-    # print(soup)
-    data = soup.find(lambda tag: (tag.name == "script") and '"StoreList":' in tag.text).text
-    #print(data)
-    json_data = json.loads(data.split('Crate.Model,')[1].split(');$')[0])
-    for i in json_data['AllStoreList']:
-        location_name = i['Name']
-        store_number = i['StoreNumber']
-        street_address = i['Address1']+" "+i['Address2']
-        city = i['City']
-        state = i['State']
-        zipp = i['Zip']
-        # print(zipp)
-        if "Philippines" in i['Country']:
-            continue
-        country_code = i['Country'].replace("USA","US").replace("CAN","CA")
-        phone = "("+i['PhoneAreacode']+")"+" "+i['PhonePrefix']+"-"+i['PhoneSuffix']
-        location_type = "Store"
-        latitude = i['StoreLat']
-        longitude = i['StoreLong']
-        page_url = "https://www.crateandbarrel.com/stores/"+str(location_name.lower().replace(',','').replace(' ','-'))+"/str"+str(store_number)
-        # print(page_url)
-        driver = SgSelenium().chrome()
-        driver.get(page_url)
-        cookies_list = driver.get_cookies()
-        # print("cookies_list === " + str(cookies_list))
-        # exit()
-        cookies_json = {}
-        for cookie in cookies_list:
-            cookies_json[cookie['name']] = cookie['value']
-        cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")  # use for header cookie
-        r_headers = {       
-            'authority': 'www.crateandbarrel.com',
-            'scheme': 'https',
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'cookie': cookies_string,
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',
-        }
-        driver.quit()
-        r1 = proxy_request('get', page_url, headers=r_headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        if soup1.find("ul",{"class":"hours"}):
-            hours = ' '.join(list(soup1.find("ul",{"class":"hours"}).stripped_strings))
-            # print(hours)
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes = ['us', 'ca'])
+    keys = set()
+    zip_code = search.next_zip()
+    while zip_code:
+        response = session.post("https://www.crateandbarrel.com/stores/locator", headers=headers, data="SearchKeyword={}&hdnHostUrl=https%3A%2F%2Fwww.crateandbarrel.com".format(zip_code)).json()
+        stores = response['storeList']
+        result_coords = []
+        for i in stores:
+            location_name = i['storeName']
+            store_number = i['storeNumber']
+            if store_number in keys:
+                continue
+            else:
+                keys.add(store_number)
+            street_address = i['address1']+" "+i['address2']
+            city = i['city']
+            state = i['state']
+            zipp = i['zip']
+            if 'USA' not in i['country']:
+                continue
+            country_code = i['country'].replace("USA","US").replace("CAN","CA")
+            phone = "("+i['phoneAreaCode']+")"+" "+i['phonePrefix']+"-"+i['phoneSuffix']
+            location_type = 'Store'
+            if i['distributionCenter']:
+                location_type = 'Distribution Center'
+            elif i['outlet']:
+                location_type = 'Outlet'
+            elif i['corporate']:
+                location_type = 'Corporate'
+            if location_type not in ['Store', 'Outlet']:
+                continue
+            latitude = i['storeLat']
+            longitude = i['storeLong']
+            result_coords.append((latitude, longitude))
+            page_url = "https://www.crateandbarrel.com/stores/"+str(location_name.lower().replace(',','').replace(' ','-'))+"/str"+str(store_number)
+            hours = parse_hours(i)
+            store = []
+            store.append(base_url)
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
+            store.append(store_number if store_number else "<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append(location_type if location_type else "<MISSING>")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(hours if hours else "<MISSING>")
+            store.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
+            yield store
+        if len(result_coords) > 0:
+            search.max_count_update(result_coords)
         else:
-            hours = "<INACCESSIBLE>"
-            # print(hours)     
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append(location_type if location_type else "<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hours if hours else "<MISSING>")
-        store.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
-      #  print("data =="+str(store))
-      #  print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        yield store
+            search.max_distance_update(100)
+        zip_code = search.next_zip()
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 scrape()
