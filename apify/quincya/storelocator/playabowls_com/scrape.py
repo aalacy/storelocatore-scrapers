@@ -65,28 +65,29 @@ def fetch_data():
 			state = city_line[-1].strip()[:-6].strip()
 			zip_code = city_line[-1][-6:].strip()
 
+		map_url = ""
 		try:
-			map_link = item.find("a", string = "Get directions")["href"]
-			driver.get(map_link)
-			time.sleep(7)
+			map_url = item.find("a", string = "Get directions")["href"]
+		except:
+			latitude = "<MISSING>"
+			longitude = "<MISSING>"
 
-			try:
+		if map_url:
+			req = session.get(map_url, headers = HEADERS)
+			map_link = req.url
+
+			if "@" not in map_link:
+				driver.get(map_url)
+				time.sleep(8)
 				map_link = driver.current_url
+			try:
 				at_pos = map_link.rfind("@")
 				latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
 				longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
 			except:
 				latitude = "<INACCESSIBLE>"
 				longitude = "<INACCESSIBLE>"
-			try:
-				if "we could not calculate" in driver.find_element_by_class_name("section-directions-error-primary-text").text:
-					latitude = "<MISSING>"
-					longitude = "<MISSING>"
-			except:
-				pass
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+				
 		if street_address == "99 Westwood Ave":
 			latitude = "40.9916482"
 			longitude = "-74.031694"
