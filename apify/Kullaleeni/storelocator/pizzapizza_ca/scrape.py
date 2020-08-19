@@ -37,7 +37,7 @@ def fetch_data():
             #print(city['city_slug'])
             mlink = 'https://www.pizzapizza.ca/restaurant-locator/'+province + '/'+city['city_slug']
             branchlink = 'https://www.pizzapizza.ca/ajax/store/api/v1/search/store_locator?province='+province+'&city='+city['city_slug']
-            print(branchlink)
+            #print(branchlink)
             #print(link)
             try:
                 r1 = session.get(branchlink, headers=headers, verify=False).json()
@@ -81,7 +81,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                print(p,data[p])
+                #print(p,data[p])
                 p += 1
                 
             
