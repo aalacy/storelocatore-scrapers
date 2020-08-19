@@ -41,14 +41,15 @@ def fetch_data():
             r = session.get(slink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             linklist = soup.findAll('a',{'class':'ca1link'})
-            for link in linklist:               
-               
-                    
+            for link in linklist:            
                 link = link['href']                    
                 #print(link)
                 page = session.get(link, headers=headers, verify=False)
                 soup1 = BeautifulSoup(page.text,'html.parser')
-                title = soup1.find('title').text.split('|')[0]
+                try:
+                    title = soup1.find('title').text.split('|')[0]
+                except:
+                    title = soup1.find('meta',{'property':"og:title"})['href']
                 if title.find('Coming Soon') == -1 and title not in titlelist:
                     titlelist.append(title)
                     ##print(title)
@@ -64,7 +65,6 @@ def fetch_data():
                             
                             break
                     datalink = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&SingleLine='+title.replace(' ','%20')+'&outfields=placeName,place_addr,phone,url,location'
-                    
                     pagedata = session.get(datalink, headers=headers, verify=False).json()["candidates"][0]
                     coord = pagedata['location']
                     longt = str(coord['x'])
