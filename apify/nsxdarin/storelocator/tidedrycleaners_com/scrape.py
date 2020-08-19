@@ -36,6 +36,7 @@ def fetch_data():
                         add = add + ' ' + item.split('streetLine2":"')[1].split('"')[0]
                     except:
                         pass
+                    add = add.strip()
                     try:
                         city = item.split(',"city":"')[1].split('"')[0]
                     except:
