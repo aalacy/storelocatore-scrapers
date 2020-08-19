@@ -38,7 +38,7 @@ def fetch_data():
             hours= "<MISSING>"
             store_number = "<MISSING>"
             store = []
-            store.append("https://www.codeninjas.com")
+            store.append("https://www.compassus.com")
             store.append(location_name)
             store.append(street_address)
             store.append(city)
