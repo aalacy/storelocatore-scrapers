@@ -38,6 +38,7 @@ def fetch_data():
         if title.find('Locations') > -1:
             slink = 'https://www.potatocornerusa.com/'+loc['pageUriSEO']
             #print(slink)
+            
             r = session.get(slink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             linklist = soup.findAll('a',{'class':'ca1link'})
@@ -45,11 +46,26 @@ def fetch_data():
                 link = link['href']                    
                 #print(link)
                 page = session.get(link, headers=headers, verify=False)
+                time.sleep(5)
                 soup1 = BeautifulSoup(page.text,'html.parser')
+                #print(soup1)
                 try:
                     title = soup1.find('title').text.split('|')[0]
                 except:
-                    title = soup1.find('meta',{'property':"og:title"})['href']
+                    try:
+                        title = soup1.find('meta',{'property':"og:title"})['href']
+                    except:
+                        try:
+                            title = soup1.find('h3').text
+                        except:
+                            title = 'mm'
+                            page = session.get(link, headers=headers, verify=False)
+                            time.sleep(5)
+                            soup1 = BeautifulSoup(page.text,'html.parser')
+                            title = soup1.find('title').text.split('|')[0]
+                            pass
+                    
+                
                 if title.find('Coming Soon') == -1 and title not in titlelist:
                     titlelist.append(title)
                     ##print(title)
