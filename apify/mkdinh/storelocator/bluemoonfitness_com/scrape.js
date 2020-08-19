@@ -10,7 +10,7 @@ function parseAddress(text) {
   const address = text.replace(/^,|,$|,,/g, '');
   const components = address.split(',');
   const zipState = components.pop().trim();
-  const [zip, state] = zipState.split(' ');
+  const [state, zip] = zipState.split(' ');
   const city = components.pop();
   const street_address = components.join(',');
   const country_code = 'US';
