@@ -20,7 +20,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if 'href="http://locations.beltone.com/' in line and 'Alabama' in line:
+        if 'href="http://locations.beltone.com/' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
@@ -57,11 +57,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
-            if '<title>' in line2 and name == '':
-                name = line2.split('<title>')[1].split('<')[0]
-                if 'Beltone Hearing Aid Center on ' in name:
-                    name = name.split('Beltone Hearing Aid Center on ')[1]
-                name = name.replace('>','')
+            if 'property="og:title" content="' in line2:
+                name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
             if '"addressLocality":"' in line2:
