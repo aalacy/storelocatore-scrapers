@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -45,7 +44,7 @@ def fetch_data():
                 branch = branch.find('a')['href']
             except:
                 continue
-            #print(branch)
+            print(branch)
             r = session.get(branch, headers=headers, verify=False)
             soup =BeautifulSoup(r.text, "html.parser")
             hours = ''
@@ -62,12 +61,9 @@ def fetch_data():
             
             title = soup.find('h1').text
             title = re.sub(pattern, " ", str(title))
-            soup = str(soup)
-            start = soup.find('"streetAddress"')
-            start = soup.find(':',start)
-            start = soup.find('"',start)+1
-            end = soup.find('"',start)
-            street = soup[start:end]
+            street = soup.find('div',{'class':'location-street-address'}).text.splitlines()[1].lstrip()
+           
+            soup = str(soup)           
             start = soup.find('"addressLocality"')
             start = soup.find(':',start)
             start = soup.find('"',start)+1

@@ -21,16 +21,16 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.guessfactory.ca/"
 
-
+    addressess =[]
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    location_url = "https://stores.guess.com.prod.rioseo.com/"
+    location_url = "https://stores.guessfactory.ca/en/"
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
 
-    for a_link in all_soup.find_all("div",{"aria-labelledby":"browse-title"})[-1].find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
+    for a_link in all_soup.find_all("a",{"data-ga":re.compile("Maplist, Region")}):
 
         city_soup = bs(session.get(a_link['href']).content, "lxml")
 
@@ -60,7 +60,7 @@ def fetch_data():
                     location_type = location_name
                 lat = data['lat']
                 lng = data['lng']
-                phone = location_soup.find("a",{"class":"phone ga-link"}).text
+                phone = location_soup.find("a",{"data-ga":re.compile("Phone - "+str(store_number))}).text
                 hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
         
                 store = []
@@ -77,10 +77,13 @@ def fetch_data():
                 store.append(lat)
                 store.append(lng)
                 store.append(hours)
-                store.append(page_url)
+                store.append(data['website'])
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                
+                if str(store[2]+store[9]+store[-1]) in addressess:
+                    continue
+                addressess.append(str(store[2]+store[9]+store[-1]))
+                # print(store)
                 yield store
 
 

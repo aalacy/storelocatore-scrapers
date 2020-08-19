@@ -28,7 +28,6 @@ def fetch_data():
     hours_of_operation ="<MISSING>"
     while True:
         soup = BeautifulSoup(driver.page_source,"lxml")
-        # print(soup)
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
@@ -51,9 +50,6 @@ def fetch_data():
                             hours_of_operation = " ".join(list(h.stripped_strings))
                 else:
                     hours_of_operation="<MISSING>"
-                
-                
-                # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
                 page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
                 location_name = list(tr.stripped_strings)[1]
                 street_address = list(tr.stripped_strings)[2]
@@ -74,6 +70,15 @@ def fetch_data():
                     hours_of_operation1= hours_of_operation
                 else:
                     hours_of_operation1 = "<MISSING>"
+                
+                if "1208 W 13TH ST" in street_address:
+                    phone="(319) 472-3591"
+                    latitude="42.15902"
+                    longitude = "-92.03876"
+                if "https://www.kwiktrip.com/locator/store?id=589" in page_url:
+                    phone="<MISSING>"
+                    latitude="42.03466"
+                    longitude = "-91.54563"
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation1, page_url]
                 if store[2] in addresses:

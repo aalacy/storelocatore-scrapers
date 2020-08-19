@@ -4,8 +4,9 @@ import re
 import json
 import datetime
 from datetime import datetime
-import requests
+from sgrequests import SgRequests
 
+MISSING = "<MISSING>"
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -20,26 +21,48 @@ def write_output(data):
 
 
 def fetch_data():
+    requests = SgRequests()
+
     base_url = "https://www.spar.co.uk"
  
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-    r = requests.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    r = requests.get("https://www.spar.co.uk/sitemap-page",headers={})
     soup = BeautifulSoup(r.text, "lxml")
+
+    encountered_identities = set()
+
     for inex,link in enumerate(soup.find_all("a")):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
             if "https://www.spar.co.uk/store-locator/hal24301" in page_url:
-                continue  
+                continue
             
             r1= requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
-            
-            full = list(soup1.find("div",{"class":"store-details__contact"}).stripped_strings)
-            if soup1.find("span",{"class":"page__notice-title"}):
+
+            store_operating_times = " ".join(list(soup1.find("table",{"class":"table"}).find("tbody").stripped_strings))
+            if "24h" in store_operating_times:
+                operating_hours = store_operating_times
+            elif "CLOSED" in store_operating_times:
+                operating_hours = store_operating_times
+            else:
+                data = re.findall(r'\d{1,3}:\d{1,3}\s+\d{1,3}:\d{1,3}',store_operating_times)
+                operating_hours = ''
+                day = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+                for hour in range(len(data)):
+                    start_time = datetime.strptime(data[hour].split(" ")[0],"%H:%M").strftime("%I:%M:%p")
+                    end_time = datetime.strptime(data[hour].split(" ")[-1],"%H:%M").strftime("%I:%M:%p")
+                    operating_hours+= day[hour] +" "+ str(start_time) +" "+ str(end_time) +" "
+
+            # if it's closed 7 days a week, treat it as permanently closed.
+            if operating_hours.count("CLOSED") == 7:
                 continue
+
+            full = list(soup1.find("div",{"class":"store-details__contact"}).stripped_strings)
+
             for index,w in enumerate(full):
                 if  "Phone" in w:
                     full= full[index+2:]
@@ -53,16 +76,17 @@ def fetch_data():
             new_words = [word for word in full1 if word not in stopwords]
             stopwords='Address'
             full2 = [word for word in new_words if word not in stopwords]
-            city="<MISSING>"
-            state = "<MISSING>"
+
+            addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
+
             try:
                 city = addr['address']['addressLocality']
             except:
-                city = "<MISSING>"
+                city = MISSING
             try:
                 state = addr['address']['addressRegion']
             except:
-                state = "<MISSING>"
+                state = MISSING
             if len(full2)==4:
                 state = full2[-1]
                 city = full2[-2]
@@ -85,65 +109,58 @@ def fetch_data():
                     state = city_state[3]
                 else:
                     city = " ".join(city_state).strip()
+            else:
+                city = MISSING
+                state = MISSING
+                street_address = MISSING
 
-            addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
             street_address = street_address.replace(location_name,'')
             try:
                 zipp = addr['address']['postalCode']
             except:
-                zipp = "<MISSING>"
+                zipp = MISSING
             try:
                 phone = addr['telephone']
             except:
-                phone = "<MISSING>"
+                phone = MISSING
             location_type = addr['@type']
-            time = " ".join(list(soup1.find("table",{"class":"table"}).find("tbody").stripped_strings))
-            if "24h" in time:
-                hours = time
-            elif "CLOSED" in time:
-                hours = time
-            else:
-                data = re.findall(r'\d{1,3}:\d{1,3}\s+\d{1,3}:\d{1,3}',time)
-                hours = ''
-                day = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-                for hour in range(len(data)):
-                    start_time = datetime.strptime(data[hour].split(" ")[0],"%H:%M").strftime("%I:%M:%p")
-                    end_time = datetime.strptime(data[hour].split(" ")[-1],"%H:%M").strftime("%I:%M:%p")
-                    hours+= day[hour] +" "+ str(start_time) +" "+ str(end_time) +" "
-                hours = hours
+
             coord = soup1.find(lambda tag : (tag.name == "script") and "storeLat" in tag.text).text
             latitude = coord.split('storeLat = "')[1].split('";')[0]
             longitude = coord.split('storeLng = "')[1].split('";')[0]
             if latitude == "0":
-                latitude = "<MISSING>"
+                latitude = MISSING
             if longitude == "0":
-                longitude = "<MISSING>"
+                longitude = MISSING
             store_number = coord.split('storeId = ')[1].split(";")[0]
-                    
-                
+
+            # deduping
+            if latitude is not MISSING and longitude is not MISSING:
+                latlong = f"{latitude[0:8]}:{longitude[0:8]}"
+                if latlong in encountered_identities:
+                    continue
+                else:
+                    encountered_identities.add(latlong)
+
             store = []
             result_coords.append((latitude,longitude))
             store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>")
+            store.append(location_name if location_name else "SPAR")
             store.append(street_address.replace("Ettington",'').replace(",",''))
             store.append(city)
             store.append(state)
-            store.append(zipp if zipp else "<MISSING>")   
+            store.append(zipp if zipp else MISSING)   
             store.append("UK")
             store.append(store_number)
             store.append(phone)
             store.append(location_type)
             store.append(latitude)
             store.append(longitude)
-            store.append(hours)
+            store.append(operating_hours)
             store.append(page_url)
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else MISSING for x in store]
             yield store
-            
-       
 
 def scrape():
     data = fetch_data()

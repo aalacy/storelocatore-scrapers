@@ -18,7 +18,8 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox()
+    addressess = []
+    # driver = SgSelenium().firefox()
     base_url = "https://www.holidaystationstores.com/"
     data = {"Lat": 40.4172871,
             "Lng": -82.90712300000001,
@@ -59,11 +60,12 @@ def fetch_data():
         city = raw.split(",")[0]
         state = raw.split(",")[1].split()[0]
         zipp = raw.split(",")[1].split()[1]
-        page_url = "http://www.holidaystationstores.com/Locations/Detail?storeNumber="+str(store_number)
-        driver.get(page_url)
-        location_soup = BeautifulSoup(driver.page_source, "lxml")
-        phone = location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).find("div",{"class":"HolidayFontColorRed"}).text.strip()
-        hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).stripped_strings)).split("Hours")[1].split("Services")[0].strip()
+        page_url = "https://www.holidaystationstores.com/Locations/Detail?storeNumber="+str(store_number)
+        
+        # driver.get(page_url)
+        # location_soup = BeautifulSoup(driver.page_source, "lxml")
+        # phone = location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).find("div",{"class":"HolidayFontColorRed"}).text.strip()
+        # hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).stripped_strings)).split("Hours")[1].split("Services")[0].strip()
     
         store = []
         store.append(base_url)
@@ -74,12 +76,15 @@ def fetch_data():
         store.append(zipp)   
         store.append("US")
         store.append(store_number)
-        store.append(phone)
+        store.append("<INACCESSIBLE>")
         store.append("<MISSING>")
         store.append(latitude )
         store.append(longitude )
-        store.append(hours)
+        store.append("<INACCESSIBLE>")
         store.append(page_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         #print(store)
         yield store

@@ -1,0 +1,2 @@
+--ignore GeoConsistencyValidator (Bowman Inn and Suites state or zipcode incorrect on website)
+--ignore StoreNumberColumnValidator (Few missing numbers)

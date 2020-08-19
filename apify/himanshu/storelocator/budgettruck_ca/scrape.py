@@ -72,7 +72,7 @@ def fetch_data():
                 store.append(state)
                 store.append(zipp)   
                 store.append(country_code)
-                store.append('<MISSING>)
+                store.append('<MISSING>')
                 store.append(phone)
                 store.append(location_type)
                 store.append(latitude)

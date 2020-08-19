@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,6 +19,7 @@ def fetch_data():
                }
     r = session.post(url, headers=headers, data=payload)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<li id="store_item_' in line:
             lat = line.split('"latlng":{"lat":')[1].split(',')[0]
             lng = line.split('"lng":')[1].split('}')[0]
@@ -38,18 +38,20 @@ def fetch_data():
                         hours = day.split('<')[0] + ' ' + day.split('<span class="hours')[1].split('">')[1].split('<')[0].strip()
                     else:
                         hours = hours + '; ' + day.split('<')[0] + ' ' + day.split('<span class="hours')[1].split('">')[1].split('<')[0].strip()
-        if '<h3 class="store-info-location-address body-font black-text">' in line:
-            add = line.split('<h3 class="store-info-location-address body-font black-text">')[1].split('<')[0]
+        if '<h4 class="store-info-location-address body-font black-text">' in line:
+            add = line.split('<h4 class="store-info-location-address body-font black-text">')[1].split('<')[0]
             city = line.split('<br/>')[1].split(',')[0]
             state = line.split('<br/>')[1].split(',')[1].strip().split(' ')[0]
             zc = line.split('<br/>')[1].split(',')[1].strip().split(' ')[1].split('<')[0]
         if '</span><a href="tel:' in line:
-            phone = line.split('</span><a href="tel:')[1].split('"')[0]
+            phone = line.split('</span><a href="tel:')[1].split('"')[0][:14]
         if '<a href="https://maps.google.com' in line:
             if hours == '':
                 hours = '<MISSING>'
             if phone == '':
                 phone = '<MISSING>'
+            if '208 N Perkins Rd' in add:
+                zc = '74075'
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

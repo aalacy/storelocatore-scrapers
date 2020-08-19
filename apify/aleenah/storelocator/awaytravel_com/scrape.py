@@ -28,16 +28,17 @@ def fetch_data():
     con="US"
     res=session.get("https://www.awaytravel.com/ca/en/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    stores = soup.find_all('li', {'class': 'component menu-dropdown-item-component component---2m_tC'})
+    stores = re.findall(r'href="(/stores/[^"]+)"',str(soup))
     all=[]
     for store in stores:
-        url="https://www.awaytravel.com"+store.find('a').get('href')
+        url="https://www.awaytravel.com"+store
         print(url)
         if "london" in url:
             con="UK"
         else:
             con="US"
         driver.get(url)
+        time.sleep(3)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         #print(soup)
         ll = soup.find('div', {'class': 'store__map js-map'}).get('data-map')
@@ -50,11 +51,13 @@ def fetch_data():
         zip=soup.find('span', {'itemprop': 'postalCode'}).text
         tim=""
         tims=soup.find_all('span', {'itemprop': 'openingHours'})
-
         for t in tims:
             tim+=t.text.strip()+" "
         if tim=="":
                 tim="<MISSING>"
+        phone = soup.find('a', {'itemprop': 'telephone'}).text.strip()
+        #print(phone)
+
         all.append([
             "https://www.awaytravel.com",
             loc,
@@ -64,11 +67,11 @@ def fetch_data():
             zip,
             con,
             "<MISSING>",  # store #
-            "<MISSING>",  # phone
+            phone,  # phone
             "<MISSING>",  # type
             lat,  # lat
             long,  # long
-            tim.strip().replace("   "," "),  # timing
+            tim.strip().replace("   "," "),  # timing
             url])
 
     return all

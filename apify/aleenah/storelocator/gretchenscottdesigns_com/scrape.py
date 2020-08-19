@@ -29,7 +29,7 @@ def fetch_data():
     ids=[]
     page_url=[]
     headers={"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-"accept-encoding": "gzip, deflate, br",
+"accept-encoding": "gzip, deflate",
 "accept-language": "en-US,en;q=0.9",
 "cache-control": "max-age=0",
     "sec-fetch-mode": "navigate",

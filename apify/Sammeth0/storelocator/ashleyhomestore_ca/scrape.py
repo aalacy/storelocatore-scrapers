@@ -1,18 +1,9 @@
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-from selenium.webdriver.support.ui import Select
+from sgselenium import SgSelenium
 import csv
 import time 
-import re 
-
-def get_driver():
-	options = Options()
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'")
-	return webdriver.Chrome('chromedriver', options=options)
+import re
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,9 +33,12 @@ def fetch_data():
 	timing = []
 	ids=[]
 	pages=[]
-	driver = get_driver()
+
+	driver = SgSelenium().chrome()
+	time.sleep(2)
+
 	driver.get(location_url)
-	time.sleep(5)	
+	time.sleep(5)
 	
 	locations=driver.find_element_by_class_name('addresses').find_elements_by_tag_name('li')
 	for l in locations:
@@ -70,8 +64,15 @@ def fetch_data():
 			phones.append(l.find_element_by_class_name('phone').text)
 		except:
 			phones.append("<MISSING>")
-		l.find_element_by_xpath('./a').click()
-		time.sleep(2)
+		try:
+			l.find_element_by_xpath('./a').click()
+			time.sleep(2)
+		except:
+			webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+			time.sleep(2)
+			l.find_element_by_xpath('./a').click()
+			time.sleep(2)
+
 		try:
 			hours = driver.find_element_by_id("store_map").find_element_by_class_name("hours").text.replace("\n"," ")
 			if ".ca" in hours:

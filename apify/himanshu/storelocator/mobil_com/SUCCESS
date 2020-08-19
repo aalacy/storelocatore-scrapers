@@ -1,3 +1,0 @@
-VALIDATOR_VERSION: 0.0.68
-COMMAND: validate.py mobil_com.csv --ignore StateLevelCountValidator --ignore CountValidator --ignore StreetAddressHasStateName --ignore CentroidValidator --ignore StreetAddressHasNumber
-PYTHON_VERSION: sys.version_info(major=3, minor=6, micro=8, releaselevel='final', serial=0)
