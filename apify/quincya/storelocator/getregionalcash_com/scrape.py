@@ -10,7 +10,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "branch_manager"])
+		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -43,7 +43,7 @@ def fetch_data():
 	for next_link in main_links:
 		print("Processing: " + next_link)
 		req = session.get(next_link, headers = HEADERS)
-		time.sleep(randint(1,2))
+		# time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
@@ -58,7 +58,7 @@ def fetch_data():
 				final_links.append(link)
 			else:
 				next_req = session.get(link, headers = HEADERS)
-				time.sleep(randint(1,2))
+				# time.sleep(randint(1,2))
 				try:
 					next_base = BeautifulSoup(next_req.text,"lxml")
 				except (BaseException):
@@ -73,7 +73,7 @@ def fetch_data():
 	data = []
 	for final_link in final_links:
 		final_req = session.get(final_link, headers = HEADERS)
-		time.sleep(randint(1,2))
+		# time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
@@ -91,7 +91,6 @@ def fetch_data():
 		location_name = item.find(class_="LocationName-brand").text.strip() + " " + location_name_geo
 		print(location_name)
 
-		branch_manager = item.find(class_="LocationInfo-manager").text.replace("Branch Manager:","").strip()
 		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
 		try:
 			street_address = street_address + " " + item.find(class_="c-address-street-2 break-before").text.replace("\u200b","").strip()
@@ -131,7 +130,7 @@ def fetch_data():
 			hours_of_operation = "<MISSING>"
 
 		location_data = [locator_domain, final_link, location_name, street_address, city, state, zip_code,
-						country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, branch_manager]
+						country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
 		data.append(location_data)
 
