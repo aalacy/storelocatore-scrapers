@@ -55,7 +55,7 @@ def fetch_data():
                         loc = item.split(',"homeUrl":"')[1].split('"')[0]
                         name = item.split('"name":"')[1].split('"')[0]
                         try:
-                            phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('=','').replace('+','')
                         except:
                             phone = '<MISSING>'
                         add = item.split('"addressLine1":"')[1].split('"')[0]
