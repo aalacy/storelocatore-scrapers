@@ -32,7 +32,7 @@ def fetch_data():
         driver.implicitly_wait(10)
         city_links = [a_tag.get_attribute('href') for a_tag in driver.find_elements_by_css_selector('a.cityLinks')]
         for city in city_links:
-            print(city)
+            # print(city)
             driver.get(city)
             driver.implicitly_wait(10)
             n_links = driver.find_elements_by_css_selector('a.neighborhoodLinks')
@@ -46,8 +46,8 @@ def fetch_data():
     all_store_data = []
 
     for i, link in enumerate(link_list):
-        print("Link %s of %s" %(i+1,len(link_list)))
-        print(link)
+        # print("Link %s of %s" %(i+1,len(link_list)))
+        # print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         try:
