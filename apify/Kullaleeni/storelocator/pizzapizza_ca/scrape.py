@@ -1,18 +1,15 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
+from sgrequests import SgRequests
+session1 = SgRequests()
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'x-request-id': 'bd65600d-8669-4903-8a14-af88203add38',
+            'session-token': '5e57f395-4453-44a4-9b02-8c73904b1168'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,105 +24,77 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    p = 1
-
     data = []
+    p = 0
+    url = 'https://www.pizzapizza.ca/ajax/store/api/v1/province_cities'
+    r = session.get(url, headers=headers, verify=False).json()
+    print(r)
+    for states in r:        
+        province = states['province_slug']
+        #print(province)
+        cities = states['cities']
+        for city in cities:
+            #print(city['city_slug'])
+            mlink = 'https://www.pizzapizza.ca/restaurant-locator/'+province + '/'+city['city_slug']
+            branchlink = 'https://www.pizzapizza.ca/ajax/store/api/v1/search/store_locator?province='+province+'&city='+city['city_slug']
+            print(branchlink)
+            #print(link)
+            try:
+                r1 = session.get(branchlink, headers=headers, verify=False).json()
+                r = r1['stores']
+            except:
 
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www5.pizzapizza.ca/restaurant-locator'
-    page = requests.get(url)
-    driver = get_driver()
-    driver.get(url)
-    time.sleep(1)
-    close = driver.find_element_by_class_name('location-modal-x-col')
-    close.click()
-    soup = BeautifulSoup(driver.page_source,"html.parser")
-
-    main_list = soup.findAll('li',{'class':'smaller'})
-    print(len(main_list))
-    for li in main_list:
-        citylink = li.find('a')
-        citylink = 'https://www5.pizzapizza.ca' + citylink['href']
-        print(citylink)
-        driver.get(citylink)
-        time.sleep(1)
-        soup1 = BeautifulSoup(driver.page_source, "html.parser")
-        maindiv = soup1.findAll('div',{'class':'store-details'})
-        print(len(maindiv))
-        for div in maindiv:
-            link = div.find('a')
-            link = "https://www5.pizzapizza.ca" + link['href']
-            driver.get(link)
-            time.sleep(1)
-            soup2 = BeautifulSoup(driver.page_source, "html.parser")
-            detail = soup2.find('div',{'class':'single-store'})
-            title = detail.find('h2').text
-            street = title
-            city,state,pcode = detail.find("p").text.split(",")
-
-            hours= detail.find('div',{'class':'store-hours'}).text
-            hours = hours.lstrip()
-            hours =hours[hours.find(" ")+1:len(hours)]
-            hours = hours.replace("day","day ")
-            hours = hours.replace("PM","PM ")
-            hours = hours.replace("AM", "AM ")
-            hours = hours.replace("  ", " ")
-            soup2 = str(soup2)
-            start = soup2.find('store_id')
-            if start != -1:
-                start = soup2.find("=", start)+1
-                end = soup2.find("&", start)
-                store = soup2[start:end]
-            else:
-                store = "<MISSING>"
-            start = soup2.find('lat&q')
-            if start != -1:
-                start = soup2.find(":", start)+1
-                end = soup2.find(",", start)
-                lat= soup2[start:end]
-            else:
-                lat = "<MISSING>"
-            start = soup2.find('lng')
-            if start != -1:
-                start = soup2.find(":", start) + 1
-                end = soup2.find(",", start)
-                longt = soup2[start:end]
-            else:
-                longt = "<MISSING>"
-            street= street.lstrip()
-            title = title.lstrip()
-            city = city.lstrip()
-            state = state.lstrip()
-            pcode = pcode.lstrip()
-            data.append([
-                'https://www5.pizzapizza.ca/',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "CA",
-                store,
-                "<MISSING>",
-                "<MISSING>",
-                lat,
-                longt,
-                hours
-            ])
-            #print(p,",",data[p-1])
-            p += 1
-
-
-    driver.quit()
+                
+                r1 = session1.get(branchlink, headers=headers, verify=False).json()
+                #print(r1)
+                r = r1['stores']
+                #input()
+            for branch in r:
+                #print(branch)
+                title = branch['name']
+                street = branch['address'].lstrip()
+                city = branch['city']
+                state = branch['province']
+                pcode = branch['postal_code']
+                store = str(branch['store_id'])
+                hourlist = branch['operating_hours']
+                phone = branch['market_phone_number']
+                lat = branch['latitude']
+                longt = branch['longitude']
+                hours = ''
+                for hr in hourlist:
+                    hours = hours + hr['label'] + ' '+ hr['start_time']+' : ' +hr['end_time'] +' '
+                link = mlink + '/'+ street.lstrip().lower().replace(' ','-')+'/'+store
+                data.append([
+                        'https://www.pizzapizza.ca/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'CA',
+                        store,
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+                print(p,data[p])
+                p += 1
+                
+            
+                #input()
+    
+        
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
-    #(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-
-
