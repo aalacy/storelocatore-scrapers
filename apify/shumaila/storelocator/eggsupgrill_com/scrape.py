@@ -119,7 +119,7 @@ def fetch_data():
                 '<MISSING>',
                 lat,
                 longt,
-                hours.replace('AM',' AM ').replace('PM',' PM ')
+                hours.replace('AM',' AM ').replace('PM',' PM ').replace(', MEETING ROOM AVAILABLE','')
             ])
             #print(p,data[p])
             p += 1
