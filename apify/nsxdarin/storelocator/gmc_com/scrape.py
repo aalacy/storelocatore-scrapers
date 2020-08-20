@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
@@ -25,6 +24,7 @@ def fetch_data():
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
             if '"id":' in line:
                 items = line.split('"id":')
                 for item in items:
