@@ -42,7 +42,7 @@ function extractHoursOfOperation($) {
 }
 
 async function fetchData({ page, request }) {
-  // waiting for google popup to load. Sometimes it stalls so just kick it bac into queue
+  // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
   await page.waitForSelector('.store-item', { timeout: 5000 });
 
   const html = await page.content();
@@ -50,7 +50,7 @@ async function fetchData({ page, request }) {
   const storePopup = parser.$('.store-item');
 
   const location_name = parser.getTextByItemProp('name');
-  const street_address = parser.getTextByItemProp('streetAddress');
+  const street_address = parser.getTextByItemProp('streetAddress').split(', ').shift(); // some page include city/state/zip in the address
   const city = parser.getTextByItemProp('addressLocality');
   const state = parser.getTextByItemProp('addressRegion');
   const country_code = parser.getTextByItemProp('addressCountry');
@@ -59,6 +59,10 @@ async function fetchData({ page, request }) {
   const store_number = storePopup.attr('data-store-id');
   const phone = formatPhone(parser.getTextByItemProp('telephone'));
   const hours_of_operation = extractHoursOfOperation(parser.$);
+
+  if (location_name.match(/.*?store.*?$/)) {
+    return null;
+  }
 
   return {
     locator_domain: 'shiekh.com',
@@ -97,10 +101,11 @@ Apify.main(async function () {
   const puppeteerPoolOptions = {
     retireInstanceAfterRequestCount: 1,
   };
-
+  console.log(proxyPassword);
   const launchPuppeteerOptions = {
     headless: true,
     stealth: true,
+    useChrome: true,
     useApifyProxy: !!proxyPassword,
     ignoreHTTPSErrors: true,
   };
@@ -112,7 +117,7 @@ Apify.main(async function () {
     launchPuppeteerOptions,
     useSessionPool: true,
     maxRequestRetries: 5,
-    maxConcurrency: 1,
+    maxConcurrency: 10,
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
@@ -121,7 +126,9 @@ Apify.main(async function () {
           break;
         default:
           const poi = await fetchData({ page, request });
-          await Apify.pushData(poi);
+          if (poi) {
+            await Apify.pushData(poi);
+          }
       }
     },
   });
