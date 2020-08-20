@@ -44,7 +44,7 @@ def fetch_data():
             elif re.search('USA',hotel['country']):
                 store.append("US")
             else:
-                store.append(hotel['country'])
+                continue
             store.append("<MISSING>")
             if "phone" in hotel:
                 store.append(hotel['phone'])

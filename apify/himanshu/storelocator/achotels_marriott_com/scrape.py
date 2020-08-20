@@ -4,7 +4,8 @@ import re
 import json
 import time
 from sgrequests import SgRequests
-session = SgRequests() 
+session = SgRequests()
+import unicodedata 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -76,7 +77,7 @@ def fetch_data():
                         store = []
                         store.append(base_url if base_url else "<MISSING>")
                         store.append(location_name if location_name else "<MISSING>") 
-                        store.append(street_address if street_address else "<MISSING>")
+                        store.append(street_address.replace("é","e") if street_address else "<MISSING>")
                         store.append(city if city else "<MISSING>")
                         store.append(state if state else "<MISSING>")
                         store.append(zipp if zipp else "<MISSING>")
@@ -88,7 +89,12 @@ def fetch_data():
                         store.append(longitude if longitude else "<MISSING>")
                         store.append("<MISSING>")
                         store.append(page_url if page_url else"<MISSING>")
-                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        for i in range(len(store)):
+                            if type(store[i]) == str:
+                                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                        store = [x.replace("–","-") if type(x) == str else x for x in store]
+                        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                        # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                         if store[2] in address :
                             continue
                         address.append(store[2])
