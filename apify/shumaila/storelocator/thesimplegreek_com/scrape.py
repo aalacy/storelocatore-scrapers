@@ -119,7 +119,7 @@ def fetch_data():
                     
                
             
-            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+           # print("<<<<<<<<<<<<<<<<<<<<<<<<<<<")
         except Exception as e:
             print(e)
             #input()
