@@ -47,7 +47,9 @@ def fetch_data():
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode('utf-8'))
-                if '"homeUrl":"' in line2:
+                if '"name": \'' in line2:
+                    name = line2.split('"name": \'')[1].split("',")[0]
+                if '"homeUrl":"' in line2 and name == '':
                     name = line2.split('"homeUrl":"')[1].split(',"name":"')[1].split('"')[0]
                 if '"latitude": "' in line2:
                     lat = line2.split('"latitude": "')[1].split('"')[0]
