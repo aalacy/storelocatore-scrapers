@@ -65,7 +65,7 @@ def fetch_data():
                             zip1 = soup3.find(
                                 "span", {"itemprop": "postalCode"}).text
                             city = soup3.find(
-                                "span", {"itemprop": "addressLocality"}).text
+                                "span", {"itemprop": "addressLocality"}).text.replace(",","")
                             name = " ".join(
                                 list(soup3.find("h1", {"itemprop": "name"}).stripped_strings))
                             phone = soup3.find(
@@ -117,7 +117,7 @@ def fetch_data():
                         zip1 = soup4.find(
                             "span", {"itemprop": "postalCode"}).text
                         city = soup4.find(
-                            "span", {"itemprop": "addressLocality"}).text
+                            "span", {"itemprop": "addressLocality"}).text.replace(",","")
                         name = " ".join(
                             list(soup4.find("h1", {"itemprop": "name"}).stripped_strings))
                         phone = soup4.find(
@@ -162,7 +162,7 @@ def fetch_data():
                     street_address = soup_loc.find(
                         "span", {"itemprop": "streetAddress"}).text.strip()
                     city = soup_loc.find(
-                        "span", {"itemprop": "addressLocality"}).text.strip()
+                        "span", {"itemprop": "addressLocality"}).text.strip().replace(",","")
                     state = soup_loc.find(
                         "span", {"itemprop": "addressRegion"}).text.strip()
                     zipp = soup_loc.find(
@@ -206,7 +206,7 @@ def fetch_data():
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
             zip1 = soup5.find("span", {"itemprop": "postalCode"}).text
-            city = soup5.find("span", {"itemprop": "addressLocality"}).text
+            city = soup5.find("span", {"itemprop": "addressLocality"}).text.replace(",","")
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text
@@ -271,7 +271,7 @@ def fetch_data():
                         zip1 = soup3.find(
                             "span", {"itemprop": "postalCode"}).text
                         city = soup3.find(
-                            "span", {"itemprop": "addressLocality"}).text
+                            "span", {"itemprop": "addressLocality"}).text.replace(",","")
                         name = " ".join(
                             list(soup3.find("h1", {"itemprop": "name"}).stripped_strings))
                         phone = soup3.find(
@@ -315,7 +315,7 @@ def fetch_data():
                         "span", {"itemprop": "addressRegion"}).text
                     zip1 = soup4.find("span", {"itemprop": "postalCode"}).text
                     city = soup4.find(
-                        "span", {"itemprop": "addressLocality"}).text
+                        "span", {"itemprop": "addressLocality"}).text.replace(",","")
                     name = " ".join(
                         list(soup4.find("h1", {"itemprop": "name"}).stripped_strings))
                     phone = soup4.find("span", {"itemprop": "telephone"}).text
@@ -361,7 +361,7 @@ def fetch_data():
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
             zip1 = soup5.find("span", {"itemprop": "postalCode"}).text
-            city = soup5.find("span", {"itemprop": "addressLocality"}).text
+            city = soup5.find("span", {"itemprop": "addressLocality"}).text.replace(",","")
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text

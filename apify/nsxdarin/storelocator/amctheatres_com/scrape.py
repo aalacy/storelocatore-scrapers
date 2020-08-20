@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,6 +18,7 @@ def fetch_data():
     url = 'https://www.amctheatres.com/movie-theatres'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'txt--tiny" href="/movie-theatres/' in line:
             items = line.split('txt--tiny" href="/movie-theatres/')
             for item in items:
@@ -29,12 +29,13 @@ def fetch_data():
         print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if '><h3><a class="Link" href="' in line2:
                 lurl = 'https://www.amctheatres.com' + line2.split('><h3><a class="Link" href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'amctheatres.com'
         typ = '<MISSING>'
         hours = '<MISSING>'
@@ -50,6 +51,7 @@ def fetch_data():
         lng = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if 'property="place:location:latitude" content="' in line2:
                 lat = line2.split('property="place:location:latitude" content="')[1].split('"')[0]
                 lng = line2.split('property="place:location:longitude" content="')[1].split('"')[0]

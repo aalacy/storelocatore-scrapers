@@ -9,7 +9,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -44,10 +44,11 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    page_url = "https://charlotterusse.com/apps/api/v1/stores"
+    page_url = ''
+    url = "https://charlotterusse.com/apps/api/v1/stores"
 
-    r_json = session.get(page_url, headers=headers)
-    json_data = r_json.json()
+    
+    json_data = session.get(url, headers=headers).json()
     # soup = BeautifulSoup(r.text, "lxml")
 
     # print("json_data === "+ str(json_data))
@@ -64,10 +65,14 @@ def fetch_data():
         longitude = str(location["address"]["longitude"])
         store_number = str(location["store_code"])
         phone = location["phone"]
-
+        location_type = location['brand']
+    
         hours_of_operation = ""
         for hours_day in location["open_hours"]:
-            hours_of_operation += hours_day["day"] +" "+hours_day["open_time"] +" - "+hours_day["close_time"] +" "
+            if "closed" in hours_day:
+                hours_of_operation += hours_day["day"] +" "+hours_day["closed"] +" "
+            else:
+                hours_of_operation += hours_day["day"] +" "+hours_day["open_time"] +" - "+hours_day["close_time"] +" "
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]

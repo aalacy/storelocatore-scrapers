@@ -1,5 +1,4 @@
 import csv
-import urllib2
 import re
 from sgrequests import SgRequests
 
@@ -16,9 +15,10 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://hq.blazepizza.com/locations/birmingham-al-7th-ave/'
+    url = 'https://www.blazepizza.com/locations'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if 'mapData =' in line:
             items = line.split('{"id":"')
             for item in items:
@@ -54,6 +54,8 @@ def fetch_data():
                         hours = 'Daily: ' + hours
                     hours = hours.replace(' &am p; ',' & ')
                     hours = hours.replace('&am p;','&').replace(' -','-').replace('- ','-')
+                    hours = hours.replace('\\u2013','-').replace('\\u00a0','').strip()
+                    hours = hours.replace('day','day: ').replace('::',':').replace('  ',' ')
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

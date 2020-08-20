@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,10 +18,12 @@ def fetch_data():
     r = session.get(url, headers=headers)
     smurl = ''
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.caseys.com/medias/Store-en' in line:
             smurl = line.split('<loc>')[1].split('<')[0]
     r = session.get(smurl, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.caseys.com/general-store/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
@@ -43,9 +44,14 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
             if '"openingHours": [' in line2:
-                g = next(lines)
-                hours = g.split('"')[1]
+                try:
+                    g = next(lines)
+                    g = str(g.decode('utf-8'))
+                    hours = g.split('"')[1]
+                except:
+                    hours = '<MISSING>'
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
