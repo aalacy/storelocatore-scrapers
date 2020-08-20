@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import csv
 import time 
@@ -39,9 +40,19 @@ def fetch_data():
 
 	driver.get(location_url)
 	time.sleep(5)
+
+	base = BeautifulSoup(driver.page_source,"lxml")
+	all_scripts = base.find_all('script')
+	for script in all_scripts:
+		if "markersCoord" in str(script):
+			script = script.text.strip()
+			start_pos = script.find("Coords.push")
+			script = script[start_pos:script.find("});\n",start_pos)+2]
+			break
+	coords = re.findall(r'lat: [0-9]{2,3}\.[0-9]+, lng: -[0-9]{2,3}\.[0-9]+,', script)
 	
 	locations=driver.find_element_by_class_name('addresses').find_elements_by_tag_name('li')
-	for l in locations:
+	for i, l in enumerate(locations):
 		try:
 			loc = l.find_element_by_xpath('./a/span[1]').text.split(' (')[0]
 			print(loc)
@@ -73,6 +84,9 @@ def fetch_data():
 			l.find_element_by_xpath('./a').click()
 			time.sleep(2)
 
+		longs.append(coords[i].split("lng")[-1][2:-1].strip())
+		lats.append(coords[i].split("lng")[0][4:-2].strip())
+
 		try:
 			hours = driver.find_element_by_id("store_map").find_element_by_class_name("hours").text.replace("\n"," ")
 			if ".ca" in hours:
@@ -95,8 +109,8 @@ def fetch_data():
 		row.append(ids[l])
 		row.append(phones[l])
 		row.append("<MISSING>")
-		row.append("<MISSING>")
-		row.append("<MISSING>")
+		row.append(lats[l])
+		row.append(longs[l])
 		row.append(timing[l]) 
 		row.append(location_url)
 		
