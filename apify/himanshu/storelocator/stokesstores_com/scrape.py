@@ -37,11 +37,17 @@ def fetch_data():
         zipp = data['zipcode']
         country_code = data['country']
         store_number = data['storelocator_id']
-        location_type = "<MISSING>"
+        location_type = "StokesStores"
         phone = data['phone']
         lat = data['latitude']
         lng = data['longtitude']
         page_url = "https://www.stokesstores.com/en/"+data['rewrite_request_path']
+
+        if session.get(page_url).status_code == 200:
+            location_soup = bs(session.get(page_url).content, "lxml")
+            hours = " ".join(list(location_soup.find("div",{"class":"opening-hours"}).find("table").stripped_strings))
+        else:
+            hours = "<MISSING>"
         
         store = []
         store.append(base_url)
@@ -56,7 +62,7 @@ def fetch_data():
         store.append(location_type)
         store.append(lat)
         store.append(lng)
-        store.append("<MISSING>")
+        store.append(hours)
         store.append(page_url)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
