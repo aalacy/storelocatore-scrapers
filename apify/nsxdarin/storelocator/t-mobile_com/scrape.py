@@ -7,7 +7,7 @@ search.initialize()
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'authority': 'www.chevrolet.ca',
+           'authority': 'www.t-mobile.com',
            'accept': 'application/json, text/plain, */*',
            'clientapplicationid': 'OCNATIVEAPP',
            'loginin': 'mytest016@outlook.com',
@@ -73,6 +73,8 @@ def fetch_data():
                             if store not in sids:
                                 sids.append(store)
                                 #print(store)
+                                if '"hasSprintStack":true' in item:
+                                    typ = 'Sprint Store'
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
