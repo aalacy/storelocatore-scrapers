@@ -30,12 +30,12 @@ def fetch_data():
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
 
-    for a_link in all_soup.find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
-
+    for a_link in all_soup.find("div",{"class":"browse mobile-collapse"}).find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
+        
         city_soup = bs(session.get(a_link['href']).content, "lxml")
 
-        for city_link in city_soup.find_all("a",{"title":re.compile("Stores in")}):
-
+        for city_link in city_soup.find_all("a",{"data-ga":re.compile("Maplist, City -")}):
+        
             store_soup = bs(session.get(city_link['href']).content, "lxml")
 
             for url in store_soup.find_all("a",{"title":re.compile("#")}):
@@ -77,7 +77,7 @@ def fetch_data():
                 store.append(lat)
                 store.append(lng)
                 store.append(hours)
-                store.append(data['website'])
+                store.append(page_url)
                 if str(store[2]+store[9]+store[-1]) in addressess:
                     continue
                 addressess.append(str(store[2]+store[9]+store[-1]))
