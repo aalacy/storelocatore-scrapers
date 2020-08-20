@@ -4,6 +4,9 @@ import time
 from random import randint
 import re
 from sgselenium import SgSelenium
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -24,13 +27,26 @@ def fetch_data():
 	driver = SgSelenium().chrome()
 	time.sleep(2)
 	
-	base_link = "https://smiledirectclub.com/smileshops/"
+	base_link = "https://smiledirectclub.com/smileshops/?country-chooser-choice=US"
 
 	driver.get(base_link)
 	time.sleep(randint(2,4))
-	element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-		(By.CLASS_NAME, "store-link")))
+	try:
+		element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+			(By.CLASS_NAME, "store-link")))
+		time.sleep(randint(2,4))
+	except:
+		print("Failed to load home page..retrying..")
+
+	driver.get(base_link)
 	time.sleep(randint(2,4))
+	try:
+		element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+			(By.CLASS_NAME, "store-link")))
+		time.sleep(randint(2,4))
+	except:
+		print("Failed to load home page..retrying..")
+
 	base = BeautifulSoup(driver.page_source,"lxml")
 
 	items = base.find_all(class_="store-link")
@@ -44,9 +60,13 @@ def fetch_data():
 
 		driver.get(link)
 		time.sleep(randint(2,4))
-		element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-			(By.CLASS_NAME, "details")))
-		time.sleep(randint(2,4))
+
+		try:
+			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+				(By.CLASS_NAME, "details")))
+			time.sleep(randint(2,4))
+		except:
+			continue
 		
 		base = BeautifulSoup(driver.page_source,"lxml")
 		raw_data = base.find(class_="row content")
