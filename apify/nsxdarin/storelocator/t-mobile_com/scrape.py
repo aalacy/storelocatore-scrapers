@@ -73,7 +73,7 @@ def fetch_data():
                             if store not in sids:
                                 sids.append(store)
                                 #print(store)
-                                if '"hasSprintStack":true' in item and '"storeDefinition":"(TPR)Third Party Retail"' in item:
+                                if '"hasSprintStack":true' in item and '"storeDefinition":"(TPR)Third Party Retail"' in item and '"hasTmobileStack":false' in item:
                                     typ = 'Sprint Store'
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
