@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 
@@ -22,13 +21,16 @@ def fetch_data():
     array = json.loads(r.content)
     for item in array['features']:
         store = item['properties']['identifiers']['storeIdentifier'][0]['identifierValue']
-        add = item['properties']['addressLine1'].encode('utf-8')
-        add = add.strip()
-        city = item['properties']['addressLine3'].encode('utf-8')
+        add = item['properties']['addressLine1']
+        add = add.strip().replace('"',"'")
+        city = item['properties']['addressLine3']
         state = '<MISSING>'
         country = 'CA'
         zc = item['properties']['postcode']
-        phone = item['properties']['telephone']
+        try:
+            phone = item['properties']['telephone']
+        except:
+            phone = '<MISSING>'
         name = "McDonald's # " + store
         website = 'mcdonalds.com'
         typ = 'Restaurant'
