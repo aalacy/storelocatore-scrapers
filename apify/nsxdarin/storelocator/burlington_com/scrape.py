@@ -39,7 +39,8 @@ def fetch_data():
                 hours = hours.strip()
                 if store not in ids:
                     ids.append(store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if 'Opening' not in hours:
+                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
