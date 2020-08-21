@@ -22,7 +22,7 @@ def fetch_data():
     url = 'https://www.costco.ca/sitemap_l_001.xml'
     r = fetch_loc(url)
     for raw_line in r.iter_lines():
-        line = str(rawl_line)
+        line = str(raw_line)
         if '<loc>https://www.costco.ca/warehouse-locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
