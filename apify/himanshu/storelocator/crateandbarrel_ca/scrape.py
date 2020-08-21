@@ -55,18 +55,31 @@ def fetch_data():
         div = soup.find_all("div",{"class":"drawer-set col-xs-12"})
         for i in div:
             name = i.find("a").find("h3",{"class":"store-name"}).text
+            hoo = i.find("ul",{"class":"hours"}).find_all("li")
+            hours = []
+            for hour in hoo:
+                frame = hour.text
+                hours.append(frame)
+            hours_of_operation = ",".join(hours)
+           # print(name)
+           # print(hours_of_operation)
+
+
             if name == location_name:
                 page_url = "https://www.crateandbarrel.ca" + i.find("a",{"class":"btn-view-info button button-secondary button-md"})['href']
                 store_number = i.find("a",{"class":"btn-view-info button button-secondary button-md"})['href'].split("/")[-1].replace("str","")
             
                 # r1 = session.get(page_url, headers=headers)
                 # soup1 = BeautifulSoup(r1.text,"lxml")
-                # hoo = soup1.find("ul",{"class":"hours"}).find_all("li")
-                # hours = []
-                # for hour in hoo:
-                #     frame = hour.text
-                #     hours.append(frame)
-                # hours_of_operation = ",".join(hours)
+
+                    # hoo = soup1.find("ul",{"class":"hours"}).find_all("li")
+                    # hours = []
+                    # for hour in hoo:
+                    #     frame = hour.text
+                    #     hours.append(frame)
+                    # hours_of_operation = ",".join(hours)
+
+                
 
 
                   
@@ -84,7 +97,7 @@ def fetch_data():
         store.append(location_type)
         store.append(latitude)
         store.append(longitude)
-        store.append("<INACCESSIBLE>")
+        store.append(hours_of_operation)
         store.append(page_url)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 

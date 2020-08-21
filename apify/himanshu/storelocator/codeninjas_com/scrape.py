@@ -34,9 +34,14 @@ def fetch_data():
         longitude =data['longitude']
         latitude =data['latitude']
         page_url ="https://www.codeninjas.com/"+ data['cnSlug']
+        # print(page_url)
         countryCode = data['countryCode']
         phone=''
         soup1 = bs(session.get(page_url,headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"}).text,'lxml')
+        if soup1.find("i",{"class":"fe fe-bell font-weight-bold"}) != None:
+            page_url ="https://www.codeninjas.com/"+ data['cnSlug']
+            continue
+
         phone = data['phone']
         hours = ""
         try:

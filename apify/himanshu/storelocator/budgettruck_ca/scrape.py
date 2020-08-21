@@ -51,7 +51,7 @@ def fetch_data():
                 zipp = dealer['zipCode']
                 country_code = dealer['countyCode']
                 phone = dealer['phoneNumber']
-                location_type = dealer['licInd']
+                location_type = dealer['licInd'].replace("C","Corporate").replace("L","Licensee").replace("A","Corporate")
                 try:
                     latitude = dealer['latitude']
                     longitude = dealer['longitude']
@@ -73,8 +73,8 @@ def fetch_data():
                 store.append('<MISSING>')
                 store.append(phone)
                 store.append(location_type)
-                store.append(latitude)
-                store.append(longitude)
+                store.append(latitude.replace("null","<MISSING>"))
+                store.append(longitude.replace("null","<MISSING>"))
                 store.append(hours_of_operation)
                 store.append(page_url)
             
