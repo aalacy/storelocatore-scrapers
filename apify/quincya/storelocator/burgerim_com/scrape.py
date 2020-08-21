@@ -40,7 +40,7 @@ def fetch_data():
 		if "coming-soon" in store["mapicon"]:
 			continue
 		location_name = store['name']
-		street_address = store['street1']
+		street_address = store['street1'].strip()
 		city = store['city']
 		state = store['state']
 		zip_code = store['zip']
