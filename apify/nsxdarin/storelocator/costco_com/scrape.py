@@ -12,7 +12,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-@retry(stop = stop_after_attempt(7)):
+@retry(stop = stop_after_attempt(7))
 def fetch_loc(loc):
     session = SgRequests()
     return session.get(url, headers=headers)
