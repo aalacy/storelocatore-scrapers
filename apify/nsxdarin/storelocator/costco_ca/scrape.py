@@ -1,10 +1,14 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+
+@retry(stop = stop_after_attempt(7))
+def fetch_loc(loc):
+    return session.get(loc, headers=headers)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,8 +20,9 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.costco.ca/sitemap_l_001.xml'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    r = fetch_loc(url)
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if '<loc>https://www.costco.ca/warehouse-locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
@@ -25,7 +30,6 @@ def fetch_data():
         while LFound:
             try:
                 LFound = False
-                print('Pulling Location %s...' % loc)
                 website = 'costco.ca'
                 typ = 'Warehouse'
                 hours = ''
@@ -39,8 +43,9 @@ def fetch_data():
                 store = ''
                 country = 'CA'
                 HFound = False
-                r2 = session.get(loc, headers=headers)
-                for line2 in r2.iter_lines():
+                r2 = fetch_loc(loc) 
+                for raw_line2 in r2.iter_lines():
+                    line2 = str(raw_line2)
                     if 'col-sm-6 hours">' in line2:
                         HFound = True
                     if HFound and '</div>' in line2:
