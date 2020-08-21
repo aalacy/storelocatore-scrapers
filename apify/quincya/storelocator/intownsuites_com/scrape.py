@@ -34,8 +34,8 @@ def fetch_data():
 		print('[?] Check whether system is Online.')
 
 	data = []
-	all_links = []
 	found_poi = []
+	all_links = []
 	items = base.find(id="locationsList").find_all("li")
 	locator_domain = "intownsuites.com"
 
@@ -62,20 +62,31 @@ def fetch_data():
 
 		all_scripts = base.find_all('script', attrs={'type': "application/ld+json"})
 		for script in all_scripts:
-			if "latitude" in str(script):
-				script = script.text.replace('\n', '').strip()
-				break
-
-		store = json.loads(script)
+			if "longitude" in str(script):
+				fin_script = script.text.replace('\n', '').replace("\r","").replace("Shipt Grocery Delivery}",'Shipt Grocery Delivery"}').strip()
+		
+		store = json.loads(fin_script)
 		location_name = store['name'].replace("&#8211;","-").replace("–","-")
-		street_address = store['address']['streetAddress']
-		city = store['address']['addressLocality']
+		if link == "https://www.intownsuites.com/extended-stay-locations/south-carolina/charleston/savannah-highway/":
+			location_name = "InTown Suites Extended Stay Charleston SC - Savannah Hwy"
+		street_address = store['address']['streetAddress'].replace("&nbsp;"," ").encode('utf8')
+		try:
+			city = store['address']['addressLocality']
+		except:
+			pass
 		state = store['address']['addressRegion']
-		zip_code = store['address']['postalCode']
+		try:
+			zip_code = store['address']['postalCode']
+		except:
+			zip_code = store['address']['postOfficeBoxNumber']
+		if street_address == "6451 Bandera Road".encode('utf8'):
+			city = "Leon Valley"
+			state = "TX"
+			zip_code = "78238"
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = str(base.find(class_="property_features").ul).replace("</li><li>",",").replace("</li> </ul>","").replace("<ul>\n<li>","")
-		phone = store['telephone'].replace("(Spanish or English)","").strip()
+		phone = base.find(class_="css_table_cell address").p.text.replace("Reservations:","").replace("(Spanish or English)","").strip()
 		try:
 			hours_of_operation = base.find(class_="css_table_cell office_hours").find_all("p")[-1].text.replace("\n"," ").strip()
 			if "Please" in hours_of_operation:
@@ -84,7 +95,13 @@ def fetch_data():
 			hours_of_operation = "<MISSING>"
 
 		latitude = store['geo']['latitude']
-		longitude = store['geo']['longitude']
+		longitude = store['geo']['longitude'].replace(",","")
+		if latitude == longitude:
+			map_link = base.find(class_="container ft_map_and_directions").a["href"]
+			longitude = map_link[map_link.find("-"):map_link.find("&")].replace(",","")
+		if location_name == "InTown Suites Extended Stay Atlanta GA - Sandy Springs":
+			latitude = "33.918987"
+			longitude = "-84.375590"
 
 		if location_name not in found_poi:
 			found_poi.append(location_name)
