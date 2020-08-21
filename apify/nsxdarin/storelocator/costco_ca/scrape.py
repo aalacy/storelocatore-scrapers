@@ -8,7 +8,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 @retry(stop = stop_after_attempt(7))
 def fetch_loc(loc):
-    return session.get(url, headers=headers)
+    return session.get(loc, headers=headers)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
