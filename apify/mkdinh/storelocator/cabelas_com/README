@@ -1,0 +1,5 @@
+Not passing validation because:
+1. "Invalid Canadian Postal Codes" in data (being scraped correctly, just not passing)
+2. Bass pro shops tend to be on custom road, e.g. 1 Bass Pro Dr. The lat, long duplication validator
+only looks at street address to determine duplication, so it thinks these are the same address with 
+multiple lat, long, when actually the streets are in different cities.
