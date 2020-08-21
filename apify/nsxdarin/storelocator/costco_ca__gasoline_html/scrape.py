@@ -1,8 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -13,6 +14,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+@retry(stop = stop_after_attempt(7))
+def fetch_loc(loc):
+    return session.get(loc, headers=headers)
+
 def fetch_data():
     locs = []
     url = 'https://www.costco.ca/sitemap_l_001.xml'
@@ -21,7 +26,6 @@ def fetch_data():
         if '<loc>https://www.costco.ca/warehouse-locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = 'costco.ca/gasoline.html'
         typ = 'Gas'
         hours = ''
@@ -36,7 +40,7 @@ def fetch_data():
         country = 'CA'
         HFound = False
         IsGas = False
-        r2 = session.get(loc, headers=headers)
+        r2 = fetch_loc(loc)
         lines = r2.iter_lines()
         for line2 in lines:
             if 'Gas Hours</span>' in line2:
