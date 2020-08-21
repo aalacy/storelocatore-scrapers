@@ -21,27 +21,30 @@ def fetch_data():
     locs = []
     url = 'https://www.costco.ca/sitemap_l_001.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if '<loc>https://www.costco.ca/warehouse-locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
         website = 'costco.ca/gasoline.html'
         typ = 'Gas'
         hours = ''
-        phone = ''
-        add = ''
-        city = ''
-        zc = ''
-        state = ''
-        lat = ''
-        lng = ''
-        store = ''
+        phone = '<MISSING>'
+        add = '<MISSING>'
+        city = '<MISSING>'
+        zc = '<MISSING>'
+        state = '<MISSING>'
+        lat = '<MISSING>'
+        lng = '<MISSING>'
+        store = '<MISSING>'
+        name = '<MISSING>'
         country = 'CA'
         HFound = False
         IsGas = False
         r2 = fetch_loc(loc)
         lines = r2.iter_lines()
-        for line2 in lines:
+        for raw_line2 in lines:
+            line2 = str(raw_line2)
             if 'Gas Hours</span>' in line2:
                 IsGas = True
                 HFound = True
@@ -76,7 +79,7 @@ def fetch_data():
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
             if 'itemprop="postalCode">' in line2:
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-            if phone == '' and 'itemprop="telephone">' in line2:
+            if phone == '<MISSING>' and 'itemprop="telephone">' in line2:
                 phone = line2.split('itemprop="telephone">')[1].split('<')[0].strip().replace('\t','')
         if hours == '':
             hours = '<MISSING>'
