@@ -15,7 +15,7 @@ def write_output(data):
 @retry(stop = stop_after_attempt(7))
 def fetch_loc(loc):
     session = SgRequests()
-    return session.get(url, headers=headers)
+    return session.get(loc, headers=headers)
 
 def fetch_data():
     locs = []
