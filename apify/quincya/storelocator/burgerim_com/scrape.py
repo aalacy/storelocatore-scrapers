@@ -17,7 +17,7 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "https://burgerim.com/?hcs=locatoraid&hca=search%3Asearch%2F%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F100"
+	base_link = "https://burgerim.com/?hcs=locatoraid&hca=search%3Asearch%2F%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F500"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -46,6 +46,8 @@ def fetch_data():
 		zip_code = store['zip']
 		if zip_code == "55608":
 			zip_code = "95608"
+		if zip_code == "32502":
+			zip_code = "23502"
 		country_code = "US"
 		store_number = store['id']
 		location_type = "<MISSING>"
