@@ -3,7 +3,6 @@ from sgselenium import SgSelenium
 import csv
 import time 
 import re
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 def write_output(data):
