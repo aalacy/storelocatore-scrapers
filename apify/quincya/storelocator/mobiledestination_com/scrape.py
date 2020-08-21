@@ -75,7 +75,7 @@ def fetch_data():
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
 		phone = item.p.text[item.p.text.find("("):item.p.text.rfind("Mon")].strip()
-		hours_of_operation = item.p.text[item.p.text.rfind("Mon"):item.p.text.rfind("\n")].replace("\n","").replace("\xa0","").strip()
+		hours_of_operation = item.p.text[item.p.text.rfind("Mon"):].replace("\n","").replace("\xa0","").replace("\u200b","").strip()
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 
