@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 
