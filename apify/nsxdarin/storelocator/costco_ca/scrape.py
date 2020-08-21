@@ -62,8 +62,8 @@ def fetch_data():
                         lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
                     if 'data-identifier="' in line2:
                         store = line2.split('data-identifier="')[1].split('"')[0]
-                    if '<h1 itemprop="name">' in line2:
-                        name = line2.split('<h1 itemprop="name">')[1].split('<')[0].replace('&nbsp;',' ')
+                    if '<h1' in line2:
+                        name = line2.split('<h1')[1].split('>')[1].split('<')[0].replace('&nbsp;',' ')
                     if 'itemprop="streetAddress">' in line2:
                         add = line2.split('itemprop="streetAddress">')[1].split('<')[0]
                     if 'itemprop="addressLocality">' in line2:
