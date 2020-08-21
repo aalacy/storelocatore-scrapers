@@ -4,6 +4,7 @@ import csv
 import time
 from random import randint
 import json
+import re
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -66,6 +67,9 @@ def fetch_data():
 			hours = day + " " +raw_hours[day]
 			hours_of_operation = (hours_of_operation + " " + hours).strip()
 
+		if location_type == "<MISSING>":
+			if len(re.findall(r'12:00-12:00', hours_of_operation)) == 7:
+				location_type = "24 Hours"
 		latitude = store['lat']
 		longitude = store['lng']
 
