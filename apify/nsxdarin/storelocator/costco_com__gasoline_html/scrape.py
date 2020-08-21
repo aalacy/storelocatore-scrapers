@@ -1,8 +1,11 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 
-driver = webdriver.Chrome("chromedriver")
+session = SgRequests()
+
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,18 +14,19 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+@retry(stop = stop_after_attempt(7))
+def fetch_loc(loc):
+    return session.get(loc, headers = headers)
+
 def fetch_data():
     locs = []
     url = 'https://www.costco.com/sitemap_l_001.xml'
-    driver.get(url)
-    lines = driver.page_source.split('\n')
-    for linenum in range(0, len(lines)):
-        g = g
-        g = str(g.decode('utf-8'))
-        if '<loc>https://www.costco.com/warehouse-locations/' in g:
-            locs.append(g.split('<loc>')[1].split('<')[0])
+    r = fetch_loc(url)
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
+        if '<loc>https://www.costco.com/warehouse-locations/' in line:
+            locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = 'costco.com/gasoline.html'
         typ = 'Gas'
         hours = ''
@@ -38,11 +42,9 @@ def fetch_data():
         country = 'US'
         HFound = False
         IsGas = False
-        driver.get(loc)
-        lines = driver.page_source.split('\n')
-        for linenum in range(0, len(lines)):
-            g = g
-            g = str(g.decode('utf-8'))
+        r2 = fetch_loc(loc) 
+        for line in r2.iter_lines(): 
+            g = str(line)
             if 'Gas Hours</span>' in g:
                 IsGas = True
                 HFound = True
