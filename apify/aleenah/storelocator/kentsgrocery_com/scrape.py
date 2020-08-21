@@ -4,11 +4,11 @@ from bs4 import BeautifulSoup
 import re
 from sgselenium import SgSelenium
 import time
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
@@ -17,14 +17,38 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 driver = SgSelenium().chrome()
 
+def get_value(item):
+    if item == None or len(item) == 0:
+        item = '<MISSING>'
+    return item
+
+def parse_address(address):
+    address = usaddress.parse(address)
+    street = ''
+    city = ''
+    state = ''
+    zipcode = ''
+    for addr in address:
+        if addr[1] == 'PlaceName':
+            city += addr[0].replace(',', '') + ' '
+        elif addr[1] == 'ZipCode':
+            zipcode = addr[0].replace(',', '')
+        elif addr[1] == 'StateName':
+            state = addr[0].replace(',', '')
+        else:
+            street += addr[0].replace(',', '') + ' '
+    return { 
+        'street': get_value(street), 
+        'city' : get_value(city), 
+        'state' : get_value(state), 
+        'zipcode' : get_value(zipcode)
+    }
+
 all=[]
 def fetch_data():
-    # Your scraper here
-
     res=session.get("https://kentsgrocery.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
     lis = soup.find('ul', {'class': 'dropdown-menu'}).find_all('li')
@@ -33,34 +57,27 @@ def fetch_data():
         url="https://kentsgrocery.com"+li.find('a').get('href')
 
         driver.get(url)
-
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-
+        store_info_container = soup.find('div', {'id': 'storeInfoContain'})
         loc = soup.find('span', {'id': 'theStoreName'}).text.strip()
-        print(soup.find('div', {'id': 'mapContain'}).find('iframe').get('src'))
         long,lat=re.findall(r'!2d(-?[\d\.]+)!3d(-?[\d\.]+)',soup.find('div', {'id': 'mapContain'}).find('iframe').get('src'))[0]
-        #print(soup.find('div', {'id': 'storeInfoContain'}).text)
-        try:
-            phone,street,state,zip,tim=re.findall(r'Phone Number(.*)Fax Number.*Store Address(.*), (.*) (.*)(Pharmacy Hours.*)Email',soup.find('div', {'id': 'storeInfoContain'}).text)[0]
-        except:
-            driver.get(url)
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-            phone, street, state, zip,tim  = re.findall(r'Phone Number(.*)Fax Number.*Store Address(.*), (.*) (.*)(Pharmacy Hours.*)Email',soup.find('div', {'id': 'storeInfoContain'}).text)[0]
-            #print(soup.find('div', {'id': 'storeHours'}).text)
-            #tim=soup.find('div', {'id': 'storeHours'}).text
-        tim=tim.replace('Hours','Hours ').replace('PM','PM ')
-        city=loc.replace('Kent\'s','').strip()
-        street=street.replace(city,'')
-        #
-        #print(city,street,state,zip,tim)
-
+        phone = store_info_container.select("a[href*=tel]")[0].text.strip()
+        address = store_info_container('h5',text=re.compile(r'Store Address'))[0].find_next('p').get_text(" ")
+        tim = store_info_container.find('div', {'id': 'storeHours'}).get_text(" ")
+        if tim == None or len(tim) == 0:
+            tim = '<MISSING>'
+        parsed_address = parse_address(address)
+        city = parsed_address['city']
+        state = parsed_address['state']
+        zipcode = parsed_address['zipcode']
+        street = parsed_address['street']
         all.append([
             "https://kentsgrocery.com",
             loc,
             street,
             city,
-            state.strip(),
-            zip,
+            state,
+            zipcode,
             "US",
             "<MISSING>",  # store #
             phone,  # phone
@@ -69,7 +86,6 @@ def fetch_data():
             long,  # long
             tim,  # timing
             url])
-
     return all
 
 def scrape():
