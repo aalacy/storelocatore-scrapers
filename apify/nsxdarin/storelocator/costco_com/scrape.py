@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -15,6 +14,7 @@ def write_output(data):
 
 @retry(stop = stop_after_attempt(7)):
 def fetch_loc(loc):
+    session = SgRequests()
     return session.get(url, headers=headers)
 
 def fetch_data():
