@@ -77,7 +77,9 @@ def fetch_data():
 		if "," not in feat_services:
 			feat_services = "<MISSING>"
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, feat_services])
+		link = "https://www.selectphysicaltherapy.com/contact/find-a-location" + item["Url"].split("outpatient")[-1]
+		
+		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, feat_services])
 
 	return data
 
