@@ -86,7 +86,9 @@ def fetch_data():
         zip_code = item.find(class_='c-address-postal-code').text.strip()
         country_code = item.find(id="address")["data-country"]
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Branch"
+        if "investment center and corporate office" in location_name.lower():
+            location_type = "Investment Center and Corporate Office"
         try:
             phone = item.find(id='telephone').text.strip()
             if not phone:
