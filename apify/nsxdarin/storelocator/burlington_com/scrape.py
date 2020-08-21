@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 import sgzip
@@ -21,26 +20,27 @@ def fetch_data():
         print('Pulling Zip Code %s...' % code)
         url = 'https://www.mapquestapi.com/search/v2/radius?key=Gmjtd|lu6tnu0bn9,85=o5-lw220&origin=' + code + '+US&radius=200&hostedData=mqap.34107_bcf_stores&_=1569251207933'
         r = session.get(url, headers=headers)
-        if 'searchResults' in r.content:
+        if 'searchResults' in str(r.content.decode('utf-8')):
             array = json.loads(r.content)
             for item in array['searchResults']:
                 store = item['name']
                 name = 'Burlington Store #' + store
-                phone = item['fields']['phone']
-                add = item['fields']['address'].encode('utf-8')
+                phone = item['fields']['phone'][:14]
+                add = item['fields']['address']
                 lat = item['fields']['mqap_geography']['latLng']['lat']
                 lng = item['fields']['mqap_geography']['latLng']['lng']
                 website = 'burlington.com'
-                city = item['fields']['city'].encode('utf-8')
-                state = item['fields']['state'].encode('utf-8')
-                zc = item['fields']['postal'].encode('utf-8')
+                city = item['fields']['city']
+                state = item['fields']['state']
+                zc = item['fields']['postal']
                 country = 'US'
                 typ = 'Store'
                 hours = item['fields']['hours1'] + ' ' + item['fields']['hours2'] + ' ' + item['fields']['hours3']
-                hours = hours.strip().encode('utf-8')
+                hours = hours.strip()
                 if store not in ids:
                     ids.append(store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if 'Opening' not in hours:
+                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regions.json"
     r = session.get(base_url).json()
-    return_main_object = []
+    
     output=[]
     for region in r['region']:
         base_url1 = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regionHotels.json?regionId="+str(region['id'])+"&subregionId=null&hotelStatus=null"
@@ -44,18 +44,24 @@ def fetch_data():
             elif re.search('USA',hotel['country']):
                 store.append("US")
             else:
-                store.append(hotel['country'])
+                continue
             store.append("<MISSING>")
-            store.append(hotel['phone'])
+            if "phone" in hotel:
+                store.append(hotel['phone'])
+            else:
+                store.append("<MISSING>")
             store.append("embassysuites3 Hilton")
             store.append(hotel['lat'])
             store.append(hotel['lng'])
             store.append("<MISSING>")
+            store.append("https://embassysuites3.hilton.com"+hotel['url']+"/index.html")
             if hotel['lat'] in output:
                 continue
             output.append(hotel['lat'])
-            return_main_object.append(store)
-    return return_main_object
+
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
+   
 
 def scrape():
     data = fetch_data()

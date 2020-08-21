@@ -17,7 +17,7 @@ def write_output(data):
 
 def fetch_data():
 
-	base_link = "https://www.magnusonhotels.com/brand/magnuson/magnuson-grand/"
+	base_link = "https://www.magnusonhotels.com/brand/magnuson-grand/"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -33,12 +33,34 @@ def fetch_data():
 	except (BaseException):
 		print('[!] Error Occured. ')
 		print('[?] Check whether system is Online.')
-
+	
 	items = main_base.find_all(class_="hoteltop")
 	
 	for item in items:
-		link = "https://www.magnusonhotels.com" + item.a["href"]
-		final_links.append(item.a["href"].split("/")[-1])
+		link = item.a["href"].split("/")[-1]
+		if link not in final_links:
+			final_links.append(link)
+
+	try:
+		last_page = int(main_base.find_all(class_="page-numbers")[-2].text)
+		for page_num in range(2,last_page+1):
+			page_link = base_link + "page/" + str(page_num)
+			req = session.get(page_link, headers = HEADERS)
+			time.sleep(randint(1,2))
+			try:
+				main_base = BeautifulSoup(req.text,"lxml")
+			except (BaseException):
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
+	
+			items = main_base.find_all(class_="hoteltop")
+			
+			for item in items:
+				link = item.a["href"].split("/")[-1]
+				if link not in final_links:
+					final_links.append(link)
+	except:
+		pass
 
 	for link in final_links:
 		final_link = "https://api.magnusonhotels.com/api/v1/hotels/find/" + link
@@ -55,8 +77,6 @@ def fetch_data():
 		if not state:
 			state = "<MISSING>"
 		zip_code = store["zipcode"]
-		if zip_code == "41907":
-			zip_code = "41097"
 		country_code = "US"
 		store_number = store["id"]
 		raw_types = store["amenities"]

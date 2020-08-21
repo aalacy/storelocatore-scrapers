@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from datetime import datetime
 
 
 session = SgRequests()
@@ -14,42 +13,68 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    zips = sgzip.for_radius(200)
-    return_main_object = []
-    addresses = []
+    MAX_RESULTS = 300
+    MAX_DISTANCE = 300
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes=['US'])
+    zip_code = search.next_zip()
+    current_results_len = 0
+    adressess = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+        'Content-Type': 'application/json',
+        'Referer': 'https://www.bmwusa.com/?bmw=grp:BMWcom:header:nsc-flyout'
     }
-    for zip_code in zips:
+    while zip_code:
+        result_coords =[]
+       # print("zip_code === "+zip_code)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        
         base_url = "https://www.bmwusa.com"
-        r = session.get("https://www.bmwusa.com/api/dealers/" + str(zip_code) + "/1000",headers=headers)
-        for store_data in r.json()["Dealers"]:
+        r = session.get("https://www.bmwusa.com/api/dealers/" + str(zip_code) + "/500",headers=headers)
+        json_data = r.json()["Dealers"]
+        current_results_len = (len(json_data))
+        for store_data in json_data:
             store = []
             store.append("https://www.bmwusa.com")
             store.append(store_data["DefaultService"]["Name"])
             store.append(store_data["DefaultService"]["Address"])
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
             store.append(store_data["DefaultService"]["City"])
             store.append(store_data["DefaultService"]["State"])
             store.append(store_data["DefaultService"]["ZipCode"])
             store.append("US")
-            store.append("<MISSING>")
+            store.append(store_data["CenterId"])
             store.append(store_data["DefaultService"]["FormattedPhone"] if store_data["DefaultService"]["FormattedPhone"] != "" and store_data["DefaultService"]["FormattedPhone"] != None else "<MISSING>")
             store.append("bmw")
             store.append(store_data["DefaultService"]["LonLat"]["Lat"])
             store.append(store_data["DefaultService"]["LonLat"]["Lon"])
             hours = " ".join(list(BeautifulSoup(store_data["DefaultService"]["FormattedHours"],"lxml").stripped_strings))
             store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append("<MISSING>")
+            if store[2] in adressess:
+                continue
+            adressess.append(store[2])
+
+            # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
+
+        #print(len(json_data))
+        if len(json_data) < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(json_data) == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        
+        zip_code = search.next_zip()
 
 def scrape():
     data = fetch_data()

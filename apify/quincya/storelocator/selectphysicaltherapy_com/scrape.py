@@ -1,20 +1,10 @@
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+import json
 import time
 from random import randint
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -28,82 +18,66 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "https://www.selectphysicaltherapy.com/contact/find-a-location/"
+	base_link = "https://www.selectphysicaltherapy.com//sxa/search/results/?s={D779ED53-C5AD-46DB-AA4F-A2F78783D3B1}|{D779ED53-C5AD-46DB-AA4F-A2F78783D3B1}&itemid={29966A67-0D55-4E7D-968A-88849BF32EF3}&sig=&autoFireSearch=true&v={99A28EFC-3607-4C5B-8D33-D37C5B70E2EF}&p=3000&g=&o=Distance,Ascending"
 
-	driver = get_driver()
-	time.sleep(2)
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	HEADERS = {'User-Agent' : user_agent}
 
-	driver.get(base_link)
-
-	more_link = driver.find_element_by_css_selector(".component.load-more.col-xs-12.load-more-tabs")
-
-	# Need to load entire page list 
-	while True:
-		try:
-			print("Loading more data ...")
-			more_link.click()
-			time.sleep(randint(3,5))
-		except:
-			break
-
+	session = SgRequests()
+	req = session.get(base_link, headers = HEADERS)
+	time.sleep(randint(1,2))
 	try:
-		base = BeautifulSoup(driver.page_source,"lxml")
+		base = BeautifulSoup(req.text,"lxml")
 		print("Got today page")
 	except (BaseException):
 		print('[!] Error Occured. ')
 		print('[?] Check whether system is Online.')
 
-	items = base.find(class_="search-result-list").find_all("li", recursive=False)
+	new_base = str(base).replace("</li><li>",",").replace("<br/>",",,").replace('<img src="h'," ,,DDD").replace('"/>',"DDD,,").replace("Request an Appointment",",,").replace("Featured Services",",,")
+	final_base = BeautifulSoup(new_base,"lxml")
+	store = json.loads(final_base.text)["Results"]
 
 	data = []
-	for item in items:
+	for item in store:
 		locator_domain = "selectphysicaltherapy.com"
-		location_name = item.find(class_="loc-result-card-name").text.strip()
-		print (location_name)
-		location_type = item.find(class_="loc-result-card-logo").img['src']
-		raw_data = str(item.find('div', attrs={'class': 'loc-result-card-address-container'}).a).replace("<a>","").replace("</a>","").split('<br/>')
 
-		if len(raw_data) > 2:
-			street_address = (raw_data[0][raw_data[0].rfind(">")+1:] + " " + raw_data[1][raw_data[1].rfind(">") +1:]).replace("  "," ")			
+		raw_data = item["Html"].split(",,")
+		location_name = raw_data[0].strip()
+
+		print (location_name)
+		location_type = raw_data[-3].replace("DDDt","ht").replace("DDD","")
+
+		if len(raw_data) == 7:
+			street_address = raw_data[1].strip() + " " + raw_data[2].strip()
+			city_line = raw_data[3].strip()
 		else:
-			street_address = raw_data[0][raw_data[0].rfind(">") +1 :].strip()
-		city = raw_data[-1][:raw_data[-1].find(',')].strip()
-		state = raw_data[-1][raw_data[-1].find(',')+1:raw_data[-1].rfind(' ')].strip()
-		zip_code = raw_data[-1][raw_data[-1].rfind(' ')+1:].strip()
+			street_address = raw_data[1].strip()
+			city_line = raw_data[2].strip()
+
+		city = city_line[:city_line.find(',')].strip()
+		state = city_line[city_line.find(',')+1:city_line.find(',')+5].strip() 
+		zip_code = city_line[city_line.find('(')-6:city_line.find('(')].strip()
 		country_code = "US"
 
 		store_number = "<MISSING>"
-		try:
-			phone = item.find(class_="loc-result-card-phone-container").text.strip()
-		except:
-			phone = "<MISSING>"
-
-		hours = item.find(class_='mobile-container field-businesshours').get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
+		phone = city_line[city_line.find("("):city_line.find("\r")].strip()
+		if phone == "(817) 333-018":
+			phone = "(817) 333-0181"
+		hours = raw_data[-2].replace("Hours","").replace("PM","PM ").replace("Closed","Closed ").strip()
 		hours_of_operation = re.sub(' +', ' ', hours)
 
 		if not hours_of_operation:
 			hours_of_operation = "<MISSING>"
 		
-		latitude = item['data-latitude']		
-		longitude = item['data-longitude']
+		latitude = item["Geospatial"]["Latitude"]
+		longitude = item["Geospatial"]["Longitude"]
 
-		if len(latitude) < 5 or len(longitude) < 6:
-			g_link = item.find('div', attrs={'class': 'loc-result-card-address-container'}).a['href']
-			latitude = g_link[g_link.rfind("=")+1:g_link.rfind(",")]
-			longitude = g_link[g_link.rfind(",")+1:]
+		feat_services = raw_data[-1].strip()
 
-		services = item.find(class_='mobile-container loc-service-list').get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-		feat_services = re.sub(' +', ' ', services)
-
-		if not feat_services:
+		if "," not in feat_services:
 			feat_services = "<MISSING>"
 
 		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, feat_services])
-
-	try:
-		driver.close()
-	except:
-		pass
 
 	return data
 

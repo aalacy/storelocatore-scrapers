@@ -32,7 +32,7 @@ def fetch_data():
     all=[]
     for store in stores:
         url="https://www.awaytravel.com"+store
-        #print(url)
+        print(url)
         if "london" in url:
             con="UK"
         else:
@@ -51,11 +51,13 @@ def fetch_data():
         zip=soup.find('span', {'itemprop': 'postalCode'}).text
         tim=""
         tims=soup.find_all('span', {'itemprop': 'openingHours'})
-
         for t in tims:
             tim+=t.text.strip()+" "
         if tim=="":
                 tim="<MISSING>"
+        phone = soup.find('a', {'itemprop': 'telephone'}).text.strip()
+        #print(phone)
+
         all.append([
             "https://www.awaytravel.com",
             loc,
@@ -65,7 +67,7 @@ def fetch_data():
             zip,
             con,
             "<MISSING>",  # store #
-            "<MISSING>",  # phone
+            phone,  # phone
             "<MISSING>",  # type
             lat,  # lat
             long,  # long

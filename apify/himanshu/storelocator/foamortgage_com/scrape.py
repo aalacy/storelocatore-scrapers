@@ -39,9 +39,10 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-       # print("zip_code === "+zip_code)
+        #print("zip_code === "+zip_code)
        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         location_url = "https://api.2xlo.com//wp-json/foa/v1/search/branch/"+str(zip_code)+"?k=f007836b4b5907b824451e19faf63520b9daee20&radius=300"
+        #print(location_url)
        
         r = session.get(location_url,headers=headers)
         data = r.json()
@@ -67,6 +68,14 @@ def fetch_data():
                     phone = "(" + raw_phone[:3] + ") " + raw_phone[3:6] + "-" + raw_phone[6:]
                 latitude = value['lat']
                 longitude = value['lng']
+                try:
+                    day_span = value['branch_hours'][0]['day_span']
+                    time_span = value['branch_hours'][0]['time_span']
+                    hours_of_operation = day_span + ' - ' + time_span
+                except:
+                    hours_of_operation = "<MISSING>"
+                #print(hours_of_operation)
+
                 page_url = "https://www.foamortgage.com/branches/" + str(value['id']) + "/"
 
                 result_coords.append((latitude, longitude))
@@ -83,15 +92,15 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(latitude)
                 store.append(longitude)
-                store.append("<MISSING>")
+                store.append(hours_of_operation)
                 store.append(page_url)
                 if store[2] in adressess:
                     continue
                 adressess.append(store[2])
                 yield store
 
-           # print(len(data['results']))
-        #print("==================")
+          #  print(len(data['results']))
+       # print("==================")
 
         if len(data) < MAX_RESULTS:
             # print("max distance update")

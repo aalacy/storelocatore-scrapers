@@ -1,9 +1,8 @@
 import csv
 import re
-
 from sgrequests import SgRequests
 from geo_grid import *
-import requests
+
 
 session = SgRequests()
 
@@ -29,7 +28,7 @@ def fetch_data(box: Rect) -> list:
 
     base_url = "https://www.exxon.com/en/api/locator/Locations"
 
-    r = requests.get(base_url, params = params).json()
+    r = session.get(base_url, params = params).json()
 
     for exxon in r:
         store = []
@@ -59,7 +58,7 @@ def fetch_data(box: Rect) -> list:
         store.append(exxon["LocationID"])
 
         if exxon['Telephone']:
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(exxon['Telephone']))
+            phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(exxon['Telephone']))
             if phone_list:
                 store.append(phone_list[0])
             else:
@@ -68,7 +67,7 @@ def fetch_data(box: Rect) -> list:
         else:
             store.append("<MISSING>")
 
-        loc_slug = " ".join(re.findall("[a-zA-Z0-9]+", exxon["DisplayName"])).lower().replace(" ","-").strip()
+        loc_slug = " ".join(re.findall(r"[a-zA-Z0-9]+", exxon["DisplayName"])).lower().replace(" ","-").strip()
         page_url = "https://www.exxon.com/en/find-station/"+exxon['City'].replace(" ","-").lower().strip()+"-"+exxon['StateProvince'].lower().strip()+"-"+str(loc_slug)+"-"+exxon["LocationID"]
         if "exxon" in exxon['BrandingImage']:
             location_type = "exxon"

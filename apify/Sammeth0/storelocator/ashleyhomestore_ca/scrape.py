@@ -1,18 +1,10 @@
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-from selenium.webdriver.support.ui import Select
+from bs4 import BeautifulSoup
+from sgselenium import SgSelenium
 import csv
 import time 
-import re 
-
-def get_driver():
-	options = Options()
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'")
-	return webdriver.Chrome('chromedriver', options=options)
+import re
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,12 +34,25 @@ def fetch_data():
 	timing = []
 	ids=[]
 	pages=[]
-	driver = get_driver()
+
+	driver = SgSelenium().chrome()
+	time.sleep(2)
+
 	driver.get(location_url)
-	time.sleep(5)	
+	time.sleep(5)
+
+	base = BeautifulSoup(driver.page_source,"lxml")
+	all_scripts = base.find_all('script')
+	for script in all_scripts:
+		if "markersCoord" in str(script):
+			script = script.text.strip()
+			start_pos = script.find("Coords.push")
+			script = script[start_pos:script.find("});\n",start_pos)+2]
+			break
+	coords = re.findall(r'lat: [0-9]{2,3}\.[0-9]+, lng: -[0-9]{2,3}\.[0-9]+,', script)
 	
 	locations=driver.find_element_by_class_name('addresses').find_elements_by_tag_name('li')
-	for l in locations:
+	for i, l in enumerate(locations):
 		try:
 			loc = l.find_element_by_xpath('./a/span[1]').text.split(' (')[0]
 			print(loc)
@@ -70,8 +75,18 @@ def fetch_data():
 			phones.append(l.find_element_by_class_name('phone').text)
 		except:
 			phones.append("<MISSING>")
-		l.find_element_by_xpath('./a').click()
-		time.sleep(2)
+		try:
+			l.find_element_by_xpath('./a').click()
+			time.sleep(2)
+		except:
+			webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+			time.sleep(2)
+			l.find_element_by_xpath('./a').click()
+			time.sleep(2)
+
+		longs.append(coords[i].split("lng")[-1][2:-1].strip())
+		lats.append(coords[i].split("lng")[0][4:-2].strip())
+
 		try:
 			hours = driver.find_element_by_id("store_map").find_element_by_class_name("hours").text.replace("\n"," ")
 			if ".ca" in hours:
@@ -94,8 +109,8 @@ def fetch_data():
 		row.append(ids[l])
 		row.append(phones[l])
 		row.append("<MISSING>")
-		row.append("<MISSING>")
-		row.append("<MISSING>")
+		row.append(lats[l])
+		row.append(longs[l])
 		row.append(timing[l]) 
 		row.append(location_url)
 		

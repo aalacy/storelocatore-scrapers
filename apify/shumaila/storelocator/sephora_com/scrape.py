@@ -1,17 +1,20 @@
-# Import libraries
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re
+import re, time, json
 
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,168 +24,86 @@ def fetch_data():
     # Your scraper here
     data = []
     p = 0
+    datanow= []
+    datanow.append('none')
     url = 'https://www.sephora.com/happening/storelist'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('a', {'class': 'css-119uldj'})
-    print(len(repo_list))
-    cleanr = re.compile('<.*?>')
-    phoner = re.compile('(.*?)')
-    for repo in repo_list:
-        link = "https://www.sephora.com" + repo['href']
-        # link = "https://www.sephora.com/happening/stores/silverdale-jcpenney-at-kitsap-mall"
-        #print(link)
-        #link ='https://www.sephora.com/happening/stores/farmington-jcpenney-at-westfarms-mall'
-        #link = 'https://www.sephora.com/happening/stores/woodbury'
-        page = requests.get(link)
-        soup = BeautifulSoup(page.text, "html.parser")
-        detail = soup.find('script', {'type': 'application/ld+json'})
-        detail = str(detail)
-        #print(detail)
-        if detail == "None":
-            detail = str(soup)
-        start = detail.find("streetAddress")
-        start = detail.find(":", start)
-        start = detail.find('"', start) + 1
-        end = detail.find('"', start)
-        
-        street = detail[start:end]
-        start = street.find('\\')
-        if start != -1:
-            street = street.replace("\\", "!")
-            street = street.replace("!n"," ")
-        street = street.replace("\n", " ")
-        street = street.replace("!r", "")
-        #print(street)
-        start = detail.find("postalCode")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
-        pcode = detail[start:end]
-        start = pcode.find("O")
-        if start != -1:
-            pcode = pcode.replace("O", "0")
-        start = detail.find("telephone")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
-        phone = detail[start:end]
-
-        start = detail.find("addressLocality")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
-        city = detail[start:end]
-
-        start = detail.find("addressRegion")
-        start = detail.find(":", start) + 2
-        end = detail.find("}", start) - 1
-        state = detail[start:end]
-
-        start = detail.find("name")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
-        title = detail[start:end]
-        start = detail.find("openingHours")
-        start = detail.find("[", start) + 2
-        end = detail.find("]", start) - 1
-        hours = detail[start:end]
-        hours = hours.replace('"', "")
-        hours = hours.replace(',', " | ")
-        detail = str(soup)
-        start = detail.find("latitude")
-        start = detail.find(":", start) + 1
-        end = detail.find(",", start) - 1
-        lat = detail[start:end]
-        start = detail.find("longitude")
-        start = detail.find(":", start) + 1
-        end = detail.find(",", start)
-        longt = detail[start:end]
-
-        detail = str(soup)
-        start = detail.find("storeInfo")
-        start = detail.find("country",start)
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start)-1
-        ccode = detail[start:end]
+    r = session.get(url, headers=headers, verify=False)
+  
+    soup =BeautifulSoup(r.text, "html.parser")
+   
+    linklist = soup.findAll('a', {'class': 'css-121wlog'})
+    print("states = ",len(linklist))
+    for link in linklist:
+        link = 'https://www.sephora.com/'+link['href']
+        r = session.get(link, headers=headers, verify=False)
+        r = r.text.split('{"storeInfo":')[1].split('}},{')[0]
+        #print(r)
+        loc = json.loads(r)
+        street = loc['address']['address1']
+        ccode = loc['address']['country']
+        state = loc['address']['state']
+        city = loc['address']['city']
+        pcode = loc['address']['postalCode']
+        phone = loc['address']['phone']
+        lat = loc['latitude']
+        longt = loc['longitude']
+        store = loc['storeId']
+        ltype= 'Store'
+        link = 'https://www.sephora.com' + loc['targetUrl']
+        title = loc['displayName']
+        hours = '<MISSING>'
         try:
+            hours  = "Monday " + loc['storeHours']['mondayHours']+" Tuesday " + loc['storeHours']['tuesdayHours']+" Wednesday " + loc['storeHours']['wednesdayHours']+ " Thursday " + loc['storeHours']['thursdayHours'] + "Friday " + loc['storeHours']['fridayHours']+" Saturday " + loc['storeHours']['saturdayHours'] + " Sunday " + loc['storeHours']['sundayHours']
+            hours = hours.replace("AM",' AM ').replace("PM",' PM ').replace("-",'- ')
 
-            start = detail.find("isOnlineReservationEnabled")
-            start = detail.find("storeId",start)
-            start = detail.find(":", start) + 2
-            end = detail.find(",", start) - 1
-            store = detail[start:end]
         except:
-            store = "<MISSING>"
-        street = re.sub('\n', " ", street)
-        if len(title) < 3:
-            title = "<MISSING>"
-        if len(street) < 3:
-            street = "<MISSING>"
-        if len(city) < 3:
-            city = "<MISSING>"
-        if len(ccode) < 2:
-            ccode = "<MISSING>"
+            hours = loc['storeHours']['closedDays']
+            if hours.find('Opening on') > -1:
+                hours = 'SOON'
+            elif hours.find('closed') > -1:
+                hours = '<MISSING>'
+                
+           
+        if hours != 'SOON':
+            if len(phone) < 3:
+                phone = '<MISSING>'
+            if len(pcode) == 4:
+                pcode = '0' + pcode
+            if state == "NW":
+                state = "WA"
+            
+            if store in datanow:
+                pass
+            else:
+                datanow.append(store)
+                data.append([
+                        'https://www.sephora.com',
+                        link,                   
+                        title.rstrip().lstrip(),
+                        street.replace('\r','').replace('\n',' ').rstrip().lstrip(),
+                        city.rstrip().lstrip(),
+                        state.rstrip().lstrip(),
+                        pcode.rstrip().lstrip(),
+                        ccode.rstrip().lstrip(),
+                        store,
+                        phone.rstrip().lstrip(),
+                        ltype,
+                        lat,
+                        longt,
+                        hours.rstrip()
+                    ])
+                #print(p,data[p])
+                p += 1
         
-        if len(pcode) == 4:
-            pcode = '0' + pcode
-        if len(pcode) < 3:
-            pcode = "<MISSING>"
-        if len(store) < 2:
-            store = "<MISSING>"
-        if len(phone) < 5:
-            phone = "<MISSING>"
-        if len(hours) < 4:
-            hours = "<MISSING>"
-        if len(lat) < 2:
-            lat = "<MISSING>"
-        if len(longt) < 2:
-            longt = "<MISSING>"
-        if hours.find("image:") > -1 or hours.find("url:") > -1:
-            hours = "<MISSING>"
-        if len(store) < 3 or len(store) > 10:
-            store = "<MISSING>"
-        if state == "NW":
-            state = "WA"
-        hours = hours.replace('PM',' PM')
-        hours = hours.replace('AM',' AM')
-        hours = hours.replace('pm',' pm')
-        hours = hours.replace('am',' am')
-
-       
-
-        flag = 0
-        for chk in data:
-            if chk[2] == street:
-                flag = 1
-                #print("Already exist")
-                break
-        if flag == 0:
-            if street.find('html') > -1 and title.find('html') > -1:
-                flag = 1
-        if flag == 0:
-            data.append([
-                'https://www.sephora.com/',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours
-            ])
-            #print(p,data[p])
-            p += 1
-
+ 
+        
     return data
 
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

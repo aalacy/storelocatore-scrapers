@@ -52,11 +52,12 @@ def fetch_data():
                             "a", class_="c-location-grid-item-link visit-page-YA")
                         for st in store_link:
                             # print(st['href'].replace("..","").replace("//",""))
-                            r3 = session.get(
-                                "https://stores.loft.com/" + st['href'].replace("..", "").replace("//", ""))
+                            r3 = session.get("https://stores.loft.com/" + st['href'].replace("..", "").replace("//", ""))
+                            soup3 = BeautifulSoup(r3.text, "lxml")
+
                             page_url = "https://stores.loft.com/" + \
                                 st['href'].replace("..", "").replace("//", "")
-                            soup3 = BeautifulSoup(r3.text, "lxml")
+                            # print(page_url)
                             streetAddress = soup3.find(
                                 "span", {"itemprop": "streetAddress"}).text.strip()
                             state = soup3.find(
@@ -64,13 +65,16 @@ def fetch_data():
                             zip1 = soup3.find(
                                 "span", {"itemprop": "postalCode"}).text
                             city = soup3.find(
-                                "span", {"itemprop": "addressLocality"}).text
+                                "span", {"itemprop": "addressLocality"}).text.replace(",","")
                             name = " ".join(
                                 list(soup3.find("h1", {"itemprop": "name"}).stripped_strings))
                             phone = soup3.find(
                                 "span", {"itemprop": "telephone"}).text
-                            hours = " ".join(list(soup3.find(
-                                "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                            try:
+                                hours = " ".join(list(soup3.find("table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                            except AttributeError:
+                                hours = "<MISSING>"
+
                             latitude = soup3.find("meta", {"itemprop": "latitude"})[
                                 'content']
                             longitude = soup3.find("meta", {"itemprop": "longitude"})[
@@ -85,7 +89,7 @@ def fetch_data():
                             tem_var.append(zip1.strip())
                             tem_var.append("US")
                             tem_var.append("<MISSING>")
-                            tem_var.append(phone)
+                            tem_var.append(phone if phone else "<MISSING>")
                             tem_var.append("<MISSING>")
                             tem_var.append(latitude)
                             tem_var.append(longitude)
@@ -113,13 +117,15 @@ def fetch_data():
                         zip1 = soup4.find(
                             "span", {"itemprop": "postalCode"}).text
                         city = soup4.find(
-                            "span", {"itemprop": "addressLocality"}).text
+                            "span", {"itemprop": "addressLocality"}).text.replace(",","")
                         name = " ".join(
                             list(soup4.find("h1", {"itemprop": "name"}).stripped_strings))
                         phone = soup4.find(
                             "span", {"itemprop": "telephone"}).text
-                        hours = " ".join(list(soup4.find(
-                            "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                        try:
+                            hours = " ".join(list(soup4.find("table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                        except AttributeError:
+                            hours = "<MISSING>"
                         latitude = soup4.find("meta", {"itemprop": "latitude"})[
                             'content']
                         longitude = soup4.find("meta", {"itemprop": "longitude"})[
@@ -156,7 +162,7 @@ def fetch_data():
                     street_address = soup_loc.find(
                         "span", {"itemprop": "streetAddress"}).text.strip()
                     city = soup_loc.find(
-                        "span", {"itemprop": "addressLocality"}).text.strip()
+                        "span", {"itemprop": "addressLocality"}).text.strip().replace(",","")
                     state = soup_loc.find(
                         "span", {"itemprop": "addressRegion"}).text.strip()
                     zipp = soup_loc.find(
@@ -200,7 +206,7 @@ def fetch_data():
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
             zip1 = soup5.find("span", {"itemprop": "postalCode"}).text
-            city = soup5.find("span", {"itemprop": "addressLocality"}).text
+            city = soup5.find("span", {"itemprop": "addressLocality"}).text.replace(",","")
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text
@@ -265,7 +271,7 @@ def fetch_data():
                         zip1 = soup3.find(
                             "span", {"itemprop": "postalCode"}).text
                         city = soup3.find(
-                            "span", {"itemprop": "addressLocality"}).text
+                            "span", {"itemprop": "addressLocality"}).text.replace(",","")
                         name = " ".join(
                             list(soup3.find("h1", {"itemprop": "name"}).stripped_strings))
                         phone = soup3.find(
@@ -309,12 +315,15 @@ def fetch_data():
                         "span", {"itemprop": "addressRegion"}).text
                     zip1 = soup4.find("span", {"itemprop": "postalCode"}).text
                     city = soup4.find(
-                        "span", {"itemprop": "addressLocality"}).text
+                        "span", {"itemprop": "addressLocality"}).text.replace(",","")
                     name = " ".join(
                         list(soup4.find("h1", {"itemprop": "name"}).stripped_strings))
                     phone = soup4.find("span", {"itemprop": "telephone"}).text
-                    hours = " ".join(list(soup4.find(
-                        "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                    try:
+                        hours = " ".join(list(soup4.find("table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                    except AttributeError:
+                        hours = "<MISSING>"
+
                     latitude = soup4.find("meta", {"itemprop": "latitude"})[
                         'content']
                     longitude = soup4.find("meta", {"itemprop": "longitude"})[
@@ -352,7 +361,7 @@ def fetch_data():
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
             zip1 = soup5.find("span", {"itemprop": "postalCode"}).text
-            city = soup5.find("span", {"itemprop": "addressLocality"}).text
+            city = soup5.find("span", {"itemprop": "addressLocality"}).text.replace(",","")
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text
