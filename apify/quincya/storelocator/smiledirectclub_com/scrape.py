@@ -59,12 +59,9 @@ def fetch_data():
 		driver.get(link)
 		time.sleep(randint(2,4))
 
-		try:
-			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-				(By.CLASS_NAME, "details")))
-			time.sleep(randint(2,4))
-		except:
-			continue
+		element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
+			(By.CLASS_NAME, "details")))
+		time.sleep(randint(2,4))
 		
 		base = BeautifulSoup(driver.page_source,"lxml")
 		raw_data = base.find(class_="row content")
