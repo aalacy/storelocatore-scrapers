@@ -52,7 +52,7 @@ def fetch_data():
 	coords = re.findall(r'lat: [0-9]{2,3}\.[0-9]+, lng: -[0-9]{2,3}\.[0-9]+,', script)
 	
 	locations=driver.find_element_by_class_name('addresses').find_elements_by_tag_name('li')
-	for i, l in enumerate(locations[:10]):
+	for i, l in enumerate(locations):
 		try:
 			loc = l.find_element_by_xpath('./a/span[1]').text.split(' (')[0]
 			print(loc)
