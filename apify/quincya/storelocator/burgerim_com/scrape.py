@@ -43,7 +43,7 @@ def fetch_data():
 		street_address = store['street1'].strip()
 		city = store['city']
 		state = store['state']
-		zip_code = store['zip']
+		zip_code = store['zip'].strip()
 		if zip_code == "55608":
 			zip_code = "95608"
 		if zip_code == "32502":
