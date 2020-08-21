@@ -3,9 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+import phonenumbers
 from datetime import datetime
 session = SgRequests()
-import phonenumbers
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -44,7 +44,12 @@ def fetch_data():
             for hr in interval:
                 hours += " "+ hr['Interval'] +" "+ hr['OpenTime'] +" - "+ hr['CloseTime'] +" "
         else:
-            hours = "<MISSING>"
+            try:
+                location_soup = bs(session.get(page_url).content, "lxml")
+                hours = " ".join(list(location_soup.find("ul",{"class":"hours ui-repeater"}).stripped_strings))
+            except:
+                hours = "<MISSING>"
+
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -55,10 +60,10 @@ def fetch_data():
         store.append(country_code)
         store.append(store_number)
         store.append(phone)
-        store.append(store_number)
+        store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
-        store.append(hours)
+        store.append(hours.replace('Please call for office hours See More Hours','OPEN 7 DAYS A WEEK'))
         store.append(page_url.strip())     
     
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
