@@ -55,8 +55,11 @@ def fetch_data():
             phone = "<MISSING>"
         if (store_number == '' or store_number is None):
             store_number = "<MISSING>"
-        for Sun in store_data['hoursOfOperation']['Sun']:
-            sun_time = 'Sun: ' + Sun[0] + ' - ' + Sun[1]
+        if "Sun" in store_data['hoursOfOperation']:
+            for Sun in store_data['hoursOfOperation']['Sun']:
+                sun_time = 'Sun: ' + Sun[0] + ' - ' + Sun[1]
+        else:
+            sun_time=""
         for Sat in store_data['hoursOfOperation']['Sat']:
             sat_time = 'Sat: ' + Sat[0] + ' - ' + Sat[1]
         for Fri in store_data['hoursOfOperation']['Fri']:
