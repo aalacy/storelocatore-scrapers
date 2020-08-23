@@ -46,7 +46,7 @@ def fetch_data():
 		if "locations" in link:
 			raw_data = base.find(id="map-listing-wrap")
 
-			location_name = raw_data.h1.text.replace("–","-").strip()
+			location_name = raw_data.h1.text.replace("–","-").replace("’","'").replace(" - ","-").strip()
 			raw_address = raw_data.find(class_="address").text.strip().split("\n")
 			try:
 				city = raw_address[-2].strip()
