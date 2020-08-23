@@ -37,7 +37,7 @@ def fetch_data():
 
 	store_data = json.loads(base.text)
 	for store in store_data:
-		location_name = store['store']
+		location_name = store['store'].replace("–","-")
 		street_address = store['address'].strip()
 		city = store['city']
 		state = store['state']
