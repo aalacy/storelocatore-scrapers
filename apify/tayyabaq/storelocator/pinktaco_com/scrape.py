@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import re, time
 
 
@@ -17,14 +16,6 @@ def write_output(data):
                 writer.writerow(row)
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-
-
 def fetch_data():
     data = [];
     location_name = [];
@@ -38,7 +29,7 @@ def fetch_data():
     hours_of_operation = [];
     phone = []
     # Driver
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get('http://www.pinktaco.com/locations/')
     stores = driver.find_elements_by_xpath("//li[@class='location']/a")
     store_text = [stores[n].text for n in range(0, len(stores))]
