@@ -51,16 +51,19 @@ def fetch_data():
                 
                 elif div.text.find('AM') > -1 and div.text.find('PM') > -1:
                     hours = div.text
+                    #print(hours)
             if hours != '':
-                hours = hours.split('\n')[1].replace('\n',' ').replace('\xa0','')
+                hours = hours.replace('\n',' ').replace('\xa0','').replace('Club Hours ','').lstrip()
             else:
                 hours = '<MISSING>'
+            #print(hours)
             coord = soup.find('div',{'class':'map-marker'})
+            #print(address)
             if address != '':
                 address= address.splitlines()
                 phone = address[0]
                 #print(address[1])
-                adr = address[1].split(' ',1)[1]
+                adr = address[1].split('Address:',1)[1].lstrip()
                 street,city,state = adr.split(', ')
                 state,pcode = state.lstrip().split(' ')
                 lat = coord['data-lat']
