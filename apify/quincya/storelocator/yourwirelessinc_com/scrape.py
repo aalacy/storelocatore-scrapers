@@ -41,15 +41,15 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.h5.text.strip()
-		if location_name in found_poi:
-			continue
-
-		found_poi.append(location_name)
 
 		raw_data = item.text.strip().replace("\t","").replace("\n\n","\n").split("\n")
 		
 		street_address = raw_data[1].replace("Unit", " Unit").replace("Suite", " Suite").strip()
 		street_address = (re.sub(' +', ' ', street_address)).strip()
+		if street_address in found_poi:
+			continue
+
+		found_poi.append(street_address)
 		city_line = raw_data[2].strip().split(",")
 		city = city_line[0].strip()
 		state = city_line[-1].strip().split()[0].strip()
