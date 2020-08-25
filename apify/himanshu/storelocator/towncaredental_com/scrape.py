@@ -1,6 +1,5 @@
 import csv
 import sys
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
@@ -29,6 +28,7 @@ def fetch_data():
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     }
     base_url = "https://www.towncaredental.com"
     addresses = []
@@ -52,13 +52,18 @@ def fetch_data():
     link = soup.find_all("p",{"class":"website"})
     for i in link:
         location_url1 = i.a['href']
+        #print(location_url1)
         r1 = session.get(location_url1, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
-        json1 = json.loads(soup1.find("script",{"type":"application/ld+json"}).text)
+    
+        json_data = str(soup1).split('</script> <script type="application/ld+json">')[1].split('</script>')[0]
+        
+        json1 = json.loads(json_data)
         street_address = json1['address']['streetAddress']
         city = json1['address']["addressLocality"]
         state = json1['address']['addressRegion']
         zipp = json1['address']['postalCode']
+        store_number = json1['branchCode']
         phone = json1['telephone']
         lat = json1['geo']['latitude']
         lng = json1['geo']['longitude']
@@ -76,8 +81,8 @@ def fetch_data():
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))                   
             store = [x if x else "<MISSING>" for x in store]
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+          #  print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         # coord = search.next_coord()   # zip_code = search.next_zip()    
@@ -85,8 +90,5 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
-
     write_output(data)
-
-
 scrape()

@@ -18,7 +18,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    # addresses = []
+    addresses = []
     
     headers = {
     'accept': "application/json, text/javascript, */*; q=0.01",
@@ -57,7 +57,7 @@ def fetch_data():
             city = "<MISSING>"
         state = i["State"]
         zipp = i["Zip"]
-        phone = i["Phone"]
+        phone = i["Phone"].replace("OUCH","")
         latitude = i["Latitude"]
         longitude = i["Longitude"]
         if i['Categories']:
@@ -86,6 +86,9 @@ def fetch_data():
         store.append("https://www.piedmont.org/locations/location-details?practice="+str(store_number))
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
         # print("data ==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
