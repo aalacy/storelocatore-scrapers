@@ -62,6 +62,9 @@ def fetch_data():
                         zc = '<MISSING>'
                     os = item['open_status']
                     stat = item['status']
+                    if state == '':
+                        state = '<MISSING>'
+                    add = add.replace('"',"'")
                     btype = ''
                     try:
                         for brand in item['brandings']:
@@ -113,6 +116,9 @@ def fetch_data():
                         zc = '<MISSING>'
                     os = item['open_status']
                     stat = item['status']
+                    if state == '':
+                        state = '<MISSING>'
+                    add = add.replace('"',"'")
                     btype = ''
                     try:
                         for brand in item['brandings']:
