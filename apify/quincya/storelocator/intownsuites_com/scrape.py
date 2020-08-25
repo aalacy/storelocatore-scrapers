@@ -66,10 +66,11 @@ def fetch_data():
 				fin_script = script.text.replace('\n', '').replace("\r","").replace("Shipt Grocery Delivery}",'Shipt Grocery Delivery"}').strip()
 		
 		store = json.loads(fin_script)
-		location_name = store['name'].replace("&#8211;","-").replace("–","-")
+		location_name = store['name'].replace("&#8211;","-").replace("–","-").strip()
 		if link == "https://www.intownsuites.com/extended-stay-locations/south-carolina/charleston/savannah-highway/":
 			location_name = "InTown Suites Extended Stay Charleston SC - Savannah Hwy"
-		street_address = store['address']['streetAddress'].replace("&nbsp;"," ").encode('utf8')
+		street_address = store['address']['streetAddress'].replace("&nbsp;"," ").strip()
+		street_address = (re.sub(' +', ' ', street_address)).strip()
 		try:
 			city = store['address']['addressLocality']
 		except:
@@ -79,7 +80,7 @@ def fetch_data():
 			zip_code = store['address']['postalCode']
 		except:
 			zip_code = store['address']['postOfficeBoxNumber']
-		if street_address == "6451 Bandera Road".encode('utf8'):
+		if street_address == "6451 Bandera Road":
 			city = "Leon Valley"
 			state = "TX"
 			zip_code = "78238"

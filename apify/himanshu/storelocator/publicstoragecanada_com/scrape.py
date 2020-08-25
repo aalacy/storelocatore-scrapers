@@ -1,18 +1,14 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
 import time
-import sgzip
-import pprint
-
-
 
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -25,116 +21,84 @@ def write_output(data):
 
 def fetch_data():
 
-    return_main_object = []
-    base_url = "https://publicstoragecanada.com"
     addressess = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
-    # print("====")
-    MAX_RESULTS = 51
-    MAX_DISTANCE = 50
-    current_results_len = 0 
+    base_url = "https://publicstoragecanada.com"
+    
+    
+    
     
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "x-requested-with":"XMLHttpRequest",
-        "referer": "https://www.thetinfishrestaurants.com/locations-menus/find-a-tin-fish-location-near-you/",
         "content-type" :"application/x-www-form-urlencoded; charset=UTF-8",
     }
-    coord = search.next_zip()
-    while coord:
-        # print("================",coord)
-        count = 0
-        result_coords =[]
-        locator_domain = "https://publicstoragecanada.com"
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "CA"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        raw_address = ""
-        hours_of_operation = ""
-        page_url = ''
-        # print("==============",str(search.current_zip))
-        # "N4W"
-        # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"
-        data = 'action=search_locations_ajax&location=+'+str(coord)
-        try:
-            data = session.post("https://publicstoragecanada.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
-        except:
-            pass
-        # except:
-        #     continue
-        if type(len(data['data']))==int:
-            current_results_len = len(data['data'])
-            
-        for loc in data['data']:
-            # soup= BeautifulSoup(loc["address"],"lxml")
-            city_state_zipp = loc["address"].split(",<br/>")[-1]
-            street_address = loc["address"].split(",<br/>")[0].replace(",",' ')
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(city_state_zipp))
-            state_list = re.findall(r' ([A-Z]{2})', str(city_state_zipp))
-            city = city_state_zipp.split(',')[0]
-            
-            page_url = loc['link']
-            location_name = loc['title']
+   
+    
+    state_soup = bs(session.get(base_url, headers=headers).content, "lxml")
+    
+        
+    for city_link in state_soup.find_all("li",{"class":re.compile("menu-item menu-item-type-taxonomy menu-item-object-location_city menu-item")}):
 
-            r1 = session.get(page_url,headers=headers,data=data)
-            soup1= BeautifulSoup(r1.text,"lxml")
+       city_soup = bs(session.get(city_link.a['href'], headers=headers).content, "lxml")
+
+       for link in city_soup.find_all("a",{"class":"secondaryText"}):
+
+            if "http" not in link['href']:
+               continue
+
+            page_url = link['href']
+
+            location_soup = bs(session.get(page_url , headers=headers).content, "lxml")
+
+            location_name = location_soup.find("h1").text.strip()
+
+            addr = location_soup.find("div",{"class":"singleLocationAddress"}).find_all("p")
+
+            street_address = addr[0].text.strip()
+            city = addr[1].text.split(",")[0].strip()
+            state = addr[1].text.split(",")[1].strip()
+            zipp = addr[2].text.strip()
             
-            hours = re.sub(r"\s+", " ", soup1.find("div",class_='singleLocationOfficeHours marginB30').text)
-            hours1 = re.sub(r"\s+", " ", soup1.find("div",class_='singleLocationGateHours').text)
-            hours_of_operation = hours + ' '+hours1
-
-            phone = loc['phone']
-            latlng = loc['latlng']
-            latitude = latlng.split(",")[0]
-            longitude = latlng.split(",")[-1]
-
+            if "201 Romina Dr" in street_address:
+                state = "ON"
+            store_number = re.findall(r'[0-9]+',location_soup.find(lambda tag: (tag.name == "script") and "locationid" in tag.text).text)
             
-            if ca_zip_list:
-                zipp = ca_zip_list[-1]
-                country_code = "CA"
+            if store_number:
+                store_number = store_number[-1]
+            else:
+                store_number = "<MISSING>"
+ 
+            phone = location_soup.find(lambda tag: (tag.name == "script") and "locphone" in tag.text).text.split('"')[1].strip()
+            
+            lat = location_soup.find(lambda tag: (tag.name == "script") and "var lat =" in tag.text).text.split('"')[1].strip()
+            lng = location_soup.find(lambda tag: (tag.name == "script") and "var lng =" in tag.text).text.split('"')[1].strip()
+            
+            hours = " ".join(list(location_soup.find("div",{"class":"singleLocationOfficeHours marginB30"}).stripped_strings)).split("hours.")[1].strip()
+        
+           
 
-            if state_list:
-                state = state_list[-1]
-                
             store = []
-            result_coords.append((latitude, longitude))
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city.strip() if city else '<MISSING>')
-            store.append(state.strip() if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation.replace("Hours",' Hours ') if hours_of_operation.replace("Hours",' Hours ') else '<MISSING>')
-            store.append(page_url if page_url else '<MISSING>')
-            if store[2] in addressess:
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)   
+            store.append("CA")
+            store.append(store_number)
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            store.append(hours)
+            store.append(page_url) 
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2] + store[-1] in addressess:
                 continue
-            addressess.append(store[2])
-            # print("====================",store)
+            addressess.append(store[2] + store[-1])
             yield store
                   
-        # print("==================================",current_results_len)
-        if current_results_len < MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_zip()
-
+      
 
 
 def scrape():

@@ -2,7 +2,8 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
+session = SgRequests()
  
 def my_function(x):
   return list(dict.fromkeys(x))
@@ -37,9 +38,9 @@ def fetch_data():
     }
 
     url = "https://www.piedmont.org/_services/LocationsService.asmx/GetLocations"
-    response = requests.request("GET", url, headers=headers)
+    response = session.get(url, headers=headers)
     json_data = response.json()
-    loc = {9: 'Cancer', 3: 'Cardiac Care', 6: 'Emergency Care', 1: 'Hospitals', 7: 'Imaging', 2: 'Primary Care', 18: 'QuickCare', 4: 'Specialists', 8: 'Surgery Centers', 5: 'Urgent Care', 11: 'Brain Cancer', 10: 'Breast Cancer', 16: 'Colon Cancer', 14: 'Gynecologic Cancer', 15: 'Liver & Pancreas Cancer', 13: 'Lung Cancer', 17: 'Orthopedic Surgeon', 12: 'Prostate Cancer', 19: 'Walgreens QuickCare'}
+    loc = {9: 'Cancer', 3: 'Cardiac Care', 6: 'Emergency Care', 1: 'Hospitals', 7: 'Imaging', 2: 'Primary Care', 18: 'QuickCare', 4: 'Specialists', 8: 'Surgery Centers', 5: 'Urgent Care', 11: 'Brain Cancer', 10: 'Breast Cancer', 16: 'Colon Cancer', 14: 'Gynecologic Cancer', 15: 'Liver & Pancreas Cancer', 13: 'Lung Cancer', 17: 'Orthopedic Surgeon', 12: 'Prostate Cancer', 19: 'Walgreens QuickCare', 20:'Pediatrics'}
     for i in json_data['d']:
         if i['OfficeHours'] != None:
             hours_of_operation =i['OfficeHours']
@@ -56,7 +57,7 @@ def fetch_data():
             city = "<MISSING>"
         state = i["State"]
         zipp = i["Zip"]
-        phone = i["Phone"]
+        phone = i["Phone"].replace("OUCH","")
         latitude = i["Latitude"]
         longitude = i["Longitude"]
         if i['Categories']:
@@ -85,6 +86,9 @@ def fetch_data():
         store.append("https://www.piedmont.org/locations/location-details?practice="+str(store_number))
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
         # print("data ==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store

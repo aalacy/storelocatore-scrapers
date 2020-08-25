@@ -37,7 +37,7 @@ def fetch_data():
 
 	store_data = json.loads(base.text)
 	for store in store_data:
-		location_name = store['store']
+		location_name = store['store'].replace("–","-")
 		street_address = store['address'].strip()
 		city = store['city']
 		state = store['state']
@@ -46,7 +46,7 @@ def fetch_data():
 		store_number = store['id']
 		location_type = "<MISSING>"
 		phone = store['phone']
-		hours_of_operation = store["hours"].replace("day","day ").replace("Closed","Closed ").strip()
+		hours_of_operation = store["hours"].replace("day","day ").replace("PM","PM ").replace("Closed","Closed ").strip()
 		latitude = store['lat']
 		longitude = store['lng']
 		if not latitude:
