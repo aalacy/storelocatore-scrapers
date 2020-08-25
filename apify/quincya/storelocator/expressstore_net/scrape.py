@@ -46,7 +46,7 @@ def fetch_data():
 		store_number = store['id']
 		location_type = "<MISSING>"
 		phone = store['phone']
-		hours_of_operation = store["hours"].replace("day","day ").replace("Closed","Closed ").strip()
+		hours_of_operation = store["hours"].replace("day","day ").replace("PM","PM ").replace("Closed","Closed ").strip()
 		latitude = store['lat']
 		longitude = store['lng']
 		if not latitude:
