@@ -35,6 +35,7 @@ def write_output(data):
 def fetch_data():
 
 	driver = get_driver()
+	
 	# driver = SgSelenium().chrome()
 	time.sleep(2)
 	
