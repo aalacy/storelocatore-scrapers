@@ -94,8 +94,8 @@ def fetch_data():
                 zipp = "".join(st2[1].strip().split(" ")[1:])
                 location_type = "EMPIRE CINEMAS"
             elif location_name == "EMPIRE SLOUGH":
-                street_address = temp[1]
-                city = temp[2]
+                street_address = temp[1].replace(",","")
+                city = temp[2].replace(",","")
                 state = temp[3]
                 zipp = temp[4]
                 location_type = "EMPIRE CINEMAS"
@@ -156,7 +156,6 @@ def fetch_data():
             yield store
             
 def scrape():
-    # fetch_data()
     data = fetch_data()
     write_output(data)
 scrape()
