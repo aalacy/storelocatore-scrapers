@@ -4,10 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
-
-
 
 session = SgRequests()
 
@@ -21,8 +17,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def fetch_data():
 
@@ -52,7 +46,6 @@ def fetch_data():
     link = soup.find_all("p",{"class":"website"})
     for i in link:
         location_url1 = i.a['href']
-        #print(location_url1)
         r1 = session.get(location_url1, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
     
@@ -64,7 +57,8 @@ def fetch_data():
         state = json1['address']['addressRegion']
         zipp = json1['address']['postalCode']
         store_number = json1['branchCode']
-        phone = json1['telephone']
+        temp_phone = json1['telephone'].replace("+1","")
+        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
         lat = json1['geo']['latitude']
         lng = json1['geo']['longitude']
         location_name =json1['name']
@@ -81,13 +75,8 @@ def fetch_data():
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))                   
             store = [x if x else "<MISSING>" for x in store]
-          #  print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
-
-        # coord = search.next_coord()   # zip_code = search.next_zip()    
-        # break
-
+            
 def scrape():
     data = fetch_data()
     write_output(data)
