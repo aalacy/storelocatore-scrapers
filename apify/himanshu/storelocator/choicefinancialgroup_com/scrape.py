@@ -27,6 +27,7 @@ def fetch_data():
     return_main_object = []
     for location in soup.find_all("div",{'class':"col-lg-3 col-md-6 bucket-content"}):
         location_details = list(location.stripped_strings)
+        
         # for i in range(len(location_details)):
         #     if "(" in location_details[i] and ")" in location_details[i] and len(location_details[i]) != 15:
         #         phone = location_details[i]
@@ -39,9 +40,9 @@ def fetch_data():
         store.append("https://choicefinancialgroup.com")
         store.append(location_details[0])
         store.append(location_details[1].split(" – ")[0])
-        store.append(location_details[1].split(" – ")[1].split(",")[0])
-        store.append(location_details[1].split(" – ")[1].split(",")[-1].split(" ")[-2])
-        store.append(location_details[1].split(" – ")[1].split(",")[-1].split(" ")[-1])
+        store.append(location_details[0].split(",")[0])
+        store.append(location_details[0].split(",")[1])
+        store.append(location_details[1].split()[-1])
         store.append("US")
         store.append("<MISSING>")
         store.append(location_details[3])

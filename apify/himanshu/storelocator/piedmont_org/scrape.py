@@ -2,7 +2,8 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
+session = SgRequests()
  
 def my_function(x):
   return list(dict.fromkeys(x))
@@ -17,7 +18,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    addresses = []
+    # addresses = []
     
     headers = {
     'accept': "application/json, text/javascript, */*; q=0.01",
@@ -37,9 +38,9 @@ def fetch_data():
     }
 
     url = "https://www.piedmont.org/_services/LocationsService.asmx/GetLocations"
-    response = requests.request("GET", url, headers=headers)
+    response = session.get(url, headers=headers)
     json_data = response.json()
-    loc = {9: 'Cancer', 3: 'Cardiac Care', 6: 'Emergency Care', 1: 'Hospitals', 7: 'Imaging', 2: 'Primary Care', 18: 'QuickCare', 4: 'Specialists', 8: 'Surgery Centers', 5: 'Urgent Care', 11: 'Brain Cancer', 10: 'Breast Cancer', 16: 'Colon Cancer', 14: 'Gynecologic Cancer', 15: 'Liver & Pancreas Cancer', 13: 'Lung Cancer', 17: 'Orthopedic Surgeon', 12: 'Prostate Cancer', 19: 'Walgreens QuickCare'}
+    loc = {9: 'Cancer', 3: 'Cardiac Care', 6: 'Emergency Care', 1: 'Hospitals', 7: 'Imaging', 2: 'Primary Care', 18: 'QuickCare', 4: 'Specialists', 8: 'Surgery Centers', 5: 'Urgent Care', 11: 'Brain Cancer', 10: 'Breast Cancer', 16: 'Colon Cancer', 14: 'Gynecologic Cancer', 15: 'Liver & Pancreas Cancer', 13: 'Lung Cancer', 17: 'Orthopedic Surgeon', 12: 'Prostate Cancer', 19: 'Walgreens QuickCare', 20:'Pediatrics'}
     for i in json_data['d']:
         if i['OfficeHours'] != None:
             hours_of_operation =i['OfficeHours']
