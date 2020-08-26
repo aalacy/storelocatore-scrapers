@@ -26,13 +26,15 @@ def fetch_data():
     driver.get('https://www.uniprix.com/en/all-cities')
     lines = driver.page_source.split('\n')
     for linenum in range(0, len(lines)):
-        if '<a href="https://www.uniprix.com/en/stores/city/' in lines[linenum]:
+        linetext = lines[linenum]
+        if '<a href="https://www.uniprix.com/en/stores/city/' in linetext:
             cities.append(lines[linenum].split('href="')[1].split('"')[0])
     for city in cities:
         driver.get(city)
         lines = driver.page_source.split('\n')
         for linenum in range(0, len(lines)):
-            if '<a href="https://www.uniprix.com/en/stores/' in lines[linenum]:
+            linetext = lines[linenum]
+            if '<a href="https://www.uniprix.com/en/stores/' in linetext:
                 lurl = lines[linenum].split('href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
@@ -68,16 +70,17 @@ def fetch_data():
                 g = next(lines)
                 h = next(lines)
                 if '<' in g:
-                    city = g.split('  ')[0].replace('\t','').strip()
-                    zc = g.split('  ')[1].split('<')[0].strip().replace('\t','')
+                    city = g.strip().replace('\t','').split('  ')[0]
+                    zc = g.strip().replace('\t','').split('  ')[0].split('<')[0]
                 else:
-                    city = h.split('  ')[0].replace('\t','').strip()
-                    zc = h.split('  ')[1].split('<')[0].strip().replace('\t','')
+                    city = h.strip().replace('\t','').split('  ')[0]
+                    zc = h.strip().replace('\t','').split('  ')[0].split('<')[0]
                 state = 'Quebec'
             if 'hollow_btn phone" href="tel:' in line2:
                 phone = line2.split('hollow_btn phone" href="tel:')[1].split('"')[0]
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
+            if 'data-lng="' in line2:
                 lng = line2.split('data-lng="')[1].split('"')[0]
             if '<tr itemprop="openingHours" datetime="' in line2:
                 if hours == '':
