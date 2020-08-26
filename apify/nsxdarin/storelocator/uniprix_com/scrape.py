@@ -82,11 +82,11 @@ def fetch_data():
                 lat = line2.split('data-lat="')[1].split('"')[0]
             if 'data-lng="' in line2:
                 lng = line2.split('data-lng="')[1].split('"')[0]
-            if '<tr itemprop="openingHours" datetime="' in line2:
+            if 'datetime="' in line2:
                 if hours == '':
-                    hours = line2.split('<tr itemprop="openingHours" datetime="')[1].split('"')[0]
+                    hours = line2.split('datetime="')[1].split('"')[0]
                 else:
-                    hours = hours + '; ' + line2.split('<tr itemprop="openingHours" datetime="')[1].split('"')[0]
+                    hours = hours + '; ' + line2.split('datetime="')[1].split('"')[0]
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
