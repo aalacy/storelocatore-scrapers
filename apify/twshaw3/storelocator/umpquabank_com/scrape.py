@@ -37,7 +37,7 @@ class UmpquaBank:
 
     def crawl(self):
         session = SgRequests()
-        session.headers.update({
+        headers = {
             'content-type': 'application/json'
             ,'cache-control': 'max-age=0'
             ,'authority': 'www.umpquabank.com'
@@ -52,13 +52,14 @@ class UmpquaBank:
             ,'sec-fetch-mode': 'cors'
             ,'sec-fetch-site': 'same-origin'
             ,'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-        })
+        }
         query_coord = self.search.next_coord()
         locations = []
         while query_coord:
+            print("remaining zipcodes: " + str(len(self.search.zipcodes)))
             lat, lng = query_coord[0], query_coord[1]
             api_data = {"latitude":lat,"longitude":lng,"spanishSpeaking":False,"atm":False,"openNow":False,"openSaturdays":False,"driveUpWindow":False,"date":"2019-08-22T04:04:22.311Z"}
-            r = session.post(self.url, json=api_data, allow_redirects=False)
+            r = session.post(self.url, json=api_data, allow_redirects=False, headers=headers)
             if r.status_code == 200:
                 json = r.json()
                 result_coords = []

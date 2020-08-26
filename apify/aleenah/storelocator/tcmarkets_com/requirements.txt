@@ -1,2 +1,2 @@
-sgzip
+bs4
 sgrequests
