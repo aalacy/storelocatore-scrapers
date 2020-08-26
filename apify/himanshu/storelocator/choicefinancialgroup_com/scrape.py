@@ -22,9 +22,11 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://choicefinancialgroup.com"
+
+    # Bank Location
     r = session.get("https://bankwithchoice.com/contact/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
+    
     for location in soup.find_all("div",{'class':"col-lg-3 col-md-6 bucket-content"}):
         location_details = list(location.find("p").stripped_strings)
     
@@ -42,7 +44,7 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(location_details[2])
-        store.append("<MISSING>")
+        store.append("choice bank")
         if location.find("a") != None:
             geo_location = location.find("a")["href"]
             store.append(geo_location.split("/@")[1].split(",")[0] if len(geo_location.split("/@")) == 2 else "<MISSING>")
@@ -52,8 +54,37 @@ def fetch_data():
             store.append("<MISSING>")
         store.append(hours)
         store.append("https://bankwithchoice.com/contact/locations/")
-        return_main_object.append(store)
-    return return_main_object
+        yield store
+    
+
+    # ATM location
+
+    atm_soup = BeautifulSoup(session.get("https://bankwithchoice.com/contact/atm/").text, "lxml")
+    for link in atm_soup.find("div",{"class":"masonry-blocks-container"}).find_all("a"):
+        address = link.parent.text
+        location_name = address.split("(")[1].replace(")","").strip()
+        street_address = address.split("(")[0].replace("Map","").strip()
+        addr = link['href'].split("q=")[1].replace("+"," ").replace("%2C",",")
+        city = addr.split(",")[1]
+        state = addr.split(",")[2].split()[0]
+        zipp = addr.split(",")[2].split()[1]
+
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)   
+        store.append("US")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("Choice Bank ATM")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("https://bankwithchoice.com/contact/atm/")    
+        yield store 
 
 def scrape():
     data = fetch_data()
