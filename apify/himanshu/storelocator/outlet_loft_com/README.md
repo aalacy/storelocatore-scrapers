@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address with no number,invalid state,same  lat & lng and i checked all data is true this website 
+address with no number,invalid state and i checked all data is true for this website 
