@@ -1,11 +1,9 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
-import usaddress
-
 
 base_url = 'https://www.mathisbrothers.com'
 
@@ -16,14 +14,14 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace(u'\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -31,30 +29,8 @@ def eliminate_space(items):
     for item in items:
         item = validate(item)
         if item != '' and item != '<br/>':
-            rets.append(item)
+            rets.append(item.replace('\xa0',' '))
     return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '') + ' '
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -66,14 +42,17 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://www.mathisbrothers.com/stores"
-    session = requests.Session()
+    session = SgRequests()
     response = session.get(url).text
     source = validate(response.split('data-stores="')[1].split('" class="default-page ">')[0]).replace("&quot;", '"')
     store_list = json.loads(source)
     for store in store_list:
         output = []
         output.append(base_url) # url
-        output.append(get_value(store['contentURL'])) # page url
+        try:
+            output.append(get_value(store['contentURL'])) # page url
+        except:
+            output.append(url)
         output.append(get_value(store['name'])) #location name
         output.append(get_value(store['address1'])) #address
         output.append(get_value(store['city'])) #city
@@ -85,15 +64,19 @@ def fetch_data():
         output.append(get_value(store['storeType'])) #location type
         output.append(get_value(store['latitude'])) #latitude
         output.append(get_value(store['longitude'])) #longitude
-        hours = get_value(store['storeHours']).replace('&lt;', '<').replace('&gt;', '>').replace('\\', '')
-        hours = eliminate_space(hours.split('<div class="store-hours-title">'))[0]      
+        raw_hours = get_value(store['storeHours']).replace('&lt;', '<').replace('&gt;', '>').replace('\\', '')
+        hours = eliminate_space(raw_hours.split('<div class="store-hours-title">'))[-1]
         hours = eliminate_space(etree.HTML(hours).xpath('.//text()'))
         store_hours = []
         for hour in hours[1:]:
-            if 'for' in hour.lower():
-                break
-            store_hours.append(hour)
-        output.append(get_value(store_hours)) #opening hours
+            if "inform" in hour.lower():
+                continue
+            if ":" in hour.lower() or "pm" in hour.lower() or " am" in hour.lower() or "closed" in hour.lower():
+                store_hours.append(hour)
+        final_hours = ""
+        for store_hour in store_hours:
+            final_hours = (final_hours + " " + get_value(store_hour)).strip()
+        output.append(final_hours) #opening hours
         output_list.append(output)
     return output_list
 
