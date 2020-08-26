@@ -50,6 +50,7 @@ def fetch_data():
     for info in scripts:
         street_address = " ".join(info['m']['address'])
         location_name = " ".join(info['m']['name'])
+        store_number = (location_name.split( )[-1])
         state = " ".join(info['m']['state'])
         zipp = " ".join(info['m']['zip'])
         phone = " ".join(info['m']['phone'])
@@ -58,7 +59,7 @@ def fetch_data():
         longitude = " ".join(info['m']['longitude'])
         location_type = "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = store_number
         hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]

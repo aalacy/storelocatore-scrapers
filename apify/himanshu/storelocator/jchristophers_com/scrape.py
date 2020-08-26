@@ -31,40 +31,52 @@ def fetch_data():
     if exists:
         for data in exists.findAll('a'):
             if 'ubereats' in data.get('href'):
-                continue
-            location_name = data.text
-            if "@" in data.get('href'):
-                latNlongVal = data.get('href').split('@')[1].split(',')
-                latitude = latNlongVal[0]
-                longitude = latNlongVal[1]
-            else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            street_address = data.find_next('p').get_text()
-            
-            city_st_pin = data.find_next('p').find_next('p').get_text().strip()
-            
-            city_st_pin_val = city_st_pin.split(' ')
-            city = " ".join(city_st_pin_val[:-2])[:-1]
-            state = city_st_pin_val[-2]
-            zipp = city_st_pin_val[-1]
-            phone = data.find_next('p').find_next('p').find_next('p').get_text()
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("J. Christopher's")
-            store.append(latitude)
-            store.append(longitude)
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            return_main_object.append(store)
+                page_url = data.get('href')
+                location_soup = BeautifulSoup(session.get(page_url).text, "lxml")
+
+                json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and 'latitude' in tag.text).text)
+                location_name = json_data['name']
+                try:
+                    street_address = json_data['address']['streetAddress']
+                    city = json_data['address']['addressLocality']
+                    state = json_data['address']['addressRegion']
+                    zipp = json_data['address']['postalCode']
+                    country = json_data['address']['addressCountry']
+                except:
+                    street_address = "220 Starcadia Cir"
+                    city = "Macon"
+                    state = "GA"
+                    zipp = "31210"
+                    country = "US"
+                if "2430 Atlanta Rd. Ste 300" == street_address:
+                    state = "GA"
+                phone = json_data['telephone']
+                lat = json_data['geo']['latitude']
+                lng = json_data['geo']['longitude']
+                location_type = json_data['@type']
+                opens = json_data['openingHoursSpecification'][0]['opens']
+                closes = json_data['openingHoursSpecification'][0]['closes']
+                hours = ''
+                for hr in json_data['openingHoursSpecification'][0]['dayOfWeek']:
+                    hours += " " + hr +" "+ opens +" - "+closes
+                
+       
+                store = []
+                store.append("http://www.jchristophers.com")
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append(country)
+                store.append("<MISSING>")
+                store.append(phone)
+                store.append(location_type)
+                store.append(lat)
+                store.append(lng)
+                store.append(hours)
+                store.append(page_url)
+                return_main_object.append(store)
         return return_main_object
 
 
