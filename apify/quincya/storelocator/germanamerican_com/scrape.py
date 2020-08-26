@@ -35,7 +35,7 @@ def fetch_data():
 
 	items = base.find_all(class_="cta-lnk lnk")
 
-	for i, item in enumerate(items[60]):
+	for i, item in enumerate(items):
 		print("Link %s of %s" %(i+1,len(items)))
 		link = "https://germanamerican.com" + item["href"]
 		print(link)
@@ -86,13 +86,16 @@ def fetch_data():
 
 		map_link = base.find(id="sec-sidebar").find(class_="btn cta-btn")["href"]
 		driver.get(map_link)
-		time.sleep(8)
+		time.sleep(10)
 
 		try:
 			map_link = driver.current_url
 			at_pos = map_link.rfind("@")
 			latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
 			longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
+			if not lat[4:6].isnumeric():
+				latitude = "<INACCESSIBLE>"
+				longitude = "<INACCESSIBLE>"
 		except:
 			latitude = "<INACCESSIBLE>"
 			longitude = "<INACCESSIBLE>"
