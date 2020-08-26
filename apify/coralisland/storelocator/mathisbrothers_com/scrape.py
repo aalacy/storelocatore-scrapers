@@ -65,7 +65,9 @@ def fetch_data():
         output.append(get_value(store['latitude'])) #latitude
         output.append(get_value(store['longitude'])) #longitude
         raw_hours = get_value(store['storeHours']).replace('&lt;', '<').replace('&gt;', '>').replace('\\', '')
-        hours = eliminate_space(raw_hours.split('<div class="store-hours-title">'))[-1]
+        hours = eliminate_space(raw_hours.split('<div class="store-hours-title">'))[0]
+        if len(hours) < 50:
+            hours = eliminate_space(raw_hours.split('<div class="store-hours-title">'))[1]
         hours = eliminate_space(etree.HTML(hours).xpath('.//text()'))
         store_hours = []
         for hour in hours[1:]:
