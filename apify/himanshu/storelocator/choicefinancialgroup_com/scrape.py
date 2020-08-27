@@ -53,7 +53,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
         store.append(hours)
-        store.append("https://bankwithchoice.com/contact/locations/")
+        store.append("<MISSING>")
         yield store
     
 
@@ -83,7 +83,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append("https://bankwithchoice.com/contact/atm/")    
+        store.append("<MISSING>")    
         yield store 
 
 def scrape():

@@ -7,7 +7,6 @@ import sgzip
 import time 
 from datetime import datetime
 import time
-from sgrequests import SgRequests
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -65,15 +64,19 @@ def fetch_data():
     base_url = "https://ctownsupermarkets.com"
     while zip_code:
         result_coords = []
-        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location=%22"+str(zip_code)+"%22&limit=25&api_key=ae29ff051811d0bf52d721ab2cadccb8&v=20181201&resolvePlaceholders=true&entityTypes=location&searchIds=5505" 
-        r = session.get(location_url,headers=headers).json()
-        k = (r['response']['entities'])
+        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location=%22"+str(zip_code)+"%22&limit=25&api_key=ae29ff051811d0bf52d721ab2cadccb8&v=20181201&resolvePlaceholders=true&entityTypes=location&savedFilterIds=29721495"
+        r = session.get(location_url,headers=headers)
+        #print(location_url)
+        data = (r.text)
+        json_data = json.loads(data)
+        k = (json_data['response']['entities'])
         for i in k:
             page_url = i['landingPageUrl']
+            #print(page_url)
             r = request_wrapper(page_url,"get",headers=headers)
             soup = BeautifulSoup(r.text,"lxml")
             data = soup.find("script",{"type":"application/ld+json"})
-            mp = data.text
+            mp = str(data).split("</script>")[0].split('application/ld+json">')[1]
             json_data = json.loads(mp)
             street_address = json_data['address']['streetAddress']
             city = json_data['address']['addressLocality']
@@ -83,16 +86,13 @@ def fetch_data():
             latitude = json_data['geo']['latitude']
             longitude = json_data['geo']['longitude']
             page_url= json_data['url']
-            # print(page_url)
-            store_number = json_data['@id']
-            # print(store_number)
+            store_number = json_data['@id'].split("_")[1]
             phone = json_data['telephone']
             location_type = json_data['@type'][0]
             location_name = json_data['name']
             hours_of_operation1 = json_data['openingHoursSpecification']
             hours_of_operation =''
             for mp1 in hours_of_operation1:
-                # print(mp1)
                 if "dayOfWeek" in mp1:
                     start_time = datetime.strptime(mp1['opens'], "%H:%M").strftime("%I:%M %p")
                     end_time = datetime.strptime(mp1['closes'], "%H:%M").strftime("%I:%M %p")
@@ -103,8 +103,6 @@ def fetch_data():
                         hours_of_operation = " ".join(list(soup.find("tbody",{"class":"hours-body"}).stripped_strings))
                     except:
                         hours_of_operation = "<MISSING>"
-            # print(hours_of_operation.strip())
-            # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
             store = []
             store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 
