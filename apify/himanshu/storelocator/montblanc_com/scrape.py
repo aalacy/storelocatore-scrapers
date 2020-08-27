@@ -26,7 +26,8 @@ def fetch_data():
     addressesess1=[]
     ids = bs(session.get("https://www.montblanc.com/en-ar/store-locator#search/country/ar/store-type/PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_STORE,PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_OUTLET").text,'lxml')
     ids = ids.find("div",{"class":"mb-storeLocator__wrap"}).text.split("storeLocatorConfig.APIConnectClientID =")[1].split('";')[0].replace('"','').strip()
-    for q in range(0,2000):
+    for q in range(0,5):
+        # print(":---------------------------",str(q))
         url = "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="+str(q)
         payload = {}
         headers = {
@@ -112,9 +113,9 @@ def fetch_data():
                     store.append(hours.strip())
                     store.append( page_url)     
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    if raw_address1 in addressesess:
+                    if str(raw_address1+page_url) in addressesess:
                         continue
-                    addressesess.append(raw_address1)
+                    addressesess.append(str(raw_address1+page_url))
                     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
                     yield store
                     # if [] != data['openingTimes']:
