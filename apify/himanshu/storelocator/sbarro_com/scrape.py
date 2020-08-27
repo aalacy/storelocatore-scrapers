@@ -128,6 +128,10 @@ def fetch_data():
 
             country_code = "US"
             location_type = "Restaurant"
+            if latitude[index] =="0" and longitude[index] == "0":
+                latitude[index] = "<MISSING>"
+                longitude[index] = "<MISSING>"
+
             if state == st:
 
                 store = []

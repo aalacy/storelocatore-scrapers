@@ -47,8 +47,8 @@ def fetch_data():
             loc=list(main2.stripped_strings)
             if '**New Address**' in loc:
                 loc.remove('**New Address**')
-            if 'Store Location' in loc:
                 loc.remove('Store Location')
+                
             hour=loc[-6]+' '+loc[-5]+' '+loc[-4]+' '+loc[-3]+' '+loc[-2]+' '+loc[-1]
             name=loc[0].strip()
             i=loc.index('Phone:')
@@ -69,19 +69,20 @@ def fetch_data():
                 phone = loc[3].strip()
             else:
                 ct=loc[2].split(',')
-                # print(ct)
+                
                 city=ct[0].strip()
                 state=ct[1].strip().split(' ')[0].strip()
                 zip=ct[1].strip().split(' ')[1].strip()
                 phone=loc[4].strip()
 
+            if "Suite 006-B" in address:
+                address = "2000 Park Manor Blvd" + " " + loc[1]
 
             storeno=''
             lat=soup2.find('h3', text="Store Hours").parent.parent.parent.find('iframe')['src'].split('!3d')[1].split('!')[0].strip()
             lng=soup2.find('h3', text="Store Hours").parent.parent.parent.find('iframe')['src'].split('!2d')[1].split('!')[0].strip()
             country="US"
             page_url = citi
-            # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")

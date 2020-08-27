@@ -26,7 +26,7 @@ def fetch_data():
     addresses = []
     return_main_object = []
     base_url = "https://www.fredericmalle.com"
-    get_url = "https://www.fredericmalle.com/about#/stores/new-york/editions-de-parfums-frederic-malle"
+    get_url = "https://www.fredericmalle.com/about#/stores/"
     r = session.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("ul", {"class":"accordions accordions--countries js-accordion--countries"})[:17]
@@ -83,17 +83,21 @@ def fetch_data():
                 state = state_tmp3[-1].strip()
     
             elif (len(address_tmp)==6):
-                address = address_tmp[-4].rstrip(",")
+                if "Editions de Parfums Frederic Malle" in address_tmp:
+                    address = address_tmp[1].rstrip(",")
+                else:
+                    address = address_tmp[-4].rstrip(",")
+
                 if len(address_tmp[2].split(',')) == 2:
                     state_tmp = address_tmp[2].split(',')
                     city = state_tmp[0]
                     state_tmp1 = state_tmp[1].strip()
+                    
                 else:
                     state_tmp = address_tmp[3].split(',')
                     city = state_tmp[0]
                     state_tmp1= state_tmp[1].strip()
-
-
+                 
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(state_tmp1))
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(state_tmp1))
             
@@ -112,11 +116,12 @@ def fetch_data():
                 address = address_tmp[1].rstrip(",")
                 state_tmp = address_tmp[2].split(',')
                 city = state_tmp[0]
+        
                 try:
                     state_tmp1= state_tmp[1].strip()
                 except:
                     state_tmp1= state_tmp[0]
-                
+               
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(state_tmp1))
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(state_tmp1))
             
@@ -132,6 +137,11 @@ def fetch_data():
                 page_url = "https://www.fredericmalle.com/about#/stores/"+str(state_name)+"/editions-de-parfums-frederic-malle"
             else:
                 page_url = "https://www.fredericmalle.com/about#/stores/"+str(state_name)+"/stockists"
+
+            if page_url == "https://www.fredericmalle.com/about#/stores/california/stockists":
+                state = "CA"
+
+
             tem_var =[]
             tem_var.append(base_url)
             tem_var.append(location_name)
@@ -146,7 +156,7 @@ def fetch_data():
             tem_var.append(latitude)
             tem_var.append(longitude)
             tem_var.append(hour)
-            tem_var.append(page_url)
+            tem_var.append("<MISSING>")
             tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
             yield tem_var
 
