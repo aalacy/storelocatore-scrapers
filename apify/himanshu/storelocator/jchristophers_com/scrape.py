@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from datetime import datetime
 
 session = SgRequests()
 
@@ -54,13 +55,10 @@ def fetch_data():
                 lat = json_data['geo']['latitude']
                 lng = json_data['geo']['longitude']
                 location_type = json_data['@type']
-                opens = json_data['openingHoursSpecification'][0]['opens']
-                closes = json_data['openingHoursSpecification'][0]['closes']
-                hours = ''
-                for hr in json_data['openingHoursSpecification'][0]['dayOfWeek']:
-                    hours += " " + hr +" "+ opens +" - "+closes
-                
-       
+                opens = datetime.strptime(json_data['openingHoursSpecification'][0]['opens'],"%H:%M").strftime("%I:%M %p")
+                closes = datetime.strptime(json_data['openingHoursSpecification'][0]['closes'],"%H:%M").strftime("%I:%M %p") 
+                hours = "Every Day " + opens + " - " + closes
+            
                 store = []
                 store.append("http://www.jchristophers.com")
                 store.append(location_name)
