@@ -25,9 +25,7 @@ def fetch_data():
     output=[]
     main=soup.find('ul',{'class':'cms-menu'}).find('ul').find_all('li')
     for dt in main[:-1]:
-        
         st = dt.find('a')['href']
-        #print("state loc: ",st)
         r1 = session.get(st)
         soup1=BeautifulSoup(r1.text,'lxml')
         
@@ -38,7 +36,7 @@ def fetch_data():
                 citi = "https://www.rockler.com/retail/stores/wi/brookfield-store"
             else:
                 citi = dt1['href']
-            #print(citi)
+
             r2 = session.get(citi)
             soup2 = BeautifulSoup(r2.text, 'lxml')
             if citi == "https://www.rockler.com/retail/stores/wi/brookfield-store":
@@ -54,8 +52,6 @@ def fetch_data():
             hour=loc[-6]+' '+loc[-5]+' '+loc[-4]+' '+loc[-3]+' '+loc[-2]+' '+loc[-1]
             name=loc[0].strip()
             i=loc.index('Phone:')
-            #print(loc)
-           # print(i)
             if i>3:
                 del loc[1]
             # if len(loc)>14:
@@ -73,7 +69,7 @@ def fetch_data():
                 phone = loc[3].strip()
             else:
                 ct=loc[2].split(',')
-                print(ct)
+                # print(ct)
                 city=ct[0].strip()
                 state=ct[1].strip().split(' ')[0].strip()
                 zip=ct[1].strip().split(' ')[1].strip()
@@ -85,7 +81,7 @@ def fetch_data():
             lng=soup2.find('h3', text="Store Hours").parent.parent.parent.find('iframe')['src'].split('!2d')[1].split('!')[0].strip()
             country="US"
             page_url = citi
-            #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+            # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")

@@ -49,8 +49,8 @@ def fetch_data():
         page_url = loc['exturl']
         hours = loc['operatingHours']
         if hours != None:
-            hours_of_operation =hours.replace('<span style="color: rgb(85&#44; 85&#44; 85); font-size: 12px;">','').replace("</span>",'').replace('<span style="font-size: 11pt; font-family: Calibri&#44; sans-serif;">','').replace("<p>",'').replace("</p>",'').replace("&nbsp;",'').replace("<br>",'').strip().lstrip()
-        # hours = BeautifulSoup(loc['operatingHours'],"lxml").text.replace("&nbsp;",'').replace("<br>",'').strip().lstrip()
+            # hours_of_operation =hours.replace('<span style="color: rgb(85&#44; 85&#44; 85); font-size: 12px;">','').replace("</span>",'').replace('<span style="font-size: 11pt; font-family: Calibri&#44; sans-serif;">','').replace("<p>",'').replace("</p>",'').replace("&nbsp;",'').replace("<br>",'').strip().lstrip()
+            hours_of_operation = BeautifulSoup(loc['operatingHours'],"lxml").text.replace("&nbsp;",'').replace("<br>",'').replace("-�","-").strip().lstrip()
         # print(hours.text)
         phone = loc['telephone']
         store_no = loc['storeId']
@@ -67,7 +67,7 @@ def fetch_data():
         tem_var.append("GoWireless")
         tem_var.append(latitude)
         tem_var.append(longitude)
-        tem_var.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        tem_var.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
         tem_var.append(page_url)
         # print(tem_var)
         return_main_object.append(tem_var)

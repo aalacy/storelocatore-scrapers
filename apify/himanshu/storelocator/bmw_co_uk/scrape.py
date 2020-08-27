@@ -1,3 +1,6 @@
+
+
+
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -28,7 +31,7 @@ def fetch_data():
 
     while coord:
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
-       
+        
         result_coords = []
         json_data = session.get("https://discover.bmw.co.uk/proxy/api/dealers?q="+str(coord[0])+","+str(coord[1])+"&type=new").json()
         
@@ -56,11 +59,16 @@ def fetch_data():
             page_url = data['url']
            
             if page_url:
-                if page_url == "https://www.buchananbmw.co.uk" or page_url == "https://www.ridgewaysalisburybmw.co.uk":
+                
+                if page_url == "https://www.buchananbmw.co.uk" or page_url == "https://www.ridgewaysalisburybmw.co.uk" or page_url == "https://www.bmwparklane.com":
                     hours = "<MISSING>"
                 else:
-                    soup = bs(session.get(page_url+"/contact-us/").text, "lxml")
-                    hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
+                    try:
+                        soup = bs(session.get(page_url+"/contact-us/").text, "lxml")
+                        hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
+                    except:
+                        soup = bs(session.get(session.get(page_url+"/contact-us/").url + "/contact-us/").text , "lxml")
+                        hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
             else:
                 hours = "<MISSING>"
             
