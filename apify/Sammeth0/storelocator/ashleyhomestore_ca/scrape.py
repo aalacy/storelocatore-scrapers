@@ -4,6 +4,7 @@ import csv
 import time 
 import re
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -78,7 +79,7 @@ def fetch_data():
 			l.find_element_by_xpath('./a').click()
 			time.sleep(2)
 		except:
-			webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+			ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 			time.sleep(2)
 			l.find_element_by_xpath('./a').click()
 			time.sleep(2)
