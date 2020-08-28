@@ -55,7 +55,7 @@ class Sandellasusa(base.Base):
                 street_address = address_first_line
 
         city, state, zipcode = None, None, None
-        region = re.findall(r'([A-Za-z]+)(,|) ([A-Z]+) ([0-9]+)', text)
+        region = re.findall(r'([A-Za-z]+)(,|) ([A-Z,]+) ([0-9]+)', text)
         if region:
             city, _, state, zipcode = region[0]
 
