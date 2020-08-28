@@ -43,7 +43,7 @@ def fetch_data():
             country="US"
         try:
             temp_hr=' '.join(soup1.find('div',{'class':'views-field-field-store-hours'}).find('div',{'class':'field-content'}).stripped_strings)
-            hour = temp_hr.replace("For Curbside Orders please call during normal business hours to schedule your Pickup","")
+            hour = temp_hr.replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>")
 
         except:
             hour=''
@@ -58,9 +58,9 @@ def fetch_data():
         store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
         store.append(zip.encode('ascii', 'ignore').decode('ascii') if zip else "<MISSING>")
         store.append(country.encode('ascii', 'ignore').decode('ascii') if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
+        store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("beefjerkyoutlet")
+        store.append("<MISSING>")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour.encode('ascii', 'ignore').decode('ascii') if hour.strip() else "<MISSING>")

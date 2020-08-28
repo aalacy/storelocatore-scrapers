@@ -51,10 +51,10 @@ def fetch_data():
         soup1 = BeautifulSoup(r1.text, "lxml")
         for lep in soup1.find_all("article",{"class":"modern__card"}):
             location_name = lep.find("a",{"class":"modern__card-title-link"}).text
-            r_location = requests.get(lep.find("a")['href'], headers=headers)
+            r_location = session.get(lep.find("a")['href'], headers=headers)
             soup_location = BeautifulSoup(r_location.text, "html.parser")
             page_urls = (soup_location.find("div",{"class":"store-button"}).find("a")['href'])
-            r4 = session.get(page_urls, headers=headers)
+            r4 = requests.get(page_urls, headers=headers)
             soup5 = BeautifulSoup(r4.text, "lxml")
             try:
                 hours_of_operation = " ".join(list(soup5.find("p",{"class":"basic__hours"}).stripped_strings)).replace("Customer Service Hours:",'').replace("Store Hours:",'')
@@ -79,8 +79,8 @@ def fetch_data():
             if str(store[2]+store[-1]) in addressess:
                 continue
             addressess.append(str(store[2]+store[-1]))
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         
