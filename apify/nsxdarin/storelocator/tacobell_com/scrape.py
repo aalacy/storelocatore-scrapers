@@ -166,7 +166,10 @@ def crawl_location_url(loc_url):
             city = line4.split('<span class="c-address-city">')[1].split('<')[0]
             state = line4.split('itemprop="addressRegion">')[1].split('<')[0]
             zc = line4.split('itemprop="postalCode">')[1].split('<')[0].strip()
-            phone = line4.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
+            try:
+                phone = line4.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
+            except:
+                phone = '<MISSING>'
             lat = line4.split('<meta itemprop="latitude" content="')[1].split('"')[0]
             lng = line4.split('<meta itemprop="longitude" content="')[1].split('"')[0]
             try:

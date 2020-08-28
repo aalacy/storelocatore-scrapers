@@ -6,13 +6,11 @@ import json
 import sgzip
 from sgselenium import SgSelenium
 import time
-import html
-
 session = SgRequests()
 
 
 
-def write_output(data1, data2):
+def write_output(data1,data2):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,20 +28,16 @@ def write_output(data1, data2):
 def fetch_data1():
     return_main_object = []
     addresses = []
-    
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 50
     MAX_DISTANCE = 50
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
     base_url = "https://www.happybank.com"
-
     while zip_code:
         result_coords = []
         #print("zip_code === " + zip_code)
@@ -71,7 +65,6 @@ def fetch_data1():
         raw_address = ""
         hours_of_operation = ""
         script = soup.find_all("script", {"type": "text/javascript"})
-
         for i in script:
             if "dataRaw" in i.text:
                 json_data = json.loads(i.text.split(
@@ -90,6 +83,7 @@ def fetch_data1():
                     latitude = data['lat']
                     longitude = data['lng']
                     page_url = data['web']
+                    # print("https://www.happybank.com/Locations" + page_url)
                     phone = data['phone'].replace("BANK ", "")
                     try:
                         r1 = session.get("https://www.happybank.com/Locations" +
@@ -97,8 +91,11 @@ def fetch_data1():
                     except:
                         continue
                     soup1 = BeautifulSoup(r1.text, "lxml")
-                    hours_of_operation = " ".join(
-                        list(soup1.find("div", {"id": "hours"}).stripped_strings)).split("Special")[0]
+                    try:
+                        hours_of_operation = " ".join(
+                            list(soup1.find("div", {"id": "hours"}).stripped_strings)).split("Special")[0]
+                    except:
+                        hours_of_operation="<MISSING>"
                     result_coords.append((latitude, longitude))
                     store = [locator_domain, location_name, street_address, city, state, zipp, "US",
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, "https://www.happybank.com/Locations" + page_url]
@@ -123,8 +120,6 @@ def fetch_data1():
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-        # break
-
 
 
 
@@ -235,6 +230,7 @@ def scrape():
     data1 = fetch_data1()
     data2 = fetch_data2()
     write_output(data1, data2)
+
 
 
 scrape()

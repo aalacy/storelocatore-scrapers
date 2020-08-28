@@ -1,181 +1,101 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
-import os
-import re
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
+import usaddress
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
-# Location URL
-location_url = 'https://dickshomecare.com/contact/'
+def fetch_data():
+    # Your scraper here
+    data = []
+    p = 0
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://dickshomecare.com/contact/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('section', {'class': 'elementor-element'})
+    #print(len(divlist))
+    for div in divlist:
+        if div.find('h2'):
+            title = div.find('h2').text
+            det = div.findAll('p')
+            address = det[0]
+            address = re.sub(cleanr,' ',str(address)).lstrip()
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
 
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
-
-# file name of CSV output
-file_name = 'data.csv'
-
-
-
-# Function pull webpage content
-
-def pull_content(url):
-
-    soup = bs(r.get(url).content,'html.parser')
-
-    return soup
-
-def pull_info(content):
-
-    # list of stores
-    location_data = [x for x in content.find_all('section') if 'www.google.com' in str(x)]
-
-    store_data = []
-
-    for store in location_data:
-
-        def clean_up_store(word):
-            word = word.replace('</span ','').replace('</span><br/>',' ').replace('</span>','').replace('<br/>','')
-            return word
-        store_name = "Dickshomecare " + re.search('[A-Za-z]{1,30} Location',clean_up_store(str(store))).group(0).replace('>','')
-
-        store_type = '<MISSING>'
-
-        # Split up address tag to parse
-        address_split = re.search('>Address:(.*)</p></div>',str(store)).group(0).replace('>Address:</div><p>','').replace('</br></p></div>','').replace('/>','>').replace('</p></div>','').replace('\xa0',' ').replace('>Address:</div><div><p>','').split('<br>')
-
-        try:
-            # determine which piece of list state and city listed. Always one before phone number
-            state_city_line = [(id, x) for id, x in enumerate(address_split,0) if re.search('[A-Z]{2} \d{4,6}',x)][0][0]
-        except:
-            pass
-
-        try:
-            city = address_split[state_city_line].split(', ')[0]
-        except:
-            city = '<INACCESSIBLE>'
-
-        try:
-            state = re.findall(' ([A-Za-z]{2}) \d{4,6}', address_split[state_city_line])[0].upper()
-        except:
-            state = re.findall('>([A-Z]{2})<', str(address_split))[0].upper()
-
-        try:
-            zip = re.search('\d{4,6}', address_split[state_city_line]).group(0)
-        except:
+            street = street.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')    
+            city = city.lstrip().replace(',','') 
+            phone =det[1].text
+            hours =det[2].text
             try:
-                zip = re.search(r'>(\d{4,6})<', str(address_split)).group(0).replace('>','').replace('<','')
+                phone = phone.split('Fax',1)[0].replace('Phone:','')
             except:
-                zip = '<INACCESSIBLE>'
-
-        # No consistency to locate besides format of phone
-        phone = re.search('\d{3}-\d{3}-\d{4}', str(store)).group(0)
-        phone = ''.join([x for x in phone if x.isnumeric()])
-
-        # Concatenate all parts of list prior to city state for street address
-        street_add = ' '.join([x for x in address_split[0:state_city_line] if x != ''])
-        street_add = '<INACCESSIBLE>' if '<' in street_add else street_add
-
-        # hours
-        hours = re.search('<p>Hours:(.*)</p></div>',str(store)).group(0).replace('<p>Hours: ','').replace('</p></div>','').replace('<br/>',',')
-
-        try:
-            raw_lat_long = store.iframe['src']
-            long = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
-            lat = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
-        except:
-            lat = '<MISSING>'
-            long = '<MISSING>'
-
-
-
-
-        temp_data = [
-
-            location_url,
-
-            store_name,
-
-            street_add,
-
-            city,
-
-            state,
-
-            zip,
-
-            'US',
-
-            '<MISSING>',
-
-            phone,
-
-            store_type,
-
-            lat,
-
-            long,
-
-            hours,
-
-            address_split
-
-        ]
+                pass
+            hours = hours.replace('Hours:','').replace('M-F','M-F ')
+            coord = div.findAll('iframe')[1]['src'].split('!2d',1)[1].split('!2m',1)[0]           
+            lat,longt =coord.split('!3d',1)
+            data.append([
+                        'https://dickshomecare.com/',
+                        'https://dickshomecare.com/contact/',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+                
+            
+ 
+        
+    return data
 
 
-        store_data = store_data + [temp_data]
+def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    data = fetch_data()
+    write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
-
-
-    final_columns = [
-
-        'locator_domain',
-
-        'location_name',
-
-        'street_address',
-
-        'city',
-
-        'state',
-
-        'zip',
-
-        'country_code',
-
-        'store_number',
-
-        'phone',
-
-        'location_type',
-
-        'latitude',
-
-        'longitude',
-
-        'hours_of_operation',
-
-        'raw_address']
-
-
-
-    final_df = pd.DataFrame(store_data,columns=final_columns)
-
-
-
-    return final_df
-
-
-
-# Pull URL Content
-
-content = pull_content(location_url)
-
-
-
-# Pull all stores and info
-
-final_df = pull_info(content)
-
-
-# write to csv
-final_df.to_csv(output_path + '/' + file_name,index=False)
+scrape()

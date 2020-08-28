@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
 
 session = SgRequests()
@@ -16,8 +15,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-# def hasNumbers(inputString):
-#     return any(char.isdigit() for char in inputString)
 
 
 
@@ -31,7 +28,6 @@ def fetch_data():
 
     addresses = []
     base_url = "https://gomart.com/"
-
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -47,44 +43,32 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
     page_url =""
-
-    r = session.get("https://gomart.com/locations/",headers = headers)
+    r = session.get("https://gomart.com/wp-content/themes/gomart-2020/locations/locations_map_display.php",headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
-    # print(soup.prettify())
-    script =soup.find(lambda tag: (tag.name == "script") and "window.map.addMarker" in tag.text).text.split('LatLngBounds();')[1].split('var storeList')[0].split('window.map.addMarker(')
-    for x in script:
-        x_list = x.replace(');',"").strip()
-        removal_list = [' ', '\t', '\n']
-        for s in removal_list:
-            x_list = x_list.replace(s, ' ')
-        val = x_list.split('data:')[-1].split('},')[0]+"}"
-        if "}" !=val:
-            info = json.loads(val)
-            location_name = info['name']
-            street_address = info['address']
-            city = info['city']
-            state = info['state']
-            zipp = info['zip']
-            phone = info['phone']
-            latitude = info['latitude']
-            longitude = info['longitude']
-            location_type = "<MISSING>"
-            country_code = "US"
-            store_number = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            page_url = "https://gomart.com/company/"+"-".join(info['name'].lower().split())
-             
-        
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
-
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+    script =soup.find(lambda tag: (tag.name == "script") and "window.locations" in tag.text).text.split("window.locations =")[1].split('}}];')[0]+"}}]"
+    scripts = json.loads(script)
+    for info in scripts:
+        street_address = " ".join(info['m']['address'])
+        location_name = " ".join(info['m']['name'])
+        store_number = (location_name.split( )[-1])
+        state = " ".join(info['m']['state'])
+        zipp = " ".join(info['m']['zip'])
+        phone = " ".join(info['m']['phone'])
+        city = " ".join(info['m']['city'])
+        latitude = " ".join(info['m']['latitude'])
+        longitude = " ".join(info['m']['longitude'])
+        location_type = "<MISSING>"
+        country_code = "US"
+        store_number = store_number
+        hours_of_operation = "<MISSING>"
+        page_url = "<MISSING>"
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        if str(store[2]) + str(store[-3]) not in addresses:
+            addresses.append(str(store[2]) + str(store[-3]))
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():

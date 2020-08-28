@@ -1,14 +1,13 @@
-#https://zios.com/locations/?disp=all
-# https://zoeskitchen.com/locations/search?location=WI
-# https://www.llbean.com/llb/shop/1000001703?nav=gn-hp
-
-
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
 
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,92 +22,73 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-
     data = []
+    cleanr = re.compile(r'<[^>]+>')
     pattern = re.compile(r'\s\s+')
+    p = 0
     url = 'https://zios.com/locations/?disp=all'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    maindiv = soup.find('div', {'class':'all-locations'})
-    link_list = maindiv.findAll('a')
-    for alink in link_list:
-        link = alink['href']
-        if link.find('/locations/?disp') > -1:
-            link = "https://zios.com" + link
-            print(link)
-            page = requests.get(link)
-            soup = BeautifulSoup(page.text, "html.parser")
-            title = soup.find('h3').text
-            soup = str(soup)
-            start = soup.find('"store_id"')
-            start = soup.find(':',start) + 2
-            end = soup.find('"', start)
-            store = soup[start:end]
-            start = soup.find('"latitude"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            lat = soup[start:end]
-            start = soup.find('"longitude"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            longt = soup[start:end]
-            start = soup.find('"city"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            city = soup[start:end]
-            start = soup.find('"state"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            state = soup[start:end]
-            start = soup.find('"street"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            street = soup[start:end]
-            start = soup.find('"zip"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            pcode = soup[start:end]
-            start = soup.find('"phone"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            phone = soup[start:end]
-            start = soup.find('"hours"')
-            start = soup.find(':', start) + 2
-            end = soup.find('"', start)
-            hours = soup[start:end]
-
-            print(title)
-            print(store)
-            print(street)
-            print(city)
-            print(state)
-            print(pcode)
-            print(phone)
-            print(hours)
-            print(lat)
-            print(longt)
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('div', {'class': 'loc-panel'})
+    print("states = ",len(divlist))
+    for div in divlist:
+        det = div.findAll('li',{'class':'col-md-6'})
+        for dt in det:
+            txtnow = re.sub(cleanr,'\n',str(dt))
+            txtnow = re.sub(pattern, '\n' ,txtnow).replace('[','').replace(']','').lstrip().splitlines()
+            title = txtnow[0]
+            street= txtnow[1]
+            city,state = txtnow[2].split(', ')
+            try:
+                city = city.split(' (')[0]
+            except:
+                pass            
+            state,pcode =state.lstrip().split(' ',1)
+            try:
+                temp,pcode = pcode.lstrip().rstrip().split(' ',1)
+                state = state + ' '+temp
+            except:
+                pass
+            phone = txtnow[3].replace('Phone:','').lstrip()
+            hours = ''
+            flag = 0
+            for m in range(3,len(txtnow)):
+                if txtnow[m].find('day')> -1 or txtnow[m].find('AM') > -1:
+                    
+                    hours = hours + txtnow[m] + ' '
+                else:
+                    pass
+                           
+                        
+            print(txtnow)
+            print(phone,hours)
             data.append([
-                'https://zios.com',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours
-            ])
-
+                        'https://zios.com/',
+                        'https://zios.com/locations/?disp=all',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>',
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+            print(">>>>>>>>>>>>")
+       
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-

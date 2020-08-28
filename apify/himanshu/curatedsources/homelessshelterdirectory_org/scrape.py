@@ -148,6 +148,8 @@ def crawl_location_url(url):
     location_soup = bs(r.content.decode('utf-8', 'ignore'), "lxml")
     try:
         location_name = location_soup.find("h3",{"class":"entry_title"}).text
+        # remove the " - city, state" from end of location name
+        location_name = " - ".join([x.strip() for x in location_name.split('-')[:-1]])
     except:
         location_name = "<MISSING>"
     

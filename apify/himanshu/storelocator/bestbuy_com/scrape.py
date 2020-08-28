@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import unicodedata
 
 
 session = SgRequests()
@@ -52,6 +51,7 @@ def request_wrapper(url,method,headers,data=None):
         return None
 
 def parser(location_soup,url):
+    store_number=(str(location_soup).split('"corporateCode":"')[1].split('",')[0])
     street_address = " ".join(list(location_soup.find("span",{'class':"c-address-street-1"}).stripped_strings))
     if location_soup.find("span",{'class':"c-address-street-2"}) != None:
         street_address = street_address + " " +  " ".join(list(location_soup.find("span",{'class':"c-address-street-2"}).stripped_strings))
@@ -73,7 +73,10 @@ def parser(location_soup,url):
     else:
         phone = location_soup.find("span",{'itemprop':"telephone"}).text
     country = location_soup.find("abbr",{'itemprop':"addressCountry"}).text.strip()
-    hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).find("tbody").stripped_strings))
+    try:
+        hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).find("tbody").stripped_strings))
+    except:
+        hours="<MISSING>"
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
     store = []
@@ -84,14 +87,14 @@ def parser(location_soup,url):
     store.append(state)
     store.append(store_zip)
     store.append(country)
-    store.append(url.split("-")[-1].replace(".html","").split('/')[0])
+    store.append(store_number)
     store.append(phone if phone != "" else "<MISSING>")
     store.append("<MISSING>")
     store.append(lat)
     store.append(lng)
     store.append(hours)
     store.append(url)
-    #print(store)
+    # print(store)
     return store
 
 def fetch_data():

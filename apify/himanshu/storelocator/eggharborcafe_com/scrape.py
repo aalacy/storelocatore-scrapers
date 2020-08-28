@@ -28,7 +28,7 @@ def fetch_data():
     base_url = "https://www.eggharborcafe.com"
     url = "https://eggharborcafe.com/locations/"
 
-    response = requests.request("GET", url, headers=headers)
+    response = session.get( url, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     for link in soup.find_all("a", text=re.compile("view location")):
         r_loc = session.get(link["href"], headers=headers)
@@ -38,7 +38,7 @@ def fetch_data():
         address = " ".join(list(soup_loc.find(
             "div", {"id": "location_address"}).stripped_strings)).split(",")
         street_address = " ".join(address[:-2]).strip()
-        city = address[-2]
+        city = address[-2].strip()
         state = address[-1].split()[0].strip()
         zipp = address[-1].split()[-1].strip()
         phone = soup_loc.find("p", {"id": "location_phone"}).text.strip()
@@ -49,7 +49,6 @@ def fetch_data():
         try:
             latitude = json.loads(soup_loc.find(
                 "div", class_="wpgmza_map")["data-settings"])["map_start_lat"]
-            print(latitude)
             longitude = json.loads(soup_loc.find(
                 "div", class_="wpgmza_map")["data-settings"])["map_start_lng"]
         except:

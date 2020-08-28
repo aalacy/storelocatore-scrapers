@@ -31,7 +31,7 @@ def fetch_data():
             link = li.find('a')['href']
             
             page_url = locator_domain + link
-            
+            print(page_url)
             r = session.get(page_url, headers = HEADERS)
             soup = BeautifulSoup(r.content, 'html.parser')
             
@@ -51,7 +51,7 @@ def fetch_data():
                         for info in hour_info:
                             hours += info.text.strip()
                         
-                hours = hours.strip()   
+                hours = hours.replace("day","day ").replace("pm","pm ").replace("Closed","Closed ").strip()   
                 location_name = loc_json['name']
                 if 'telephone' in loc_json:
                     phone_number = loc_json['telephone']
@@ -66,11 +66,15 @@ def fetch_data():
                 zip_code = addy['postalCode']
                 country_code = 'US'
 
-                coords = loc_json['geo']
-                lat = coords['latitude']
-                longit = coords['longitude']
+                try:
+                    coords = loc_json['geo']
+                    lat = coords['latitude']
+                    longit = coords['longitude']
+                except:
+                    lat = '<MISSING>'
+                    longit = '<MISSING>'                    
 
-                store_number = '<MISSING>'
+                store_number = page_url.split("/")[-3]
                 location_type = '<MISSING>'
 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 

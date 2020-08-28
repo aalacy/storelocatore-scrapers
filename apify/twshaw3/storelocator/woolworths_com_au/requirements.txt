@@ -1,4 +1,2 @@
-lxml==4.3.4
-requests==2.11.1
-# uncomment if you use selenium
-# selenium==3.141.0
+sgzip
+sgrequests

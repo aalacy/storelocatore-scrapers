@@ -44,8 +44,17 @@ def fetch_data():
         page_url = data['Long_description_url']
         
         hours=''
+        # print(page_url)
+        # data1 = bs(session.get(page_url).text,'lxml')
+        # data_id = (data1.find("div",{"class":"psll-listfull"})['data-id'])
+        # data1 = bs(session.get("https://www.fyzical.com/kenai/getwidget.php?wtype=locationslist&uid="+str(data_id)+"&wraw=").text,'lxml')
+        # print(data1.find("div",{"class":"psl-text-cell psl-text-hours"}))
         for hour in data['Workhours']:
-            hours =hours+' '+ data['Workhours'][hour]['Weekday']+ ' '+data['Workhours'][hour]['Opening_time']+' '+data['Workhours'][hour]['Closing_time']
+            if data['Workhours'][hour]['Always_closed']=="yes":
+                hours = hours+ ' ' +data['Workhours'][hour]['Weekday'] + ' Closed '
+            else:
+                hours =hours+' '+ data['Workhours'][hour]['Weekday']+ ' '+data['Workhours'][hour]['Opening_time']+' '+data['Workhours'][hour]['Closing_time']
+        # print(hours)
         store_number = "<MISSING>"
         store = []
         store.append("https://www.fyzical.com")

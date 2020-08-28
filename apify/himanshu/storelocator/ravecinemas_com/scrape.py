@@ -1,16 +1,12 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
-from urllib3.exceptions import InsecureRequestWarning
-import unicodedata
-
-
+from sgrequests import SgRequests
+import urllib3
 session = SgRequests()
-
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,24 +22,28 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    return_main_object = []
     base_url = "https://ravecinemas.com"
     r = session.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
-        # print(base_url + location["href"])
+        #print(base_url+location["href"])
+        locationtype = location["href"].split("/")[-1].split("-")[0]
+        if "cinemark" in locationtype or "century" in locationtype or "tinseltown" in locationtype:
+            locationtype = locationtype
+        else:
+            locationtype = "ravecinema"
         location_request = session.get(base_url + location["href"],headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
+        store_number = (str(location_soup).split("var currentTheaterId =")[1].split(';')[0].strip())
+        # var currentTheaterId =
+        if location_soup.find("div",{"class":"theatre-status-label"}):
+            label = location_soup.find("div",{"class":"theatre-status-label"}).text.strip()
+            if "Permanently Closed" in label or "Closed" in label:
+                continue
         if location_soup.find("div",{"class":"theatreMap"}) == None:
             continue
         geo_location = location_soup.find("div",{"class":"theatreMap"}).find("img")["data-src"]
-        for script in location_soup.find_all("script",{"type":"application/ld+json"}):
-            try:
-                location_details = json.loads(script.text)
-                if "screenCount" in location_details:
-                    break
-            except:
-                continue
+        location_details = json.loads(location_soup.find("script",{"type":"application/ld+json"}).text)
         address = location_details["address"][0]
         store = []
         store.append("https://ravecinemas.com")
@@ -55,18 +55,14 @@ def fetch_data():
         store.append(address["addressRegion"])
         store.append(address["postalCode"])
         store.append(address["addressCountry"])
-        store.append("<MISSING>")
+        store.append(store_number)
         store.append(location_details["telephone"] if location_details["telephone"] else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(locationtype)
         store.append(geo_location.split("&pp=")[1].split(",")[0] if geo_location.split("&pp=")[1].split(",")[0] else "<MISSING>" )
         store.append(geo_location.split("&pp=")[1].split(",")[1].split("&")[0] if geo_location.split("&pp=")[1].split(",")[1].split("&")[0] else "<MISSING>")
         store.append("<MISSING>")
         store.append(base_url + location["href"])
-        for i in range(len(store)):
-            if type(store[i]) == str:
-                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-        store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        #print(store)
         yield store
 
 def scrape():

@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +17,7 @@ def fetch_data():
     url = 'https://www.greatclips.com/sitemap.GreatClipsSalons.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.greatclips.com/salons/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
@@ -34,36 +34,36 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            if '<span itemprop="name">' in line2:
-                name = line2.split('<span itemprop="name">')[1].split('<')[0]
-            if '<div class="salon-address">' in line2 and '</div>' in line2 and '<span>' not in line2:
-                add = add + ' ' + line2.split('<div class="salon-address">')[1].split('<')[0]
-                add = add.strip()
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0].strip()
+            line2 = str(line2.decode('utf-8'))
+            if '<span class="LocationName-geo">' in line2:
+                name = line2.split('<span class="LocationName-geo">')[1].split('<')[0]
+                name = 'Great Clips ' + name
+            if 'itemprop="streetAddress" content="' in line2:
+                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
+            if 'class="c-address-city">' in line2:
+                city = line2.split('class="c-address-city">')[1].split('<')[0].strip()
             if 'itemprop="addressRegion">' in line2:
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0].strip()
             if 'itemprop="postalCode">' in line2:
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0].strip()
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0].strip()
-            if '<span itemprop="telephone" content=' in line2:
-                phone = line2.split('<span itemprop="telephone" content=')[1].split('">')[1].split('<')[0]
-            if '<th scope="row">' in line2:
-                day = next(lines).replace('\r','').replace('\n','').replace('\t','').strip()
-                next(lines)
-                next(lines)
-                g = next(lines)
-                if '</td>' in g or '<span class="specialHours">' in g:
-                    hrs = g.split('<')[0].strip().replace('\t','')
-                else:
-                    hrs = next(lines).split('<')[0].strip().replace('\t','')
-                if hours == '':
-                    hours = day + ': ' + hrs
-                else:
-                    hours = hours + '; ' + day + ': ' + hrs
-        lat = '<MISSING>'
-        lng = '<MISSING>'
+            if 'id="phone-main">' in line2:
+                phone = line2.split('id="phone-main">')[1].split('<')[0]
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                for day in days:
+                    if '<table class="c-hours-details">' not in day:
+                        hrs = day.split('"')[0]
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+            if '<meta itemprop="latitude" content="' in line2:
+                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
+                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
+        if lat == '':
+            lat = '<MISSING>'
+        if lng == '':
+            lng = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
         if phone == '':

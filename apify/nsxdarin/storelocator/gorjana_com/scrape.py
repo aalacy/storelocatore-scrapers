@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -27,14 +26,19 @@ def fetch_data():
     lines = r.iter_lines()
     Found = False
     for line in lines:
+        line = str(line.decode('utf-8'))
         if Found is False and 'var storeMarkers' in line:
             Found = True
         if Found and '</script>' in line:
             Found = False
         if Found and 'id: ' in line:
             store = line.split('id: ')[1].split(',')[0]
-            name = next(lines).split('title: "')[1].split('"')[0]
-            g = next(lines).split(': "')[1].split('"')[0]
+            g = next(lines)
+            g = str(g.decode('utf-8'))
+            name = g.split('title: `')[1].split('`')[0]
+            g = next(lines)
+            g = str(g.decode('utf-8'))
+            g = g.split(': `')[1].split('`')[0]
             if g.count('<br />') == 0:
                 add = g.split(',')[0].strip() + ' ' + g.split(',')[1].strip()
                 city = g.split(',')[2].strip()
@@ -50,10 +54,12 @@ def fetch_data():
                 city = g.split('<br />')[2].split(',')[0]
                 state = g.split('<br />')[2].split(',')[1].strip().split(' ')[0]
                 zc = g.rsplit(' ',1)[1]
-        if Found and 'phone: "' in line:
-            phone = line.split('phone: "')[1].split('"')[0]
-        if Found and 'working_hours: "' in line:
-            hours = line.split('working_hours: "')[1].split('"')[0].replace('<br />','; ').replace('|',':')
+        if Found and 'phone: `' in line:
+            phone = line.split('phone: `')[1].split('`')[0]
+        if Found and 'working_hours: `' in line:
+            hours = line.split('working_hours: `')[1].split('`')[0].replace('<br />','; ').replace('|',':')
+            if hours == '':
+                hours = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

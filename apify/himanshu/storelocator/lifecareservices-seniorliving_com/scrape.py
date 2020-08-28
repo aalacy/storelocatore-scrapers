@@ -1,11 +1,12 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# from sgrequests import SgRequests
-# session = SgRequests()
-import requests
+import lxml
+import html5lib
+from sgrequests import SgRequests
+session = SgRequests()
+
 
 def write_output(data):
     with open('data.csv', mode='w',newline='\n') as output_file:
@@ -39,9 +40,8 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    r2 = requests.get("https://www.lifecareservices-seniorliving.com/",headers=headers)
-    soup2 = BeautifulSoup(r2.text, "lxml")
-    gd_nonce = soup2.find(lambda tag: (tag.name == "script" ) and "var gd_ajax_vars" in tag.text.strip()).text.split("var gd_ajax_vars =")[-1].replace("};",'}').split("nonce:")[-1].split("url:")[0].replace("',",'').replace("'",'').strip()
+    
+    # gd_nonce = soup2.find(lambda tag: (tag.name == "script" ) and "var gd_ajax_vars" in tag.text.strip()).text.split("var gd_ajax_vars =")[-1].replace("};",'}').split("nonce:")[-1].split("url:")[0].replace("',",'').replace("'",'').strip()
     # print(gd_nonce)
     # exit()
     url = "https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php"
@@ -49,14 +49,15 @@ def fetch_data():
     data = {
             'pg': '1',
             'action': 'get_communities',
-            'gd_nonce': gd_nonce
+            'gd_nonce': 'ef846c1788'
         }
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
   
     }
 
-    response = requests.request("POST", url, headers=headers, data = data).json()
+    response = session.post(url, headers=headers, data = data).json()
+
     for ut in response['results']:
         soup1 = BeautifulSoup(ut['html'], "html5lib")
         for data in soup1.find_all("div",{"class":"cmnty-results-address"}):
@@ -68,7 +69,10 @@ def fetch_data():
             zipp = list(data.find("p",{"class":"address"}).stripped_strings)[-1].split(",")[-1].strip().split(" ")[-1]
             street_address = ' '.join(full[:-1])
             location_name=data.find("h5",{"class":"cmnty-results-item-heading"}).text.strip()
-            phone = list(data.stripped_strings)[-2].replace("Chicago,       IL","<MISSING>").replace("Austin,       TX       78731","<MISSING>").replace("West Lafayette,       IN       47906-1431","<MISSING>").replace("Wheaton,       IL       60187","<MISSING>").replace("Bridgewater,       NJ       08807","<MISSING>").replace("Atchison,       KS       66002","<MISSING>")
+            if ", The" in location_name:
+                location_name1 = location_name.split(",")[0]
+                location_name = "The "+str(location_name1)
+            phone = list(data.stripped_strings)[-2].replace("Chicago,       IL","<MISSING>").replace("Austin,       TX       78731","<MISSING>").replace("West Lafayette,       IN       47906-1431","<MISSING>").replace("Wheaton,       IL       60187","<MISSING>").replace("Bridgewater,       NJ       08807","<MISSING>").replace("Atchison,       KS       66002","<MISSING>").replace("Phoenix,       AZ       85018","(480) 573-3700")
             # print(phone)
             try:
                 page_url =(data.find("h5",{"class":"cmnty-results-item-heading"}).find("a")['href'])
@@ -77,7 +81,7 @@ def fetch_data():
             latitude = ut['latitude']
             # print(latitude)
             longitude = ut['longitude']
-            store_number="<MISSING>"
+            store_number= ut['id']
             location_type="<MISSING>"
        
             hours_of_operation="<MISSING>"

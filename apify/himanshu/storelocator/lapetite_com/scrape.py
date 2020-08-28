@@ -40,8 +40,8 @@ def fetch_data():
     # }
     while zip_code:
         result_coords =[]
-        #print("zip_code === "+zip_code)
-       # print("remaining zipcodes: " + str(len(search.zipcodes)))
+       # print("zip_code === "+zip_code)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
 
         r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
@@ -51,10 +51,14 @@ def fetch_data():
             address = location.find("span",{'class':"street"}).text
             address2 = location.find("span",{'class':"cityState"}).text
             store_id = location["data-school-id"]
+            # if name.split(" ")[1] == "Petite":
+            #     phone = "(888)330-3479"
             if location.find("span",{'class':"tel"}) != None:
-                phone = location.find("span",{'class':"tel"}).text
+                temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
+                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
             elif location.find("p",{'class':"phone"}) != None:
-                phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1]
+                temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
+                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
             else:
                 phone = "<MISSING>"
             hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))

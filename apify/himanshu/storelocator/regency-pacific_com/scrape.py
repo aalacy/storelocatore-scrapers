@@ -1,8 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,11 +24,11 @@ def fetch_data():
             'Connection': 'keep-alive',
             }
         base_url = "https://www.regency-pacific.com"
-        r1 = requests.get("https://g5-geo-service.herokuapp.com/clients/g5-c-ifyj3t6d-regency-pacific-management-client/location_search.json?search=21216&radius=100&lat=39.31&lon=-76.66", headers= headers).json()
+        r1 = session.get("https://g5-geo-service.herokuapp.com/clients/g5-c-ifyj3t6d-regency-pacific-management-client/location_search.json?search=21216&radius=100&lat=39.31&lon=-76.66", headers= headers).json()
         for i in r1["locations"]:
             store_number = (i['id'])
             location_name = i['name']
-            street_address = i['street_address_1']+" "+i['street_address_2']
+            street_address = i['street_address_1']
             city = i['city']
             state = i['state']
             zipp = i['postal_code']
@@ -42,7 +44,7 @@ def fetch_data():
             store.append(state if state else "<MISSING>")
             store.append(zipp if zipp else "<MISSING>")
             store.append("US")
-            store.append("<MISSING>") 
+            store.append(store_number)
             store.append(phone if phone else "<MISSING>" )
             store.append("<MISSING>")
             store.append( latitude if latitude else "<MISSING>")

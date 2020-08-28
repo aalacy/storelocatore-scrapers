@@ -166,7 +166,7 @@ def get_location(loc, reset_session=False, attempts=1):
     addr = props['address1']
     if props['address2'] is not None:
         addr = addr + ', ' + props['address2']
-    addr = addr.strip()
+    addr = addr.strip() if addr else "<MISSING>"
     city = props['city'].strip()
     state = props['state']
     zc = props['postalCode']

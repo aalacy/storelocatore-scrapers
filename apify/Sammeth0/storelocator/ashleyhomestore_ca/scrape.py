@@ -3,8 +3,8 @@ from sgselenium import SgSelenium
 import csv
 import time 
 import re
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -79,7 +79,7 @@ def fetch_data():
 			l.find_element_by_xpath('./a').click()
 			time.sleep(2)
 		except:
-			webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+			ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 			time.sleep(2)
 			l.find_element_by_xpath('./a').click()
 			time.sleep(2)
@@ -92,9 +92,14 @@ def fetch_data():
 			if ".ca" in hours:
 				hours = hours[hours.rfind(".ca")+3:].strip()
 			timing.append(hours)
-
 		except:
 			timing.append("<MISSING>")
+
+		try:
+			link = l.find_element_by_class_name("store_website").find_element_by_tag_name("a").get_attribute("href")
+			pages.append(link)
+		except:
+			pages.append(location_url)
 
 	return_main_object = []	
 	for l in range(len(locs)):
@@ -111,8 +116,8 @@ def fetch_data():
 		row.append("<MISSING>")
 		row.append(lats[l])
 		row.append(longs[l])
-		row.append(timing[l]) 
-		row.append(location_url)
+		row.append(timing[l])
+		row.append(pages[l])
 		
 		return_main_object.append(row)
 	

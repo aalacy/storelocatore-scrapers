@@ -1,70 +1,101 @@
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
+import string
+import re, time
+
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    locator_domain = 'https://healthworksfitness.com/'
-    ext = 'our-locations/'
+    # Your scraper here
+    data = []
+    
+    url = 'https://healthworksfitness.com/our-locations/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    linklist = soup.find('li',{'id':'menu-item-11140'}).find('ul').findAll('li')
+    #print("states = ",len(linklist))    
+    p = 0
+    for link in linklist:
+        link = link.find('a')
+        #print(link.text)
+        if link.text.lower().find('about') > -1 or link.text.lower().find('community') > -1:
+            pass
+        else:
+            title = link.text
+            link = link['href']
+            
+            #print(link)
+            r = session.get(link, headers=headers, verify=False)  
+            soup =BeautifulSoup(r.text, "html.parser")
+            hours = ''
+            address = '' 
+            det = soup.findAll('p')
+            for div in det:
+                if div.text.find('Address') > -1:
+                    address = div.text
+                
+                elif div.text.find('AM') > -1 and div.text.find('PM') > -1:
+                    hours = div.text
+                    #print(hours)
+            if hours != '':
+                hours = hours.replace('\n',' ').replace('\xa0','').replace('Club Hours ','').lstrip()
+            else:
+                hours = '<MISSING>'
+            #print(hours)
+            coord = soup.find('div',{'class':'map-marker'})
+            #print(address)
+            if address != '':
+                address= address.splitlines()
+                phone = address[0]
+                #print(address[1])
+                adr = address[1].split('Address:',1)[1].lstrip()
+                street,city,state = adr.split(', ')
+                state,pcode = state.lstrip().split(' ')
+                lat = coord['data-lat']
+                longt = coord['data-lng']
+                data.append([
+                        'https://healthworksfitness.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone.replace('Telephone:\xa0',''),
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+                #print(p,data[p])
+                p += 1
+                
+                
+         
+    return data
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-
-    divs = driver.find_elements_by_css_selector('div.work-info')
-    link_list = [div.find_element_by_css_selector('a').get_attribute('href') for div in divs]
-
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        main = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[2]
-        content = main.text.split('\n')
-
-        if len(content) == 16:
-            content = content[:-7]
-        if len(content) == 15:
-            content = content[:-1]
-
-        addy = content[0].split(',')
-        street_address = addy[0]
-        city = addy[1].strip()
-        state_zip = addy[2].strip().split(' ')
-        state = state_zip[0]
-        zip_code = state_zip[1]
-        hours = ''
-        for h in content[1:]:
-            hours += h + ' '
-
-        coord = driver.find_element_by_css_selector('div.nectar-google-map')
-        lat = coord.get_attribute('data-center-lat')
-        longit = coord.get_attribute('data-center-lng')
-        location_name = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[0].text
-
-        phone = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[4].text.split('\n')
-
-        phone_number = phone[1].replace('Telephone:', '').strip()
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
