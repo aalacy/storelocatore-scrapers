@@ -68,16 +68,23 @@ def fetch_data():
         phone = ''
         temp = 0
         for i in range(0,len(address)):           
-            adr = address[i]          
-            if (adr.find('.') > -1 and adr.split('.')[0].isdigit()) or (adr.find('-') > -1 and adr.find('(') > -1) or adr.find('-') > -1 and len(adr.split('-')[0]) ==3 and adr.split('-')[-1] == 4:
-                check = adr.replace('-','').replace('(','').replace(')','').replace('.','')
-                if check.isdigit():
-                    phone = adr
-                    temp = i
-                    break
-                else:
-                    pass
-                
+            adr = address[i]
+            if adr.find(' – Main') > -1:
+                adr = adr.split(' – Main')[0]
+            
+            check =adr.replace('-','').replace('(','').replace(')','').replace('.','').replace(' ','')
+            #print(check)
+            #input()
+            #if (adr.find('.') > -1 and adr.split('.')[0].isdigit()) or (adr.find('-') > -1 and (adr.find('(') > -1) or adr.find('-') > -1) and (len(adr.split('-')[0]) ==3 and adr.split('-')[-1] == 4) or (len(adr.split('-')[0]) ==3 and adr.split('-')[1] == 4):
+             #   check = adr.replace('-','').replace('(','').replace(')','').replace('.','')
+            if check.isdigit():
+                #print(check.isdigit())
+                phone = adr
+                temp = i
+                break
+            else:
+                pass
+            
         if phone == '':
             temp = len(address)
             
@@ -93,7 +100,7 @@ def fetch_data():
         except:
             pass
             
-        print(address)
+        #print(address)
         address = usaddress.parse(address)
         i = 0
         street = ""
@@ -145,6 +152,7 @@ def fetch_data():
             city = '<MISSING>'
         if state == 'NYC':
             state = 'NY'
+      
         data.append([
                         'https://www.shakeshack.com',
                         link,                   
