@@ -52,52 +52,49 @@ def handle_missing(field):
         return '<MISSING>'
     return field
 
+def parse_hours(json_hours):
+    hours = []
+    for day in json_hours:
+        if day['isClosed']:
+            hours.append("{}: CLOSED".format(day['day']))
+        else:
+            hours.append("{}: {}-{}".format(day['day'], day['intervals'][0]['start'], day['intervals'][0]['end']))
+    return ', '.join(hours)
+
 def fetch_data():
     keys = set()
-    locations = []
     coord = search.next_zip()
     while coord:
         result_coords = []
         print("remaining zipcodes: " + str(len(search.zipcodes)))
-        r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord))
-        for line in r.iter_lines():
-            if '"profile":{' in line:
-                items = line.split('"profile":{')
-                for item in items:
-                    if '"address":{"city":"' in item:
-                        city = item.split('"address":{"city":"')[1].split('"')[0]
-                        state = item.split('"region":"')[1].split('"')[0]
-                        country = 'US'
-                        website = 'chick-fil-a.com'
-                        typ = 'Restaurant'
-                        add = item.split('"line1":"')[1].split('"')[0]
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        name = item.split('"c_locationName":"')[1].split('"')[0]
-                        store = item.split('"id":"')[1].split('"')[0]
-                        try:
-                            phone = item.split('"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
-                        except:
-                            phone = '<MISSING>'
-                        loc = item.split('"websiteUrl":"')[1].split('"')[0]
-                        lat = item.split('"lat":')[1].split(',')[0]
-                        lng = item.split('"long":')[1].split('}')[0]
-                        hours = ''
-                        days = item.split('"normalHours":[')[1].split('"day":"')
-                        for day in days:
-                            if '"intervals":' in day:
-                                if '"isClosed":true' in day:
-                                    hrs = day.split('"')[0] + ': Closed'
-                                else:
-                                    hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                                if hours == '':
-                                    hours = hrs
-                                else:
-                                    hours = hours + '; ' + hrs
-                        if store not in locations:
-                            locations.append(store)
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        #print("max distance update")
-        search.max_distance_update(MAX_DISTANCE)
+        r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
+        stores = r['response']['entities']
+        result_coords = []
+        for store in stores:
+            address = store['profile']['address']
+            city =  address['city']
+            state = address['region'] 
+            country = address['countryCode']
+            website = 'chick-fil-a.com'
+            typ = '<MISSING>'
+            add = address['line1'] 
+            zc = address['postalCode'] 
+            name = store['profile']['c_locationName'] 
+            store_number = store['profile']['meta']['id'] 
+            try:
+                phone = item.split('"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
+            except:
+                phone = '<MISSING>'
+            loc = store['profile']['websiteUrl'] 
+            lat = store['profile']['displayCoordinate']['lat'] 
+            lng = store['profile']['displayCoordinate']['long'] 
+            result_coords.append((lat, lng))
+            hours = parse_hours(store['profile']['hours']['normalHours'])
+            if store_number not in keys:
+                keys.add(store_number)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        print(len(result_coords))
+        search.max_count_update(result_coords)
         coord = search.next_zip()
 
 def scrape():
