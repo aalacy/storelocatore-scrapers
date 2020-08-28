@@ -4,24 +4,8 @@ import csv
 import time
 from random import randint
 import re
-from random import randint
+from sgselenium import SgSelenium
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -59,7 +43,7 @@ def fetch_data():
 
     data = []
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     time.sleep(2)
 
     total_links = len(main_links)
@@ -70,23 +54,19 @@ def fetch_data():
         raw_address = raw_link[1]
 
         req = session.get(link, headers = HEADERS)
-        time.sleep(randint(1,2))
-        try:
-            item = BeautifulSoup(req.text,"lxml")
-            print(link)
-        except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
-        time.sleep(randint(1,2))
+        item = BeautifulSoup(req.text,"lxml")
+        print(link)
 
         locator_domain = "fitnessconnection.com"
 
         location_name = item.find("h3").text.replace("-","- ").replace("– NOW OPEN","").replace("– Now Open!","").strip()
         if "coming soon" in location_name.lower():
             continue
-        print(location_name)
+        # print(location_name)
 
         street_address = raw_address[:raw_address.find("<")].strip()
+        if ", Austin" in street_address:
+            street_address = street_address[:street_address.find(", Austin")].strip()
         city = raw_address[raw_address.find(">")+1:raw_address.rfind(",")].strip()
         state = raw_address[raw_address.rfind(",")+1:raw_address.rfind(" ")].strip()
         zip_code = raw_address[raw_address.rfind(" ")+1:].strip()
@@ -103,12 +83,15 @@ def fetch_data():
         except:
             phone = "<MISSING>"
 
-        raw_hours = item.find(class_="primary-hours").text
-        hours_of_operation = raw_hours.replace("\n", " ").replace("\r", "").strip()
+        try:
+            raw_hours = item.find(class_="primary-hours").text
+            hours_of_operation = raw_hours.replace("\n", " ").replace("\r", "").strip()
+        except:
+            continue
         
         raw_gps = item.find(class_="address-wrapper").a['href']
         try:
-            print("Opening gmaps..")
+            # print("Opening gmaps..")
             driver.get(raw_gps)
             time.sleep(randint(6,8))
 

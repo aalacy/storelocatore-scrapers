@@ -17,7 +17,7 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "https://lebanesetaverna.com/locations-%26-hours"
+	base_link = "http://lebanesetaverna.com/locations-%26-hours"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -41,49 +41,69 @@ def fetch_data():
 
 		location_name = item.h4.text.strip()
 		print(location_name)
-		
-		raw_address = item.find_all("span")[-1].text.replace("\xa0","").strip()
-		if "," not in raw_address:
-			raw_address = item.find_all("span")[-2].text.strip()
-		
-		raw_address = raw_address.replace("VA,","VA").replace("  "," ")
 
-		state = raw_address[raw_address.rfind(",")+1:raw_address.rfind(",")+4].strip()
+		zip_code = "<MISSING>"
+
 		try:
-			zip_code = re.findall(r' [0-9]{5}', raw_address)[0].strip()
+			raw_city = item.find_all("span")[4].text.replace("\xa0","").replace("VA,","VA").replace("  "," ").strip()
+
+			if "," in raw_city:
+				street_address = item.find_all("span")[3].text.replace("\xa0","").strip()
+			else:
+				raw_city = item.find_all("span")[3].text.replace("\xa0","").replace("VA,","VA").replace("  "," ").strip()
+				street_address = item.find_all("span")[2].text.replace("\xa0","").strip()
+			if raw_city == "703-241-8681":
+				street_address = "5900 WASHINGTON BLVD."
+				raw_city = " ARLINGTON, VA 22205"
+
+			if "\n" in street_address:
+				street_address = street_address[street_address.rfind('\n')+2:].strip()
+
+			state = raw_city[raw_city.rfind(",")+1:raw_city.rfind(",")+4].strip()
+			try:
+				zip_code = re.findall(r' [0-9]{5}', raw_city)[0].strip()
+			except:
+				zip_code = "<MISSING>"
+
+			city = raw_city.split()[0].strip()
+			if city == "SILVER":
+				city = "SILVER SPRING"
+
+			raw_hours = item.find_all('strong')
+			hours_of_operation = ""
+			for raw_hour in raw_hours:
+				hours_of_operation = (hours_of_operation + " " + raw_hour.text.replace("\xa0","").strip()).strip()
 		except:
-			zip_code = "<MISSING>"
-
-		raw_street_city = raw_address[:raw_address.rfind(",")]
-		if "\n" in raw_street_city:
-			raw_street_city = raw_street_city[raw_street_city.rfind('\n')+2:]
-
-		city = raw_street_city.split()[-1].strip()
-		if city == "SPRING":
-			city = "SILVER SPRING"
-		street_address = raw_street_city[:raw_street_city.rfind(city)].strip()
+			raw_address = item.find_all("span")[1].text.replace("\xa0","").strip()
+			if "\n" in raw_address:
+				hours_of_operation = raw_address.split("\n")[0]
+				street_address = raw_address.split("\n")[1].replace(",","")
+				if street_address == "2641 CONNECTICUT AVE. NW":
+					street_address = "2641 CONNECTICUT AVE."
+					city = "NW"
+					state = "DC"
+			elif "4400" in raw_address:
+				hours_of_operation = raw_address.split("4400")[0]
+				street_address = "4400 OLD DOMINION DR."
+				city = "ARLINGTON"
+				state = "VA"
 
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
 
 		try:
-			phone = re.findall(r'[0-9]{3}.[0-9]{3}.[0-9]{4}', str(item))[0]
+			phone = re.findall(r'[0-9]{3}.[0-9]{3}.[0-9]{4}', str(item.text))[0]
 		except:
 			try:
 				phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', str(item))[0]
 			except:
 				phone = "<MISSING>"
 
-		raw_hours = item.find_all('strong')
-		hours_of_operation = ""
-		for raw_hour in raw_hours:
-			hours_of_operation = (hours_of_operation + " " + raw_hour.text.replace("\xa0","").strip()).strip()
-
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, base_link, location_name, street_address.replace(",",""), city.replace(",",""), state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	return data
 

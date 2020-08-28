@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,8 +19,11 @@ def fetch_data():
     website = 'plazaazteca.com'
     country = 'US'
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<h2 class="elementor-heading-title elementor-size-default"><a href="' in line:
-            locs.append(line.split('<h2 class="elementor-heading-title elementor-size-default"><a href="')[1].split('"')[0])
+            lurl = line.split('<h2 class="elementor-heading-title elementor-size-default"><a href="')[1].split('"')[0]
+            if lurl not in locs:
+                locs.append(lurl)
     for loc in locs:
         print('Pulling Location %s...' % loc)
         store = '<MISSING>'
@@ -38,23 +40,45 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split('&')[0].strip()
-            if '<div class="elementor-text-editor elementor-clearfix"><p>' in line2 and 'At Plaza' not in line2 and 'We invite' not in line2:
-                add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p>')[1].split(',')[0]
-                city = line2.split('</p><p>')[1].split(',')[0]
-                state = line2.split('</p><p>')[1].split(',')[1].strip()
-                zc = line2.split('</p><p>')[1].split(',')[2].strip()
-                phone = line2.split('</p><p>')[2].split('<')[0]
+            if '<div class="elementor-text-editor elementor-clearfix"><p>' in line2 and 'At Plaza' not in line2 and 'We invite' not in line2 and 'Welcome to the' not in line2:
+                if '2835 Lehigh St' in line2:
+                    add = '2835 Lehigh St'
+                    city = 'Allentown'
+                    state = 'Pennsylvania'
+                    zc = '18103'
+                    phone = '(484) 656 7277'
+                elif '153 S Gulph Rd' in line2:
+                    add = '153 S Gulph Rd'
+                    city = 'King of Prussia'
+                    state = 'Pennsylvania'
+                    zc = '19406'
+                    phone = '(610) 265-1170'
+                elif '821 W Lancaster Ave' in line2:
+                    add = '821 W Lancaster Ave'
+                    city = 'Wayne'
+                    state = 'Pennsylvania'
+                    zc = '19087'
+                    phone = '484-580-6369'
+                else:
+                    add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p>')[1].split(',')[0]
+                    city = line2.split('</p><p>')[1].split(',')[0]
+                    state = line2.split('</p><p>')[1].split(',')[1].strip()
+                    zc = line2.split('</p><p>')[1].split(',')[2].strip()
+                    phone = line2.split('</p><p>')[2].split('<')[0]
             if '<div class="elementor-text-editor elementor-clearfix"><p class="p1">' in line2:
                 add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p class="p1">')[1].split('<')[0]
                 city = line2.split('15px;">')[1].split(',')[0]
                 state = line2.split('15px;">')[2].split(',')[0]
                 zc = line2.split('15px;">')[3].split('<')[0]
-            if '<span >' in line2 and '<span ><' not in line2:
+            if '<span >' in line2 and '<span ><' not in line2 and '</span>' in line2:
                 g = next(lines)
+                g = str(g.decode('utf-8'))
                 if '<p' not in g:
                     g = next(lines)
+                    g = str(g.decode('utf-8'))
                 if 'font-weight: 500;">' in g:
                     hinfo = g.split('font-weight: 500;">')[1].split('<')[0]
                 else:
@@ -99,7 +123,8 @@ def fetch_data():
                 hours = 'Monday - Thursday: 11am - 10pm (Bar Open Late); Friday - Saturday: 11am - 11pm (Bar Open Late); Sunday: 11:30am - 10pm (Bar Open Late)'
             if '<' in name:
                 name = name.split('<')[0]
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'Coming Soon' not in name:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

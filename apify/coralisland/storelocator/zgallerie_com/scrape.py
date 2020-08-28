@@ -1,7 +1,7 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
@@ -11,14 +11,14 @@ base_url = 'https://www.zgallerie.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -32,7 +32,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -64,6 +64,9 @@ def parse_address(address):
             }
 
 def fetch_data():
+
+    session = SgRequests()
+
     output_list = []
     url = "https://www.zgallerie.com/storelocations.aspx/GetStoreAddresses"
     state_list = ["AK","AL","AR","AZ","CA","CO","CT","DE","FL","GA","HI","IA","ID","IL","IN","KS","KY","LA","MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VA","VT","WA","WI","WV","WY"]
@@ -84,7 +87,7 @@ def fetch_data():
             "State": state,
             "Type": "state"
         }
-        request = requests.post(url, json=payload)
+        request = session.post(url, json=payload)
         response = json.loads(request.text)['d']
         store_list = etree.HTML(response).xpath('.//div[@class="found_location_details"]')
         for store in store_list:
@@ -93,18 +96,22 @@ def fetch_data():
             geoinfo = validate(store.xpath('.//input/@value'))
             latitude = geoinfo.split('|')[0]
             longitude = geoinfo.split('|')[1]
-                
+
             output = []
             output.append(base_url) # url
+            output.append(base_url)
             output.append(info[0]) #location name
-            output.append(info[1]) #address
+            street_address = info[1]
+            if street_address[-1] == ",":
+                street_address = street_address[:-1].strip()
+            output.append(street_address) #address
             output.append(info[2].split(', ')[0]) #city
             output.append(info[2].split(', ')[1].split(' ')[0]) #state
             output.append(info[2].split(', ')[1].split(' ')[1]) #zipcode
             output.append(validate('US')) #country code
             output.append('<MISSING>') #store_number
             output.append(info[3]) #phone
-            output.append("Decor Store | Affordable & Modern Furniture | Z Gallerie") #location type
+            output.append('<MISSING>') #location type
             output.append(latitude) #latitude
             output.append(longitude) #longitude
             output.append(hours.replace('Hours:', '')) #opening hours

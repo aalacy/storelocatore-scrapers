@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,10 +23,10 @@ def fetch_data():
     r = session.get(base_url+'/location-finder')
     soup=BeautifulSoup(r.text,'lxml')
     output=[]
-    main=soup.find('ul',{'class':'geolocation-common-map-locations'}).find_all('li')
+    main=soup.find('ul',{'class':'geolocation-common-map-locations'}).find_all('li')[:91]
     for ltag in main:
-        lat=ltag['data-lat']
         name=ltag.find('span',{'class':'title'}).text.strip()
+        lat=ltag['data-lat']
         lng=ltag['data-lng']
         link=ltag.find('a',text="Shop this store")['href']
         r1 = session.get(base_url+link)
@@ -42,11 +42,14 @@ def fetch_data():
         if country=="United States":
             country="US"
         try:
-            hour=' '.join(soup1.find('div',{'class':'views-field-field-store-hours'}).find('div',{'class':'field-content'}).stripped_strings)
+            temp_hr=' '.join(soup1.find('div',{'class':'views-field-field-store-hours'}).find('div',{'class':'field-content'}).stripped_strings)
+            hour = temp_hr.replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>")
+
         except:
             hour=''
         phone=soup1.find('div',{'class':'views-field-field-store-phone'}).find('div',{'class':'field-content'}).text.strip()
         storeno=name.split('-')[-1].strip()
+        page_url = base_url+link
         store=[]
         store.append(base_url)
         store.append(name.encode('ascii', 'ignore').decode('ascii') if name else "<MISSING>")
@@ -55,12 +58,13 @@ def fetch_data():
         store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
         store.append(zip.encode('ascii', 'ignore').decode('ascii') if zip else "<MISSING>")
         store.append(country.encode('ascii', 'ignore').decode('ascii') if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
+        store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("beefjerkyoutlet")
+        store.append("<MISSING>")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour.encode('ascii', 'ignore').decode('ascii') if hour.strip() else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
         if zip not in output:
             output.append(zip)
             return_main_object.append(store)

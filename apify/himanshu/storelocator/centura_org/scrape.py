@@ -21,11 +21,11 @@ def fetch_data():
     headers = {
              'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36',    
     }
-
+    adressessess=[]
     base_url = "https://www.centura.org"   
     page = 1
     while True:
-        json_data = session.get("https://www.centura.org/rest/solr/location-search?_format=json&search=&location=&radius=0&page="+str(page)+"&type=", headers=headers).json()['response']['docs']
+        json_data = session.get("https://www.centura.org/rest/solr/location-search?_format=json&search=&location=USA&radius=0&page="+str(page)+"&type=", headers=headers).json()['response']['docs']
         if json_data == []:
             break
         for data in json_data:
@@ -98,6 +98,9 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
+            if str(str(store[2]+store[10]+store[-1])) in adressessess :
+                continue
+            adressessess.append(str(store[2]+store[10]+store[-1]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data==="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")

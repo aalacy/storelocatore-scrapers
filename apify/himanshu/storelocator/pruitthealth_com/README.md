@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-addresss with no number,invalid zip,same lat & lng this website
+addresss with no number,invalid zip,same lat & lng and i checked all data is true for this website
