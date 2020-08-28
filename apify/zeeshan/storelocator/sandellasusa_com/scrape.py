@@ -1,6 +1,6 @@
 import re 
-import base
-import requests
+import base 
+from sgrequests import SgRequests
 
 from lxml import (html, etree,)
 
@@ -13,19 +13,46 @@ class Sandellasusa(base.Base):
     csv_filename = 'data.csv'
     domain_name = 'sandellasusa.com'
     url = 'https://sandellasusa.com/locations'
+    re_address = re.compile('([A-Z0-9]+) ([ \.A-Z0-9a-z]+) ([A-Z0-9a-z\.]+)')
 
     def map_data(self, row):
 
-        text = etree.tostring(row)
-
-        name = xpath(row, './/span//text()').strip()
-
-        text = text.replace('&#8217;', "")
+        # print('***********')
+        # print(etree.tostring(row, pretty_print=True).decode("utf-8") )
+        
+        name = xpath(row, './/span//text()').strip().decode("utf-8") 
+        
+        text = etree.tostring(row).decode("utf-8") 
+        text = re.sub('&#8217;|&nbsp;|&#160;', '', text)
         
         street_address = None
-        street_address = re.findall(r'([0-9]+) ([ \.A-Z0-9a-z]+) ([A-Z0-9a-z]+)', text)
-        if street_address:
-            street_address = ' '.join(street_address[0])
+        street_address_matches = re.findall(self.re_address, text)
+        if street_address_matches:
+            street_address = ' '.join(street_address_matches[0])
+
+        if not street_address:
+            street_suny_match = re.match(r'Johnson Rd\. Commissary Bldg\.', text)
+            if street_suny_match: 
+                street_address = street_suny_match.group(0)
+
+        if not street_address:
+            street_rensselaer_match = re.match(r'15th and Sage Avenue', text)
+            if street_rensselaer_match: 
+                street_address = street_rensselaer_match.group(0)
+
+        if not street_address:
+            street_address = None        
+
+        second_line = etree.tostring(row[1], pretty_print=True).decode("utf-8") 
+        # if the second paragraph doesn't match the street address pattern 
+            # and it's not equal to the value of street_address, then treat it as the first line of the address
+        if not re.match(self.re_address, second_line):
+            address_first_line = xpath(row[1], './/span//text()').strip().decode("utf-8") 
+            # print(f'address_first_line: {address_first_line}')
+            if street_address and street_address not in address_first_line:
+                street_address = address_first_line + ' - ' + street_address
+            else: 
+                street_address = address_first_line
 
         city, state, zipcode = None, None, None
         region = re.findall(r'([A-Za-z]+)(,|) ([A-Z]+) ([0-9]+)', text)
@@ -57,8 +84,8 @@ class Sandellasusa(base.Base):
 
 
     def crawl(self):
-        session = requests.Session()
-        session.headers.update({
+        session = SgRequests()
+        session.session.headers.update({
             'authority': 'sandellasusa.com'
             ,'method': 'GET'
             ,'path': '/locations'
@@ -76,7 +103,23 @@ class Sandellasusa(base.Base):
             for row in rows:
                 if xpath(row, './/span//text()') is None:
                     continue
-                yield row
+                row_text = etree.tostring(row).decode("utf-8") 
+                sub_rows = re.split('<p style=\"margin:0\"><span><br/></span></p>|<p style=\"margin:0\"><span>&#8203;</span></p>', row_text)
+
+                if len(sub_rows) == 1: 
+                    yield etree.fromstring(sub_rows[0])
+                else:
+                    for i, sub_row in enumerate(sub_rows):
+                        if i == 0:
+                            valid_html = sub_row + '</div>'
+                        elif i == len(sub_rows)-1: 
+                            valid_html = '<div>' + sub_row 
+                        else:
+                            valid_html = '<div>' + sub_row + '</div>'
+
+                        el = etree.fromstring(valid_html)
+                        if (len(el) > 0):
+                            yield el
 
 
 if __name__ == '__main__':
