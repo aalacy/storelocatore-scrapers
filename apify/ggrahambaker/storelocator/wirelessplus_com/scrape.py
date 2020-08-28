@@ -61,7 +61,7 @@ def fetch_data():
                 addy = loc_json['address']
 
                 street_address = addy['streetAddress']
-                city = addy['addressLocality']
+                city = addy['addressLocality'].replace("(DTLA)","").strip()
                 state = addy['addressRegion']
                 zip_code = addy['postalCode']
                 country_code = 'US'
