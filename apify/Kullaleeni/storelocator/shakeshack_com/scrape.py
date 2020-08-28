@@ -1,204 +1,178 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep 12 11:22:27 2019
-
-@author: srek
-"""
-import pandas as pd
-import re
-import requests
 from bs4 import BeautifulSoup
+import csv
+import string,usaddress
+import re, time, json
 
-def string_clean(record):
-    return record.replace("\r","").replace("\n","").strip()
+from sgrequests import SgRequests
 
-def contact_info(address):
-    phone = []
-    remove_from_address = []
-    
-    for ad in range(len(address)):
-        try:
-            phone.append(re.search('\d{3}.\d{3}.\d{4}',address[ad]).group(0))  
-            remove_from_address.append(address[ad])
-            
-        except:
-            pass
-        
-    if phone == []:
-        for ad in range(len(address)):
-            try:
-                phone.append(re.compile(r'(\(\d\d\d\)) (\d\d\d-\d\d\d\d)').search(address[ad]).group(0))
-                remove_from_address.append(address[ad])
-            except:
-                pass
-    
-
-    email = []
-    for ad in range(len(address)):
-        if "email" in address[ad].lower():
-            try:
-                email.append(address[ad])
-                remove_from_address.append(address[ad])
-            except:
-                pass
-            
-    return phone,email,remove_from_address
-
-def fetch_data():
-
-    url = "https://www.shakeshack.com/locations/"
-    
-    
-    page = requests.get(url)
-    
-    
-    soup = BeautifulSoup(page.text,"html.parser")
-    
-    locator_domain = url
-    us_locations = soup.find_all("div",attrs={"class":"citys span10 offset1"})[0]
-    
-    
-    states = [string_clean(x.text) for x in us_locations.find_all("h3")]
-    
-    data = []
-    print(states)
-    for s in range(len(states)):
-        
-        state = states[s]
-        stores = us_locations.find("div",attrs={"id":"usa_{}".format(state.replace(" ","_"))}).find_all("div",attrs={"class":"row-fluid"})
-        
-        for st in range(len(stores)): 
-            #print(s,st)
-            loc_page = "https://www.shakeshack.com"+stores[st].find("a").get("href")
-            soup_loc = BeautifulSoup(requests.get(loc_page).text)
-            latitude,longitude = str(soup_loc.find_all("script",attrs={"type":"text/javascript"})[7]).replace("\r","").replace("\n"," ").split("center: {")[1].split("},")[0].split(",")
-            location_name = stores[st].find("h4").text
-            #loc_page = "https://www.shakeshack.com"+stores[st].find("a").get("href")
-            #soup_loc = BeautifulSoup(requests.get(loc_page).text)
-            #soup_loc.find("div",attrs={"class","place-card place-card-large"})
-            address = stores[st].find("div",attrs={"class":"address"}).text.replace("\xa0"," ").split("\n")
-         
-            data_record = {}
-            #print(address)
-            data_record['locator_domain'] = locator_domain
-            data_record['location_name'] = location_name
-            
-            phone,email,remove_from_address = contact_info(address)    
-            #[address.remove(e) for e in email]
-            
-            
-            [address.remove(p) for p in remove_from_address]
-            
-            address = list(filter(None, address))
-            address = ','.join(address).split(",")  
-            try:
-                zipcode = re.search('\d{5}',address[-1]).group(0)
-            except:
-                zipcode = "<MISSING>"
-                
-            
-            
-            city = ','.join(location_name.split(",")[:-1])
-            street_address = ""
-            for c in range(len(address)):
-                if city in address[c]:
-                    street_address = ','.join(address[:c])
-            if street_address == "":
-                if (zipcode == "<MISSING>") & (len(address) ==2):
-                    city = address[1]
-                    street_address = address[0]
-                elif (zipcode == "<MISSING>") & (len(address) ==1):
-                    street_address = address[0]
-                    city = "<MISSING>" 
-                else:
-                    street_address = address[0]
-                    
-            country_code = "US"
-            hours_of_open = (stores[st].find("div",attrs={"class":"opening"}).text.split('\n'))
-            #print(hours_of_open)
-            hours_of_open = ';'.join(list(filter(None, hours_of_open)))
-            #print(hours_of_open)
-            
-            if state == "Washington, D.C." or state == "Washington DC": 
-                state = "Washington"
-
-            data_record['street_address'] = street_address.replace("’","'").replace(" "," ").replace("–","-")  
-            data_record['city'] = city.replace("’","'").replace(" "," ").replace("–","-")  
-            data_record['state'] = state.replace("’","'").replace(" "," ").replace("–","-")  
-            data_record['zip'] = zipcode.replace("’","'").replace(" "," ").replace("–","-")  
-            data_record['country_code'] = country_code
-            data_record['store_number'] = '<MISSING>'
-            try:
-                data_record['phone'] = phone[0]   
-            except:
-                data_record['phone'] = '<MISSING>'
-                
-            data_record['location_type'] = '<MISSING>'
-            data_record['latitude'] = latitude.replace("lat:","")
-            data_record['longitude'] = longitude.replace("lng:","")
-            data_record['page_url'] = '<MISSING>'
-            data_record['hours_of_operation'] = hours_of_open.replace("’","'").replace(" "," ").replace("–","-")  
-            #print(hours_of_open)
-            #break
-            data.append(data_record)
-    return data
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    df_data = pd.DataFrame(columns=['locator_domain','location_name','street_address','city','state','zip','country_code','store_number','phone','location_type','latitude','longitude','hours_of_operation'])
-    
-    for d in range(len(data)):
-        df = pd.DataFrame(list(data[d].values())).transpose()
-        df.columns = list((data[d].keys()))   
-        df_data = df_data.append(df)
-    #df_data = df_data.fillna("<MISSING>")
-    df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
-    df_data = df_data.drop_duplicates(["location_name","street_address"])
-    df_data['zip'] = df_data.zip.astype(str)
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    df_data.to_csv('./data.csv',index = 0,header=True)
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
+def fetch_data():
+    # Your scraper here
+    data = []    
+    url = 'https://www.shakeshack.com/locations/'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('div', {'class': 'citys'})[0].findAll('div',{'class':'address_div'})
+    coordlist = str(soup).split('window.locations = [',1)[1].split('}]',1)[0]
+    coordlist ='[' + coordlist + '}]'
+    #print(coordlist)
+    p = 0
+    coordlist = json.loads(coordlist)
+    for div in divlist:
+        
+        #input()
+        title = div.find('div',{'class':'title'}).text.replace('\n','')
+        link = 'https://www.shakeshack.com' + div.find('div',{'class':'title'}).find('a')['href']
+        #print(title)
+        address = ''
+        lat = '<MISSING>'
+        longt = '<MISSING>'
+        for coord in coordlist:
+            try:
+                if title == coord['name']:
+                    lat = coord['lat']
+                    longt = coord['long']
+                    address = coord['directionsLink'].replace('\r\n',' ')            
+                    break
+            except:
+                address = ''
+                break
+                
+
+        if address == '':
+            continue
+        
+       
+        address = div.find('div',{'class':'address'}).text.lstrip().splitlines()        
+        
+       
+        i = 0
+        state = ''
+        pcode = ''
+        street = ''
+        city = ''
+        phone = ''
+        temp = 0
+        for i in range(0,len(address)):           
+            adr = address[i]          
+            if (adr.find('.') > -1 and adr.split('.')[0].isdigit()) or (adr.find('-') > -1 and adr.find('(') > -1) or adr.find('-') > -1 and len(adr.split('-')[0]) ==3 and adr.split('-')[-1] == 4:
+                check = adr.replace('-','').replace('(','').replace(')','').replace('.','')
+                if check.isdigit():
+                    phone = adr
+                    temp = i
+                    break
+                else:
+                    pass
+                
+        if phone == '':
+            temp = len(address)
+            
+        address = ' '.join(address[0:temp])
+        try:
+            address= address.split('Email')[0]
+        except:
+            pass
+        check = ''
+        try:
+            check = address.split('(')[1].split(')')[0]
+            address = address.split('(')[0]+' '+address.split(')')[1]
+        except:
+            pass
+            
+        print(address)
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+            
+        state = state.lstrip().replace(',','')
+        pcode = pcode.lstrip().replace(',','')
+        street = street.lstrip().replace(',','')
+        city = city.lstrip().replace(',','')
+        street = street + ' ' + check
+        hours = div.find('div',{'class':'opening'}).text.lstrip()
+        if len(phone) < 3:
+            phone = '<MISSING>'
+        if len(hours) < 3:
+            hours = '<MISSING>'
+        if state == '' and city == '':
+            temp= title.split(', ')
+            print(temp)
+            state = temp[-1]
+            city = temp[-2]
+        if state == '' :
+            temp= title.split(', ')
+            #print(temp)
+            state = temp[-1]
+            if city != temp:
+                street = street + ' '+city
+                city = temp[-2]
+        if len(pcode) < 3:
+            pcode = '<MISSING>'
+        if len(state) < 2:
+            state = '<MISSING>'
+        if len(street) < 3:
+            street = '<MISSING>'
+
+        if len(city) < 3:
+            city = '<MISSING>'
+        if state == 'NYC':
+            state = 'NY'
+        data.append([
+                        'https://www.shakeshack.com',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours.replace('\n',' ').lstrip().rstrip()
+                    ])
+        #print(p,data[p])
+        p += 1
+        #input()
+  
+        
+    return data
+
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
