@@ -57,7 +57,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         lat, lng = coord[0], coord[1] 
         response = session.post(URL, json=get_payload(lat, lng), headers=HEADERS).json()
         stores = response["data"]['viewer']['storesInRadius']['source']

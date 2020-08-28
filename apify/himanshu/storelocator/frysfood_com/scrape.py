@@ -134,7 +134,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         log("zip_code: " + str(zip_code))
-        log("remaining zips: " + str(len(search.zipcodes)))
+        log("remaining zips: " + str(search.zipcodes_remaining()))
 
         r = do_search(zip_code)
         log('status code for do_search(): ', r.status_code)

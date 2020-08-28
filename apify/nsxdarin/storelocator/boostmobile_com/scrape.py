@@ -26,7 +26,7 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('%s...' % coord)
         url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + coord + '&page=1'
         r = session.get(url, headers=headers)

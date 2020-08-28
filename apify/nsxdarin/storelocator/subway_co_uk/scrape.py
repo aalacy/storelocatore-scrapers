@@ -29,7 +29,7 @@ def fetch_data():
     while coord:
         time.sleep(1)
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x, y = coord[0], coord[1]
         url = 'https://locator-svc.subway.com/v3/GetLocations.ashx?callback=jQuery111103224152676024219_1577552416099&q=%7B%22InputText%22%3A%22' + str(x) + '%2C' + str(y) + '%22%2C%22GeoCode%22%3A%7B%22Latitude%22%3A' + str(x) + '%2C%22Longitude%22%3A' + str(y) + '%2C%22Accuracy%22%3Anull%2C%22CountryCode%22%3A%22%22%2C%22RegionCode%22%3Anull%2C%22PostalCode%22%3Anull%2C%22City%22%3Anull%2C%22LocalityType%22%3Anull%2C%22name%22%3Anull%7D%2C%22DetectedLocation%22%3A%7B%22Latitude%22%3A0%2C%22Longitude%22%3A0%2C%22Accuracy%22%3A0%7D%2C%22Paging%22%3A%7B%22StartIndex%22%3A1%2C%22PageSize%22%3A50%7D%2C%22ConsumerParameters%22%3A%7B%22metric%22%3Afalse%2C%22culture%22%3A%22en-GB%22%2C%22country%22%3A%22GB%22%2C%22size%22%3A%22D%22%2C%22template%22%3A%22%22%2C%22rtl%22%3Afalse%2C%22clientId%22%3A%2217%22%2C%22key%22%3A%22SUBWAY_PROD%22%7D%2C%22Filters%22%3A%5B%5D%2C%22LocationType%22%3A0%2C%22behavior%22%3A%22%22%2C%22FavoriteStores%22%3Anull%2C%22RecentStores%22%3Anull%2C%22Stats%22%3A%7B%22abc%22%3A%5B%7B%22N%22%3A%22geo%22%2C%22R%22%3A%22A%22%7D%5D%2C%22src%22%3A%22map%22%2C%22act%22%3A%22map%22%2C%22c%22%3A%22subwayLocator%22%7D%7D&_=1577552416106'
         r = session.get(url, headers=headers)

@@ -23,7 +23,7 @@ def fetch_data():
     zip_code = search.next_zip()
     while zip_code:
         #print(zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         result_coords = []
         zip_bytes = zip_code.encode('ascii')

@@ -96,7 +96,7 @@ def fetch_data():
         page_url = ""
         hours_of_operation = ""
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         page =1
         while True:
             r= session.get("https://www.ziebart.com/find-my-ziebart?zipcode="+str(zip_code)+"&distance=100&page="+str(page),headers= headers)

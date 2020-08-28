@@ -34,7 +34,7 @@ def fetch_data():
         while True:
             try:
                 result_coords = []
-                # print("remaining zipcodes: " + str(len(search.zipcodes)))
+                # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
                 x = coord[0]
                 y = coord[1]
                 # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))

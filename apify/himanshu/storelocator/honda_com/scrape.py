@@ -63,7 +63,7 @@ def fetch_data():
 
         k={}
         #print(zip_code)
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
 

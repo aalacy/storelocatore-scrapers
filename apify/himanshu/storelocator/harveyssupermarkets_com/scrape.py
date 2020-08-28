@@ -71,7 +71,7 @@ def fetch_data():
     while zip_code: 
         result_coords = []
         # print("zip_code === "+zip_code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         data = "fhController=ContentComponentsController&fhAction=StoreLocatorResults&sitename=harveys&bannerName=Harveys+Supermarket+%23+&CurrentState=StrTab&StoreZipCode="+str(zip_code)+"&MilesSelectedValue=25&MilesSelectedValue=25&strCommand=Search&ATM=false&Floral=false&Lottery=false&RedBox=false&CoinCounter=false&FreshMeat=false&MTMO=false&SeaFood=false&DeliBakery=false&GlutenFree=false&Pharmacy=false&Sushi=false&ATM=false&Floral=false&Lottery=false&RedBox=false&CoinCounter=false&FreshMeat=false&MTMO=false&SeaFood=false&DeliBakery=false&GlutenFree=false&Pharmacy=false&Sushi=false"
   
         r = request_wrapper("https://www.harveyssupermarkets.com/Locator",'post',headers=headers,data=data)

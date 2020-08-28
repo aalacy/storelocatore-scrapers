@@ -68,7 +68,7 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': MAX_DISTANCE }
@@ -128,7 +128,7 @@ def fetch_data():
     coord = search.next_coord()
   
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
   

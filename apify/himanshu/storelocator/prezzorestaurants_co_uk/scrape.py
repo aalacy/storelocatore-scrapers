@@ -46,7 +46,7 @@ def fetch_data():
    
     while zip_code:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s="+str(zip_code)+"&dist=Dist500"
         headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',

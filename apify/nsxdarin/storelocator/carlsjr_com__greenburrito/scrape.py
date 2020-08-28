@@ -27,7 +27,7 @@ def fetch_data(search):
     locations = []
     while code:
         print('Pulling Zip Code %s...' % code)
-        print('{} zip codes remaining'.format(len(search.zipcodes)))
+        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
         query_country = 'ca' if len(code) == 3 else 'us'
         url = 'https://maps.ckr.com/stores/search?brand=carlsjr&country=' + query_country + '&q=' + code + '&brand_id=8&zoom=5'
         coords = []

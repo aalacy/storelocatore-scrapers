@@ -104,7 +104,7 @@ def fetch_data():
     locations = []
     ids = set()
     while query_coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         stores = query_locator(query_coord)
         if len(stores) == 0:
             search.max_distance_update(MAX_DISTANCE)

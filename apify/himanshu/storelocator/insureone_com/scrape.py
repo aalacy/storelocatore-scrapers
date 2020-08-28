@@ -58,7 +58,7 @@ def fetch_data():
         page_url = ""
         hours_of_operation = ""
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print("zip_code === "+zip_code)
         # x = coord[0]
         # y = coord[1]
