@@ -16,7 +16,6 @@ URL_TEMPLATE = 'https://locator.chick-fil-a.com.yext-cdn.com' + PATH_TEMPLATE
 search = sgzip.ClosestNSearch()
 search.initialize(country_codes = ['us'])
 
-
 MAX_RESULTS = 50
 MAX_DISTANCE = 20
 
@@ -90,11 +89,15 @@ def fetch_data():
             lng = store['profile']['displayCoordinate']['long'] 
             result_coords.append((lat, lng))
             hours = parse_hours(store['profile']['hours']['normalHours'])
-            if store_number not in keys:
-                keys.add(store_number)
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            key = loc
+            if key not in keys:
+                keys.add(key)
+                yield [website, loc, name, add, city, state, zc, country, store_number, phone, typ, lat, lng, hours]
         print(len(result_coords))
-        search.max_count_update(result_coords)
+        if len(result_coords) > 0:
+            search.max_count_update(result_coords)
+        else:
+            search.max_distance_update(20)
         coord = search.next_zip()
 
 def scrape():
