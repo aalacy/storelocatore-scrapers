@@ -99,6 +99,9 @@ def fetch_data():
                         phone = hours.split('; ')[1]
                     else:
                         phone = desc.split('<\\/p>\\n<p>')[2].split('<')[0]
+                    name = name.replace('\\u2019',"'").replace('\\u00e9','e').replace('\\u00e8','e').replace('\\u00c9','E').replace('\\u00e7','c')
+                    add = add.replace('\\u2019',"'").replace('\\u00e9','e').replace('\\u00e8','e').replace('\\u00c9','E').replace('\\u00e7','c')
+                    city = city.replace('\\u2019',"'").replace('\\u00e9','e').replace('\\u00e8','e').replace('\\u00c9','E').replace('\\u00e7','c')
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
