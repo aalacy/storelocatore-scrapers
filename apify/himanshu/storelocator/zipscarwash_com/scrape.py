@@ -38,7 +38,7 @@ def fetch_data():
         location_name = []
         phone = []
         address = soup.find_all("div", {"class":"views-field views-field-field-address"})
-        link = soup.find_all("a",{"hreflang":"en"})
+        link = soup.find_all("div",{"class":"views-field views-field-title"})
         direction = soup.find_all("div",{"class":"views-field views-field-field-regional-manager"})
         time = soup.find_all("span",{"class":"office-hours__item-slots"})
         contact = soup.find_all("div", {"class":"views-field views-field-field-location-hours"})
@@ -58,52 +58,48 @@ def fetch_data():
         for cord in direction:
             
             if cord.find("div",{"class":"home-page-direction"}) != None:
-                latitude.append(cord.find("div",{"class":"home-page-direction"}).find("a")['href'].split("=")[1].split("&")[0])
-                longitude.append(cord.find("div",{"class":"home-page-direction"}).find("a")['href'].split("=")[-1])
+                try:
+                    latitude.append(cord.find("div",{"class":"home-page-direction"}).find("a")['href'].split("=")[1].split("&")[0])
+                    longitude.append(cord.find("div",{"class":"home-page-direction"}).find("a")['href'].split("=")[-1])
+                except:
+                    latitude.append("<MISSING>")
+                    longitude.append("<MISSING>")
             else:
                 latitude.append("<MISSING>")
                 longitude.append("<MISSING>")
             
 
         for direct in link:
-            page_url.append("https://www.zipscarwash.com"+direct['href'])
-            location_name.append(direct.text.split("(")[0])
+            page_url.append("https://www.zipscarwash.com"+direct.find("a")['href'])
+            location_name.append(direct.find("a").text.split("(")[0])
             
         for index,i in enumerate(address):
+            name = location_name[index]
             street_address = i.find("span",{"class":"address-line1"}).text
             city = i.find("span",{"class":"locality"}).text
             state = i.find("span",{"class":"administrative-area"}).text
             zipp = i.find("span",{"class":"postal-code"}).text
+            store_number = page_url[index].split("/")[-1]
 
-                            
-                            
-
-
-                        
             store = []
-
             store.append(base_url)
-            store.append(location_name[index])
+            store.append(name)
             store.append(street_address)
             store.append(city)
             store.append(state)
             store.append(zipp)
             store.append("US")
-            store.append("<MISSING>")
+            store.append(store_number)
             store.append(phone[index])
             store.append("<MISSING>")
             store.append(latitude[index])
             store.append(longitude[index])
             store.append(hours[index])
             store.append(page_url[index])
-            #print("===", str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         page+=1
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

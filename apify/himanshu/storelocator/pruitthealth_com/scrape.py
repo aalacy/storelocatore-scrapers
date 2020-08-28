@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -33,7 +32,7 @@ def fetch_data():
         json_data = session.post("http://www.pruitthealth.com/_Layouts/FacilityLocatorSt/FacilityLocatorSt.aspx/FilterFacilityByFeatures", data=payload, headers=headers).json()['d']['mapData']
         for data in json.loads(json_data):
             location_name = data['Title']
-
+            
             if len(data['Address'].split(",")) == 3:
                 street_address = " ".join(data['Address'].split(",")[:-2])
                 city = data['Address'].split(",")[-2].strip()
@@ -63,16 +62,22 @@ def fetch_data():
                     state = addr[0].split()[-2]
                     zipp = addr[0].split()[-1]
                 else:
-                    if len(addr[-1].split()) == 3:
+                    try:
+                        if len(addr[-1].split()) == 3:
+                            street_address = addr[0]
+                            city = addr[-1].split()[0]
+                            state = addr[-1].split()[1]
+                            zipp = addr[-1].split()[2]
+                        else:
+                            street_address = " ".join(addr[0].split()[:-1])
+                            city = addr[0].split()[-1]
+                            state = addr[-1].split()[-2]
+                            zipp = addr[-1].split()[-1]
+                    except:
                         street_address = addr[0]
-                        city = addr[-1].split()[0]
-                        state = addr[-1].split()[1]
-                        zipp = addr[-1].split()[2]
-                    else:
-                        street_address = " ".join(addr[0].split()[:-1])
-                        city = addr[0].split()[-1]
-                        state = addr[-1].split()[-2]
-                        zipp = addr[-1].split()[-1]
+                        city = "<MISSING>"
+                        state = "<MISSING>"
+                        zipp = addr[-1].strip()
                 
             else:
                 street_address = " ".join(data['Address'].split(",")[:-3])

@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -22,37 +20,25 @@ def fetch_data():
     return_main_object=[]
     r = session.get(base_url+'/online-ordering/')
     soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('article',{"class":'all-locations'}).find_all('a')
-    for dt in main:
-        r1 = session.get(dt['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        loc=list(soup1.find('address',{'id':'rColAddress'}).stripped_strings)
-        name=loc[0].strip()
-        storeno=loc[0].split('#')[-1].strip()
-        address=loc[1].strip()
-        hour=' '.join(soup1.find('div',{'id':'rColHours'}).stripped_strings).strip()
-        phone=loc[-1].strip()
-        ct=loc[2].split(',')
-        city=ct[0].strip()
-        state=ct[1].strip().split(' ')[0].strip()
-        zip=ct[1].strip().split(' ')[1].strip()
-        lat=''
-        lng=''
-        country="US"
+    
+    for dt in soup.find('article',{"class":'all-locations'}).find_all("div",{"class":"location-block"}):
+        data = list(dt.stripped_strings)
+        location_name = data[0]
+        street_address = data[1]
         store=[]
         store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(location_name)
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("US")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
         store.append("cassanos")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
         store.append("https://www.cassanos.com/online-ordering/")
         return_main_object.append(store)
     return return_main_object
