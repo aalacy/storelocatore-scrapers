@@ -56,7 +56,7 @@ class UmpquaBank:
         query_coord = self.search.next_coord()
         locations = []
         while query_coord:
-            print("remaining zipcodes: " + str(len(self.search.zipcodes)))
+            print("remaining zipcodes: " + str(self.search.zipcodes_remaining()))
             lat, lng = query_coord[0], query_coord[1]
             api_data = {"latitude":lat,"longitude":lng,"spanishSpeaking":False,"atm":False,"openNow":False,"openSaturdays":False,"driveUpWindow":False,"date":"2019-08-22T04:04:22.311Z"}
             r = session.post(self.url, json=api_data, allow_redirects=False, headers=headers)
