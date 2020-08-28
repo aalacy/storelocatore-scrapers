@@ -80,24 +80,28 @@ def fetch_data():
             zc = address['postalCode'] 
             name = store['profile']['c_locationName'] 
             store_number = store['profile']['meta']['id'] 
-            try:
-                phone = item.split('"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
-            except:
-                phone = '<MISSING>'
+            phone = '<MISSING>'
+            if 'mainPhone' in store['profile']:
+                phone = store['profile']['mainPhone']['number']
             loc = store['profile']['websiteUrl'] 
             lat = store['profile']['displayCoordinate']['lat'] 
-            lng = store['profile']['displayCoordinate']['long'] 
-            result_coords.append((lat, lng))
+            lng = store['profile']['displayCoordinate']['long']
+            yext_lat = store['profile']['yextDisplayCoordinate']['lat']
+            yext_lng = store['profile']['yextDisplayCoordinate']['long']
+            result_coords.append((yext_lat, yext_lng))
             hours = parse_hours(store['profile']['hours']['normalHours'])
-            key = loc
+            key = '|'.join([name, add, city, state, zc, country])
             if key not in keys:
                 keys.add(key)
                 yield [website, loc, name, add, city, state, zc, country, store_number, phone, typ, lat, lng, hours]
-        print(len(result_coords))
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
             search.max_distance_update(20)
+        if '30013' not in search.zipcodes:
+            print("missed")
+            print(coord)
+            print(result_coords)
         coord = search.next_zip()
 
 def scrape():
