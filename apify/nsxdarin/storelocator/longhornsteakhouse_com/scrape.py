@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import time
 
@@ -19,6 +18,7 @@ def fetch_data():
     url = 'https://www.longhornsteakhouse.com/locations-sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.longhornsteakhouse.com/locations/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
@@ -41,6 +41,7 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if 'id="restLatLong" value="' in line2:
                 lat = line2.split('id="restLatLong" value="')[1].split(',')[0]
                 lng = line2.split('id="restLatLong" value="')[1].split(',')[1].split('"')[0]
@@ -54,7 +55,7 @@ def fetch_data():
                 state = line2.split('id="restAddress" value="')[1].split(',')[2]
                 zc = line2.split('id="restAddress" value="')[1].split(',')[3].split('"')[0]
                 country = 'US'
-            if '"address":' in line2:
+            if '"streetAddress":"' in line2:
                 if add == '':
                     add = line2.split('"streetAddress":"')[1].split('"')[0]
                     country = line2.split('"addressCountry":"')[1].split('"')[0]

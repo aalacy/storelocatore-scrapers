@@ -26,9 +26,16 @@ def fetch_data():
     r = session.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
-        # print(base_url + location["href"])
+        #print(base_url+location["href"])
+        locationtype = location["href"].split("/")[-1].split("-")[0]
+        if "cinemark" in locationtype or "century" in locationtype or "tinseltown" in locationtype:
+            locationtype = locationtype
+        else:
+            locationtype = "ravecinema"
         location_request = session.get(base_url + location["href"],headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
+        store_number = (str(location_soup).split("var currentTheaterId =")[1].split(';')[0].strip())
+        # var currentTheaterId =
         if location_soup.find("div",{"class":"theatre-status-label"}):
             label = location_soup.find("div",{"class":"theatre-status-label"}).text.strip()
             if "Permanently Closed" in label or "Closed" in label:
@@ -48,14 +55,14 @@ def fetch_data():
         store.append(address["addressRegion"])
         store.append(address["postalCode"])
         store.append(address["addressCountry"])
-        store.append("<MISSING>")
+        store.append(store_number)
         store.append(location_details["telephone"] if location_details["telephone"] else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(locationtype)
         store.append(geo_location.split("&pp=")[1].split(",")[0] if geo_location.split("&pp=")[1].split(",")[0] else "<MISSING>" )
         store.append(geo_location.split("&pp=")[1].split(",")[1].split("&")[0] if geo_location.split("&pp=")[1].split(",")[1].split("&")[0] else "<MISSING>")
         store.append("<MISSING>")
         store.append(base_url + location["href"])
-        # print(store)
+        #print(store)
         yield store
 
 def scrape():

@@ -1,9 +1,35 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-
+import usaddress
 import re
 
+def get_value(item):
+    if item == None or len(item) == 0:
+        item = '<MISSING>'
+    return item
+
+def parse_address(address):
+    address = usaddress.parse(address)
+    street = ''
+    city = ''
+    state = ''
+    zipcode = ''
+    for addr in address:
+        if addr[1] == 'PlaceName':
+            city += addr[0].replace(',', '') + ' '
+        elif addr[1] == 'ZipCode':
+            zipcode = addr[0].replace(',', '')
+        elif addr[1] == 'StateName':
+            state = addr[0].replace(',', '')
+        else:
+            street += addr[0].replace(',', '') + ' '
+    return {
+        'street': get_value(street),
+        'city' : get_value(city),
+        'state' : get_value(state),
+        'zipcode' : get_value(zipcode)
+    }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,50 +64,62 @@ def fetch_data():
             continue
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        data=re.findall(r'Store Address([a-zA-Z0-9,\.\(\)\- #&\']+)Store Hours:([a-zA-Z0-9\. \-:]+)',str(soup).replace('<strong>','').replace('</p>','').replace('<p>','').replace('\n','').replace('</strong>','').replace('<br>','').replace('<br/>','').replace('\xa0','').replace('&nbsp;','').replace('Services Offered:',''))[0]
-        print(data)
-    """
-    print(len(stores))
+        data = soup.find('div', {'class': 'fl-rich-text'}).find_all('p')
+        #data=re.findall(r'Store Address([a-zA-Z0-9,\.\(\)\- #&\']+)Store Hours:([a-zA-Z0-9\. \-:]+)',str(soup).replace('<strong>','').replace('</p>','').replace('<p>','').replace('\n','').replace('</strong>','').replace('<br>','').replace('<br/>','').replace('\xa0','').replace('&nbsp;','').replace('Services Offered:',''))[0]
 
-    for store in stores:
-        id,lat,long,url=re.findall(r'store_number: (.*),lat: (.*),lon: (.*),status:.*<a href="([^"]+)">',store)[0]
-        #print(id, lat, long, url)
-
-        url='https://www.ontherun.com/store-locator/'+url
-        print(url)
-
-        res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        street,city,state,zip=re.findall(r'<h1>(.*)<br/>(.*), (.*), ([\d]+)</h1>',str(soup))[0]
-        phone=re.findall(r'phone-number">([\(\)\d \-]+)</h4>',str(soup))
-        if phone==[]:
-            phone="<MISSING>"
+        for p in data:
+            if 'Store Address' in p.text:
+                addr=p
+        phone=""
+        if 'Hours' not in addr.text:
+            ad = addr
+            tim = data[data.index(addr) + 1].text.strip()
+            addr=addr.text.strip()
+            p = re.findall(r'\([\d]{3}\)[\d \-]+', tim)
+            print(p)
+            if p != []:
+                phone = p[0]
+                
+                tim = data[data.index(ad) + 2].text.strip()
         else:
-            phone=phone[0]
 
-        print(street,city,state,zip,phone)
-        tim=soup.find('div',{'class':'weekdays columns small-20'}).text.strip().replace('\n\n',',').replace('\n',' ')
+            addr=addr.text.strip()
+            tim = re.findall('Store Hours:(.*)', addr, re.DOTALL)[0]
 
-        print(tim)
+            addr = addr.replace(tim, '')
+
+        if phone=='':
+            phone = re.findall(r'\([\d]{3}\)[\d \-]+',addr)[0]
+
+        tim=' '.join(tim.replace('Store Hours:','').strip().split('\n'))
+        addr=' '.join(addr.replace('Store Address','').replace(phone,'').strip().split('\n'))
+        parsed_address = parse_address(addr)
+        city = parsed_address['city']
+        state = parsed_address['state']
+        zip = parsed_address['zipcode']
+        street = parsed_address['street']
+
+
+
 
         all.append([
 
-            "https://www.ontherun.com",
-            '<MISSING>',
-            street.replace('amp;',''),
+            "https://tcmarkets.com",
+            city,
+            street,
             city,
             state,
             zip,
             "US",
-            id,  # store #
+            "<MISSING>",  # store #
             phone,  # phone
             "<MISSING>",  # type
-            lat,  # lat
-            long,  # long
+            "<MISSING>",  # lat
+            "<MISSING>",  # long
             tim,  # timing
             url])
 
-    """
+
 
     return all
 

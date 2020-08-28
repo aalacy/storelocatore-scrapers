@@ -7,6 +7,7 @@ import json
 import usaddress
 session = SgRequests()
 
+
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,11 +24,11 @@ def fetch_data():
 
     addressesess = []
     addressesess1=[]
-
-
-    for q in range(0,2000):
+    ids = bs(session.get("https://www.montblanc.com/en-ar/store-locator#search/country/ar/store-type/PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_STORE,PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_OUTLET").text,'lxml')
+    ids = ids.find("div",{"class":"mb-storeLocator__wrap"}).text.split("storeLocatorConfig.APIConnectClientID =")[1].split('";')[0].replace('"','').strip()
+    for q in range(0,5):
+        # print(":---------------------------",str(q))
         url = "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="+str(q)
-
         payload = {}
         headers = {
         'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -39,7 +40,7 @@ def fetch_data():
         'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
         'x-dtpc': '4$191667465_950h12vQPNFURNDJMQINMBHSQMRENURORTBHPHM-0e9',
-        'x-ibm-client-id': 'b8d40347-fa4e-457c-831a-31b159bf081a',
+        'x-ibm-client-id': ids,
         'x-requested-with': 'XMLHttpRequest',
         }
 
@@ -112,10 +113,10 @@ def fetch_data():
                     store.append(hours.strip())
                     store.append( page_url)     
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    if raw_address1 in addressesess:
+                    if str(raw_address1+page_url) in addressesess:
                         continue
-                    addressesess.append(raw_address1)
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
+                    addressesess.append(str(raw_address1+page_url))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
                     yield store
                     # if [] != data['openingTimes']:
                     #     for q in data['openingTimes']:

@@ -37,53 +37,51 @@ def fetch_data():
 
         session = SgRequests()
                 
-        r = session.get(locator_domain)
-        soup=BeautifulSoup(r.text,'lxml')
+        r = session.get("https://www.zoomcare.com/about")
+        soup=str(BeautifulSoup(r.text,'lxml'))
+        soup = soup.replace("\\u002F","/")
 
-        divs=soup.findAll(class_="sub-list")
-        for div in divs:
-                page_locator=locator_domain+div.a.get('href')
-                if page_locator=="https://www.zoomcare.com/about":
-                        break
-                else:
-                        print(page_locator)
-                        r_locator=session.get(page_locator)
-                        soup_locator=BeautifulSoup(r_locator.text,'lxml')
-                        if "Goodbye" in soup_locator.h1.text:
-                                continue
-                        if "We're coming" in soup_locator.h1.text:
-                                continue
-                        pages.append(page_locator)
-                        try:
-                                locs.append(soup_locator.find(class_="header-3").text)
-                        except:
-                                locs.append(soup_locator.title.text.split("|")[0].strip())
-                        streets.append(soup_locator.find(class_="clinic-address").contents[0].text)
-                        cities.append(soup_locator.find(class_="clinic-address").contents[2].text.split(',')[0])
-                        states.append(soup_locator.find(class_="clinic-address").contents[2].text.split(', ')[1])
-                        try:
-                                zips.append(soup_locator.find(class_="map-info-column").a.get('href').split('+')[-1])
-                        except:
-                                try:
-                                        zips.append(str(soup_locator.findAll("script")[-9]).split('postalCode="')[1].split('"')[0])
-                                except:
-                                        try:
-                                                map_link = soup_locator.find('iframe')['src']
-                                                zip_code = re.findall(r'\+[0-9]{5}', map_link)[0][1:]
-                                                zips.append(zip_code)
-                                        except:
-                                                zips.append("<MISSING>")
-                        types_list=soup_locator.findAll(class_="col-8")
-                        list=[]
-                        for type in types_list:
-                                list.append(type.h2.text)
-                        types.append(', '.join(list))
-                        lats.append(str(soup_locator.findAll("script")[-9]).split('latitude="')[1].split('"')[0])
-                        longs.append(str(soup_locator.findAll("script")[-9]).split('longitude="')[1].split('"')[0])
-                        try:
-                                timing.append(soup_locator.find(class_="Clinic__body__hours").text.strip())
-                        except:
-                                timing.append("<MISSING>")
+        links = re.findall(r'/clinic/.*?"', soup)
+        for link in links:
+            page_locator = locator_domain + link[:-1]
+            print(page_locator)
+            r_locator=session.get(page_locator)
+            soup_locator=BeautifulSoup(r_locator.text,'lxml')
+            if "Goodbye" in soup_locator.h1.text:
+                    continue
+            if "We're coming" in soup_locator.h1.text:
+                    continue
+            pages.append(page_locator)
+            try:
+                    locs.append(soup_locator.find(class_="header-3").text)
+            except:
+                    locs.append(soup_locator.title.text.split("|")[0].strip())
+            streets.append(soup_locator.find(class_="clinic-address").contents[0].text)
+            cities.append(soup_locator.find(class_="clinic-address").contents[2].text.split(',')[0])
+            states.append(soup_locator.find(class_="clinic-address").contents[2].text.split(', ')[1])
+            try:
+                    zips.append(soup_locator.find(class_="map-info-column").a.get('href').split('+')[-1])
+            except:
+                    try:
+                            zips.append(str(soup_locator.findAll("script")[-9]).split('postalCode="')[1].split('"')[0])
+                    except:
+                            try:
+                                    map_link = soup_locator.find('iframe')['src']
+                                    zip_code = re.findall(r'\+[0-9]{5}', map_link)[0][1:]
+                                    zips.append(zip_code)
+                            except:
+                                    zips.append("<MISSING>")
+            types_list=soup_locator.findAll(class_="col-8")
+            list=[]
+            for type in types_list:
+                    list.append(type.h2.text)
+            types.append(', '.join(list))
+            lats.append(str(soup_locator.findAll("script")[-9]).split('latitude="')[1].split('"')[0])
+            longs.append(str(soup_locator.findAll("script")[-9]).split('longitude="')[1].split('"')[0])
+            try:
+                    timing.append(soup_locator.find(class_="Clinic__body__hours").text.strip())
+            except:
+                    timing.append("<MISSING>")
                 
         return_main_object=[]
         for i in range(len(locs)):

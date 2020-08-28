@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +17,7 @@ def fetch_data():
     url = 'https://storelocations.ae.com/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://storelocations.ae.com/ca/' in line or '<loc>https://storelocations.ae.com/us/' in line:
             lurl = line.split('>')[1].split('<')[0]
             count = lurl.count('/')
@@ -42,6 +42,9 @@ def fetch_data():
             country = 'US'
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if '<title>' in line2:
+                name = line2.split('<title>')[1].split('<')[0].replace('&amp;','&')
             if "days='[" in line2:
                 days = line2.split("days='[")[1].split("]}]'")[0].split('"day":"')
                 for day in days:
@@ -55,33 +58,24 @@ def fetch_data():
                                 hours = hours + '; ' + dname + ': ' + hrs
                         except:
                             hours = 'CLOSED'
-            if '","id":' in line2:
-                store = line2.split('","id":')[1].split(',')[0]
-            if '"latitude":' in line2:
-                lat = line2.split('"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split(',')[0]
-            if 'itemprop="name">' in line2:
-                typ = line2.split('itemprop="name">')[1].split('<')[0]
-                name = line2.split('itemprop="name">')[1].split('</h1>')[0].replace('<br>','')
-            if 'c-address-street-1" itemprop="streetAddress">' in line2:
-                add = line2.split('c-address-street-1" itemprop="streetAddress">')[1].split('<')[0]
-            if 'c-address-street-2" itemprop="streetAddress">' in line2:
-                add = add + ' ' + line2.split('c-address-street-2" itemprop="streetAddress">')[1].split('<')[0]
-                add = add.strip()
-            if '<span itemprop="addressLocality">' in line2:
-                city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
-            if 'itemprop="addressRegion">' in line2:
+            if 'itemprop="address" data-country="' in line2:
+                city = line2.split('<meta itemprop="addressLocality" content="')[1].split('"')[0]
+                add = line2.split('"streetAddress" content="')[1].split('"')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-            if 'itemprop="postalCode">' in line2:
-                zc = line2.split('itemprop="postalCode">')[1].split('<')[0].strip()
-            if 'itemprop="telephone" id="telephone">' in line2:
-                phone = line2.split('itemprop="telephone" id="telephone">')[1].split('<')[0]
+                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
+                lat = line2.split('data-lat="')[1].split('"')[0]
+                lng = line2.split('data-long="')[1].split('"')[0]
+                try:
+                    phone = line2.split('data-ya-track="phone">')[1].split('<')[0]
+                except:
+                    phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
         if typ == '':
             typ = 'American Eagle'
+        store = '<MISSING>'
         if city != '' and hours != 'CLOSED':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

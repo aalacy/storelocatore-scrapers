@@ -19,39 +19,55 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36',
     "X-Requested-With": "XMLHttpRequest",
     "Accept": "application/json",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.oktire.com"
-    data = 'action=api_oktire_stores&path=search&filter%5Bkeywords%5D=&filter%5Bcity%5D=&filter%5Bzip%5D=&filter%5Bcountry%5D=&filter%5Bloc%5D=56.130366%2C-106.34677099999999&filter%5Bradius%5D=99999&filter%5Bcommercial%5D=0'
-    r = session.post("https://www.oktire.com/wp-admin/admin-ajax.php",headers=headers,data=data)
-    return_main_object = []
-    location_list = r.json()["items"]
-    for i in range(len(location_list)):
+
+    ca_provinces_codes = {'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'}
+    final_data = []
+    for province in ca_provinces_codes:
+        data = {'action': 'api_oktire_stores',
+                'path': 'search',
+                'filter[radius]': '99999',
+                'filter[city]': '',
+                'filter[zip]': '',
+                'filter[country]': '',
+                'filter[loc]': '',
+                'filter[province][]': province,
+                'summarize': '1',
+                'limit': '9999',
+                'offset': '0'}
+
+        r = session.post("https://www.oktire.com/wp-admin/admin-ajax.php",headers=headers,data=data)
+        return_main_object = []
+        location_list = r.json()["items"]
+        for i in range(len(location_list)):
             store_data = location_list[i]
             store = []
             store.append("https://www.oktire.com")
             store.append(store_data["name"])
-            store.append(store_data["street"])
-            store.append(store_data["City"])
-            store.append(store_data["StateProvince"])
-            store.append(store_data["ZIPPostal_Code"] if len(store_data["ZIPPostal_Code"]) != 6 else store_data["ZIPPostal_Code"][0:3] + " " + store_data["ZIPPostal_Code"][3:])
+            store.append(store_data["address"]["street"])
+            store.append(store_data["address"]["city"])
+            store.append(store_data["address"]["province"])
+            store.append(store_data["address"]["postal"])
             store.append("CA")
             store.append(store_data["id"])
-            store.append(store_data["phone"]["formatted"] if store_data["phone"]["formatted"]  != "" else "<MISSING>")
+            store.append(store_data["contact"]["phone"]["formatted"] if store_data["contact"]["phone"]["formatted"] != "" else "<MISSING>")
             store.append("<MISSING>")
-            store.append(store_data["Latitude"])
-            store.append(store_data["Longitude"])
+            store.append(store_data["coords"]["lat"])
+            store.append(store_data["coords"]["lng"])
             hours = ""
             store_hours = store_data["hours"]
             for key in store_hours:
                 hours = hours + " " + store_hours[key]["label"] + " " + store_hours[key]["hours"]
             store.append(hours if hours  != "" else "<MISSING>")
-            store.append("<MISSING>")
+            store.append(store_data["url"])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            yield store
+            final_data.append(store)
+    return final_data
 
 def scrape():
     data = fetch_data()
