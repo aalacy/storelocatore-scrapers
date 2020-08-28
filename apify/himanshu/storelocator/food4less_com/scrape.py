@@ -40,7 +40,7 @@ def fetch_data():
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
     while zip_code:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         datas = query_zip(zip_code)
         result_coords = []
         for key in datas['stores']:

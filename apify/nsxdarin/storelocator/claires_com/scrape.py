@@ -85,7 +85,7 @@ def fetch_data():
                    'lat': str(x),
                    'lng': str(y)
                    }
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         website = 'claires.com'
         r = session.post(url, headers=headers, data=payload)
         if '"id":"' in r.content:

@@ -60,7 +60,7 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         website = 'kroger.com/fuel'
         # print('%s...' % coord)
         url = 'https://www.kroger.com/stores/api/graphql'

@@ -40,7 +40,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         #print("zip_code === "+zip_code)
-       # print("remaining zipcodes: " + str(len(search.zipcodes)))
+       # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://api.2xlo.com//wp-json/foa/v1/search/branch/"+str(zip_code)+"?k=f007836b4b5907b824451e19faf63520b9daee20&radius=300"
         #print(location_url)
        

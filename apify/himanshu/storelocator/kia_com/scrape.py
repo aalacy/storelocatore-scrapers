@@ -34,7 +34,7 @@ def fetch_data():
     while zip_code:
         result_coords =[]
         # print("zip_code === "+zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://www.kia.com/us/services/en/dealers/search"
 
         data = r'{"type":"zip","zipCode":"'+str(zip_code)+'","dealerCertifications":[],"dealerServices":[]}'

@@ -33,7 +33,7 @@ def fetch_data():
         result_coords = []
         lat = str(coord[0])
         lng = str(coord[1])
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('Pulling Lat-Long %s,%s..' % (lat,lng))
         # print(lng)
         base_url="https://www.pizza73.com/Pizza73/proxy.php?lng="+str(lng)+"&lat="+str(lat)

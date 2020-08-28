@@ -84,7 +84,7 @@ def fetch_store_ids():
     store_ids = set()
     zip_code = search.next_zip()
     while zip_code:
-        print('{} zip codes remaining'.format(len(search.zipcodes)))
+        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
         new_ids = crawl_zip_code(zip_code)
         store_ids.update(new_ids)
         search.max_distance_update(50.0)

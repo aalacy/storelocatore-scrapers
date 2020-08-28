@@ -63,7 +63,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print(zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))        
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))        
         list_of_urls.append("https://us.nissan-api.net/v2/dealers?size=50&isMarketingDealer=true&location="+str(zip_code)+"&serviceFilterType=AND&include=openingHours")  
         # if len(list_of_urls)==5:
         #     break

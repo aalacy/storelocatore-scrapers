@@ -30,7 +30,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print("zip_code === " + str(zip_code))
-        # print("ramiang zip =====" + str(len(search.zipcodes)))
+        # print("ramiang zip =====" + str(search.zipcodes_remaining()))
         headers = {
             'User-Agent': "PostmanRuntime/7.19.0",
             'content-type' : 'application/json;charset=UTF-8'

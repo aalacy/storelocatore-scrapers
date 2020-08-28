@@ -45,7 +45,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print("zip_code === "+zip_code)
 
         location_url = "https://productlocator.iriworldwide.com/productlocator/servlet/ProductLocatorEngine?producttype=upc&radius=" + str(

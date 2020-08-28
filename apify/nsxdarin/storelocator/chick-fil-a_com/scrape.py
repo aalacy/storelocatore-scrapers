@@ -65,7 +65,7 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
         stores = r['response']['entities']
         result_coords = []

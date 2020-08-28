@@ -26,7 +26,7 @@ def fetch_data():
     code = search.next_zip()
     while code:
         #print('Pulling Zip Code %s...' % code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         url = 'https://www.ford.com/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode=' + code
         js = fetch_zip_code(url)

@@ -38,7 +38,7 @@ def fetch_data():
     while coord:
         result_coords = []
      #   print(search.current_zip)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://www.labcorp.com/labs-and-appointments/results?lat="+str(coord[0])+"&lon="+str(coord[1])+"&radius="+str(MAX_DISTANCE)
         # print(location_url)
         try:

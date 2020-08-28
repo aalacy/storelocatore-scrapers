@@ -26,7 +26,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         website = 'pennzoil.com'

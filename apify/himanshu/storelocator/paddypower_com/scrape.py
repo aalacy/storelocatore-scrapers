@@ -33,7 +33,7 @@ def fetch_data():
     returnres=[]
     base_url="https://www.paddypower.com/"
     while coord:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         if coord != None:
             lat = coord[0]

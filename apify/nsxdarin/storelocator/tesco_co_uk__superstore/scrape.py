@@ -77,7 +77,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         lat, lng = coord[0], coord[1]
         url = URL_TEMPLATE.format(lat, lng)
         response = session.get(url, headers=HEADERS).json()

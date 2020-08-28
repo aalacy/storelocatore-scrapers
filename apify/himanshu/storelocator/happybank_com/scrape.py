@@ -41,7 +41,7 @@ def fetch_data1():
     while zip_code:
         result_coords = []
         #print("zip_code === " + zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             location_url = "https://www.happybank.com/Locations?bh-sl-address=" + \
                 str(zip_code) + "&locpage=search"

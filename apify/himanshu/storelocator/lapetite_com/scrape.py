@@ -41,7 +41,7 @@ def fetch_data():
     while zip_code:
         result_coords =[]
        # print("zip_code === "+zip_code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers)
         soup = BeautifulSoup(r.text,"lxml")

@@ -34,7 +34,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(coord[0], coord[1])
         stores = session.get(url, headers=HEADERS).json()['Items']
         print(len(stores))

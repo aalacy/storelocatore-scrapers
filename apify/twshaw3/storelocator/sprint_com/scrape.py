@@ -40,7 +40,7 @@ def fetch_data():
     zipcode = search.next_zip()
     while zipcode:
         print(zipcode)
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(zipcode)
         stores = session.get(url, headers=HEADERS).json()['Hits']
         print(len(stores))

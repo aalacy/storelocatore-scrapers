@@ -29,7 +29,7 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.benjerry.co.uk/home/scoop-shops/main/scoopshopcontent/genericContent/brand-redesign-header-grid/columnOne/scoop-shop--header.where2GetItActionNew.do"
 
         payload = 'addressline='+str(zip_code)+'&icons=SHOP%2Cdefault%2CCINEMA'

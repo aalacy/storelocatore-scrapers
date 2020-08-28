@@ -30,7 +30,7 @@ def fetch_data():
 
 	while coords:
 		result_coords = []
-		# print("remaining zipcodes: " + str(len(search.zipcodes)))
+		# print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 		# print(coords[0],coords[1])
 		base_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1="+str(coords[0])+"&Latitude2="+str(coords[0]+1)+"&Longitude1="+str(coords[1])+"&Longitude2="+str(coords[1]+1)+"&DataSource=RetailGasStations&Country=US"
 		# base_url = "https://www.exxon.com/en/find-station/?longitude1="+str(coords[1])+"&longitude2="+str(coords[1]-1)+"&latitude1="+str(coords[0])+"&latitude2="+str(coords[0]-1)
