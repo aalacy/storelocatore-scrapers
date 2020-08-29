@@ -99,27 +99,34 @@ def fetch_data():
         if " Coming soon" in title:
             continue
         else:
-
-            store = []
-            store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code)
-            store.append(store_number) 
-            store.append(phone.replace("813.602.1 (677)","813.602.1677") if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append("<MISSING>")
-            store.append(page_url)
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            if store[2] in adressess:
+            std = street_address.replace("Coming Soon!","").strip()
+            if location_name == "Bel Air":
+                std = "564 Baltimore Pike"
+                city = "Bel Air"
+                state = "MD"
+            if location_name == "Atlanta" or location_name == "Pittsburgh":
                 continue
-            adressess.append(store[2])
-            yield store
+            else:
+                store = []
+                store.append(base_url)
+                store.append(location_name if location_name else "<MISSING>")
+                store.append(std if std else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code)
+                store.append(store_number) 
+                store.append(phone.replace("813.602.1 (677)","813.602.1677") if phone else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(latitude)
+                store.append(longitude)
+                store.append("<MISSING>")
+                store.append(page_url)
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                if store[2] in adressess:
+                    continue
+                adressess.append(store[2])
+                yield store
         
 def scrape():
     data = fetch_data()
