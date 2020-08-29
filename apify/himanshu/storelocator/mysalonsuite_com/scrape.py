@@ -28,12 +28,9 @@ def fetch_data():
     base_url = "https://www.mysalonsuite.com"
     json_data = session.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
     for data in json_data:
-        if data['street_address'] == "Coming Soon!" or data['street_address'] == "Opening Soon!" or data['street_address'] == "1943 E Brandon Blvd":
-            continue
         location_name = data['name'].replace("MY SALON Suite of Whitney Ranch","Whitney Ranch")
         street_address = (str(data['street_address']) +" "+ str(data['street_address_line2']) +" "+ str(data['street_address_line3'])).replace("(at 4th Avenue North)","").replace("Now Open!","").replace("(Next to Regal Cinema)","").strip()
-        if "Coming Soon" in street_address:
-            continue
+        
         if "1943 E Brandon Blvd" in street_address:
             continue
         city = data['city']
@@ -71,10 +68,12 @@ def fetch_data():
         else:
             r1 = session.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
-            zipp1 = list(soup1.find("div",{"class":"intro__content"}).stripped_strings)
-            zipp = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp1))[0]
-            # print(zipp)
-           # street_address =street_address1[0]# phone = number[-1].replace("949) 424-6770","(949) 424-6770").replace("63-608-9772","863-608-9772").replace("Leasing Phone Number:","")
+            try:
+                zipp1 = list(soup1.find("div",{"class":"intro__content"}).stripped_strings)
+                zipp = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp1))[0]
+            except:
+                zipp = "<MISSING>"
+        
         if temp_phone:
             temp_phone = temp_phone
             phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
@@ -89,37 +88,40 @@ def fetch_data():
                 phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
             except:
                 phone = "<MISSING>"
-        
-        
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code)
-        store.append(store_number) 
-        store.append(phone.replace("813.602.1 (677)","813.602.1677") if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append("<MISSING>")
-        store.append(page_url)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        if store[2] in adressess:
+
+       
+        filter_data= session.get(page_url,headers=headers)
+        soup_filter = BeautifulSoup(filter_data.text, "lxml")
+        try:
+            title = soup_filter.find("div",{"class":"intro__content"}).find("h1").text.split("–")[-1]
+        except:
             continue
-        adressess.append(store[2])
-        yield store
+        if " Coming soon" in title:
+            continue
+        else:
 
+            store = []
+            store.append(base_url)
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code)
+            store.append(store_number) 
+            store.append(phone.replace("813.602.1 (677)","813.602.1677") if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append("<MISSING>")
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2] in adressess:
+                continue
+            adressess.append(store[2])
+            yield store
         
-
-
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
