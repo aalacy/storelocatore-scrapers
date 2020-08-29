@@ -1,12 +1,14 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import lxml
 import html5lib
-from sgrequests import SgRequests
 session = SgRequests()
 
+gd_soup = BeautifulSoup(session.get("https://www.lifecareservices-seniorliving.com/find-a-community/").text, "html5lib")
+ 
+gd_nonce = gd_soup.find(lambda tag : (tag.name == "script") and "nonce" in tag.text).text.split("nonce: '")[1].split("'")[0]
 
 def write_output(data):
     with open('data.csv', mode='w',newline='\n') as output_file:
@@ -40,7 +42,8 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    
+    r2 = session.get("https://www.lifecareservices-seniorliving.com/",headers=headers)
+    soup2 = BeautifulSoup(r2.text, "lxml")
     # gd_nonce = soup2.find(lambda tag: (tag.name == "script" ) and "var gd_ajax_vars" in tag.text.strip()).text.split("var gd_ajax_vars =")[-1].replace("};",'}').split("nonce:")[-1].split("url:")[0].replace("',",'').replace("'",'').strip()
     # print(gd_nonce)
     # exit()
@@ -49,7 +52,7 @@ def fetch_data():
     data = {
             'pg': '1',
             'action': 'get_communities',
-            'gd_nonce': 'ef846c1788'
+            'gd_nonce': str(gd_nonce)
         }
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
@@ -57,7 +60,6 @@ def fetch_data():
     }
 
     response = session.post(url, headers=headers, data = data).json()
-
     for ut in response['results']:
         soup1 = BeautifulSoup(ut['html'], "html5lib")
         for data in soup1.find_all("div",{"class":"cmnty-results-address"}):

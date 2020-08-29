@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     headers = {
@@ -98,24 +96,16 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            if str(str(store[2]+store[10]+store[-1])) in adressessess :
+            if str(str(store[1])) in adressessess :
                 continue
-            adressessess.append(str(store[2]+store[10]+store[-1]))
+            adressessess.append(str(store[1]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data==="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
             yield store
         page+= 1
-        
-        
-
-        
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

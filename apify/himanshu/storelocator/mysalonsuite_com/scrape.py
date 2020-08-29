@@ -28,11 +28,13 @@ def fetch_data():
     base_url = "https://www.mysalonsuite.com"
     json_data = session.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
     for data in json_data:
-        if data['street_address'] == "Coming Soon!" or data['street_address'] == "Opening Soon!":
+        if data['street_address'] == "Coming Soon!" or data['street_address'] == "Opening Soon!" or data['street_address'] == "1943 E Brandon Blvd":
             continue
         location_name = data['name'].replace("MY SALON Suite of Whitney Ranch","Whitney Ranch")
         street_address = (str(data['street_address']) +" "+ str(data['street_address_line2']) +" "+ str(data['street_address_line3'])).replace("(at 4th Avenue North)","").replace("Now Open!","").replace("(Next to Regal Cinema)","").strip()
         if "Coming Soon" in street_address:
+            continue
+        if "1943 E Brandon Blvd" in street_address:
             continue
         city = data['city']
         state = data['state_province']
@@ -41,11 +43,12 @@ def fetch_data():
             city = "Hermosa Beach"
             state = "CA"
             zipp = "90254"
-        street_address = street_address.replace("1559 CA-1, Hermosa Beach, CA 90254","1559 CA-1")
+        street_address = street_address.replace("1559 CA-1, Hermosa Beach, CA 90254","1559 CA-1").replace("The Marks Retail Center 1610 East Girard Place","16010 East Girard Place")
         country_code = data['country'].replace("Canada","CA")
         if len(zipp) == 5 or len(zipp) == 0:
             country_code = "US"
-        temp_phone = data['phone'].replace("-","").replace(".","").replace(" ","").replace(")","").replace("(","").encode('ascii', 'ignore').decode("utf-8").strip()
+        temp_phone = data['phone'].replace("MSS","").replace("MYSS","").replace("-","").replace(".","").replace(" ","").replace(")","").replace("(","").encode('ascii', 'ignore').decode("utf-8").strip()
+        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
         latitude = data['lat']
         longitude = data['lon']
         store_number = data['location_number']
@@ -62,7 +65,7 @@ def fetch_data():
             r1 = session.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             street_address1 = list(soup1.find("div",{"class":"intro__content"}).find("p").stripped_strings)
-            street_address =street_address1[0]
+            street_address =street_address1[0].replace("The Marks Retail Center","")
         if zipp:
             zipp = zipp
         else:
@@ -74,6 +77,7 @@ def fetch_data():
            # street_address =street_address1[0]# phone = number[-1].replace("949) 424-6770","(949) 424-6770").replace("63-608-9772","863-608-9772").replace("Leasing Phone Number:","")
         if temp_phone:
             temp_phone = temp_phone
+            phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
         else:
             r1 = session.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
@@ -82,10 +86,11 @@ def fetch_data():
                 if number[-1] == ".":
                     del number[-1]
                 temp_phone = number[-1].replace("-","").replace(".","").replace(" ","").replace(")","").replace("(","").encode('ascii', 'ignore').decode("utf-8")
+                phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
             except:
-                temp_phone = "<MISSING>"
+                phone = "<MISSING>"
         
-        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:].replace("(<MI)SSI-NG>","<MISSING>")
+        
         store = []
         store.append(base_url)
         store.append(location_name if location_name else "<MISSING>")
