@@ -81,7 +81,8 @@ def fetch_data():
             longit = '<MISSING>'
         
         street_address, city, state, zip_code = parse_address(a_tag.text.strip())
-        
+        if street_address == "17310 Laurel Park Drive":
+            street_address = "17310 Laurel Park Drive North"
         phone_number = soup.find('p', {'class': 'phone'}).text.replace("Virtual Spin Tour","").strip()
         country_code = 'US'
         store_number = link.split("/")[-1]
