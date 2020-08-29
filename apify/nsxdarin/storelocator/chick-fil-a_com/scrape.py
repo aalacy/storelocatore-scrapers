@@ -65,7 +65,7 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
         stores = r['response']['entities']
         result_coords = []
@@ -98,10 +98,6 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             search.max_distance_update(20)
-        if '30013' not in search.zipcodes:
-            print("missed")
-            print(coord)
-            print(result_coords)
         coord = search.next_zip()
 
 def scrape():
