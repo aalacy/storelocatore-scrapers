@@ -1,13 +1,14 @@
 import csv
 import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -16,23 +17,27 @@ def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
     state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
+    state = state_zip[0].upper()
     zip_code = state_zip[1]
     return city, state, zip_code
 
 def fetch_data():
-    # Your scraper here
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     locator_domain = 'https://clicks.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
-    driver.implicitly_wait(20)
+    req = session.get(locator_domain, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
     all_store_data = []
 
     ##Corporate location
-    divs = driver.find_elements_by_css_selector('div.clicks_locat')
-    cont = divs[1].find_element_by_css_selector('div.block')
-    content = cont.find_element_by_css_selector('p').text.split('\n')
+    divs = base.find_all(class_='clicks_locat')
+    cont = divs[1].find(class_='block')
+    content = cont.p.text.replace('(',".(").split('.')
     street_address = content[0]
     city, state, zip_code = addy_ext(content[1])
     phone_number = content[2]
@@ -43,35 +48,28 @@ def fetch_data():
     country_code = 'US'
     store_number = '<MISSING>'
     location_type = 'Corporate Office'
-    location_name = 'Corporate Office'
+    location_name = 'CLICKS Billiards'
     hours = '<MISSING>'
 
-    store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+    store_data = [locator_domain, locator_domain, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours]
     all_store_data.append(store_data)
 
-    element = driver.find_element_by_css_selector('a.popmake-locations.pum-trigger')
-    driver.execute_script("arguments[0].click();", element)
-
-    places = driver.find_element_by_css_selector('ul.site_list')
-    links = places.find_elements_by_css_selector('a')
+    places = base.find(class_='clicks_locat')
+    links = places.find_all(class_='block')
     href_list = []
     for link in links:
-        href_list.append(link.get_attribute('href'))
+        href_list.append(link.a['href'])
 
     for link in href_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        content = driver.find_element_by_css_selector('div.top-location').text.split('\n')
-        location_name = '<MISSING>'
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+        content = base.find(class_="top-location").text.strip().split('\n')
+        location_name = base.find(class_="navigation").h2.text.strip()
         street_address = content[0]
         city, state, zip_code = addy_ext(content[1])
-        phone_number = content[2].replace('Ph:', '').strip()
-        hours = ''
-        for h in content[3:]:
-            hours += h + ' '
-
-        hours = hours.strip()
+        phone_number = base.find(class_="top-location").a.text.strip()
+        hours = base.find(class_="top-location").find_all("h2")[-1].text.replace("Hours:","").replace("\r\n"," ").replace("  "," ").strip()
 
         lat = '<MISSING>'
         longit = '<MISSING>'
@@ -79,11 +77,10 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():
