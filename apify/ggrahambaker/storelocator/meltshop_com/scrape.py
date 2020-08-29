@@ -35,7 +35,19 @@ def fetch_data():
 
         link = loc.find_all("a")[-1]["href"]
         # print(link)
-        try:
+        if "pittsburgh-airport" in link:
+            link = "https://www.meltshop.com/locations/pittsburgh-airport"
+            street_address = "1000 Airpot Blvd"
+            city = "PITTSBURGH"
+            state = "PA"
+            zip_code = "15231"
+            phone_number = '<MISSING>'
+            country_code = 'US'
+            location_type = '<MISSING>'
+            lat = '<MISSING>'
+            longit = '<MISSING>'
+            store_number = '<MISSING>'
+        else:
             req = session.get(link, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
                 
@@ -49,19 +61,6 @@ def fetch_data():
             lat = base.find(class_="latitude").span["title"]
             longit = base.find(class_="longitude").span["title"]
             store_number = '<MISSING>'
-        except:
-            if link == "/locations/pittsburgh-airport":
-                link = "https://www.meltshop.com/locations/pittsburgh-airport"
-                street_address = "1000 Airpot Blvd"
-                city = "PITTSBURGH"
-                state = "PA"
-                zip_code = "15231"
-                phone_number = '<MISSING>'
-                country_code = 'US'
-                location_type = '<MISSING>'
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-                store_number = '<MISSING>'
 
         store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
