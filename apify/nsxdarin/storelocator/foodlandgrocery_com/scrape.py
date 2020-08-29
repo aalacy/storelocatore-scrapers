@@ -1,8 +1,7 @@
 import json
 
 from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
 URL = "http://foodlandgrocery.com/"
@@ -27,11 +26,7 @@ class Scraper(Scrape):
         phone_numbers = []
         hours = []
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+        driver = SgSelenium().chrome()
 
         # Fetch store urls from location menu
         location_url = "http://foodlandgrocery.com/Decatur_Foodland/locations"
