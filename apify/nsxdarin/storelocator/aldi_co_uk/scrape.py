@@ -4,9 +4,18 @@ import time
 import re
 import json
 
+show_logs = False
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+}
+
+
+def log(*args, **kwargs):
+  if (show_logs == True):
+    print(" ".join(map(str, args)), **kwargs)
+    print("")
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,6 +29,8 @@ def get_json_data(html):
     re_get_json = re.compile('window\.dataLayer\.push\((.+?)\)')
     match = re.search(re_get_json, html)
     json_text = match.group(1)
+    log('>>>>>>>>>>>')
+    log(json_text)
     return json.loads(json_text)['seoData']
 
 
@@ -28,6 +39,22 @@ def get_geo_data(html):
     match = re.search(re_get_json, html)
     json_text = match.group(1).strip()
     return json.loads(json_text)
+
+
+def get(url, headers, attempts=1):
+    global session
+    if attempts == 10:
+        raise SystemExit(f"Could not get {url} after {attempts} attempts.")
+    try:
+        r = session.get(url, headers=headers)
+        log(f'Got status {r.status_code} for {url}')
+        r.raise_for_status()
+        return r
+    except Exception as e:
+        log(e)
+        # reset session and try again
+        session = SgRequests()
+        return get(url, headers, attempts+1)
 
 
 def fetch_data():
@@ -45,7 +72,7 @@ def fetch_data():
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
         time.sleep(3)
-        print('Pulling Location %s ...' % loc)
+        log('Pulling Location %s ...' % loc)
         website = 'aldi.co.uk'
         store = loc.split('s-uk-')[1]
         typ = 'Store'
@@ -58,7 +85,7 @@ def fetch_data():
         zc = ''
         lat = ''
         lng = ''
-        r2 = session.get(loc, headers=headers)
+        r2 = get(loc, headers=headers)
         data = get_json_data(r2.text)
         name = data['name']
         try:
