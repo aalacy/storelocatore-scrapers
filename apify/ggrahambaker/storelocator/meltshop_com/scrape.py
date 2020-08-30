@@ -51,7 +51,7 @@ def fetch_data():
             req = session.get(link, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
                 
-            street_address = base.find(class_="street-address").text.strip()
+            street_address = base.find(class_="street-address").text.replace("2829","2820").strip()
             city = base.find(class_="locality").text.strip()
             state = base.find(class_="region").text.strip()
             zip_code = base.find(class_="postal-code").text.strip()
