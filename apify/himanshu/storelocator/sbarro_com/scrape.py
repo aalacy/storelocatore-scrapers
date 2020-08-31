@@ -111,12 +111,18 @@ def fetch_data():
                 
                 store_number = link['id'].split("-")[-1].strip()
                 lat = link['data-latitude']
+                if lat == '0':
+                    lat='<MISSING>'
+            
                 lng = link['data-longitude']
+                if lng == '0':
+                    lng='<MISSING>'
                 
                 location_type = "Restaurant"
                 location_soup = bs(session.get(page_url).text, "lxml")
                 hours = " ".join(list(location_soup.find("div",{"class":"location-hours"}).stripped_strings)).replace("Hours of Operation","")
-
+                if 'Hours not available' in  hours:
+                    hours = "<MISSING>"
                 store = []
                 store.append(base_url)
                 store.append(location_name)
