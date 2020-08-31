@@ -1,69 +1,11 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-
-sta = {
-        'AL': 'Alabama',
-        'AR': 'Arkansas',
-        'AS': 'American Samoa',
-        'AZ': 'Arizona',
-        'CA': 'California',
-        'CO': 'Colorado',
-        'CT': 'Connecticut',
-        'DC': 'District of Columbia',
-        'DE': 'Delaware',
-        'FL': 'Florida',
-        'GA': 'Georgia',
-        'GU': 'Guam',
-        'HI': 'Hawaii',
-        'IA': 'Iowa',
-        'ID': 'Idaho',
-        'IL': 'Illinois',
-        'IN': 'Indiana',
-        'KS': 'Kansas',
-        'KY': 'Kentucky',
-        'LA': 'Louisiana',
-        'MA': 'Massachusetts',
-        'MD': 'Maryland',
-        'ME': 'Maine',
-        'MI': 'Michigan',
-        'MN': 'Minnesota',
-        'MO': 'Missouri',
-        'MP': 'Northern Mariana Islands',
-        'MS': 'Mississippi',
-        'MT': 'Montana',
-        'NA': 'National',
-        'NC': 'North Carolina',
-        'ND': 'North Dakota',
-        'NE': 'Nebraska',
-        'NH': 'New Hampshire',
-        'NJ': 'New Jersey',
-        'NM': 'New Mexico',
-        'NV': 'Nevada',
-        'NY': 'New York',
-        'OH': 'Ohio',
-        'OK': 'Oklahoma',
-        'OR': 'Oregon',
-        'PA': 'Pennsylvania',
-        'PR': 'Puerto Rico',
-        'RI': 'Rhode Island',
-        'SC': 'South Carolina',
-        'SD': 'South Dakota',
-        'TN': 'Tennessee',
-        'TX': 'Texas',
-        'VA': 'Virginia',
-        'VI': 'Virgin Islands',
-        'VT': 'Vermont',
-        'WA': 'Washington',
-        'WI': 'Wisconsin',
-        'WV': 'West Virginia',
-        'WY': 'Wyoming'
-}
-states_lp = sta.keys()
+from bs4 import BeautifulSoup as bs
+import usaddress
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -75,84 +17,128 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    addresses = []
+    addressess = []
     base_url = "https://sbarro.com"
-    for st in states_lp:
-        # print(st)
-        location_url = "https://sbarro.com/locations/?user_search=" + str(st)
-        r = session.get(location_url)
-        soup = BeautifulSoup(r.text, "lxml")
-        links = soup.find_all("h2",{"class":"location-name"})
-        for index,link in enumerate(links):
-            coords = soup.find_all("section",{"class":"locations-result"})
-            latitude = []
-            longitude = []
-            for coord in coords:
-                latitude.append(coord['data-latitude'])
-                longitude.append(coord['data-longitude'])
-            page_url = base_url+link.find("a")['href']
-            r1 = session.get(page_url)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            try:
+    UsState = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
+    
+    for region in UsState:
 
-                try:
-                    location_name = soup1.find("h1",{"class":"location-name"}).text.strip()
-                except:
-                    location_name = soup1.find("h2",{"class":"location-name"}).text.strip()
-            except:
-                continue
-                
+        location_url = "https://sbarro.com/locations/?user_search=" + str(region)
+        soup = bs(session.get(location_url).text, "lxml")
+        
+        for link in soup.find_all("section",{"class":"locations-result"}):
             
-            # print(location_name)
-            street_address = " ".join(soup1.find("p",{"class":"location-address"}).text.replace(",,",',').split(",")[:-2]).strip()
-            city = soup1.find("p",{"class":"location-address"}).text.replace(",,",',').split(",")[-2].strip().capitalize()
-            temp_state_zip = soup1.find("p",{"class":"location-address"}).text.replace(",,",',').split(",")[-1].strip().split(" ")
-            # print(temp_state_zip)
-            if len(temp_state_zip) == 2:
-                state = temp_state_zip[0]
-                zipp = temp_state_zip[1]
-            elif len(temp_state_zip) == 3:
-                state = temp_state_zip[0]
-                zipp = temp_state_zip[2]
-            else:
-                state = temp_state_zip[0]
-                zipp = "<MISSING>"
-            try:
-                phone = soup1.find("div",{"class":"location-phone location-cta"}).find("span",{"class":"btn-label"}).text.strip()
-            except:
-                phone = "<MISSING>"
-            try:
-                hours_of_operation = " ".join(list(soup1.find("div",{"class":"location-hours"}).stripped_strings))
-            except:
-                hours_of_operation = "<MISSING>"
+            page_url = base_url + link.find("a")['href']
+            
+            if region != page_url.split("/")[4].upper().strip():
+                continue
+           
+            if page_url.split("/")[-1]:
+               
+                try:
+                    location_name = link.find("h1",{"class":"location-name"}).text.strip()
+                except:
+                    location_name = link.find("h2",{"class":"location-name"}).text.strip()
+                
+                addr = list(link.find("p",{"class":"location-address nobottom"}).stripped_strings)
+            
+                if len(addr) == 1:
+                    address = usaddress.parse(addr[0])
+                    
+                    street_address = []
+                    city = ''
+                    state = ''
+                    zipp = ''
+                    for info in address:
+                        if "SubaddressType" in info:
+                            street_address.append(info[0])
 
-            country_code = "US"
-            location_type = "Restaurant"
-            if latitude[index] =="0" and longitude[index] == "0":
-                latitude[index] = "<MISSING>"
-                longitude[index] = "<MISSING>"
+                        if "SubaddressIdentifier" in info:
+                            street_address.append(info[0])
 
-            if state == st:
+                        if "Recipient" in info:
+                            street_address.append(info[0])
+
+                        if "International" in info:
+                            street_address.append(info[0])
+                        
+                        if "BuildingName" in info:
+                            street_address.append(info[0])
+
+                        if "AddressNumber" in info:
+                            street_address.append(info[0])
+
+                        if "StreetNamePreDirectional" in info:
+                            street_address.append(info[0])
+
+                        if "StreetNamePreType" in info:
+                            street_address.append(info[0])
+                        if "StreetName" in info:
+                            street_address.append(info[0])
+                        if "StreetNamePostType" in info:
+                            street_address.append(info[0])
+                        if "StreetNamePostDirectional" in info:
+                            street_address.append(info[0])
+                        if "OccupancyType" in info:
+                            street_address.append(info[0])
+                        if "OccupancyIdentifier" in info:
+                            street_address.append(info[0])
+
+                        if "PlaceName" in info:
+                            city = info[0]
+                        if "StateName" in info:
+                            state = info[0]
+                        if "ZipCode" in info:
+                            zipp = info[0]
+
+                    street_address = " ".join(street_address)  
+                else:   
+                    street_address = " ".join(addr[:-1])
+                    city = addr[-1].split(",")[0]
+                    
+                    if len(addr[-1].split(",")[1].split()) == 2:
+                        state = addr[-1].split(",")[1].split()[0]
+                        zipp = addr[-1].split(",")[1].split()[-1]
+                    else:
+                        state = addr[-1].split(",")[1].split()[0]
+                        zipp = "<MISSING>"
+        
+                if link.find("div",{"class":"location-phone location-cta"}):
+                    phone = link.find("div",{"class":"location-phone location-cta"}).find("span",{"class":"btn-label"}).text.strip()
+                    
+                else:
+                    phone = "<MISSING>"
+                
+                store_number = link['id'].split("-")[-1].strip()
+                lat = link['data-latitude']
+                lng = link['data-longitude']
+                
+                location_type = "Restaurant"
+                location_soup = bs(session.get(page_url).text, "lxml")
+                hours = " ".join(list(location_soup.find("div",{"class":"location-hours"}).stripped_strings)).replace("Hours of Operation","")
 
                 store = []
                 store.append(base_url)
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append(country_code if country_code else "<MISSING>")
-                store.append("<MISSING>") 
-                store.append(phone if phone else "<MISSING>") 
-                store.append(location_type if location_type else "<MISSING>")
-                store.append(latitude[index])
-                store.append(longitude[index])
-                store.append(hours_of_operation.replace("Hours of Operation","") if hours_of_operation.replace("Hours of Operation","") else "<MISSING>")
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append("US")
+                store.append(store_number)
+                store.append(phone)
+                store.append(location_type)
+                store.append(lat)
+                store.append(lng)
+                store.append(hours)
                 store.append(page_url)
-                if store[2] in addresses:
-                        continue
-                addresses.append(store[2])
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
+                if store[2] in addressess:
+                    continue
+                addressess.append(store[2])
                 yield store
+           
                 
 def scrape():
     data = fetch_data()
