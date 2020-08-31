@@ -29,54 +29,93 @@ def fetch_data():
     timing = []
     ids = []
     page_url = []
-
+    urls=[]
     res = requests.get("https://houlihans.com/find-a-location")
     soup = BeautifulSoup(res.text, 'html.parser')
-    lis = soup.find('div', {'class': 'sf_cols'}).find_all('li')
+    lis = soup.find('div', {'class': 'sf_cols'}).find_all('a')
     print(len(lis))
 
     for li in lis:
 
-        if "(coming" in li.text.lower():
-            continue
-        u = li.find('a').get('href')
+        u = li.get('href')
+        print(u)
         if "www.houlihans.com" not in u:
             if "//bit.ly" not in u:
-                page_url.append("https://houlihans.com" + u)
+                urls.append("https://houlihans.com" + u)
+                locs.append(li.text)
         else:
+            locs.append(li.text)
+            urls.append(u)
 
-            page_url.append(u)
+    for url in urls:
+        #print(url)
+        try:
+            res = requests.get(url)
+        except:
+            del locs[urls.index(url)]
+            continue
+        page_url.append(url)
 
-    for url in page_url:
-        print(url)
-        res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        locs.append(soup.find('span', {'itemprop': 'name'}).text)
-        strees = soup.find_all('span', {'itemprop': 'streetAddress'})
-        st = ""
-        for stree in strees:
-            st += stree.text
-        street.append(st)
-        cities.append(soup.find('span', {'itemprop': 'addressLocality'}).text)
-        states.append(soup.find('span', {'itemprop': 'addressRegion'}).text)
-        zips.append(soup.find('span', {'itemprop': 'postalCode'}).text)
-        ph = soup.find('span', {'itemprop': 'telephone'}).text.strip()
+        street.append(soup.find('span', {'class': 'd_address1'}).text.strip())
+        cities.append(soup.find('span', {'class': 'd_city'}).text.strip())
+        states.append(soup.find('span', {'class': 'd_state'}).text.strip())
+        zips.append(soup.find('span', {'class': 'd_zip'}).text.strip())
+        ph = soup.find('span', {'class': 'd_phone'}).text.strip()
         if ph != "":
             phones.append(ph)
         else:
             phones.append("<MISSING>")
 
-        tim = soup.find('div', {'class': 'location-hours pod half'}).text.strip()
-        if tim != "":
-            timing.append(tim.replace('\r\n', " ").replace('\n', " ").replace('\t', ""))
-        else:
-            timing.append("<MISSING>")
-        coord = soup.find('a', {'id': 'MainContent_hlDirections'}).get('href')
-        lat.append(re.findall(r'q=(-?[\d\.]*)', coord)[0])
-        long.append(re.findall(r'q=[-?\d\.]*\,([-?\d\.]*)', coord)[0])
-        ids.append(soup.find('input', {'id': 'hidStoreNumber'}).get('value'))
-        #print(soup)
-        types.append(re.findall(r'<div itemscope="" itemtype="http://schema\.org/([^"]*)">',str(soup),re.DOTALL)[0])
+
+
+        tim=re.sub(r'[ ]+',' ',soup.find('span', {'class': 'd_hours'}).prettify().replace('&amp;','-').replace('<span class="d_hours">','').replace('</span>','').replace('<br/>','').replace('\n\n','\n').replace('\n',' ').strip())
+        timing.append(tim)
+        try:
+            coord = soup.find('a', {'id': 'MainContent_hlDirections'}).get('href')
+            lat.append(re.findall(r'q=(-?[\d\.]*)', coord)[0])
+            long.append(re.findall(r'q=[-?\d\.]*\,([-?\d\.]*)', coord)[0])
+        except:
+            lat.append('<MISSING>')
+            long.append('<MISSING>')
+        try:
+            ids.append(soup.find('input', {'id': 'hidStoreNumber'}).get('value'))
+        except:
+            ids.append('<MISSING>')
+
+        try:
+            types.append(re.findall(r'<div itemscope="" itemtype="http://schema\.org/([^"]*)">', str(soup), re.DOTALL)[0])
+        except:
+            types.append('<MISSING>')
+
+        """locs.append(soup.find('span', {'itemprop': 'name'}).text)
+    strees = soup.find_all('span', {'itemprop': 'streetAddress'})
+    st = ""
+    for stree in strees:
+        st += stree.text
+    street.append(st)
+    cities.append(soup.find('span', {'itemprop': 'addressLocality'}).text)
+    states.append(soup.find('span', {'itemprop': 'addressRegion'}).text)
+    zips.append(soup.find('span', {'itemprop': 'postalCode'}).text)
+    ph = soup.find('span', {'itemprop': 'telephone'}).text.strip()
+    if ph != "":
+        phones.append(ph)
+    else:
+        phones.append("<MISSING>")
+
+    tim = soup.find('div', {'class': 'location-hours pod half'}).text.strip()
+    if tim != "":
+        timing.append(tim.replace('\r\n', " ").replace('\n', " ").replace('\t', ""))
+    else:
+        timing.append("<MISSING>")
+    coord = soup.find('a', {'id': 'MainContent_hlDirections'}).get('href')
+    lat.append(re.findall(r'q=(-?[\d\.]*)', coord)[0])
+    long.append(re.findall(r'q=[-?\d\.]*\,([-?\d\.]*)', coord)[0])
+    ids.append(soup.find('input', {'id': 'hidStoreNumber'}).get('value'))
+    #print(soup)
+    types.append(re.findall(r'<div itemscope="" itemtype="http://schema\.org/([^"]*)">',str(soup),re.DOTALL)[0])"""
+
+
     all = []
     for i in range(0, len(locs)):
         row = []

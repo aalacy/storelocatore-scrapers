@@ -62,7 +62,6 @@ def fetch_data():
                     city = line2.split('"addressLocality":"')[1].split('"')[0]
                     state = line2.split('"addressRegion":"')[1].split('"')[0]
                     zc = line2.split('"postalCode":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
                 if lat == '':
                     try:
                         lat = line2.split('"latitude":"')[1].split('"')[0]
@@ -74,6 +73,8 @@ def fetch_data():
                     hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
                 except:
                     pass
+            if ',"telephone":"' in line2:
+                phone = line2.split(',"telephone":"')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if phone == '':

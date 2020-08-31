@@ -65,7 +65,10 @@ def fetch_data():
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
                 lat = line2.split('data-lat="')[1].split('"')[0]
                 lng = line2.split('data-long="')[1].split('"')[0]
-                phone = line2.split('data-ya-track="phone">')[1].split('<')[0]
+                try:
+                    phone = line2.split('data-ya-track="phone">')[1].split('<')[0]
+                except:
+                    phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
         if phone == '':

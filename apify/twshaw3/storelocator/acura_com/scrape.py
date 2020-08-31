@@ -26,23 +26,28 @@ class Acura:
                     row = self.map_data(row)
                 writer.writerow(row)
 
+    def handle_missing(self, x):
+        if x == None or len(x) == 0:
+            return "<MISSING>"
+        return x
+        
     def map_data(self, row):
         missing = '<MISSING>'
         return {
             'locator_domain': self.domain_name
-            ,'location_name': row.get('Name', missing)
-            ,'street_address': row.get('Address', missing)
-            ,'city': row.get('City', missing)
-            ,'state': row.get('State', missing)
-            ,'zip': row.get('ZipCode', missing)
+            ,'location_name': self.handle_missing(row.get('Name', missing))
+            ,'street_address': self.handle_missing(row.get('Address', missing))
+            ,'city': self.handle_missing(row.get('City', missing))
+            ,'state': self.handle_missing(row.get('State', missing))
+            ,'zip': self.handle_missing(row.get('ZipCode', missing))
             ,'country_code': self.default_country
             ,'store_number': row.get('DealerNumber', missing)
-            ,'phone': row.get('Phone', missing)
+            ,'phone': self.handle_missing(row.get('Phone', missing))
             ,'location_type': ', '.join([attr['Code'] for attr in row.get('Attributes', [])])
             ,'latitude': row.get('Latitude', missing)
             ,'longitude': row.get('Longitude', missing)
             ,'hours_of_operation': ', '.join(['%s-%s' % (hour['Days'], hour['Hours']) for hour in row.get('SalesHours', [])])
-            ,'page_url': row.get('WebAddress', missing)
+            ,'page_url': self.handle_missing(row.get('WebAddress', missing))
         }
 
     def crawl(self):
@@ -67,6 +72,7 @@ class Acura:
                 ,'getDDPOnly': False
                 ,'zip': code
                 ,'maxResults': 100
+                ,'configGUID': '63be31ec-8c94-47bd-9f96-04a75e315f17'
             }
             headers.update({
                 'referer': 'https://www.acura.com/dealer-locator-inventory?zipcode=%s' % previous_zip_code

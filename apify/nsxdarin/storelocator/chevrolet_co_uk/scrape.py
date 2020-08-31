@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,44 +14,36 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.chevrolet.co.uk/dealer-locator-ws-json/servlet/GB/en/meta/?query=Nr+Spalding&queryType=city&format=html&offset=0&limit=26&onlyMatching=false&apps=iconics&orderBy=distance&orderDirection=asc'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '{"id":' in line:
-            line = line.replace('"departments":[{"id":','').replace(']},{"id":','')
-            items = line.split('{"id":')
-            for item in items:
-                if '{"countryCode":"GB"' not in item:
-                    locs.append(item.split(',')[0])
-    url = 'https://www.chevrolet.co.uk/dealer-locator-ws-json/servlet/GB/en/detail/?'
-    for loc in locs:
-        url = url + 'ids=' + loc + '&'
-    url = url + 'format=html'
-    r2 = session.get(url, headers=headers)
     website = 'chevrolet.co.uk'
-    typ = '<MISSING>'
-    for line2 in r2.iter_lines():
-        if '{"id":' in line2:
-            line2 = line2.replace('"departments":[{"id":','').replace('{"id":1,','')
-            items = line2.split('{"id":')
-            for item in items:
-                if '"code":"' in item:
-                    city = item.split('"locality":"')[1].split('"')[0]
-                    state = item.split('"region":"')[1].split('"')[0]
-                    store = item.split(',')[0]
-                    zc = item.split('"postalCode":"')[1].split('"')[0]
-                    add = item.split('"street":"')[1].split('"')[0]
-                    phone = item.split('"html":"tel: ')[1].split('"')[0]
-                    loc = '<MISSING>'
-                    name = item.split(',"formatted":{"html":"')[1].split('"')[0].strip()
-                    country = 'GB'
-                    lng = item.split('"longitude":')[1].split(',')[0]
-                    lat = item.split(',"latitude":')[1].split('}')[0]
-                    hours = '<MISSING>'
-                    if 'Parts USA' in name:
-                        city = 'Stockport'
-                    state = state.replace('England, ','')
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    cities = ['London','Belfast','Aberdeen']
+    for city in cities:
+        url = 'https://www.chevrolet.co.uk/OCRestServices/dealer/city/v1/faw/' + city + '?distance=500&maxResults=50'
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            if '{"dealerName":"' in line:
+                items = line.split('{"dealerName":"')
+                for item in items:
+                    if 'legalEntityName' in item:
+                        name = item.split('"')[0]
+                        loc = item.split(',"dealerUrl":"')[1].split('"')[0]
+                        phone = item.split('"phone1":"')[1].split('"')[0]
+                        city = item.split('"cityName":"')[1].split('"')[0]
+                        add = item.split('"addressLine1":"')[1].split('"')[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        country = item.split('"countryCode":"')[1].split('"')[0]
+                        state = '<MISSING>'
+                        lat = item.split('"latitude":')[1].split(',')[0]
+                        lng = item.split('"longitude":')[1].split('}')[0]
+                        if 'Stockport' in city:
+                            city = 'Stockport'
+                            add = add + ' Bredbury Park Way'
+                        store = '<MISSING>'
+                        typ = '<MISSING>'
+                        hours = '<MISSING>'
+                        if name not in locs:
+                            locs.append(name)
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
