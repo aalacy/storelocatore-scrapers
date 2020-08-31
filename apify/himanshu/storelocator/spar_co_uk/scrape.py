@@ -5,8 +5,10 @@ import json
 from sgrequests import SgRequests
 
 MISSING = "<MISSING>"
+
 STREET_NUM = re.compile("""^\d{1,7}[A-Z]?$""")
 CONNECTED_HOUSE_NUMS = re.compile("""^\d+ ?- ?\d+$""")
+UNIT_NUM = re.compile("""^Unit \d+$""")
 
 def or_default(get_value: lambda: str, default = MISSING) -> str:
     try:
@@ -60,11 +62,19 @@ def fetch_data():
             contact_us = []
             street_address_seen = False
             for item in contact_us_raw:
-                if STREET_NUM.match(item) or CONNECTED_HOUSE_NUMS.match(item) or item.upper() == "SPAR":
+                # some street addresses have these in them, which isn't necessary.
+                if item == "SPAR" or item == "Euro Garages":
+                    continue
+
+                if STREET_NUM.match(item) \
+                        or CONNECTED_HOUSE_NUMS.match(item) \
+                        or UNIT_NUM.match(item):
                     street_address_seen = True
                     contact_us.append(item)
+
                 elif not street_address_seen:
                     contact_us.append(item)
+
                 else:
                     contact_us[-1] = f"{contact_us[-1]} {item}"
                     street_address_seen = False
@@ -82,13 +92,8 @@ def fetch_data():
                     state = None
                     zipcode = contact_us[address_idx + 3]
             except (ValueError, IndexError) as e:
+                # either no values, or ambiguous data
                 (street_address, city, state, zipcode) = (None, None, None, None)
-
-                print (e)
-                print(list(soup1.find("div", {"class": "store-details__contact"}).stripped_strings))
-                print(contact_us_raw)
-                print(contact_us)
-                print("----")
 
             try:
                 phone_idx = contact_us.index("Phone")
@@ -118,7 +123,11 @@ def fetch_data():
                 ]
             )
 
-            # if it's closed 7 days a week, treat it as permanently closed.
+            # missing crucial address details
+            if not street_address and not zipcode:
+                continue
+
+            # if it's closed 7 days a week, treat it as permanently closed
             if operating_hours.count("CLOSED") == 7:
                 continue
 
