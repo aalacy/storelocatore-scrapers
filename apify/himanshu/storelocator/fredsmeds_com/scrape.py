@@ -42,7 +42,7 @@ def fetch_data():
         try:
             result_coords = []
 
-            # print("remaining zipcodes: " + str(len(search.zipcodes)))
+            # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
             # print("zip_code === " + zip_code)
             # zip_code = "39114"
             location_url = "http://www.fredsmeds.com/locate/?find-a-store=" + zip_code

@@ -57,7 +57,7 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         # lat = -42.225

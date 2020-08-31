@@ -74,7 +74,7 @@ def fetch_data():
     result_coords = []
     # x = coord[0]
     # y = coord[1]
-    #print("remaining zipcodes: " + str(len(search.zipcodes)))
+    #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
     # print("zipcode == " + str(zip_code))
     time.sleep(1)
     r = request_wrapper("https://www.dvf.com/on/demandware.store/Sites-DvF_US-Site/default/Stores-FinderJSON?lat=" +

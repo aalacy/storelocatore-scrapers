@@ -29,7 +29,7 @@ def fetch_data():
     base_url = "https://www.caseih.com/"
     while coord:
         result_coords =[]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         response={}
         if len(str(search.current_zip))==5:
             contry="US"

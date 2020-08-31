@@ -32,7 +32,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('%s-%s...' % (llat, llng))
         url = 'https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/' + str(llat) + '/' + str(llng) + '/?distance=500&maxResults=50'
         r = session.get(url, headers=headers)

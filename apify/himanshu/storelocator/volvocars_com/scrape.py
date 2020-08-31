@@ -66,7 +66,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print(search.current_zip)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         location_url = "https://liveapi.yext.com/v2/accounts/1342454/entities/geosearch?api_key=e3101b0a7c8f6bbd85f09c65cc1f29c7&v=20200630&location="+str(search.current_zip)+"&radius=500&countryBias=US&languages=en&limit=50"
         r = request_wrapper(location_url,"get",headers=headers)

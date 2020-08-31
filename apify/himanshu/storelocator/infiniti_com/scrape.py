@@ -46,7 +46,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print(search.current_zip)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
     
         json_data = session.get("https://us.nissan-api.net/v2/dealers?size="+str(MAX_RESULTS)+"&lat="+str(lat)+"&long="+str(lng)+"&serviceFilterType=AND&include=openingHours", headers=headers).json()['dealers']

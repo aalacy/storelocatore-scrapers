@@ -33,7 +33,7 @@ def fetch_data():
     base_url = "https://www.tractorsupply.com/"
 
     while zip_code:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         json_data = session.get("https://www.tractorsupply.com/wcs/resources/store/10151/zipcode/fetchstoredetails?zipCode="+str(zip_code)+"&isOverlay=Y&lpStoreId=&storeId=&catalogId=&langId=&responseFormat=json&_=1591770815402", headers=headers).json()['storesList']
         

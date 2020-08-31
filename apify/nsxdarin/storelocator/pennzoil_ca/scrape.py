@@ -23,7 +23,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        print("remaining zipcodes: " + str(len(search.zipcodes))) 
+        print("remaining zipcodes: " + str(search.zipcodes_remaining())) 
         website = 'pennzoil.ca'
         url = 'https://locator.pennzoil.com/api/v1/pennzoil/oil_change_locations/nearest_to?limit=50&lat=' + str(llat) + '&lng=' + str(llng) + '&format=json'
         r = session.get(url, headers=headers)

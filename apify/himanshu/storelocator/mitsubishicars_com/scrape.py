@@ -35,7 +35,7 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print(zip_code)
         
         try:

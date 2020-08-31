@@ -41,7 +41,7 @@ def fetch_data2():
               }
     while coords:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             url = 'https://midlandsb.locatorsearch.com/GetItems.aspx'
             data = "lat=" + str(coords[0]) + "&lng=" + str(coords[1]) + \
@@ -166,7 +166,7 @@ def fetch_data1():
     while coords:
         # try:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print(coords[0], coords[1])
 
         try:

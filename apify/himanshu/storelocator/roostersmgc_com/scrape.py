@@ -44,7 +44,7 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
             get_url ="https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/0.8/0.5/true"

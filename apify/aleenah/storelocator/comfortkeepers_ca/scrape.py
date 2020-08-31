@@ -44,7 +44,7 @@ def fetch_data():
     key_set=set([])
     count=0
     while postcode:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         results = query_zip(postcode)
         result_coords=[]
         for r in results:

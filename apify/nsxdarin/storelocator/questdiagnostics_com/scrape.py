@@ -177,7 +177,7 @@ def fetch_data():
             raise
 
         # print(f'found {len(locations)} locations')
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         for loc in locations:
             domain = 'questdiagnostics.com'

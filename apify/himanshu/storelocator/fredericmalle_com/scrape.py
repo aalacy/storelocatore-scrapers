@@ -141,6 +141,9 @@ def fetch_data():
             if page_url == "https://www.fredericmalle.com/about#/stores/california/stockists":
                 state = "CA"
 
+            if "8417 Melrose Place" in address:
+                latitude = '34.08377'
+                longitude = '-118.373915'
 
             tem_var =[]
             tem_var.append(base_url)

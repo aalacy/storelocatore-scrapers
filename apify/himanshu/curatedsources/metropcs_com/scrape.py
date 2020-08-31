@@ -43,7 +43,7 @@ def fetch_data():
 
     response1 =0
     while coord:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         lat = coord[0]
         lng = coord[1]

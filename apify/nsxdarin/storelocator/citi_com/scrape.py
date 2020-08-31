@@ -33,7 +33,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         url = 'https://online.citi.com/gcgapi/prod/public/v1/geoLocations/places/retrieve'
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         array = []

@@ -60,7 +60,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         form_data = get_form_data(coord[0], coord[1])
         stores = session.post(URL, headers=HEADERS, data=form_data).json()
         result_coords = []

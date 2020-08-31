@@ -55,7 +55,7 @@ def fetch_data():
         longitude = ""
         hours_of_operation = ""
         page_url = ''
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             r = session.get("https://maps.hallmark.com/api/getAsyncLocations?template=searchResultsMap&level=search&radius=" + str(MAX_DISTANCE) + "&search=" + str(search.current_zip),
                              headers).json()

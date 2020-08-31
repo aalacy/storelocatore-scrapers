@@ -59,7 +59,7 @@ def fetch_data():
             req = session.get(link, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
             try:
-                hours_of_operation = base.find(class_="collapseBox-info").text.replace("\n","").strip()
+                hours_of_operation = base.find(class_="restaurant-tab-info").text.replace("\n","").replace("Restaurant Hours","").replace("See more Hours"," ").strip()
             except:
                 hours_of_operation = base.find(class_="restaurant-title").text.replace("\n","").strip()
 

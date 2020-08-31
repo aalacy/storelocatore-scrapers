@@ -1,10 +1,9 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import requests
-session = SgRequests()
+
 
 
 
@@ -27,7 +26,7 @@ def fetch_data():
     addressess =[]
     addresses = []
     base_url = "https://www.educationaloutfitters.com"
-    r = session.get("http://www.educationaloutfitters.com/states", headers=headers)
+    r = requests.get("http://www.educationaloutfitters.com/states", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     # it will used in store data.
@@ -47,13 +46,14 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "http://www.educationaloutfitters.com/states"
     for script in soup.find_all("li", {"class": "navList-item"}):
-        r1 = session.get(script.find("a")['href'], headers=headers)
+        r1 = requests.get(script.find("a")['href'], headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         for lep in soup1.find_all("article",{"class":"modern__card"}):
             location_name = lep.find("a",{"class":"modern__card-title-link"}).text
-            r_location = session.get(lep.find("a")['href'], headers=headers)
+            r_location = requests.get(lep.find("a")['href'], headers=headers)
             soup_location = BeautifulSoup(r_location.text, "html.parser")
             page_urls = (soup_location.find("div",{"class":"store-button"}).find("a")['href'])
+            #print(page_urls)
             r4 = requests.get(page_urls, headers=headers)
             soup5 = BeautifulSoup(r4.text, "lxml")
             try:
@@ -79,8 +79,8 @@ def fetch_data():
             if str(store[2]+store[-1]) in addressess:
                 continue
             addressess.append(str(store[2]+store[-1]))
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         

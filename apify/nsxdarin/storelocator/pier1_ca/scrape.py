@@ -24,7 +24,7 @@ def fetch_data(search):
     locations = []
     while code:
         print('Pulling Zip Code %s...' % code)
-        print('{} zip codes remaining'.format(len(search.zipcodes)))
+        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
         query_country = 'ca'
         url = 'https://www.pier1.ca/on/demandware.store/Sites-pier1_intl_ca-Site/en_CA/Stores-FindFromNav?ajax=true&dwfrm_storelocator_postalCode=' + code + '+1A1'
         coords = []

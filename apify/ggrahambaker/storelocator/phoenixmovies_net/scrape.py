@@ -46,7 +46,7 @@ def parse_address(addy_string):
     else:
         zip_code = parsed_add['ZipCode']
 
-    return street_address, city, state, zip_code
+    return street_address.strip(), city.strip(), state.strip(), zip_code.strip()
 
 def fetch_data():
     session = SgRequests()
@@ -68,19 +68,24 @@ def fetch_data():
         main = soup.find('div', {'id': 'theatre-information'})
         location_name = main.find('h1').text
         
-        a_tag = main.find('p', {'class': 'address'}).find('a')
-        google_link = a_tag['href']
-        
-        start = google_link.find('@')
-        coords = google_link[start+1:].split(',')
-        lat = coords[0]
-        longit = coords[1]
+        try:
+            a_tag = main.find('p', {'class': 'address'}).find('a')
+            google_link = a_tag['href']
+            
+            start = google_link.find('@')
+            coords = google_link[start+1:].split(',')
+            lat = coords[0]
+            longit = coords[1]
+        except:
+            lat = '<MISSING>'
+            longit = '<MISSING>'
         
         street_address, city, state, zip_code = parse_address(a_tag.text.strip())
-        
-        phone_number = soup.find('p', {'class': 'phone'}).text
+        if street_address == "17310 Laurel Park Drive":
+            street_address = "17310 Laurel Park Drive North"
+        phone_number = soup.find('p', {'class': 'phone'}).text.replace("Virtual Spin Tour","").strip()
         country_code = 'US'
-        store_number = '<MISSING>'
+        store_number = link.split("/")[-1]
         location_type = '<MISSING>'
         hours = '<MISSING>'
         

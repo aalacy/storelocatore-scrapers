@@ -59,6 +59,9 @@ def fetch_data():
                     location_name = data['storeName']
                     page_url ="https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/"+location_name.lower().replace("-","").replace(" ","-")
                     page_url= page_url.replace("--","-").replace("--tyson's","-tyson-s").replace("--","-").replace("'s",'-s').replace("o'","o-")
+                    
+                    if "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-orlando-millenia" in page_url:
+                        continue
                     if "Washington DC Tyson's Galleria 2001 International Drive, Suite 2134 McLean, VA 22102" in raw_address:
                         page_url = "https://www.montblanc.com/en-ar/store-locator/stores/america/united-states/montblanc-mc-lean-tyson-s"
                     response1 = bs(session.get(page_url).text,'lxml')
@@ -69,6 +72,9 @@ def fetch_data():
                     address = usaddress.parse(raw_address.replace(zipp,"").replace(", Canada","").replace("Canada,","").replace("Canada","").replace(", USA","").replace("USA",""))
                     street_address = []
                     for info in address:
+                        # if "Recipient" in info:
+                        #     street_address.append(info[0])
+
                         if "International" in info:
                             street_address.append(info[0])
                         
@@ -93,14 +99,15 @@ def fetch_data():
                             street_address.append(info[0])
                         if "OccupancyIdentifier" in info:
                             street_address.append(info[0])
-                    raw_address = " ".join(street_address).replace(",","").replace("Ave.","Avenue").replace("120 Grant Avenue","120 Grant Avenue San Francisco").replace("160 North Gulph Road","King of Prussia Mall 160 North Gulph Road, Space #2160 B King of Prussia").replace("The Gardens Mall 3101 PGA Boulevard","The Gardens Mall 3101 PGA Boulevard, Space M-203 Palm Beach Gardens").replace("The Mall at Millenia 4200 Conroy Road","The Mall at Millenia 4200 Conroy Road, Space C-182 Orlando").replace("Dadeland Mall 7481 SW 88th Street Unit 1940","Dadeland Mall 7481 SW 88th Street Unit 1940 Miami").replace("2001 International International Drive Suite 2134 McLean","2001 International Drive, Suite 2134 McLean").replace("3327 Las Vegas Boulevard South Suite 2746","3327 Las Vegas Boulevard South, Suite 2746").replace("Ala Moana Center 1450 Ala Moana Boulevard Ste 2215 Honolulu","Ala Moana Center 1450 Ala Moana Boulevard Ste 2215").replace("International K2","O'Hare International Airport Terminal 3, Concourse K, Gate K2 Chicago")
+
+                    raw_address = " ".join(street_address).replace(",","").replace("Ave.","Avenue").replace("120 Grant Avenue","120 Grant Avenue San Francisco").replace("160 North Gulph Road","King of Prussia Mall 160 North Gulph Road, Space #2160 B King of Prussia").replace("The Gardens Mall 3101 PGA Boulevard","The Gardens Mall 3101 PGA Boulevard, Space M-203 Palm Beach Gardens").replace("The Mall at Millenia 4200 Conroy Road","The Mall at Millenia 4200 Conroy Road, Space C-182 Orlando").replace("Dadeland Mall 7481 SW 88th Street Unit 1940","Dadeland Mall 7481 SW 88th Street Unit 1940 Miami").replace("2001 International International Drive Suite 2134 McLean","2001 International Drive, Suite 2134 McLean").replace("3327 Las Vegas Boulevard South Suite 2746","3327 Las Vegas Boulevard South, Suite 2746").replace("Ala Moana Center 1450 Ala Moana Boulevard Ste 2215 Honolulu","Ala Moana Center 1450 Ala Moana Boulevard Ste 2215").replace("International K2",r"OHare International Airport Terminal 3, Concourse K, Gate K2 Chicago")
                     state = data['address']['state']
                     city = data['address']['city']
                     store = []
                     store_number=""
                     store.append("https://www.montblanc.com/")
                     store.append(location_name)
-                    store.append(raw_address.replace(" Tampa",'').replace("1200 Scottsdale","1200 ").replace("Gate K2 Chicago","Gate K2").replace("Cherry Creek Shopping Center 3000 East First Avenue Denver","Cherry Creek Shopping Center 3000 East First Avenue").replace("120 Grant Avenue San Francisco","120 Grant Avenue").replace("Lenox Square 3393 Peachtree Road North","Lenox Square 3393 Peachtree Road North East  #3006 Atlanta").replace("Space M-203 Palm Beach Gardens","Space M-203 ").replace(", Space C-182 Orlando",", Space C-182 ").replace("Dadeland Mall 7481 SW 88th Street Unit 1940 Miami","Dadeland Mall 7481 SW 88th Street Unit 1940").replace("Suite 2134 McLean","Suite 2134 ").replace("Vegas Boulevard South Las Vegas","Vegas Boulevard South").replace("International International Plaza ","").replace("Fashion Square ","").replace("Valley Fair Center ","").replace("North Star Mall ","").replace("King of Prussia Mall","").replace("The Gardens Mall ","").replace("The Mall at Millenia ","").replace("Dadeland Mall ","").replace("Beverly Center ","").replace("Roosevelt Field Mall ","").replace("The Forum Shops at Caesars ","").replace("Ala Moana Center ","").replace("Cherry Creek Shopping Center","").replace("NorthPark Center ","").replace("South Coast Plaza ","").replace("O'Hare ","").replace("South Park Mall ","").replace("Copley Place ","").replace("Town Center at Boca Raton","").replace("Lenox Square ","").replace("South Coast Plaza 3333 Bristol Street Ste. # 2209 Costa Mesa","South Coast Plaza 3333 Bristol Street Ste. # 2209").replace(" #3006 Atlanta"," #3006 "))
+                    store.append(raw_address.replace(" Tampa",'').replace("1200 Scottsdale","1200 ").replace("Gate K2 Chicago","Gate K2").replace("Cherry Creek Shopping Center 3000 East First Avenue Denver","Cherry Creek Shopping Center 3000 East First Avenue").replace("120 Grant Avenue San Francisco","120 Grant Avenue").replace("Lenox Square 3393 Peachtree Road North","Lenox Square 3393 Peachtree Road North East  #3006 Atlanta").replace("Space M-203 Palm Beach Gardens","Space M-203 ").replace(", Space C-182 Orlando",", Space C-182 ").replace("Dadeland Mall 7481 SW 88th Street Unit 1940 Miami","Dadeland Mall 7481 SW 88th Street Unit 1940").replace("Suite 2134 McLean","Suite 2134 ").replace("Vegas Boulevard South Las Vegas","Vegas Boulevard South").replace("International International Plaza ","").replace("Fashion Square ","").replace("Valley Fair Center ","").replace("North Star Mall ","").replace("King of Prussia Mall","").replace("The Gardens Mall ","").replace("The Mall at Millenia ","").replace("Dadeland Mall ","").replace("Beverly Center ","").replace("Roosevelt Field Mall ","").replace("The Forum Shops at Caesars ","").replace("Ala Moana Center ","").replace("Cherry Creek Shopping Center","").replace("NorthPark Center ","").replace("South Coast Plaza ","").replace("O'Hare ","").replace("South Park Mall ","").replace("Copley Place ","").replace("Town Center at Boca Raton","").replace("Lenox Square ","").replace("South Coast Plaza 3333 Bristol Street Ste. # 2209 Costa Mesa","South Coast Plaza 3333 Bristol Street Ste. # 2209").replace(" #3006 Atlanta"," #3006 ").replace("he Mall at Millenia 4200 Conroy Road","The Mall at Millenia 4200 Conroy Road Space C -182"))
                     store.append(city)
                     store.append(state)
                     store.append(zipp.split(" ")[-1])   

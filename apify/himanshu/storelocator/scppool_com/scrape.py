@@ -35,7 +35,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print(f"zip code: {zip_code}")
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             json_data = session.get(
                 "http://scppool.com/map_api/?z="+str(zip_code), headers=headers).json()

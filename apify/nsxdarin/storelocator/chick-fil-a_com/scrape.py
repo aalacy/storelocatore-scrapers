@@ -65,7 +65,7 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
         stores = r['response']['entities']
         result_coords = []
@@ -80,20 +80,20 @@ def fetch_data():
             zc = address['postalCode'] 
             name = store['profile']['c_locationName'] 
             store_number = store['profile']['meta']['id'] 
-            try:
-                phone = item.split('"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
-            except:
-                phone = '<MISSING>'
+            phone = '<MISSING>'
+            if 'mainPhone' in store['profile']:
+                phone = store['profile']['mainPhone']['number']
             loc = store['profile']['websiteUrl'] 
             lat = store['profile']['displayCoordinate']['lat'] 
-            lng = store['profile']['displayCoordinate']['long'] 
-            result_coords.append((lat, lng))
+            lng = store['profile']['displayCoordinate']['long']
+            yext_lat = store['profile']['yextDisplayCoordinate']['lat']
+            yext_lng = store['profile']['yextDisplayCoordinate']['long']
+            result_coords.append((yext_lat, yext_lng))
             hours = parse_hours(store['profile']['hours']['normalHours'])
-            key = loc
+            key = '|'.join([name, add, city, state, zc, country])
             if key not in keys:
                 keys.add(key)
                 yield [website, loc, name, add, city, state, zc, country, store_number, phone, typ, lat, lng, hours]
-        print(len(result_coords))
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:

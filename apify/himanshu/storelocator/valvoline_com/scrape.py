@@ -33,7 +33,7 @@ def fetch_data():
 	while zip_code:
 		result_coords = []
 		# print("zip_code === " + str(zip_code))
-		# print("remaining zip =====" + str(len(search.zipcodes)))
+		# print("remaining zip =====" + str(search.zipcodes_remaining()))
 		headers = {
 			'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36",
 			'content-type' : 'application/x-www-form-urlencoded'

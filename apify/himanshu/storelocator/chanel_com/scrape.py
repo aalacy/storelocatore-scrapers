@@ -33,7 +33,7 @@ def fetch_data():
     coords = sgzip.coords_for_radius(50)
     for coord in coords:
         # result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
