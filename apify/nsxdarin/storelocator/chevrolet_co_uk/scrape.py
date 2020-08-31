@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +17,7 @@ def fetch_data():
     url = 'https://www.chevrolet.co.uk/dealer-locator-ws-json/servlet/GB/en/meta/?query=Nr+Spalding&queryType=city&format=html&offset=0&limit=26&onlyMatching=false&apps=iconics&orderBy=distance&orderDirection=asc'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '{"id":' in line:
             line = line.replace('"departments":[{"id":','').replace(']},{"id":','')
             items = line.split('{"id":')
@@ -32,6 +32,7 @@ def fetch_data():
     website = 'chevrolet.co.uk'
     typ = '<MISSING>'
     for line2 in r2.iter_lines():
+        line2 = str(line2.decode('utf-8'))
         if '{"id":' in line2:
             line2 = line2.replace('"departments":[{"id":','').replace('{"id":1,','')
             items = line2.split('{"id":')
