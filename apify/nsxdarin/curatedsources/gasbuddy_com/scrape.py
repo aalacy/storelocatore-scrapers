@@ -186,7 +186,7 @@ def fetch_data():
                                 btype = btype + ', ' + brand['branding_type']
                     except:
                         btype = '<MISSING>'
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    yield [website, loc, os, stat, btype, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours] 
             except:
                 Found = False
 
