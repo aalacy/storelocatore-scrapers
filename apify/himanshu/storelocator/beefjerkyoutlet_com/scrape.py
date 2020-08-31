@@ -33,6 +33,7 @@ def fetch_data():
         result_coords = []
 
         location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(coord[0])+"&proximity_lng="+str(coord[1])
+        #print(location)
         r = session.get(location,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
 
@@ -62,12 +63,13 @@ def fetch_data():
             country = temp_add.find("span",{"class":"country"}).text
             if country == "United States":
                 country_code = "US"
-            phone = ltag.find_all("a")[0].text
+            phone = ltag.find("div",{"class":"location-content"}).find("a").text
+            #print(phone)
             hour = ltag.find("div",{"class":"location-content"}).find_all("div",{"class":"field-item"})
             hoo = []
             for h in hour:
                 hoo.append(h.text)
-            hours_of_operation = ",".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>")
+            hours_of_operation = ", ".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>").replace("Hours may vary,Please call for hours","")
 
             result_coords.append((lat,lng))
             store=[]

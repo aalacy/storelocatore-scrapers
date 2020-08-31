@@ -5,11 +5,10 @@ import re
 import json
 import sgzip
 
-
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8",newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -24,23 +23,17 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['US'])
     zip_code = search.next_zip()
-    current_results_len = 0
     adressess = []
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "X-Requested-With": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.lapetite.com"
-    # data = {
-    #     'location': '11756',
-    #     'range': '1000'
-
-    # }
+   
     while zip_code:
         result_coords =[]
-       # print("zip_code === "+zip_code)
+        # print("zip_code === "+zip_code)
         #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers)
@@ -51,42 +44,37 @@ def fetch_data():
             address = location.find("span",{'class':"street"}).text
             address2 = location.find("span",{'class':"cityState"}).text
             store_id = location["data-school-id"]
-            # if name.split(" ")[1] == "Petite":
-            #     phone = "(888)330-3479"
-            if location.find("span",{'class':"tel"}) != None:
-                temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
-                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            elif location.find("p",{'class':"phone"}) != None:
-                temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
-                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            else:
-                phone = "<MISSING>"
+
             hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))
 
             if name.split(" ")[0] == "Childtime":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Childtime"
+                phone = "(888) 330-5352"
             elif name.split(" ")[0] == "Tutor":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Tutor Time"
+                
+                phone = "(888) 329-9874"
             elif name.split(" ")[0] == "Everbrook":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Everbrook Academy"
-            elif name.split(" ")[-1] == "Montessori":
+                phone = "(571) 344-3589"
+           
+            elif "Montessori" in name:
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Montessori"
-            elif name.split(" ")[1] == "Montessori":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Montessori"
+                phone = "(281) 463-8886"
             elif "The Children's Courtyard" in name:
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "The Children's Courtyard"
-
-
+                phone = "(877) 771-0629"
             else:
                 page_url = "https://www.lapetite.com" + location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "lapetite"
-
+                phone = "(888) 330-3479"
+           
+            
             store = []
             store.append("https://www.lapetite.com")
             store.append(name)
