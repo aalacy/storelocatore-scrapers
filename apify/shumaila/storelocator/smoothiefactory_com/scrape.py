@@ -23,8 +23,12 @@ def write_output(data):
 def fetch_data(): 
     data = []
     p = 0
-    url = 'https://momentfeed-prod.apigee.net/api/llp.json?auth_token=ZLHQWBGKROQFVIUG&center=32.9618,-96.8292&coordinates=31.38177878211098,-94.8779296875,34.51560953848204,-98.778076171875&multi_account=false&page=1&pageSize=30'
+    
+    url = 'https://momentfeed-prod.apigee.net/api/llp.json?auth_token=ZLHQWBGKROQFVIUG&pageSize=30'
+    sitemap = 'https://momentfeed-prod.apigee.net/api/v2/llp/sitemap?auth_token=ZLHQWBGKROQFVIUG&country=US'
+    maplist = session.get(sitemap, headers=headers, verify=False).json()['locations']
     loclist = session.get(url, headers=headers, verify=False).json()
+    #print(maplist)
     hourd = {"1":"Mon","2":"Tues","3":"Wed","4":"Thurs","5":"Fri","6":"Sat","7":"Sun"}
     for loc in loclist:
         loc = loc['store_info']
@@ -56,7 +60,24 @@ def fetch_data():
                 hours = hours + day +' '+ start + '- '+ str(end) +":00 PM "
             except:
                 pass
-               
+
+        status = 0
+        #print(street)
+        #print(len(maplist))
+        for t in maplist:
+            #print(t['store_info']['address'])
+            #input()
+            if street.find(t['store_info']['address']) > -1:
+                #print("YES")
+                link = 'https://locations.smoothiefactory.com' +t["llp_url"]
+                if t['open_or_closed'].find('coming soon') > -1:
+                    status = 1
+                if t['open_or_closed'].find('temp closed') > -1:
+                    hours = t['open_or_closed']
+                break
+                    
+        if status == 1:
+            continue
         data.append([
                         'https://smoothiefactory.com/',
                         link,                   
