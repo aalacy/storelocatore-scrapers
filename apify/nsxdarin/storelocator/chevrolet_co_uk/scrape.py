@@ -14,6 +14,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    website = 'chevrolet.co.uk'
     cities = ['London','Belfast','Aberdeen']
     for city in cities:
         url = 'https://www.chevrolet.co.uk/OCRestServices/dealer/city/v1/faw/' + city + '?distance=500&maxResults=50'
