@@ -4,7 +4,12 @@ from bs4 import BeautifulSoup as bs
 import time
 from sgselenium import SgSelenium
 from sgrequests import SgRequests
+import logging
 session = SgRequests()
+
+# supress error logging from selenium-wire
+sgselenium_logger = logging.getLogger('seleniumwire')
+sgselenium_logger.addHandler(logging.NullHandler())
 
 
 def write_output(data):
