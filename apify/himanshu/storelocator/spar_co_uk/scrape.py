@@ -10,6 +10,9 @@ STREET_NUM = re.compile("""^\d{1,7}[A-Z]?$""")
 CONNECTED_HOUSE_NUMS = re.compile("""^\d+ ?- ?\d+$""")
 UNIT_NUM = re.compile("""^Unit \d+$""")
 
+# Source: https://stackoverflow.com/questions/164979/regex-for-matching-uk-postcodes
+BRITISH_POST_CODE = re.compile("""^(([gG][iI][rR] {0,}0[aA]{2})|(([aA][sS][cC][nN]|[sS][tT][hH][lL]|[tT][dD][cC][uU]|[bB][bB][nN][dD]|[bB][iI][qQ][qQ]|[fF][iI][qQ][qQ]|[pP][cC][rR][nN]|[sS][iI][qQ][qQ]|[iT][kK][cC][aA]) {0,}1[zZ]{2})|((([a-pr-uwyzA-PR-UWYZ][a-hk-yxA-HK-XY]?[0-9][0-9]?)|(([a-pr-uwyzA-PR-UWYZ][0-9][a-hjkstuwA-HJKSTUW])|([a-pr-uwyzA-PR-UWYZ][a-hk-yA-HK-Y][0-9][abehmnprv-yABEHMNPRV-Y]))) {0,}[0-9][abd-hjlnp-uw-zABD-HJLNP-UW-Z]{2}))$""")
+
 def or_default(get_value: lambda: str, default = MISSING) -> str:
     try:
         v_stripped = get_value().strip()
@@ -26,7 +29,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url", "raw_address"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -54,14 +57,16 @@ def fetch_data():
             soup1 = BeautifulSoup(r1.text, "lxml")
 
             # Sometimes, the JSON doesn't have all the answers... or the correct answers, fot that matter.
-            contact_us_raw = list(map(condense,
+            contact_us_raw = list(soup1.find("div", {"class": "store-details__contact"}).stripped_strings)
+
+            contact_us_semi_processed = list(map(condense,
                                   list(filter(lambda s: s.strip() and s.strip() != ",",
-                                              ",".join(list(soup1.find("div", {"class": "store-details__contact"}).stripped_strings)).split(",")))))
+                                              ",".join(contact_us_raw).split(",")))))
 
             # Putting street numbers back with the street, if they were comma-separated.
             contact_us = []
             street_address_seen = False
-            for item in contact_us_raw:
+            for item in contact_us_semi_processed:
                 # some street addresses have these in them, which isn't necessary.
                 if item == "SPAR" or item == "Euro Garages":
                     continue
@@ -87,10 +92,8 @@ def fetch_data():
 
                 if len(contact_us) > address_idx + 4:
                     state = contact_us[address_idx + 3]
-                    zipcode = contact_us[address_idx + 4]
                 else:
                     state = None
-                    zipcode = contact_us[address_idx + 3]
             except (ValueError, IndexError) as e:
                 # either no values, or ambiguous data
                 (street_address, city, state, zipcode) = (None, None, None, None)
@@ -100,6 +103,11 @@ def fetch_data():
                 phone = contact_us[phone_idx + 1]
             except ValueError:
                 phone = None
+
+            if BRITISH_POST_CODE.match(contact_us[-1]):
+                zipcode = contact_us[-1]
+            else:
+                zipcode = None
 
 
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
@@ -137,13 +145,6 @@ def fetch_data():
             else:
                 encountered_identities.add(store_number)
 
-            if street_address.isdigit() or CONNECTED_HOUSE_NUMS.match(street_address) or street_address == "SPAR":
-                print(list(soup1.find("div", {"class": "store-details__contact"}).stripped_strings))
-                print(contact_us_raw)
-                print(contact_us)
-                print(addr['address']['streetAddress'])
-                print("----")
-
             store = [base_url,
                      location_name,
                      street_address,
@@ -157,7 +158,8 @@ def fetch_data():
                      lat,
                      lng,
                      operating_hours,
-                     page_url]
+                     page_url,
+                     str((contact_us_raw, addr["address"]))]
 
             yield [field.strip() if field else MISSING for field in store]
 
