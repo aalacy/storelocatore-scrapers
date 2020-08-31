@@ -25,8 +25,11 @@ def fetch_data():
     r = session.get("https://www.city.bank/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{'class':"sf_cols"}).find_all("a"):
-        print(base_url + location["href"])
-        location_request = session.get(base_url + location["href"],headers=headers)
+        # print(base_url + location["href"])
+        try:
+            location_request = session.get(base_url + location["href"],headers=headers)
+        except:
+            continue
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"main-content"}).find('div',{'class':"sfContentBlock"}).stripped_strings)
         if location_details == []:
@@ -66,7 +69,7 @@ def fetch_data():
         store.append(hours.replace("\t"," "))
         store.append(base_url + location["href"])
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        print(store)
+        # print(store)
         yield store
 
 def scrape():
