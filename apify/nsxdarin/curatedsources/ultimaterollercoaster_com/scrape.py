@@ -46,7 +46,7 @@ def fetch_data():
         for line2 in lines:
             line2 = str(line2.decode('utf-8'))
             if '<h1 class="new">' in line2:
-                name = line2.split('<h1 class="new">')[1].split('<')[0]
+                name = line2.split('<h1 class="new">')[1].split('<')[0].replace('&amp;','&')
             if '<p class="topblue">' in line2:
                 mainloc = line2.split('<p class="topblue">')[1].split('</p')[0]
                 city = mainloc.split(',')[0].strip()
