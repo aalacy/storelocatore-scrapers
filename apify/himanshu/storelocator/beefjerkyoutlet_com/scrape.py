@@ -69,7 +69,7 @@ def fetch_data():
             hoo = []
             for h in hour:
                 hoo.append(h.text)
-            hours_of_operation = ", ".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>").replace("Hours may vary,Please call for hours","")
+            hours_of_operation = ", ".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>").replace("Hours may vary, Please call for hours, ","")
 
             result_coords.append((lat,lng))
             store=[]
