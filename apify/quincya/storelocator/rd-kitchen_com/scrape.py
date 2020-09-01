@@ -52,7 +52,7 @@ def fetch_data():
 		store_number = "<MISSING>"
 		phone = base.find('a', attrs={'class': 'phone'}).text
 		menu_item = base.find('div', attrs={'class': 'contact'})
-		location_type = menu_item.find('ul', attrs={'class': 'menus'}).get_text(separator=u' ').strip().replace("\n",",").strip()
+		location_type = "<MISSING>"
 		hours_of_operation = base.find('div', attrs={'class': 'hours'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").replace("–","-").strip()
 		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 
