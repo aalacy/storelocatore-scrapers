@@ -87,6 +87,9 @@ def fetch_data():
             zc = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        add = add.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
+        city = city.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
+        state = state.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         if country == 'CA' or country == 'US':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
