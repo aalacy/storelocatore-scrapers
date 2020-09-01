@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
@@ -19,8 +19,8 @@ def fetch_data():
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	headers = {'User-Agent' : user_agent}
-
-	req = requests.get(base_link, headers=headers)
+	session = SgRequests()
+	req = session.get(base_link, headers=headers)
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
