@@ -76,12 +76,7 @@ def fetch_data():
         json_results = parse_store_locations(r.iter_lines())
 
         for j_result in json_results:
-            page_url = 'https://www.verizonwireless.com' + j_result['storeUrl']
-            if page_url in ids:
-                continue
-            else:
-                ids.add(page_url)
-
+            page_url = f"https://www.verizonwireless.com{j_result['storeUrl']}"
             store_name = get(j_result, 'storeName')
             address = get(j_result, 'address')
             city = get(j_result, 'city')
@@ -96,6 +91,11 @@ def fetch_data():
             hours = get(j_result, 'openingHours')
 
             result_coords.append((lat, lng))
+
+            if store_number in ids:
+                continue
+            else:
+                ids.add(store_number)
 
             yield [website, page_url, store_name, address, city, state, zipcode, country, store_number, phone, store_type, lat, lng, hours]
 
