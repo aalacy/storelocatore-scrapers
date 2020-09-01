@@ -1,8 +1,7 @@
 import csv
 import json
 import time
-from random import randint
-from sgrequests import SgRequests
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 
 
@@ -15,17 +14,15 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
-
-    session = SgRequests()
+    driver = SgSelenium().chrome()
+    time.sleep(2)
 
     base_link = "https://www.academy.com/api/stores?lat=31.96&lon=-99.90&rad=10000&bopisEnabledFlag=false"
-        
-    req = session.get(base_link, headers = HEADERS)
-    time.sleep(randint(3,4))
+    
+    driver.get(base_link)
+    time.sleep(4)
 
-    base = BeautifulSoup(req.text,"lxml")
+    base = BeautifulSoup(driver.page_source,"lxml")
     stores = json.loads(base.text.strip())["stores"]
 
     data = []
@@ -41,7 +38,7 @@ def fetch_data():
             zip_code = "<MISSING>"
         country_code = store["properties"]['country']
         store_number = store["storeId"].split("-")[-1]
-        location_type = store["properties"]["services"].replace("View details","").strip().replace("\n",",").strip()
+        location_type = "<MISSING>"
         phone = store["properties"]['phone']
         hours_of_operation = store["properties"]['storeHours']
         latitude = store['geometry']['coordinates'][0]
@@ -49,6 +46,7 @@ def fetch_data():
 
         # Store data
         data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+    driver.close()
     return data
 
 def scrape():
