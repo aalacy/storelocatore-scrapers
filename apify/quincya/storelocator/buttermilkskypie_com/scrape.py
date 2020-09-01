@@ -74,7 +74,7 @@ def fetch_data():
 				street_address = street_address + " " + city
 				city_line = base.find(class_="et-boc").find_all("p")[0].find_all("a")[2].text.split(",")
 				city = city_line[0].strip()
-		street_address = street_address.replace("’","'").replace("Â"," ")
+		street_address = street_address.replace("’","'").encode("ascii", "replace").decode().replace("?"," ")
 
 		state = city_line[1][:-6].strip()
 		zip_code = city_line[1][-6:].strip()
@@ -90,7 +90,7 @@ def fetch_data():
 			next_line = base.find(class_="et-boc").find_all("p")[3].text.replace("pm","pm ").strip()
 			if ":" in next_line:
 				hours_of_operation = (hours_of_operation + " " + next_line).strip()
-		hours_of_operation = hours_of_operation.replace("–","-").replace("Hours","").replace("Â"," ").replace("  "," ").strip()
+		hours_of_operation = hours_of_operation.replace("–","-").replace("Hours","").replace("  "," ").encode("ascii", "replace").decode().replace("?"," ")
 		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
 		
 		map_link = item.find(class_="infobox__row infobox__cta ssflinks")["href"]
