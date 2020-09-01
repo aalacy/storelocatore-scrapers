@@ -11,7 +11,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -19,18 +19,21 @@ def fetch_data():
     url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=40.0&longitude=-95.0&radius=10000&maxResults=30000&country=us&language=en-us&showClosed=&hours24Text=Open%2024%20hr'
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
+
+    country = 'US'
+    website = 'mcdonalds.com'
+    typ = 'Restaurant'
+    page_url = 'https://www.mcdonalds.com/ca/en-ca/restaurant-locator.html'
+
     for item in array['features']:
         store = item['properties']['identifierValue']
         add = item['properties']['addressLine1']
         add = add.strip()
         city = item['properties']['addressLine3']
         state = item['properties']['subDivision']
-        country = 'US'
         zc = item['properties']['postcode']
         phone = item['properties']['telephone']
         name = "McDonald's # " + store
-        website = 'mcdonalds.com'
-        typ = 'Restaurant'
         lat = item['geometry']['coordinates'][0]
         lng = item['geometry']['coordinates'][1]
         try:
@@ -43,10 +46,11 @@ def fetch_data():
             hours = hours + '; Sun: ' + item['properties']['restauranthours']['hoursSunday']
         except:
             hours = '<MISSING>'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, page_url, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+if __name__ == "__main__":
+    scrape()
