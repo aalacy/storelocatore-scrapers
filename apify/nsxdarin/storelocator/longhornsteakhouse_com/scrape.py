@@ -79,7 +79,14 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'Cincinnati - Eastgate' in name:
+            phone = '(513) 947-8882'
+        if 'Orchard Park' in name:
+            phone = '(716) 825-1378'
+        if 'Gainesville' in name:
+            phone = '(352) 372-5715'
+        if 'Find A R' not in name:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
