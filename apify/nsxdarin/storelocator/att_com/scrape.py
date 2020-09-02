@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,21 +17,24 @@ def fetch_data():
     url = 'https://www.att.com/stores/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<loc>https://www.att.com/stores/' in line:
             lurl = line.split('>')[1].split('<')[0]
             count = lurl.count('/')
             if count == 6:
                 locs.append(lurl)
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'att.com'
         typ = 'Store'
         hours = ''
         lat = ''
         name = ''
+        phone = ''
         store = loc.rsplit('/',1)[1]
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
             if 'itemprop="streetAddress" content="' in line2:
                 add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
                 city = line2.split('<meta itemprop="addressLocality" content="')[1].split('"')[0]
@@ -47,8 +49,8 @@ def fetch_data():
             if lat == '' and '<meta itemprop="latitude" content="' in line2:
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-            if 'itemprop="telephone" id="telephone">' in line2:
-                phone = line2.split('itemprop="telephone" id="telephone">')[1].split('<')[0]
+            if ' itemprop="telephone" id="phone-main">' in line2:
+                phone = line2.split(' itemprop="telephone" id="phone-main">')[1].split('<')[0]
             if 'itemprop="openingHours" content="' in line2:
                 days = line2.split('itemprop="openingHours" content="')
                 for day in days:
