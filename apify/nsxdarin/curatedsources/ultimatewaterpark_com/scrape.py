@@ -76,6 +76,8 @@ def fetch_data():
         add = add.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         city = city.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         state = state.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
+        if '&ndash;' in zc:
+            zc = zc.split('&ndash;')[0].strip()
         if country == 'CA' or country == 'US':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
