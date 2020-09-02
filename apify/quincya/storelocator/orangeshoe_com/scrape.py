@@ -42,8 +42,9 @@ def fetch_data():
 		store = json.loads(script)
 
 		location_name = store['name']
-		street_address = store['address']['streetAddress']
 		city = store['address']['addressLocality']
+		raw_address = base.find(class_="locFooterAddress").text
+		street_address = raw_address[:raw_address.find(city)].strip()
 		state = store['address']['addressRegion']
 		zip_code = store['address']['postalCode']
 		country_code = "US"
@@ -59,11 +60,10 @@ def fetch_data():
 			if len(day[0]) != 1:
 				day = ' '.join(hours['dayOfWeek'])
 			opens = hours['opens']
-			closes = hours['closes']
-			if opens != "" and closes != "":
-				clean_hours = day + " " + opens + "-" + closes
+			if opens != "":
+				clean_hours = day + " " + opens
 				hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
-		hours_of_operation = hours_of_operation.replace("NONE-NONE","Closed")
+		hours_of_operation = hours_of_operation.replace("NONE","Closed")
 		latitude = store['geo']['latitude']
 		longitude = store['geo']['longitude']
 
