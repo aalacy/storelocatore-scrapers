@@ -12,8 +12,8 @@ MISSING = '<MISSING>'
 
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
 
-MAX_RESULTS = 250
-MAX_DISTANCE = 5
+MAX_RESULTS = 25
+MAX_DISTANCE = 2
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
