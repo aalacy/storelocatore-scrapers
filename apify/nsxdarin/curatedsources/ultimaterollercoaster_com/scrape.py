@@ -87,6 +87,7 @@ def fetch_data():
             zc = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        name = name.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         add = add.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         city = city.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
         state = state.replace('&eacute;','e').replace('&egrave;','e').replace('&amp;','&')
