@@ -1,10 +1,10 @@
-# coding=UTF-8
 
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import html5lib
 
 
 
@@ -35,16 +35,14 @@ def fetch_data():
     location_url = "https://www.omegawatches.com/store/"
     r = session.get(location_url, headers=headers)
 
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html5lib")
     data = soup.find("script", text=re.compile("var stores =")).text.split(
-        "var stores =")[1].split("];")[0] + "]"
-    # print(data)
+        "var stores = ")[1].split("; var pm_countries")[0]
     json_data = json.loads(data)
-    # print(json_data)
+    # # print(json_data)
 
     for i in json_data:
         # name = i["name"]
-        # print(name)
         if i['countryName'] == "Canada" or i['countryName'] == "United States":
             if i['countryName'] == "Canada":
                 location_name = i['name']
@@ -58,8 +56,14 @@ def fetch_data():
                 store_number = i['id']
                 country_code = i['countryCode']
                 phone = i['contacts']['phone']
-                latitude = i['latitude'].replace("0.0000000000", "<MISSING>")
-                longitude = i['longitude'].replace("0.0000000000", "<MISSING>")
+                if i['latitude'] == "0.0000000000":
+                    latitude = "<MISSING>"
+                else:
+                    latitude = i['latitude']
+                if i['longitude'] == "0.0000000000":
+                    longitude = "<MISSING>"
+                else:
+                    longitude = i['longitude']
                 href = "https://www.omegawatches.com/" + str(i['websiteUrl'])
                 r1 = session.get(href, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
@@ -79,8 +83,14 @@ def fetch_data():
                 store_number = i['id']
                 country_code = i['countryCode']
                 phone = i['contacts']['phone']
-                latitude = i['latitude'].replace("0.0000000000", "<MISSING>")
-                longitude = i['longitude'].replace("0.0000000000", "<MISSING>")
+                if i['latitude'] == "0.0000000000":
+                    latitude = "<MISSING>"
+                else:
+                    latitude = i['latitude']
+                if i['longitude'] == "0.0000000000":
+                    longitude = "<MISSING>"
+                else:
+                    longitude = i['longitude']
                 href = "https://www.omegawatches.com/" + str(i['websiteUrl'])
                 r2 = session.get(href, headers=headers)
                 soup2 = BeautifulSoup(r2.text, "lxml")
@@ -112,6 +122,4 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
