@@ -5,6 +5,7 @@ import re
 import json
 # import sgzip
 # import time
+import html5lib
 
 
 
@@ -55,7 +56,7 @@ def fetch_data():
 
 
     r= session.get('https://hokuliashaveice.com/locations/',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
+    soup = BeautifulSoup(r.text,'html5lib')
     script= soup.find('div',{'id':'locations'}).find_next('script')
     s = script.text.split(' var features = ')[-1].split('];')[0] + ']'.replace('\n','')
     sc= s.split(' position:')
@@ -175,16 +176,19 @@ def fetch_data():
                     zipp = csz[1].split()[-1]
             # print(city,state,zipp)
         elif len(add_list) ==5:
-            location_name = add_list[0].strip()
-            street_address = add_list[2].strip()
-            city = add_list[3].split(',')[0].strip()
-            state = add_list[3].split(',')[1].split()[0].strip()
-            zipp = add_list[3].split(',')[1].split()[-1].strip()
+            if add_list[0] == " 3341 Lexington Road":
+                continue
+            else:
+                location_name = add_list[0].strip()
+                street_address = add_list[2].strip()
+                city = add_list[3].split(',')[0].strip()
+                state = add_list[3].split(',')[1].split()[0].strip()
+                zipp = add_list[3].split(',')[1].split()[-1].strip()
         else:
             continue
         # print(zipp)
         # print(street_address +" | "+city+" | "+state+" | "+zipp +" | "+location_name)
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), info.split('message:')[-1])
+        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),info.split('message:')[-1])
         if phone_list !=[]:
             phone = phone_list[0].strip()
         else:
@@ -193,8 +197,6 @@ def fetch_data():
 
         if "Check for " in  " ".join(hours) or "Call for" in  " ".join(hours):
             hours_of_operation = "<MISSING>"
-
-
         else:
             # print(hours)
             # print(len(hours))
@@ -233,16 +235,20 @@ def fetch_data():
                     hours_of_operation = "<MISSING>"
         # print(hours_of_operation)
 
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
-        # if street_address in addresses:
+        if location_name == "Temecula - Promenade Mall" or location_name == "Victoria Gardens" or location_name == "Delaware":
+            continue
+        else:
+            location_name = location_name.split("(")[0]
+            street_address = street_address.replace(" (by Burt Bros.)","").replace(" (Fresh Market Parking Lot)","").replace("(Down East Lot)","").replace("(Near Honeybaked Ham) ","").replace("(Dominos Parking Lot) ","").replace("(Inside Walmart) ","").replace("  (Fresh Market)","").replace(" (Ft. Union Blvd)","")
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
+            # if street_address in addresses:
         #     continue
         # addresses.append(street_address)
 
-        print("data = " + str(store))
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

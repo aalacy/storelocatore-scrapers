@@ -5,10 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,11 +17,9 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     return_main_object = []
     addressess = []
-
     headers = {
             'authority': "www.cartersoshkosh.ca",
             'method': 'GET',
@@ -34,15 +29,17 @@ def fetch_data():
             'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
     }
     base_url = "https://www.cartersoshkosh.ca/"
-    location_url = "https://www.cartersoshkosh.ca/on/demandware.store/Sites-CartersCA-Site/en_CA/Stores-GetNearestStores?&countryCode=CA&distanceUnit=imperial&maxdistance=1000000&lat=43.7215756&lng=-79.34935129999997"
+    location_url = "https://www.cartersoshkosh.ca/on/demandware.store/Sites-CartersCA-SFRA-Site/en_CA/Stores-GetNearestStores?postalCode=A1A&countryCode=CA&distanceUnit=imperial&maxdistance=1000000&lat=47.5702401&lng=-52.69563350000001"
     r = session.get(location_url, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    # print(soup)
     json_data = r.json()
     for key,value in json_data['stores'].items():
         # print(value.keys())
         store_number = value['storeid']
         # print(value)
         location_name = "Carter's OshKosh"+" "+str(value['mallName'])
-        print(location_name)
+        # print(location_name)
         street_address = value['address1']+" "+value['address2']
         city = value['city']
         zipp  = value['postalCode']
@@ -63,7 +60,7 @@ def fetch_data():
         store.append(country_code if country_code else '<MISSING>')
         store.append(store_number if store_number else '<MISSING>')
         store.append(phone if phone else '<MISSING>')
-        store.append('<MISSING>')
+        store.append("Carter's OshKosh")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation )
@@ -72,9 +69,7 @@ def fetch_data():
             continue
         addressess.append(store[2])
         yield store
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
