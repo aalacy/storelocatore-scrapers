@@ -47,14 +47,15 @@ def fetch_data():
                 add = line2.split('"address1":"')[1].split('"')[0]
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"state":"')[1].split('"')[0]
-                zc = line2.split('"zip":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
-                lat = line2.split('"gps_lat":')[1].split(',')[0]
-                lng = line2.split(',"gps_lon":')[1].split(',')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                phone = line2.split('"telephone":"')[1].split('"')[0]
+                lat = line2.split('"latitude":')[1].split(',')[0]
+                lng = line2.split(',"longitude":')[1].split(',')[0]
                 days = line2.split('"schedule":[')[1].split(']')[0].split('"day":"')
                 for day in days:
                     if '"hours":' in day:
-                        hrs = day.split('"')[0] + ': ' + day.split('"open":"')[1].split('"')[0] + '-' + day.split('"close":"')[1].split('"')[0]
+
+                        hrs = day.split('"')[0] + ': ' + day.split('"openTime":"')[1].split('"')[0] + '-' + day.split('"closeTime":"')[1].split('"')[0]
                         if hours == '':
                             hours = hrs
                         else:
