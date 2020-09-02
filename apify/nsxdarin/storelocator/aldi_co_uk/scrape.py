@@ -26,7 +26,7 @@ def write_output(data):
 
 
 def get_json_data(html):
-    re_get_json = re.compile('window\.dataLayer\.push\((.+?)\)')
+    re_get_json = re.compile('window\.dataLayer\.push\((.+)\)')
     match = re.search(re_get_json, html)
     json_text = match.group(1)
     log('>>>>>>>>>>>')
@@ -86,7 +86,12 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = get(loc, headers=headers)
-        data = get_json_data(r2.text)
+        log(loc)
+        try:
+            data = get_json_data(r2.text)
+        except Exception as e:
+            log(f'>>> exception for {loc}: {e}')
+            continue
         name = data['name']
         try:
             hours = "; ".join(data['openingHours'])
