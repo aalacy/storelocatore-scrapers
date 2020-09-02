@@ -1,8 +1,7 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
-import sgzip
 import time
+import gzip
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -16,70 +15,77 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    stores = []
-    for code in sgzip.for_radius(100):
-        print('Pulling Zip %s...' % code)
-        url = 'https://www.airgas.com/store-finder'
-        payload = {'query': code,
-               'radius': '100',
-               'type': 'BRANCH',
-               '_requestConfirmationToken': '231814d4c8742da3c6e0b717dbe424a3d9f55914'
-               }
-        r = session.post(url, headers=headers, data=payload)
-        lines = r.iter_lines()
-        for line in lines:
-            if '<div class="map-information">' in line:
-                next(lines)
-                g = next(lines)
-                name = g.split('<')[0].strip().replace('\t','')
-                next(lines)
-                next(lines)
-                g = next(lines)
-                try:
-                    add = g.split('>')[1].split('<')[0]
-                except:
-                    add = ''
-                next(lines)
-                g = next(lines)
-                store = '<MISSING>'
-                typ = 'BRANCH'
-                website = 'airgas.com'
-                phone = ''
-                lat = ''
-                lng = ''
-                try:
-                    city = g.split('>')[1].split(',')[0]
-                    state = g.split('&nbsp;')[1]
-                    zc = g.split('&nbsp;')[3].split('<')[0]
-                    country = 'US'
-                except:
-                    city = ''
-                    state = ''
-                    zc = ''
-                    country = ''
-            if '<p class="findabranch_callout">' in line:
-                next(lines)
-                g = next(lines)
-                phone = g.strip().replace('\r','').replace('\n','').replace('\t','')
-            if 'href="https://www.google.com/maps/dir/' in line:
-                lat = line.split('href="https://www.google.com/maps/dir/')[1].split(',')[0]
-                lng = line.split('href="https://www.google.com/maps/dir/')[1].split(',')[1].split('/')[0]
-                hours = '<MISSING>'
-                info = add + ':' + city + ':' + state + ':' + zc
-                if info not in stores and country == 'US':
-                    if add != '':
-                        if zc == '':
-                            zc = '<MISSING>'
-                        if lat == '':
-                            lat = '<MISSING>'
-                        if lng == '':
-                            lng = '<MISSING>'
-                        if phone == '':
-                            phone = '<MISSING>'
-                        if city == '':
-                            city = '<MISSING>'
-                        stores.append(info)
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    locs = []
+    sitemaps = []
+    url = 'https://locations.airgas.com/sitemap/sitemap_index.xml'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
+        if '<loc>' in line:
+            sitemaps.append(line.split('>')[1].split('<')[0])
+    for sm in sitemaps:
+        print('Pulling Sitemap %s...' % sm)
+        smurl = sm
+        with open('branches.xml.gz','wb') as f:
+            r = session.get(smurl, headers=headers)
+            f.write(r.content)
+            f.close()
+            with gzip.open('branches.xml.gz', 'rb') as f:
+                for line in f:
+                    line = str(line.decode('utf-8'))
+                    if '<loc>https://locations.airgas.com' in line:
+                        lurl = line.split('<loc>')[1].split('<')[0]
+                        if '.html' in lurl:
+                            if lurl not in locs:
+                                locs.append(lurl)
+        print(str(len(locs)) + ' Locations Found...')
+    for loc in locs:
+        website = 'airgas.com'
+        country = 'US'
+        hours = ''
+        print(loc)
+        store = loc.rsplit('.',1)[0].rsplit('-',1)[1]
+        typ = '<MISSING>'
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if '<h2 class="mt-20 mb-20">' in line2:
+                name = line2.split('<h2 class="mt-20 mb-20">')[1].split('<')[0]
+                if '|' in name:
+                    typ = name.split('|')[0].strip()
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"telephone": "' in line2:
+                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '<span class="daypart" data-daypart="' in line2:
+                day = line2.split('<span class="daypart" data-daypart="')[1].split('"')[0]
+            if '<span class="time-open">' in line2:
+                hrs = line2.split('<span class="time-open">')[1].split('<')[0]
+            if '"latitude": "' in line2:
+                lat = line2.split('"latitude": "')[1].split('"')[0]
+            if '"longitude": "' in line2:
+                lng = line2.split('"longitude": "')[1].split('"')[0]
+            if '<span class="time-close">' in line2:
+                hrs = hrs + '-' + line2.split('<span class="time-close">')[1].split('<')[0]
+                hrinfo = day + ': ' + hrs
+                if hours == '':
+                    hours = hrinfo
+                else:
+                    hours = hours + '; ' + hrinfo
+            if '<span>Closed</span>' in line2:
+                hrs = 'Closed'
+                hrinfo = day + ': ' + hrs
+                if hours == '':
+                    hours = hrinfo
+                else:
+                    hours = hours + '; ' + hrinfo
+        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
