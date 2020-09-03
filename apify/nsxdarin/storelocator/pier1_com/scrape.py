@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import time
 
@@ -25,6 +24,7 @@ def fetch_data():
     url = 'https://www.pier1.com/on/demandware.store/Sites-pier1_us-Site/default/LocalStore'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
         if '<a href="/on/demandware.store/Sites-pier1_us-Site/default/LocalStore?storeId=' in line:
             lurl = 'https://www.pier1.com' + line.split('href="')[1].split('"')[0]
             locs.append(lurl)
@@ -50,6 +50,7 @@ def fetch_data():
                 PFound = False
                 r2 = session.get(loc, headers=headers)
                 for line2 in r2.iter_lines():
+                    line2 = str(line2.decode('utf-8'))
                     if '"name": "' in line2:
                         name = line2.split('"name": "')[1].split('"')[0]
                     if '"address":' in line2:
