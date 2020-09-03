@@ -111,6 +111,7 @@ def fetch_data():
     # End scraper
 
     driver.quit()
+    driver1.quit()
     return all_store_data
 
 def scrape():
