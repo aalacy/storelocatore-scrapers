@@ -1,16 +1,16 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-import re
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,23 +27,28 @@ def addy_extractor(src):
     return city, state, zip_code
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     data = []
     driver = SgSelenium().chrome()
 
     locator_domain = 'https://www.pluckers.com/'
     ext = 'locations'
     driver.get(locator_domain + ext)
+    time.sleep(6)
+
     store_name = driver.find_elements_by_css_selector('div.storepoint-location')
 
     all_store_data = []
     for store in store_name:
-        # location name
-        # print(store.find_element_by_css_selector('div.storepoint-name').text)
         location_name = store.find_element_by_css_selector('div.storepoint-name').text
 
-        # address 
-        #print(store.find_element_by_css_selector('div.storepoint-address').text)  
-        loc = store.find_element_by_css_selector('div.storepoint-address').text      
+        # address
+        loc = store.find_element_by_css_selector('div.storepoint-address').text.replace("\nTX",", TX")
         if '\n' in loc:
             loc_split = loc.split('\n')
             # street_address 
@@ -66,15 +71,25 @@ def fetch_data():
             zip_code = space_split[-1]
 
         phone_number = store.find_elements_by_css_selector('a')[1].text
-
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        hours = '<INACCESSIBLE>'
+
+        link = store.find_elements_by_tag_name('a')[-2].get_attribute("href")
+        if "tel" in link:
+            link = store.find_elements_by_tag_name('a')[-1].get_attribute("href")
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+        hours = '<MISSING>'
+        raw_hours = base.find_all(class_="address-phone w-richtext")[-1].text.strip()
+        if "pm" in raw_hours or "am" in raw_hours:
+            hours = raw_hours[:raw_hours.rfind("m")+1].replace("pm","pm ").replace("Hours","Hours ").strip()
+        if "coming" in raw_hours.lower():
+            continue
         lat = '<MISSING>'
         longit = '<MISSING>'
         
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                          store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
         
