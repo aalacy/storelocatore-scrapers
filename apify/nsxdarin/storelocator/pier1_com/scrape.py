@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-import time
+import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -21,57 +21,31 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.pier1.com/on/demandware.store/Sites-pier1_us-Site/default/LocalStore'
+    url = 'https://stockist.co/api/v1/u6649/locations/all.js?callback=_stockistAllStoresCallback'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if '<a href="/on/demandware.store/Sites-pier1_us-Site/default/LocalStore?storeId=' in line:
-            lurl = 'https://www.pier1.com' + line.split('href="')[1].split('"')[0]
-            locs.append(lurl)
-    print('Found %s Locations...' % str(len(locs)))
-    for loc in locs:
-        PFound = True
-        time.sleep(3)
-        print('Pulling Location %s...' % loc)
-        website = 'pier1.com'
-        typ = 'Store'
-        store = loc.rsplit('=',1)[1]
-        hours = ''
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        while PFound:
-            try:
-                PFound = False
-                r2 = session.get(loc, headers=headers)
-                for line2 in r2.iter_lines():
-                    line2 = str(line2.decode('utf-8'))
-                    if '"name": "' in line2:
-                        name = line2.split('"name": "')[1].split('"')[0]
-                    if '"address":' in line2:
-                        add = line2.split('"streetAddress":"')[1].split('"')[0]
-                        state = line2.split('"addressRegion":"')[1].split('"')[0]
-                        zc = line2.split('"postalCode":"')[1].split('"')[0]
-                        city = line2.split('"addressLocality":"')[1].split('"')[0]
-                    if '"telephone": "' in line2:
-                        phone = line2.split('"telephone": "')[1].split('"')[0]
-                    if '"openingHours": ["' in line2:
-                        hours = line2.split('"openingHours": ["')[1].split('"]')[0].replace('","','; ')
-                    if '<img src="https://maps.googleapis.com/' in line2:
-                        lat = line2.split('|')[1].split(',')[0]
-                        lng = line2.split('|')[1].split(',')[1].split('&')[0]
-                if hours == '':
+        if '"id":' in line:
+            items = line.split('"id":')
+            for item in items:
+                if '"name":"' in item:
+                    name = item.split('"name":"')[1].split('"')[0]
+                    store = item.split(',')[0]
+                    website = 'pier1.com'
+                    country = 'US'
+                    add = item.split('"address_line_1":"')[1].split('"')[0]
+                    if '"address_line_2":"' in item:
+                        add = add + ' ' + item.split('"address_line_2":"')[1].split('"')[0]
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0]
+                    zc = item.split('"postal_code":"')[1].split('"')[0]
+                    phone = item.split('"phone":"')[1].split('"')[0]
+                    lat = item.split('"latitude":"')[1].split('"')[0]
+                    lng = item.split('"longitude":"')[1].split('"')[0]
+                    typ = '<MISSING>'
+                    loc = '<MISSING>'
                     hours = '<MISSING>'
-                country = 'US'
-                if add != '':
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-            except:
-                PFound = True
 
 def scrape():
     data = fetch_data()
