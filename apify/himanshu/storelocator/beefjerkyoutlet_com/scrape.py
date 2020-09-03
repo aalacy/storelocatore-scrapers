@@ -31,9 +31,7 @@ def fetch_data():
 
     while coord:
         result_coords = []
-
         location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(coord[0])+"&proximity_lng="+str(coord[1])
-        #print(location)
         r = session.get(location,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
 
@@ -64,13 +62,12 @@ def fetch_data():
             if country == "United States":
                 country_code = "US"
             phone = ltag.find("div",{"class":"location-content"}).find("a").text
-            #print(phone)
             hour = ltag.find("div",{"class":"location-content"}).find_all("div",{"class":"field-item"})
             hoo = []
             for h in hour:
                 hoo.append(h.text)
-            hours_of_operation = ", ".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>").replace("Hours may vary, Please call for hours, ","")
-
+            temp_hho = ", ".join(hoo).replace("For Curbside Orders please call during normal business hours to schedule your Pickup","").replace("Store Temporarily Closed - Still Processing Online Orders","<MISSING>")
+            hours_of_operation = temp_hho.replace("Hours may vary, Please call for hours, ","")
             result_coords.append((lat,lng))
             store=[]
             store.append(base_url)
@@ -82,7 +79,7 @@ def fetch_data():
             store.append(country_code.encode('ascii', 'ignore').decode('ascii') if country_code else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append("beefjerkyoutlet")
+            store.append("<MISSING>")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii') if hours_of_operation.strip() else "<MISSING>")

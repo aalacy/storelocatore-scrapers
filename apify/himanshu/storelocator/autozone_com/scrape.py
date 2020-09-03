@@ -1,11 +1,13 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 import platform
 from sgrequests import SgRequests
+    
+
+
 
 session = SgRequests()
 
@@ -40,6 +42,7 @@ def fetch_data():
             r1 = session.get(state_link, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             page_url = state_link
+            # print("page_url:111",page_url)
             street_address = soup1.find("span",{"class":"c-address-street-1"}).text.strip()
             state = soup1.find("abbr",{"class":"c-address-state"}).text
             zip1 = soup1.find("span",{"class":"c-address-postal-code"}).text
@@ -75,6 +78,7 @@ def fetch_data():
             for count in soup2.find_all("li",{"class":"c-directory-list-content-item"}):
                 if count.find("span",{"class":"c-directory-list-content-item-count"}).text == "(1)":
                     page_url = "https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href']
+                    # print("page_url:222",page_url)
                     r3 = session.get(page_url, headers=headers)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     street_address = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
@@ -114,10 +118,13 @@ def fetch_data():
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     for url in soup4.find_all("a",{"data-ya-track":"visitpage"}):
                         page_url = url['href'].replace('..','https://www.autozone.com/locations')
+                        # print("page_url:333",page_url)
                         r5 = session.get(page_url, headers=headers)
                         soup5 = BeautifulSoup(r5.text, "lxml")
-                        
-                        street_address = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
+                        try:
+                            street_address = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
+                        except:
+                            street_address=''
                         try:
                             state = soup5.find("abbr",{"class":"c-address-state"}).text
                         except:
@@ -158,6 +165,7 @@ def fetch_data():
     for link in soup_wc.find_all("div",{"class":"c-location-grid-col col-lg-4 col-sm-5 col-xs-12"}):
         page_url = link.find("h5",class_="c-location-grid-item-title").find("a")["href"].replace("..","https://www.autozone.com/locations")
         # print(page_url)
+        # print("page_url:444",page_url)
         name = link.find("h5",class_="c-location-grid-item-title").find("a").text.strip()
         address = list(link.find("address",class_="c-address").stripped_strings)
         street_address = address[0].strip()
