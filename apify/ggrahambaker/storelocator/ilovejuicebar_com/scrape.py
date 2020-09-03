@@ -76,7 +76,7 @@ def fetch_data():
         if not raw_address[-1].strip():
             raw_address.pop(-1)
 
-        street_address = " ".join(raw_address[:-1])
+        street_address = " ".join(raw_address[1:-1])
         city, state, zip_code = addy_ext(raw_address[-1])
         location_name = raw_address[0].strip()
 
