@@ -1,6 +1,7 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from postal.parser import parse_address
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,22 +31,22 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
 
-        cont = driver.find_element_by_css_selector('div.storeModule').text.split('\n')
+        cont = driver.find_element_by_css_selector('div.container.main-content').text.split('\n')
         location_name = cont[0]
         start_idx = cont.index('Horario de Operación')
         content = cont[start_idx:]
         hours = content[2] + ' ' + content[3]
-        street_address = content[5]
-        city_zip = content[7].split(',')
-        city = city_zip[0]
-        if city == '':
-            city = '<MISSING>'
-        zip_code = city_zip[1].strip()
-        if zip_code == '':
-            zip_code = '<MISSING>'
-        if 'PR' in zip_code:
-            zip_code = '<MISSING>'
+        raw_address = content[4]
         phone_number = content[-1]
+        parsed_address = parse_address(raw_address)
+        city_opt = [x[0] for x in parsed_address if x[1] == 'city']
+        city = city_opt[0] if len(city_opt) > 0 else '<MISSING>'
+        zip_code_opt = [x[0] for x in parsed_address if x[1] == 'postcode']
+        zip_code = zip_code_opt[0] if len(zip_code_opt) > 0 else '<MISSING>'
+        number_opt = [x[0] for x in parsed_address if x[1] == 'house_number']
+        number = number_opt[0] if len(number_opt) > 0 else ''
+        name = [x[0] for x in parsed_address if x[1] == 'road'][0]
+        street_address = ' '.join([x for x in [number, name] if x])
         state = 'PR'
 
         src = driver.find_elements_by_css_selector('iframe')
