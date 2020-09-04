@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -22,7 +22,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.autopartintl.com/autopart/wp-admin/admin-ajax.php'
         payload = {'address': '',
                    'formdata': 'addressInput=',

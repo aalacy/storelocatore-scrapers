@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,25 +18,27 @@ def fetch_data():
     url = 'https://www.mandarinoriental.com/ajax/getproperties?language=1'
     locs = []
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     array = json.loads(r.content)
     for item in array['data']['record']:
         hurl = 'https://www.mandarinoriental.com/' + item['homepage'].replace('\\/','/')
-        name = item['name'].encode('utf-8')
+        name = item['name']
         website = 'mandarinoriental.com'
         add = '<MISSING>'
         lat = item['latitude']
         lng = item['longitude']
         typ = 'Hotel'
         hours = '<MISSING>'
-        city = item['city'].encode('utf-8')
+        city = item['city']
         state = '<MISSING>'
         zc = '<MISSING>'
-        country = item['country'].encode('utf-8')
+        country = item['country']
         store = item['properties_id']
         phone = item['phone']
         r2 = session.get(hurl, headers=headers)
-        print('Pulling Location %s...' % hurl)
-        for line in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        print(('Pulling Location %s...' % hurl))
+        for line in r2.iter_lines(decode_unicode=True):
             if '"addressRegion">' in line:
                 state = line.split('"addressRegion">')[1].split('<')[0]
             if 'itemprop="streetAddress">' in line:

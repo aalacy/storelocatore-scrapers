@@ -1,6 +1,6 @@
 # -*- coding: cp1252 -*-
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     url = 'https://nativerootscannabis.com/locations/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a href="/locations/' in line:
             items = line.split('<a href="/locations/')
             for item in items:
@@ -26,7 +27,7 @@ def fetch_data():
                     lurl = item.split('"')[0]
                     if len(lurl) >= 2:
                         locs.append('https://nativerootscannabis.com/locations/' + lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -39,11 +40,12 @@ def fetch_data():
         country = 'US'
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'nativerootsdispensary.com'
         typ = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1 class="css-hcge3v' in line2:
                 name = line2.split('<h1 class="css-hcge3v')[1].split('>')[1].split('<')[0]
             if 'Address</h3><p>' in line2 and '<b>OPENING SOON</b>' not in line2:

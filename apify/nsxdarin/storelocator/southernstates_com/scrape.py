@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 

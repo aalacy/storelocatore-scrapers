@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,11 +15,12 @@ def write_output(data):
 
 def fetch_data():
     for x in range(0, 15):
-        print('Page %s...' % str(x))
+        print(('Page %s...' % str(x)))
         url = 'https://baycare.org/api/search/locations?&page=' + str(x) + '&pageSize=50&returnWildcardResults=true&searchDistance=500&FacilityType=Behavioral%20Health&FacilityType=Corporate&FacilityType=Community%20Blood%20Center&FacilityType=Diabetes%20Education&FacilityType=Emergency%20Center&FacilityType=Extended%20Care&FacilityType=Fitness%20Center&FacilityType=Health%20Centers&FacilityType=HealthHub&FacilityType=HomeCare&FacilityType=Hospital&FacilityType=Imaging&FacilityType=Lab%20Services&FacilityType=Medical%20Arts%20Building&FacilityType=Outpatient%20Facility&FacilityType=Outpatient%20Rehabilitation&FacilityType=Physician%20Specialty%20Group&FacilityType=Primary%20Care&FacilityType=Wound%20Care&FacilityType=Wellness%20Station&FacilityType=Walk-in%20Clinic&FacilityType=Urgent%20Care&FacilityType=Surgery%20Center&FacilityType=Specialty%20Center&FacilityType=Sleep%20Center'
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         website = 'baycare.org'
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '"locationId": "' in line:
                 store = line.split('"locationId": "')[1].split('"')[0]
                 name = ''

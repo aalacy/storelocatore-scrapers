@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,10 +17,11 @@ def fetch_data():
     locs = []
     for x in range(15, 65, 5):
         for y in range(-65, -175, -5):
-            print('Pulling Coordinates %s-%s...' % (str(x), str(y)))
+            print(('Pulling Coordinates %s-%s...' % (str(x), str(y))))
             url = 'https://www.jiffylube.com/api/locations?lat=' + str(x) + '&lng=' + str(y) + '&radius=250&state='
             r = session.get(url, headers=headers)
-            for line in r.iter_lines():
+            if r.encoding is None: r.encoding = 'utf-8'
+            for line in r.iter_lines(decode_unicode=True):
                 if ',"postal_code":"' in line:
                     items = line.split(',"postal_code":"')
                     for item in items:

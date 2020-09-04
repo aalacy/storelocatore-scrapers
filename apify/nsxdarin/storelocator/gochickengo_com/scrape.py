@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,6 +18,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://gochickengo.com/pages/locations'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     hours = '<INACCESSIBLE>'
     website = 'gochickengo.com'
     store = '<MISSING>'
@@ -26,7 +27,7 @@ def fetch_data():
     phone = '<INACCESSIBLE>'
     country = 'US'
     name = 'Go Chicken Go'
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<a target="_blank" href="http://maps.google.com/maps?' in line:
             items = line.split('<a target="_blank" href="http://maps.google.com/maps?')

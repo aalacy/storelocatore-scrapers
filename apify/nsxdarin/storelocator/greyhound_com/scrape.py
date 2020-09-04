@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
@@ -20,11 +20,12 @@ def fetch_data():
     for metro in metros:
         mcity = metro.split(',')[0]
         mstate = metro.split(',')[1]
-        print('Pulling Metro Area %s...' % mcity)
+        print(('Pulling Metro Area %s...' % mcity))
         url = 'https://locations.greyhound.com/bus-stations/search?city=' + mcity.replace(' ','%20') + '&state=' + mstate + '&zip=&q='
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         Found = False
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         website = 'greyhound.com'
         typ = '<MISSING>'
         coords = []
@@ -109,11 +110,12 @@ def fetch_data():
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://locations.greyhound.com/bus-stations/search?city=&state=&zip=' + code + '&q='
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         Found = False
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         website = 'greyhound.com'
         typ = '<MISSING>'
         coords = []

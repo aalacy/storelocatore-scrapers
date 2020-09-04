@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import usaddress
@@ -23,14 +23,15 @@ def fetch_data():
     locs = []
     alllocs = []
     for code in sgzip.for_radius(100):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         ZFound = True
         url = 'https://fit4mom.com/__/frontdesk/locations?zip=' + code + '&_=1565982065744'
         while ZFound:
             ZFound = False
             try:
                     r = session.get(url, headers=headers)
-                    for line in r.iter_lines():
+                    if r.encoding is None: r.encoding = 'utf-8'
+                    for line in r.iter_lines(decode_unicode=True):
                         if '<h2 class="contentTitle"><a href="' in line:
                             lurl = line.split('href="')[1].split('"')[0]
                             if lurl not in locs:
@@ -41,7 +42,8 @@ def fetch_data():
                             LFound = False
                             try:
                                 r = session.get(loc + '/locations', headers=headers2)
-                                for line in r.iter_lines():
+                                if r.encoding is None: r.encoding = 'utf-8'
+                                for line in r.iter_lines(decode_unicode=True):
                                     if '<div class="contentImg imgShape' in line:
                                         locurl = loc + line.split('href="')[1].split('"')[0]
                                         website = 'fit4mom.com'
@@ -54,7 +56,8 @@ def fetch_data():
                                                 STFound = False
                                                 try:
                                                     r2 = session.get(locurl, headers=headers2)
-                                                    lines = r2.iter_lines()
+                                                    if r2.encoding is None: r2.encoding = 'utf-8'
+                                                    lines = r2.iter_lines(decode_unicode=True)
                                                     hours = '<MISSING>'
                                                     lat = '<MISSING>'
                                                     lng = '<MISSING>'
@@ -66,10 +69,10 @@ def fetch_data():
                                                     phone = '<MISSING>'
                                                     name = '<MISSING>'
                                                     rawadd = '<MISSING>'
-                                                    print('Pulling Location %s...' % locurl)
+                                                    print(('Pulling Location %s...' % locurl))
                                                     for line2 in lines:
                                                         if '<h2 class="contentTitle" itemprop="name">' in line2:
-                                                            name = line2.decode('utf-8','ignore').encode("utf-8").split('<h2 class="contentTitle" itemprop="name">')[1].split('<')[0].replace('"',"'")
+                                                            name = line2.decode('utf-8','ignore').split('<h2 class="contentTitle" itemprop="name">')[1].split('<')[0].replace('"',"'")
                                                         if '<p class="address" itemprop="address">' in line2:
                                                             g = next(lines)
                                                             g = g.replace('•','').replace(' ','').replace('<br>United States','').replace('\r','').replace('\n','').replace('\t','').strip()
@@ -91,17 +94,17 @@ def fetch_data():
                                                                 if 'ZipCode' not in baseadd:
                                                                     baseadd['ZipCode'] = '<INACCESSIBLE>'
                                                                 address = add[0]['AddressNumber'] + ' ' + add[0]['StreetName'] + ' ' + add[0]['StreetNamePostType']
-                                                                address = address.encode('utf-8')
+                                                                address = address
                                                                 if address == '':
                                                                     address = '<INACCESSIBLE>'
-                                                                city = add[0]['PlaceName'].encode('utf-8')
-                                                                state = add[0]['StateName'].encode('utf-8')
-                                                                zc = add[0]['ZipCode'].encode('utf-8')
+                                                                city = add[0]['PlaceName']
+                                                                state = add[0]['StateName']
+                                                                zc = add[0]['ZipCode']
                                                             except:
                                                                 rawadd = g
                                                         if '<h2 class="contentTitle">Contact' in line2:
                                                             try:
-                                                                phone = next(lines).split('<li>')[1].split(' ')[0].encode('utf-8')
+                                                                phone = next(lines).split('<li>')[1].split(' ')[0]
                                                             except:
                                                                 phone = '<MISSING>'
                                                         phone = phone.replace('<em>','').replace('</em>','')

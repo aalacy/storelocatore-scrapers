@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -22,7 +22,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(200):
         x = coord[0]
         y = coord[1]
-        print('Pulling Zip Lat-Lng %s-%s...' % (x, y))
+        print(('Pulling Zip Lat-Lng %s-%s...' % (x, y)))
         payload = {"request":{"appkey":"E76CAAF4-9877-11E1-9438-A503DEB2B31E","formdata":{"geoip":"false","dataview":"store_default","limit":5000,
                                                                                           "reviews":{"bd":1},"order":"rank::numeric, _DISTANCE",
                                                                                           "geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":x,"longitude":y,"state":"","province":"",
@@ -37,18 +37,18 @@ def fetch_data():
                 lat = item['latitude']
                 lng = item['longitude']
                 zc = item['postalcode']
-                name = item['name'].encode('utf-8')
+                name = item['name']
                 if item['address2']:
-                    add = item['address1'].encode('utf-8') + ' ' + item['address2'].encode('utf-8')
+                    add = item['address1'] + ' ' + item['address2']
                 else:                    
-                    add = item['address1'].encode('utf-8')
+                    add = item['address1']
                 try:
                     add = add.strip().replace('"',"'")
                 except:
                     add = ''
                 state = item['state']
                 if item['city'] is not None:
-                    city = item['city'].encode('utf-8')
+                    city = item['city']
                 website = 'ugg.com'
                 phone = item['phone']
                 if item['province'] is not None:
@@ -60,7 +60,7 @@ def fetch_data():
                 typ = item['storetype']
                 if typ == '':
                     typ = 'Store'
-                store = item['clientkey'].encode('utf-8')
+                store = item['clientkey']
                 if item['mon_hours']:
                     hours = 'Mon: ' + item['mon_hours']
                     hours = hours + '; Tue: ' + item['tue_hours']

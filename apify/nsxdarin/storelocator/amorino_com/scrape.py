@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import usaddress
@@ -22,8 +22,9 @@ def fetch_data():
     locs = []
     cities = []
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     USFound = False
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<optgroup label="USA">' in line:
             USFound = True
         if USFound and '<option value="https://www.amorino.com/us/' in line:
@@ -33,15 +34,17 @@ def fetch_data():
                 locs.append(line.split('value="')[1].split('"')[0])
 
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if ' class="bouton">' in line2:
                 locs.append(line2.split('href="')[1].split('"')[0])
 
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         website = 'amorino.com'
         country = 'US'
         store = loc.replace('.html','').rsplit('.',1)[1]
@@ -56,7 +59,7 @@ def fetch_data():
         lat = ''
         lng = ''
         rawadd = ''
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split('<')[0].replace('Amorino - ','')
             if '<li><i class="fa fa-map-marker"></i>' in line2:
@@ -77,12 +80,12 @@ def fetch_data():
                     if 'ZipCode' not in baseadd:
                         baseadd['ZipCode'] = '<INACCESSIBLE>'
                     address = add[0]['AddressNumber'] + ' ' + add[0]['StreetName'] + ' ' + add[0]['StreetNamePostType']
-                    address = address.encode('utf-8')
+                    address = address
                     if address == '':
                         address = '<INACCESSIBLE>'
-                    city = add[0]['PlaceName'].encode('utf-8')
-                    state = add[0]['StateName'].encode('utf-8')
-                    zc = add[0]['ZipCode'].encode('utf-8')
+                    city = add[0]['PlaceName']
+                    state = add[0]['StateName']
+                    zc = add[0]['ZipCode']
                 except:
                     pass
             if 'Tel : ' in line2:

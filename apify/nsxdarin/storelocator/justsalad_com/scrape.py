@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 requests.packages.urllib3.disable_warnings()
@@ -19,7 +19,8 @@ def fetch_data():
     url = 'https://justsalad.com/assets/geo/js.geojson?v=1558558583021'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '"locationID": "' in line:
             store = line.split('"locationID": "')[1].split('"')[0]

@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -26,6 +25,7 @@ def fetch_data():
             url = 'https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=' + str(lats) + '&sw%5B%5D=' + str(lngw) + '&ne%5B%5D=' + str(latn) + '&ne%5B%5D=' + str(lnge) + '&selected=&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json'
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
+                line = str(line.decode('utf-8'))
                 if '{"id":"' in line:
                     items = line.split('{"id":"')
                     for item in items:
@@ -50,29 +50,35 @@ def fetch_data():
                             hours = ''
                             if phone == '':
                                 phone = '<MISSING>'
-                            if storeinfo not in ids and country == 'CA':
+                            if storeinfo not in ids and country == 'CA' and '10053240-fariview-ave-st-thomas' not in loc:
                                 print('Pulling Store %s...' % name)
                                 days = []
-                                if loc != '<MISSING>':
-                                    r2 = session.get(loc, headers=headers)
-                                    lines = r2.iter_lines()
-                                    rc = 0
-                                    dc = -1
-                                    for line in lines:
-                                        if '<div class="opening-times__cell">' in line:
-                                            rc = rc + 1
-                                            if rc <= 7:
-                                                g = next(lines)
-                                                days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
-                                            if rc >= 8:
-                                                dc = dc + 1
-                                                g = next(lines)
-                                                days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
-                                    for day in days:
-                                        if hours == '':
-                                            hours = day
-                                        else:
-                                            hours = hours + '; ' + day
+                                try:
+                                    if loc != '<MISSING>':
+                                        r2 = session.get(loc, headers=headers, timeout=5)
+                                        lines = r2.iter_lines()
+                                        rc = 0
+                                        dc = -1
+                                        for line in lines:
+                                            line = str(line.decode('utf-8'))
+                                            if '<div class="opening-times__cell">' in line:
+                                                rc = rc + 1
+                                                if rc <= 7:
+                                                    g = next(lines)
+                                                    g = str(g.decode('utf-8'))
+                                                    days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
+                                                if rc >= 8:
+                                                    dc = dc + 1
+                                                    g = next(lines)
+                                                    g = str(g.decode('utf-8'))
+                                                    days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
+                                        for day in days:
+                                            if hours == '':
+                                                hours = day
+                                            else:
+                                                hours = hours + '; ' + day
+                                except:
+                                    pass
                                 if hours == '':
                                     hours = '<MISSING>'
                                 if phone == '':

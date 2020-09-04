@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://www.vw.ca/app/dccsearch/vw-ca/en/Volkswagen%20Dealer%20Search/+/49.87951181643615/-97.1759382/12/+/+/+/+'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '%5C%22,%5C%22name%5C%22:%5C%22' in line:
             items = line.split('%5C%22,%5C%22name%5C%22:%5C%22')
             for item in items:

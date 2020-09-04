@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -18,7 +18,7 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         try:
             url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?near_location=' + code + '&threshold=4000&services__in=&within_business=true'
             r = session.get(url, headers=headers, verify=False)

@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 import time
@@ -23,7 +22,7 @@ def fetch_data():
     VSG = ''
     EV = ''
     ids = []
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode = True):
         if 'type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="' in line:
             VS = line.split('type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="')[1].split('"')[0]
         if 'type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="' in line:
@@ -31,7 +30,6 @@ def fetch_data():
         if 'type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="' in line:
             EV = line.split('type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="')[1].split('"')[0]
     for code in sgzip.for_radius(50):
-        print('Pulling Postal Code %s...' % code)
         url = 'https://branchlocator.kellyservices.com/default.aspx'
         headers2 = {'Content-Type': 'application/x-www-form-urlencoded',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'

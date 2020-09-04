@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,15 +17,16 @@ def fetch_data():
     url = 'https://aspencreekgrill.com/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
+    if r.encoding is None: r.encoding = 'utf-8'
     Found = False
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<ul class="sub-menu">' in line and len(locs) == 0:
             Found = True
         if Found and 'Menus</a>' in line:
             Found = False
         if Found and 'href="https://aspencreekgrill.com/' in line:
             locs.append(line.split('href="')[1].split('"')[0])
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -38,11 +39,12 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'aspencreekgrill.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<div class="et_pb_text_inner"><h2>' in line2 and name == '':
                 name = line2.split('<div class="et_pb_text_inner"><h2>')[1].split('<')[0]

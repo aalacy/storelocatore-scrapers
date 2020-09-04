@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,12 +17,13 @@ def fetch_data():
     locs = []
     url = 'https://www.ikea.com/gb/en/stores/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<p><a href="https://www.ikea.com/gb/en/stores/' in line and 'Bromley - Planning studio' not in line:
             locs.append(line.split('href="')[1].split('"')[0])
     PSFound = False
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'ikea.co.uk'
         typ = 'IKEA Store'
         hours = ''
@@ -41,7 +42,8 @@ def fetch_data():
         if 'order-collection-point' in loc:
             typ = 'IKEA Order and Collection Point'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'planning-studios' in loc and '<h2><strong>' in line2 and 'FAQ' not in line2:
                 name = line2.split('<strong>')[1].split('<')[0]

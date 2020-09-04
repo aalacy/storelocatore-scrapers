@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,17 +19,20 @@ def fetch_data():
     cities = []
     url = 'https://www.statefarm.com/agent/us'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'class="block"   >' in line:
             states.append('https://www.statefarm.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         r2 = session.get(state, headers=headers)
-        print('Pulling State %s...' % state)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        print(('Pulling State %s...' % state))
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'class="block"   >' in line2:
                 cities.append('https://www.statefarm.com' + line2.split('href="')[1].split('"')[0])
     for city in cities:
         r2 = session.get(city, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         #print('Pulling City %s...' % city)
         country = 'US'
         typ = '<MISSING>'
@@ -38,7 +41,7 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         loc = '<MISSING>'
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if "getEmailPageAL('" in line2:
                 store = line2.split("getEmailPageAL('")[1].split("'")[0]

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,7 +19,8 @@ def fetch_data():
     locs = []
     cities = []
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<div class="location-regions__item">' in line:
             lurl = next(lines).split('href="')[1].split('"')[0]
@@ -27,14 +28,16 @@ def fetch_data():
                 cities.append(lurl)
     for city in cities:
         r2 = session.get(city, headers=headers)
-        lines2 = r2.iter_lines()
-        print('Pulling Region %s...' % city)
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines2 = r2.iter_lines(decode_unicode=True)
+        print(('Pulling Region %s...' % city))
         for line2 in lines2:
             if '<div class="col-xs-12 col-x-sm-6 col-sm-6 col-md-4">' in line2:
                 locs.append(next(lines2).split('href="')[1].split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         website = 'www.umamiburger.com'
         typ = 'Restaurant'
         store = '<MISSING>'
@@ -48,7 +51,7 @@ def fetch_data():
         hours = ''
         lat = ''
         lng = ''
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
