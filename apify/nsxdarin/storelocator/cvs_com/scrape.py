@@ -1,106 +1,142 @@
 import csv
-import urllib2
+import json
+import time
+import random
+import threading
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+thread_local = threading.local()
+max_workers = 8
+base_url = "https://www.cvs.com"
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",    
+    "connection": "Keep-Alive"
+}
+
+def sleep(min=3, max=3):
+    duration = random.randint(min, max)
+    time.sleep(duration)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name",
+        "location_type","store_number", "street_address", "city", "state", "zip", "country_code","latitude", "longitude", "phone", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
+def get_session(reset=False):
+    if not hasattr(thread_local, "session") or (reset == True):
+        thread_local.session = SgRequests()
+    return thread_local.session
+
+def enqueue_links(url, selector):
     locs = []
-    donelocs = []
+    cities = []
     states = []
-    url = 'https://www.cvs.com/store-locator/cvs-pharmacy-locations'
+
+    session.get_session()
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '<a href="/store-locator/cvs-pharmacy-locations/' in line:
-            states.append('https://www.cvs.com' + line.split('href="')[1].split('"')[0])
-    for state in states:
-        cities = []
-        print('Pulling State %s...' % state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<a href="/store-locator/cvs-pharmacy-locations/' in line2:
-                cities.append('https://www.cvs.com' + line2.split('href="')[1].split('"')[0])
-        for city in cities:
-            r2 = session.get(city, headers=headers)
-            print('Pulling City %s...' % city)
-            for line2 in r2.iter_lines():
-                if '<a href="/store-locator/cvs-pharmacy-address/' in line2:
-                    lurl = 'https://www.cvs.com' + line2.split('href="')[1].split('"')[0]
-                    if lurl not in locs:
-                        locs.append(lurl)
-            for loc in locs:
-                if loc not in donelocs:
-                    LFound = True
-                    lcount = 0
-                    while LFound:
-                        try:
-                            lcount = lcount + 1
-                            print('Pulling Location %s-%s...' % (loc, str(lcount)))
-                            website = 'cvs.com'
-                            typ = '<MISSING>'
-                            hours = ''
-                            name = 'CVS Pharmacy'
-                            add = ''
-                            city = ''
-                            state = ''
-                            zc = ''
-                            country = 'US'
-                            store = ''
-                            phone = ''
-                            lat = ''
-                            lng = ''
-                            Found = False
-                            r3 = session.get(loc, headers=headers)
-                            for line3 in r3.iter_lines():
-                                if add == '' and '"streetAddress": "' in line3:
-                                    LFound = False
-                                    add = line3.split('"streetAddress": "')[1].split('"')[0]
-                                if city == '' and '"addressLocality": "' in line3:
-                                    city = line3.split('"addressLocality": "')[1].split('"')[0]
-                                if state == '' and '"addressRegion": "' in line3:
-                                    state = line3.split('"addressRegion": "')[1].split('"')[0]
-                                if zc == '' and '"postalCode": "' in line3:
-                                    zc = line3.split('"postalCode": "')[1].split('"')[0]
-                                if phone == '' and '"telephone": "' in line3:
-                                    phone = line3.split('"telephone": "')[1].split('"')[0]
-                                if '"latitude": "' in line3:
-                                    lat = line3.split('"latitude": "')[1].split('"')[0]
-                                if '"longitude": "' in line3:
-                                    lng = line3.split('"longitude": "')[1].split('"')[0]
-                                if 'store_id : "' in line3 and 'cvs' not in line3:
-                                    store = line3.split('store_id : "')[1].split('"')[0]
-                                if '"openingHours":' in line3 and hours == '':
-                                    Found = True
-                                if Found and ']' in line3:
-                                    Found = False
-                                if Found and '"' in line3 and 'openingHours' not in line3:
-                                    hrs = line3.split('"')[1]
-                                    if hours == '':
-                                        hours = hrs
-                                    else:
-                                        hours = hours + '; ' + hrs
-                            if hours == '':
-                                hours = '<MISSING>'
-                            if phone == '':
-                                phone = '<MISSING>'
-                            hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-                            if loc not in donelocs and add != '':
-                                donelocs.append(loc)
-                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                        except:
-                            if lcount <= 3:
-                                LFound = True
-                            else:
-                                LFound = False
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    links = soup.select(selector)
+
+    for link in links:
+        lurl = f"{base_url}{link['href']}"
+        path_count = lurl.count("/")
+        if path_count == 5:
+            states.append(lurl)
+        elif path_count == 6:
+            if "cvs-pharmacy-address" in  lurl:
+                locs.append(lurl)
+            else:
+                cities.append(lurl)
+        else:
+            raise Exception(f"invalid link: {lurl}") 
+
+    return {
+        "locs": locs,
+        "cities": cities,
+        "states": states
+    }
+
+def scrape_state_urls(state_urls, city_urls):
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(enqueue_links, url, ".states a") for url in state_urls]
+        for result in as_completed(futures):
+            urls = result.result()
+            city_urls.extend(urls["cities"])
+
+def scrape_city_urls(city_urls, loc_urls):
+    # scrape each city url and populate loc_urls with the results
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(enqueue_links, url, ".directions-link a") for url in city_urls]
+        for result in as_completed(futures):
+            d = result.result()
+            loc_urls.extend(d["locs"])
+
+def get_location(loc):
+    print(f"Pulling Location: {loc}")
+
+    session = get_session()
+    r = session.get(loc, headers=headers)
+    location = BeautifulSoup(r.text, "html.parser")
+    script = location.select_one("#structured-data-block")
+    if not script:
+        print(f"Unable to fetch location: {loc}")
+        return None
+
+    structured_data = script.string
+
+    info = json.loads(structured_data)[0]
+
+    locator_domain = "cvs.com"
+    page_url = loc
+    location_name = info["name"]
+    location_type = info["@type"]
+    store_number = info["url"].split("/")[-1]
+    street_address = info["address"]["streetAddress"]
+    city = info["address"]["addressLocality"]
+    state = info["address"]["addressRegion"]
+    zipcode = info["address"]["postalCode"]
+    country_code = info["address"]["addressCountry"]
+    latitude = info["geo"]["latitude"]
+    longitude = info["geo"]["longitude"]
+    phone = info["address"]["telephone"]
+    hours_of_operation = info["openingHours"]
+    
+    return [locator_domain, page_url, location_name, location_type, store_number, street_address, city, state, zipcode, country_code, latitude, longitude, phone, hours_of_operation]
+    
+
+def scrape_loc_urls(loc_urls):
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(get_location, loc) for loc in loc_urls]
+        for result in as_completed(futures):
+            record = result.result()
+            if record is not None:
+                yield record
+
+                
+def fetch_data():
+    urls = enqueue_links(f"{base_url}/store-locator/cvs-pharmacy-locations", ".states a")
+
+    state_urls = urls["states"]
+    city_urls = urls["cities"]
+    loc_urls = urls["locs"]
+
+    print(f"number of states: {len(state_urls)}")
+    scrape_state_urls(state_urls, city_urls)
+
+    print(f"number of cities: {len(city_urls)}")
+    scrape_city_urls(city_urls, loc_urls)
+
+    print(f"number of locations: {len(loc_urls)}")
+    return scrape_loc_urls(loc_urls)
+        
 
 def scrape():
     data = fetch_data()
