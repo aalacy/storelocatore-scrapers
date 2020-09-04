@@ -31,7 +31,7 @@ def process_internal(base_path):
                     newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))
                 elif 'r = session.' in line and has_iter_lines:
                     newfile.write(line)
-                    newfile.write(get_padding(line) + "r.encoding = 'utf-8' if r.encoding is None\n")
+                    newfile.write(get_padding(line) + "if r.encoding is None: r.encoding = 'utf-8'\n")
                 elif 'iter_lines()' in line:
                     newfile.write(line.replace('iter_lines()', 'iter_lines(decode_unicode=True)'))
                 else:
