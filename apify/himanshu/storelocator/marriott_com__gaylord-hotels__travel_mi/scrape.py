@@ -2,7 +2,6 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import time 
 from sgrequests import SgRequests
 session = SgRequests()
 def write_output(data):
@@ -49,7 +48,7 @@ def request_wrapper(url,method,headers,data=None):
 def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://www.marriott.com/gaylord-hotels/"
-    url_list= ['bnago','mcogp','dalgt','wasgn','dengr']
+    url_list= ['bnago','mcogp','dalgt','wasgn','dengr','bnagi']
     for j in url_list:
         location_url = "https://www.marriott.com/hotels/travel/"+str(j)
         # location_url = 'https://www.marriott.com/hotels/travel/mcogp-gaylord-palms-resort-and-convention-center/'

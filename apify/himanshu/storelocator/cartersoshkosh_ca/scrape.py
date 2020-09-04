@@ -1,9 +1,9 @@
 # coding=UTF-8
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
 def write_output(data):
@@ -31,7 +31,7 @@ def fetch_data():
     base_url = "https://www.cartersoshkosh.ca/"
     location_url = "https://www.cartersoshkosh.ca/on/demandware.store/Sites-CartersCA-SFRA-Site/en_CA/Stores-GetNearestStores?postalCode=A1A&countryCode=CA&distanceUnit=imperial&maxdistance=1000000&lat=47.5702401&lng=-52.69563350000001"
     r = session.get(location_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    # soup = BeautifulSoup(r.text, "lxml")
     # print(soup)
     json_data = r.json()
     for key,value in json_data['stores'].items():
@@ -60,11 +60,16 @@ def fetch_data():
         store.append(country_code if country_code else '<MISSING>')
         store.append(store_number if store_number else '<MISSING>')
         store.append(phone if phone else '<MISSING>')
-        store.append("Carter's OshKosh")
+        store.append("<MISSING>")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation )
         store.append("<MISSING>")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         if store[2] in addressess:
             continue
         addressess.append(store[2])

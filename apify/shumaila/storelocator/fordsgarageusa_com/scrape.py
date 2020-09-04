@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -32,74 +31,53 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     link_list = soup.findAll('div',{'class':'service-content'})
-   # print("states = ",len(state_list))
+    print("states = ",len(link_list))
     p = 0
-    for rep in link_list:
-        link = rep.find('a')
-        title = link.text
+    for rep in link_list:        
+        title = rep.find('h4').text
+        det = rep.find('div',{'class':'service-details'}).text.splitlines()
+        #print(det)
+        try:
+            hours = rep.find('p',{'class':'hours-row'}).text.replace('\n',' ')
+        except:
+            hours = rep.findAll('p')[3].text
+            if hours.find('VIEW') > -1:
+                hours = rep.findAll('p')[2].text   
+        if hours.find("Opening") > -1:
+            continue
+        street = det[1]
+        flag = 0
+        try:
+            city, state = det[2].split(', ')
+            state,pcode = state.lstrip().split(' ')
+        except:
+            flag = 1
+            pass
+        phone = det[3]       
+            
         link = rep.find('p',{'class':'location-links'})
-        link = link.find('a')
-        maindiv = rep.findAll('p')
-        #print(states.text.strip())
+        link = link.find('a')       
         link = 'https://www.fordsgarageusa.com'+ link['href']
         r = session.get(link, headers=headers, verify=False)
         ccode = 'US'
         
         soup = BeautifulSoup(r.text, "html.parser")
-        
-        detail = soup.findAll('p',{'class':'hours-row'})
-        if len(detail)> 0:
-            if len(detail) == 2:
-                address = detail[1].find('a').text
-                hours = detail[0].text
-            elif len(detail) == 1:
-                address = detail[0].find('a').text
-                hours = "<MISSING>"
+        coord = soup.findAll('iframe')
+        coord = str(coord[1]['src'])
+        coord = coord.split('!2d',1)[1].split('!2m')[0]
+        lat,longt = coord.split('!3d')
+        if flag == 1:
             try:
-                phone = soup.find('h2',{'class':'dark'})
-                phone = phone.find('a')
-                phone = phone['href']
-                phone = phone.replace('tel:1-','')
+                address = soup.findAll('p',{'class':'hours-row'})[1].text
             except:
-                phone =maindiv[2].text
-                
-            coord = soup.findAll('iframe')
-            coord = str(coord[1]['src'])
-            start = coord.find('!2d')+3
-            end = coord.find('!3d',start)
-            longt = coord[start:end]
-            start = end + 3
-            end = coord.find('!2m',start)
-            if end == -1:
-               end = coord.find('!3m',start) 
-            lat = coord[start:end]
-            print(link)
-            street = address[0:address.find('\n')]
-            address = address[address.find('\n')+1:len(address)]
-            city,state = address.split(', ')
-            state = state.lstrip()
-            state,pcode = state.split(' ')
-           
-            hours = hours.replace('\n',' ' )
+                address = soup.findAll('p',{'class':'hours-row'})[0].text
+            street,city = address.split('\n',1)
+            city,state = city.split(', ')
+            state,pcode = state.lstrip().split(' ',1)
             
-            
-            
-        
-            
-
-        if len(hours) < 3:
-            hours = "<MISSING>"
-        if len(phone) < 3:
-            phone = "<MISSING>"
-        if len(lat) < 3:
-            lat = "<MISSING>"
-        if len(longt) < 3:
-            longt = "<MISSING>"
-        if city.find('\n') > -1:
-            street = street + ' '+ city[0:city.find('\n')]
-            city = city[city.find('\n')+1:len(city)]
         phone = phone.replace('Phone:','')
         phone = phone.lstrip()
+        hours = hours.replace('\n', ' ')
         data.append(['https://www.fordsgarageusa.com/',link,title,street,city,state,pcode,
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
     
