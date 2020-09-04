@@ -28,13 +28,15 @@ def fetch_data():
         lng = item['location_1_coordinate']
         lat = item['location_0_coordinate']
         phone = item['phone']
-        typ = ''
-        typs = item['marketSiteOfServiceType']
-        for styp in typs:
-            if typ == '':
-                typ = styp
-            else:
-                typ = typ + '; ' + styp
+        typ = '<MISSING>'
+        if 'marketSiteOfServiceType' in item:
+            typ = ''
+            typs = item['marketSiteOfServiceType']
+            for styp in typs:
+                if typ == '':
+                    typ = styp
+                else:
+                    typ = typ + '; ' + styp
         store = item['sosID']
         website = 'mercy.net'
         zc = item['zipcode']
