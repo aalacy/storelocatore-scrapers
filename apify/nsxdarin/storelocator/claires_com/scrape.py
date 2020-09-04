@@ -37,7 +37,7 @@ def fetch_data():
                    }
         website = 'claires.com'
         r = session.post(url, headers=headers, data=payload)
-        if '"id":"' in r.content:
+        if '"id":"' in r.content.decode('utf-8'):
             for item in json.loads(r.content)['stores']:
                 hours = ''
                 store = item['id']
@@ -90,7 +90,7 @@ def fetch_data():
         #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         website = 'claires.com'
         r = session.post(url, headers=headers, data=payload)
-        if '"id":"' in r.content:
+        if '"id":"' in r.content.decode('utf-8'):
             for item in json.loads(r.content)['stores']:
                 hours = ''
                 store = item['id']
