@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,16 +20,16 @@ def fetch_data():
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
     for item in array['locations']:
-        name = item['name'].encode('utf-8')
+        name = item['name']
         coming = item['coming_soon']
         lat = item['lat']
         lng = item['lng']
         if 'address2' in item:
             add = item['address'] + ' ' + str(item['address2'])
-        add = add.strip().encode('utf-8')
-        city = item['city'].encode('utf-8')
-        state = item['state'].encode('utf-8')
-        zc = item['zip'].encode('utf-8')
+        add = add.strip()
+        city = item['city']
+        state = item['state']
+        zc = item['zip']
         lurl = item['site_url']
         phone = item['phone']
         country = item['country_code']
@@ -39,9 +39,9 @@ def fetch_data():
         store = item['clubready_id']
         DFound = False
         if lurl is not None:
-            print('Pulling Hours For %s...' % lurl)
+            print(('Pulling Hours For %s...' % lurl))
             r2 = session.get(lurl, headers=headers)
-            lines = r2.iter_lines()
+            lines = r2.iter_lines(decode_unicode=True)
             for line2 in lines:
                 if 'day&quot;:' in line2:
                     DFound = True

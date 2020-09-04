@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
 
@@ -19,7 +19,7 @@ def fetch_data():
     url = 'https://www.anthropologie.com/stores'
     r = session.get(url, headers=headers)
     Found = True
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'Scotland' in line:
             Found = False
         if 'itemprop="url" content="https://www.anthropologie.com/stores">' in line and Found:
@@ -41,7 +41,7 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         Found = False
         for line2 in lines:
             if '<h2>Hours</h2>' in line2:

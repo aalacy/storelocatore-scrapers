@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,14 +18,14 @@ def fetch_data():
     locs = []
     url = 'https://pizza.dominos.ca/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<a rel="canonical" href="http://pizza.dominos.ca/' in line:
             items = line.split('class="location"><h2>')
             for item in items:
                 if 'rel="canonical" href="' in item:
                     locs.append(item.split('rel="canonical" href="')[1].split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
         website = 'dominos.ca'
         country = 'CA'
@@ -40,7 +40,7 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         hours = ''
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<h1 itemprop="name">' in line2:
                 name = line2.split('<h1 itemprop="name">')[1].split('<')[0]
