@@ -55,11 +55,11 @@ def fetch_data():
                             ids.append(store)
                             for line2 in r2.iter_lines():
                                 line2 = str(line2.decode('utf-8'))
-                                if ',"openingHoursSpecification":[' in line2 and hours == '':
-                                    days = line2.split(',"openingHoursSpecification":[')[1].split(']')[0].split('"dayOfWeek":"')
+                                if ',&quot;openingHoursSpecification&quot;:[' in line2 and hours == '':
+                                    days = line2.split(',&quot;openingHoursSpecification&quot;:[')[1].split(']')[0].split('&quot;dayOfWeek&quot;:&quot;')
                                     for day in days:
-                                        if '"opens":"' in day:
-                                            hrs = day.split('"')[0] + ': ' + day.split('"opens":"')[1].split('"')[0].rsplit(':',1)[0] + '-' + day.split('"closes":"')[1].split('"')[0].rsplit(':',1)[0]
+                                        if '&quot;opens&quot;:&quot;' in day:
+                                            hrs = day.split('&quot;')[0] + ': ' + day.split('&quot;opens&quot;:&quot;')[1].split('&quot;')[0].rsplit(':',1)[0] + '-' + day.split('&quot;closes&quot;:&quot;')[1].split('&quot;')[0].rsplit(':',1)[0]
                                             if hours == '':
                                                 hours = hrs
                                             else:
