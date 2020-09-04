@@ -29,7 +29,7 @@ def process_internal(base_path):
             for line in content:
                 if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
                     newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))
-                elif 'r = session.' in line and has_iter_lines:
+                elif ('r = session.' in line or 'r1 = session.' in line or 'r2 = session.' in line or 'r4 = session.' in line) and has_iter_lines:
                     newfile.write(line)
                     newfile.write(get_padding(line) + "if r.encoding is None: r.encoding = 'utf-8'\n")
                 elif 'iter_lines()' in line:
@@ -53,11 +53,11 @@ def process(base_path):
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs[0:10]:
+        for dir in dirs[0:100]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator/citi_com')
+run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator')
