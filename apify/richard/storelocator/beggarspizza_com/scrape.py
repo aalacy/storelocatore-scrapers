@@ -1,17 +1,8 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import json
 import re
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
-
-COMPANY_URL = "https://www.beggarspizza.com"
-CHROME_DRIVER_PATH = "chromedriver"
-
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -23,6 +14,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -45,6 +37,7 @@ def write_output(data):
 def fetch_data():
     # store data
     locations_titles = []
+    urls = []
     location_id = []
     street_addresses = []
     cities = []
@@ -55,50 +48,26 @@ def fetch_data():
     longitude_list = []
     latitude_list = []
     data = []
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
 
-    store_url = "https://www.beggarspizza.com/locations/"
-    driver.get(store_url)
-    names = [
-        name.get_attribute("textContent")
-        for name in driver.find_elements_by_css_selector(
-            "div.wpsl-store-location > p > strong > a"
-        )
-    ]
-    urls = [
-        url.get_attribute("href")
-        for url in driver.find_elements_by_css_selector(
-            "div.wpsl-store-location > p > strong > a"
-        )
-    ]
-    hour_dict = {}
-    for name, url in zip(names, urls):
-        driver.get(url)
-        hour = driver.find_element_by_css_selector(
-            "div.col-sm-12.reset-left > div.col-xs-6.smallWide.reset-left"
-        ).get_attribute("textContent")
-        hour_dict[name.strip()] = hour
-
-    # Fetch store urls from location menu
+    COMPANY_URL = "beggarspizza.com"
     store_url = "https://www.beggarspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&max_results=25&search_radius=1000&autoload=1"
-    driver.get(store_url)
 
-    # Wait until element appears - 10 secs max
-    wait = WebDriverWait(driver, 10)
-    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "pre")))
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    locations = json.loads(driver.find_element_by_css_selector("pre").text)
+    session = SgRequests()
+
+    req = session.get(store_url, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+
+    locations = json.loads(base.text)
 
     for location in locations:
         # ID
         location_id.append(location["id"])
 
         # Title
-        locations_titles.append(location["store"])
+        locations_titles.append(location["store"].replace("–","-"))
 
         # Street address
         street_addresses.append(location["address"] + " " + location["address2"])
@@ -113,7 +82,10 @@ def fetch_data():
         phone_numbers.append(location["phone"])
 
         # Zip
-        zip_codes.append(location["zip"])
+        zip_code = location["zip"]
+        if zip_code == "40409":
+            zip_code = "46409"
+        zip_codes.append(zip_code)
 
         # Latitude
         latitude_list.append(location["lat"])
@@ -121,17 +93,26 @@ def fetch_data():
         # Longitude
         longitude_list.append(location["lng"])
 
-        # Hour  - Use backup to reference
-        hour = " ".join(re.sub("<[^>]*>", ",", location["hours"]).split(","))
-        if hour == "":
-            if location["store"] in hour_dict.keys():
-                hour = hour_dict[location["store"]]
-            else:
-                hour = "<MISSING>"
-        hours.append(hour)
+        link = location["url"]
+        urls.append(link)
+
+        # Hour
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+
+        raw_hours = base.find(class_="col-sm-12 reset-left").find(class_="col-xs-6 smallWide reset-left").text.replace("–","-").replace("<"," ").strip().split("\n")
+        fin_hours = ""
+        for raw_hour in raw_hours:
+            if "day" in raw_hour.lower() or "am " in raw_hour.lower() or "pm " in raw_hour.lower():
+                fin_hours = fin_hours + " " + raw_hour
+        fin_hours = (re.sub(' +', ' ', fin_hours)).strip()
+        if " LA" in fin_hours:
+            fin_hours = fin_hours[:fin_hours.find(" LA")].strip()
+        hours.append(fin_hours)
 
     for (
         locations_title,
+        url,
         street_address,
         city,
         state,
@@ -143,6 +124,7 @@ def fetch_data():
         id,
     ) in zip(
         locations_titles,
+        urls,
         street_addresses,
         cities,
         states,
@@ -156,6 +138,7 @@ def fetch_data():
         data.append(
             [
                 COMPANY_URL,
+                url,
                 locations_title,
                 street_address,
                 city,
@@ -171,7 +154,6 @@ def fetch_data():
             ]
         )
 
-    driver.quit()
     return data
 
 
