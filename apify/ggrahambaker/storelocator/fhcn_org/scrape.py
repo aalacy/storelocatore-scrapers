@@ -64,10 +64,15 @@ def fetch_data():
             else:  
                 addy = addy[1].split(',')
                 street_address = addy[0]
-                city = addy[1]
-                state_zip = addy[2].strip().split(' ')
-                state = state_zip[0]
-                zip_code = state_zip[1]
+                try:
+                    city = addy[1]
+                    state_zip = addy[2].strip().split(' ')
+                    state = state_zip[0]
+                    zip_code = state_zip[1]
+                except:
+                    city = '<MISSING>'
+                    state= '<MISSING>'
+                    zip_code = '<MISSING>'
         else:
             street_address = addy[1]
             city, state, zip_code = addy_ext(addy[2])
@@ -81,18 +86,21 @@ def fetch_data():
             hours += h.strip().replace('&amp;', '&') + ' '
         
         hours = hours.strip()
-        
-        phone_number = loc.find('div', {'class': 'phone-wrapper'}).find('span').text
+        try:
+            phone_number = loc.find('div', {'class': 'phone-wrapper'}).find('span').text
 
+        except:
+            phone = '<MISSING>'
         country_code = 'US'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        page_url = '<MISSING>'
+        page_url = 'https://www.fhcn.org/locations/'
         store_number = '<MISSING>'
-        
+        if phone_number.find('KID') > -1:
+            phone_number = phone_number.replace(' (KIDS)','')
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-
+        #print(store_data)
         all_store_data.append(store_data)
 
     return all_store_data
