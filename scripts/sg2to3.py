@@ -28,6 +28,8 @@ def process_internal(base_path):
             for line in content:
                 if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
                     newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))    
+                elif 'iter_lines()' in ilne:
+                    newfile.write(line.replace('iter_lines()', 'iter_lines(decode_unicode=True)')
                 else:
                     newfile.write(line)
     run2to3(base_path)
@@ -54,4 +56,4 @@ def run(root):
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator/lids_com')
+run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator/security-finance_com__sunbelt-credit')
