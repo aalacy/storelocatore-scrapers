@@ -19,8 +19,9 @@ def fetch_data():
     key = ''
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if 'key=' in line:
-            key = line.split('key=')[1].split('"')[0]
+        if '"apiKey\\":\\"' in line:
+            key = line.split('"apiKey\\":\\"')[1].split('\\')[0]
+    print(key)
     for code in sgzip.for_radius(100):
         print('Pulling Zip Code %s...' % code)
         url = 'https://redsky.target.com/v3/stores/nearby/' + code + '?key=' + key + '&limit=500&within=100&unit=mile'
