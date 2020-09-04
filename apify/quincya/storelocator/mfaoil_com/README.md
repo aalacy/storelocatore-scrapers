@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+--ignore GeoConsistencyValidator (Few state/zipcodes not matching)
