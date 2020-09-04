@@ -1,0 +1,53 @@
+import os
+from shutil import copyfile
+
+def replace_files(base_path):
+    os.remove('{}/scrape.py'.format(base_path))
+    os.remove('{}/Dockerfile'.format(base_path))
+    copyfile('{}/../../../../templates/python3_simple/Dockerfile'.format(base_path), '{}/Dockerfile'.format(base_path))
+    os.rename('{}/scrape-tmp.py'.format(base_path), '{}/scrape.py'.format(base_path))
+
+def get_padding(line):
+    tab_count, space_count = 0, 0
+    for c in line:
+        if c == '\t':
+            tab_count += 1
+        elif c == ' ':
+            space_count += 1
+        else:
+            return '\t'*tab_count + ' '*space_count
+
+def process_internal(base_path):
+    with open('{}/scrape.py'.format(base_path)) as oldfile:
+        with open('{}/scrape-tmp.py'.format(base_path), 'w') as newfile:
+            content = oldfile.readlines()
+            in_get_driver_method, seen_else = False, False
+            for line in content:
+                if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
+                    newfile.write(get_padding(line).replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))    
+                else:
+                    newfile.write(line)
+    replace_files(base_path)
+
+def process(base_path):
+    (_, _, files) = next(os.walk(base_path))
+    if 'scrape.py' not in files or 'Dockerfile' not in files:
+        print('skipping {}'.format(base_path))
+        return
+    with open('{}/Dockerfile'.format(base_path)) as f:
+        content = f.readlines()
+        for line in content:
+            if 'apify-python:latest' in line:
+                process_internal(base_path)
+
+def run(root):
+    if root.endswith('storelocator'):
+        (_, dirs, _) = next(os.walk(root))
+        for dir in dirs:
+            print("processing {}".format(dir))
+            process('{}/{}'.format(root, dir))
+    else:
+        print("processing {}".format(root))
+        process(root)
+
+run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator/lids_com')
