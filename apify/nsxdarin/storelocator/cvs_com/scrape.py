@@ -39,7 +39,7 @@ def enqueue_links(url, selector):
     cities = []
     states = []
 
-    session.get_session()
+    get_session()
     r = session.get(url, headers=headers)
 
     soup = BeautifulSoup(r.text, "html.parser")
