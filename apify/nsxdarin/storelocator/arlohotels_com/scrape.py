@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://www.arlohotels.com'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<li class="location">' in line:
             items = line.split('<li class="location">')
             for item in items:
@@ -31,7 +32,7 @@ def fetch_data():
     store = '<MISSING>'
     hours = '<MISSING>'
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         name = ''
         add = ''
         city = ''
@@ -41,7 +42,8 @@ def fetch_data():
         lng = ''
         phone = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h3 class="address__hotel-name">' in line2:
                 name = line2.split('<h3 class="address__hotel-name">')[1].split('<')[0]
             if '"streetAddress":"' in line2:

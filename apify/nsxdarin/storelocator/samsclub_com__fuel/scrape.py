@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,13 +17,14 @@ def fetch_data():
     locs = []
     url = 'https://www.samsclub.com/sitemap_locators.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.samsclub.com/club/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     for loc in locs:
         Fuel = False
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'samsclub.com/fuel'
         typ = 'Gas'
         hours = ''
@@ -39,7 +40,8 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         locurl = 'https://www.samsclub.com/api/node/clubfinder/' + store
         r2 = session.get(locurl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"postalCode":"' in line2 and '"displayName":"Fuel Center"' in line2:
                 Fuel = True
                 name = line2.split('"name":"')[1].split('"')[0]

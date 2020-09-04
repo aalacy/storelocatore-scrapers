@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,9 +17,10 @@ def fetch_data():
     locs = []
     url = 'https://www.parker.com/parker/ParkerStoreRedesign/jsp/googlemaplink.jsp?localeCode=EN&searchType=N&distributorType=P&countryName=&from=parkerstore&countrySelect=USA&City=&County=&postalcode=10002&distance=10000'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'parker.com'
     Found = False
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if ',markers: [{' in line and Found is False:
             Found = True
             items = line.split('latitude:')

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,12 +17,13 @@ def fetch_data():
     regions = ['12900000001']
     url = 'https://www.doyourumble.com'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a class="block p-2" href="/returnregion/' in line:
             regions.append(line.split('<a class="block p-2" href="/returnregion/')[1].split('"')[0])
     for region in regions:
         url2 = 'https://www.doyourumble.com/returnregion/' + region
-        print('Pulling Region %s...' % region)
+        print(('Pulling Region %s...' % region))
         website = 'doyourumble.com'
         typ = '<MISSING>'
         hours = '<MISSING>'
@@ -37,7 +38,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(url2, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'title: "' in line2:
                 name = line2.split('title: "')[1].split('"')[0]
             if 'address1: "' in line2:

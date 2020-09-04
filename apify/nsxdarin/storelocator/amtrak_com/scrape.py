@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     canada = ['SK','ON','PQ','QC','AB','MB','BC','YT','NS','NF','NL','PEI','PE']
     url = 'https://www.amtrak.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.amtrak.com/stations/' in line:
             items = line.split('<loc>https://www.amtrak.com/stations/')
             for item in items:
@@ -26,7 +27,7 @@ def fetch_data():
                     lurl = 'https://maps.amtrak.com/services/MapDataService/StationInfo/getStationInfo?stationCode=' + item.split('<')[0]
                     locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'amtrak.com'
         typ = '<MISSING>'
         hours = ''
@@ -42,7 +43,8 @@ def fetch_data():
         store = loc.rsplit('=',1)[1]
         lurl = 'https://www.amtrak.com/stations/' + store
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '"name":"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
@@ -62,7 +64,8 @@ def fetch_data():
                 state = line2.split('"stateProv":{"stateCode":"')[1].split('"')[0]
         hurl = 'https://www.amtrak.com/content/amtrak/en-us/stations/bos.stationTabContainer.' + store.upper() + '.json'
         r3 = session.get(hurl, headers=headers)
-        for line3 in r3.iter_lines():
+        if r3.encoding is None: r3.encoding = 'utf-8'
+        for line3 in r3.iter_lines(decode_unicode=True):
             if '"type":"stationhours","rangeData":[{' in line3:
                 days = line3.split('"type":"stationhours","rangeData":[{')[1].split('}]}]},')[0].split('"day":"')
                 for day in days:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,20 +19,23 @@ def fetch_data():
     states = []
     url = 'https://www.cvs.com/store-locator/cvs-pharmacy-locations'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a href="/store-locator/cvs-pharmacy-locations/' in line:
             states.append('https://www.cvs.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         cities = []
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<a href="/store-locator/cvs-pharmacy-locations/' in line2:
                 cities.append('https://www.cvs.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
             r2 = session.get(city, headers=headers)
-            print('Pulling City %s...' % city)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            print(('Pulling City %s...' % city))
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<a href="/store-locator/cvs-pharmacy-address/' in line2:
                     lurl = 'https://www.cvs.com' + line2.split('href="')[1].split('"')[0]
                     if lurl not in locs:
@@ -44,7 +47,7 @@ def fetch_data():
                     while LFound:
                         try:
                             lcount = lcount + 1
-                            print('Pulling Location %s-%s...' % (loc, str(lcount)))
+                            print(('Pulling Location %s-%s...' % (loc, str(lcount))))
                             website = 'cvs.com'
                             typ = '<MISSING>'
                             hours = ''
@@ -60,7 +63,8 @@ def fetch_data():
                             lng = ''
                             Found = False
                             r3 = session.get(loc, headers=headers)
-                            for line3 in r3.iter_lines():
+                            if r3.encoding is None: r3.encoding = 'utf-8'
+                            for line3 in r3.iter_lines(decode_unicode=True):
                                 if add == '' and '"streetAddress": "' in line3:
                                     LFound = False
                                     add = line3.split('"streetAddress": "')[1].split('"')[0]

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,8 +17,9 @@ def fetch_data():
     locs = []
     url = 'https://stockist.co/api/v1/u3959/locations/all.js?callback=_stockistAllStoresCallback'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = '5starnutritionusa.com'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"id":' in line:
             items = line.split('"id":')
             for item in items:
@@ -46,7 +47,7 @@ def fetch_data():
                         state = 'LA'
                     phone = item.split('"phone":"')[1].split('"')[0]
                     try:
-                        hours = item.split('"description":"')[1].split('"')[0].replace('day\\t','day: ').replace('\u2013','-').replace('\\n','; ')
+                        hours = item.split('"description":"')[1].split('"')[0].replace('day\\t','day: ').replace('\\u2013','-').replace('\\n','; ')
                     except:
                         hours = '<MISSING>'
                     if '1800 McFarland Blvd' in add:

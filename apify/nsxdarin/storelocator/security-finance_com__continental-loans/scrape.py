@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import sgzip
@@ -20,7 +20,8 @@ def fetch_data():
     for code in sgzip.for_radius(50):
         url = 'https://www.securityfinance.com/wp-admin/admin-ajax.php?action=tba_locator_search&zip=' + code + '&radius=100&results=100'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if 'More info' in line:
                 items = line.split('\\" href=\\"https:\\/\\/www.securityfinance.com\\/locations\\/')
                 for item in items:
@@ -30,6 +31,7 @@ def fetch_data():
                             locs.append(lurl)
     for loc in locs:
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         website = 'www.security-finance.com'
         typ = ''
         store = ''
@@ -44,7 +46,7 @@ def fetch_data():
         NFound = False
         lat = '<MISSING>'
         lng = '<MISSING>'
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1 class="location-name">' in line2:
                 typ = line2.split('<h1 class="location-name">')[1].split('<')[0]
             if '"name": "' in line2 and NFound is False:

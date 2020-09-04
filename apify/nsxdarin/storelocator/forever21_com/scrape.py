@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,7 +20,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)['F21StoreList']:
         if item['CountryName'] == 'U.S.A':
-            add = item['Address'].encode('utf-8') + ' ' + item['Address2'].encode('utf-8')
+            add = item['Address'] + ' ' + item['Address2']
             city = item['City']
             country = 'US'
             website = 'forever21.com'
