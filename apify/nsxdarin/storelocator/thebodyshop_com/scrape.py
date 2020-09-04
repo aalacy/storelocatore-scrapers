@@ -22,9 +22,9 @@ def fetch_data():
         typ = item['storeType']
         website = 'thebodyshop.com'
         store = item['uniqueId']
-        try:
+        if 'number' in item and item['number']:
             phone = item['number']
-        except:
+        else:
             phone = '<MISSING>'
         add = item['address']
         if item['address2']:
@@ -89,9 +89,9 @@ def fetch_data():
         typ = item['storeType']
         website = 'thebodyshop.com'
         store = item['uniqueId']
-        try:
+        if 'number' in item and item['number']:
             phone = item['number']
-        except:
+        else:
             phone = '<MISSING>'
         add = item['address']
         if item['address2']:
