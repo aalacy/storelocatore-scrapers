@@ -42,6 +42,7 @@ def fetch_data():
         payload = '{"type":"branchesAndATMs","inputLocation":[' + str(y) + ',' + str(x) + '],"resultCount":"500","distanceUnit":"MILE","findWithinRadius":"500"}'
         payload = json.loads(payload)
         r = session.post(url, headers=headers, data=json.dumps(payload))
+        if r.encoding is None: r.encoding = 'utf-8'
         for line in r.iter_lines(decode_unicode=True):
             if '"name":"' in line:
                 items = line.split('"type":"Point"')
