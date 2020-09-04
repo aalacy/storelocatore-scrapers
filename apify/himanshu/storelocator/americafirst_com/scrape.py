@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import io
 import json
@@ -21,16 +21,20 @@ def fetch_data():
     base_url = "https://www.americafirst.com/"
     db =  'https://www.americafirst.com/content/afcu/en/about/branch-search-results/_jcr_content/main/branch_search_result.nocache.html'
     r = session.get(db, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = bs(r.text, "lxml")
     data_8 = (soup.find_all("div",{"class":"h4"}))
     for i in data_8 :
         location_name = i.text.strip()
         # print(location_name)
         data = (i.text.strip().replace(" ","-").lower().replace("'","").replace(".","").replace("park-city,-the-market-at-park-city","the-market-at-park-city").replace("boise-office","boise"))
         link = ("https://www.americafirst.com/content/afcu/en/about/branches/"+str(data)+"-branch/_jcr_content/main/column_container_add/col-1/branch-details-info.nocache.html").replace("park-city,-the-market-at-park-city","the-market-at-park-city").replace("boise-office","boise").replace("marriott-slaterville-12th-st","marriott-slaterville-12th-street")
-       # print(link)
+        soup = bs(session.get(link).text, 'lxml')
+        if "No ATM's available nearby" in str(soup):
+            location_type = "Branch"
+        else:
+            location_type = "Branch & ATM'S"
         r1 = session.get(link, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
+        soup1 = bs(r1.text, "lxml")
         data_9 = (soup1.find_all("div",{"class":"col-12 col-sm-12 col-xl-12 col-lg-12 col-md-6"}))
         try:
             for k in data_9:
@@ -51,12 +55,11 @@ def fetch_data():
                 store.append("US")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(location_type)
                 store.append(data_add_1.split("=")[1].split(",")[0])
                 store.append(data_add_1.split("=")[1].split(",")[1])
                 store.append(hours_of_operation)
                 store.append(url_data)
-                
                 yield store
         except:
             pass
