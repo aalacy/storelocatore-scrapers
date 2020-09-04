@@ -1,5 +1,6 @@
 import os
 from shutil import copyfile
+import subprocess
 
 def replace_files(base_path):
     os.remove('{}/scrape.py'.format(base_path))
@@ -17,6 +18,9 @@ def get_padding(line):
         else:
             return '\t'*tab_count + ' '*space_count
 
+def run2to3(base_path):
+    subprocess.run(["2to3", "-wn", '{}/scrape-tmp.py'.format(base_path)])
+
 def process_internal(base_path):
     with open('{}/scrape.py'.format(base_path)) as oldfile:
         with open('{}/scrape-tmp.py'.format(base_path), 'w') as newfile:
@@ -27,6 +31,7 @@ def process_internal(base_path):
                     newfile.write(get_padding(line).replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))    
                 else:
                     newfile.write(line)
+    run2to3(base_path)
     replace_files(base_path)
 
 def process(base_path):
