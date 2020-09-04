@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,31 +17,34 @@ def fetch_data():
     states = []
     url = 'https://www.goodyear.ca/en-CA/services/find-a-tire-store'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     locs = []
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<li><a rel="t-sd-3' in line:
             surl = 'https://www.goodyear.ca' + line.split('href="')[1].split('"')[0]
             states.append(surl)
 
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'details#overview"' in line2:
                 rurl = 'https://www.goodyear.ca' + line2.split('href="')[1].split('"')[0]
                 if rurl not in locs:
                     locs.append(rurl)
 
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r3 = session.get(loc, headers=headers)
+        if r3.encoding is None: r3.encoding = 'utf-8'
         typ = 'Retailer'
         website = 'www.goodyear.ca'
         country = 'CA'
         hours = ''
         store = '<MISSING>'
-        lines3 = r3.iter_lines()
+        lines3 = r3.iter_lines(decode_unicode=True)
         for line3 in lines3:
             if '<h1 itemprop="name"><b>' in line3:
                 name = line3.split('<h1 itemprop="name"><b>')[1].split('<')[0]

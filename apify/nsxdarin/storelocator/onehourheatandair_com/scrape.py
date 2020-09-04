@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,14 +20,15 @@ def fetch_data():
     locs = []
     payload = {'CallAjax': 'GetLocations'}
     r = session.post(url, headers=headers, data=payload)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"Path":"' in line:
             items = line.split('"Path":"')
             for item in items:
                 if '"ExternalDomain":' in item:
                     locs.append('https://www.onehourheatandair.com' + item.split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'onehourheatandair.com'
         name = ''
         country = 'US'
@@ -36,7 +37,8 @@ def fetch_data():
         typ = 'Location'
         store = '<MISSING>'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         hours = '<MISSING>'
         phone = '<MISSING>'
         zc = '<MISSING>'

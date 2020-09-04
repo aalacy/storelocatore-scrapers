@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,20 +19,23 @@ def fetch_data():
     for url in urls:
         states = []
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if 'Hotels</span></a>' in line:
                 states.append(line.split('href="')[1].split('"')[0])
         for state in states:
             cities = []
             #print('Pulling State %s...' % state)
             r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'Hotels</span></a>' in line2:
                     cities.append(line2.split('href="')[1].split('"')[0])
             for city in cities:
                 #print('Pulling City %s...' % city)
                 r3 = session.get(city, headers=headers)
-                for line3 in r3.iter_lines():
+                if r3.encoding is None: r3.encoding = 'utf-8'
+                for line3 in r3.iter_lines(decode_unicode=True):
                     if '"@type":"Hotel","name":"Holiday Inn Express' in line3:
                         lurl = line3.split('"url":"')[1].split('"')[0]
                         if lurl not in alllocs:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://stores.anntaylor.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://stores.anntaylor.com/' in line:
             lurl = line.split('>')[1].split('<')[0]
             count = lurl.count('/')
@@ -26,7 +27,7 @@ def fetch_data():
             if count == 7 and '/factory/' in lurl:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'anntaylor.com'
         typ = 'Store'
         name = ''
@@ -40,7 +41,8 @@ def fetch_data():
         country = 'US'
         hours = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'itemprop="name">' in line2:
                 name = line2.split('itemprop="name">')[1].split('</h1>')[0].replace('<div>','').replace('</div>','')
                 if 'Factory Store' in name:

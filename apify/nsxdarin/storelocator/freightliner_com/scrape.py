@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,17 +17,19 @@ def fetch_data():
     urls = ['https://freightliner.com/dealers/CANADA','https://freightliner.com/dealers/UNITED-STATES']
     for url in urls:
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         website = 'freightliner.com'
         if 'CANADA' in url:
             country = 'CA'
         else:
             country = 'US'
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '<h2><a href="/Dealer?code=' in line:
                 code = line.split('<h2><a href="/Dealer?code=')[1].split('&')[0]
                 lurl = 'https://freightliner.com/Dealer?code=' + code
                 print(lurl)
                 r2 = session.get(lurl, headers=headers)
+                if r2.encoding is None: r2.encoding = 'utf-8'
                 name = ''
                 add = ''
                 city = ''
@@ -40,7 +42,7 @@ def fetch_data():
                 hours = ''
                 phone = ''
                 HFound = False
-                lines = r2.iter_lines()
+                lines = r2.iter_lines(decode_unicode=True)
                 for line2 in lines:
                     if '<h3><a map="' in line2:
                         if country == 'CA':

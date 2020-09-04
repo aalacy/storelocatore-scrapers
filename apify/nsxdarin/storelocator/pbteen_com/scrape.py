@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -17,9 +17,10 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.potterybarn.com/customer-service/store-locator.html?cm_type=fnav'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     storeinfo = []
     storelist = ['6095','6060','6058','981','888','6023','983','6101','665','6036','655','6033']
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<div class="store-card">' in line:
             next(lines)
@@ -31,6 +32,7 @@ def fetch_data():
     locs = []
     url = 'https://www.potterybarn.com/search/stores.json?brands=PB,PK,PT&lat=40.714&lng=-73.986&radius=10000'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     for item in json.loads(r.content)['storeListResponse']['stores']:
         country = item['properties']['COUNTRY_CODE']
         store = item['properties']['STORE_NUMBER']

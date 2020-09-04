@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     urlhome = 'https://www.volkswagen.co.uk/app/dealersearch/vw-gb/en/Volkswagen%20Passenger%20Cars%20Search/+/53.98724/-1.0928/800/JCT600%20Volkswagen%20York/+/+/+'
     r = session.get(urlhome, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '%22id%5C%22:%5C%22' in line:
             items = line.split('%22id%5C%22:%5C%22')
             for item in items:
@@ -33,6 +34,7 @@ def fetch_data():
         print(loc)
         url = 'https://cdn6.prodworksngwapi.de/sds/search/v2/dealers/' + loc + '?dv=1591269&tenant=v-gbr-dcc'
         r2 = session.get(url, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         website = 'volkswagen.co.uk'
         typ = '<MISSING>'
         country = 'GB'
@@ -46,7 +48,7 @@ def fetch_data():
         week = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
         hours = ''
         lurl = ''
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if ',"name":"' in line2:
                 name = line2.split(',"name":"')[1].split('"')[0]
                 add = line2.split('"street":"')[1].split('"')[0]

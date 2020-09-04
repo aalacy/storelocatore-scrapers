@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,6 +17,7 @@ def fetch_data():
     locs = []
     url = 'https://www.spinpizza.com/locations/'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'spinpizza.com'
     typ = '<MISSING>'
     country = 'US'
@@ -26,7 +27,7 @@ def fetch_data():
     lat = ''
     lng = ''
     LFound = False
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<div class="location" id="' in line:
             store = line.split('<div class="location" id="')[1].split('"')[0]

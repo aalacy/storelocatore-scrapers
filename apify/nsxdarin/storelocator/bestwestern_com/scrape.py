@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
 
@@ -21,11 +21,12 @@ def fetch_data():
     locs = []
     url = 'https://www.bestwestern.com/etc/seo/bestwestern/hotels.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.bestwestern.com/en_US/book/' in line and 'https://www.bestwestern.com/en_US/book/hotels-in-' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    print('Found %s Locations...' % str(len(locs)))
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
         PageFound = True
         time.sleep(2)
@@ -47,8 +48,9 @@ def fetch_data():
             try:
                 PageFound = False
                 r2 = session.get(loc, headers=headers, timeout=(connect_timeout, read_timeout))
+                if r2.encoding is None: r2.encoding = 'utf-8'
                 try:
-                    for line2 in r2.iter_lines():
+                    for line2 in r2.iter_lines(decode_unicode=True):
                         if '&#34;street1&#34;:&#34;' in line2:
                             add = line2.split('&#34;street1&#34;:&#34;')[1].split('&#34')[0]
                             city = line2.split('&#34;city&#34;:&#34;')[1].split('&#34')[0]

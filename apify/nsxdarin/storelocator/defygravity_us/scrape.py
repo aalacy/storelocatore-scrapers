@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,13 +17,14 @@ def fetch_data():
     locs = []
     url = 'http://www.defygravity.us/'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'defygravity.us'
     typ = '<MISSING>'
     country = 'US'
     store = '<MISSING>'
     lat = '<MISSING>'
     lng = '<MISSING>'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<li><a href="http://www.' in line:
             locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
@@ -35,7 +36,8 @@ def fetch_data():
         hours = ''
         HFound = False
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split(' - ')[0]

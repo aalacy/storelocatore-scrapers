@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,10 +17,11 @@ def fetch_data():
     ids = []
     for x in range(10, 65, 5):
         for y in range(-60, -170, -5):
-            print(str(x) + ',' + str(y))
+            print((str(x) + ',' + str(y)))
             url = 'https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(' + str(x) + ',' + str(y) + ',1000)&$filter=Confidence%20Eq%20%27High%27%20And%20(EntityType%20Eq%20%27Address%27%20Or%20EntityType%20Eq%20%27RoadIntersection%27)%20AND%20(Brand%20eq%20%27P66%27)&$format=json&$inlinecount=allpages&$select=*,__Distance&key=AvroZVNGVuRnilfbaoMSyXJhjA36NTNr8jdIufcn1erJ_kJMF5UE33M_ENXxHwTb&$top=1000'
             r = session.get(url, headers=headers)
-            for line in r.iter_lines():
+            if r.encoding is None: r.encoding = 'utf-8'
+            for line in r.iter_lines(decode_unicode=True):
                 if '"uri":"' in line:
                     items = line.split('"uri":"')
                     for item in items:
