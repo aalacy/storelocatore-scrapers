@@ -101,11 +101,13 @@ def fetch_data():
                     if '"intervals"' in day:
                         if '"isClosed":true' in day:
                             hrs = day.split('"')[0] + ': Closed'
-                        else:
+                        elif 'dailyHolidayHours' not in day:
                             hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                        if hours == '':
-                            hours = hrs
                         else:
+                            hrs = None
+                        if hours == '' and hrs:
+                            hours = hrs
+                        elif hrs:
                             hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
