@@ -9,7 +9,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "location_name2", "location_name_concat", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "office_name", "building_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -23,7 +23,7 @@ def fetch_data():
         typ = item['CourtType'].replace('\\','')
         store = item['LocationId']
         loc = 'https://www.uscourts.gov/federal-court-finder/location/' + store
-        name = item['OfficeName']
+        office_name = item['OfficeName']
         add = item['BuildingAddress']
         city = item['BuildingCity']
         state = item['BuildingState']
@@ -32,17 +32,17 @@ def fetch_data():
         hours = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
-        name2 = item['BuildingName']
-        if name2 == '':
-            name2 = '<MISSING>'
-            nameconcat = name
+        building_name = item['BuildingName']
+        if building_name == '':
+            building_name = '<MISSING>'
+            name = office_name
         else:
-            nameconcat = name.split(' - ')[0] + ' ' + name2
+            name = office_name.split(' - ')[0] + ' ' + building_name
         if typ == '':
             typ = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, name2, nameconcat, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc, name, office_name, building_name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
