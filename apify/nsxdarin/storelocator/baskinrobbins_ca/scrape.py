@@ -17,7 +17,7 @@ def write_output(data):
 def fetch_data():
     url = 'http://cdn.storelocatorwidgets.com/json/4a009290a87670e408c8d77aada5c556?callback=slw&_=1573064176270'
     r = session.get(url, headers=headers)
-    items = r.content.split('"storeid":"')
+    items = r.text.split('"storeid":"')
     for item in items:
         if '"name":"' in item and 'slw({"settings":' not in item:
             item = item.replace(', Canada",','",')
