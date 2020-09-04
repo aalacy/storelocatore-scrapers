@@ -2,6 +2,7 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,6 +15,8 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+driver = SgSelenium().chrome()
 
 def fetch_data():
     # Your scraper here
@@ -30,8 +33,10 @@ def fetch_data():
     ids = []
     page_url = []
     urls=[]
-    res = requests.get("https://houlihans.com/find-a-location")
-    soup = BeautifulSoup(res.text, 'html.parser')
+    #res = requests.get("https://houlihans.com/find-a-location")
+    #soup = BeautifulSoup(res.text, 'html.parser')
+    driver.get("https://houlihans.com/find-a-location")
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
     lis = soup.find('div', {'class': 'sf_cols'}).find_all('a')
     print(len(lis))
 

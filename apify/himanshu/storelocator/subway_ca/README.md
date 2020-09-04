@@ -13,4 +13,4 @@ Please make sure that:
 
 invalid zip and same lat & lng and his length is short 
 
-and i checked all data is true this website 
+and i checked all data is true for this website 

@@ -100,6 +100,8 @@ def fetch_data():
                 phone = phone.replace('"',"'")
                 if 'tel:' in phone:
                     phone = phone.split("tel:")[1].split("'")[0]
+                if '0' not in phone and '1' not in phone:
+                    phone = '<MISSING>'
                 if add not in locs:
                     locs.append(add)
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

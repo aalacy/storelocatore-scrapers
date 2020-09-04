@@ -4,6 +4,7 @@ from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import time
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,6 +36,7 @@ def fetch_data():
 
     data = []
     driver = SgSelenium().chrome()
+    driver1 = SgSelenium().chrome()
 
     locator_domain = 'https://www.pluckers.com/'
     ext = 'locations'
@@ -78,6 +80,7 @@ def fetch_data():
         link = store.find_elements_by_tag_name('a')[-2].get_attribute("href")
         if "tel" in link:
             link = store.find_elements_by_tag_name('a')[-1].get_attribute("href")
+        print(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
         hours = '<MISSING>'
@@ -86,9 +89,21 @@ def fetch_data():
             hours = raw_hours[:raw_hours.rfind("m")+1].replace("pm","pm ").replace("Hours","Hours ").strip()
         if "coming" in raw_hours.lower():
             continue
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        
+
+        driver1.get(link)
+        time.sleep(2)
+
+        try:
+            geo = re.findall(r'{lat.+lng:.+}', driver1.page_source)[0]
+            lat = geo.split(":")[1].split(",")[0].strip()
+            longit = geo.split(":")[-1].split("}")[0].strip()
+            if not lat:
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+        except:
+            lat = '<MISSING>'
+            longit = '<MISSING>'
+            
         store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                          store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
@@ -96,6 +111,7 @@ def fetch_data():
     # End scraper
 
     driver.quit()
+    driver1.quit()
     return all_store_data
 
 def scrape():

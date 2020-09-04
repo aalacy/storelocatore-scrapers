@@ -99,7 +99,9 @@ def fetch_data():
         zip = parsed_address['zipcode']
         street = parsed_address['street']
 
-
+        loc=city
+        if loc=='<MISSING>':
+            loc=url.strip().strip('/').split('/')[-1].replace('-',' ').upper()
 
 
         all.append([
