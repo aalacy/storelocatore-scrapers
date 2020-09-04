@@ -52,7 +52,7 @@ def fetch_data():
                    'txtDisplayMode': 'expanded'
                    }
         r2 = session.post(url, headers=headers2, data=payload)
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode = True)
         website = 'kellyservices.com'
         typ = 'Branch'
         name = ''
