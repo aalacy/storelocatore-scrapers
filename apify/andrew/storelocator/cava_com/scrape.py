@@ -21,6 +21,7 @@ def write_output(data):
 def fetch_data():
     data = []
     driver.get(BASE_URL)
+    time.sleep(8)
     stores = driver.find_elements_by_css_selector('div.vcard')
     for store in stores:
         location_name = store.find_element_by_css_selector('h3').text
@@ -35,7 +36,7 @@ def fetch_data():
             if "coming" in note.lower():
                 continue
             if "close" in note.lower():
-                hours_of_operation = note                
+                hours_of_operation = note
         phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
         try:
             store_number = store.find_element_by_css_selector("div.adr ~ p > a[href*='order.cava.com']").get_attribute('href')
