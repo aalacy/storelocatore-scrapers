@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 import time
@@ -23,7 +22,7 @@ def fetch_data():
     VSG = ''
     EV = ''
     ids = []
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode = True):
         if 'type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="' in line:
             VS = line.split('type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="')[1].split('"')[0]
         if 'type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="' in line:
