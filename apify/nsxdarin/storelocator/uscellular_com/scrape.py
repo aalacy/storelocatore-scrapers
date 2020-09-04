@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,14 +14,20 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://uscc.koremuat.com//getStores?callback=jQuery1910010208167602496543_1577813002514&xMin=-179.29488281249996&yMin=10.17114643872303&xMax=-50.37398437499996&yMax=69.32114216809255&zoom=20&deltaX=3.955078125&deltaY=3.1724993594054274&stores=9&buffer=9&offset=0&filters=on%2C&retailers=&paymentTypes=&closestPOI=&_=1577813002518'
-    r = session.get(url, headers=headers)
+    states = []
+    sm = 'https://local.uscellular.com/sitemap.xml'
+    r = session.get(sm, headers=headers)
     for line in r.iter_lines():
-        if ',"id":' in line:
-            items = line.split(',"id":')
-            for item in items:
-                if 'jQuery' not in item:
-                    locs.append(item.split(',')[0])
+        line = str(line.decode('utf-8'))
+        if 'sitemap.xml' in line:
+            states.append(line.strip().replace('\r','').replace('\t','').replace('\n',''))
+    for state in states:
+        r2 = session.get(state, headers=headers)
+        print(state)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if 'https://local.uscellular.com/' in line2:
+                locs.append(line2.strip().replace('\r','').replace('\t','').replace('\n',''))
     for loc in locs:
         print('Pulling Location %s...' % loc)
         lurl = 'https://uscc.koremuat.com//getStoreInfo?callback=jQuery191011573511012738757_1577812759166&id=' + loc
@@ -39,25 +44,40 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"success":true' in line2:
-                zc = line2.split('"zip":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                add = line2.split(',"address":"')[1].split('"')[0]
-                name = line2.split('"title":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
-                hours = line2.split('hours":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split(',')[0]
-                store = line2.split('"storeId":"')[1].split('"')[0]
+        r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
+            if '<strong class="name">' in line2:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                name = g.strip().replace('\r','').replace('\t','').replace('\n','')
+            if '<div class="street">' in line2:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                add = g.strip().replace('\r','').replace('\t','').replace('\n','')
+            if '<div class="locality">' in line2:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                csz = g.strip().replace('\r','').replace('\t','').replace('\n','')
+                city = csz.split(',')[0]
+                state = csz.split(',')[1].strip().split(' ')[0]
+                zc = csz.rsplit(' ',1)[1]
+            if '"latitude":"' in line2:
+                lat = line2.split('"latitude":"')[1].split('"')[0]
+                lng = line2.split('"longitude":"')[1].split('"')[0]
+            if 'class="location-detail-phone-number">' in line2:
+                phone = line2.split('tel:')[1].split('"')[0]
+            if '"branchCode":"' in line2:
+                store = line2.split('"branchCode":"')[1].split('"')[0]
+            if '"openingHours":["' in line2:
+                hours = line2.split('"openingHours":["')[1].split(']')[0].replace('","','; ').replace('"','')
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        purl = '<MISSING>'
-        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'a href' not in name:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
