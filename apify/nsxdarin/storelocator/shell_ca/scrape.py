@@ -50,7 +50,7 @@ def fetch_data():
                             hours = ''
                             if phone == '':
                                 phone = '<MISSING>'
-                            if storeinfo not in ids and country == 'CA':
+                            if storeinfo not in ids and country == 'CA' and '10053240-fariview-ave-st-thomas' not in loc:
                                 print('Pulling Store %s...' % name)
                                 days = []
                                 try:
