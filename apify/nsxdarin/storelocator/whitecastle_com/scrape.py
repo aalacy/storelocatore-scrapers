@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,17 +20,19 @@ def fetch_data():
     locs = []
     url = 'https://www.whitecastle.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.whitecastle.com/locations/' in line:
             locs.append(line.split('locations/')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         lurl = 'https://www.whitecastle.com/wcapi/location-by-store-number?storeNumber=' + loc
         website = 'whitecastle.com'
         name = 'White Castle #' + loc
         store = loc
         hours = ''
         r2 = session.get(lurl, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         array = json.loads(r2.content)
         add = array['address']
         city = array['city']

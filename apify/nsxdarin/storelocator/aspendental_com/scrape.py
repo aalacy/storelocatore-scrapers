@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -24,7 +24,8 @@ def fetch_data():
         Found = False
         url = 'https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=5568aa1809f16997ec2ac0c1ed321f59&jsLibVersion=v0.12.1&sessionTrackingEnabled=true&input=dentist%20near%20me&experienceKey=aspen_dental_answers&version=PRODUCTION&verticalKey=locations&limit=50&offset=' + str(x) + '&queryId=878323fa-cfa8-42f2-836f-975b7b1837b9&locale=en'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"id":"' in line:
                 Found = True
                 x = x + 50
@@ -38,9 +39,9 @@ def fetch_data():
                             lurl = lurl.split('\\u0026utm_source=')[0]
                         locs.append(lurl)
                         print(lurl)
-    print('Found %s Locations...' % str(len(locs)))
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'aspendental.com'
         typ = 'Office'
         hours = ''
@@ -60,7 +61,8 @@ def fetch_data():
             try:
                 LocFound = False
                 r2 = session.get(loc, headers=headers, timeout=5)
-                for line2 in r2.iter_lines():
+                if r2.encoding is None: r2.encoding = 'utf-8'
+                for line2 in r2.iter_lines(decode_unicode=True):
                     if '<div class="ssa-office-hours" style="background: #eeeeee;z-index:999999">' in line2:
                         HFound = True
                     if HFound and '<div class="col-sm-8">' in line2:

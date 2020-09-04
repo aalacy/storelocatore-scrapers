@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 requests.packages.urllib3.disable_warnings()
@@ -20,21 +20,24 @@ def fetch_data():
     states = []
     ids = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a href="/storedirectory?state=' in line:
             states.append('https://www.hibbett.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         cities = []
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state.replace('&amp;','&'), headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '/storedirectory?city=' in line2:
                 cities.append('https://www.hibbett.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
-            print('Pulling City %s...' % city)
+            print(('Pulling City %s...' % city))
             locs = []
             r3 = session.get(city.replace('&amp;','&'), headers=headers)
-            for line3 in r3.iter_lines():
+            if r3.encoding is None: r3.encoding = 'utf-8'
+            for line3 in r3.iter_lines(decode_unicode=True):
                 if 'More Details</a>' in line3:
                     locs.append('https://www.hibbett.com/' + line3.split('href="')[1].split('"')[0])
             for loc in locs:
@@ -49,11 +52,11 @@ def fetch_data():
                 country = 'US'
                 zc = ''
                 phone = ''
-                print('Pulling Location %s...' % loc)
+                print(('Pulling Location %s...' % loc))
                 website = 'hibbett.com'
                 typ = 'Store'
                 r4 = session.get(loc, headers=headers)
-                lines = r4.iter_lines()
+                lines = r4.iter_lines(decode_unicode=True)
                 for line4 in lines:
                     if '<title>' in line4 and name == '':
                         name = line4.split('<title>')[1].split(' |')[0]

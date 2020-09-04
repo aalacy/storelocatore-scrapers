@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
 
@@ -20,7 +20,8 @@ def fetch_data():
     Found = False
     url = 'https://www.libertytaxcanada.ca/office-directory/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<h2>Provinces</h2>' in line:
             Found = True
         if Found and '<!-- FOOTER -->' in line:
@@ -29,14 +30,15 @@ def fetch_data():
             states.append('https://www.libertytaxcanada.ca' + line.split('href="')[1].split('"')[0])
     for state in states:
         time.sleep(5)
-        print('Pulling Province %s...' % state)
+        print(('Pulling Province %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'More detail</a>' in line2:
                 locs.append('https://www.libertytaxcanada.ca' + line2.split('href="')[1].split('"')[0])
     for loc in locs:
         time.sleep(5)
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'libertytaxcanada.ca'
         typ = '<MISSING>'
         hours = ''
@@ -52,7 +54,8 @@ def fetch_data():
         store = ''
         HFound = False
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1>' in line2:
                 name = line2.split('<h1>')[1].split('<')[0]
             if 'streetAddress' in line2:

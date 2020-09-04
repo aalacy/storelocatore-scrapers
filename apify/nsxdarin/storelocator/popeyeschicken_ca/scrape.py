@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -22,7 +22,8 @@ def fetch_data():
         #print('Pulling Coordinates %s-%s...' % (lat, lng))
         url = 'https://hosted.where2getit.com/popeyes/ajax?&xml_request=<request><appkey>17DA36EB-B7DF-3E53-B01F-391651032194<%2Fappkey><formdata+id%3D"locatorsearch"><dataview>store_default<%2Fdataview><limit>100<%2Flimit><geolocs><geoloc><addressline><%2Faddressline><longitude>' + lng + '<%2Flongitude><latitude>' + lat + '<%2Flatitude><country>CA<%2Fcountry><%2Fgeoloc><%2Fgeolocs><where><operatingstatus><or><eq>Operating<%2Feq><eq>Reopenings<%2Feq><%2For><%2Foperatingstatus><%2Fwhere><searchradius>250<%2Fsearchradius><%2Fformdata><%2Frequest>'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<address1>' in line:
                 add = line.split('<address1>')[1].split('<')[0]
             if '<address2>' in line:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,17 +17,19 @@ def fetch_data():
     locs = []
     url = 'https://www.olivegarden.ca/ca-locations-sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         store = loc.rsplit('/',1)[1]
         website = 'olivegarden.ca'
         country = 'CA'
         typ = 'Restaurant'
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' Italian')[0]
             if 'id="restAddress" value="' in line2:

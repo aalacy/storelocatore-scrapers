@@ -37,7 +37,7 @@ def fetch_data():
         store = x
         phone = ''
         name = ''
-        for raw_line in r.iter_lines():
+        for raw_line in r.iter_lines(decode_unicode=True):
             line = str(raw_line)
             if '"name":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]

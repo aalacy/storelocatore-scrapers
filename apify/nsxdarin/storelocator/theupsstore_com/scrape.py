@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,18 +18,20 @@ def fetch_data():
     sms = []
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '/sitemap.xml.' in line:
             sms.append(line.split('>')[1].split('<')[0])
     for sm in sms:
         r2 = session.get(sm, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<loc>https://locations.theupsstore.com/' in line2:
                 lurl = line2.split('>')[1].split('<')[0]
                 count = lurl.count('/')
                 if count == 5 and lurl not in locs:
                     locs.append(lurl)
-    print('Found %s Locations...' % (str(len(locs))))
+    print(('Found %s Locations...' % (str(len(locs)))))
     for loc in locs:
         website = 'theupsstore.com'
         country = ''
@@ -38,7 +40,8 @@ def fetch_data():
         typ = 'UPS Store'
         store = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         hours = ''
         phone = ''
         zc = ''

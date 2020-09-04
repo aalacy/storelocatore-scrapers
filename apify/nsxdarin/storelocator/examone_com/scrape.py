@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 import sgzip
 import time
@@ -18,10 +18,11 @@ def write_output(data):
 def fetch_data():
     stores = []
     for code in sgzip.for_radius(100):
-        print('Pulling Zip %s...' % code)
+        print(('Pulling Zip %s...' % code))
         url = 'https://www.examone.com/locations/?zipInput=' + code + '&dist=100&submit=find+locations'
         r = session.get(url, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if 'var php_vars' in line:
                 items = line.split('\\"qsl_id\\":\\"')

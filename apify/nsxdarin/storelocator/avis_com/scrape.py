@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,15 +19,17 @@ def fetch_data():
     urls = ['https://www.avis.com/en/locations/us','https://www.avis.com/en/locations/ca']
     for url in urls:
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<a href="/en/locations/us/' in line or '<a href="/en/locations/ca/' in line:
                 lurl = 'https://www.avis.com' + line.split('href="')[1].split('"')[0]
                 states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         RFound = False
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1>' in line2:
                 RFound = True
             if RFound and '<a href="/en/locations/' in line2:
@@ -50,7 +52,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"addressCountry": "' in line2:
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
                 if 'C' in country:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -22,8 +22,9 @@ def fetch_data():
                'radius': 10000
                }
     r = session.post(url, headers=headers, data=payload)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'komatsuamerica.com'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"CompanyName":"' in line:
             items = line.split('"CompanyName":"')
             for item in items:

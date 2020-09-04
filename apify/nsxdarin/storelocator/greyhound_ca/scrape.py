@@ -1,6 +1,6 @@
 # -*- coding: cp1252 -*-
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,10 +18,11 @@ def write_output(data):
 def fetch_data():
     locs = []
     r = session.get('https://www.greyhound.ca/en/locations/default.aspx', headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     VS = ''
     VSG = ''
     EV = ''
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'id="__VIEWSTATE" value="' in line:
             VS = line.split('id="__VIEWSTATE" value="')[1].split('"')[0]
         if 'id="__EVENTVALIDATION" value="' in line:
@@ -53,7 +54,8 @@ def fetch_data():
                    'RadAJAXControlID': 'ctl00_ctl00_tkAjxMngr'
                    }
         r = session.post(url, headers=headers, data=payload)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"value":"/en/locations/terminal.aspx?city=' in line:
                 items = line.split('"value":"/en/locations/terminal.aspx?city=')
                 for item in items:
@@ -65,7 +67,7 @@ def fetch_data():
         state = loc.split('|')[1]
         lurl = 'https://www.greyhound.ca/en/locations/terminal.aspx?city=' + lid
         store = lid
-        print('Pulling Location %s...' % lurl)
+        print(('Pulling Location %s...' % lurl))
         website = 'greyhound.ca'
         typ = '<MISSING>'
         phone = ''
@@ -76,7 +78,8 @@ def fetch_data():
         lng = ''
         hours = ''
         r2 = session.get(lurl, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         HFound = False
         for line2 in lines:
             if 'Station<' in line2:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -37,20 +37,20 @@ def fetch_data():
                 phone = array['storeDetails']['phoneNumber']
             except:
                 phone = '<MISSING>'
-            name = array['name'].encode('utf-8')
+            name = array['name']
             website = 'loblaws.com'
-            typ = array['storeBannerName'].encode('utf-8') + '-' + array['locationType'].encode('utf-8')
+            typ = array['storeBannerName'] + '-' + array['locationType']
             lat = array['geoPoint']['latitude']
             lng = array['geoPoint']['longitude']
             country = 'CA'
-            state = array['address']['region'].encode('utf-8')
-            city = array['address']['town'].encode('utf-8')
-            zc = array['address']['postalCode'].encode('utf-8')
+            state = array['address']['region']
+            city = array['address']['town']
+            zc = array['address']['postalCode']
             try:
                 add = array['address']['line1'] + ' ' + array['address']['line2']
             except:
                 add = array['address']['line1']
-            add = add.strip().encode('utf-8')
+            add = add.strip()
             hours = ''
             for item in array['storeDetails']['storeHours']:
                 hrs = item['day'] + ': ' + item['hours']
