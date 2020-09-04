@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-import time
-import requests
 from tenacity import retry, stop_after_attempt
 
 def write_output(data):
@@ -76,8 +74,13 @@ def fetch_data():
             location_soup =  BeautifulSoup(html[0],"lxml")
             if location_soup.find("div",{'class':"locationOpen"}) == False:
                 continue
-            hours = " ".join(list(location_soup.find("div",{'class':'hoursTable'}).stripped_strings))
-            phone = location_soup.find("div",{"class":"locatorPhone"}).text.strip()
+            try:
+                hours = " ".join(list(location_soup.find("div",{'class':'hoursTable'}).stripped_strings))
+                phone = location_soup.find("div",{"class":"locatorPhone"}).text.strip()
+            except:
+                hours = "<MISSING>"
+                phone = "<MISSING>"
+            
             del html[0]
             store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
