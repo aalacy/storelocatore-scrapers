@@ -12,64 +12,77 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+    adressess = []
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Cookie': 'PHPSESSID=miahqdtr2q6h4ni622800h7ig5; Rossy_lang=En; _ga=GA1.2.1497936504.1599040884; _gid=GA1.2.331653320.1599040884; _fbp=fb.1.1599040884656.569999714; _gat_gtag_UA_85203089_2=1; Rossy_lastPageViewed=1599128426; PHPSESSID=0j3hff3p0hpmrjj84vhirref61; Rossy_lang=En; Rossy_lastPageViewed=1599128522',
+        'Referer': 'https://www.rossy.ca/en/store-finder/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest'
+        }
+
+    payload = "/ajax/ajaxcall.php?langID=1&do=getLocations&q=E1c5a3&distance=10000&units=km"
     base_url = "https://rossy.ca"
-    r = session.get("https://rossy.ca/magasins/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for script in soup.find_all("script"):
-        if "var wpgmaps_localize_marker_data = " in script.text:
-            location_list = json.loads(script.text.split("var wpgmaps_localize_marker_data = ")[1].split("};")[0] + "}")
-            for key in location_list:
-                for key1 in location_list[key]:
-                    store_data = location_list[key][key1]
-                    hours_phone = list(BeautifulSoup(store_data["desc"],"lxml").stripped_strings)
-                    store_data["address"] = store_data["address"].replace(", Canada","").replace(", Canad\u00e1","")
-                    if len(store_data["address"].split(",")) == 3:
-                        if len(store_data["address"].split(" ")[-3]) == 2:
-                            store_data["address"] = store_data["address"][:-8] + "," + store_data["address"][-8:]
-                    if len(store_data["address"].split(",")) == 2:
-                        store_data["address"] = store_data["address"][:-8] + "," + store_data["address"][-8:]
-                        city = store_data["address"].split(",")[0].split(" ")[-1]
-                        store_data["address"] = store_data["address"].replace(city,"," + city)
-                    store = []
-                    store.append("https://rossy.ca")
-                    store.append(store_data['title'])
-                    if " ".join(store_data["address"].split(",")[0:-3]) == "":
-                        if len(store_data["address"].split(",")[-1]) == 8:
-                            store.append(store_data['address'].split(",")[0])
-                            store.append("<MISSING>")
-                            store.append(store_data['address'].split(",")[1])
-                            store.append(store_data['address'].split(",")[2])
-                        else:
-                            store.append(store_data['address'].split(",")[0])
-                            store.append(store_data['address'].split(",")[1])
-                            store.append(store_data['address'].split(",")[2])
-                            store.append("<MISSING>")
-                    else:
-                        store.append(" ".join(store_data["address"].split(",")[0:-3]))
-                        store.append(store_data['address'].split(",")[-3])
-                        store.append(store_data['address'].split(",")[-2])
-                        store.append(store_data["address"].split(",")[-1][1:])
-                    store.append("CA")
-                    store.append(key1)
-                    store.append(hours_phone[0].replace("T:",""))
-                    store.append("rossy")
-                    store.append(store_data["lat"])
-                    store.append(store_data["lng"])
-                    store.append(" ".join(hours_phone[1:]))
-                    return_main_object.append(store)
-    return return_main_object
+    location_url = "https://www.rossy.ca/ajax/store-finder.php?langID=1&"
+
+    r = session.post(location_url,data=payload,headers=headers)
+    r.encoding='utf-8-sig'
+    
+    json_data = json.loads(r.json()['stores'])
+    for value in json_data:
+        location_name = value['city']+"("+value['store']+")"
+        try:
+            street_address = value['address'] +" "+value['address2']
+        except:
+            street_address = value['address']
+        city = value['city']
+        state = value['province']
+        zipp = value['postalCode']
+        country_code = value['country']
+        store_number = value['store']
+        temp_phone = value['telephone']
+        phone = temp_phone[:3]+"-"+temp_phone[3:6]+"-"+temp_phone[6:]
+        location_type = "<MISSING>"
+        latitude = value['latitude']
+        longitude = value['longitude']
+        hours_of_operation = "Monday: "+value['mondayHours']+",Tuesday: "+value['tuesdayHours']+",Wednesday: "+value['wednesdayHours']+",Thursday: "+value['thursdayHours']+",Friday: "+value['fridayHours']+",Saturday: "+value['saturdayHours']+",Sunday: "+value['sundayHours']
+        page_url = "<MISSING>"
+
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append("<MISSING>")
+        if store[2] in adressess:
+            continue
+        adressess.append(store[2])
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        yield store
+
+
 
 def scrape():
+   
     data = fetch_data()
     write_output(data)
 
