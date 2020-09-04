@@ -6,6 +6,9 @@ import threading
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+
+start_time = datetime.now()
 
 thread_local = threading.local()
 max_workers = 8
@@ -28,6 +31,12 @@ def write_output(data):
         "location_type","store_number", "street_address", "city", "state", "zip", "country_code","latitude", "longitude", "phone", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
+
+    end_time = datetime.now()
+    timedelta = end_time - start_time
+    print('--------------------')
+    duration = time.strftime('%H:%M:%S', time.gmtime(timedelta.total_seconds()))
+    print(f"duration: {duration}")
 
 def get_session(reset=False):
     if not hasattr(thread_local, "session") or (reset == True):
