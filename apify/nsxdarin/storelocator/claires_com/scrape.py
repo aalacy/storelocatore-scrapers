@@ -1,5 +1,4 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import json
 import sgzip
@@ -61,11 +60,14 @@ def fetch_data():
                 r2 = session.get(loc, headers=headers)
                 lines = r2.iter_lines()
                 for line2 in lines:
+                    line2 = str(line2.decode('utf-8'))
                     if '<p><strong>' in line2:
                         next(lines)
                         next(lines)
                         next(lines)
-                        state = next(lines).strip().split(' ')[0]
+                        g = next(lines)
+                        g = str(g.decode('utf-8'))
+                        state = g.strip().split(' ')[0]
                 for day in item['storeHours']:
                     hrs = day['day'] + ': ' + day['from'].strip() + '-' + day['to'].strip()
                     if hours == '':
@@ -111,11 +113,14 @@ def fetch_data():
                 r2 = session.get(loc, headers=headers)
                 lines = r2.iter_lines()
                 for line2 in lines:
+                    line2 = str(line2.decode('utf-8'))
                     if '<p><strong>' in line2:
                         next(lines)
                         next(lines)
                         next(lines)
-                        state = next(lines).strip().split(' ')[0]
+                        g = next(lines)
+                        g = str(g.decode('utf-8'))
+                        state = g.strip().split(' ')[0]
                 for day in item['storeHours']:
                     hrs = day['day'] + ': ' + day['from'].strip() + '-' + day['to'].strip()
                     if hours == '':
