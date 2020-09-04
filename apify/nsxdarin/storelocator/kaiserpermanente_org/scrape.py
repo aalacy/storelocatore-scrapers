@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -27,14 +27,15 @@ def fetch_data():
     for url in urls:
         #print(url)
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<loc>https://healthy.kaiserpermanente.org/' in line:
                 items = line.split('<loc>https://healthy.kaiserpermanente.org/')
                 for item in items:
                     if '<?xml' not in item:
                         lurl = 'https://healthy.kaiserpermanente.org/' + item.split('<')[0]
                         locs.append(lurl)
-    print('Found %s Locations...' % str(len(locs)))
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
         #print('Pulling Location %s...' % loc)
         website = 'kaiserpermanente.org'
@@ -51,7 +52,8 @@ def fetch_data():
         zc = ''
         phone = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'phone-number styling-5-marketing" x-ms-format-detection="none">' in line2:
                 g = next(lines)

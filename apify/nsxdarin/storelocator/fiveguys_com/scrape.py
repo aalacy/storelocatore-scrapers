@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,17 +18,17 @@ def fetch_data():
     url = 'https://www.fiveguys.com/5gapi/stores/ByDistance?lat=40.7135097&lng=-73.9859414&distance=2500000&secondaryDistance=25000000&lang=en&units=M'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
-        store = item['ClientKey'].encode('utf-8')
-        name = item['LocationName'].encode('utf-8')
+        store = item['ClientKey']
+        name = item['LocationName']
         cs = item['ComingSoon']
-        hours = item['Hours'].encode('utf-8')
-        phone = item['PhoneNumber'].encode('utf-8')
+        hours = item['Hours']
+        phone = item['PhoneNumber']
         add = item['AddressLine1'] + ' ' + item['AddressLine2']
-        add = add.strip().encode('utf-8').replace('<p>','').replace('</p>','').replace('\\n','')
-        city = item['City'].encode('utf-8')
-        state = item['StateOrProvince'].encode('utf-8')
-        zc = item['PostalCode'].encode('utf-8')
-        country = item['Country'].encode('utf-8')
+        add = add.strip().replace('<p>','').replace('</p>','').replace('\\n','')
+        city = item['City']
+        state = item['StateOrProvince']
+        zc = item['PostalCode']
+        country = item['Country']
         lat = item['Latitude']
         lng = item['Longitude']
         website = 'fiveguys.com'

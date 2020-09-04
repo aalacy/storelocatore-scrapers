@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import datetime
@@ -30,7 +30,7 @@ def fetch_data():
         y = coord.split(',')[1]
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.starbucks.ca/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -38,27 +38,27 @@ def fetch_data():
         for item in array['stores']:
             website = 'starbucks.ca'
             store = item['storeNumber']
-            name = item['name'].encode('utf-8')
+            name = item['name']
             phone = item['phoneNumber']
             lat = item['coordinates']['latitude']
             lng = item['coordinates']['longitude']
-            add = item['address']['streetAddressLine1'].encode('utf-8')
+            add = item['address']['streetAddressLine1']
             try:
-                add = add + ' ' + item['address']['streetAddressLine2'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine2']
             except:
                 pass
             try:
-                add = add + ' ' + item['address']['streetAddressLine3'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine3']
             except:
                 pass
             add = add.strip()
-            city = item['address']['city'].encode('utf-8')
+            city = item['address']['city']
             state = item['address']['countrySubdivisionCode']
             country = item['address']['countryCode']
             if country == 'CA':
                 num = num + 1
             zc = item['address']['postalCode']
-            typ = item['brandName'].encode('utf-8')
+            typ = item['brandName']
             hours = ''
             weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
             today = weekdays[weekday]
@@ -126,27 +126,27 @@ def fetch_data():
         for item in array['stores']:
             website = 'starbucks.ca'
             store = item['storeNumber']
-            name = item['name'].encode('utf-8')
+            name = item['name']
             phone = item['phoneNumber']
             lat = item['coordinates']['latitude']
             lng = item['coordinates']['longitude']
-            add = item['address']['streetAddressLine1'].encode('utf-8')
+            add = item['address']['streetAddressLine1']
             try:
-                add = add + ' ' + item['address']['streetAddressLine2'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine2']
             except:
                 pass
             try:
-                add = add + ' ' + item['address']['streetAddressLine3'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine3']
             except:
                 pass
             add = add.strip()
-            city = item['address']['city'].encode('utf-8')
+            city = item['address']['city']
             state = item['address']['countrySubdivisionCode']
             country = item['address']['countryCode']
             if country == 'CA':
                 num = num + 1
             zc = item['address']['postalCode']
-            typ = item['brandName'].encode('utf-8')
+            typ = item['brandName']
             hours = ''
             weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
             today = weekdays[weekday]

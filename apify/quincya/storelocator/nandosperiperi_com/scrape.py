@@ -58,7 +58,10 @@ def fetch_data():
             link = item['data-link']
             req = session.get(link, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
-            hours_of_operation = base.find(class_="collapseBox-info").text.replace("\n","").strip()
+            try:
+                hours_of_operation = base.find(class_="restaurant-tab-info").text.replace("\n","").replace("Restaurant Hours","").replace("See more Hours"," ").strip()
+            except:
+                hours_of_operation = base.find(class_="restaurant-title").text.replace("\n","").strip()
 
             data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

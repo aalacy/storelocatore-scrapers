@@ -82,7 +82,9 @@ def fetch_data():
     #print("here")
 
     for url in page_url:  #for timing
-        print(url)
+        if url.startswith('//'):
+            url = 'http:' + url
+        # print(url)
         driver.get(url)
         try:
             element = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]')))

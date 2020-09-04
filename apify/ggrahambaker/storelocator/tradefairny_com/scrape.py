@@ -23,7 +23,7 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://www.tradefairny.com/' 
+    locator_domain = 'http://www.tradefairny.com/' 
     ext = 'store-locations.html'
 
     driver = SgSelenium().chrome()

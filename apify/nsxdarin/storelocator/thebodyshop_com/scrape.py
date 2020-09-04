@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,23 +19,23 @@ def fetch_data():
     url = 'https://www.thebodyshop.com/en-ca/store-finder/search?country=CA'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)['stores']:
-        typ = item['storeType'].encode('utf-8')
+        typ = item['storeType']
         website = 'thebodyshop.com'
-        store = item['uniqueId'].encode('utf-8')
-        try:
-            phone = item['number'].encode('utf-8')
-        except:
+        store = item['uniqueId']
+        if 'number' in item and item['number']:
+            phone = item['number']
+        else:
             phone = '<MISSING>'
-        add = item['address'].encode('utf-8')
+        add = item['address']
         if item['address2']:
-            add = add + ' ' + item['address2'].encode('utf-8')
+            add = add + ' ' + item['address2']
         city = item['zip']
-        state = item['city'].strip().encode('utf-8').split(' ')[0]
+        state = item['city'].strip().split(' ')[0]
         zc = item['zip']
         if item['state']:
             state = item['state']
         city = item['city']
-        country = item['country']['isocode'].encode('utf-8')
+        country = item['country']['isocode']
         lurl = '<MISSING>'
         lat = item['latlong'][0]
         lng = item['latlong'][1]
@@ -86,20 +86,20 @@ def fetch_data():
     url = 'https://www.thebodyshop.com/en-us/store-finder/search?country=US'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)['stores']:
-        typ = item['storeType'].encode('utf-8')
+        typ = item['storeType']
         website = 'thebodyshop.com'
-        store = item['uniqueId'].encode('utf-8')
-        try:
-            phone = item['number'].encode('utf-8')
-        except:
+        store = item['uniqueId']
+        if 'number' in item and item['number']:
+            phone = item['number']
+        else:
             phone = '<MISSING>'
-        add = item['address'].encode('utf-8')
+        add = item['address']
         if item['address2']:
-            add = add + ' ' + item['address2'].encode('utf-8')
+            add = add + ' ' + item['address2']
         city = item['zip']
-        state = item['city'].strip().encode('utf-8').split(' ')[0]
+        state = item['city'].strip().split(' ')[0]
         try:
-            zc = item['city'].strip().encode('utf-8').split(' ')[1]
+            zc = item['city'].strip().split(' ')[1]
             if 'a' in zc.lower() or 'e' in zc.lower() or 'i' in zc.lower() or 'o' in zc.lower() or 'u' in zc.lower():
                 zc = item['zip']
                 city = item['city']
@@ -112,7 +112,7 @@ def fetch_data():
             state = item['state']
         if city == 'Fort Lauderdale':
             state = 'FL'
-        country = item['country']['isocode'].encode('utf-8')
+        country = item['country']['isocode']
         lurl = '<MISSING>'
         lat = item['latlong'][0]
         lng = item['latlong'][1]

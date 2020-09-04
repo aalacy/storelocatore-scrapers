@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -21,12 +21,13 @@ def fetch_data():
     store = '<MISSING>'
     country = 'US'
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<li class=""><a href="https://www.phoenixrehab.com/' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if '/ohio' not in lurl:
                 locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -37,9 +38,10 @@ def fetch_data():
         hours = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '{"@type":"Organization' in line2:
                 name = line2.rsplit('"name":"',1)[1].split('"')[0]
             if 'itemprop="streetAddress">' in line2:
@@ -74,7 +76,8 @@ def fetch_data():
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     url = 'https://www.phoenixrehab.com/ohio/'
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     name = ''
     hours = '<MISSING>'
     print('Pulling OH Locations...')
@@ -107,8 +110,9 @@ def fetch_data():
         if '<a class="website-link" href="' in line:
             loc = line.split('<a class="website-link" href="')[1].split('"')[0]
             r2 = session.get(loc, headers=headers)
+            if r2.encoding is None: r2.encoding = 'utf-8'
             hours = ''
-            for line2 in r2.iter_lines():
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'HOURS: </strong>' in line2:
                     hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
         if '</main><!-- #main -->' in line:

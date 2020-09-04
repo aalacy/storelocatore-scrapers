@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
@@ -17,10 +17,11 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://www.foodlion.com/bin/foodlion/search/storelocator.json?zip=' + code + '&distance=5000&onlyPharmacyEnabledStores=false'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '{"result":"' in line:
                 items = line.split('\\"id\\":')
                 for item in items:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -40,9 +40,9 @@ def fetch_data():
     Found = True
     for item in array['Locations']:
         store = item['Location']['StoreNumber']
-        name = item['Location']['Name'].encode('utf-8')
-        add = item['Location']['Street'].encode('utf-8')
-        city = item['Location']['City'].encode('utf-8')
+        name = item['Location']['Name']
+        add = item['Location']['Street']
+        city = item['Location']['City']
         state = item['Location']['State']
         country = item['Location']['Country']
         zc = item['Location']['Zip']

@@ -1,151 +1,88 @@
+import csv
 import json
-import sgzip
-
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-URL = "https://www.hibbett.com"
+import time
+from random import randint
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
 
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        location_types = []
-        stores = []
+def fetch_data():
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-        for coords in sgzip.coords_for_radius(50):
-            location_url = f"https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/default/Stores-GetNearestStores?latitude={coords[0]}&longitude={coords[1]}&countryCode=US&distanceUnit=mi&maxdistance=50"
-            driver.get(location_url)
-            stores.extend(
-                json.loads(driver.find_element_by_css_selector("pre").get_attribute('textContent').strip())["stores"].items()
-            )
+    session = SgRequests()
+    stores = []
 
-        for store in stores:
-            store = store[1]
+    location_url = "https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/default/Stores-GetNearestStores?latitude=40.7377313&longitude=-73.6131232&countryCode=US&distanceUnit=mi&maxdistance=5000"
+        
+    req = session.get(location_url, headers = HEADERS)
+    time.sleep(randint(2,4))
+    base = BeautifulSoup(req.text,"lxml")
+    if "page has been denied" in str(base):
+        print("BLOCKED BY WEBSITE")
+    else:
+        stores = json.loads(base.text.strip())["stores"].items()
+        print("Stores found!!")
 
-            # Store ID
-            location_id = store["id"]
+    data = []
+    locator_domain = "hibbett.com"
+    for store in stores:
+        store = store[1]
 
-            # Name
-            location_title = store["name"]
+        # Store ID
+        location_id = store["id"]
 
-            # Type
-            location_type = store['storeType']
+        # Name
+        location_title = store["name"]
 
-            # Street
-            street_address = store["address1"] + store["address2"]
+        # Type
+        location_type = store['storeType']
 
-            # State
-            state = store["stateCode"]
+        # Street
+        street_address = (store["address1"] + " " + store["address2"]).replace("  "," ").strip()
 
-            # city
-            city = store["city"]
+        # State
+        state = store["stateCode"]
 
-            # zip
-            zipcode = store["postalCode"]
+        # city
+        city = store["city"]
 
-            # Lat
-            lat = store['latitude']
+        # zip
+        zipcode = store["postalCode"]
 
-            # Long
-            lon = store['longitude']
+        # Lat
+        lat = store['latitude']
 
-            # Phone
-            phone = store["phone"]
+        # Long
+        lon = store['longitude']
 
-            # Hour
-            hour = store["storeHours"]
+        # Phone
+        phone = store["phone"]
+        if not phone:
+            phone = "<MISSING>"
 
-            # Country
-            country = store['countryCode']
+        # Hour
+        hour = store["storeHours"].replace("\n"," ").strip()
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
+        # Country
+        country = store['countryCode']
 
-        for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type,
-        ) in zip(
-            locations_titles,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-            location_types,
-        ):
-            if country == "<MISSING>":
-                pass
-            else:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
-                        street_address,
-                        city,
-                        state,
-                        zipcode,
-                        country,
-                        location_id,
-                        phone_number,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
+        link = "https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/default/Stores-Details?StoreID=" + location_id
 
-        driver.quit()
+        # Store data
+        data.append([locator_domain, link, location_title, street_address, city, state, zipcode, country, location_id, phone, location_type, lat, lon, hour])
+    return data
 
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-scrape = Scraper(URL)
-scrape.scrape()
+scrape()

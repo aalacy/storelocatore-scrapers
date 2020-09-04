@@ -67,6 +67,9 @@ def fetch_data():
             hours = hours.replace('Hours:','').replace('M-F','M-F ')
             coord = div.findAll('iframe')[1]['src'].split('!2d',1)[1].split('!2m',1)[0]           
             lat,longt =coord.split('!3d',1)
+            if city.find('East') > -1:
+                street = street + ' East'
+                city= city.replace('East ','')
             data.append([
                         'https://dickshomecare.com/',
                         'https://dickshomecare.com/contact/',                   

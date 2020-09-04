@@ -34,7 +34,7 @@ def fetch_data():
     while zip_code:
         result_coords =[]
        # print("zip_code === "+zip_code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         
         base_url = "https://www.bmwusa.com"
         r = session.get("https://www.bmwusa.com/api/dealers/" + str(zip_code) + "/500",headers=headers)

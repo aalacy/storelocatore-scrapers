@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,21 +20,21 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
         store = item['storeId']
-        name = item['name'].encode('utf-8')
-        add = item['address1'].encode('utf-8')
+        name = item['name']
+        add = item['address1']
         try:
-            add = add + ' ' + item['address2'].encode('utf-8')
+            add = add + ' ' + item['address2']
             add = add.strip()
         except:
             pass
-        city = item['city'].encode('utf-8')
+        city = item['city']
         state = item['state']
         country = item['country']
         phone = item['phone']
         zc = item['zip']
         lat = item['latitude']
         lng = item['longitude']
-        typ = item['storeBrand'].encode('utf-8')
+        typ = item['storeBrand']
         hours = 'Mon-Fri: ' + item['monFriOpen'] + '-' + item['monFriClose']
         hours = hours + '; Sat: ' + item['satOpen'] + '-' + item['satClose']
         hours = hours + '; Sun: ' + item['sunOpen'] + '-' + item['sunClose']

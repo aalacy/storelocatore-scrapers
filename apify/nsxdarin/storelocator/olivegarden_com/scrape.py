@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 import json
 import datetime
@@ -36,9 +36,10 @@ def fetch_data():
                    'locale': 'en_US'
                    }
         r = session.post(url, headers=headers, data=payload)
+        if r.encoding is None: r.encoding = 'utf-8'
         website = 'olivegarden.com'
         result_coords = []
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '"country":"' in line:
                 items = line.split('"country":"')
                 for item in items:

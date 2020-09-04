@@ -44,7 +44,7 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url ="http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=25&search_radius=25&search=&statistics="

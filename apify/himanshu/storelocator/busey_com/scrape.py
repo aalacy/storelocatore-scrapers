@@ -61,7 +61,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         #print(search.current_zip)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
             location_url = "https://www.busey.com/_/api/branches/"+str(lat)+"/"+str(lng)+"/500"

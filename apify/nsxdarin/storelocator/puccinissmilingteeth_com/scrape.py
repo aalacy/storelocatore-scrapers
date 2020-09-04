@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     locs = []
     Found = False
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'INDIANAPOLIS, IN<br /></strong>' in line:
             line = line.replace('</a>Oaklandon','</a><strong>Oaklandon')
             items = line.split('<strong>')

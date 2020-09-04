@@ -18,4 +18,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+if __name__ == "__main__":
+    scrape()

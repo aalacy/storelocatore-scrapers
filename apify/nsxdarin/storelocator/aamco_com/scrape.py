@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,13 +18,14 @@ def fetch_data():
     canada = ['ON','SK','AB','NB','NL','PQ','QC','NS','BC','PEI','PE','NU','YK']
     url = 'https://www.aamco.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.aamco.com/Auto-Repair-Center/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             if lurl.count('/') > 4:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'aamco.com'
         name = ''
         store = '<MISSING>'
@@ -43,7 +44,8 @@ def fetch_data():
             country = 'US'
         hours = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         HFound = False
         for line2 in lines:
             if 'day</span></p>' in line2:

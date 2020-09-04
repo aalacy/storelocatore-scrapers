@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,7 @@ def fetch_data():
     url = 'https://store.tagheuer.com/us'
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:
@@ -31,7 +31,7 @@ def fetch_data():
                     locs.append(lid + '|US|' + llat + '|' + llng + '|' + ltyp)
     url = 'https://store.tagheuer.com/ca'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:
@@ -44,7 +44,7 @@ def fetch_data():
                         ltyp = '<MISSING>'
                     locs.append(lid + '|CA|' + llat + '|' + llng + '|' + ltyp)
     for loc in locs:
-        print('Pulling Location %s...' % loc.split('|')[0])
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'tagheuer.com'
         country = loc.split('|')[1]
         lat = loc.split('|')[2]
@@ -53,7 +53,7 @@ def fetch_data():
         store = loc.split('|')[0]
         lurl = 'https://store.tagheuer.com/' + store
         r2 = session.get(lurl, headers=headers)
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         hours = '<MISSING>'
         phone = '<MISSING>'
         zc = '<MISSING>'

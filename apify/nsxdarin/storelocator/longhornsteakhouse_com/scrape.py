@@ -62,7 +62,6 @@ def fetch_data():
                     city = line2.split('"addressLocality":"')[1].split('"')[0]
                     state = line2.split('"addressRegion":"')[1].split('"')[0]
                     zc = line2.split('"postalCode":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
                 if lat == '':
                     try:
                         lat = line2.split('"latitude":"')[1].split('"')[0]
@@ -74,11 +73,20 @@ def fetch_data():
                     hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
                 except:
                     pass
+            if ',"telephone":"' in line2:
+                phone = line2.split(',"telephone":"')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'Cincinnati - Eastgate' in name:
+            phone = '(513) 947-8882'
+        if 'Orchard Park' in name:
+            phone = '(716) 825-1378'
+        if 'Gainesville' in name:
+            phone = '(352) 372-5715'
+        if 'Find A R' not in name:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

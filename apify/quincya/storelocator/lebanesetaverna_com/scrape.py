@@ -66,7 +66,7 @@ def fetch_data():
 				zip_code = "<MISSING>"
 
 			city = raw_city.split()[0].strip()
-			if city == "SPRING":
+			if city == "SILVER":
 				city = "SILVER SPRING"
 
 			raw_hours = item.find_all('strong')

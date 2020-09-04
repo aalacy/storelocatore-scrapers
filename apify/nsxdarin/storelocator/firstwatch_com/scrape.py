@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import time
@@ -35,12 +35,13 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print(("remaining zipcodes: " + str(search.zipcodes_remaining())))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.firstwatch.com/api/get_locations.php?latitude=' + str(x) + '&longitude=' + str(y)
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         array = json.loads(r.content)
         result_coords = []
         for item in array:
@@ -58,7 +59,8 @@ def fetch_data():
             slug = item['slug']
             surl = 'https://www.firstwatch.com/locations/' + slug
             r2 = session.get(surl, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<address>Open' in line2:
                     hours = line2.split('<address>')[1].split('<')[0]
             typ = 'Restaurant'
@@ -68,7 +70,7 @@ def fetch_data():
             country = 'US'
             store = item['corporate_id']
             ids.add(store)
-            print('Pulling Store ID #%s...' % store)
+            print(('Pulling Store ID #%s...' % store))
             locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
         if len(array) < MAX_RESULTS:
             print("max distance update")

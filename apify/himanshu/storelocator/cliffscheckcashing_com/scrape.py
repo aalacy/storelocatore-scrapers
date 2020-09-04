@@ -49,7 +49,7 @@ def fetch_data():
 
         # lat = 32.7557
         # lng = -96.76546
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "http://cliffscheckcashing.com/wp-admin/admin-ajax.php?action=store_search&lat=" + str(

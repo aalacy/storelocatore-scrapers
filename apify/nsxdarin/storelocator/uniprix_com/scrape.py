@@ -1,13 +1,8 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from sgrequests import SgRequests
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = SgSelenium().chrome()
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'

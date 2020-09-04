@@ -64,7 +64,7 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.valley.com/siteAPI/Branch/Branches"
 
         payload = "{\"Location\":\"'"+str(zip_code)+"'\"}"

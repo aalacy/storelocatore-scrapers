@@ -1,16 +1,10 @@
 import csv
 import re
+import time
+from sgselenium import SgSelenium
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-
-options = Options() 
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('/bin/chromedriver', options=options)
+driver = SgSelenium().chrome()
+time.sleep(2)
 
 BASE_URL = 'https://cava.com/locations'
 
@@ -19,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,6 +21,7 @@ def write_output(data):
 def fetch_data():
     data = []
     driver.get(BASE_URL)
+    time.sleep(8)
     stores = driver.find_elements_by_css_selector('div.vcard')
     for store in stores:
         location_name = store.find_element_by_css_selector('h3').text
@@ -35,18 +30,22 @@ def fetch_data():
         state = store.find_element_by_css_selector('span.region').text
         zipcode = store.find_element_by_css_selector('span.postal-code').text
         try:
-            hours_of_operation = store.find_element_by_css_selector('p.copy').text
-        except NoSuchElementException:
-            hours_of_operation = '<MISSING>'
-            continue
+            hours_of_operation = store.find_element_by_css_selector('p.copy').text.replace("Hours:","").strip()
+        except:
+            note = store.find_element_by_css_selector('.location-note').text
+            if "coming" in note.lower():
+                continue
+            if "close" in note.lower():
+                hours_of_operation = note
         phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
         try:
             store_number = store.find_element_by_css_selector("div.adr ~ p > a[href*='order.cava.com']").get_attribute('href')
             store_number = re.findall(r'stores\/{1}(\d*)', store_number)[0]
-        except NoSuchElementException:
+        except:
             store_number = '<MISSING>'
         data.append([
-            'https://cava.com',
+            'cava.com',
+            BASE_URL,
             location_name,
             street_address,
             city,

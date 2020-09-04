@@ -29,7 +29,7 @@ def fetch_data():
     base_url = "https://www.seat.co.uk"
     while zip_code:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         soup = bs(session.get("https://dealersearch.seat.com/xml?app=seat-gbr&max_dist=0&city="+str(zip_code)+"&_=1591338622355").content, "lxml")
         current_results_len = len(soup.find_all("partner"))
         for data in soup.find_all("partner"):

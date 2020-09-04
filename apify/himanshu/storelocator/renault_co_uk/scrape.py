@@ -33,7 +33,7 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         url = "https://dealerlocator.renault.co.uk/data/GetDealersList"
         payload = 'postcode='+str(zip_code)

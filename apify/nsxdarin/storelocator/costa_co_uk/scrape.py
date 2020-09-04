@@ -28,7 +28,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x, y = coord[0], coord[1]
         url = 'https://www.costa.co.uk/api/locations/stores?latitude=' + str(x) + '&longitude=' + str(y) + '&maxrec=500'
         r = session.get(url, headers=headers)

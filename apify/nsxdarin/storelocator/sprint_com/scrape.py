@@ -32,7 +32,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('%s-%s...' % (llat, llng))
         url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
         r = session.get(url, headers=headers)

@@ -1,14 +1,9 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import re
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 COMPANY_URL = 'https://www.clarev.com/'
-CHROME_DRIVER_PATH = 'chromedriver'
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -49,38 +44,38 @@ def fetch_data():
     hours = []
     data = []
 
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-
-    # Fetch store urls from location menu
     location_url = 'https://www.clarev.com/pages/locations'
-    driver.get(location_url)
 
-    # Wait until element appears - 10 secs max
-    wait = WebDriverWait(driver, 10)
-    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".shopify-section.grid.display-flex.page-builder")))
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
+    session = SgRequests()
 
-    locations = driver.find_elements_by_css_selector('div.grid__item.large--one-half.medium--one-half.small--one-whole.padding-left')
+    req = session.get(location_url, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+
+    locations = base.find_all(class_='grid__item store-block large--one-half medium--one-half small--one-whole padding-left')
 
     for location in locations:
-        location_title = location.find_element_by_css_selector('h1.small--text-left').text.strip()
-        phone_number = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > span > p').get_attribute('textContent').split('\n')[0]
-        street_address = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > span > p.text-style-capitalize').get_attribute('textContent').split('\n')[0]
-        city = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > span > p.text-style-capitalize').get_attribute('textContent').split('\n')[1].split(',')[0]
-        state = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > span > p.text-style-capitalize').get_attribute('textContent').split('\n')[1].split(',')[1].strip().split(' ')[0]
-        zip_code = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > span > p.text-style-capitalize').get_attribute('textContent').split('\n')[1].split(',')[1].strip().split(' ')[1]
-        hour = location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left.text-right > span > p:nth-of-type(2)').get_attribute('textContent').strip()
+        location_title = location.find('h1').text.strip()
+        phone_number = location.find(class_='grid__item one-half small--one-whole small--text-left').p.text.split('\n')[0].strip()
+        street_address = location.find(class_='text-style-capitalize').text.split('\n')[0]
+        city = location.find(class_='text-style-capitalize').text.split('\n')[1].split(',')[0]
+        state = location.find(class_='text-style-capitalize').text.split('\n')[1].split(',')[1].strip().split(' ')[0]
+        zip_code = location.find(class_='text-style-capitalize').text.split('\n')[1].split(',')[1].strip().split(' ')[1]
+        hour = location.find(class_='grid__item one-half small--one-whole small--text-left text-right').find_all("p")[-1].text.replace("\n"," ").strip()
         if " time" in hour:
-        	hour = hour[hour.find(" time")+5:].strip()
-
-        if location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > h3 > a').get_attribute('href') !=  '':
-            latitude = re.search('([-+]?)([\d]{1,3})(((\.)(\d+)())),([-+]?)([\d]{1,3})(((\.)(\d+)()))', location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > h3 > a').get_attribute('href')).group(0).split(',')[0]
-            longitude = re.search('([-+]?)([\d]{1,3})(((\.)(\d+)())),([-+]?)([\d]{1,3})(((\.)(\d+)()))', location.find_element_by_css_selector('div.grid__item.one-half.small--one-whole.small--text-left > h3 > a').get_attribute('href')).group(0).split(',')[1]
-        else:
+            hour = hour[hour.find(" time")+5:].strip()
+        hour = (re.sub(' +', ' ', hour)).strip()
+        map_link = location.h3.a["href"]
+        try:
+            if map_link != '':
+                latitude = re.search('([-+]?)([\d]{1,3})(((\.)(\d+)())),([-+]?)([\d]{1,3})(((\.)(\d+)()))',map_link).group(0).split(',')[0]
+                longitude = re.search('([-+]?)([\d]{1,3})(((\.)(\d+)())),([-+]?)([\d]{1,3})(((\.)(\d+)()))',map_link).group(0).split(',')[1]
+            else:
+                latitude = '<MISSING>'
+                longitude = '<MISSING>'
+        except:
             latitude = '<MISSING>'
             longitude = '<MISSING>'
 
@@ -114,9 +109,7 @@ def fetch_data():
             hour,
         ])
 
-    driver.quit()
     return data
-
 
 def scrape():
     data = fetch_data()

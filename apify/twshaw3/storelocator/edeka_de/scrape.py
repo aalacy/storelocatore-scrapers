@@ -44,7 +44,7 @@ def fetch_data():
     postcode = search.next_zip()
     while postcode:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(postcode)
         response = session.get(url, headers=HEADERS).json()
         stores = response["markets"]

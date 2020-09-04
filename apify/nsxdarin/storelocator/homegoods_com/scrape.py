@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,24 +17,26 @@ def fetch_data():
     url = 'https://www.homegoods.com/all-stores'
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<h5>' in line:
             sname = line.split('<h5>')[1].split('<')[0].strip()
         if '<a class="arrow-link" href="' in line:
             lurl = 'https://www.homegoods.com' + line.split('href="')[1].split('"')[0]
             locs.append(lurl + '|' + sname)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         add = ''
         city = ''
         state = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc.split('|')[0])
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'homegoods.com'
         typ = 'Store'
         r2 = session.get(loc.split('|')[0], headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<h2>' in line2:
                 g = next(lines)

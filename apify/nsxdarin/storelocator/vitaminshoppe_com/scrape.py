@@ -1,6 +1,6 @@
 import json
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
@@ -22,19 +22,22 @@ def fetch_data():
     cities = []
     url = 'https://locations.vitaminshoppe.com'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'title="Stores in ' in line and '{{url' not in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'title="Stores in ' in line2 and '<a href="https://locations.vitaminshoppe.com/' in line2:
                 cities.append(line2.split('href="')[1].split('"')[0])
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'data-show-country="en-ca" data-gaq="Maplist, Location Link' in line2 and '<a href="https://locations.vitaminshoppe.com/' in line2:
                 lurl = line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
@@ -45,7 +48,8 @@ def fetch_data():
             try:
                 PFound = False
                 r2 = session.get(loc, headers=headers)
-                print('Pulling Location %s...' % loc)
+                if r2.encoding is None: r2.encoding = 'utf-8'
+                print(('Pulling Location %s...' % loc))
                 website = 'vitaminshoppe.com'
                 name = ''
                 add = ''
@@ -59,7 +63,7 @@ def fetch_data():
                 lng = ''
                 typ = '<MISSING>'
                 hours = ''
-                lines = r2.iter_lines()
+                lines = r2.iter_lines(decode_unicode=True)
                 for line2 in lines:
                     if '<h2 class="mt-20 mb-20">' in line2:
                         name = line2.split('<h2 class="mt-20 mb-20">')[1].split('<')[0]

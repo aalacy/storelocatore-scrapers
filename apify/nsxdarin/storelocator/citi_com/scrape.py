@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import sgzip
@@ -33,16 +33,17 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         url = 'https://online.citi.com/gcgapi/prod/public/v1/geoLocations/places/retrieve'
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         array = []
         result_coords = []
-        print('%s - %s...' % (str(x), str(y)))
+        print(('%s - %s...' % (str(x), str(y))))
         payload = '{"type":"branchesAndATMs","inputLocation":[' + str(y) + ',' + str(x) + '],"resultCount":"500","distanceUnit":"MILE","findWithinRadius":"500"}'
         payload = json.loads(payload)
         r = session.post(url, headers=headers, data=json.dumps(payload))
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"name":"' in line:
                 items = line.split('"type":"Point"')
                 for item in items:
@@ -73,7 +74,7 @@ def fetch_data():
                             if store not in ids and 'america' in country:
                                 ids.add(store)
                                 country = 'US'
-                                print('Pulling Store ID #%s...' % store)
+                                print(('Pulling Store ID #%s...' % store))
                                 if '-Closing' in name:
                                     name = name.split('-Closing')[0]
                                 yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

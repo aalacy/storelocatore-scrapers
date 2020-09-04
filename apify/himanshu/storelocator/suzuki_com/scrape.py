@@ -42,7 +42,7 @@ def fetch_data():
     zip = search.next_zip()
     while zip:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         #print('Pulling Lat-Long %s...' % (str(zip)))
         try:
             r = session.get(base_url+'/DealerSearchHandler.ashx?zip='+str(zip)+'&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=4&country=en')

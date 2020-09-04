@@ -42,7 +42,7 @@ def fetch_data():
 
         while coord:
             result_coords = []
-            print("remaining zipcodes: " + str(len(search.zipcodes)))
+            print("remaining zipcodes: " + str(search.zipcodes_remaining()))
             lat = coord[0]
             lng = coord[1]
             context = ssl.SSLContext(ssl.PROTOCOL_TLS)

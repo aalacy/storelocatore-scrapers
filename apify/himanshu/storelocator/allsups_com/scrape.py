@@ -31,7 +31,7 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         json_data = session.get("https://allsups.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=100&search_radius=500").json()
         current_results_len = len(json_data)
         for data in json_data:

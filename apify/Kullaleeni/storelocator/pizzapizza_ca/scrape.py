@@ -4,11 +4,16 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+session2 = SgRequests()
 session1 = SgRequests()
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'x-request-id': 'bd65600d-8669-4903-8a14-af88203add38',
             'session-token': '5e57f395-4453-44a4-9b02-8c73904b1168'
+           }
+headers1 = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36',
+           'x-request-id': '449704b9-6540-48b0-b9f2-432fa5dd1891',
+            'session-token': '029149bd-86ba-4246-9d90-c6e3eb5ea850'
            }
 
 def write_output(data):
@@ -29,28 +34,29 @@ def fetch_data():
     url = 'https://www.pizzapizza.ca/ajax/store/api/v1/province_cities'
     r = session.get(url, headers=headers, verify=False).json()
     print(r)
-    for states in r:        
+    for states in r:
         province = states['province_slug']
-        #print(province)
+        # print(province)
         cities = states['cities']
         for city in cities:
-            #print(city['city_slug'])
+            # print(city['city_slug'])
             mlink = 'https://www.pizzapizza.ca/restaurant-locator/'+province + '/'+city['city_slug']
             branchlink = 'https://www.pizzapizza.ca/ajax/store/api/v1/search/store_locator?province='+province+'&city='+city['city_slug']
-            #print(branchlink)
-            #print(link)
+            # print(branchlink)
             try:
                 r1 = session.get(branchlink, headers=headers, verify=False).json()
                 r = r1['stores']
             except:
-
-                
-                r1 = session1.get(branchlink, headers=headers, verify=False).json()
-                #print(r1)
-                r = r1['stores']
-                #input()
+                try:
+                    # print("Next session use")
+                    r1 = session1.get(branchlink, headers=headers1, verify=False).json()
+                    r = r1['stores']
+                except:
+                    # print("Final session use")
+                    r1 = session2.get(branchlink, headers=headers, verify=False).json()
+                    r = r1['stores']
             for branch in r:
-                #print(branch)
+                # print(branch)
                 title = branch['name']
                 street = branch['address'].lstrip()
                 city = branch['city']
@@ -67,7 +73,7 @@ def fetch_data():
                 link = mlink + '/'+ street.lstrip().lower().replace(' ','-')+'/'+store
                 data.append([
                         'https://www.pizzapizza.ca/',
-                        link,                   
+                        link,
                         title,
                         street,
                         city,
@@ -83,10 +89,6 @@ def fetch_data():
                     ])
                 #print(p,data[p])
                 p += 1
-                
-            
-                #input()
-    
         
     return data
 

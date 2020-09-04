@@ -85,7 +85,7 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         r_location = session.post("https://www.midfirst.com/api/Locations", headers=headers,

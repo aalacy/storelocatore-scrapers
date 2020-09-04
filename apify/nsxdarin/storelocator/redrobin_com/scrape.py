@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 import json
 
@@ -18,7 +18,8 @@ def fetch_data():
     locs = []
     url = 'https://www.redrobin.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://redrobin.com/locations/' in line:
             items = line.split('<loc>https://redrobin.com/locations/')
             for item in items:
@@ -37,14 +38,15 @@ def fetch_data():
                     'referer': 'https://www.redrobin.com/locations/sunset-galleria/'
                     }
         slug = loc.rsplit('/',1)[1]
-        print('Pulling Location %s...' % slug)
+        print(('Pulling Location %s...' % slug))
         website = 'redrobin.com'
         typ = 'Restaurant'
         hours = ''
         payload = '{"operationName":"RestaurantBySlugQuery","variables":{"restaurantSlug":"' + slug + '"},"query":"query RestaurantBySlugQuery($restaurantSlug: String!) {  restaurants {    byRestaurantSlug(slug: $restaurantSlug) {      ...RestaurantDetails      __typename    }    __typename  }}fragment RestaurantDetails on RestaurantInfo {  address {    ...Address    __typename  }  bannerImage {    ...BannerImage    __typename  }  gallery {    ...GalleryImage    __typename  }  events {    ...RestaurantEvent    __typename  }  capabilities  franchiseName  franchiseSlug  geoCoordinate {    latitude    longitude    __typename  }  id  name  phone  temporarilyClosed  timezone  statusValue  serviceHours {    ...RestaurantServiceHours    __typename  }  slug  ...LocationLinks  __typename}fragment BannerImage on ImageSet {  alt  height  url  width  sourceSet(queryList: [{format: WEBP, quality: 50, width: 410}, {width: 410}, {format: WEBP, quality: 50, width: 820}, {width: 820}, {format: WEBP, quality: 50, width: 1680}, {width: 1680}]) {    format    url    width    height    __typename  }  __typename}fragment GalleryImage on ImageSet {  alt  height  url  width  sourceSet(queryList: [{format: WEBP, quality: 50, width: 410}, {width: 410}, {format: WEBP, quality: 50, width: 540}, {width: 540}, {format: WEBP, quality: 50, width: 910}, {width: 910}]) {    format    url    width    height    __typename  }  __typename}fragment RestaurantEvent on RestaurantEvent {  startTime  endTime  legal  title  details  anchorId  __typename}fragment LocationLinks on RestaurantInfo {  onlineOrderingLink  cateringLink  careersLink  __typename}fragment Address on Address {  line1  line2  city  state  country  zipCode  __typename}fragment RestaurantServiceHours on RestaurantServiceHours {  restaurantHours {    ...RestaurantServiceWorkingHour    __typename  }  deliveryHours {    ...RestaurantServiceWorkingHour    __typename  }  pickupHours {    ...RestaurantServiceWorkingHour    __typename  }  __typename}fragment RestaurantServiceWorkingHour on RestaurantServiceWorkingHour {  close  day  description  open  special  __typename}"}'
         payload = json.loads(payload)
-        r2 = session.post('https://api.burgerblaster.io/blaster', headers=headers2, data=json.dumps(payload))
-        for line2 in r2.iter_lines():
+        r2 = session.post('https://api.burgerblaster.io/graphql', headers=headers2, data=json.dumps(payload))
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"line1":' in line2:
                 add = line2.split('"line1":"')[1].split('"')[0]
                 try:

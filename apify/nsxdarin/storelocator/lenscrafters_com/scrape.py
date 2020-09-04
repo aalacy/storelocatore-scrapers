@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,14 +17,15 @@ def fetch_data():
     locs = []
     url = 'https://local.lenscrafters.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'hreflang="en" href="https://local.lenscrafters.com/' in line and 'hreflang="en" href="https://local.lenscrafters.com/eyedoctors' not in line:
             lurl = line.split('href="')[1].split('"')[0]
             count = lurl.count('/')
             if count == 5:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'lenscrafters.com'
         typ = '<MISSING>'
         hours = ''
@@ -32,7 +33,8 @@ def fetch_data():
         store = ''
         name = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'location-name h1-normal">' in line2 and name == '':
                 name = line2.split('location-name h1-normal">')[1].split('<')[0]
             if hours == '' and 'data-days=' in line2:

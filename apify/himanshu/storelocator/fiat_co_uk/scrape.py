@@ -29,7 +29,7 @@ def fetch_data():
     base_url = "https://www.fiat.co.uk/"
 
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         soup = bs(session.get("https://dealerlocator.fiat.com/geocall/RestServlet?jsonp=callback&mkt=3112&brand=00&func=finddealerxml&serv=sales&track=1&x="+str(coord[1])+"&y="+str(coord[0])+"&rad=100&_=1591185101147").content, "lxml")
         try:

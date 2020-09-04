@@ -49,7 +49,7 @@ def fetch_data():
     while zip:
         try:
             result_coords = []
-            # print("remaining zipcodes: " + str(len(search.zipcodes)))
+            # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
             # print('Pulling zipcode  %s...' % (str(zip)))
             WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//input[@id='locator']"))
