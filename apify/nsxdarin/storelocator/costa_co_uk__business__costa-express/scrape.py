@@ -32,18 +32,18 @@ def fetch_data():
         url = 'https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500'
         r = session.get(url, headers=headers)
         for item in json.loads(r.content)['stores']:
-            store = item['storeNo8Digit'].encode('utf-8')
-            typ = item['storeType'].encode('utf-8')
-            phone = item['telephone'].encode('utf-8')
-            add = item['storeAddress']['addressLine1'].encode('utf-8')
-            add = add + ' ' + item['storeAddress']['addressLine2'].encode('utf-8') + ' ' + item['storeAddress']['addressLine3'].encode('utf-8')
+            store = item['storeNo8Digit']
+            typ = item['storeType']
+            phone = item['telephone']
+            add = item['storeAddress']['addressLine1']
+            add = add + ' ' + item['storeAddress']['addressLine2'] + ' ' + item['storeAddress']['addressLine3']
             add = add.strip()
-            name = item['storeNameExternal'].encode('utf-8')
+            name = item['storeNameExternal']
             if name == '':
                 name = typ
-            city = item['storeAddress']['city'].encode('utf-8')
+            city = item['storeAddress']['city']
             state = '<MISSING>'
-            zc = item['storeAddress']['postCode'].encode('utf-8')
+            zc = item['storeAddress']['postCode']
             country = 'GB'
             lng = item['longitude']
             website = 'costa.co.uk/business/costa-express'
@@ -62,7 +62,7 @@ def fetch_data():
             if add == '':
                 add = '<MISSING>'
             if city == '':
-                city = item['storeAddress']['addressLine3'].encode('utf-8')
+                city = item['storeAddress']['addressLine3']
             if city == '':
                 city = '<MISSING>'
             loc = '<MISSING>'
@@ -103,18 +103,18 @@ def fetch_data():
         r = session.get(url, headers=headers)
         try:
             for item in json.loads(r.content)['stores']:
-                store = item['storeNo8Digit'].encode('utf-8')
-                typ = item['storeType'].encode('utf-8')
-                phone = item['telephone'].encode('utf-8')
-                add = item['storeAddress']['addressLine1'].encode('utf-8')
-                add = add + ' ' + item['storeAddress']['addressLine2'].encode('utf-8') + ' ' + item['storeAddress']['addressLine3'].encode('utf-8')
+                store = item['storeNo8Digit']
+                typ = item['storeType']
+                phone = item['telephone']
+                add = item['storeAddress']['addressLine1']
+                add = add + ' ' + item['storeAddress']['addressLine2'] + ' ' + item['storeAddress']['addressLine3']
                 add = add.strip()
-                name = item['storeNameExternal'].encode('utf-8')
+                name = item['storeNameExternal']
                 if name == '':
                     name = typ
-                city = item['storeAddress']['city'].encode('utf-8')
+                city = item['storeAddress']['city']
                 state = '<MISSING>'
-                zc = item['storeAddress']['postCode'].encode('utf-8')
+                zc = item['storeAddress']['postCode']
                 country = 'GB'
                 lng = item['longitude']
                 website = 'costa.co.uk/business/costa-express'
@@ -133,7 +133,7 @@ def fetch_data():
                 if add == '':
                     add = '<MISSING>'
                 if city == '':
-                    city = item['storeAddress']['addressLine3'].encode('utf-8')
+                    city = item['storeAddress']['addressLine3']
                 if city == '':
                     city = '<MISSING>'
                 loc = '<MISSING>'
