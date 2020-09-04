@@ -27,7 +27,7 @@ def process_internal(base_path):
             content = oldfile.readlines()
             for line in content:
                 if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
-                    newfile.write(get_padding(line) + line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))    
+                    newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))    
                 else:
                     newfile.write(line)
     run2to3(base_path)
