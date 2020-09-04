@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     alllocs = []
     states = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'href="/tax-offices/local/' in line:
             lurl = 'https://hrblock.com' + line.split('href="')[1].split('"')[0]
             states.append(lurl)
@@ -26,7 +27,8 @@ def fetch_data():
         #print('Pulling State %s...' % state)
         cities = []
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '{"loc":"b","nm":"city' in line2:
                 lurl = 'https://hrblock.com' + line2.split('href="')[1].split('"')[0]
                 cities.append(lurl)
@@ -34,13 +36,14 @@ def fetch_data():
             locs = []
             #print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
-            for line3 in r3.iter_lines():
+            if r3.encoding is None: r3.encoding = 'utf-8'
+            for line3 in r3.iter_lines(decode_unicode=True):
                 if 'View Office Info' in line3:
                     lurl = 'https://hrblock.com' + line3.split('href="')[1].split('"')[0]
                     if lurl not in alllocs:
                         alllocs.append(lurl)
                         r4 = session.get(lurl, headers=headers)
-                        lines = r4.iter_lines()
+                        lines = r4.iter_lines(decode_unicode=True)
                         website = 'hrblock.com'
                         typ = 'Location'
                         name = 'H&R Block'

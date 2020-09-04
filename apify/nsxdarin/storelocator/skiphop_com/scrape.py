@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,9 +20,10 @@ def fetch_data():
     locs = []
     url = 'https://www.skiphop.com/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?postalCode=90210&countryCode=US&distanceUnit=imperial&maxdistance=5000&carters=false&oshkosh=false&skiphop=true&retail=true&wholesale=true&lat=40.0&lng=-95.0'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'skiphop.com'
     country = 'US'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"name": "' in line:
             name = line.split('"name": "')[1].split('"')[0]
         if '"brand": "' in line:

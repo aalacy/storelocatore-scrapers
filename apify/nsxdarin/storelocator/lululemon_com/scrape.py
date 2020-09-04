@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
 import json
@@ -24,12 +24,12 @@ def fetch_data():
         typ = '<MISSING>'
         hours = ''
         store = '<MISSING>'
-        name = item['name'].encode('utf-8')
+        name = item['name']
         loc = item['websiteUrl']
-        city = item['city'].encode('utf-8')
+        city = item['city']
         country = item['country']
         store = item['storeNumber']
-        addinfo = item['fullAddress'].encode('utf-8')
+        addinfo = item['fullAddress']
         lat = item['latitude']
         lng = item['longitude']
         state = item['state']

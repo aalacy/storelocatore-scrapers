@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,14 +17,15 @@ def fetch_data():
     locs = []
     url = 'https://www.wyndhamhotels.com/en-ca/super-8/locations'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     Found = True
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'section-name headline-i">Asia</h3>' in line:
             Found = False
         if Found and 'overview">Super 8' in line:
             locs.append('https://www.wyndhamhotels.com' + line.split('href="')[1].split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'super8.com'
         typ = 'Restaurant'
         hours = '<MISSING>'
@@ -40,7 +41,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'siteID : "' in line2:
                 store = line2.split('siteID : "')[1].split('"')[0]
             if name == '' and '"name":"' in line2:

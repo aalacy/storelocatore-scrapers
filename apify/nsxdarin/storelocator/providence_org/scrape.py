@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -21,14 +21,15 @@ def fetch_data():
     walocs = []
     Found = False
     for x in range(1, 50):
-        print('Pulling OR Page %s...' % str(x))
+        print(('Pulling OR Page %s...' % str(x)))
         PFound = True
         while PFound:
             try:
                 PFound = False
                 url = 'https://oregon.providence.org/location-directory/list-view/?page=' + str(x) + '&within=5000'
                 r = session.get(url, headers=headers)
-                lines = r.iter_lines()
+                if r.encoding is None: r.encoding = 'utf-8'
+                lines = r.iter_lines(decode_unicode=True)
                 for line in lines:
                     if '<h4><a id="main_0_contentpanel' in line:
                         lurl = 'https://oregon.providence.org' + line.split('href="')[1].split('"')[0]
@@ -83,14 +84,15 @@ def fetch_data():
                             else:
                                 newadd = add
                             yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                print('%s OR Locations Found' % str(len(orlocs)))
+                print(('%s OR Locations Found' % str(len(orlocs))))
             except:
                 PFound = True
     for x in range(1, 15):
-        print('Pulling WA Page %s...' % str(x))
+        print(('Pulling WA Page %s...' % str(x)))
         url = 'https://washington.providence.org/locations-directory/search-results?page=' + str(x)
         r = session.get(url, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if '<ul  class="list-unstyled row">' in line:
                 Found = True
@@ -148,12 +150,13 @@ def fetch_data():
                 else:
                     newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print('%s WA Locations Found' % str(len(mtlocs)))
+        print(('%s WA Locations Found' % str(len(mtlocs))))
     for x in range(1, 10):
-        print('Pulling MT Page %s...' % str(x))
+        print(('Pulling MT Page %s...' % str(x)))
         url = 'https://montana.providence.org/locations-directory/list-view?page=' + str(x)
         r = session.get(url, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if '<ul  class="list-unstyled row">' in line:
                 Found = True
@@ -201,17 +204,18 @@ def fetch_data():
                 else:
                     newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print('%s MT Locations Found' % str(len(mtlocs)))
+        print(('%s MT Locations Found' % str(len(mtlocs))))
     for x in range(1, 10):
-        print('Pulling AK Page %s...' % str(x))
+        print(('Pulling AK Page %s...' % str(x)))
         url = 'https://alaska.providence.org/locations/list-view?page=' + str(x) + '&within=5000'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<h4><a id="main_0' in line:
                 lurl = 'https://alaska.providence.org' + line.split('href="')[1].split('"')[0]
                 if lurl not in aklocs:
                     aklocs.append(lurl)
-        print('%s AK Locations Found' % str(len(aklocs)))
+        print(('%s AK Locations Found' % str(len(aklocs))))
     for loc in aklocs:
         #print('Pulling AK Location %s...' % loc)
         website = 'providence.org'
@@ -229,7 +233,8 @@ def fetch_data():
         lng = '<MISSING>'
         HFound = False
         r = session.get(loc, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if 'pnlOfficeHours">' in line:
                 HFound = True
@@ -330,19 +335,20 @@ def fetch_data():
                 newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
-        print('Pulling SCA Page %s...' % str(x))
+        print(('Pulling SCA Page %s...' % str(x)))
         url = 'https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page=' + str(x) + '&radius=5000&term=#'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<h3><a href="' in line:
                 stub = line.split('a href="')[1].split('"')[0]
                 if '/location' in stub and '.providence.org' not in stub:
                     lurl = 'https://www.providence.org' + stub
                     if lurl not in scalocs and lurl.count('http') == 1:
                         scalocs.append(lurl)
-        print('%s SCA Locations Found' % str(len(scalocs)))
+        print(('%s SCA Locations Found' % str(len(scalocs))))
     for loc in scalocs:
-        print('Pulling SCA Location %s...' % loc)
+        print(('Pulling SCA Location %s...' % loc))
         website = 'providence.org'
         typ = '<MISSING>'
         hours = ''
@@ -357,7 +363,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r = session.get(loc, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"streetAddress":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]
                 add = line.split('"streetAddress":"')[1].split('"')[0]
@@ -390,7 +397,8 @@ def fetch_data():
                 newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     r = session.get('https://www.stjosephhealth.org/our-locations/', headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<div class="location">' in line:
             g = next(lines)

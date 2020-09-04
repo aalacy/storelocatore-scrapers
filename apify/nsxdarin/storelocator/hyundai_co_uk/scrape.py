@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,11 +17,13 @@ def fetch_data():
     locs = []
     url = 'https://www.hyundai.co.uk/dealer-locator'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a href="/dealer/https://dealer.hyundai.co.uk/' in line:
             locs.append(line.split('dealer/')[1].split('"')[0])
     for loc in locs:
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         print(loc)
         website = 'hyundai.co.uk'
         typ = '<MISSING>'
@@ -37,7 +39,7 @@ def fetch_data():
         hours = ''
         zc = ''
         phone = ''
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<div class="c-header__dealer-name">' in line2:
                 name = line2.split('<div class="c-header__dealer-name">')[1].split('<')[0].replace('&#039;',"'")

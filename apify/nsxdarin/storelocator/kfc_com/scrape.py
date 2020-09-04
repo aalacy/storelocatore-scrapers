@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,12 +17,13 @@ def fetch_data():
     url = 'https://locations.kfc.com/sitemap.xml'
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'href="https://locations.kfc.com/' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl.count('/') >= 5:
                 locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         hours = ''
@@ -38,8 +39,9 @@ def fetch_data():
         typ = 'Restaurant'
         store = ''
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         Found = False
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"c_historicStoreID":"' in line2:
                 store = line2.split('"c_historicStoreID":"')[1].split('"')[0]
             if '"dimension4":"' in line2:

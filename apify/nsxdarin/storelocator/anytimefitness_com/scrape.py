@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,7 +18,8 @@ def fetch_data():
     locs = []
     url = 'https://www.anytimefitness.com/wp-content/uploads/gyms.json'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"latitude":"' in line:
             items = line.split('"latitude":"')
             for item in items:

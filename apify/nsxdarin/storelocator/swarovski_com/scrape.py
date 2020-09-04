@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,7 +20,7 @@ def fetch_data():
     for item in coords:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        print('%s - %s...' % (lat, lng))
+        print(('%s - %s...' % (lat, lng)))
         rad = 1000
         if lng == '-95':
             rad = 500

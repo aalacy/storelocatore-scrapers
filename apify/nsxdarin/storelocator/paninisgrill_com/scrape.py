@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import re
 
@@ -18,14 +18,15 @@ def fetch_data():
     url = 'https://paninisgrill.com/locations/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'mega-menu-link" href="https://paninisgrill.com/locations/' in line:
             items = line.split('mega-menu-link" href="https://paninisgrill.com/locations/')
             for item in items:
                 lurl = 'https://paninisgrill.com/locations/' + item.split('"')[0]
                 if ' ' not in lurl and lurl.count('/') == 5:
                     locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -38,11 +39,12 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'paninisgrill.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' - ')[0]
             if add == '' and '<span class="elementor-icon-list-text">' in line2:

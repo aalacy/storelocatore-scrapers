@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,14 +18,15 @@ def fetch_data():
     links = []
     url = 'https://www.roomstogo.com/stores'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<div class="link-container"><a href="' in line:
             items = line.split('<div class="link-container"><a href="')
             for item in items:
                 if 'Rooms To Go Store Locator' not in item:
                     locs.append('https://www.roomstogo.com' + item.split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         rs = session.get(loc, headers=headers)
         website = 'roomstogo.com'
         name = ''
@@ -39,11 +40,11 @@ def fetch_data():
         store = ''
         lat = ''
         lng = ''
-        for line2 in rs.iter_lines():
+        for line2 in rs.iter_lines(decode_unicode=True):
             if '<link as="fetch" rel="preload" href="' in line2:
                 link = 'https://www.roomstogo.com' + line2.split('<link as="fetch" rel="preload" href="')[1].split('"')[0]
                 rl = session.get(link, headers=headers)
-                for line3 in rl.iter_lines():
+                for line3 in rl.iter_lines(decode_unicode=True):
                     if ',"storeNumber":' in line3:
                         store = line3.split(',"storeNumber":')[1].split(',')[0]
                         name = line3.split('"pageTitle":"')[1].split('"')[0]

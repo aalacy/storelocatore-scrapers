@@ -11,7 +11,7 @@ session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
-CANADA_STATE_VARIATIONS = {'ab', 'alberta', 'bc', 'british columbia', 'mb', 'manitoba', 'nb', 'new brunswick', 'nl', 'newfoundland and labrador', 'nt', 'northwest territories', 'ns', 'nova scotia', 'nu', 'nunavut', 'on', 'ontario', 'pe', 'prince edward island', 'qc', 'quebec', 'sk', 'saskatchewan', 'yt', 'yukon', u'québec', 'newfoundland', 'b.c.'}
+CANADA_STATE_VARIATIONS = {'ab', 'alberta', 'bc', 'british columbia', 'mb', 'manitoba', 'nb', 'new brunswick', 'nl', 'newfoundland and labrador', 'nt', 'northwest territories', 'ns', 'nova scotia', 'nu', 'nunavut', 'on', 'ontario', 'pe', 'prince edward island', 'qc', 'quebec', 'sk', 'saskatchewan', 'yt', 'yukon', 'québec', 'newfoundland', 'b.c.'}
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,11 +23,11 @@ def write_output(data):
 def fetch_data(search):
     ids = set()
     code = search.next_zip()
-    print("code: {}".format(code))
+    print(("code: {}".format(code)))
     locations = []
     while code:
-        print('Pulling Zip Code %s...' % code)
-        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
+        print(('Pulling Zip Code %s...' % code))
+        print(('{} zip codes remaining'.format(search.zipcodes_remaining())))
         query_country = 'ca' if len(code) == 3 else 'us'
         url = 'https://maps.ckr.com/stores/search?brand=carlsjr&country=' + query_country + '&q=' + code + '&brand_id=8&zoom=5'
         coords = []
@@ -72,7 +72,7 @@ def fetch_data(search):
                         if hours == '':
                             hours = '<MISSING>'
                         locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
-        if not coords: print("zip returned no results: {}".format(search.current_zip))
+        if not coords: print(("zip returned no results: {}".format(search.current_zip)))
         search.max_count_update(coords)
         code = search.next_zip()
     for location in locations:

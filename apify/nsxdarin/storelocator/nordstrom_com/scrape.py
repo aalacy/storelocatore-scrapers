@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
@@ -17,11 +17,12 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(100):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://public.api.nordstrom.com/v2/storeservice/postalcode/' + code + '?distance=100&apikey=Gneq2B6KqSbEABkg9IDRxuxAef9BqusJ&apigee_bypass_cache=1&format=json'
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         Found = False
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if '{"number":' in line:
                 items = line.split('{"number":')

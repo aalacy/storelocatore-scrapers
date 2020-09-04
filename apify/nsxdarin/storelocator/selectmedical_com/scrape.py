@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,16 +18,18 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=50&e=0&g=&o=Distance,Ascending'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     count = 0
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"Count":' in line:
             count = int(line.split('"Count":')[1].split(',')[0])
-    print('Found %s Locations...' % str(count))
+    print(('Found %s Locations...' % str(count)))
     for x in range(0, count + 75, 50):
-        print('Pulling Results %s...' % str(x))
+        print(('Pulling Results %s...' % str(x)))
         url2 = 'https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&sig=&autoFireSearch=true&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=50&e=' + str(x) + '&g=&o=Distance,Ascending'
         r2 = session.get(url2, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"Id":"' in line2:
                 items = line2.split('"Id":"')
                 for item in items:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -36,14 +36,14 @@ def fetch_data():
         purl = '<MISSING>'
         array = []
         for item in json.loads(r.content):
-            store = item['id'].encode('utf-8')
-            name = item['name'].encode('utf-8')
+            store = item['id']
+            name = item['name']
             lat = item['lat']
             lng = item['lng']
             result_coords.append((lat, lng))
-            add = item['address1'].encode('utf-8')
-            city = item['city'].encode('utf-8')
-            state = item['state'].encode('utf-8')
+            add = item['address1']
+            city = item['city']
+            state = item['state']
             zc = item['postcode']
             country = 'US'
             phone = item['telephone']

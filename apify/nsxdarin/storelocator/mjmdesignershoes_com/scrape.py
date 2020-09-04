@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,6 +17,7 @@ def fetch_data():
     locs = []
     url = 'http://mjmdesignershoes.com/shipad_mjmshoes.html'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'mjmdesignershoes.com'
     typ = '<MISSING>'
     country = 'US'
@@ -24,7 +25,7 @@ def fetch_data():
     hours = '<MISSING>'
     lat = '<MISSING>'
     lng = '<MISSING>'
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<td class="findastore" valign="top">' in line:
             store = line.split('<b>')[1].split(')')[0]

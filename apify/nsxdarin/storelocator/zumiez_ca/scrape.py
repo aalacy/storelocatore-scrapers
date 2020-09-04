@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,6 +18,7 @@ def fetch_data():
     locs = []
     url = 'https://www.zumiez.ca/storelocator/search/latlng/?lat=40.7135097&lng=-73.9859414&radius=10000'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     for item in json.loads(r.content):
         store = item['locator_id']
         website = 'zumiez.ca'
@@ -27,7 +28,8 @@ def fetch_data():
         country = 'CA'
         name = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2 and name == '':
                 name = line2.split('<title>')[1].split(' |')[0]
             if 'itemprop="streetAddress">' in line2:

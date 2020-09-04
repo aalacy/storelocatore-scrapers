@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -16,12 +16,13 @@ def write_output(data):
 def fetch_data():
     url = 'https://urgentandercare.com/'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     name = 'Code 3 Emergency Room'
     country = 'US'
     website = 'code3er.com'
     typ = '<MISSING>'
     store = '<MISSING>'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"address-text">' in line:
             add = line.split('"address-text">')[1].split('<')[0]
             csz = line.split('<br>')[1].split('<')[0]
@@ -34,7 +35,8 @@ def fetch_data():
         if 'Learn More</button>' in line:
             loc = line.split('href="')[1].split('"')[0]
             r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '"latitude":"' in line2:
                     lat = line2.split('"latitude":"')[1].split('"')[0]
                     lng = line2.split('"longitude":"')[1].split('"')[0]
