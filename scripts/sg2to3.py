@@ -25,13 +25,13 @@ def process_internal(base_path):
     with open('{}/scrape.py'.format(base_path)) as oldfile:
         with open('{}/scrape-tmp.py'.format(base_path), 'w') as newfile:
             content = oldfile.readlines()
-            has_iter_lines = 'iter_lines()' in content 
+            has_iter_lines = any(['iter_lines()' in x for x in content])
             for line in content:
                 if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
                     newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))
                 elif 'r = session.' in line and has_iter_lines:
                     newfile.write(line)
-                    newfile.write(get_padding(line) + "r.encoding = 'utf-8' if r.encoding is None")
+                    newfile.write(get_padding(line) + "r.encoding = 'utf-8' if r.encoding is None\n")
                 elif 'iter_lines()' in line:
                     newfile.write(line.replace('iter_lines()', 'iter_lines(decode_unicode=True)'))
                 else:
@@ -60,4 +60,4 @@ def run(root):
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator/citi_com')
