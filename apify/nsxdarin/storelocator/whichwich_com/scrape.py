@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
@@ -26,7 +26,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         payload = {'search': '',
                    'hdnLat': str(x),
                    'hdnLng': str(y),
@@ -35,7 +35,8 @@ def fetch_data():
                    'hdnFormattedState': ' '
                    }
         r = session.post(url, headers=headers, data=payload)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if 'value = [{"id":"' in line:
                 items = line.split('"id":"')
                 for item in items:
@@ -65,7 +66,7 @@ def fetch_data():
                         lng = item.split('"google_longitude":"')[1].split('"')[0]
                         if store not in ids:
                             ids.append(store)
-                            print('Pulling Store ID #%s...' % store)
+                            print(('Pulling Store ID #%s...' % store))
                             if '0' not in hours:
                                 hours = '<MISSING>'
                             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

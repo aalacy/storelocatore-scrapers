@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://locations.michaelkors.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://locations.michaelkors.com/canada/' in line or '<loc>https://locations.michaelkors.com/us/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             if lurl.count('/') == 6:
@@ -43,7 +44,8 @@ def fetch_data():
         store = '<MISSING>'
         HFound = False
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<span class="Heading-sub Heading--pre">' in line2:
                 typ = line2.split('<span class="Heading-sub Heading--pre">')[1].split('<')[0]
             if '"dimension4":"' in line2:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,7 +19,8 @@ def fetch_data():
     locs = []
     cities = []
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '"title":"' in line:
             items = line.split('"title":"')

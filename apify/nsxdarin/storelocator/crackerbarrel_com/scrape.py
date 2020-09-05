@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 
@@ -18,23 +18,24 @@ def fetch_data():
     coords = []
     url = 'http://locations.crackerbarrel.com/sitemap.xml.gz'
     with open('sitemap.xml.gz','wb') as f:
-        f.write(urllib2.urlopen(url).read())
+        f.write(urllib.request.urlopen(url).read())
         f.close()
     locs = []
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     with gzip.open('sitemap.xml.gz', 'rb') as f:
         for line in f:
             if '<loc>http://locations.crackerbarrel.com/' in line:
                 lurl = line.replace('/</loc>','</loc>').split('<loc>')[1].split('<')[0]
                 if lurl.count('/') == 5 and lurl not in locs:
                     locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         PageFound = True
         while PageFound:
             try:
                 PageFound = False
-                print('Pulling Location %s...' % loc)
+                print(('Pulling Location %s...' % loc))
                 url = loc
                 add = ''
                 city = ''
@@ -50,7 +51,8 @@ def fetch_data():
                 website = 'crackerbarrel.com'
                 typ = 'Restaurant'
                 r2 = session.get(loc, headers=headers)
-                lines = r2.iter_lines()
+                if r2.encoding is None: r2.encoding = 'utf-8'
+                lines = r2.iter_lines(decode_unicode=True)
                 Found = False
                 for line2 in lines:
                     if 'W2GI.collection.poi = [' in line2:

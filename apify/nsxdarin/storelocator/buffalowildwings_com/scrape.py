@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
@@ -23,7 +23,7 @@ def fetch_data():
     for coord in canada:
         x = coord.split(',')[0]
         y = coord.split(',')[1]
-        print('Pulling Canadian Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Canadian Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://api.buffalowildwings.com/BWWService.svc/GetRestaurntDetailsByltdLng?fLatitude=' + x + '&fLongitude=' + y + '&radius=500&iVendorID=50'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -70,7 +70,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://api.buffalowildwings.com/BWWService.svc/GetRestaurntDetailsByltdLng?fLatitude=' + x + '&fLongitude=' + y + '&radius=500&iVendorID=50'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)

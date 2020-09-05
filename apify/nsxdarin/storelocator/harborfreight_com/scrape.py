@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,14 +18,16 @@ def fetch_data():
     states = []
     url = 'https://shop.harborfreight.com/storelocator/location/map'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'class="state" href="#' in line:
             states.append(line.split('class="state" href="#')[1].split('"')[0])
     for state in states:
         url2 = 'https://shop.harborfreight.com/storelocator/location/state?lat=&lng=&state=' + state + '&radius=3000&justState=true&stateValue=' + state
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(url2, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'store_num="' in line2:
                 items = line2.split('store_num="')
                 for item in items:
