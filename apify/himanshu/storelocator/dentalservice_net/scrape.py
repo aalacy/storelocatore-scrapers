@@ -8,9 +8,6 @@ import json
 
 session = SgRequests()
 
-requests.packages.urllib3.disable_warnings()
- 
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +19,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -31,11 +27,9 @@ def fetch_data():
     base_url = "https://www.dentalservice.net"
     addresses = []
 
-    r = session.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers,verify=False)
+    r = session.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data_id = soup.find("script", {"data-id": re.compile("")})["data-id"]
-    # print("data_id === " + str(data_id))
-
     page_count = 0
 
     while True:
@@ -48,11 +42,7 @@ def fetch_data():
             break
 
         page_count += 10
-        # print(str(page_count) + " === json_data === " + str(json_data["Hit"]))
-
         for location in json_data["Hit"]:
-
-            # print("location == "+ str(location))
             locator_domain = base_url
             location_name = ""
             street_address = ""
@@ -89,20 +79,13 @@ def fetch_data():
                 for day in hours_day:
                     hours_of_operation += str(day) +" "+ str(location["HoursOfOperation"][str(day)]["Hours"][0]).replace("{","").replace("}","").replace("'","")+" "
             hours_of_operation = hours_of_operation.replace(", CloseTime: "," - ").replace("CloseTime: ","").replace("OpenTime: ","")
-            # print("HoursOfOperation === " + str(hours_of_operation))
-
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]))
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
-
-
 
 def scrape():
     data = fetch_data()
