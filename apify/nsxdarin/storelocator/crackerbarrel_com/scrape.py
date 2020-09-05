@@ -23,7 +23,7 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     if r.encoding is None: r.encoding = 'utf-8'
-    with gzip.open('sitemap.xml.gz', 'rb') as f:
+    with gzip.open('sitemap.xml.gz', 'rt') as f:
         for line in f:
             if '<loc>http://locations.crackerbarrel.com/' in line:
                 lurl = line.replace('/</loc>','</loc>').split('<loc>')[1].split('<')[0]
