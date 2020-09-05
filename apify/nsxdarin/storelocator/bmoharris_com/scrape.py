@@ -1,6 +1,6 @@
 import json
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
@@ -58,7 +58,8 @@ def fetch_data():
     locs = []
     branches = []
     r = session.post(url, headers=headers, data=json.dumps(payload), verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '{"mondayopen":"' in line:
             items = line.split('{"mondayopen":"')
             for item in items:
@@ -81,7 +82,8 @@ def fetch_data():
             Found = True
             try:
                 r = session.get(branch, headers=headers, timeout=10, verify=False)
-                lines = r.iter_lines()
+                if r.encoding is None: r.encoding = 'utf-8'
+                lines = r.iter_lines(decode_unicode=True)
                 for line in lines:
                     if 'property="og:title" content="' in line:
                         name = line.split('property="og:title" content="')[1].split('"')[0]

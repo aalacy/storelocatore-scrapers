@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,7 +19,8 @@ def fetch_data():
     states = []
     alllocs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'address_states_stateUSSO" >' in line:
             info = line.split('address_states_stateUSSO" >')[1].split('</select>')[0].split('class="select-option" label="')
             for item in info:
@@ -28,11 +29,12 @@ def fetch_data():
     for state in states:
         storetypes = ['storeType-R','storeType-F','storeType-D','womenFootwear-true','Capability9-true']
         for stype in storetypes:
-            print('Pulling State %s-%s...' % (state, stype))
+            print(('Pulling State %s-%s...' % (state, stype)))
             surl = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=' + state + '_state&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=0&sz=10&format=ajax'
             r2 = session.get(surl, headers=headers)
+            if r2.encoding is None: r2.encoding = 'utf-8'
             count = 0
-            for line2 in r2.iter_lines():
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<span class="newCount hide">' in line2:
                     try:
                         count = int(line2.split('<span class="newCount hide">')[1].split('<')[0])
@@ -42,7 +44,8 @@ def fetch_data():
                 for x in range(0, count + 20, 10):
                     s2url = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=' + state + '_state&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=' + str(x) + '&sz=10&format=ajax'
                     r3 = session.get(s2url, headers=headers)
-                    for line3 in r3.iter_lines():
+                    if r3.encoding is None: r3.encoding = 'utf-8'
+                    for line3 in r3.iter_lines(decode_unicode=True):
                         if '<meta itemprop="name" content="' in line3:
                             stores = line3.split('<meta itemprop="name" content="')
                             for sitem in stores:
@@ -98,11 +101,12 @@ def fetch_data():
                                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     storetypes = ['storeType-R','storeType-F','storeType-D','womenFootwear-true','Capability9-true']
     for stype in storetypes:
-        print('Pulling Canada %s...' % stype)
+        print(('Pulling Canada %s...' % stype))
         surl = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=CA_country&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=0&sz=10&format=ajax'
         r2 = session.get(surl, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         count = 0
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<span class="newCount hide">' in line2:
                 try:
                     count = int(line2.split('<span class="newCount hide">')[1].split('<')[0])
@@ -112,7 +116,8 @@ def fetch_data():
             for x in range(0, count + 20, 10):
                 s2url = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=CA_country&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=' + str(x) + '&sz=10&format=ajax'
                 r3 = session.get(s2url, headers=headers)
-                for line3 in r3.iter_lines():
+                if r3.encoding is None: r3.encoding = 'utf-8'
+                for line3 in r3.iter_lines(decode_unicode=True):
                     if '<meta itemprop="name" content="' in line3:
                         stores = line3.split('<meta itemprop="name" content="')
                         for sitem in stores:

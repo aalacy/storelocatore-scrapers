@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,16 +19,17 @@ def fetch_data():
     locs = []
     for url in urls:
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<loc>https://www.wholefoodsmarket.com/stores/' in line:
                 items = line.split('<loc>')
                 for item in items:
                     if 'https://www.wholefoodsmarket.com/stores/' in item:
                         lurl = item.split('<')[0]
                         locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         url = loc
         add = ''
         city = ''
@@ -43,7 +44,8 @@ def fetch_data():
         typ = 'Store'
         today = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0].split(' |')[0]
             if "<span class='w-mailing-address-section--description-first'>" in line2:
@@ -84,16 +86,17 @@ def fetch_data():
     locs = []
     payload = {"query":["AYAAFOedDKENmOaaURfqtV/zEcEALgACABFvcmlnaW5hbEZpZWxkTmFtZQAFcXVlcnkADWZyYWdtZW50SW5kZXgAATAAAQAGc2k6bWQ1ACBjNjEyNzMwZmM4NzA0NjYyMThkZjRiMjc1YWFlYTJiNQEAPOhlmJP1EnDxvtOvSd/ckG4EsKlX24HCJ7Ytx3ux444C2PXDzX7c7phhh4FfMD5W0S8cxCexDiP16Ktn2O/1xluzhIpEQt9LPaHN0YEZ+oxPsVrCfn0JR+dXhDbxYePMZO9HHIZR/vm6r3TDdlYC9iuOPSY2E0rk8mt8gZnZGb/ueYVWjJKWzjo3vA9qN0q/fQCSekPuUSlLBnOx1sI3XFIBfeujCmmjYbgGNw8TnTd2KCrjYH3YPiktRiw+3mdUDc+pl9/xgwGDzATnhAGXFwHq5oKqTRlhQzldXD0L7gHGdZ4DR96TYiLJawqT7i7Z5W5V9Goh0wbl38NwYx7fHgIAAAAADAAAACgAAAAAAAAAAAAAAACgxENGGAexhATiEb63DF0q/////wAAAAEAAAAAAAAAAAAAAAEAAAAn4cvNgh6oSjxx/LVXtdlqbeBEbM96hs3pDrdUmPy2ESLs9muar7gFxTskKozaFVwGji7wHjw6lA=="]}
     r = session.post(url, headers=headers, data=json.dumps(payload))
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"folder":"' in line:
             items = line.split('"folder":"')
             for item in items:
                 if '"links":' in item:
                     lurl = 'https://www.wholefoodsmarket.com/stores/' + item.split('"')[0]
                     locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         url = loc
         add = ''
         city = ''
@@ -108,7 +111,8 @@ def fetch_data():
         typ = 'Store'
         today = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0].split(' |')[0]
             if "<span class='w-mailing-address-section--description-first'>" in line2:
@@ -150,16 +154,17 @@ def fetch_data():
     url = 'https://www.wholefoodsmarket.com/stores/search'
     payload = {"query":["AYAAFGL2ZAEAPAhMuUj8IuW/owoALgACABFvcmlnaW5hbEZpZWxkTmFtZQAFcXVlcnkADWZyYWdtZW50SW5kZXgAATAAAQAGc2k6bWQ1ACBjNjEyNzMwZmM4NzA0NjYyMThkZjRiMjc1YWFlYTJiNQEAg+PlV4FRWbsLb6xespRkxrgYZoCeg+UlMylHN+jcwD4DKfeYwyK4lkEWrBemaZE74yP6K2RFRCr+0wpI2CNiC/Bx/al+68grySF3gv7rykiDYndrU8jUwtuTqjvXThn0w2VwPhozbO15gSdzF/Y8ISXX4qp3K9igJUDILVfZxLGfBgDajXOBXcVVT5Kw+n+pZQ2Wkw7yJrKtFsfLRQs5fglcW/fOhiUVPKChU2RwM4cWpZvF7GGQHOfXvm0doMgR6KquAuC+C2WT+joZETULmuqi8j6QmterbNCVBlXNw9DEfBUWDWpW+4RzMNTDE/H4l5aJIuFdZ77836ObCykO5wIAAAAADAAAACYAAAAAAAAAAAAAAADhSaBmdH/7ltQeK6mPU2+I/////wAAAAEAAAAAAAAAAAAAAAEAAAAlWJMmVBTnHghLMxhdKUdWDuye5KRsIAVmqJpjA+DYnb4pnHYEONsZ4BPn8TYs2Qya4FUcPTw="]}
     r = session.post(url, headers=headers, data=json.dumps(payload))
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"folder":"' in line:
             items = line.split('"folder":"')
             for item in items:
                 if '"links":' in item:
                     lurl = 'https://www.wholefoodsmarket.com/stores/' + item.split('"')[0]
                     locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         url = loc
         add = ''
         city = ''
@@ -174,7 +179,8 @@ def fetch_data():
         typ = 'Store'
         today = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0].split(' |')[0]
             if "<span class='w-mailing-address-section--description-first'>" in line2:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,23 +17,24 @@ def fetch_data():
     locs = []
     url = 'https://www.kfc.ca/find-a-kfc'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"RestaurantName":"' in line and 'var allRestDetails' in line:
             items = line.split('"RestaurantName":"')
             for item in items:
                 if 'var allRestDetails' not in item and 'TEST-CA' not in item:
                     name = 'KFC'
                     try:
-                        add = item.split('"AddressLine1":"')[1].split('"')[0].encode('utf-8')
+                        add = item.split('"AddressLine1":"')[1].split('"')[0]
                     except:
                         add = '<MISSING>'
                     if add != '<MISSING>':
-                        add2 = item.split('"AddressLine2":"')[1].split('"')[0].encode('utf-8')
+                        add2 = item.split('"AddressLine2":"')[1].split('"')[0]
                         add = add + ' ' + add2
                     add = add.strip()
                     store = item.split('"')[0]
                     try:
-                        city = item.split('"City":"')[1].split('"')[0].encode('utf-8')
+                        city = item.split('"City":"')[1].split('"')[0]
                     except:
                         city = '<MISSING>'
                     try:

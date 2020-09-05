@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,7 +19,8 @@ def fetch_data():
     cities = []
     url = 'https://oldnavy.gapcanada.ca/stores?cid=57308&mlink=5151,8551677,7'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'class="ga-link" data-ga="Maplist, Region ' in line:
             stub = line.split('href="')[1].split('"')[0]
             lurl = 'https://oldnavy.gapcanada.ca/' + stub
@@ -27,17 +28,19 @@ def fetch_data():
                 states.append(lurl)
     for state in states:
         if '/' in state:
-            print('Pulling Province %s...' % state)
+            print(('Pulling Province %s...' % state))
             r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'data-city-item="' in line2:
                     lurl = 'https://oldnavy.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
                     if lurl not in cities:
                         cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<a class="view-store ga-link"' in line2:
                 lurl = 'https://oldnavy.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
@@ -59,7 +62,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if 'class="daypart" data-daypart="' in line2:
                 day = line2.split('data-daypart="')[1].split('"')[0]

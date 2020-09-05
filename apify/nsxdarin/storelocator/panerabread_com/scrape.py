@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -22,8 +22,8 @@ def fetch_data():
         zc = item['properties']['Zip']
         store = item['properties']['CafeId']
         name = 'Panera Bread'
-        add = item['properties']['StreetName'].encode('utf-8')
-        city = item['properties']['City'].encode('utf-8')
+        add = item['properties']['StreetName']
+        city = item['properties']['City']
         state = item['properties']['State']
         phone = item['properties']['Phone']
         website = 'panerabread.com'

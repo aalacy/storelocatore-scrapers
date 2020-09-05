@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,8 +17,9 @@ def fetch_data():
     locs = []
     url = 'https://apps.hac.ca/api/getdealers?numberdealers=1000&languagecode=en&latitude=49.2827291&longitude=-123.1207375'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     info = ''
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         info = info + line.replace('\r','').replace('\t','').replace('\n','').strip()
     items = info.split('{"SortOrder":"')
     for item in items:

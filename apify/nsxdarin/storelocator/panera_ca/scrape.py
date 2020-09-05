@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,7 +19,8 @@ def fetch_data():
     url = 'https://locations.panerabread.com/index.html'
     states = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a class="c-directory-list-content-item-link" href="' in line:
             items = line.split('<a class="c-directory-list-content-item-link" href="')
             for item in items:
@@ -30,9 +31,10 @@ def fetch_data():
     cities = []
     locs = []
     for state in states:
-        print('Pulling Province %s...' % state)
+        print(('Pulling Province %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<a class="c-directory-list-content-item-link" href="' in line2:
                 items = line2.split('<a class="c-directory-list-content-item-link" href="')
                 for item in items:
@@ -43,9 +45,10 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'aria-level="2"><a href="../' in line2:
                 items = line2.split('aria-level="2"><a href="../')
                 for item in items:
@@ -53,8 +56,9 @@ def fetch_data():
                         lurl = 'https://locations.panerabread.com/' + item.split('"')[0]
                         locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         name = ''
         typ = 'Restaurant'
         website = 'panera.ca'
@@ -68,7 +72,7 @@ def fetch_data():
         lng = ''
         store = ''
         phone = ''
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<span class="location-name-geo">' in line2 and name == '':
                 name = line2.split('<span class="location-name-geo">')[1].split('<')[0].strip()
             if '"c-address-street-1">' in line2 and add == '':
