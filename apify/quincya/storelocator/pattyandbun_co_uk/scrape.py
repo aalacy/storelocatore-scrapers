@@ -78,7 +78,7 @@ def fetch_data():
 			at_pos = map_link.rfind("!3d")
 			latitude = map_link[at_pos+3:map_link.rfind("!")].strip()
 			longitude = map_link[map_link.find("!4d", at_pos)+3:].strip()
-			if len(lat) > 30:
+			if len(latitude) > 30:
 				latitude = map_link[map_link.find("=")+1:map_link.find(",")].strip()
 				longitude = map_link[map_link.find(",")+1:map_link.find("&")].strip()
 		except:
