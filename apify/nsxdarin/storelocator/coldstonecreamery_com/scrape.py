@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,10 +17,11 @@ def fetch_data():
     url = 'https://www.coldstonecreamery.com/locator/index.php?brand=14&mode=desktop&pagesize=7000&q=55441&latitude=&longitude='
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'Locator.stores[' in line:
             store = line.split('"StoreId":')[1].split(',')[0]
-            print('Pulling Store %s...' % store)
+            print(('Pulling Store %s...' % store))
             website = 'coldstonecreamery.com'
             name = 'Cold Stone #' + store
             lat = line.split('"Latitude":')[1].split(',')[0]
@@ -34,7 +35,8 @@ def fetch_data():
             typ = 'Restaurant'
             surl = 'https://www.coldstonecreamery.com/stores/' + store
             r2 = session.get(surl, headers=headers)
-            lines = r2.iter_lines()
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            lines = r2.iter_lines(decode_unicode=True)
             for line2 in lines:
                 if '<ul class="hours">' in line2:
                     g = next(lines)

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -22,10 +22,11 @@ def fetch_data():
             latn = x + 1
             lnge = y
             lngw = y - 1
-            print(str(x) + ',' + str(y))
+            print((str(x) + ',' + str(y)))
             url = 'https://bpretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=' + str(lats) + '&sw%5B%5D=' + str(lngw) + '&ne%5B%5D=' + str(latn) + '&ne%5B%5D=' + str(lnge) + '&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json'
             r = session.get(url, headers=headers)
-            for line in r.iter_lines():
+            if r.encoding is None: r.encoding = 'utf-8'
+            for line in r.iter_lines(decode_unicode=True):
                 if '{"id":"' in line:
                     items = line.split('{"id":"')
                     for item in items:

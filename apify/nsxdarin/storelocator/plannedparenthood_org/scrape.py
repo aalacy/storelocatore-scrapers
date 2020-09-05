@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import unidecode
 
@@ -42,9 +42,10 @@ def fetch_data():
         zc = sanitize(location.get('zipcode', '<MISSING>'))
         phone = sanitize(store['phone'].get('display', '<MISSING>'))
         country = 'US'
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers2)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"openingHours": ["' in line2:
                 hours = line2.split('"openingHours": ["')[1].split(']')[0].replace('", "','; ').replace('"','')
         if hours == '':

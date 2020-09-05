@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
@@ -30,11 +30,12 @@ def fetch_data():
         website = 'aldi.us'
         url = 'https://www.aldi.us/stores/en-us/Search?SingleSlotGeo=' + coord + '&Mode=None'
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         locations_this_url = []
         purl = '<MISSING>'
         typ = 'Store'
 
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '<li tabindex="' in line:
                 try:
                     lng = line.split('locX&quot;:&quot;')[1].split('&')[0]
