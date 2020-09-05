@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+--ignore LatLngDuplicationValidator (Multiple suites at same location)
