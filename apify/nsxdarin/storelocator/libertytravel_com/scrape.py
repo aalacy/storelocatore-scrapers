@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 
 session = requests.Session()
@@ -19,11 +19,12 @@ def fetch_data():
     locs = []
     url = 'https://www.libertytravel.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '/stores/' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         rs = session.get(loc, headers=headers)
         website = 'libertytravel.com'
         name = '<MISSING>'
@@ -38,7 +39,7 @@ def fetch_data():
         store = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
-        for line2 in rs.iter_lines():
+        for line2 in rs.iter_lines(decode_unicode=True):
             if 'name="geo.placename" content="' in line2:
                 name = line2.split('name="geo.placename" content="')[1].split('"')[0]
             if 'name="geo.position" content="' in line2:

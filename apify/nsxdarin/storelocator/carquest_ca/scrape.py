@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
 
@@ -26,7 +26,8 @@ def fetch_data():
     canada = ['PE','NB','MB','BC','ON','QC','AB','NS','NL']
     for url in urls:
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<a class="c-directory-list-content-item-link" href="' in line:
                 items = line.split('<a class="c-directory-list-content-item-link" href="')
                 for item in items:
@@ -37,9 +38,10 @@ def fetch_data():
                         else:
                             locs.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r = session.get(state, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if 'a class="c-directory-list-content-item-link" href="' in line:
                 items = line.split('<a class="c-directory-list-content-item-link" href="')
                 for item in items:
@@ -51,12 +53,13 @@ def fetch_data():
                             locs.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
                                 
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         coords = []
         stores = []
         typ = 'Carquest'
         r = session.get(city, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<div class="LocationName-geo">' in line:
                 name = line.split('<div class="LocationName-geo">')[1].split('<')[0]
                 add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
@@ -127,9 +130,10 @@ def fetch_data():
                     state = 'PR'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         typ = 'Carquest'
         r = session.get(loc, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         name = ''
         add = ''
         city = ''
@@ -142,7 +146,7 @@ def fetch_data():
         phone = ''
         store = ''
         LocFound = False
-        for line in r.iter_lines():
+        for line in r.iter_lines(decode_unicode=True):
             if '"store_id":"' in line:
                 store = line.split('"store_id":"')[1].split('"')[0]
             if '<div class="LocationName-geo">' in line and LocFound is False:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -30,7 +30,7 @@ def fetch_data():
         prov = place.split(',')[1]
         url = 'https://api.cloud.littlecaesars.com/bff/api/stores?city=' + city + '&province=' + prov
         website = 'littlecaesars.ca'
-        print('%s...' % city)
+        print(('%s...' % city))
         r = session.get(url, headers=headers)
         for item in json.loads(r.content)['stores']:
             name = "Little Caesar's"

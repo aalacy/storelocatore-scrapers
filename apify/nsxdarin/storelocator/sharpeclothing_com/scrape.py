@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     coords = []
     url = 'https://sharpeclothing.com/our-stores/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<h3 class="post-name h5"><a href="https://sharpeclothing.com/' in line:
             locs.append(line.split('href="')[1].split('"')[0])
         if 'var marker_object = cspm_new_pin_object' in line:
@@ -27,7 +28,7 @@ def fetch_data():
             clng = line.split('var marker_object = cspm_new_pin_object')[1].split(',')[3].strip()
             coords.append(cid + '|' + clat + '|' + clng)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'sharpeclothing.com'
         typ = '<MISSING>'
         hours = ''
@@ -42,7 +43,8 @@ def fetch_data():
         phone = ''
         zc = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' - ')[0]
                 city = name.split(',')[0].strip()

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,10 +19,11 @@ def fetch_data():
     x = 0
     while PageFound:
         x = x + 1
-        print('Pulling Page %s...' % str(x))
+        print(('Pulling Page %s...' % str(x)))
         url = 'https://momentfeed-prod.apigee.net/api/llp/cricket.json?auth_token=IVNLPNUOBXFPALWE&center=37.9358,-122.3477&multi_account=false&name=Cricket+Wireless+Authorized+Retailer,Cricket+Wireless+Store&page=' + str(x) + '&pageSize=100&type=store'
         r = session.get(url, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         name = ''
         website = 'cricketwireless.com'
         loc = ''

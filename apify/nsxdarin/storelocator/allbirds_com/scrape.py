@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     url = 'https://www.allbirds.com/pages/stores'
     locs = []
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     CFound = True
     website = 'allbirds.com'
     store = '<MISSING>'
@@ -36,6 +37,7 @@ def fetch_data():
         if 'See Map</a></p>' in line and CFound:
             murl = line.split('href="')[1].split('"')[0]
             r2 = session.get(murl, headers=headers)
+            if r2.encoding is None: r2.encoding = 'utf-8'
             lat = r2.url.split('@')[1].split(',')[0]
             lng = r2.url.split('@')[1].split(',')[1]
         if 'LOCATION</h3>' in line and CFound:

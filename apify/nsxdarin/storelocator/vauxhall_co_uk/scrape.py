@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://www.vauxhall.co.uk/apps/atomic/DealersServlet?distance=1000&latitude=55.378051&longitude=-3.435973&maxResults=1000&path=L2NvbnRlbnQvdmF1eGhhbGwvd29ybGR3aWRlL3VrL2Vu&searchType=latlong'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '{"siteGeo":"' in line:
             items = line.split('{"siteGeo":"')
             for item in items:

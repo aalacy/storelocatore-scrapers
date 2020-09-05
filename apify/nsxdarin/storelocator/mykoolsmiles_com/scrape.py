@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://www.mykoolsmiles.com/api/locations/find_nearest'
         payload = {'zip': code,
                    'about_myself': 'other',
