@@ -37,18 +37,21 @@ def fetch_data():
         hours = '<MISSING>'
         if 'opening_hours' in item['eng-GB']:
             hrs = str(item['eng-GB']['opening_hours'])
-            hrs = hrs.replace('[u','').replace('"]','').replace("'",'').replace(']','')
+            hrs = hrs.replace('[','').replace('"]','').replace("'",'').replace(']','')
             if 'False' not in hrs:
                 days = hrs.split(',')
                 for day in days:
                     day = str(day)
                     days = ['','','Mon','Tue','Wed','Thu','Fri','Sat','Sun']
                     dayname = days[int(day[:1])]
-                    text = dayname + ': ' + day.split(':')[1] + ':' + day.split(':')[2] + '-' + day.split(':')[3] + ':' + day.split(':')[4]
-                    if hours == '<MISSING>':
-                        hours = text
-                    else:
-                        hours = hours + '; ' + text
+                    if dayname == '':
+                        continue
+                    if len(day.split(':')) == 5: 
+                        text = dayname + ': ' + day.split(':')[1] + ':' + day.split(':')[2] + '-' + day.split(':')[3] + ':' + day.split(':')[4]
+                        if hours == '<MISSING>':
+                            hours = text
+                        else:
+                            hours = hours + '; ' + text
         hours = hours.replace(':0;',':00;')
         hours = hours.replace(':0-',':00-')
         if hours[-2:] == ':0':
