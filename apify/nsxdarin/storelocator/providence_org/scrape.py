@@ -20,6 +20,61 @@ def fetch_data():
     orlocs = []
     walocs = []
     Found = False
+    for x in range(1, 10):
+        print(('Pulling MT Page %s...' % str(x)))
+        url = 'https://montana.providence.org/locations-directory/list-view?page=' + str(x)
+        r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
+        for line in lines:
+            if '<ul  class="list-unstyled row">' in line:
+                Found = True
+            if Found and '<div id="psjh_body_1' in line:
+                Found = False
+            if Found and '<a href="/locations-directory/' in line:
+                lurl = 'https://montana.providence.org' + line.split('href="')[1].split('"')[0]
+                if lurl not in mtlocs:
+                    mtlocs.append(lurl)
+                mloc = lurl
+                website = 'providence.org'
+                typ = '<MISSING>'
+                hours = '<MISSING>'
+                g = next(lines)
+                name = g.strip().replace('\r','').replace('\t','').replace('\n','')
+                while '<br' not in g:
+                    g = next(lines)
+                print(g)
+                h = next(lines).strip().replace('\r','').replace('\t','').replace('\n','')
+                print(h)
+                add = g.split('<')[0].strip().replace('\t','')
+                if ' Suite' in add:
+                    add = add.split(' Suite')[0]
+                city = h.split(',')[0]
+                state = h.split(',')[1].strip().split(' ')[0]
+                zc = h.rsplit(' ',1)[1]
+                country = 'US'
+                phone = '<MISSING>'
+                lat = '<MISSING>'
+                store = '<MISSING>'
+                lng = '<MISSING>'
+            if Found and '?q=' in line:
+                lat = line.split('?q=')[1].split(',')[0]
+                lng = line.split('?q=')[1].split(',')[1].split('"')[0]
+            if Found and '</li>' in line:
+                newadd = ''
+                if ',' in add:
+                    addparts = add.split(',')
+                    for aitem in addparts:
+                        if 'Floor' not in aitem:
+                            if newadd == '':
+                                newadd = aitem
+                            else:
+                                newadd = newadd + ',' + aitem
+                else:
+                    newadd = add
+                print('yield MT')
+                yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        print(('%s MT Locations Found' % str(len(mtlocs))))
     for x in range(1, 50):
         print(('Pulling OR Page %s...' % str(x)))
         PFound = True
@@ -151,60 +206,6 @@ def fetch_data():
                     newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print(('%s WA Locations Found' % str(len(mtlocs))))
-    for x in range(1, 10):
-        print(('Pulling MT Page %s...' % str(x)))
-        url = 'https://montana.providence.org/locations-directory/list-view?page=' + str(x)
-        r = session.get(url, headers=headers)
-        if r.encoding is None: r.encoding = 'utf-8'
-        lines = r.iter_lines(decode_unicode=True)
-        for line in lines:
-            if '<ul  class="list-unstyled row">' in line:
-                Found = True
-            if Found and '<div id="psjh_body_1' in line:
-                Found = False
-            if Found and '<a href="/locations-directory/' in line:
-                lurl = 'https://montana.providence.org' + line.split('href="')[1].split('"')[0]
-                if lurl not in mtlocs:
-                    mtlocs.append(lurl)
-                mloc = lurl
-                website = 'providence.org'
-                typ = '<MISSING>'
-                hours = '<MISSING>'
-                g = next(lines)
-                name = g.strip().replace('\r','').replace('\t','').replace('\n','')
-                while '<br' not in g:
-                    g = next(lines)
-                print(g)
-                h = next(lines).strip().replace('\r','').replace('\t','').replace('\n','')
-                print(h)
-                add = g.split('<')[0].strip().replace('\t','')
-                if ' Suite' in add:
-                    add = add.split(' Suite')[0]
-                city = h.split(',')[0]
-                state = h.split(',')[1].strip().split(' ')[0]
-                zc = h.rsplit(' ',1)[1]
-                country = 'US'
-                phone = '<MISSING>'
-                lat = '<MISSING>'
-                store = '<MISSING>'
-                lng = '<MISSING>'
-            if Found and '?q=' in line:
-                lat = line.split('?q=')[1].split(',')[0]
-                lng = line.split('?q=')[1].split(',')[1].split('"')[0]
-            if Found and '</li>' in line:
-                newadd = ''
-                if ',' in add:
-                    addparts = add.split(',')
-                    for aitem in addparts:
-                        if 'Floor' not in aitem:
-                            if newadd == '':
-                                newadd = aitem
-                            else:
-                                newadd = newadd + ',' + aitem
-                else:
-                    newadd = add
-                yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print(('%s MT Locations Found' % str(len(mtlocs))))
     for x in range(1, 10):
         print(('Pulling AK Page %s...' % str(x)))
         url = 'https://alaska.providence.org/locations/list-view?page=' + str(x) + '&within=5000'
