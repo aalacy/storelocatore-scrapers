@@ -1,10 +1,13 @@
 #
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -31,7 +34,7 @@ def fetch_data():
 
     p = 0
     url = 'http://outbacksteakhouseniagarafalls.com/'
-    page = requests.get(url)
+    page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text,"html.parser")
     repo_list = soup.findAll("div",{'class':'split'})
     print(len(repo_list))
@@ -64,9 +67,11 @@ def fetch_data():
             street = street.replace(title,"")
             #print(title)
             title = "Outback Steakhouse " + title
+            if hours.find('closed') > -1:
+                hours = 'Currently Closed'
             data.append([
                 'http://outbacksteakhouseniagarafalls.com/',
-                'http://outbacksteakhouseniagarafalls.com/index.php#location-and-hours',
+                'http://outbacksteakhouseniagarafalls.com/',
                 title,
                 street,
                 'Niagara Falls',
