@@ -6,7 +6,6 @@ import random
 
 from helpers import printRequestInfo, getFormattedDateTime, setCookie
 
-
 session = requests.Session()
 
 headers = {
@@ -76,9 +75,8 @@ def get_csrf_token():
 
   headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
 
-  r = session.post('https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=csrf.getToken', headers=headers,
+  r = session.post('https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=csrf.getToken', headers=headers, data="JSONRPC=%5B%7B%22method%22%3A%22csrf.getToken%22%2C%22id%22%3A1%2C%22params%22%3A%5B%7B%7D%5D%7D%5D")
   if r.encoding is None: r.encoding = 'utf-8'
-                   data="JSONRPC=%5B%7B%22method%22%3A%22csrf.getToken%22%2C%22id%22%3A1%2C%22params%22%3A%5B%7B%7D%5D%7D%5D")
 
   if __debug__:
     printRequestInfo(r, session)
