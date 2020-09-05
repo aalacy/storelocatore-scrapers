@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,7 +19,8 @@ def fetch_data():
     cities = []
     url = 'https://local.albertsons.com/index.html'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"links_directory" href="' in line:
             items = line.split('"links_directory" href="')
             for item in items:
@@ -31,9 +32,10 @@ def fetch_data():
                     else:
                         states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'data-ya-track="links_directory" href="' in line2:
                 items = line2.split('data-ya-track="links_directory" href="')
                 for item in items:
@@ -45,9 +47,10 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<a class="Teaser-titleLink" href="../' in line2:
                 items = line2.split('<a class="Teaser-titleLink" href="../')
                 for item in items:
@@ -70,7 +73,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '-lead ContentBanner-title">' in line2:
                 name = line2.split('-lead ContentBanner-title">')[1].split('<')[0]
                 days = line2.split("days='[{")[1].split("}]'")[0].split('"day":"')

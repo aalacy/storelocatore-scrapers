@@ -1,6 +1,6 @@
 # -*- coding: cp1252 -*-
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import re
 
@@ -19,8 +19,9 @@ def fetch_data():
     url = 'https://dickswingsandgrill.com/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
+    if r.encoding is None: r.encoding = 'utf-8'
     Found = False
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'LOCATIONS</span></a>' in line:
             Found = True
         if Found and '>CONTACT</span>' in line:
@@ -31,7 +32,7 @@ def fetch_data():
                 locs.append(lurl)
             else:
                 locs.append('https://dickswingsandgrill.com' + lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -44,11 +45,12 @@ def fetch_data():
         country = 'US'
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'dickswingsandgrill.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]

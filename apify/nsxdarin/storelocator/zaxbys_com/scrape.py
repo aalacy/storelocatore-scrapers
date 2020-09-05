@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,8 +18,9 @@ def fetch_data():
     locs = []
     url = 'https://www.zaxbys.com/locations/'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     Found = False
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'SELECT STATE</option>' in line:
             Found = True
         if Found and '</select>' in line:
@@ -27,9 +28,10 @@ def fetch_data():
         if Found and '<option value="' in line and '<option value=""' not in line:
             states.append('https://www.zaxbys.com/locations/' + line.split('value="')[1].split('"')[0])
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'var locations = ' in line2:
                 items = line2.split('"LongDisplay":"')
                 for item in items:
