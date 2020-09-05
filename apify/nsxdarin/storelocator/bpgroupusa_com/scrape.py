@@ -38,7 +38,9 @@ def fetch_data():
         if 'id="canada">' in line:
             country = 'CA'
         if '<div class="row ourlocations-title" id="china">' in line:
-            LFound = False
+            LFound = False 
+        if '<div class="row ourlocations-title" id="japan">' in line:
+            LFound = False  
         if LFound and '<div class="row ourlocations-row">' in line and '<!--' not in line:
             LocFound = True
         if '<!--' in line and '-->' not in line:
