@@ -40,21 +40,24 @@ def fetch_data():
             if r2.encoding is None: r2.encoding = 'utf-8'
             lat = r2.url.split('@')[1].split(',')[0]
             lng = r2.url.split('@')[1].split(',')[1]
-        if 'LOCATION</h3>' in line and CFound:
+        if 'location</h3>' in line.lower() and CFound:
             g = next(lines)
             h = next(lines)
+            if 'suite' in h.lower():
+                h = next(lines)
             add = g.split('">')[1].split('<')[0].strip()
             city = h.split(',')[0].strip()
             state = h.split(',')[1].strip().split(' ')[0].strip()
             zc = h.split('<')[0].rsplit(' ',1)[1].strip()
             country = 'US'
-        if 'HOURS</h3>' in line and CFound:
+        if 'hours</h3>' in line.lower() and CFound:
             g = next(lines)
             h = next(lines)
             hours = g.split('">')[1].split('<')[0]
             if '</p>' in h:
                 hours = hours + '; ' + h.split('<')[0]
         if 'paragraph">(' in line and CFound:
+            print(name)
             phone = line.split('paragraph">')[1].split('<')[0]
             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
