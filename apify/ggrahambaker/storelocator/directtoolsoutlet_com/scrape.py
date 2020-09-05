@@ -50,19 +50,21 @@ def fetch_data():
             longit = loc['longitude']
             
             hours = ''
+            try:
+                store_hours = loc['openings']
+                for day, hours in store_hours.items():
+            
+                    hours += day + ' ' + hours + ' '
 
-            store_hours = loc['openings']
-            for day, hours in store_hours.items():
-        
-                hours += day + ' ' + hours + ' '
-
-            if hours == '':
+                if hours == '':
+                    hours = '<MISSING>'
+                hours = hours.strip()
+            except:
                 hours = '<MISSING>'
-            hours = hours.strip()
             country_code = 'US'
 
             location_type = '<MISSING>'
-            page_url = '<MISSING>'
+            page_url = 'https://www.directtoolsoutlet.com/store-finder'
             store_number = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
