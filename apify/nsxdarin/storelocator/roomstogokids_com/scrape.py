@@ -28,6 +28,7 @@ def fetch_data():
     for loc in locs:
         print(('Pulling Location %s...' % loc))
         rs = session.get(loc, headers=headers)
+        if rs.encoding is None: rs.encoding = 'utf-8'
         website = 'roomstogo.com'
         name = ''
         add = ''
@@ -44,6 +45,7 @@ def fetch_data():
             if '<link as="fetch" rel="preload" href="' in line2:
                 link = 'https://www.roomstogo.com' + line2.split('<link as="fetch" rel="preload" href="')[1].split('"')[0]
                 rl = session.get(link, headers=headers)
+                if rl.encoding is None: rl.encoding = 'utf-8'
                 for line3 in rl.iter_lines(decode_unicode=True):
                     if ',"storeNumber":' in line3:
                         store = line3.split(',"storeNumber":')[1].split(',')[0]
