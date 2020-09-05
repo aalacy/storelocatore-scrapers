@@ -29,8 +29,8 @@ def fetch_data():
         typ = ''
         hours = ''
         r = session.get(url, headers=headers)
-        if '{"results":[{"name":' in r.content:
-            items = r.content.split('{"name":"')
+        if '{"results":[{"name":' in r.text:
+            items = r.text.split('{"name":"')
             for item in items:
                 if ',"displayName":"' in item:
                     store = item.split('"')[0]
