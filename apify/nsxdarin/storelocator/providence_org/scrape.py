@@ -43,9 +43,7 @@ def fetch_data():
                 name = g.strip().replace('\r','').replace('\t','').replace('\n','')
                 while '<br' not in g:
                     g = next(lines)
-                print(g)
                 h = next(lines).strip().replace('\r','').replace('\t','').replace('\n','')
-                print(h)
                 add = g.split('<')[0].strip().replace('\t','')
                 if ' Suite' in add:
                     add = add.split(' Suite')[0]
@@ -72,7 +70,6 @@ def fetch_data():
                                 newadd = newadd + ',' + aitem
                 else:
                     newadd = add
-                print('yield MT')
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print(('%s MT Locations Found' % str(len(mtlocs))))
     for x in range(1, 50):
