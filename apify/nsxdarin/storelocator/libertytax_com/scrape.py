@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     states = []
     url = 'https://www.libertytax.com/income-tax-preparation-locations.html'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"State":"' in line:
             items = line.split('"State":"')
             for item in items:
@@ -25,9 +26,10 @@ def fetch_data():
                     states.append('https://www.libertytax.com/' + item.split('"StateUrl":"/')[1].split('"')[0])
     for state in states:
         locs = []
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'target="_blank" href="/income' in line2:
                 items = line2.split('target="_blank" href="/income')
                 for item in items:
@@ -52,8 +54,9 @@ def fetch_data():
                     lat = ''
                     lng = ''
                     r2 = session.get(loc, headers=headers)
+                    if r2.encoding is None: r2.encoding = 'utf-8'
                     hcount = 0
-                    for line2 in r2.iter_lines():
+                    for line2 in r2.iter_lines(decode_unicode=True):
                         if '<section class="office-details-body-text">' in line2:
                             hcount = hcount + 1
                         if '<h1>' in line2:

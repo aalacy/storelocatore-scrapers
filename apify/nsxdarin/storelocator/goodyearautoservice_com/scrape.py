@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,15 +18,17 @@ def fetch_data():
     cities = []
     url = 'https://www.goodyear.com/en-US/tires/tire-shop?expand=states'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     alllocs = []
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if 'data-tracking-cta-id="bbs-' in line:
             states.append('https://www.goodyear.com/' + line.split('href="')[1].split('"')[0])
     for state in states:
         # print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<li><a href="/en-US/tire-stores/' in line2:
                 cities.append('https://www.goodyear.com/' + line2.split('href="')[1].split('"')[0])
     for city in cities:
@@ -34,7 +36,8 @@ def fetch_data():
         # print('Pulling City %s...' % city)
         citystate = city.split('/tire-stores/')[1].split('/')[0]
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<a href="/en-US/tire-shop/' in line2 and 'Goodyear Auto' in line2:
                 lurl = 'https://www.goodyear.com/' + line2.split('href="')[1].split('"')[0]
                 if lurl not in alllocs:
@@ -47,10 +50,11 @@ def fetch_data():
                 try:
                     PageFound = True
                     r3 = session.get(loc, headers=headers)
+                    if r3.encoding is None: r3.encoding = 'utf-8'
                     typ = 'Store'
                     website = 'www.goodyearautoservice.com'
                     country = 'US'
-                    lines3 = r3.iter_lines()
+                    lines3 = r3.iter_lines(decode_unicode=True)
                     name = ''
                     store = ''
                     lat = '<MISSING>'

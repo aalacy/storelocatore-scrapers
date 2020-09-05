@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -22,9 +22,10 @@ def fetch_data():
             lat2 = y + 5
             lng1 = x
             lng2 = x + 5
-            print(str(lat1) + ',' + str(lng1))
+            print((str(lat1) + ',' + str(lng1)))
             url = 'https://www.goldencorral.com/locations/wp-json/locator/v1/search/0/0/' + str(lat1) + '/' + str(lng1) + '/' + str(lat2) + '/' + str(lng2)
             r = session.get(url, headers=headers)
+            if r.encoding is None: r.encoding = 'utf-8'
             for item in json.loads(r.content):
                 lat = item['lat']
                 lng = item['lng']
@@ -46,7 +47,8 @@ def fetch_data():
                     loc = 'https://www.goldencorral.com/locations/location-detail/' + store + '/golden-corral-' + addtext
                     try:
                         r = session.get(loc, headers=headers)
-                        lines = r.iter_lines()
+                        if r.encoding is None: r.encoding = 'utf-8'
+                        lines = r.iter_lines(decode_unicode=True)
                         for line in lines:
                             if '"dayOfWeek":' in line:
                                 g = next(lines)

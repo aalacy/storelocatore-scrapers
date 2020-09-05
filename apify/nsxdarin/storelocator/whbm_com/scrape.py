@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,19 +17,21 @@ def fetch_data():
     locs = []
     url = 'https://stores.whitehouseblackmarket.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://stores.whitehouseblackmarket.com/s/' in line:
             lurl = line.split('>')[1].split('<')[0]
             locs.append(lurl)
     for loc in locs:
         stub = loc.rsplit('/',1)[1]
         jsonurl = 'https://whitehouse.brickworksoftware.com/en_US/api/v3/stores/' + stub
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'whbm.com'
         typ = '<MISSING>'
         hours = ''
         r2 = session.get(jsonurl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             name = line2.split('"name":"')[1].split('"')[0]
             store = line2.split('"number":"')[1].split('"')[0]
             add = line2.split('"address_1":"')[1].split('"')[0]

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import ast
@@ -22,16 +22,16 @@ def fetch_data():
     url = 'https://stores.hermes.com/stores/get/(language)/eng-GB'
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
-    for item in array.values():
+    for item in list(array.values()):
         website = 'hermes.com'
-        name = item['eng-GB']['short_title'].encode('utf-8').strip()
-        add = item['eng-GB']['street_address1'].strip().encode('utf-8')
+        name = item['eng-GB']['short_title'].strip()
+        add = item['eng-GB']['street_address1'].strip()
         if '"street_address2":""' not in item['eng-GB']:
-            add = add + ' ' + item['eng-GB']['street_address2'].strip().encode('utf-8')
+            add = add + ' ' + item['eng-GB']['street_address2'].strip()
         if '"street_address3":""' not in item['eng-GB']:
-            add = add + ' ' + item['eng-GB']['street_address3'].strip().encode('utf-8')
-        city = item['eng-GB']['city'].encode('utf-8')
-        state = item['eng-GB']['area'].strip().encode('utf-8')
+            add = add + ' ' + item['eng-GB']['street_address3'].strip()
+        city = item['eng-GB']['city']
+        state = item['eng-GB']['area'].strip()
         zc = item['eng-GB']['postal_code'].strip()
         phone = item['eng-GB']['store_phone_number'].strip()
         hours = '<MISSING>'

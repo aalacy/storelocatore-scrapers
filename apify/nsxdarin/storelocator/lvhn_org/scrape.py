@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,7 +20,8 @@ def fetch_data():
     donelocs = []
     url = 'https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<select data-drupal-selector="edit-location-types"' in line:
             items = line.split('</option><option value="')
             for item in items:
@@ -36,10 +37,11 @@ def fetch_data():
         while Found:
             urlloc = url2 + '&page=' + str(pagenum)
             pagenum = pagenum + 1
-            print('Pulling Category %s, %s...' % (catname, str(pagenum)))
+            print(('Pulling Category %s, %s...' % (catname, str(pagenum))))
             Found = False
             r2 = session.get(urlloc, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'NEXT</span>' in line2:
                     Found = True
                 if '<a href="/locations/' in line2 and '<div class="field__item">' not in line2:
@@ -54,9 +56,10 @@ def fetch_data():
         urlnew = 'https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002&keys=&location_types=All&physician_practice=All&services=All&page=' + str(pagenum)
         pagenum = pagenum + 1
         PFound = False
-        print('Pulling Full List Page %s...' % str(pagenum))
+        print(('Pulling Full List Page %s...' % str(pagenum)))
         r2 = session.get(urlnew, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'NEXT</span>' in line2:
                 PFound = True
             if '<a href="/locations/' in line2 and '<div class="field__item">' not in line2:
@@ -64,11 +67,11 @@ def fetch_data():
                 if lurl not in alllocs:
                     alllocs.append(lurl)
                     locs.append('https://www.lvhn.org' + line2.split('<a href="')[1].split('"')[0] + '|<MISSING>')
-        print('%s Locations Found...' % str(len(locs)))
+        print(('%s Locations Found...' % str(len(locs))))
     for loc in locs:
         lurl = loc.split('|')[0]
         typ = loc.split('|')[1]
-        print('Pulling Location %s...' % lurl)
+        print(('Pulling Location %s...' % lurl))
         website = 'lvhn.org'
         hours = ''
         name = ''
@@ -82,7 +85,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if name == '' and '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if '"address-line1">' in line2:

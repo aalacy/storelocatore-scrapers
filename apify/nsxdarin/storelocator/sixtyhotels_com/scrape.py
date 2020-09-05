@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 
 session = requests.Session()
@@ -18,7 +18,8 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.sixtyhotels.com/api/slides'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '"fieldgroup":"fieldgroup1","fieldgroup_label":null,"fieldgroupsub":null,"areaid":2,"parentid":2,"title":null,"active":true,"h1":"' in line:
             items = line.split('"fieldgroup":"fieldgroup1","fieldgroup_label":null,"fieldgroupsub":null,"areaid":2,"parentid":2,"title":null,"active":true,"h1":"')
             for item in items:

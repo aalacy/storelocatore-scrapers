@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -110,7 +110,8 @@ def fetch_data():
     urls = ['https://www.topshop.com/store-locator?country=United+States','https://www.topshop.com/store-locator?country=Canada']
     for url in urls:
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"stores":[' in line:
                 items = line.split('"stores":[')[1].split('],"selectedStore":{}')[0].split('"storeId":"')
                 for item in items:

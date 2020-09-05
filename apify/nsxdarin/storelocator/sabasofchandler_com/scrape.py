@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -16,6 +16,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://sabasofchandler.com'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'sabasofchandler.com'
     name = "Saba Western Wear"
     store = '<MISSING>'
@@ -28,7 +29,7 @@ def fetch_data():
     typ = 'Store'
     lat = ''
     lng = ''
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if 'places":[{"address":"' in line:
             add = line.split('places":[{"address":"')[1].split(',')[0].strip()

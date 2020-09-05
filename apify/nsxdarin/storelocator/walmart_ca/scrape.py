@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,10 +17,11 @@ def fetch_data():
     url = 'https://www.walmart.ca/sitemap-stores-en.xml'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.walmart.ca/en/stores-near-me/' in line and '-only' not in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -33,11 +34,12 @@ def fetch_data():
         country = 'CA'
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'walmart.ca'
         typ = 'Store'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '"dayOfWeek": [' in line2:
                 g = next(lines)
