@@ -23,7 +23,7 @@ def fetch_data():
         with open('branches.xml.gz','wb') as f:
             f.write(urllib.request.urlopen(smurl).read())
             f.close()
-            with gzip.open('branches.xml.gz', 'rb') as f:
+            with gzip.open('branches.xml.gz', 'rt') as f:
                 for line in f:
                     if '<loc>http://locations.westernunion.com/ca/' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
