@@ -172,11 +172,11 @@ def fetch_data():
                 hours = '<MISSING>'
                 g = next(lines)
                 name = g.strip().replace('\r','').replace('\t','').replace('\n','')
-                next(lines)
-                next(lines)
-                next(lines)
-                g = next(lines)
+                while '<br' not in g:
+                    g = next(lines)
+                print(g)
                 h = next(lines).strip().replace('\r','').replace('\t','').replace('\n','')
+                print(h)
                 add = g.split('<')[0].strip().replace('\t','')
                 if ' Suite' in add:
                     add = add.split(' Suite')[0]

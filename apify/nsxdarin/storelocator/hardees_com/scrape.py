@@ -27,6 +27,7 @@ def fetch_data(search):
         url = 'https://maps.ckr.com/stores/search?brand=hardees&country=' + query_country + '&q=' + code + '&brand_id=1&zoom=8'
         coords = []
         r = session.get(url, headers=headers)
+        print(r.text)
         for line in r.iter_lines(decode_unicode=True):
             if 'var storeJson' in line:
                 items = line.split('"name":"')
