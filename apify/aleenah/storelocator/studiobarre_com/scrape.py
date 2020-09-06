@@ -2,8 +2,37 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
+import usaddress
 
 driver = SgSelenium().chrome()
+
+def get_value(item):
+    if item == None or len(item) == 0:
+        item = '<MISSING>'
+    return item
+
+
+def parse_address(address):
+    address = usaddress.parse(address)
+    street = ''
+    city = ''
+    state = ''
+    zipcode = ''
+    for addr in address:
+        if addr[1] == 'PlaceName':
+            city += addr[0].replace(',', '') + ' '
+        elif addr[1] == 'ZipCode':
+            zipcode = addr[0].replace(',', '')
+        elif addr[1] == 'StateName':
+            state = addr[0].replace(',', '')
+        else:
+            street += addr[0].replace(',', '') + ' '
+    return {
+        'street': get_value(street),
+        'city': get_value(city),
+        'state': get_value(state),
+        'zipcode': get_value(zipcode)
+    }
 
 
 def write_output(data):
@@ -40,29 +69,7 @@ def fetch_data():
 
     for sl in statel:
         h5s = sl.find_all("h5")
-        ps = sl.find_all('p', {'class', 'big'})
-        for p in ps:
-            addr = p.text.replace("View on Map", "").strip()
-            addr = addr.split(",")
-            z = re.findall(r'[0-9]{5}', addr[-1].strip())
-            if z == []:
-                zips.append("<MISSING>")
-                states.append(addr[-1])
 
-            else:
-                zips.append(z[0])
-                states.append(addr[-1].replace(z[0], ""))
-            del addr[-1]
-            if "Great Falls" in addr[-1]:
-                cities.append("Great Falls")
-            else:
-                cities.append(addr[-1])
-                del addr[-1]
-            st = ""
-            for ad in addr:
-                st += ad
-
-            street.append(st.replace("Great Falls", ""))
         for h in h5s:
             a = h.find_all("a")
             if a != []:
@@ -72,49 +79,38 @@ def fetch_data():
                 locs.append(h.text)
                 page_url.append("https://" + h.text.strip().lower() + ".studiobarre.com/")
 
+
     for url in page_url:
         print(url)
 
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        addr=soup.find('ul',{'class':'elementor-icon-list-items'}).find_all('li')[0].text.strip().split('\n')[0]
+        #print(addr)
+        parsed_address = parse_address(addr)
+
+        cities.append(parsed_address['city'])
+        states.append(parsed_address['state'])
+        zips.append(parsed_address['zipcode'])
+        street.append(parsed_address['street'])
+
 
         spans = soup.find_all('span', {'class': 'elementor-icon-list-text'})
         phones.append(re.sub(r'[\{\}a-z ]*', "", spans[1].text.strip()))
-        print(re.sub(r'[\{\}a-z ]*', "", spans[1].text.strip()))
-
         try:
-            div = driver.find_element_by_xpath("/html/body/div[1]/div[1]/div/div/div/section[4]")
+            tim=re.findall(r'Monday.*\d[ ]*pm',soup.text.replace('pm\n','pm, ').replace('am\n','am, '), re.DOTALL)[0]
+            tim=re.sub(r'[\n]+',r' ',tim)
+            tim=re.sub(r'[ ]+',' ',tim)
         except:
             try:
-                div = driver.find_element_by_xpath("/html/body/div[1]/div[2]/div/div/div/section[4]")
+                tim = re.findall(r'Monday.*\d[ ]*am', soup.text.replace('pm\n', 'pm, ').replace('am\n', 'am, '), re.DOTALL)[0]
+                tim = re.sub(r'[\n]+', r' ', tim)
+                tim = re.sub(r'[ ]+', ' ', tim)
             except:
-                timing.append('<MISSING>')
-                continue
-        divas = div.find_elements_by_class_name("elementor-widget-container")
-        del divas[0]
-        del divas[0]
-        tim = ""
+                tim="<MISSING>"
 
-        for div in divas:
-
-            try:
-                h3s = div.find_element_by_tag_name('h3')
-            except:
-                break
-            dvs = div.find_elements_by_class_name('desc')
-
-            tim += h3s.text
-            for ds in dvs:
-                tim += " " + ds.text + " "
-
-            if dvs == []:
-                s = str(soup)
-                divs = re.findall(r'<!--div class="desc">(.*)</div-->', s)
-                tim += " " + divs[divas.index(div)] + " "
-
-            tim = tim.replace("\n", " ")
-        if tim == "":
-            tim = "<MISSING>"
+        tim=tim.split('Raising')[0]
+        print(tim)
         timing.append(tim.strip())
 
     all = []
