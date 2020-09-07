@@ -6,22 +6,16 @@ import json
 
 session = SgRequests()
 
-requests.packages.urllib3.disable_warnings()
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     headers = {
@@ -43,16 +37,6 @@ def fetch_data():
             'ascii').strip()
         store_name.append(name.encode('ascii', 'ignore').decode(
             'ascii').strip())
-        # street_address1 = data[1]
-        # # print(data)
-        # street_address = street_address1.replace(
-        #     "(212) 787-9368", "").replace("(212) 580-8300", "").replace("\n", "").replace("\r", "")
-        # if "Order" in data[2]:
-        #     phone = street_address1.replace("\n", "").replace("469 Columbus Ave", "").replace(
-        #         "469 Columbus Ave", "302 Columbus Ave").replace("\r", "")
-        # else:
-        #     phone = data[2]
-
         hours = ''
         if len(data) == 7:
             if "Mon – Fri : 6am – 8pm" in data[4]:
@@ -75,18 +59,11 @@ def fetch_data():
         details = list(soup_loc.find(
             "div", class_="footer_two").stripped_strings)
         details = [el.replace('\x95', ' ') for el in details]
-        # details = [el.replace('\n', ' ') for el in details]
-        # print(details)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         street_address = details[0].split("\n")[1].strip()
-        # print(street_address)
         city = details[0].split("\n")[-1].split(',')[0].strip()
         state = details[0].split("\n")[-1].split(',')[1].split()[0].strip()
         zipp = details[0].split("\n")[-1].split(',')[1].split()[-1].strip()
         phone = details[-2].strip()
-        # print(phone)
-        # print(city, state, zipp)
-
         tem_var.append(street_address)
         tem_var.append(city)
         tem_var.append(state)
@@ -109,11 +86,7 @@ def fetch_data():
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store)
-
-        # print("data =="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~`")
     return return_main_object
-
 
 def scrape():
     data = fetch_data()

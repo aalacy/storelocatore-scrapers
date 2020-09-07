@@ -8,9 +8,6 @@ from datetime import datetime
 
 session = SgRequests()
 
-requests.packages.urllib3.disable_warnings()
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,13 +19,9 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     addresses = []
-   
     base_url= "https://centurytheatres.com"
-
-    
     headers = {           
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
@@ -56,9 +49,6 @@ def fetch_data():
         location_type = data['@type']
         latitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[0]
         longitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[1].split("&")[0]
-        
-
-       
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -74,15 +64,10 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
-        # print("data =="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
-        
-       
         
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

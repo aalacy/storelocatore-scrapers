@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,13 +18,14 @@ def fetch_data():
     locs = []
     country = 'US'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<h2>AB</h2>' in line:
             country = 'CA'
         if '<li><a href="/us-en/locator/Detail/' in line:
             title = line.split('title="')[1].split('"')[0].replace('&amp;','&')
             locs.append(title + '|' + country + '|' + 'https://www.dairyqueen.com' + line.split('href="')[1].split('"')[0])
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         typ = loc.split('|')[0]
         lurl = loc.split('|')[2]
@@ -41,7 +42,8 @@ def fetch_data():
         store = lurl.rsplit('/',1)[1]
         website = 'dairyqueen.com'
         r2 = session.get(lurl, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         Found = False
         for line2 in lines:
             if '>Hours:</h4>' in line2:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import ast
@@ -22,33 +22,36 @@ def fetch_data():
     url = 'https://stores.hermes.com/stores/get/(language)/eng-GB'
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
-    for item in array.values():
+    for item in list(array.values()):
         website = 'hermes.com'
-        name = item['eng-GB']['short_title'].encode('utf-8').strip()
-        add = item['eng-GB']['street_address1'].strip().encode('utf-8')
+        name = item['eng-GB']['short_title'].strip()
+        add = item['eng-GB']['street_address1'].strip()
         if '"street_address2":""' not in item['eng-GB']:
-            add = add + ' ' + item['eng-GB']['street_address2'].strip().encode('utf-8')
+            add = add + ' ' + item['eng-GB']['street_address2'].strip()
         if '"street_address3":""' not in item['eng-GB']:
-            add = add + ' ' + item['eng-GB']['street_address3'].strip().encode('utf-8')
-        city = item['eng-GB']['city'].encode('utf-8')
-        state = item['eng-GB']['area'].strip().encode('utf-8')
+            add = add + ' ' + item['eng-GB']['street_address3'].strip()
+        city = item['eng-GB']['city']
+        state = item['eng-GB']['area'].strip()
         zc = item['eng-GB']['postal_code'].strip()
         phone = item['eng-GB']['store_phone_number'].strip()
         hours = '<MISSING>'
         if 'opening_hours' in item['eng-GB']:
             hrs = str(item['eng-GB']['opening_hours'])
-            hrs = hrs.replace('[u','').replace('"]','').replace("'",'').replace(']','')
+            hrs = hrs.replace('[','').replace('"]','').replace("'",'').replace(']','')
             if 'False' not in hrs:
                 days = hrs.split(',')
                 for day in days:
                     day = str(day)
                     days = ['','','Mon','Tue','Wed','Thu','Fri','Sat','Sun']
                     dayname = days[int(day[:1])]
-                    text = dayname + ': ' + day.split(':')[1] + ':' + day.split(':')[2] + '-' + day.split(':')[3] + ':' + day.split(':')[4]
-                    if hours == '<MISSING>':
-                        hours = text
-                    else:
-                        hours = hours + '; ' + text
+                    if dayname == '':
+                        continue
+                    if len(day.split(':')) == 5: 
+                        text = dayname + ': ' + day.split(':')[1] + ':' + day.split(':')[2] + '-' + day.split(':')[3] + ':' + day.split(':')[4]
+                        if hours == '<MISSING>':
+                            hours = text
+                        else:
+                            hours = hours + '; ' + text
         hours = hours.replace(':0;',':00;')
         hours = hours.replace(':0-',':00-')
         if hours[-2:] == ':0':

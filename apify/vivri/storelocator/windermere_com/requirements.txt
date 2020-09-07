@@ -1,7 +1,7 @@
 lxml==4.5.2
 sgrequests==0.0.15
 sgvalidator==0.0.70
-sgzip==0.0.40
+sgzip
 simplejson==3.17.2
 requests_toolbelt==0.9.1
 bs4==0.0.1

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,23 +19,26 @@ def fetch_data():
     states = []
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<option value="' in line and '<option value=""' not in line and 'miles' not in line:
             states.append(line.split('<option value="')[1].split('"')[0])
     for state in states:
-        print('Pulling Province %s...' % state)
+        print(('Pulling Province %s...' % state))
         findurl = 'https://www.journeys.ca/stores?StateOrProvince=' + state + '&PostalCode=&MileRadius=&Latitude=&Longitude=&Mode=search'
         r2 = session.get(findurl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'class="store-name">' in line2:
                 surl = 'https://www.journeys.ca' + line2.split('href="')[1].split('"')[0]
                 if surl not in locs:
                     locs.append(surl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         AFound = False
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         website = 'journeys.ca'
         add = ''
         hours = ''

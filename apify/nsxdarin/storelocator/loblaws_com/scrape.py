@@ -29,7 +29,7 @@ def fetch_data():
         print(x)
         url = 'https://www.loblaws.ca/api/pickup-locations/' + str(x)
         r = session.get(url, headers=headers)
-        if 'Could not find' not in r.content and 'storeDetails' in r.content:
+        if 'Could not find' not in r.text and 'storeDetails' in r.text:
             array = json.loads(r.content)
             loc = 'https://www.loblaws.ca/store-locator/details/' + str(x)
             store = str(x)

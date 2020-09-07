@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import datetime
@@ -37,25 +37,25 @@ def fetch_data():
         for item in array['stores']:
             website = 'starbucks.com'
             store = item['storeNumber']
-            name = item['name'].encode('utf-8')
+            name = item['name']
             phone = item['phoneNumber']
             lat = item['coordinates']['latitude']
             lng = item['coordinates']['longitude']
-            add = item['address']['streetAddressLine1'].encode('utf-8')
+            add = item['address']['streetAddressLine1']
             try:
-                add = add + ' ' + item['address']['streetAddressLine2'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine2']
             except:
                 pass
             try:
-                add = add + ' ' + item['address']['streetAddressLine3'].encode('utf-8')
+                add = add + ' ' + item['address']['streetAddressLine3']
             except:
                 pass
             add = add.strip()
-            city = item['address']['city'].encode('utf-8')
+            city = item['address']['city']
             state = item['address']['countrySubdivisionCode']
             country = item['address']['countryCode']
             zc = item['address']['postalCode']
-            typ = item['brandName'].encode('utf-8')
+            typ = item['brandName']
             hours = ''
             weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
             today = weekdays[weekday]
@@ -129,25 +129,25 @@ def fetch_data():
                 for item in array['stores']:
                     website = 'starbucks.com'
                     store = item['storeNumber']
-                    name = item['name'].encode('utf-8')
+                    name = item['name']
                     phone = item['phoneNumber']
                     lat = item['coordinates']['latitude']
                     lng = item['coordinates']['longitude']
-                    add = item['address']['streetAddressLine1'].encode('utf-8')
+                    add = item['address']['streetAddressLine1']
                     try:
-                        add = add + ' ' + item['address']['streetAddressLine2'].encode('utf-8')
+                        add = add + ' ' + item['address']['streetAddressLine2']
                     except:
                         pass
                     try:
-                        add = add + ' ' + item['address']['streetAddressLine3'].encode('utf-8')
+                        add = add + ' ' + item['address']['streetAddressLine3']
                     except:
                         pass
                     add = add.strip()
-                    city = item['address']['city'].encode('utf-8')
+                    city = item['address']['city']
                     state = item['address']['countrySubdivisionCode']
                     country = item['address']['countryCode']
                     zc = item['address']['postalCode']
-                    typ = item['brandName'].encode('utf-8')
+                    typ = item['brandName']
                     hours = ''
                     weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
                     today = weekdays[weekday]

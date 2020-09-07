@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,8 +17,9 @@ def fetch_data():
     locs = []
     url = 'https://www.westfield.com'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'westfield.com'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<h2 class="tile-centre__header u-font--flama"> <a href="/' in line:
             items = line.split('<h2 class="tile-centre__header u-font--flama"> <a href="/')
             for item in items:
@@ -26,8 +27,9 @@ def fetch_data():
                     city = item.split('<div class="tile-centre__subtitle">')[1].split(',')[0].strip()
                     locs.append('https://www.westfield.com/' + item.split('"')[0] + '|' + city)
     for loc in locs:
-        print(loc.split('|')[0])
+        print((loc.split('|')[0]))
         r2 = session.get(loc.split('|')[0], headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         typ = 'Center'
         store = '<MISSING>'
         name = ''
@@ -40,7 +42,7 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         hours = '<MISSING>'
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if "var centerName = '" in line2:
                 name = line2.split("var centerName = '")[1].split("'")[0]
             if '<div class="content"> <a href="/' in line2:
@@ -52,7 +54,8 @@ def fetch_data():
                 add = addinfo.split(city)[0].strip()
         loc2 = loc.split('|')[0] + '/access'
         r3 = session.get(loc2, headers=headers)
-        for line3 in r3.iter_lines():
+        if r3.encoding is None: r3.encoding = 'utf-8'
+        for line3 in r3.iter_lines(decode_unicode=True):
             if '<h3 class="whats-hot-title text-uppercase "> <span>' in line3:
                 hours = line3.split('<h3 class="whats-hot-title text-uppercase "> <span>')[1].split('<span class="title-separator"></span> </h3>')[0]
                 hours = hours.replace('<span class=" title-light">','').replace('<span>','').replace('</span>','').replace('<span class="title-separator">','; ').replace('  ',' ')

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -19,6 +19,7 @@ def write_output(data):
 def fetch_data():
     url = 'http://borregodeoro.com/contact.html'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     typ = 'Restaurant'
     website = 'borregodeoro.com'
     country = 'US'
@@ -27,7 +28,7 @@ def fetch_data():
     hours = '<MISSING>'
     Found = True
     num = 0
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     maps = []
     locs = []
     for line in lines:

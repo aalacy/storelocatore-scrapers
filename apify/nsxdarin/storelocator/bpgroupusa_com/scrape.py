@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -16,6 +16,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.bpgroupusa.com/OurLocations.html'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     locs = []
     LFound = True
     LocFound = False
@@ -32,12 +33,14 @@ def fetch_data():
     store = '<MISSING>'
     lat = '<MISSING>'
     lng = '<MISSING>'
-    lines = r.iter_lines()
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if 'id="canada">' in line:
             country = 'CA'
         if '<div class="row ourlocations-title" id="china">' in line:
-            LFound = False
+            LFound = False 
+        if '<div class="row ourlocations-title" id="japan">' in line:
+            LFound = False  
         if LFound and '<div class="row ourlocations-row">' in line and '<!--' not in line:
             LocFound = True
         if '<!--' in line and '-->' not in line:

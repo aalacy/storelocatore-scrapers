@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://beacon-canada.com/Contact_Us.html'
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     name = ''
     hours = ''
     for line in lines:
@@ -26,9 +27,9 @@ def fetch_data():
                 hours = '<MISSING>'
             name = line.split('><span style="font-weight: bold">')[1].split('<')[0]
             if '<strong>(' in line:
-                name = name + ' ' + line.split('<strong>')[1].split('<')[0].encode('utf-8')
+                name = name + ' ' + line.split('<strong>')[1].split('<')[0]
             if '<strong> (' in line:
-                name = name + line.split('<strong>')[1].split('<')[0].encode('utf-8')
+                name = name + line.split('<strong>')[1].split('<')[0]
             g = next(lines)
             add = ''
             if '<span itemprop="streetAddress">' in g:
@@ -38,12 +39,12 @@ def fetch_data():
             if '311 Chemin' in g:
                 g = '311 Chemin Saint Francois Xavier'
             else:
-                g = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+                g = g.split('<')[0].strip().replace('\t','')
             h = next(lines)
             if 'al, QC' in h:
                 h = 'Montreal, QC H1A 1A9'
             else:
-                h = h.split('<')[0].strip().replace('\t','').encode('utf-8')
+                h = h.split('<')[0].strip().replace('\t','')
             if '132 Street' not in add:
                 add = g
             loc = '<MISSING>'
@@ -69,17 +70,17 @@ def fetch_data():
         if '<td scope="col"><span style="font-weight: bold">' in line and 'Posi-Slope' not in line and '><span style="font-weight: bold">' in line:
             name = line.split('><span style="font-weight: bold">')[1].split('<')[0]
             if '<strong>(' in line:
-                name = name + ' ' + line.split('<strong>')[1].split('<')[0].encode('utf-8')
+                name = name + ' ' + line.split('<strong>')[1].split('<')[0]
             if '<strong> (' in line:
-                name = name + line.split('<strong>')[1].split('<')[0].encode('utf-8')
-            g = next(lines).split('<')[0].strip().replace('\t','').encode('utf-8')
+                name = name + line.split('<strong>')[1].split('<')[0]
+            g = next(lines).split('<')[0].strip().replace('\t','')
             h = next(lines)
             if 'Trois-R' in h:
                 h = 'Trois-Rivieres, QC G9C 1M6'
             elif 'bec, QC G1P 3X2' in h:
                 h = 'Quebec, QC G1P 3X2'
             else:
-                h = h.split('<')[0].strip().replace('\t','').encode('utf-8')
+                h = h.split('<')[0].strip().replace('\t','')
             add = g
             loc = '<MISSING>'
             website = 'beacon-canada.com'
@@ -94,7 +95,7 @@ def fetch_data():
             if 'bec Locations' in line:
                 state = 'Quebec'
             else:
-                state = line.split('<h2><span style="font-weight: bold">')[1].split(' Locations')[0].encode('utf-8')
+                state = line.split('<h2><span style="font-weight: bold">')[1].split(' Locations')[0]
         if 'PH: (' in line:
             phone = line.split('PH: ')[1].split('<')[0]
         if '">Open:' in line:

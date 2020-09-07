@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -16,7 +16,8 @@ def write_output(data):
 def fetch_data():
     url = 'https://stoneyriver.com/locations/'
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     HoursFound = False
     for line in lines:
         if 'Book Now <span class="screenreadable">' in line:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,8 +19,9 @@ def fetch_data():
     locs = []
     url = 'https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=32,-96&distance=2500&LineOfBusiness=BSWH&pageNumber=1&sortSeed=7202&perPage=2500&SortBy=Distance&DocSortBy=NextAvailableAppointment'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'bswhealth.com'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"locationType":"' in line:
             items = line.split('"locationType":"')
             for item in items:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,11 +17,12 @@ def fetch_data():
     locs = []
     url = 'https://www.saintalphonsus.org/sitemap-xml-locations'
     r = session.get(url, verify = False, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.saintalphonsus.org/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         rs = session.get(loc, headers=headers)
         website = 'saintalphonsus.org'
         name = ''
@@ -36,7 +37,7 @@ def fetch_data():
         store = ''
         lat = ''
         lng = ''
-        for line2 in rs.iter_lines():
+        for line2 in rs.iter_lines(decode_unicode=True):
             if '"Latitude\\\":' in line2:
                 store = line2.split('"Id\\\\\\":')[1].split(',')[0]
                 lat = line2.split('"Latitude\\\\\\":')[1].split(',')[0]

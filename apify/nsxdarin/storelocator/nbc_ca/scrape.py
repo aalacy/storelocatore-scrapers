@@ -1,8 +1,5 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
-
-requests.packages.urllib3.disable_warnings()
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -18,8 +15,8 @@ def write_output(data):
 def fetch_data():
     url = 'https://locator.nbc.ca/?branch&atm'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines(decode_unicode = True):
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:

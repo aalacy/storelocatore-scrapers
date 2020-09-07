@@ -20,86 +20,52 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
-    data = []    
+def fetch_data():  
+    data = []
+    pattern = re.compile(r'\s\s+')
     url = 'https://www.shakeshack.com/locations/'
     r = session.get(url, headers=headers, verify=False)  
-    soup =BeautifulSoup(r.text, "html.parser")   
-    divlist = soup.findAll('div', {'class': 'citys'})[0].findAll('div',{'class':'address_div'})
-    coordlist = str(soup).split('window.locations = [',1)[1].split('}]',1)[0]
-    coordlist ='[' + coordlist + '}]'
-    #print(coordlist)
-    p = 0
-    coordlist = json.loads(coordlist)
+    soup =BeautifulSoup(r.text, "html.parser")    
+    p = 0   
+    divlist = soup.findAll('div', {'class': 'citys'})[0].findAll('div',{'class':'row-fluid'})
     for div in divlist:
-        
-        #input()
-        title = div.find('div',{'class':'title'}).text.replace('\n','')
         link = 'https://www.shakeshack.com' + div.find('div',{'class':'title'}).find('a')['href']
-        #print(title)
-        address = ''
-        lat = '<MISSING>'
-        longt = '<MISSING>'
-        for coord in coordlist:
-            try:
-                if title == coord['name']:
-                    lat = coord['lat']
-                    longt = coord['long']
-                    address = coord['directionsLink'].replace('\r\n',' ')            
-                    break
-            except:
-                address = ''
-                break
-                
-
-        if address == '':
-            continue
+        #print(link)
+        r = session.get(link, headers=headers, verify=False)  
+        soup =BeautifulSoup(r.text, "html.parser")
+        title = soup.find('title').text.split(' - ')[0]
+        hours = soup.find('div',{'class':'hours-and-transportation'}).find('p').text.replace('Hours:','').replace('\n','')
+        det = soup.find('div',{'class':'address'}).text.lstrip().rstrip().split('\n')
+        #print(det)
         
-       
-        address = div.find('div',{'class':'address'}).text.lstrip().splitlines()        
-        
-       
-        i = 0
-        state = ''
-        pcode = ''
-        street = ''
-        city = ''
+        flag = 0
+        count = 0
         phone = ''
-        temp = 0
-        for i in range(0,len(address)):           
-            adr = address[i]
-            if adr.find(' – Main') > -1:
-                adr = adr.split(' – Main')[0]
-            
-            check =adr.replace('-','').replace('(','').replace(')','').replace('.','').replace(' ','')
-            #print(check)
-            #input()
-            #if (adr.find('.') > -1 and adr.split('.')[0].isdigit()) or (adr.find('-') > -1 and (adr.find('(') > -1) or adr.find('-') > -1) and (len(adr.split('-')[0]) ==3 and adr.split('-')[-1] == 4) or (len(adr.split('-')[0]) ==3 and adr.split('-')[1] == 4):
-             #   check = adr.replace('-','').replace('(','').replace(')','').replace('.','')
-            if check.isdigit():
-                #print(check.isdigit())
-                phone = adr
-                temp = i
+        address = ''
+        #print(dt)
+        #input()
+        for dt in det :
+            temp = dt.replace('.','').replace('-','').replace(')','').replace('(','').replace(' ','').lstrip().rstrip()
+            temp = temp.replace('–','')
+            temp = temp.replace('Main','')
+            if temp.isdigit() and len(temp) == 10:
+                #print('1')
+                phone = dt
                 break
-            else:
+            elif dt.find('Direction') > -1:          
+                break
+            elif dt.find('Email') > -1 or dt.find('Office') > -1 or dt.find('Just off') > -1:
                 pass
+            else:
+                #print('4')
+                count += 1
+        #print(temp)
+        
+        address = ''
+        for i in range(0,count):
+            address = address + det[i]+ ' '
             
-        if phone == '':
-            temp = len(address)
-            
-        address = ' '.join(address[0:temp])
-        try:
-            address= address.split('Email')[0]
-        except:
-            pass
-        check = ''
-        try:
-            check = address.split('(')[1].split(')')[0]
-            address = address.split('(')[0]+' '+address.split(')')[1]
-        except:
-            pass
-            
+        #
         #print(address)
         address = usaddress.parse(address)
         i = 0
@@ -118,41 +84,55 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
-            
+        lat = str(soup).split('lat:',1)[1].split(',',1)[0]
+        longt = str(soup).split('lng:',1)[1].split('}',1)[0]
+        street = street.lstrip()
+        city = city.lstrip().replace(',','')
         state = state.lstrip().replace(',','')
         pcode = pcode.lstrip().replace(',','')
-        street = street.lstrip().replace(',','')
-        city = city.lstrip().replace(',','')
-        street = street + ' ' + check
-        hours = div.find('div',{'class':'opening'}).text.lstrip()
-        if len(phone) < 3:
-            phone = '<MISSING>'
+        
         if len(hours) < 3:
             hours = '<MISSING>'
-        if state == '' and city == '':
-            temp= title.split(', ')
-            print(temp)
-            state = temp[-1]
-            city = temp[-2]
-        if state == '' :
-            temp= title.split(', ')
-            #print(temp)
-            state = temp[-1]
-            if city != temp:
-                street = street + ' '+city
-                city = temp[-2]
-        if len(pcode) < 3:
-            pcode = '<MISSING>'
-        if len(state) < 2:
-            state = '<MISSING>'
-        if len(street) < 3:
-            street = '<MISSING>'
-
+        if len(phone) < 3:
+            phone = '<MISSING>'
+        else:
+            phone = phone.replace(' – Main','')
+        if len(city) < 3 and len(state) < 2:
+            try:
+                city,state = title.split(',')
+            except:
+                city,state = title.split(',',1)[1].split(',',1)
+                city = city.split(' ')[-1]
+        if state.find('NYC') > -1:
+            state = 'NY'
+            street = street + ' ' + city
+            city = 'NYC'
+        if len(pcode)  < 3:
+            pcode = str(soup).split("geocode({ 'address': '",1)[1].split("'}")[0].split(' ')[-1]
+            if len(pcode) == 5 and pcode.isdigit():
+                pass
+            else:
+                pcode = '<MISSING>'
+        if hours.find('Check the') > -1 or hours.find('before') > -1:
+            hours  = '<MISSING>'
+        if city.find('(Queens') > -1:
+            city = 'Queens'
+            state = 'NY'
+        if state.find('DC') > -1 or state.find('D.C') > -1:
+            state = 'DC'
+            city = 'Washington'
+        if state.find('Washington') > -1:
+            state = 'WA'
+        if len(hours) <3 :
+            hours = '<MISSING>'
+        if len(phone) < 3:
+            phone =  '<MISSING>'
         if len(city) < 3:
             city = '<MISSING>'
-        if state == 'NYC':
-            state = 'NY'
-      
+        if len(pcode) < 4:
+            pcode = '0'+pcode
+    
+            
         data.append([
                         'https://www.shakeshack.com',
                         link,                   
@@ -167,7 +147,7 @@ def fetch_data():
                         '<MISSING>',
                         lat,
                         longt,
-                        hours.replace('\n',' ').lstrip().rstrip()
+                        hours.replace('\n',' ').lstrip().rstrip().replace("\xa0",' ')
                     ])
         #print(p,data[p])
         p += 1

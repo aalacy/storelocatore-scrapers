@@ -1,74 +1,82 @@
+from bs4 import BeautifulSoup
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
+import string
+import re, time
 import json
+from sgrequests import SgRequests
 
-base_url = 'https://www.soccerpost.com'
-
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.encode('ascii', 'ignore').replace('\n', '').encode("utf8").strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse(item, reg):
-    return item.split(reg+':')[1].split(',')[0].replace('"', '') .strip()
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "https://www.soccerpost.com"
-    session = requests.Session()
-    request = session.get(url)
-    response = etree.HTML(request.text)
-    data = validate(response.xpath('.//script[@type="text/javascript"]')[-1].xpath('.//text()'))
-    store_list = data.split('SP.stores = [{')[1].split('}];//]]>')[0].split('},{')
-    for store in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(parse(store, 'name')) #location name
-        output.append(parse(store, 'address')) #address        
-        output.append(parse(store, 'city')) #city
-        output.append(parse(store, 'state')) #state
-        output.append(parse(store, 'zip')) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(parse(store, 'phone')) #phone
-        output.append("Soccer Post America's Soccer Store") #location type
-        output.append(parse(store, 'latitude')) #latitude
-        output.append(parse(store, 'longitude')) #longitude
-        output.append("<MISSING>") #opening hours   
-        # if parse(store, 'url') != '':
-        #    res = etree.HTML(session.get(parse(store, 'url')).text)
-        #    store_hours = validate(eliminate_space(res.xpath('//div[@class="pp-sub-heading"]')[1].xpath('.//text()')))
-        output_list.append(output)
-    return output_list
+    # Your scraper here
+    data = []
+    cleanr = re.compile(r'<[^>]+>')    
+    url = 'https://www.soccerpost.com'
+    p = 0
+    r = session.get(url, headers=headers, verify=False)
+    r = r.text.split('SP.stores = ')[1].split('];')[0]
+    r = r+']'
+    
+    print(r)
+    loclist = r.replace('\n',' ').split('},')
+    for loc in loclist:
+        title = loc.split('name: "',1)[1].split('"',1)[0]
+        store = '<MISSING>'
+        lat = loc.split('latitude: ',1)[1].split(',',1)[0]
+        longt = loc.split('longitude: ',1)[1].split(',',1)[0]
+        street = loc.split('address: "',1)[1].split('"',1)[0]
+        city = loc.split('city: "',1)[1].split('"',1)[0]
+        state = loc.split('state: "',1)[1].split('"',1)[0]
+        pcode = loc.split('zip: "',1)[1].split('"',1)[0]
+        ccode = 'US'
+        
+        phone = loc.split('phone: "',1)[1].split('"',1)[0]
+        try:
+            longt = longt.split('}',1)[0]
+        except:
+            pass
+        if street.find('coming soon!') == -1:
+            data.append([
+                'https://www.soccerpost.com',
+                'https://www.soccerpost.com',                   
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                ccode,
+                store,
+                phone,
+                '<MISSING>',
+                lat,
+                longt,
+                '<MISSING>'
+            ])
+            #print(p,data[p])
+            p += 1
+        
+  
+    return data
+
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
+

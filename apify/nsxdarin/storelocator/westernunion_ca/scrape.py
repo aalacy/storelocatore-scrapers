@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
@@ -18,16 +18,16 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(1, 15):
-        print('Pulling Sitemap %s...' % str(x))
+        print(('Pulling Sitemap %s...' % str(x)))
         smurl = 'http://locations.westernunion.com/sitemap-' + str(x) + '.xml.gz'
         with open('branches.xml.gz','wb') as f:
-            f.write(urllib2.urlopen(smurl).read())
+            f.write(urllib.request.urlopen(smurl).read())
             f.close()
-            with gzip.open('branches.xml.gz', 'rb') as f:
+            with gzip.open('branches.xml.gz', 'rt') as f:
                 for line in f:
                     if '<loc>http://locations.westernunion.com/ca/' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
-        print(str(len(locs)) + ' Locations Found...')
+        print((str(len(locs)) + ' Locations Found...'))
     for loc in locs:
         website = 'westernunion.ca'
         typ = 'Location'
@@ -46,7 +46,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r = session.get(loc, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         AFound = False
         for line in lines:
             if '<h1 class="offscreen">' in line:

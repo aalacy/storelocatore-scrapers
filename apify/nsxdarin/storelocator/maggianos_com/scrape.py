@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -27,12 +27,12 @@ def fetch_data():
         lat = item['geometry']['coordinates'][0]
         lng = item['geometry']['coordinates'][1]
         hours = item['properties']['c_hours'].replace('<ul><li><strong>','').replace('</strong>',' ').replace('</li><li>','; ').replace('<strong>','').replace('</ul>','').replace('</li>','')
-        hours = hours.encode('utf-8')
-        name = item['properties']['business_name'].encode('utf-8')
-        store = item['properties']['store_code'].encode('utf-8')
+        hours = hours
+        name = item['properties']['business_name']
+        store = item['properties']['store_code']
         add = item['properties']['address_line_1'] + ' ' + item['properties']['address_line_2']
-        city = item['properties']['city'].encode('utf-8')
-        state = item['properties']['state'].encode('utf-8')
+        city = item['properties']['city']
+        state = item['properties']['state']
         zc = item['properties']['postalCode']
         phone = item['properties']['primary_phone']
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

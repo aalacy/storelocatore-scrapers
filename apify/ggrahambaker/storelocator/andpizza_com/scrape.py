@@ -18,10 +18,7 @@ def fetch_data():
     session = SgRequests()
 
     HEADERS = {'Host': 'api.andpizza.com',
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
     'Referer': 'https://order.andpizza.com/',
     'Api-Token': 'SrM8gqYvLYOowhu0deSheJxCuWBX',
     'X-Client': 'NextGenOnline',
@@ -34,7 +31,7 @@ def fetch_data():
     'TE': 'Trailers'}
 
     r = session.get(ext, headers = HEADERS)
-
+    
     loc_data = json.loads(r.content)
     all_store_data = []
     for loc in loc_data['data']:    

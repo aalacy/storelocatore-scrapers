@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,11 +17,12 @@ def fetch_data():
     locs = []
     url = 'https://www.habitat.co.uk/storelocator'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'Store information</a>' in line:
             locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'habitat.co.uk'
         typ = ''
         hours = ''
@@ -36,7 +37,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"url":"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
                 typ = line2.split('"brand":"')[1].split('"')[0]

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -25,7 +25,7 @@ def fetch_data():
     for item in array['response']['collection']:
         states.append(item['name'])
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         url = 'https://hosted.where2getit.com/samashmusic/rest/getlist?lang=en_US'
         payload = {"request":{"appkey":"F1BBEE32-0D3E-11DF-AB7B-8CB43B999D57","formdata":{"order":"city","-softmatch":"1","objectname":"Locator::Store","where":{"clientkey":{"eq":""},"state":{"eq":state},"name":{"ilike":""}}}}}
         r = session.post(url, data=json.dumps(payload), headers=headers)

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sgzip import sgzip
 
@@ -17,10 +17,11 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
-        print('Pulling Postal Code %s...' % code)
+        print(('Pulling Postal Code %s...' % code))
         url = 'https://www.hooters.com/api/search_locations.json?address=' + code
         r2 = session.get(url, headers=headers)
-        for line in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line in r2.iter_lines(decode_unicode=True):
             if '"id":"' in line:
                 items = line.split('"id":"')
                 for item in items:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -22,11 +22,12 @@ def fetch_data():
     for xy in coord:
         x = xy.split(',')[0]
         y = xy.split(',')[1]
-        print('%s-%s...' % (x, y))
+        print(('%s-%s...' % (x, y)))
         url = 'https://z1-prod-cec-services-location.azurewebsites.net/api/cec/locations/search'
         payload = {"latitude":x,"longitude":y,"radius":"500"}
         r = session.post(url, headers=headers, data=json.dumps(payload))
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"website":"' in line:
                 items = line.split('"account_id":"')
                 for item in items:
@@ -60,7 +61,7 @@ def fetch_data():
                                 hours = '<MISSING>'
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
-        print('Found %s Locations...' % str(len(locs)))
+        print(('Found %s Locations...' % str(len(locs))))
 
 def scrape():
     data = fetch_data()

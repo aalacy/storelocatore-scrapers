@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,12 +17,13 @@ def fetch_data():
     url = 'https://creamistry.com/locations'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'class="stroe_link" href="' in line:
             lurl = 'https://creamistry.com/' + line.split('href="')[1].split('"')[0]
             if 'detail' not in lurl:
                 locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -35,11 +36,12 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'creamistry.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<h2 class="section-title" style="padding-left:0px !important;">' in line2:
                 name = line2.split('<h2 class="section-title" style="padding-left:0px !important;">')[1].split('<')[0]

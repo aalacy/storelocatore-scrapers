@@ -2,5 +2,5 @@ selenium==3.141.0
 beautifulsoup4==4.8.0
 sgrequests==0.0.6
 pyzipcode3==2.2
-sgzip==0.0.31
+sgzip
 requests==2.22.0

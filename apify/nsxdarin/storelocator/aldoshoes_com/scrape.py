@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -35,6 +35,7 @@ def fetch_data():
     for x in range(2000, 3000):
         surl = 'https://www.aldoshoes.com/us/en_US/store-locator/store/' + str(x)
         r2 = session.get(surl, headers=headers)
+        if r2.encoding is None: r2.encoding = 'utf-8'
         name = ''
         add = ''
         typ = 'Store'
@@ -47,9 +48,9 @@ def fetch_data():
         lng = ''
         hours = ''
         phone = ''
-        print('%s...' % str(x))
+        print(('%s...' % str(x)))
         SFound = False
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title data-react-helmet="true">' in line2:
                 name = line2.split('<title data-react-helmet="true">')[1].split(' |')[0]
             if '<span class="c-markdown">Store details' in line2:
@@ -88,13 +89,13 @@ def fetch_data():
     url = 'https://www.aldoshoes.com/api/stores?countryCode=US&lat=44.99512980000001&lng=-93.4352207&allStores=True'
     rcan = session.get(url, headers=caheaders)
     for item in json.loads(rcan.content)['stores']:
-        add = item['address']['line1'].encode('utf-8')
-        city = item['address']['town'].encode('utf-8')
+        add = item['address']['line1']
+        city = item['address']['town']
         zc = item['address']['postalCode']
         country = 'CA'
         website = 'aldoshoes.com'
-        name = item['displayName'].encode('utf-8')
-        state = item['address']['region']['name'].encode('utf-8')
+        name = item['displayName']
+        state = item['address']['region']['name']
         lat = item['geoPoint']['latitude']
         lng = item['geoPoint']['longitude']
         store = item['name']

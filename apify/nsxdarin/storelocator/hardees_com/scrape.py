@@ -4,8 +4,6 @@ import sgzip
 import us
 import random
 
-random.seed(123) 
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -22,15 +20,14 @@ def write_output(data):
 def fetch_data(search):
     ids = set()
     code = search.next_zip()
-    print("code: {}".format(code))
     locations = []
     while code:
-        print('Pulling Zip Code %s...' % code)
         print('{} zip codes remaining'.format(search.zipcodes_remaining()))
         query_country = 'ca' if len(code) == 3 else 'us'
         url = 'https://maps.ckr.com/stores/search?brand=hardees&country=' + query_country + '&q=' + code + '&brand_id=1&zoom=8'
         coords = []
         r = session.get(url, headers=headers)
+        print(r.text)
         for line in r.iter_lines(decode_unicode=True):
             if 'var storeJson' in line:
                 items = line.split('"name":"')

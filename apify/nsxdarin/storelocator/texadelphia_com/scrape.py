@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,10 +18,11 @@ def fetch_data():
     coords = []
     url = 'https://www.texadelphia.com/wp-content/themes/texsite/json/locations-v1.json'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'texadelphia.com'
     typ = '<MISSING>'
     store = '<MISSING>'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"name":' in line:
             name = line.split('"name":')[1].split('"')[1]
         if '"address": "' in line:

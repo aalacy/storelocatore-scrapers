@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -16,7 +16,8 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.hottopic.com/on/demandware.store/Sites-hottopic-Site/default/Stores-GetNearestStores?postalCode=10002&customStateCode=&maxdistance=10000&unit=mi&latitude=44.9479791&longitude=-93.29357779999998&maxResults=15000&distanceUnit=mi&countryCode=US'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if ': {' in line and '{"stores":' not in line and '"image"' not in line:
             store = line.split('"')[1]
         if '"name": "' in line:
