@@ -181,7 +181,7 @@ def parse_address(address):
         state = '<MISSING>'
         city, zipcode = city_state_zip_parts[0].split(' ')
 
-    street_address = ' '.join(parts)
+    street_address = parts[0]
     return [street_address, city, state, zipcode[0:5]]
 
 
