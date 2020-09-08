@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -22,7 +22,8 @@ def fetch_data():
         lng = coord.split(',')[1]
         url = 'https://bgcaorg-find-a-c-1488560011850.appspot.com//x/v1/clubs/' + lat + '/' + lng + '/1000/'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"City": "' in line:
                 typ = '<MISSING>'
                 loc = '<MISSING>'
@@ -58,10 +59,11 @@ def fetch_data():
         for y in range(-66, -126, -1):
             lat = str(x)
             lng = str(y)
-            print(str(lat) + ',' + str(lng))
+            print((str(lat) + ',' + str(lng)))
             url = 'https://bgcaorg-find-a-c-1488560011850.appspot.com//x/v1/clubs/' + lat + '/' + lng + '/100/'
             r = session.get(url, headers=headers)
-            for line in r.iter_lines():
+            if r.encoding is None: r.encoding = 'utf-8'
+            for line in r.iter_lines(decode_unicode=True):
                 if '"City": "' in line:
                     typ = '<MISSING>'
                     loc = '<MISSING>'

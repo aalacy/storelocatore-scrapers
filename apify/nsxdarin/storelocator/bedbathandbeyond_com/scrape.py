@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,12 +17,13 @@ def fetch_data():
     locs = []
     url = 'https://stores.bedbathandbeyond.com/sitemap.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'Registry</loc>' in line:
             lurl = line.split('<loc>')[1].split('/Registry')[0].replace('&#39;',"'")
             locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'bedbathandbeyond.com'
         typ = '<MISSING>'
         hours = ''
@@ -36,7 +37,8 @@ def fetch_data():
         lng = ''
         store = loc.rsplit('-',1)[1]
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if name == '' and 'class="location-name-geo">' in line2:
                 name = line2.split('class="location-name-geo">')[1].split('<')[0]
             if add == '' and '<span class="c-address-street-1">' in line2:

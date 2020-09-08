@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -35,7 +35,7 @@ def parse_address(raw_address):
 
 def parse_address_with_usaddress(raw_address):
     parsed = usaddress.tag(raw_address)[0]
-    city = parsed['PlaceName'].encode('utf-8')
+    city = parsed['PlaceName']
     address = raw_address.rsplit(city, 1)[0].strip()
     return { "city": city, "address": address }
 
@@ -69,7 +69,8 @@ def fetch_data():
                        'center_Long': y
                        }
             r = session.post(url, headers=headers, data=payload)
-            for line in r.iter_lines():
+            if r.encoding is None: r.encoding = 'utf-8'
+            for line in r.iter_lines(decode_unicode=True):
                 if 'UniqueID":"' in line:
                     items = line.split('UniqueID":"')
                     for item in items:

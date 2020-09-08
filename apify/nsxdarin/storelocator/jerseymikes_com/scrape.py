@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
@@ -23,10 +23,11 @@ def fetch_data():
         url = 'https://www.jerseymikes.com/locations?search=' + code + '&page=1'
         while Found:
             try:
-                print('Pulling Zip Code %s-%s...' % (code, str(pagenum)))
+                print(('Pulling Zip Code %s-%s...' % (code, str(pagenum))))
                 Found = False
                 r = session.get(url, headers=headers)
-                lines = r.iter_lines()
+                if r.encoding is None: r.encoding = 'utf-8'
+                lines = r.iter_lines(decode_unicode=True)
                 website = 'jerseymikes.com'
                 store = ''
                 name = "Jersey Mike's"

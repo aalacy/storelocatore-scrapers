@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://www.dsautomobiles.co.uk/_/Layout_DSPP_DealerLocator/getStoreList?lat=51.51&long=-0.13&page=15041&version=58&order=2&area=50000&ztid=&attribut=&brandactivity=DS'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '{"id":"' in line:
             items = line.split('{"id":"')
             for item in items:
@@ -47,7 +48,8 @@ def fetch_data():
                     add = add.replace('&nbsp;-','').replace('&nbsp;',' ').replace('\\/','/')
                     durl = 'https://www.dsautomobiles.co.uk/_/Layout_DSPP_DealerLocator/getDealer?id=' + store
                     r2 = session.get(durl, headers=headers)
-                    for line2 in r2.iter_lines():
+                    if r2.encoding is None: r2.encoding = 'utf-8'
+                    for line2 in r2.iter_lines(decode_unicode=True):
                         if '"timetable":"' in line2:
                             hours = line2.split('"timetable":"')[1].replace('<br \\/>",','"').split('"')[0].replace('<br \\/>','; ')
                         if hours == '':
