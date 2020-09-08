@@ -51,7 +51,9 @@ def fetch_data():
         except:
             phone = '<MISSING>'
         try:
-            hours = div.findAll('td')[2].text.replace('\n','')
+            hours = re.sub(cleanr,'\n',str(div.findAll('td')[2])).replace('\n',' ').lstrip()
+            #print(hours)
+            #input()
         except:
             hours = '<MISSING>'
         try:
@@ -60,6 +62,10 @@ def fetch_data():
             pass
         try:
             hours = hours.split('Trans')[0]
+        except:
+            pass
+        try:
+            hours = hours.split('-->')[0]
         except:
             pass
         det =div.findAll('td')[3].text
