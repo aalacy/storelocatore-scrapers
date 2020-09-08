@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 from sgselenium import SgSelenium
 
 def write_output(data):
@@ -17,6 +17,7 @@ def write_output(data):
             writer.writerow(row)
 
 driver = SgSelenium().chrome()
+session = SgRequests()
 
 def fetch_data():
     # Your scraper here
@@ -43,25 +44,38 @@ def fetch_data():
     for li in lis:
 
         u = li.get('href')
-        print(u)
+
         if "www.houlihans.com" not in u:
+
             if "//bit.ly" not in u:
+
                 urls.append("https://houlihans.com" + u)
                 locs.append(li.text)
         else:
+
             locs.append(li.text)
             urls.append(u)
 
+    
     for url in urls:
-        #print(url)
+        print(url)
+        if url=='https://houlihans.comeats-and-drinks/richfield':
+            url= 'https://houlihans.com/eats-and-drinks/richfield'
         try:
-            res = requests.get(url)
+            res = session.get(url)
+            soup = BeautifulSoup(res.text, 'html.parser')
+
         except:
-            del locs[urls.index(url)]
-            continue
+            try:
+                driver.get(url)
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
+            except:
+
+                del locs[urls.index(url)]
+                continue
         page_url.append(url)
 
-        soup = BeautifulSoup(res.text, 'html.parser')
+
         street.append(soup.find('span', {'class': 'd_address1'}).text.strip())
         cities.append(soup.find('span', {'class': 'd_city'}).text.strip())
         states.append(soup.find('span', {'class': 'd_state'}).text.strip())
@@ -93,33 +107,6 @@ def fetch_data():
         except:
             types.append('<MISSING>')
 
-        """locs.append(soup.find('span', {'itemprop': 'name'}).text)
-    strees = soup.find_all('span', {'itemprop': 'streetAddress'})
-    st = ""
-    for stree in strees:
-        st += stree.text
-    street.append(st)
-    cities.append(soup.find('span', {'itemprop': 'addressLocality'}).text)
-    states.append(soup.find('span', {'itemprop': 'addressRegion'}).text)
-    zips.append(soup.find('span', {'itemprop': 'postalCode'}).text)
-    ph = soup.find('span', {'itemprop': 'telephone'}).text.strip()
-    if ph != "":
-        phones.append(ph)
-    else:
-        phones.append("<MISSING>")
-
-    tim = soup.find('div', {'class': 'location-hours pod half'}).text.strip()
-    if tim != "":
-        timing.append(tim.replace('\r\n', " ").replace('\n', " ").replace('\t', ""))
-    else:
-        timing.append("<MISSING>")
-    coord = soup.find('a', {'id': 'MainContent_hlDirections'}).get('href')
-    lat.append(re.findall(r'q=(-?[\d\.]*)', coord)[0])
-    long.append(re.findall(r'q=[-?\d\.]*\,([-?\d\.]*)', coord)[0])
-    ids.append(soup.find('input', {'id': 'hidStoreNumber'}).get('value'))
-    #print(soup)
-    types.append(re.findall(r'<div itemscope="" itemtype="http://schema\.org/([^"]*)">',str(soup),re.DOTALL)[0])"""
-
 
     all = []
     for i in range(0, len(locs)):
@@ -144,6 +131,9 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
+    write_output(data)
+
+scrape()data = fetch_data()
     write_output(data)
 
 scrape()
