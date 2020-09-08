@@ -35,17 +35,18 @@ def fetch_data():
     r = session.get(locator_domain + ext, headers = HEADERS)
 
     soup = BeautifulSoup(r.content, 'html.parser')
-
+    p = 0
     locs = soup.find_all('div', {'class': 'location_detail'})
-
+    print(len(locs))
     all_store_data = []
 
     for loc in locs:
         location_type = loc.find('div', {'class': 'location-services'}).text.strip()
-        if 'Non-' in location_type:
-            continue
-            
         location_name = loc.find('div', {'class': 'location_detail_title'}).text.strip()
+       
+        '''if 'Non-' in location_type:
+            continue '''
+            
         if 'Mobile' in location_name:
             continue
         
@@ -98,9 +99,10 @@ def fetch_data():
         store_number = '<MISSING>'
         if phone_number.find('KID') > -1:
             phone_number = phone_number.replace(' (KIDS)','')
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+        store_data = [locator_domain, location_name.replace("\xa0",' '), street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-        #print(store_data)
+        #print(p,store_data)
+        p += 1
         all_store_data.append(store_data)
 
     return all_store_data
