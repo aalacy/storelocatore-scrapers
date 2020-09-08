@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -31,7 +31,8 @@ def fetch_data():
         else:
             country = 'CA'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<a class="Directory-listLink" href="' in line:
                 items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
@@ -45,7 +46,8 @@ def fetch_data():
         for state in states:
             #print('Pulling State %s...' % state)
             r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<a class="Directory-listLink" href="..' in line2:
                     items = line2.split('<a class="Directory-listLink" href="..')
                     for item in items:
@@ -59,7 +61,8 @@ def fetch_data():
         for city in cities:
             #print('Pulling City %s...' % city)
             r2 = session.get(city, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'data-ya-track="visitpage" href="../../' in line2:
                     items = line2.split('data-ya-track="visitpage" href="../../')
                     for item in items:
@@ -80,7 +83,8 @@ def fetch_data():
             hours = ''
             store = '<MISSING>'
             r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'itemprop="name">' in line2 and name == '':
                     name = line2.split('itemprop="name">')[1].split('<')[0]
                 if "'dimension4', '" in line2:

@@ -20,11 +20,11 @@ def write_output(data):
 def fetch_data(search):
     ids = []
     code = search.next_zip()
-    print("code: {}".format(code))
+    print(("code: {}".format(code)))
     locations = []
     while code:
-        print('Pulling Zip Code %s...' % code)
-        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
+        print(('Pulling Zip Code %s...' % code))
+        print(('{} zip codes remaining'.format(search.zipcodes_remaining())))
         query_country = 'ca'
         url = 'https://www.pier1.ca/on/demandware.store/Sites-pier1_intl_ca-Site/en_CA/Stores-FindFromNav?ajax=true&dwfrm_storelocator_postalCode=' + code + '+1A1'
         coords = []
@@ -73,7 +73,7 @@ def fetch_data(search):
                 if store not in ids:
                     ids.append(store)
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        if not coords: print("zip returned no results: {}".format(search.current_zip))
+        if not coords: print(("zip returned no results: {}".format(search.current_zip)))
         search.max_count_update(coords)
         code = search.next_zip()
 

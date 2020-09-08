@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import time
@@ -18,12 +18,13 @@ def write_output(data):
 def fetch_data():
     ids = []
     for code in sgzip.for_radius(100):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://bobcat.know-where.com/bobcat/cgi/selection?place=' + code + '&lang=en&option=&ll=&stype=place&async=results'
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         Found = False
         time.sleep(3)
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if '"><span class="kw-results-FIELD-NAME">' in line:
                 name = line.split('"><span class="kw-results-FIELD-NAME">')[1].split('<')[0]

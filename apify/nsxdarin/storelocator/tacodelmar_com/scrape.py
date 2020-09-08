@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -15,11 +15,12 @@ def write_output(data):
 
 def fetch_data():
     for x in range(0, 125):
-        print('Pulling Location %s...' % str(x))
+        print(('Pulling Location %s...' % str(x)))
         url = 'https://tacodelmar.com/location/?id=' + str(x)
         r = session.get(url, headers=headers)
+        if r.encoding is None: r.encoding = 'utf-8'
         website = 'tacodelmar.com'
-        lines = r.iter_lines()
+        lines = r.iter_lines(decode_unicode=True)
         hours = ''
         typ = '<MISSING>'
         store = str(x)
