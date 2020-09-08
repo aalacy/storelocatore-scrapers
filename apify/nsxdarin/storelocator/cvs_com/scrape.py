@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 import time
@@ -23,6 +24,10 @@ headers = {
 def sleep(min=3, max=3):
     duration = random.randint(min, max)
     time.sleep(duration)
+
+def clean_hours(hour):
+    cleaned = hour.text.strip().replace('\n', ' ').replace('\t', '')
+    return re.sub('\s\s+',' ', cleaned)
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -113,11 +118,14 @@ def get_location(loc):
     state = info["address"]["addressRegion"]
     zipcode = info["address"]["postalCode"]
     country_code = info["address"]["addressCountry"]
-    latitude = info["geo"]["latitude"]
-    longitude = info["geo"]["longitude"]
+    latitude = info["geo"]["latitude"] if info["geo"]["latitude"] != '0.0' else '<MISSING>'
+    longitude = info["geo"]["longitude"] if info["geo"]["longitude"] != '0.0' else '<MISSING>'
     phone = info["address"]["telephone"]
-    hours_of_operation = info["openingHours"]
     
+    hours = location.select('.phHours li') if len(location.select('.phHours li')) else location.select('.srHours li')
+
+    hours_of_operation = ','.join([clean_hours(hour) for hour in hours])
+
     return [locator_domain, page_url, location_name, location_type, store_number, street_address, city, state, zipcode, country_code, latitude, longitude, phone, hours_of_operation]
     
 

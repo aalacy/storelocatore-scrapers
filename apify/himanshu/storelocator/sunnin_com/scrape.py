@@ -27,7 +27,7 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    k=soup.find_all("div",{"class":"col-md-4"})
+    k=soup.find_all("div",{"class":"col-md-6"})
 
     for i in k:
         tem_var=[]
@@ -44,8 +44,8 @@ def fetch_data():
 
             hours = (" ".join(list(v.stripped_strings)))
         if list(i.stripped_strings) != []:
-            store_name.append(list(i.stripped_strings)[0])
             st=list(i.stripped_strings)[1]
+            store_name.append(list(i.stripped_strings)[0])
             city = list(i.stripped_strings)[2].split(',')[0]
             state = list(i.stripped_strings)[2].split(',')[1].split( )[0]
             zip1 = list(i.stripped_strings)[2].split(',')[1].split( )[1]
@@ -54,8 +54,7 @@ def fetch_data():
         else:
             pass
 
-
-        tem_var.append(st)
+        tem_var.append(st.replace(".,",""))
         tem_var.append(city)
         tem_var.append(state.strip())
         tem_var.append(zip1.strip())

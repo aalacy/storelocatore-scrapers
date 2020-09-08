@@ -1,105 +1,106 @@
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
-import usaddress
-import time
+import string
+import re, time, usaddress
+
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def parse_addy(addy):
-
-    parsed_add = usaddress.tag(addy)[0]
-
-    street_address = ''
-
-    if 'AddressNumber' in parsed_add:
-        street_address += parsed_add['AddressNumber'] + ' '
-    if 'StreetNamePreDirectional' in parsed_add:
-        street_address += parsed_add['StreetNamePreDirectional'] + ' '
-    if 'StreetNamePreType' in parsed_add:
-            street_address += parsed_add['StreetNamePreType'] + ' '
-    if 'StreetName' in parsed_add:
-        street_address += parsed_add['StreetName'] + ' '
-    if 'StreetNamePostType' in parsed_add:
-        street_address += parsed_add['StreetNamePostType'] + ' '
-    if 'OccupancyType' in parsed_add:
-        street_address += parsed_add['OccupancyType'] + ' '
-    if 'OccupancyIdentifier' in parsed_add:
-        street_address += parsed_add['OccupancyIdentifier'] + ' ' 
-
-    street_address = street_address.strip()
-    city = parsed_add['PlaceName'].strip()
-    state = parsed_add['StateName'].strip()
-    zip_code = parsed_add['ZipCode'].strip()
-    
-    return street_address, city, state, zip_code
 
 def fetch_data():
-    
-    locator_domain = 'https://www.mygatestore.com/'
-    ext = 'find-a-gate/'
+    # Your scraper here
+    data = []
+    p = 0
+    url = 'https://www.mygatestore.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1599378444483'
+    r = session.get(url, headers=headers, verify=False)
+  
+    soup =BeautifulSoup(r.text, "html.parser")
+   
+    storelist = soup.find('store').findAll('item')
+    #print("states = ",len(storelist))
+    for store in storelist:
+        title = store.find('location').text
+        address = store.find('address').text.replace('&#44;','').strip()
+        try:
+            address = address.split('USA')[0]
+            address1 = address
+        except:
+            pass
+        #print(address)
+        address = usaddress.parse(address)
+        #input()
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+            
+        street = street.lstrip().replace(',','')
+        city = city.lstrip().replace(',','')
+        state = state.lstrip().replace(',','')
+        pcode = pcode.lstrip().replace(',','')
+        
+        lat = store.find('latitude').text
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+        longt = store.find('longitude').text
+        try:
+            storeid = title.split('#')[1]
+        except:
+            storeid = title.split(' ')[-1]
+        if len(street) < 3:
+            street = address1.split(',')[0]
+        if len(pcode) < 3:
+            pcode = store.find('address').text.split(' ')[-1]
+        data.append([
+                        'https://www.mygatestore.com/',
+                        'https://www.mygatestore.com/find-a-gate/',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        storeid,
+                        '<MISSING>',
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        '<MISSING>'
+                    ])
+        #print(p,data[p])
+        p += 1
+        
+    return data
 
-    driver.implicitly_wait(30)
-    time.sleep(5)
-
-    locs = driver.find_elements_by_css_selector('div.store-locator__infobox')
-    all_store_data = []
-    for loc in locs:
-        location_name = loc.find_element_by_css_selector('div.store-location').text.strip()
-        if location_name == '':
-            continue
-        
-        store_number = location_name.split('#')[1]
-        
-        raw_addy = loc.find_element_by_css_selector('div.store-address').text
-        if 'USA' not in raw_addy:
-            addy = raw_addy
-        else:
-            addy_1 = raw_addy.split(',')[0]
-            addy_2 = raw_addy.split('USA')[1]
-            addy = addy_1 + addy_2
-        
-        if '26699 FL 56' in addy_1:
-            street_address = '26699 FL 56'
-            city = 'Wesley Chapel'
-            state = 'FL'
-            zip_code = '33544'
-        else:
-            street_address, city, state, zip_code = parse_addy(addy)
-        
-        maps_href = loc.find_element_by_css_selector('a.infobox__row.infobox__cta.ssflinks').get_attribute('href')
-        start = maps_href.find('(')
-        coords = maps_href[start + 1: -1].split(',%20')
-        
-        lat = coords[0]
-        longit = coords[1]
-        
-        country_code = 'US'
-
-        location_type = '<MISSING>'
-        page_url = '<MISSING>'
-        phone_number = '<MISSING>'
-        hours = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
-        
-    driver.quit()
-    return all_store_data
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

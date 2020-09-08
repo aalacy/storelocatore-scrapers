@@ -42,9 +42,10 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    datapath_url = soup.text.split('datapath":"')[1].split('"')[0].replace("\\", "")
+    # datapath_url = soup.text.split('datapath":"')[1].split('"')[0].replace("\\", "")
+    temp_url = "https://www.api-sobeys.com/magasins/stores_locator/MmE4ZTZiNjIzMWYzMzU2YTA4ZDBiZWIzNTdmMGQyOTA2ODk5YTNlNjQ3ZTBlMmM4NjVkYTA2YzU2NzA3Nzg1MmU0NGRhNjkwMWUwMjYyZThlZjMzZWU4YTRiM2E3OTVjMDk4ODUyZWE2MmIwNDEzZDQzN2VjMzU5ZmVlMDlkM2NLeDV0R2VORUhadENvME0wR25KWnZVcWhwMWRSTDc5WkJiaDlaMDBMVW9CMzRTc0VkVlpaRGZBbWU0RWNLTGVj/1822?origLat=45.5115686&origLng=-73.5936926&origAddress=Mount+Royal+Mountain%2C+Canada%2C+1576+Voie+Camillien-Houde%2C+Montreal%2C+QC+H2W+1S8%2C+Canada&formattedAddress=&boundsNorthEast=&boundsSouthWest="
 
-    r1 = session.get(datapath_url, headers=headers,verify=False)
+    r1 = session.get(temp_url, headers=headers,verify=False)
 
     json_data = r1.json()
 
@@ -60,11 +61,13 @@ def fetch_data():
         arr_street_address.append(street_address)
 
         city = data["city"]
-        location_name = city
+        location_name = data['name']+" at "+city
         state = data["state"]
         zipp = data["postal"]
         phone = data["phone"]
         country_code = 'CA'
+        store_number = data['id']
+        page_url = "https://www.rachellebery.ca/magasin/" + str(store_number) + "/"
 
         day_list = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
         hoursfrom_list = data["hours1"].split(',')

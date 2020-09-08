@@ -46,13 +46,19 @@ def fetch_data():
         if i['countryName'] == "Canada" or i['countryName'] == "United States":
             if i['countryName'] == "Canada":
                 location_name = i['name']
-                street_address = i['adrOnly'].replace('\n', ', ')
                 city = i['cityName']
                 if len(i['adr'].split("\r\n")[-2].split(" ")[-1]) == 2:
                     state = i['adr'].split("\r\n")[-2].split(" ")[-1]
+                elif city =="Montreal":
+                    state = "QC"
+                elif city == "Richmond" or city=="Victoria":
+                    state = "BC"
+                elif city=="Woodbridge":
+                    state="ON"
                 else:
                     state = "<MISSING>"
-                zipp = i['zipcode'].replace("(828) 298-4024", "<MISSING>")
+                zipp = i['zipcode'].replace("(828) 298-4024", "<MISSING>").replace("V6V 3E2","V3S 9N7")
+                street_address = i['adrOnly'].replace('\n', ' ').replace(", Ontario","").replace(city,"").replace(state,"").replace(zipp,"").replace("Montréal","").replace(" , BC","").replace("  , Quebec City","").replace("– Conestoga Mall ","").strip().rstrip(",").rstrip(".").strip()
                 store_number = i['id']
                 country_code = i['countryCode']
                 phone = i['contacts']['phone']
@@ -75,17 +81,11 @@ def fetch_data():
 
             elif i['countryName'] == "United States":
                 location_name = i['name']
-                if len(i['adrOnly'].split('\n'))==1:
-                    street_address = i['adrOnly']
-                elif location_name == "Chong Hing":
-                    street_address = i['adrOnly'].replace("\n",",")
-                elif location_name == "Timeless Luxury Watches":
-                    street_address = i['adrOnly'].replace("\n",",")
-                else:
-                    street_address = " ".join(i['adrOnly'].split('\n')[1:])
                 city = i['cityName']
                 state = i['stateCode']
                 zipp = i['zipcode'].replace("(828) 298-4024", "<MISSING>")
+                street_address = i['adrOnly'].replace("\n", ' ').replace("\r", ' ').replace(state,"").replace("     ","").replace(" Thackerville, Oklahoma 73459 Phone:  (800) 622-6317","").strip().rstrip(",").strip()
+                street_address = street_address.replace(", Towson,","").replace(zipp,"").replace(", Las Vegas,   USA","").replace(" New York ,   Phone: 646-973-3363","").replace(", WILMINGTON,,","").strip().rstrip(",").rstrip(".").strip()
                 store_number = i['id']
                 country_code = i['countryCode']
                 phone = i['contacts']['phone']
@@ -106,6 +106,7 @@ def fetch_data():
                 else:
                     hours_of_operation = "<MISSING>"
 
+            # street_address = street_address.replace("The Fairmont Hotel  ","").replace("Phipps Plaza Mall ","").replace("Aventura Mall ")
             store = []
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>")

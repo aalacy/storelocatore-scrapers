@@ -1,153 +1,232 @@
 import csv
 import os
-from sgselenium import SgSelenium
-from selenium.webdriver.support.ui import Select
 import time
+import re
+import json
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+session = SgRequests()
+headers = {
+    "Host": "www.swedish.org",
+    "Accept-Encoding": "gzip, deflate",
+    "Accept": "*/*",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "connection": "Keep-Alive"
+}
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow([
+            "locator_domain",
+            "page_url",
+            "location_name",
+            "location_type",
+            "store_number",
+            "street_address",
+            "city",
+            "state",
+            "zip",
+            "country_code",
+            "latitude",
+            "longitude",
+            "phone",
+            "hours_of_operation",
+        ])
+
         # Body
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+
+def create_url(loctype):
+    return {
+        "loctype": loctype,
+        "url": f"https://www.swedish.org/locations/list-view?loctype={loctype.replace(' ', '+')}&within=5000"
+    }
+
+
+def fetch_populated_location_map():
+    locator_url = 'https://www.swedish.org/locations/list-view'
+    r = session.get(locator_url, headers=headers)
+    groups = fetch_json_data(r.text)
+
+    location_map = {}
+
+    for group in groups:
+        latitude = group.get('Latitude', '<MISSING>')
+        longitude = group.get('Longitude', '<MISSING>')
+
+        locations = group.get('Locations', [])
+        street_address, city, state, zipcode = parse_address(
+            group.get('Locations')[0].get('Address'))
+
+        for location in locations:
+            location_name = location.get('Name')
+            key = location.get('Maps')
+            page_url = f"https://www.swedish.org{key}"
+
+            location_map[location.get('Maps')] = {
+                "locator_domain": "swedish.org",
+                "page_url": page_url,
+                "store_number": '<MISSING>',
+                "location_name": location_name,
+                "street_address": street_address,
+                "city": city,
+                "state": state,
+                "zip": zipcode,
+                "latitude": latitude,
+                "longitude": longitude,
+                "country_code": "US"
+            }
+
+    return location_map
+
+
+def fetch_loctype_urls():
+    locator_url = 'https://www.swedish.org/locations'
+    r = session.get(locator_url, headers=headers)
+    soup = BeautifulSoup(r.text, 'html.parser')
+
+    loctype_options = soup.select(
+        '#main_0_contentpanel_1_ddlLocationType option')
+    loctypes = [option['value']
+                for option in loctype_options if option['value']]
+
+    urls = []
+    for loctype in loctypes:
+        urls.append(create_url(loctype))
+
+    return urls
+
 
 def fetch_data():
-    locator_domain = 'https://www.swedish.org/'
-    ext = 'locations/list-view?loctype=birth+center&within=5000'
+    location_map = fetch_populated_location_map()
 
-    driver = SgSelenium().chrome()
+    loctype_urls = fetch_loctype_urls()
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(populate_loc_type, url, location_map)
+                   for url in loctype_urls]
+        for result in as_completed(futures):
+            result.result()
 
-    driver.get(locator_domain + ext)
-    driver.implicitly_wait(5)
-    time.sleep(5)
+    for key, location in location_map.items():
+        if not location.get('location_type'):
+            location_map[key]['location_type'] = '<MISSING>'
 
-    opts = driver.find_element_by_id('main_0_leftpanel_0_ddlLocationType').find_elements_by_css_selector('option')
-    types = []
-    for opt in opts:
-        o = opt.get_attribute('value').strip()
-        if o == '':
-            continue
-        types.append(o)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(populate_details, location, location_map)
+                   for location in location_map.items()]
+        for result in as_completed(futures):
+            location = result.result()
 
-    link_list = []
+            yield [
+                location.get('locator_domain'),
+                location.get('page_url'),
+                location.get('location_name'),
+                location.get('location_type'),
+                location.get('store_number'),
+                location.get('street_address'),
+                location.get('city'),
+                location.get('state'),
+                location.get('zip'),
+                location.get('country_code'),
+                location.get('latitude'),
+                location.get('longitude'),
+                location.get('phone'),
+                location.get('hours_of_operation'),
+            ]
 
-    for t in types:
-        butt = driver.find_element_by_id('main_0_leftpanel_0_btnSubmit')
-        select = Select(driver.find_element_by_id('main_0_leftpanel_0_ddlLocationType'))
-        select.select_by_value(t)
-        driver.execute_script("arguments[0].click();", butt)
-        driver.implicitly_wait(5)
-        time.sleep(3)
-    
-        while True:
-            links = driver.find_elements_by_css_selector('div.listing-item-more-link')
-            
-            for l in links:
-                link = l.find_element_by_css_selector('a').get_attribute('href')
-                link_list.append([link, t])
-            eles = driver.find_elements_by_css_selector('span.module-pg-no-link')
-            
-            if len(eles) == 2:
-                if 'Next' in eles[0].text:
-                    break
 
-            nexts = driver.find_elements_by_css_selector('a#main_0_contentpanel_1_tablocationlisting_0_ucPagingTop_hlNext')
+def populate_loc_type(loctype_url, location_map):
+    r = session.get(loctype_url.get('url'), headers=headers)
+    groups = fetch_json_data(r.text)
 
-            if len(nexts) > 0:
-                next_link = driver.find_elements_by_xpath('//a[contains(text(),"Next")]')[0].get_attribute('href')
-                driver.get(next_link)
-                driver.implicitly_wait(5)
+    for group in groups:
+        for location in group.get('Locations', []):
+            key = location.get('Maps')
 
+            if key in location_map:
+                location_map[key]['location_type'] = loctype_url.get(
+                    'loctype').replace('swedish', '')
             else:
-                break    
+                print(f"location missing in map: {key}")
 
-    all_store_data = []
-    for i, link in enumerate(link_list):
-        page_url = link[0]
-        location_type = link[1]
-        driver.get(page_url)
-        driver.implicitly_wait(5)
-        
-        location_name = driver.find_element_by_css_selector('h1').text
 
-        addy_div = addy = driver.find_elements_by_css_selector('div#main_0_contentpanel_2_pnlAddress')
-        if len(addy_div) > 0:
-            addy = addy_div[0].text.split('\n')
-        else:
-            addy_div = driver.find_elements_by_css_selector('div#main_0_contentpanel_3_pnlAddress')
-            if len(addy_div) > 0:
-                addy = addy_div[0].text.split('\n')
-            else:
-                addy_div = driver.find_elements_by_css_selector('div#main_0_contentpanel_1_pnlAddress')
-                if len(addy_div) > 0:
-                    addy = addy_div[0].text.split('\n')
-                else:
-                    addy_div = driver.find_elements_by_css_selector('div#main_0_contentpanel_0_pnlAddress')
-                    if len(addy_div) > 0:
-                        addy = addy_div[0].text.split('\n')
-                    else:
-                        addy_div = driver.find_elements_by_css_selector('div#main_0_rightpanel_0_pnlAddress')
-                        if len(addy_div) > 0:
-                            addy = addy_div[0].text.split('\n')
-                        else:
-                            print('\n\n\n\n\n\n\n')
-                            print('error')
-                            print('\n\n\n\n\n\n\n')
+def fetch_json_data(content):
+    match = re.search(
+        "locationsList\s*=\s*[\'|\"](.*?)[\'|\"];", content)
+    data = json.loads(match.group(1))
+    return data
 
-        if len(addy) == 1:
-            addy = ['1101 Madison St.', 'Seattle, WA 98104']
 
-        if len(addy) == 3:
-            street_address = addy[0]
-            city, state, zip_code = addy_ext(addy[2])
-        else:
-            street_address = addy[0]
-            city, state, zip_code = addy_ext(addy[1])
-            
-        phone_numbers = driver.find_element_by_css_selector('div.phones').find_elements_by_css_selector('a')
+def parse_address(address):
+    if address == '':
+        return ['<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>']
 
-        if len(phone_numbers) > 0:
-            phone_number = phone_numbers[0].text
-        else:
-            phone_number = '<MISSING>'
-            
-        hours_raw = driver.find_elements_by_css_selector('div.module-lc-hours')
-        if len(hours_raw) == 1:
-            hours_raw = hours_raw[0].text.replace('\n', ' ').replace('Office hours', '').strip()
-        else:
-            hours_raw = 'Monday-Friday, 9 a.m.-3 p.m.'
+    parts = address.split('<br/>')
+    city_state_zip = parts.pop(-1)
+    city_state_zip_parts = city_state_zip.split(', ')
 
-        if hours_raw == '':
-            hours = '<MISSING>'
-        else:
-            hours = ' '.join(hours_raw.split())
-        
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        country_code = 'US'
-        store_number = '<MISSING>'
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+    if len(city_state_zip_parts) == 2:
+        city, state_zip = city_state_zip_parts
+        state, zipcode = state_zip.split(' ')
+    else:
+        state = '<MISSING>'
+        city, zipcode = city_state_zip_parts[0].split(' ')
 
-        all_store_data.append(store_data)
+    street_address = parts[0]
+    return [street_address, city, state, zipcode[0:5]]
 
-    driver.quit()
-    return all_store_data
+
+def populate_details(location_tuple, location_map):
+    key, location = location_tuple
+
+    r = session.get(location.get('page_url'))
+    soup = BeautifulSoup(r.text, 'html.parser')
+
+    phone = soup.select_one('#main_0_contentpanel_2_hlAlternatePhone')
+
+    phoneNumber = clean_phone(phone)
+
+    hours = soup.select_one(
+        '#main_0_rightpanel_0_pnlOfficeHours .option-content')
+    hours_of_operation = hours.text.replace(
+        '\n', ' ').strip() if hours and hours.text != '' else None
+
+    location_map[key]['phone'] = phoneNumber or '<MISSING>'
+    location_map[key]['hours_of_operation'] = hours_of_operation or '<MISSING>'
+
+    return location_map[key]
+
+
+def clean_phone(phone):
+    if not phone or phone.text == '':
+        return None
+
+    phoneNumber = phone.text
+
+    match = re.search("\d{3}-\d{3}-\d{4}", phoneNumber)
+
+    if not match:
+        return None
+
+    match = re.search("\s\((.*)\)", phoneNumber)
+    if match and match.group(1):
+        phoneNumber = match.group(1)
+
+    return re.sub('\(|\)|\s|-', '', phoneNumber)
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

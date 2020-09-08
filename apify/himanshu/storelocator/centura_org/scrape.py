@@ -81,7 +81,6 @@ def fetch_data():
             if "Ste" in street_address:
                 street_address = street_address.split("Ste")[0].strip()
             store = []
-        
             store.append(base_url)
             store.append(location_name)
             store.append(street_address.replace("Floor",""))
@@ -96,12 +95,13 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            if str(str(store[1])) in adressessess :
+            if str(store[2]+str(store[7])+store[-1]) in adressessess :
                 continue
-            adressessess.append(str(store[1]))
+            adressessess.append(str(store[2]+str(store[7])+store[-1]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+           # print("data==="+str(store))
+          #  print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
 
             yield store
         page+= 1

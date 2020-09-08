@@ -31,7 +31,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     link_list = soup.findAll('div',{'class':'service-content'})
-    print("states = ",len(link_list))
+    #print("states = ",len(link_list))
     p = 0
     for rep in link_list:        
         title = rep.find('h4').text
@@ -47,13 +47,14 @@ def fetch_data():
             continue
         street = det[1]
         flag = 0
+        
         try:
             city, state = det[2].split(', ')
             state,pcode = state.lstrip().split(' ')
         except:
             flag = 1
             pass
-        phone = det[3]       
+        #phone = det[3]       
             
         link = rep.find('p',{'class':'location-links'})
         link = link.find('a')       
@@ -71,13 +72,33 @@ def fetch_data():
                 address = soup.findAll('p',{'class':'hours-row'})[1].text
             except:
                 address = soup.findAll('p',{'class':'hours-row'})[0].text
-            street,city = address.split('\n',1)
+            address = address.split('\n')
+            if len(address) == 3:
+                street = address[0]+ ' '+ address[1]
+                city = address[2]
+            elif len(address) == 2:
+                street = address[0]
+                city = address[1]
+                
             city,state = city.split(', ')
             state,pcode = state.lstrip().split(' ',1)
+                
+           
             
+        
+        det = rep.find('div',{'class':'service-details'}).findAll('p')
+        phone = ''
+        for dt in det:
+            if dt.text.find('Phone') > -1 and phone == '':
+                phone = dt.text
+                #print(phone,'yes',title)
+            elif dt.text.find('Thursday') > -1 and(hours == '' or hours.find('Phone') > -1):
+                hours = dt.text
+                #print(hours,'Hours',title)
+                
         phone = phone.replace('Phone:','')
         phone = phone.lstrip()
-        hours = hours.replace('\n', ' ')
+        hours = hours.replace('\n', ' ')  
         data.append(['https://www.fordsgarageusa.com/',link,title,street,city,state,pcode,
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
     

@@ -49,29 +49,6 @@ def fetch_data():
     for store in store_name:
         location_name = store.find_element_by_css_selector('div.storepoint-name').text
 
-        # address
-        loc = store.find_element_by_css_selector('div.storepoint-address').text.replace("\nTX",", TX")
-        if '\n' in loc:
-            loc_split = loc.split('\n')
-            # street_address 
-            street_address = loc_split[0]
-            if len(loc_split[1].split(',')) > 2:
-                street_address += loc_split[1].split(',')[0]
-                city, state, zip_code = addy_extractor((loc_split[1].split(',')[1] + ',' + loc_split[1].split(',')[2]).strip())
-            else:
-                city, state, zip_code = addy_extractor(loc_split[1])
-        else:
-            space_split = loc.split(' ')
-            street_address = space_split[0] + ' ' + space_split[1] + ' ' + space_split[2] 
-            if len(space_split) > 6:
-                # 2 word city
-                city = space_split[3] + ' ' + space_split[4] 
-            else:
-                city = space_split[3]
-
-            state = space_split[-2]
-            zip_code = space_split[-1]
-
         phone_number = store.find_elements_by_css_selector('a')[1].text
         country_code = 'US'
         location_type = '<MISSING>'
@@ -83,12 +60,21 @@ def fetch_data():
         print(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
+
         hours = '<MISSING>'
         raw_hours = base.find_all(class_="address-phone w-richtext")[-1].text.strip()
         if "pm" in raw_hours or "am" in raw_hours:
             hours = raw_hours[:raw_hours.rfind("m")+1].replace("pm","pm ").replace("Hours","Hours ").strip()
         if "coming" in raw_hours.lower():
             continue
+
+        # address
+        street_address = base.find(class_='address-phone w-richtext').p.text.replace("Â","").replace("Rd,","Rd").strip()
+        city_line = base.find(class_='address-phone w-richtext').find_all("p")[1].text.replace("\xa0"," ").replace("TX,","TX").replace("Austin TX","Austin, TX").strip()
+        if ") " in street_address:
+            street_address = base.find(class_='address-phone w-richtext').find_all("p")[2].text.replace("Â","").replace("Rd,","Rd").strip()
+            city_line = base.find(class_='address-phone w-richtext').find_all("p")[3].text.replace("\xa0"," ").replace("TX,","TX").replace("Austin TX","Austin, TX").strip()
+        city, state, zip_code = addy_extractor(city_line)
 
         driver1.get(link)
         time.sleep(2)
