@@ -1,119 +1,135 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sgrequests import SgHttpClient
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-}
-
 def fetch_data():
-    client = SgHttpClient("unitedtkdcenters.com")
-    res = client.get("/locations", headers = HEADERS)
-    soup= BeautifulSoup(res,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    k = soup.find_all("a",{"data-ux":"ContentCardButton"})
-    name3 = soup.find_all("h4",{"data-ux":"ContentCardHeading"})
-    address = soup.find_all("div",{"data-ux":"ContentCardText"})
-    url =[]
-    for index,i in enumerate(name3):
-        if "Hazlet" in  i or "North Bergen" in i or "Union City" in i:
-            tem_var =[]
-            name5 = (i.text)
-            st5 = address[index].text.split(",")[0]
-            city = address[index].text.split(",")[1].split("(")[0]
-            phone = (address[index].text.split(",")[1].replace(city,""))
-            state = "<MISSING>"
-            zip1 =  "<MISSING>"
-            tem_var.append("https://unitedtkdcenters.com")
-            tem_var.append(name5)
-            tem_var.append(st5)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("https://unitedtkdcenters.com/locations")
-            return_main_object.append(tem_var)
-    for index,i in enumerate(k):
-        if "http:" in i['href'] or  "https:" in i['href'] or "/locations" in i['href']:
-            pass
-        else:
-            tem_var =[]
-            r = client.get(i['href'], headers=HEADERS)
-            url.append("https://unitedtkdcenters.com"+i['href'])
-            soup2= BeautifulSoup(r,"lxml")
-            phone =soup2.find("a",{"data-aid":"CONTACT_INFO_PHONE_REND"}).text
-            
-            full_address =soup2.find("p",{"data-aid":"CONTACT_INFO_ADDRESS_REND"}).text.replace(", United States","").replace(", USA","")
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address))
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-            st = full_address.replace(zipp,"").split(',')[0]
-            city = full_address.replace(zipp,"").split(',')[1]
-            state = (full_address.replace(zipp,"").split(',')[-1].replace(" Hackensack","<MISSING>").replace(" South Korea","<MISSING>").replace(" Fairview","<MISSING>"))
-            script1 = soup2.find_all("script",{"type":"text/javascript"})
-            time =''
-            for j in script1:
-                if 'var props = {"structuredHours"' in j.text:
-                    json1 = json.loads(j.text.split("var props = ")[1].split("var context = ")[0].replace("};","}"))
-                    for j in json1['structuredHours']:
-                        if "openTime" in j and "closeTime" in j:
-                            time = time + ' ' +j['day']+ ' '+j['openTime']+ ' '+j['closeTime']
-            name1 = soup2.find("h2",{"data-aid":"CONTACT_SECTION_TITLE_REND","data-ux":"SectionSplitHeading"})
-            if name1 != None:
-                name = (name1.text)
-            else:
-                name2 = soup2.find("h1",{"data-aid":"CONTACT_SECTION_TITLE_REND","data-ux":"SectionSplitHeading"})
-                name = (name2.text)
-            store_name.append(name)
-            tem_var.append(st.replace("Goyang-si","Goyang-si, Gyeonggi-do. 10324"))
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zipp if zipp else "<MISSING>" )
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            store_detail.append(tem_var)
-    for i in range(len(store_name)):
-       store = list()
-       store.append("https://unitedtkdcenters.com")
-       store.append(store_name[i])
-       store.extend(store_detail[i])
-       store.append("<MISSING>")
-       store.append("<MISSING>")
-       store.append("<INACCESSIBLE>")
-       store.append(url[i])
-       if store[2] in address:
-            continue
-       address.append(store[2])
-       if "Ilsan, South Korea" in store:
-           pass
-       else:
-            return_main_object.append(store)
-    return return_main_object
+    addresses = []
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+    }
+    base_url = "https://unitedtkdcenters.com"
+    location_url = "https://unitedtkdcenters.com/locations"
+    
+    r = session.get(location_url,headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
 
+    div = soup.find_all("div",{"data-ux":"ContentCard"})[0:30]
+    for i in div:
+        try:
+
+            if "/locations" in i.find("a",{"data-ux":"ContentCardButton"})['href']:
+                name = i.find("h4",{"data-ux":"ContentCardHeading"}).text
+                addr = i.find_all("span")[0].text.split(",")
+                street_address = addr[0].strip()
+                city = addr[1].strip()
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                phone = i.find_all("span")[1].text.strip()
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                link = "<MISSING>"
+
+            else:
+                link = base_url + i.find("a",{"data-ux":"ContentCardButton"})['href']
+
+                r1 = session.get(link,headers=headers)
+                soup1 = BeautifulSoup(r1.text,"lxml")
+                try:
+                    name = soup1.find("h2",{"data-ux":"SectionSplitHeading"}).text
+                except:
+                    name = soup1.find("h1",{"data-ux":"SectionSplitHeading"}).text
+
+                addr2 = soup1.find("p",{"data-ux":"ContentText"}).text.split(",")
+               # print(addr2)
+                phone = soup1.find("a",{"data-aid":"CONTACT_INFO_PHONE_REND"}).text.strip()
+                if len(addr2)==2:
+                    street_address = addr2[0]
+                    city = addr2[1].strip()
+                    state = "<MISSING>"
+                    zipp = "<MISSING>"
+                elif len(addr2)==3:
+                    street_address = addr2[0]
+                    city = addr2[1].strip()
+                    temp_state_zip = addr2[2].split(" ")
+                    state = temp_state_zip[-2]
+                    zipp = temp_state_zip[-1]
+                elif len(addr2)==4:
+                    street_address = addr2[0]
+                    city = addr2[1].strip()
+                    temp_state_zip = addr2[2].split(" ")
+                    state = " ".join(temp_state_zip[0:3]).replace(" 07423","").strip()
+                    zipp = temp_state_zip[-1].strip()
+                elif len(addr2)==5:
+                    street_address = addr2[0]
+                    city = addr2[1].strip()
+                    temp_state_zip = addr2[3].split(" ")
+                    state = " ".join(temp_state_zip[0:3]).replace(" 07423","").strip()
+                    zipp = temp_state_zip[-1].strip()
+                
+                for i in soup1.find_all("script",{"src":re.compile("//img1.wsimg.com/blobby/go/1730034b-f59e-4632-8435-ec0a3958a5d9/gpub")}):
+                    if "isPublishMode" in str(BeautifulSoup(session.get("https:"+i['src']).text,"lxml")):
+                        geo_data = json.loads(session.get("https:"+i['src']).text.split("})(")[1].split(',{"widgetId"')[0])
+                        latitude = geo_data['lat']
+                        longitude = geo_data['lon']
+                    
+                    if "structuredHours" in str(BeautifulSoup(session.get("https:"+i['src']).text,"lxml")):
+                        hour_data = json.loads(session.get("https:"+i['src']).text.split("})(")[1].split(',{"widgetId"')[0])['structuredHours']
+                        hoo = []
+                        for k in hour_data[:-1]:
+                            
+                            day = k['hour']['day']
+                            closetime = k['hour']['closeTime']
+                            opentime = k['hour']['openTime']
+                            frame = day +": "+opentime+" - "+ closetime
+                            hoo.append(frame)
+                        hours_of_operation = ", ".join(hoo)
+                hours_of_operation = hours_of_operation + ", Sun: Closed"
+
+            store = []
+            store.append(base_url)
+            store.append(name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(link)     
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            yield store
+                        
+        except TypeError:
+            continue      
+
+
+        
 def scrape():
+    # fetch_data()
     data = fetch_data()
     write_output(data)
-
 scrape()
