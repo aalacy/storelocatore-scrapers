@@ -44,7 +44,7 @@ def fetch_data():
             else:
                 state = loc['region']
 
-                state = 'KY'
+                #state = 'KY'
             zip_code = loc['postalCode']
             lat = loc['latitude']
             longit = loc['longitude']
