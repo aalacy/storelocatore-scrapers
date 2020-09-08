@@ -70,6 +70,8 @@ def fetch_data():
         stores = r['response']['entities']
         result_coords = []
         for store in stores:
+            if 'c_status' in store['profile'] and store['profile']['c_status'].lower() == 'future':
+                continue
             address = store['profile']['address']
             city =  address['city']
             state = address['region'] 
@@ -97,6 +99,7 @@ def fetch_data():
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
+            print("max distance update")
             search.max_distance_update(20)
         coord = search.next_zip()
 
