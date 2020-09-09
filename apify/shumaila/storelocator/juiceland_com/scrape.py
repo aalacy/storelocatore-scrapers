@@ -30,7 +30,7 @@ def fetch_data():
     for link in linklist:
         title = link.text
         link = link.find('a')['href']
-        print(link)
+        #print(link)
         r = session.get(link, headers=headers, verify=False)  
         soup =BeautifulSoup(r.text, "html.parser")
         loc = str(soup).split('"locations":[',1)[1].split(']};',1)[0]
