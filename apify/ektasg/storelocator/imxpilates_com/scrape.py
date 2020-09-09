@@ -29,6 +29,8 @@ def fetch_data():
     divlist = soup.findAll('div', {'class': 'studionewcol'})
     #print("states = ",len(divlist))
     p = 0
+    titles = []
+    titles.append('None')
     for div in divlist:
         div = div.findAll('p')
         for repo in div:
@@ -37,8 +39,11 @@ def fetch_data():
                 try:
                     title = link.text.replace('IM=X®','').lstrip().replace('\n','')
                     link = link['href']
+                    if len(title) < 2:
+                        title = link.split('imxpilates',1)[1].split('.',1)[0]
                     #print(title,link)
-                    if (link.find('branch') > -1 or link.find('imx') > -1 )and title.find('Coming Soon') == -1:
+                    if (link.find('branch') > -1 or link.find('imx') > -1 )and title.find('Coming Soon') == -1 and title not in titles:
+                        titles.append(title)
                         #print(p,link)                       
                         r = session.get(link, headers=headers, verify=False)                    
                         soup =BeautifulSoup(r.text, "html.parser")                        
@@ -87,17 +92,15 @@ def fetch_data():
                             store = store.split('studioid=',1)[1]
                         except:
                             pass
-                        try:
-                            state = state.split(' ')[0]
-                        except:
-                            pass
-                        try:
-                            pcode = pcode.split(' ')[0]
-                        except:
-                            pass
+                        
                         if city.find('Tampa') > -1 and title.find('Carrollwood') > -1:
                             city = title
-                            street = street + ' Tampa' 
+                            street = street + ' Tampa'
+                            state = state.lstrip().split(' ')[0]
+                            pcode = pcode.lstrip().split(' ')[0]
+                        if len(title) < 3:
+                            title = city.lstrip().replace(',','')
+                            titles.append(title)
                         data.append([
                         'https://www.imxpilates.com/',
                         link,                   
