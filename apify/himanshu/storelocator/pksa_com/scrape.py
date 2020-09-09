@@ -59,6 +59,8 @@ def fetch_data():
             city = city.replace(zipp,"").replace(state,"")
         if "PKSA Karate Detroit" in location_name:
             street_address = "3627C Cass Ave"
+        if "PKSA Karate Holland" in location_name:
+            street_address = "3006 West Shore Dr, Ste 30"
         store = []
         store.append(base_url)
         store.append(location_name)

@@ -30,7 +30,9 @@ def fetch_data():
     divlist = soup.findAll('div', {'class': 'citys'})[0].findAll('div',{'class':'row-fluid'})
     for div in divlist:
         link = 'https://www.shakeshack.com' + div.find('div',{'class':'title'}).find('a')['href']
+        #link = 'https://www.shakeshack.com/location/empire-outlets-staten-island-ny/'
         #print(link)
+        
         r = session.get(link, headers=headers, verify=False)  
         soup =BeautifulSoup(r.text, "html.parser")
         title = soup.find('title').text.split(' - ')[0]
@@ -67,7 +69,16 @@ def fetch_data():
             
         #
         #print(address)
+        check = ''
+        try:
+            check = address.split('(')[1].split(')')[0]
+            check = '('+check+')'            
+            address = address.replace(check,'')
+            check = check.replace('&\xa0','')
+        except:
+            pass
         address = usaddress.parse(address)
+        #print(address)
         i = 0
         street = ""
         city = ""
@@ -115,6 +126,16 @@ def fetch_data():
                 pcode = '<MISSING>'
         if hours.find('Check the') > -1 or hours.find('before') > -1:
             hours  = '<MISSING>'
+        if city.find('Las Vegas') > -1:
+            street = street + ' ' + city.replace('Las Vegas','')
+            city = 'Las Vegas'
+        if city.find('Lake Grove') > -1:
+            street = street + ' ' + city.replace('Lake Grove','')
+            city = 'Lake Grove'
+        if city.find('New Orleans') > -1:
+            street = street + ' ' + city.replace('New Orleans','')
+            city = 'New Orleans'
+
         if city.find('(Queens') > -1:
             city = 'Queens'
             state = 'NY'
@@ -131,13 +152,15 @@ def fetch_data():
             city = '<MISSING>'
         if len(pcode) < 4:
             pcode = '0'+pcode
-    
-            
+        if city == '<MISSING>' and street.find('Staten Island') > -1:
+            city = 'Staten Island'
+            street = street.replace('Staten Island','')
+        street = street + ' '+ check
         data.append([
                         'https://www.shakeshack.com',
                         link,                   
                         title,
-                        street,
+                        street.replace(',',''),
                         city,
                         state,
                         pcode,

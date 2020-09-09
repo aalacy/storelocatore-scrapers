@@ -8,7 +8,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8",newline='') as output_file:
+    with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -24,59 +24,70 @@ def fetch_data():
     search.initialize(country_codes=['US'])
     zip_code = search.next_zip()
     adressess = []
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "X-Requested-With": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.lapetite.com"
-   
     while zip_code:
         result_coords =[]
-        # print("zip_code === "+zip_code)
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        try:
+            r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers,timeout=10)
+            soup = BeautifulSoup(r.text,"lxml")
+        except:
+            pass
 
-        r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
 
         for location in soup.find_all("div",{'class':"locationCard"}):
             name = location.find("a",{'class':"schoolNameLink"}).text
             address = location.find("span",{'class':"street"}).text
             address2 = location.find("span",{'class':"cityState"}).text
             store_id = location["data-school-id"]
-
+           
+            if location.find("span",{'class':"tel"}) != None:
+                temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
+                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+            elif location.find("p",{'class':"phone"}) != None:
+                temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
+                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+            else:
+                phone = "<MISSING>"
             hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))
 
             if name.split(" ")[0] == "Childtime":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Childtime"
-                phone = "(888) 330-5352"
             elif name.split(" ")[0] == "Tutor":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Tutor Time"
-                
-                phone = "(888) 329-9874"
             elif name.split(" ")[0] == "Everbrook":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
+                r_everybrook = session.get(page_url,headers=headers)
+                soup_everybrook = BeautifulSoup(r_everybrook.text,"lxml")
+                if soup_everybrook.find("div",{"class":"school-info-row vcard"}) is not None:
+                    temp_phone = soup_everybrook.find("div",{"class":"school-info-row vcard"}).find("span",{"class":"tel show-for-large"}).text.replace('.','')
+                    phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+                else:
+                    pass
+                
                 location_type = "Everbrook Academy"
-                phone = "(571) 344-3589"
-           
-            elif "Montessori" in name:
+            elif name.split(" ")[-1] == "Montessori":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "Montessori"
-                phone = "(281) 463-8886"
+            elif name.split(" ")[1] == "Montessori":
+                page_url = location.find("a",{'class':"schoolNameLink"})['href']
+                location_type = "Montessori"
             elif "The Children's Courtyard" in name:
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "The Children's Courtyard"
-                phone = "(877) 771-0629"
             else:
                 page_url = "https://www.lapetite.com" + location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "lapetite"
-                phone = "(888) 330-3479"
-           
-            
+
             store = []
-            store.append("https://www.lapetite.com")
+            store.append(base_url)
             store.append(name)
             store.append(address)
             store.append(address2.split(",")[0])
@@ -97,10 +108,10 @@ def fetch_data():
             yield store
             
         if len(location) < MAX_RESULTS:
-            # print("max distance update")
+         
             search.max_distance_update(MAX_DISTANCE)
         elif len(location) == MAX_RESULTS:
-            # print("max count update")
+        
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
