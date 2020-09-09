@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
@@ -18,12 +18,13 @@ def fetch_data():
     url = 'https://www.walmart.com/sitemap_store_main.xml'
     ids = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr=' + code + '&distance=100'
         website = 'walmart.com'
         typ = 'Store'
         r2 = session.get(url, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '{"distance":' in line2:
                 items = line2.split('{"distance":')
                 for item in items:

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -20,10 +20,11 @@ def fetch_data():
     for coord in coords:
         lat = coord.split(',')[0]
         lng = coord.split(',')[1]
-        print('Pulling %s-%s...' % (lat, lng))
+        print(('Pulling %s-%s...' % (lat, lng)))
         url = 'https://public.api.nordstrom.com/v2/storeservice/geocode?latitude=' + lat + '&longitude=' + lng + '&distance=100&apikey=Gneq2B6KqSbEABkg9IDRxuxAef9BqusJ&apigee_bypass_cache=1&format=json'
         r = session.get(url, headers=headers)
-        lines = r.iter_lines()
+        if r.encoding is None: r.encoding = 'utf-8'
+        lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             if '{"number":' in line:
                 items = line.split('{"number":')

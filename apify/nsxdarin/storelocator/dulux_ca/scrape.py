@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,29 +19,33 @@ def fetch_data():
     states = []
     cities = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<li><a href="/diy/trouver-un-magasin/' in line:
             states.append('https://www.dulux.ca/diy/store-locator' + line.split('/trouver-un-magasin')[1].split('"')[0])
     for state in states:
-        print('Pulling Province %s...' % state)
+        print(('Pulling Province %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<li><a href="/diy/where-to-buy/ca/' in line2:
                 cities.append('https://www.dulux.ca/diy/where-to-buy/ca/' + line2.split('/ca/')[1].split('"')[0])
     for city in cities:
         locs = []
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'p>More Info</p>' in line2:
                 lurl = 'https://www.dulux.ca' + line2.split('href="')[1].split('"')[0]
                 if lurl not in alllocs:
                     alllocs.append(lurl)
                     locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
+            print(('Pulling Location %s...' % loc))
             r2 = session.get(loc, headers=headers)
-            lines = r2.iter_lines()
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            lines = r2.iter_lines(decode_unicode=True)
             country = 'CA'
             typ = 'Store'
             website = 'dulux.ca'

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,13 +18,15 @@ def fetch_data():
     cities = []
     url = 'https://www.onemedical.com/locations/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<a href="/locations/' in line and 'class="link-list' in line:
             code = line.split('/locations/')[1].split('"')[0]
             lurl = 'https://www.onemedical.com/api/locations/?code=' + code
-            print('Pulling Region %s...' % code)
+            print(('Pulling Region %s...' % code))
             r2 = session.get(lurl, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '"latitude\\": ' in line2:
                     items = line2.split('"latitude\\": ')
                     for item in items:
@@ -35,7 +37,7 @@ def fetch_data():
                             ilng = item.split('\\"longitude\\": ')[1].split(',')[0]
                             locs.append('https://www.onemedical.com/locations/' + code + '/' + item.split('"slug\\": \\"')[1].split('\\')[0] + '|' + ilat + '|' + ilng + '|' + iadd)
     for loc in locs:
-        print('Pulling Location %s...' % loc.split('|')[0])
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'onemedical.com'
         purl = loc.split('|')[0]
         typ = '<MISSING>'
@@ -53,7 +55,8 @@ def fetch_data():
         phone = ''
         zc = ''
         r2 = session.get(purl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<title>' in line2 and name == '':
                 name = line2.split('<title>')[1].split(' |')[0]
             if '<p itemprop="telephone"><a href="tel:' in line2:

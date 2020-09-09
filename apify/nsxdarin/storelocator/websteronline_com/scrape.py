@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,12 +18,14 @@ def fetch_data():
     url = 'https://public.websteronline.com/sitemap.xml'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://public.websteronline.com/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
         r2 = session.get(loc, headers=headers, verify=False)
-        print('Pulling Location %s...' % loc)
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        print(('Pulling Location %s...' % loc))
         website = 'public.websteronline.com'
         typ = ''
         store = ''
@@ -40,7 +42,7 @@ def fetch_data():
         country = 'US'
         HFound = False
         PFound = False
-        lines = r2.iter_lines()
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if HFound is False and 'Banking Center Hours</h2>' in line2:
                 HFound = True
