@@ -1,17 +1,13 @@
-import time
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import re
+import string
+import re, time, usaddress
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver2 = webdriver.Chrome("chromedriver", options=options)
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,87 +20,107 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    return lat, lon
-
-
-def fetch_data():
-    # Your scraper here
-    data=[]
-
-
-    names=[]
-    driver.get("https://imxpilates.com/studios.php")
-    stores = driver.find_elements_by_xpath("//div[contains(@class,'studionewcol')]//p//a[contains(@href,'http://')]")
-    for i in range(0,len(stores)):
-       if "coming soon" not in stores[i].text.lower() :
-        if stores[i].get_attribute('href')not in names:
-         names.append(stores[i].get_attribute('href'))
-
-    
-    
-    print(len(names))
-
-    count =0
-    for j in range(len(names)):
-        #print(names[j])
-        #print(titles[j])
-        #if "coming soon" in titles[j].lower():
-        #    print("contnued")
-        #    continue
-        driver.get(names[j])
-        time.sleep(5)
-        #print("time")
-        page_url = names[j]
-        """try:
-            location_name = driver.current_url.split("branchname=")[1]
-        except:
-            location_name = driver.current_url.split("branches/")[1]"""
-        location_name= driver.find_element_by_css_selector('div.location-banner-block > h1').text.split(",")[0].strip()
-        text = driver.find_element_by_css_selector('div.footer-logo > p').text.splitlines()
-        if "Plaza" in text[0]:
-          street_address = text[0].split("Plaza")[1].strip()
-        else:
-          street_address = text[0]
-        state_city_zip = text[1]
-        zipcode = state_city_zip.split(" ")[-1]
-        state = state_city_zip.split(" ")[-2]
-        city = state_city_zip.split(",")[0]
-        phone = text[3]
-        #store_id = driver.find_element_by_partial_link_text('Buy Classes').get_attribute('href').split('studioid=')[1].split('&')[0]
-        store_id = driver.find_element_by_xpath("//a[contains(@href,'studioid=')]").get_attribute('href').split('studioid=')[1].split('&')[0]
-        geomap = driver.find_element_by_css_selector('div.footer-logo > p > a:nth-child(8)').get_attribute('href')
-        driver2.get(geomap)
-        time.sleep(5)
-        lat,lon = parse_geo(driver2.current_url)
-        data.append([
-             'https://imxpilates.com/',
-              page_url,
-              location_name,
-              street_address,
-              city,
-              state,
-              zipcode,
-              'US',
-              store_id,
-              phone,
-              '<MISSING>',
-              lat,
-              lon,
-              '<MISSING>'
-            ])
-        count+=1
-        print(count)
-
-    time.sleep(3)
-    driver.quit()
-    driver2.quit()
+def fetch_data(): 
+    data = []
+    pattern = re.compile(r'\s\s+') 
+    url = 'https://imxpilates.com/studios.php'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('div', {'class': 'studionewcol'})
+    #print("states = ",len(divlist))
+    p = 0
+    for div in divlist:
+        div = div.findAll('p')
+        for repo in div:
+            linklist = repo.findAll('a')
+            for link in linklist:
+                try:
+                    title = link.text.replace('IM=X®','').lstrip().replace('\n','')
+                    link = link['href']
+                    #print(title,link)
+                    if (link.find('branch') > -1 or link.find('imx') > -1 )and title.find('Coming Soon') == -1:
+                        #print(p,link)                       
+                        r = session.get(link, headers=headers, verify=False)                    
+                        soup =BeautifulSoup(r.text, "html.parser")                        
+                        det = soup.find('div',{'class':'header-left'}).text                        
+                        det = re.sub(pattern,'\n',det).splitlines()                        
+                        count = len(det)
+                        phone = det[count - 1].lstrip()                        
+                        address = ' '.join(det[0:count-1]).lstrip()
+                        #print(address)
+                        check = ''
+                        try:
+                            check = address.split('(')[1].split(')')[0]
+                            
+                            check = ' ('+ check +')'
+                            address =address.replace(check,'')
+                            #print(address)
+                        except :
+                            pass
+                        try:
+                            address = address.split('!',1)[1]
+                        except:
+                            pass
+                        address = usaddress.parse(address)
+                        i = 0
+                        street = ""
+                        city = ""
+                        state = ""
+                        pcode = ""
+                        while i < len(address):
+                            temp = address[i]
+                            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                                street = street + " " + temp[0]
+                            if temp[1].find("PlaceName") != -1:
+                                city = city + " " + temp[0]
+                            if temp[1].find("StateName") != -1:
+                                state = state + " " + temp[0]
+                            if temp[1].find("ZipCode") != -1:
+                                pcode = pcode + " " + temp[0]
+                            i += 1
+                            
+                        #print(address)
+                        
+                        street = street + ' ' + str(check)               
+                        store = str(soup).split('?studioid',1)[1].split('&',1)[0]
+                        try:
+                            store = store.split('studioid=',1)[1]
+                        except:
+                            pass
+                        data.append([
+                        'https://www.imxpilates.com/',
+                        link,                   
+                        title,
+                        street.lstrip().replace(',',''),
+                        city.lstrip().replace(',',''),
+                        state.lstrip().replace(',',''),
+                        pcode.lstrip().replace(',',''),
+                        'US',
+                        store,
+                        phone,
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>'
+                        ])
+                        #print(p,data[p])
+                        p += 1
+                    #input()
+                        
+                except Exception as e:
+                    #print(e)
+                    pass
+            
+         
+            
+        
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
