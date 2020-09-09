@@ -1,2 +1,3 @@
 sgrequests
-sgzip==0.0.14
+sgzip
+usaddress
