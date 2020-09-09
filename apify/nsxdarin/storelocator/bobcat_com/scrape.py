@@ -30,7 +30,6 @@ def fetch_data():
             if 'kw-results-FIELD-NAME' in line:
                 name = line.split('kw-results-FIELD-NAME">')[1].split('<')[0]
                 typ = 'Dealer'
-                print(name)
             if '<span onclick="KW.bobcat.toggleDetail' in line:
                 store = line.split("toggleDetail('")[1].split("'")[0]
                 raw_address = next(lines).split('<div>')[1].split('</div>')[0]
@@ -38,7 +37,6 @@ def fetch_data():
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:')[1].split('"')[0]
-                print(phone)
                 try:
                     tagged = usaddress.tag(raw_address)[0]
                     city = tagged.get('PlaceName', '<MISSING>')
@@ -53,10 +51,6 @@ def fetch_data():
                     state = raw_address.strip().split(' ')[-2]
                     city = raw_address.strip().split(',')[0].split(' ')[1]
                     add = raw_address.strip().split(',')[0].split(' ')[0]
-                print(add)
-                print(city)
-                print(state)
-                print(zc)
                 country = 'US'
                 hours = '<MISSING>'
             if 'poilat: "' in line:
