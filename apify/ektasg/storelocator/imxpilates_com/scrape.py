@@ -87,6 +87,17 @@ def fetch_data():
                             store = store.split('studioid=',1)[1]
                         except:
                             pass
+                        try:
+                            state = state.split(' ')[0]
+                        except:
+                            pass
+                        try:
+                            pcode = pcode.split(' ')[0]
+                        except:
+                            pass
+                        if city.find('Tampa') > -1 and title.find('Carrollwood') > -1:
+                            city = title
+                            street = street + ' Tampa' 
                         data.append([
                         'https://www.imxpilates.com/',
                         link,                   
