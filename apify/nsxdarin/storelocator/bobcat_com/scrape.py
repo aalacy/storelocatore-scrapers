@@ -39,14 +39,20 @@ def fetch_data():
                     tel_line = next(lines)
                 phone = tel_line.split('tel:')[1].split('"')[0]
                 print(phone)
-                tagged = usaddress.tag(raw_address)[0]
-                city = tagged.get('PlaceName', '<MISSING>')
-                state = tagged.get('StateName', '<MISSING>')
-                zc = tagged.get('ZipCode', '<MISSING>')
-                if city != '<MISSING>':
-                    add = raw_address.split(city)[0].strip() 
-                else:
-                    add = raw_address.split(',')[0]
+                try:
+                    tagged = usaddress.tag(raw_address)[0]
+                    city = tagged.get('PlaceName', '<MISSING>')
+                    state = tagged.get('StateName', '<MISSING>')
+                    zc = tagged.get('ZipCode', '<MISSING>')
+                    if city != '<MISSING>':
+                        add = raw_address.split(city)[0].strip() 
+                    else:
+                        add = raw_address.split(',')[0]
+                except:
+                    zc = add.strip().rsplit(' ')[1]
+                    state = add.strip().split(' ')[-2]
+                    city = add.strip().split(',')[0].split(' ')[1]
+                    add = add.strip().split(',')[0].split(' ')[0]
                 print(add)
                 print(city)
                 print(state)
