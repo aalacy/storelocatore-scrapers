@@ -49,10 +49,10 @@ def fetch_data():
                     else:
                         add = raw_address.split(',')[0]
                 except:
-                    zc = add.strip().rsplit(' ')[1]
-                    state = add.strip().split(' ')[-2]
-                    city = add.strip().split(',')[0].split(' ')[1]
-                    add = add.strip().split(',')[0].split(' ')[0]
+                    zc = raw_address.strip().rsplit(' ')[1]
+                    state = raw_address.strip().split(' ')[-2]
+                    city = raw_address.strip().split(',')[0].split(' ')[1]
+                    add = raw_address.strip().split(',')[0].split(' ')[0]
                 print(add)
                 print(city)
                 print(state)
