@@ -54,6 +54,7 @@ def fetch_data():
                     phone = temp_add[2]
                 hoo = list(soup1.find("div",{"class":"textwidget openhours"}).stripped_strings)
                 hours_of_operation = " ".join(hoo)
+                
 
                 store = []
                 store.append(base_url)
@@ -68,9 +69,10 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
-                store.append(hours_of_operation.replace('Kitchen is closed 20 minutes before closing time every lunch and dinner.','').replace('***','').replace('(buffet)','').replace('(menu)','').replace('(buffet + menu)',''))
+                store.append(hours_of_operation.replace('TEMPORARY NEW HOURS : ',''))
                 store.append(links)
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 if store[2] in address:
                     continue
                 address.append(store[2])
