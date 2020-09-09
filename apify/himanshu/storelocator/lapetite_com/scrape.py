@@ -6,15 +6,6 @@ import json
 import sgzip
 
 session = SgRequests()
-# headers = {
-#         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-#         "X-Requested-With": "XMLHttpRequest",
-#         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-#     }
-# raw = session.get("https://www.everbrookacademy.com/4807",headers=headers)
-# raw_soup = BeautifulSoup(raw.text,"lxml")
-# print(raw_soup)
-# exit()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -42,11 +33,12 @@ def fetch_data():
     base_url = "https://www.lapetite.com"
     while zip_code:
         result_coords =[]
-        #print("zip_code === "+zip_code)
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        try:
+            r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers,timeout=10)
+            soup = BeautifulSoup(r.text,"lxml")
+        except:
+            pass
 
-        r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
 
         for location in soup.find_all("div",{'class':"locationCard"}):
             name = location.find("a",{'class':"schoolNameLink"}).text
@@ -75,7 +67,6 @@ def fetch_data():
                 r_everybrook = session.get(page_url,headers=headers)
                 soup_everybrook = BeautifulSoup(r_everybrook.text,"lxml")
                 if soup_everybrook.find("div",{"class":"school-info-row vcard"}) is not None:
-
                     temp_phone = soup_everybrook.find("div",{"class":"school-info-row vcard"}).find("span",{"class":"tel show-for-large"}).text.replace('.','')
                     phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
                 else:
