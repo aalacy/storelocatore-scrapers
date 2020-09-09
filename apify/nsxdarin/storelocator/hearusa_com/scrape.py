@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,12 +18,13 @@ def fetch_data():
     urls = ['https://www.hearusa.com/wpsl_stores-sitemap1.xml','https://www.hearusa.com/wpsl_stores-sitemap2.xml','https://www.hearusa.com/wpsl_stores-sitemap3.xml']
     for url in urls:
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '<loc>https://www.hearusa.com/locations/' in line:
                 lurl = line.split('<loc>')[1].split('<')[0]
                 if lurl not in locs:
                     locs.append(lurl)
-    print('%s Locations Founds...' % str(len(locs)))
+    print(('%s Locations Founds...' % str(len(locs))))
     for loc in locs:
         #print('Pulling Location %s...' % loc)
         website = 'hearusa.com'
@@ -41,7 +42,8 @@ def fetch_data():
         Found = False
         store = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'enters__header__title">' in line2:
                 name = line2.split('enters__header__title">')[1].split('<')[0]
             if '<div class="wpsl-location-address">' in line2:

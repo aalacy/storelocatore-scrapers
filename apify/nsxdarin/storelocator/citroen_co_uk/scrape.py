@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     locs = []
     url = 'https://www.citroen.co.uk/_/Layout_Citroen_PointsDeVente/getStoreList?lat=51.51&long=-0.13&page=4081&version=129&order=2&area=50000&ztid=&attribut=1000&brandactivity='
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:
@@ -41,7 +42,8 @@ def fetch_data():
         HFound = False
         hours = ''
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '"edealerName" : "' in line2:
                 name = line2.split('"edealerName" : "')[1].split('"')[0].title().replace('&Amp;','&').replace('&amp;','&')

@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,17 +18,19 @@ def fetch_data():
     sms = []
     url = 'https://www.mattressfirm.com/sitemap_index.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'sitemap_stores' in line:
             sms.append(line.split('>')[1].split('<')[0])
     for sm in sms:
         r2 = session.get(sm, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<loc>https:/www.mattressfirm.com/stores/' in line2 and '.html' in line2:
                 lurl = line2.split('<loc>')[1].split('<')[0].replace('https:/w','https://w')
                 if lurl not in locs:
                     locs.append(lurl)
-    print('Found %s Locations...' % str(len(locs)))
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
         #print('Pulling Location %s...' % loc)
         website = 'mattressfirm.com'
@@ -45,7 +47,8 @@ def fetch_data():
         state = ''
         zc = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'Mattress Firm Clearance' in line2:
                 typ = 'Mattress Firm Clearance'
             if name == '' and '<title>' in line2:

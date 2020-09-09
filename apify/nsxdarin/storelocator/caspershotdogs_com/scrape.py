@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     url = 'http://www.caspershotdogs.com/locations/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     for line in lines:
         if '<strong><a id="' in line:
             store = line.split('<a id="')[1].split('"')[0][-3:]

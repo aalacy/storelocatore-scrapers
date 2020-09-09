@@ -29,21 +29,23 @@ def fetch_data():
     url = 'https://apps.pnc.com/locator-api/locator/api/v1/locator/browse?t=1578513813794'
     session = SgRequests()
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     locs = []
-    for line in [str(x) for x in r.iter_lines()]:
+    for line in [str(x) for x in r.iter_lines(decode_unicode=True)]:
         if '"externalId" : "' in line:
             lid = line.split('" : "')[1].split('"')[0]
             locs.append(lid)
-    print('Found %s Locations...' % str(len(locs)))
+    print(('Found %s Locations...' % str(len(locs))))
     i = 0
     for loc in locs:
         i += 1
         if i % 30 == 0:
             session = SgRequests()
         lurl = 'https://apps.pnc.com/locator-api/locator/api/v2/location/' + loc
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(lurl, headers=headers2)
-        lines = (str(x) for x in r2.iter_lines())
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = (str(x) for x in r2.iter_lines(decode_unicode=True))
         website = 'pnc.com'
         HFound = False
         hours = ''

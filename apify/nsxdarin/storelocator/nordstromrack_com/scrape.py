@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,7 +20,8 @@ def fetch_data():
         states = []
         cities = []
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if '"Directory-listLink" href="' in line:
                 items = line.split('"Directory-listLink" href="')
                 for item in items:
@@ -35,9 +36,10 @@ def fetch_data():
                         else:
                             locs.append(lurl)
         for state in states:
-            print('Pulling State %s...' % state)
+            print(('Pulling State %s...' % state))
             r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<a class="Directory-listLink" href="../' in line2:
                     items = line2.split('<a class="Directory-listLink" href="../')
                     for item in items:
@@ -49,9 +51,10 @@ def fetch_data():
                             else:
                                 locs.append(lurl)
         for city in cities:
-            print('Pulling City %s...' % city)
+            print(('Pulling City %s...' % city))
             r2 = session.get(city, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if '<a class="Teaser-titleLink" href="../../' in line2:
                     items = line2.split('<a class="Teaser-titleLink" href="../../')
                     for item in items:
@@ -59,13 +62,14 @@ def fetch_data():
                             lurl = 'https://stores.nordstromrack.com/' + item.split('"')[0]
                             locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
+            print(('Pulling Location %s...' % loc))
             website = 'nordstromrack.com'
             typ = 'Store'
             store = '<MISSING>'
             hours = ''
             r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            for line2 in r2.iter_lines(decode_unicode=True):
                 if 'id="telephone">' in line2:
                     phone = line2.split('id="telephone">')[1].split('<')[0]
                 if 'itemprop="openingHours" content="' in line2:
