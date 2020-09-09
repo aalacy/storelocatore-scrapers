@@ -49,24 +49,37 @@ def fetch_data():
                 phone = loc['phone'].replace('\u200b','').replace('\u202c','')
                 link = loc['moreInfoUrl']
                 pcode = loc['zip']
-                hours = loc['hoursOpen']
+                hours1 = loc['hoursOpen']
                 title = loc['title']
                 store = loc["siteId"]
                 ccode = 'US'
                 if phone.lower().find('available') > -1 or len(phone) < 3 :
                     phone = '<MISSING>'
                 try:
-                    if len(hours) < 3:
-                        hours = '<MISSING>'
+                    if len(hours1) < 3:
+                        hours1 = '<MISSING>'
                 except:
-                    hours = '<MISSING>'
+                    hours1 = '<MISSING>'
 
                 try:
                     if len(store) < 1:
                         store = '<MISSING>'
                 except:
                     store = title.split('#')[1]
-                    
+                r = session.get(link, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text,'html.parser')
+                hours = ''
+                try:
+                    hourlist = soup.find('div',{'class':'hours'}).findAll('li')
+                    for hr in hourlist:
+                        hours = hours + hr.findAll('span')[0].text + ' ' +hr.findAll('span')[1].text + ' '
+                except:
+                     hours = hours1
+                     
+                if len(hours) < 3:
+                    hours = hours1      
+                
+        
                 data.append([
                 'https://www.firehousesubs.com/',
                 link,                   
@@ -87,10 +100,7 @@ def fetch_data():
                 p += 1
         
 
-
-    
-                
-        
+       
     return data
 
 
