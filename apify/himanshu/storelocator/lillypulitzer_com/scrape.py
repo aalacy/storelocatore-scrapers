@@ -3,13 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline= '') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -39,7 +35,6 @@ def fetch_data():
             location_type = store_data['storeType']
         else:
             location_type = "Other Lilly Destinations"
-
         store.append("https://www.lillypulitzer.com")
         store.append(store_data["name"])
         address2=''
@@ -49,18 +44,12 @@ def fetch_data():
         store.append(store_data["city"])
 
         store.append(store_data["stateCode"])
-        if len(store_data["stateCode"]) > 2:
-            continue
         if store[-1] == "ZZ":
             store[-1] = store_data["city"].split(",")[1]
             store[-2] = store_data["city"].split(",")[0]
         store.append(store_data["postalCode"]
                      if store_data["postalCode"] != "" else "<MISSING>")
         store.append(store_data["countryCode"])
-        if len(store_data["postalCode"]) == 7:
-            store[-1] = "CA"
-        if store[-1] == "":
-            store[-1] = "US"
         store.append(store_number)
         store.append(store_data["phone"]
                      if store_data["phone"] != "" else "<MISSING>")
@@ -76,14 +65,8 @@ def fetch_data():
         store.append(page_url
                      if page_url != '' else "<MISSING>")
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print("===" + str(store))
         yield store
-        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

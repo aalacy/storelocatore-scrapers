@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import itertools as it
+import datetime
+
 session = SgRequests()
 
 def write_output(data):
@@ -44,7 +46,8 @@ def fetch_data():
                 
                 latitude = response.find("main",{'id':"main"}).find("div",{"id":"vue"}).find("single-place-map")[':lat']
                 longitude = response.find("main",{'id':"main"}).find("div",{"id":"vue"}).find("single-place-map")[':lng']
-                hours = " ".join(list(response.find("div",class_="hours").stripped_strings)).replace("Open Hours","")
+                dayofweek = datetime.datetime.today().strftime("%A")
+                hours = " ".join(list(response.find("div",class_="hours").stripped_strings)).replace("Open Hours","").replace("Today",dayofweek)
                 phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(adr))
                 zip_list = list(response.find("div",class_="contact").stripped_strings)[2].split(",")[1].split(" ")
                 if len(zip_list) == 4:
