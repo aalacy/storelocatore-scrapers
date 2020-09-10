@@ -37,25 +37,30 @@ def fetch_data():
                 street_address = list(location_soup.find("span",{"itemprop":"streetAddress"}).stripped_strings)[0]
                 city = location_soup.find("span",{"itemprop":"addressLocality"}).text
                 state = location_soup.find("span",{"itemprop":"addressRegion"}).text
-                zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
+                try:
+                    zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
+                except:
+                    zipp='<MISSING>'
                 store_number = page_url.split("/")[-2]
                 try:
-                    phone = location_soup.find("span",{"itemprop":"telephone"}).text
+                    phone = location_soup.find("span",{"itemprop":"telephone"}).text.split("x")[0].strip()
                 except:
                     phone = "<MISSING>"
                 location_type = loc_type
                 
                 try:
-                    coord = location_soup.find("div",{"id":"practice-buttons"}).find("a",{"class":"callout-button"})['href']
-                    if "/@" in coord:
-                        latitude = coord.split("@")[1].split(",")[0]
-                        longitude = coord.split("@")[1].split(",")[1]
-                    elif "ll=" in coord:
-                        latitude = coord.split("ll=")[1].split(",")[0]
-                        longitude = coord.split("ll=")[1].split(",")[1].split("&")[0]
-                    else:
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
+                    coord = location_soup.find("div",{"id":"practice-buttons"}).find_all("a",{"class":"callout-button"})
+                    for maps in coord:
+                        if "google.com/maps" in maps['href']:
+                            if "/@" in maps['href']:
+                                latitude = maps['href'].split("@")[1].split(",")[0]
+                                longitude = maps['href'].split("@")[1].split(",")[1]
+                            elif "ll=" in maps['href']:
+                                latitude = maps['href'].split("ll=")[1].split(",")[0]
+                                longitude = maps['href'].split("ll=")[1].split(",")[1].split("&")[0]
+                            else:
+                                latitude = "<MISSING>"
+                                longitude = "<MISSING>"
                 except:
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"

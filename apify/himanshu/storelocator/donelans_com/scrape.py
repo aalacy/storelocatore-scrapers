@@ -45,7 +45,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-    base_url= "https://api.freshop.com/1/stores?app_key=donelans&has_address=true&limit=-1&token=e0e535ce4aacc3fae9a96991e278dae1"
+    base_url= "https://api-2.freshop.com/1/stores?app_key=donelans&has_address=true&token=79b451a529cd09a1a727aa929fbf753f"
     locations = session.get(base_url,headers=headers).json()
     
     # soup= BeautifulSoup(r.text,"lxml")

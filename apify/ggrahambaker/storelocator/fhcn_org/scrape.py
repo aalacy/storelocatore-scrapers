@@ -77,6 +77,11 @@ def fetch_data():
         else:
             street_address = addy[1]
             city, state, zip_code = addy_ext(addy[2])
+        if city == '<MISSING>' and state == '<MISSING>' and street_address.find('7060 N. Recreation Ave #101') > -1:
+            city = 'Fresno'
+            state = 'CA'
+            zip_code = '93701'
+           
         
         hours_raw = loc.find('div', {'class': 'hours-wrapper'}).find('div').prettify().split('\n')
         hours_arr = [h for h in hours_raw if '<' not in h]

@@ -60,7 +60,8 @@ def fetch_data():
             if 'Green Burrito</span>' in line2:
                 RB = True
         if RB is False:
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if add != '':
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

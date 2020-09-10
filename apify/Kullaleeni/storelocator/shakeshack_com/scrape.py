@@ -136,7 +136,7 @@ def fetch_data():
             street = street + ' ' + city.replace('New Orleans','')
             city = 'New Orleans'
 
-        if city.find('(Queens') > -1:
+        if check.find('(Queens') > -1:
             city = 'Queens'
             state = 'NY'
         if state.find('DC') > -1 or state.find('D.C') > -1:

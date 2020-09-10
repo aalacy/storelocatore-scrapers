@@ -18,82 +18,53 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
+    header = {
+        'User-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
+        }
     return_main_object = []
     base_url = "https://mandarinrestaurant.com/"
-    get_url ='https://mandarinrestaurant.com/locations/'
-    r = session.get(get_url,headers = header)
-    soup = BeautifulSoup(r.text,"lxml")    
-    main = soup.find_all('div',{'class':'wpsl-store-location'})
-    for i in main:
-        link =i.find('a')['href']
-        location_name =i.find('a').text
-        r1 = session.get(link,headers = header)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        # lat = soup1.find('iframe')['src'].split('2d')[1].split('!2d')[0] 
-        lat = soup1.find('iframe')['src'].split('1d')[1].split('!2d')[0].replace('11217.998304286211','45.3387268') 
-        lng = soup1.find('iframe')['src'].split('1d')[1].split('!2d')[1].split('!3f')[0]
-        if (len(lng)>50):
-            lng = lng.split('!3d')[0] 
-        # print(lng)  
-        main1 = soup1.find_all('div',{'class':'et_pb_text_inner'})[1]
-        st = list(main1.stripped_strings)
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(st))
-        if phone_list !=[]:
-            hour_tmp = soup1.find_all('div',{'class':'et_pb_text_inner'})[2]
-            hour = " ".join(list(hour_tmp.stripped_strings))
-            # print(hour)
-            address = st[-6]
-            city_tmp = st[-5].split(',')
-            if (len(city_tmp)==1):
-                city = city_tmp[0]
-            else:
-                city = city_tmp[0]
-                state_tmp = city_tmp[1].replace('ON\xa0K4A 4C5',' ON K4A 4C5').strip().split(' ')
-                state = state_tmp[0]
-                if (len(state_tmp)==3):
-                    zip = state_tmp[1]+' '+state_tmp[2]
-                elif(len(state_tmp)==2):                    
-                    zip = state_tmp[1]
-                # print(zip)
-            phone = st[-4]
-            # print(city_tmp)
+    get_url ='https://mandarinrestaurant.com/wp-admin/admin-ajax.php?action=store_search&lat=43.73155&lng=-79.76242&max_results=40&search_radius=50&autoload=1'
+    json_data = session.get(get_url,headers = header).json()
+    for value in json_data:
+        location_name = value['store']
+        street_address = value['address']
+        city = value['city']
+        state = value['state']
+        zipp = value['zip']
+        country_code = "CA"
+        store_number = value['id']
+        phone = value['phone']
+        location_type = "<MISSING>"
+        latitude = value['lat']
+        longitude = value['lng']
+        hours_of_operation = value['hours'].replace('\n',"").replace("<p>","").replace("<br />"," ").replace("</p>","").replace("</span>"," ").replace("<span>","").replace("&amp;",",")
+        page_url = value['url']
 
-        else:
-            main2 = soup1.find_all('div',{'class':'et_pb_text_inner'})[0]
-            hour_tmp = soup1.find_all('div',{'class':'et_pb_text_inner'})[1]
-            hour = " ".join(list(hour_tmp.stripped_strings))
-            st1 = list(main2.stripped_strings)
-            phone = st1[-4]
-            address = st1[-6]
-            city_tmp = st1[-5].split(',')
-            city = city_tmp[0]
-            state_tmp = city_tmp[1].strip().split(' ')
-            state = state_tmp[0]
-            zip = state_tmp[1]+ ' '+state_tmp[2]
-             
-      
+
 
         store=[]
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
-        store.append(address if address else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
         store.append('CA')
-        store.append('<MISSING>')
+        store.append(store_number)
         store.append(phone if phone else '<MISSING>')
-        store.append('<MISSING>')
-        store.append(lat if lat else '<MISSING>')
-        store.append(lng if lng else '<MISSING>')
-        store.append(hour  if hour else '<MISSING>')
-        store.append(link)
-        return_main_object.append(store)
-        #print("data ==== "+str(store))
-    return return_main_object
+        store.append(location_type)
+        store.append(latitude if latitude else '<MISSING>')
+        store.append(longitude if longitude else '<MISSING>')
+        store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
+        store.append(page_url)
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
+    
         
+  
 def scrape():
+    # fetch_data()
     data = fetch_data()    
     write_output(data)
 
