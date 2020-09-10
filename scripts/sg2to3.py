@@ -27,10 +27,8 @@ def process_internal(base_path):
             content = oldfile.readlines()
             has_iter_lines = any(['iter_lines()' in x for x in content])
             for line in content:
-                if ".encode('utf-8')" in line or '.encode("utf-8")' or '.encode("utf8")' in line:
-                    newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', "").replace('.encode("utf8")', ""))
-                elif ".encode('ascii', 'ignore')" in line:
-                    newfile.write(line.replace(".encode('ascii', 'ignore')", ""))
+                if ".encode('utf-8')" in line or '.encode("utf-8")' or '.encode("utf8")' or ".encode('ascii', 'ignore')" in line:
+                    newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', "").replace('.encode("utf8")', "").replace(".encode('ascii', 'ignore')", ""))
                 elif 'r = session.' in line and has_iter_lines:
                     newfile.write(line)
                     newfile.write(get_padding(line) + "if r.encoding is None: r.encoding = 'utf-8'\n")
