@@ -69,6 +69,7 @@ def fetch_data():
             continue
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"main-content"}).find('div',{'class':"sfContentBlock"}).stripped_strings)
+        
 
         # location_name = location_details
         
@@ -97,10 +98,21 @@ def fetch_data():
 
         
         phone = location_details[-1].replace("Phone:",'').replace("Phone:",'').strip().replace("PH:",'')
-        city = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[0]
-        state = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[-1].strip().split( )[0]
-        zipp = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[-1].strip().split( )[-1]
-        address = " ".join(location_details[:-2])
+        
+        
+        
+        ignore_data = ['214 S. Main','210 N. Oak','1501 W. University Blvd']
+        if location_details[0] in ignore_data:
+            
+            address = location_details[0]
+            city = location_details[1].split(",")[0]
+            state = location_details[1].split(",")[1].strip().split(" ")[0]
+            zipp = location_details[1].split(",")[1].strip().split(" ")[1]
+        else:
+            address = " ".join(location_details[:-2])
+            city = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[0]
+            state = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[-1].strip().split( )[0]
+            zipp = location_details[-2].replace("PO Box 410","Monahans, TX 79756").replace("PO Drawer K",'Kermit, TX 79745').split(",")[-1].strip().split( )[-1]
         
         
         hours = " ".join(list(location_soup.find("div",{'class':"sf_colsOut col-left"}).stripped_strings))
@@ -121,10 +133,11 @@ def fetch_data():
         store.append(geo_location.split("!2d")[1].split("!")[0])
         store.append(hours.replace("\t"," "))
         store.append(base_url + location["href"])
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # if store[2] in adressessess :
-        #     continue
-        # adressessess.append(store[2])
+        if store[2] in adressessess :
+            continue
+        adressessess.append(store[2])
         # print(store)
         yield store
 

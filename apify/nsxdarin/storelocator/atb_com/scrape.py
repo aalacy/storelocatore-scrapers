@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,7 +17,8 @@ def fetch_data():
     url = 'https://www.atb.com/resources/find-a-location/'
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'window.branchData' in line:
             items = line.split('"name":"')
             for item in items:
@@ -38,8 +39,9 @@ def fetch_data():
                     hours = ''
                     phone = ''
                     r2 = session.get(lurl, headers=headers)
-                    print('Pulling Location %s...' % lurl)
-                    lines = r2.iter_lines()
+                    if r2.encoding is None: r2.encoding = 'utf-8'
+                    print(('Pulling Location %s...' % lurl))
+                    lines = r2.iter_lines(decode_unicode=True)
                     for line2 in lines:
                         if '<a href="tel:' in line2:
                             phone = line2.split('<a href="tel:')[1].split('"')[0]

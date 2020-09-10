@@ -74,7 +74,7 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("Gym")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(hours_of_operation)

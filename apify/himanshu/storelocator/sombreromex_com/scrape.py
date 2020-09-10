@@ -3,9 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -48,35 +45,17 @@ def fetch_data():
     hours_of_operation = ""
 
     for script in soup.find_all('div', {'class': 'mmtl-col mmtl-col-sm-3'}):
-        # for script in soup.find_all('div', {'mmtl-content'}):
+        
         list_store_data = list(script.stripped_strings)
-
-        # cityTag = script.parent.find('div', {'class': 'mmtl-col mmtl-col-sm-12'})
-        # # print(cityTag)
-        # if cityTag is not None:
-        #     city = cityTag.text.strip()
-
-
-        # print(" city === " + str(city))
-
-        # if len(list_store_data) == 1:
-        #     city = list_store_data[0]
         if script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text) is not None:
-            url = script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text)['href'].split('//')
-            if len(url) ==1:
-                page_url = base_url + "".join(url)
+            url = script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text)['href']
+            if "https:" in url:
+                page_url =  url
             else:
-                page_url = "".join(url)
+                page_url = base_url + url
         else:
             page_url = "<MISSING>"
-        # print(page_url)
-
-
-
-
-
-
-
+        
         if len(list_store_data) > 1:
 
             if 'Order Food Delivery with DoorDash' in list_store_data:
@@ -102,6 +81,8 @@ def fetch_data():
 
             if 'Order Online' in list_store_data:
                 list_store_data.remove('Order Online')
+            if 'Online Ordering Coming Soon, Please Call Location for Takeout' in list_store_data:
+                list_store_data.remove("Online Ordering Coming Soon, Please Call Location for Takeout")
 
             # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
             # print('~~~~~~~~~~~~~~~~')
@@ -156,27 +137,31 @@ def fetch_data():
                     city = ''.join(list_store_data[0].split(',')[0].split(' ')[-3])
 
                 location_name = street_address.split(' ')[-1]
-                # print(street_address +"|"+city)
-                # city = location_name
-
-            # city = city.split("–")[0]
-            # print("city === "+ city)
+        
 
             country_code = 'US'
             store_number = '<MISSING>'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+            if page_url != "<MISSING>":
+                location_soup = BeautifulSoup(session.get(page_url, headers=headers).text, "lxml")
+                maps = location_soup.find("a",text=re.compile("Get Directions"))
+                if "@" in maps['href']:
+                    latitude = maps['href'].split("@")[1].split(",")[0]
+                    longitude = maps['href'].split("@")[1].split(",")[1]
+                else:
+                    latitude = '<MISSING>'
+                    longitude = '<MISSING>'
+
+
+            else:
+                latitude = '<MISSING>'
+                longitude = '<MISSING>'
 
             if not phone.replace('-', '').isdigit():
                 phone = '<MISSING>'
 
-            # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

@@ -59,6 +59,10 @@ def fetch_data():
                 if hours == '':
                     hours = '<MISSING>'
                 hours = hours.strip()
+                if hours.find('- Sun  -') > -1:
+                    hours = '<MISSING>'
+                else:
+                    hours =hours.replace("Sun",' Sun')
             except:
                 hours = '<MISSING>'
             country_code = 'US'

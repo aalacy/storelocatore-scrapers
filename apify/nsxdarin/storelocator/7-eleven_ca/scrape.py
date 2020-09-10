@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -19,10 +19,11 @@ def fetch_data():
     for item in canada:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        print('Pulling Coordinates %s, %s...' % (lat, lng))
+        print(('Pulling Coordinates %s, %s...' % (lat, lng)))
         url = 'https://liveapi.yext.com/v2/accounts/me/locations/geosearch?location=' + lat + ',' + lng + '&limit=50&radius=500&filters=%5B%7B%22closed%22%3Afalse%7D%5D&resolvePlaceholders=true&api_key=4c8292a53c2dae5082ba012bdf783295&v=20180210'
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        if r.encoding is None: r.encoding = 'utf-8'
+        for line in r.iter_lines(decode_unicode=True):
             if ',"locationName":"' in line:
                 places = line.split(',"locationName":"')
                 for place in places:

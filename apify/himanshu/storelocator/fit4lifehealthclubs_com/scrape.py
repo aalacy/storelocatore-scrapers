@@ -4,19 +4,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-import time
-from random import randint
 
-from sgselenium import SgSelenium
+session = SgRequests()
 
-
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -28,85 +18,79 @@ def write_output(data):
             writer.writerow(i)
 
 def fetch_data():
-
-    base_link = "https://fit4lifehealthclubs.com/find-a-gym/"
-
-    driver = SgSelenium().chrome()
-    time.sleep(2)
-
-    driver.get(base_link)
-    time.sleep(randint(15,20))
-    soup = BeautifulSoup(driver.page_source, "lxml")
-
-    session = SgRequests()
+    addressess = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
+    base_url = "https://fit4lifehealthclubs.com"
+    r_data = session.get("https://fit4lifehealthclubs.com/find-a-gym/",headers=headers)
+    r_soup = BeautifulSoup(r_data.text,"lxml")
+    json_data = json.loads(str(r_soup).split('places":')[1].split(',"listing":')[0])
     
-    all_store_data = []
-
-    k = soup.find_all(class_='wpgmp_locations')
-    for i in k:
-        store = []
-        if "coming soon" in i.text.lower():
+    for value in json_data:
+        if "Hope Mills" in value['title']:
             continue
-        link = i.find_all("a")[-1]['href']
-        print(link)
-        if link != "https://fit4lifehealthclubs.com/fayetteville-2/":
-            location_name= i.find_all("a")[-2].text
-            raw_address = i.find(class_="wpgmp_locations_content").text.strip().split("\n")
-            try:
-                address = (raw_address[-5] + " " + raw_address[-4]).strip()
-            except:
-                address = raw_address[-4]
-
-            city, state, zip1 = addy_ext(raw_address[-3])
-            phone = raw_address[-2]
-
-            r1 = session.get(link, headers=headers)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            try:
-                lng = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[0]
-                lat = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[1].split('!')[0]
-            except:
-                continue
-            raw_hours = soup1.find_all('div', {'class': re.compile(r'wpb_text_column wpb_content_element vc_custom_[0-9]+')})[-2].p.text.strip()
-            hour = raw_hours.replace('\n','').strip().replace('\xa0','').replace("pm","pm ").strip()
+        location_name = value['title']
+        city = value['location']['city'].replace("Anderson Creek","Spring Lake")
+        state = value['location']['state']
+        zipp = value['location']['postal_code']
+        if location_name == "McGee's Crossroads":
+            street_address = "".join(value['address'].replace(", USA","").split(",")[:2]).replace(city,"")
+        elif location_name == "Raeford":
+            street_address = "4550 Fayetteville Rd."
         else:
-            location_name = "Fayetteville - Owens Dr."
-            address = "210 Owen Dr"
-            city = "Fayetteville"
-            state = "NC"
-            zip1 = "28304"
-            phone = "910-527-0042"
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-            hour = "<MISSING>"
-            link = base_link
+            street_address = value['address'].replace(", USA","").split(",")[0]
 
-        store.append('https://fit4lifehealthclubs.com/')
-        store.append(location_name)
-        store.append(address)
-        store.append(city)
-        store.append(state) 
-        store.append(zip1)
-        store.append('US')
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hour)
-        store.append(link)
-        all_store_data.append(store)
+        country_code = "US"
+        store_number = value['id']
+        content = value['content']
+        reg = re.compile(r'(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})')
+        phone=reg.findall(content)[0]
+        location_type = "<MISSING>"
+        latitude = value['location']['lat']
+        longitude = value['location']['lng']
+        page_url = content.split('<a href=\"')[1].split('\">Location Page')[0]
+        r = session.get(page_url,headers=headers)
+        soup = BeautifulSoup(r.text,"lxml")
+        if location_name == "Mt. Olive":
+            hour = list(soup.find_all("div",{"class":"wpb_wrapper"})[35].stripped_strings)
+        elif location_name == "Raeford":
+            hour = list(soup.find_all("div",{"class":"wpb_wrapper"})[46].stripped_strings)
+        elif location_name == "Richlands":
+            hour = list(soup.find_all("div",{"class":"wpb_wrapper"})[49].stripped_strings)
+        elif location_name == "Spring Lake" or location_name == "Clayton":
+            hour = list(soup.find_all("div",{"class":"wpb_wrapper"})[47].stripped_strings)
+        elif location_name == "Fayetteville - Owens Dr.":
+            pass
+        else:
+            hour = list(soup.find_all("div",{"class":"wpb_wrapper"})[43].stripped_strings)
+            
 
-    driver.close()
-    return all_store_data
+        hours_of_operation = " ".join(hour)
+        if location_name=="Fayetteville - Owens Dr.":
+            page_url = "<MISSING>"
+        store=[]
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append(country_code)
+        store.append(store_number)
+        store.append(phone if phone else '<MISSING>')
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

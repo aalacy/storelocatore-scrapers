@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,8 +17,9 @@ def fetch_data():
     locs = []
     url = 'https://www.fastenal.com/locations/all'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     styp = ''
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if 'Distribution Centers' in line:
             styp = 'Distribution Center'
         if 'Branch Locations' in line:
@@ -29,7 +30,8 @@ def fetch_data():
             locs.append(lurl + '|' + styp)
     for loc in locs:
         r2 = session.get(loc.split('|')[0], headers=headers)
-        print('Pulling Location %s...' % loc.split('|')[0])
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'fastenal.com'
         typ = loc.split('|')[1]
         name = ''
@@ -44,7 +46,7 @@ def fetch_data():
         HFound = False
         store = loc.split('|')[0].rsplit('/',1)[1]
         hours = ''
-        for line2 in r2.iter_lines():
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1>' in line2 and name == '':
                 name = line2.split('<h1>')[1].split('<')[0]
             if 'class="address1 ellipsis">' in line2:

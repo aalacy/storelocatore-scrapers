@@ -3,15 +3,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+import unicodedata
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -30,14 +28,21 @@ def fetch_data():
         if main1!=None:
             madd=list(main1.find('div').stripped_strings)
             name=madd[0].strip()
-            address=madd[1].strip()
-            ct=madd[2].split(',')
-            city=ct[0].strip()
-            st=ct[1].replace('\xa0\xa0',' ').strip().split(' ')
-            state=st[0].strip()
-            zip=st[1].strip()
+            if len(madd) == 12 :
+                address = madd[-4]
+                city = madd[-3].split(",")[0]
+                state = madd[-3].split(",")[1].strip().split(" ")[0]
+                if len(state) == 2:
+                    state = state
+                else:
+                    state = state[0:2]
+                zipp = madd[-3].split(",")[1].split(" ")[-1].replace(state,"")
+            else:
+                address = madd[-5]
+                city = madd[-4].split(",")[0]
+                state = madd[-4].split(",")[1].strip().split(" ")[0]
+                zipp = madd[-4].split(",")[1].split(" ")[-1]
             phone=main1.find('div').find('span').text.strip()
-            storeno=''
             lt=main1.find('a',text="Get Directions")['href'].split('@')[1].split(',')
             lat=lt[0].strip()
             lng=lt[1].strip()
@@ -53,16 +58,21 @@ def fetch_data():
             store.append(address if address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
             store.append(country if country else "<MISSING>")
-            store.append(storeno if storeno else "<MISSING>")
+            store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append("urbanplates")
+            store.append("<MISSING>")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hour if hour.strip() else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append(link)
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)

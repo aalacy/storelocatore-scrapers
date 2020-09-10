@@ -1,6 +1,6 @@
 import json
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
@@ -22,23 +22,24 @@ def fetch_data():
     addinfos = []
     url = 'https://locators.bankofamerica.com/sitemap/sitemap_index.xml'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<loc>' in line:
             sitemaps.append(line.split('>')[1].split('<')[0])
     for sm in sitemaps:
-        print('Pulling Sitemap %s...' % sm)
+        print(('Pulling Sitemap %s...' % sm))
         smurl = sm
         with open('branches.xml.gz','wb') as f:
-            f.write(urllib2.urlopen(smurl).read())
+            f.write(urllib.request.urlopen(smurl).read())
             f.close()
-            with gzip.open('branches.xml.gz', 'rb') as f:
+            with gzip.open('branches.xml.gz', 'rt') as f:
                 for line in f:
                     if '<loc>https://locators.bankofamerica.com/' in line:
                         lurl = line.split('<loc>')[1].split('<')[0]
                         if '.html' in lurl and '.m.' not in lurl:
                             if lurl not in locs:
                                 locs.append(lurl)
-        print(str(len(locs)) + ' Locations Found...')
+        print((str(len(locs)) + ' Locations Found...'))
     stores = []
     for loc in locs:
         #print('Pulling Location %s...' % loc)
@@ -47,6 +48,7 @@ def fetch_data():
             try:
                 PFound = False
                 r2 = session.get(loc, headers=headers)
+                if r2.encoding is None: r2.encoding = 'utf-8'
                 website = 'bankofamerica.com'
                 name = ''
                 add = ''
@@ -61,7 +63,7 @@ def fetch_data():
                 typ = ''
                 hours = ''
                 AFound = False
-                lines = r2.iter_lines()
+                lines = r2.iter_lines(decode_unicode=True)
                 for line2 in lines:
                     if "var fid = '" in line2:
                         store = line2.split("var fid = '")[1].split("'")[0]

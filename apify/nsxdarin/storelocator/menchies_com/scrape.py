@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,8 +18,9 @@ def fetch_data():
     locs = []
     alllocs = []
     r = session.get(url, headers=headers, verify=False)
+    if r.encoding is None: r.encoding = 'utf-8'
     country = 'US'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '<div class="loc-name"><span class="font-purple title-case"><a href="' in line:
             items = line.split('<div class="loc-name"><span class="font-purple title-case"><a href="')
             for item in items:
@@ -32,7 +33,7 @@ def fetch_data():
                         locs.append(lurl + '|' + country)
                 if 'name">Australia</h3>' in item:
                     country = 'AU'
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -46,11 +47,12 @@ def fetch_data():
         state = ''
         zc = ''
         phone = '<MISSING>'
-        print('Pulling Location %s...' % lurl)
+        print(('Pulling Location %s...' % lurl))
         website = 'menchies.com'
         typ = '<MISSING>'
         r2 = session.get(lurl, headers=headers, verify=False)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1 class="h2">' in line2:
                 name = line2.split('<h1 class="h2">')[1].split('<')[0]
             if '<em class="fa fa-map show-phone info-fa"></em>' in line2:

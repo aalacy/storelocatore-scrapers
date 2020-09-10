@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 
@@ -18,7 +18,7 @@ def fetch_data():
     locs = []
     url = 'https://www.harley-davidson.com/dealerservices/services/rest/dealers/proximitySearch.json?_type=json&size=2500&latlng=45%2C-95&miles=10000&locale=en_US'
     r = session.get(url, headers=headers)
-    items = r.content.split('"authCode":"')
+    items = r.text.split('"authCode":"')
     for item in items:
         if '"commerceInfo":' in item:
             website = 'harley-davidson.com'

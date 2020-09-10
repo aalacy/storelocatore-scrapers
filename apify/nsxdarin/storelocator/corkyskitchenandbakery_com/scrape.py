@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,6 +17,7 @@ def fetch_data():
     locs = []
     url = 'https://www.corkyskitchenandbakery.com/locations'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'corkyskitchenandbakery.com'
     typ = '<MISSING>'
     country = 'US'
@@ -25,7 +26,7 @@ def fetch_data():
     hours = '<MISSING>'
     lat = '<MISSING>'
     lng = '<MISSING>'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"@type":"Restaurant","' in line:
             items = line.split('"@type":"Restaurant","')
             for item in items:

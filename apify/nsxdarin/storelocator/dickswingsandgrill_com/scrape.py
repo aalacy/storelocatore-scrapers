@@ -56,7 +56,12 @@ def fetch_data():
                 name = line2.split('<title>')[1].split(' |')[0]
             if '<h2>' in line2 and '<h2><' not in line2 and 'Weekly' not in line2:
                 add = line2.split('<h2>')[1].split('•')[0]
-                phone = '(' + line2.split('(')[1].split('<')[0].strip()
+                try:
+                    phone = '(' + line2.split('(')[1].split('<')[0].strip()
+                except:
+                    phone = ''
+            if '<h2>NEW PHONE # ' in line2:
+                phone = line2.split('<h2>NEW PHONE # ')[1].split('<')[0]
             if '!2d-' in line2:
                 lng = line2.split('!2d')[1].split('!')[0]
                 lat = line2.split('!2d-')[1].split('!3d')[1].split('!')[0]
