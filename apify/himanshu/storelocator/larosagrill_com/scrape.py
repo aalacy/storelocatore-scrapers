@@ -50,7 +50,7 @@ def fetch_data():
             state = st[-5].split(",")[1].strip().split( )[0]
             zipp = st[-5].split(",")[1].strip().split( )[1]
             try:
-                hours = list(soup3.find("h4",text=re.compile(" Store Hours")).parent.stripped_strings)[1]
+                hours = " ".join(list(soup3.find("h4",text=re.compile(" Store Hours")).parent.stripped_strings)[1:])
             except:
                 hours="<MISSING>"
             street_address = " ".join(st[:-5])

@@ -38,6 +38,9 @@ def fetch_data():
     data = soup.find_all("div",{"class":"restaurant"})
     for i in data:
         t = list(i.stripped_strings)
+        if "ONLINE ORDERING COMING SOON" in t:
+            continue
+        
         if "Skip The Dishes - Delivery" in t[-1]:
             del t[-1] 
         if "Order Online" in t[-1]:
@@ -48,8 +51,11 @@ def fetch_data():
         state = t[2].split(',')[1].split(' ')[1]
         zipp = ' '.join(t[2].split(',')[1].split(' ')[2:])
         phone = t[3]
-        hours_of_operation = ' '.join(t[5:8]).replace("*delivery available from 4pm to close.",'').replace("Delivery: 11am - Close",'')
-
+        hours_of_operation=''
+        for index,dt in enumerate(t):
+            if "Get Directions" in dt:
+                hours_of_operation= " ".join(t[index+1:])
+        # hours_of_operation = ' '.join(t[5:8]).replace("*delivery available from 4pm to close.",'').replace("Delivery: 11am - Close",'')
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -66,6 +72,7 @@ def fetch_data():
         store.append(hours_of_operation)
         store.append(location_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        # print(store)
         yield store
         
 

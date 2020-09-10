@@ -33,6 +33,8 @@ def fetch_data():
     "https://www.firstunited.bank/company/banking-center-atm-itm-locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     k  = soup.find_all('a', {'class': 'location-title'})
+ 
+
     for i in k:
         tem_var = []
         link = i['href']
@@ -67,9 +69,13 @@ def fetch_data():
 
         elif(len(list(address_tmp.stripped_strings))==17):
             hour = list(address_tmp.stripped_strings)[11]+''+list(address_tmp.stripped_strings)[12]+''+list(address_tmp.stripped_strings)[13]+''+list(address_tmp.stripped_strings)[14]+''+list(address_tmp.stripped_strings)[15]+''+list(address_tmp.stripped_strings)[16]
-            
-                  
-        tem_var.append('https://www.firstunited.bank/')
+        loc=''    
+        if "EARTH BANKING CENTER" in location_name or "LITTLEFIELD BANKING CENTER" in location_name or "SEAGRAVES BANKING CENTER" in location_name or "SUDAN BANKING CENTER" in location_name or "WICHITA FALLS BANKING CENTER" in location_name or "SEMINOLE BANKING CENTER" in location_name or "FIRST UNITED EXPRESS" in location_name or "DIMMITT BANKING CENTER" in location_name or "SOUTHEAST BANKING CENTER" in location_name:
+            loc="Branch"
+        else:
+            loc="Branch & ATM"
+        # print(location_name)    
+        tem_var.append('https://www.firstunited.net/')
         tem_var.append(location_name)
         tem_var.append(address+' '+Address)
         tem_var.append(city)
@@ -78,7 +84,7 @@ def fetch_data():
         tem_var.append('US')
         tem_var.append("<MISSING>")
         tem_var.append(phone)
-        tem_var.append("<MISSING>")
+        tem_var.append(loc)
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
         tem_var.append(hour.replace("Motor Bank Hours:",' Motor Bank Hours: '))

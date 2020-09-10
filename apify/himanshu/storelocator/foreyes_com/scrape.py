@@ -3,72 +3,91 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+import sgzip
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.foreyes.com"
-    data = "action=get_properties&lat=39.8283459&lng=-98.5794797&dist=5000&queryType=distance&term=false"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Host': 'www.foreyes.com',
-        'Referer': 'https://www.foreyes.com/locations/',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-    }
-
-    r = session.post(base_url + "/wp-admin/admin-ajax.php",data=data,headers=headers)
-    data = r.json()['properties']
-    return_main_object = []
-    for i in range(len(data)):
-        store_data = data[i]
-        store = []
-        store.append("https://www.foreyes.com ")
-        store.append(store_data['name'].split(";")[1])
-        store.append(store_data["address1"])
-        store.append(store_data['city'])
-        store.append(store_data['state'])
-        store.append(store_data["zip"])
-        store.append("US")
-        store.append(store_data['id'])
-        store.append(store_data['phoneStripped'])
-        store.append("for eyes")
-        store.append(store_data["maps"]['lat'])
-        store.append(store_data["maps"]['lng'])
-        hours = ""
-        if store_data["monday_open"] and store_data["monday_open"] != "":
-            hours = hours + " Monday open time " + store_data["monday_open"] +" Monday close time " + store_data["monday_close"] + " "
-        if store_data["tuesday_open"] and store_data["tuesday_open"] != "":
-            hours = hours + " tuesday open time " + store_data["tuesday_open"] +" tuesday close time " + store_data["tuesday_close"] + " "
-        if store_data["wednesday_open"] and store_data["wednesday_open"] != "":
-            hours = hours + " wednesday open time " + store_data["wednesday_open"] +" wednesday close time " + store_data["wednesday_close"] + " "
-        if store_data["thursday_open"] and store_data["thursday_open"] != "":
-            hours = hours + " thursday open time " + store_data["thursday_open"] +" thursday close time " + store_data["thursday_close"] + " "
-        if store_data["friday_open"] and store_data["friday_open"] != "":
-            hours = hours + " friday open time " + store_data["friday_open"] +" friday close time " + store_data["friday_close"] + " "
-        if store_data["saturday_open"] and store_data["saturday_open"] != "":
-            hours = hours + " saturday open time " + store_data["saturday_open"] +" saturday close time " + store_data["saturday_close"] + " "
-        if store_data["sunday_open"] and store_data["sunday_open"] != "":
-            hours = hours + " sunday open time " + store_data["sunday_open"] +" sunday close time " + store_data["sunday_close"] + " "
-        if hours == "":
-            hours = "<MISSING>"
-        store.append(hours)
-        return_main_object.append(store)
-    return return_main_object
-
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 50
+    current_results_len = 0
+    coord = search.next_coord()
+    addresses = []
+    while coord:
+        result_coords = []
+        lat = coord[0]
+        # print(lat)
+        lng = coord[1]
+        base_url = "https://www.foreyes.com"
+        data = "action=get_properties&lat=39.8283459&lng=-98.5794797&dist=5000&queryType=distance&term=false"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Host': 'www.foreyes.com',
+            'Referer': 'https://www.foreyes.com/locations/',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+        r = session.get("https://www.foreyes.com/locations?lat="+str(lat)+"&lng="+str(lng),data=data,headers=headers)
+        soup = BeautifulSoup(r.text,"lxml")
+        table = soup.find_all("script")[29]
+        data_main = (str(table).split('storeLocations: {"items":')[1].split(',"totalRecords"')[0])
+        json_data = json.loads(data_main)
+        for store_data in json_data:
+            store = []
+            store.append("https://www.foreyes.com ")
+            store.append(store_data['store_name'])
+            store.append(store_data["store_address_line"])
+            store.append(store_data['store_city'])
+            store.append(store_data['store_state'])
+            store.append(store_data["store_zip"])
+            store.append("US")
+            store.append(store_data['sofe_store_id'])
+            store.append(store_data['store_phone'])
+            store.append(store_data["store_type"])
+            store.append(store_data['store_lat'])
+            store.append(store_data["store_long"])
+            hours = ""
+            if store_data["time_mon_start"] and store_data["time_mon_start"] != "":
+                hours = hours + "Monday  " + store_data["time_mon_start"] +" - " + store_data["time_mon_end"] + ", "
+            if store_data["time_tue_start"] and store_data["time_tue_start"] != "":
+                hours = hours + " tuesday  " + store_data["time_tue_start"] +" - " + store_data["time_tue_end"] + ", "
+            if store_data["time_wed_start"] and store_data["time_wed_start"] != "":
+                hours = hours + " wednesday  " + store_data["time_wed_start"] +" - " + store_data["time_wed_end"] + ", "
+            if store_data["time_thu_start"] and store_data["time_thu_start"] != "":
+                hours = hours + " thursday  " + store_data["time_thu_start"] +" - " + store_data["time_thu_end"] + ", "
+            if store_data["time_fri_start"] and store_data["time_fri_start"] != "":
+                hours = hours + " friday  " + store_data["time_fri_start"] +" - " + store_data["time_fri_end"] + ", "
+            if store_data["time_sat_start"] and store_data["time_sat_start"] != "":
+                hours = hours + " saturday " + store_data["time_sat_start"] +" - " + store_data["time_sat_end"] + ", "
+            if store_data["time_sun_start"] and store_data["time_sun_start"] != "":
+                hours = hours + " sunday " + store_data["time_sun_start"] +" - " + store_data["time_sun_end"]
+            if hours == "":
+                hours = "<MISSING>"
+            store.append(hours)
+            # store.append(store_data['template_name'])
+            store.append("https://www.foreyes.com/locations/"+store_data['url_key'].strip())
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            yield store
+        if current_results_len < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
