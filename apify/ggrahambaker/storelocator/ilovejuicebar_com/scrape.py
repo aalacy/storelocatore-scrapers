@@ -32,19 +32,19 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://ilovejuicebar.com/'
-    ext = 'locations-1'
+    locator_domain = 'https://www.ilovejuicebar.com/'
+    ext = 'locations'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-    states = driver.find_elements_by_css_selector('section.Index-page')[2:]
+    states = driver.find_elements_by_css_selector('.sqs-layout.sqs-grid-12.columns-12')
     link_list = []
     for state in states:
         ps = state.find_elements_by_tag_name("p")
         for p in ps:
             try:
                 href = p.find_element_by_tag_name('a').get_attribute('href')
-                if "locations-1" not in href:
+                if "/menu" not in href and "/contact" not in href and "locations" not in href:
                     main = p.text.replace("105 Franklin","105\nFranklin").split("\n")
                     link_list.append([href,main])
             except:
@@ -56,12 +56,34 @@ def fetch_data():
         driver.get(link)
         print(link)
         time.sleep(2)
-        element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-            (By.CLASS_NAME, "Main-content")))
-        time.sleep(2)
-        main = driver.find_element_by_css_selector('section.Main-content').text.split('\n')
-        
-        if "brand that was founded" in main[0] and link == "https://ilovejuicebar.com/troy":
+
+        raw_address = row[1]
+        if not raw_address[-1].strip():
+            raw_address.pop(-1)
+
+        street_address = " ".join(raw_address[1:-1])
+        city, state, zip_code = addy_ext(raw_address[-1])
+        country_code = 'US'
+        location_name = raw_address[0].strip()
+
+        if location_name == "Plaza Midwood1204 Central Avenue":
+            location_name = "Plaza Midwood"
+            street_address = "1204 Central Avenue Suite 100"
+        try:
+            element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+                (By.CLASS_NAME, "Main-content")))
+            time.sleep(2)
+            main = driver.find_element_by_css_selector('section.Main-content').text.split('\n')
+        except:
+            if street_address == "1320 McFarland Blvd East Building 520":
+                main = driver.find_element_by_css_selector('.content').text.split('\n')
+            else:
+                store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
+                              '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>']
+                all_store_data.append(store_data)
+                continue
+
+        if "brand that was founded" in main[0] and "/troy" in link:
             location_name = "Troy"
             street_address = "3115 Crooks Road"
             city = "Troy"
@@ -71,14 +93,6 @@ def fetch_data():
                           '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>']
             all_store_data.append(store_data)
             continue
-
-        raw_address = row[1]
-        if not raw_address[-1].strip():
-            raw_address.pop(-1)
-
-        street_address = " ".join(raw_address[1:-1])
-        city, state, zip_code = addy_ext(raw_address[-1])
-        location_name = raw_address[0].strip()
 
         hours = ''
         phone_number = ''
@@ -91,7 +105,10 @@ def fetch_data():
                 try:
                     phone_number = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', h)[0]
                 except:
-                    pass
+                    if street_address == "1320 McFarland Blvd East Building 520":
+                        phone_number = main[4]
+                    else:
+                        pass
 
         hours = hours.replace("–","-").strip()
 
@@ -108,7 +125,6 @@ def fetch_data():
 
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        country_code = 'US'
         store_data = [locator_domain, link, location_name, street_address.strip(), city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
