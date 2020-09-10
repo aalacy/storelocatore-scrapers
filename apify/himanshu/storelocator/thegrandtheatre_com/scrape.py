@@ -18,70 +18,57 @@ def write_output(data):
             writer.writerow(row)
  
 def fetch_data():
+    addressess = []
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://thegrandtheatre.com"
-    return_main_object=[]
-    r = session.get(base_url+'/search?type=locations',headers=headers)
+   
+    r = session.get("https://thegrandtheatre.com/locations",headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('div',{"id":"searchresults"}).find_all('a',{"class":"searchtitle"})
-    for i in main:
-        link = base_url+'/'+i['href']
-        r1 = session.get(link,headers=headers)
-        nonBreakSpace = '&nbsp;'
+    main = soup.find("div",{"class":"container clearfix"}).find_all('div',{"class":"slide locationblock"})
+    for sub in main:
+        link = sub.find("a")['href']
+        page_url = base_url + link
+        r1 = session.get(page_url,headers=headers)
         soup1=BeautifulSoup(r1.text,'lxml')
-        location_name=soup1.find('div',{"id":"theatre"}).find('div',{"class":"title"}).text.strip()
-        st=list(soup1.find('div',{"id":"theatre"}).find('div',{"class":"small"}).stripped_strings)
-        lat_tmp = soup1.find('div',{"id":"map"}).find('iframe')['src'].split('m&ll=')[1].split('&spn=0.')[0].split(',')
-        lat =lat_tmp[0]
-        lng = lat_tmp[1]
-        # print(lng)
-        
-        if (len(st)==2):
-            address_tmp= st[0].split('|')
-            address =address_tmp[0]
-            city_tmp = address_tmp[1].strip().split(',')
-            city = city_tmp[0]
-            state_tmp = city_tmp[1].strip().split('\xa0')
-            state = state_tmp[0]
-            zip = state_tmp[1]
-            phone = st[-1].replace('Information:','').strip()
-             
-            
+        field=soup1.find('div',{"class":"location-main"})
+        location_name = field.find("h1").text
+        addr = list(field.find("div",{"class":"address"}).stripped_strings)
+        street_address = addr[0]
+        city = addr[1].split(",")[0]
+        state = addr[1].split(",")[1].strip().split(" ")[0]
+        zipp = addr[1].split(",")[1].strip().split(" ")[1]
+        phone = addr[2]
+        if "amstar" in page_url:
+            location_type = "Amstar Cinemas"
+        elif "the-grand" in page_url:
+            location_type = "The Grand Theatre"
         else:
-            address_tmp = st[1].split('|')
-            address = address_tmp[0]
-            city_tmp = address_tmp[1].strip().split(',')
-            city = city_tmp[0]
-            state_tmp = city_tmp[1].strip().split('\xa0')
-            state = state_tmp[0]
-            zip = state_tmp[1]
-            phone = st[-1].replace('Information:','').strip()
-            
-        
-        country="US"
-        hour=''
-        store_number=''
+            location_type = "<MISSING>"
+
         store=[]
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(address.encode('ascii', 'ignore').decode('ascii').strip() if address else "<MISSING>")
-        store.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
-        store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else "<MISSING>")
-        store.append(zip.encode('ascii', 'ignore').decode('ascii').strip() if zip else "<MISSING>")
-        store.append(country.encode('ascii', 'ignore').decode('ascii').strip() if country else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(lat.encode('ascii', 'ignore').decode('ascii').strip() if lat else "<MISSING>")
-        store.append(lng.encode('ascii', 'ignore').decode('ascii').strip() if lng else "<MISSING>")
-        store.append(hour.encode('ascii', 'ignore').decode('ascii').strip() if hour else "<MISSING>")
-        store.append(link.encode('ascii', 'ignore').decode('ascii').strip())
-        return_main_object.append(store)
-    return return_main_object
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append('US')
+        store.append('<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append(location_type)
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append(page_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
 def scrape():
+    # fetch_data()
     data = fetch_data()
     write_output(data)
 
