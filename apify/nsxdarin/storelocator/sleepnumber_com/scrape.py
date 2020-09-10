@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -20,7 +20,8 @@ def fetch_data():
     cities = []
     url = 'https://stores.sleepnumber.com/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if 'class="Directory-listLink" href="' in line:
             items = line.split('class="Directory-listLink" href="')
             for item in items:
@@ -33,9 +34,10 @@ def fetch_data():
                     else:
                         states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        print(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'class="Directory-listLink" href="' in line2:
                 items = line2.split('class="Directory-listLink" href="')
                 for item in items:
@@ -48,9 +50,10 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if 'track="visitpage" href="../' in line2:
                 items = line2.split('track="visitpage" href="../')
                 for item in items:
@@ -59,10 +62,10 @@ def fetch_data():
                         if lurl not in locs:
                             locs.append(lurl)
                         else:
-                            print(lurl + '|' + city)
-    print('Found %s Locations...' % str(len(locs)))
+                            print((lurl + '|' + city))
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print(('Pulling Location %s...' % loc))
         website = 'sleepnumber.com'
         typ = '<MISSING>'
         hours = ''
@@ -77,7 +80,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '"entityType":"location","id":"' in line2:
                 store = line2.split('"entityType":"location","id":"')[1].split('"')[0]
             if '"name" id="location-name">' in line2:

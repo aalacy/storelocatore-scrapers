@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -17,8 +17,9 @@ def fetch_data():
     locs = []
     url = 'https://www.macktrucks.com/simpleprox.ashx?http://mvservices.liquidint.com/DealerJSON_new.ashx'
     r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
     website = 'macktrucks.com'
-    for line in r.iter_lines():
+    for line in r.iter_lines(decode_unicode=True):
         if '"IDENTIFIER_VALUE":"' in line:
             items = line.split(',"SELECT_EMAIL_ADDRESS":""},"')
             for item in items:

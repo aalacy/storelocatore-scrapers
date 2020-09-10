@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 import json
 
@@ -20,7 +20,8 @@ def fetch_data():
     locs = []
     url = 'https://www.tacobell.ca/en/stores/'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if '<script id="all_stores_locations"' in line:
             items = line.split('"slug": "')
             for item in items:
@@ -32,7 +33,7 @@ def fetch_data():
                     locs.append(lurl + '|' + lat + '|' + lng)
     
     for loc in locs:
-        print('Pulling Location %s...' % loc.split('|')[0])
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'tacobell.ca'
         typ = 'Restaurant'
         name = ''
@@ -48,7 +49,8 @@ def fetch_data():
         lng = loc.split('|')[2]
         name = 'Taco Bell'
         r2 = session.get(loc.split('|')[0], headers=headers)
-        lines = r2.iter_lines()
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
             if '<p class="text text--pink text--bold">' in line2:
                 add = line2.split('<p class="text text--pink text--bold">')[1].split('<')[0]

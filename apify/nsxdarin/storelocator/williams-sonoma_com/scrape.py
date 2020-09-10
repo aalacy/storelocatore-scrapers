@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,7 +18,8 @@ def fetch_data():
     allurls = []
     url = 'https://www.williams-sonoma.com/customer-service/store-locator.html?cm_type=gnav#'
     r = session.get(url, headers=headers)
-    lines = r.iter_lines()
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
     cty = ''
     for line in lines:
         if 'United States</h2>' in line:
@@ -41,7 +42,7 @@ def fetch_data():
         purl = loc.split('|')[0]
         country = loc.split('|')[1]
         typ = ''
-        print('Pulling Location %s...' % purl)
+        print(('Pulling Location %s...' % purl))
         website = 'williams-sonoma.com'
         hours = ''
         name = ''
@@ -53,7 +54,8 @@ def fetch_data():
         lat = ''
         lng = ''
         r2 = session.get(purl, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if "storeType: '" in line2:
                 typ = line2.split("storeType: '")[1].split("'")[0]
             if 'class="store-name">' in line2:

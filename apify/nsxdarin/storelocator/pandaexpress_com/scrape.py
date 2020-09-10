@@ -1,5 +1,5 @@
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -18,13 +18,14 @@ def fetch_data():
     mexico = ['bn','c1','df','du','gu','gt','i1','ka','l1','m1','mx','o1','qr','s1','sc','sa','se','t1']
     locs = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    if r.encoding is None: r.encoding = 'utf-8'
+    for line in r.iter_lines(decode_unicode=True):
         if ' <loc>https://www.pandaexpress.com/userlocation/' in line and '/  /' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             st = lurl.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[1]
             if st not in mexico:
                 locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    print(('Found %s Locations.' % str(len(locs))))
     canada = ['AB','BC','MB','QC','NB','NL','NS','ON','PE','SK','YT','NU','NT']
     for loc in locs:
         name = ''
@@ -44,7 +45,8 @@ def fetch_data():
         lng = ''
         store = loc.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[0]
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        if r2.encoding is None: r2.encoding = 'utf-8'
+        for line2 in r2.iter_lines(decode_unicode=True):
             if '<h1 class="title">' in line2:
                 name = line2.split('<h1 class="title">')[1].split('<')[0].strip().replace('&amp;','&').replace('&#39;',"'")
             if 'var store = { lat: ' in line2:
