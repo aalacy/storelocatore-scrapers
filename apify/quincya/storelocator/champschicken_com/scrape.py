@@ -6,6 +6,10 @@ from random import randint
 import re
 
 from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -38,7 +42,9 @@ def fetch_data():
 	for state in states:
 		print("Search: " + state)
 		driver.get("https://champschicken.com/locate/?loc=" + state)
-		time.sleep(randint(2,4))
+		element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+			(By.ID, "skin_wrap_inner")))
+		time.sleep(4)
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 
@@ -72,13 +78,19 @@ def fetch_data():
 					phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', item.text)[0]
 				except:
 					phone = "<MISSING>"
-			hours_of_operation = "<MISSING>"
-
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
 
 			req = session.get(link, headers = HEADERS)
 			base = BeautifulSoup(req.text,"lxml")
+			hours_of_operation = base.find(class_="details").find_all("p")[3].text.replace(" PM", " PM ")
+			hours_of_operation = re.sub('[0-9]{1}\.' , '', hours_of_operation)
+			hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+			if "pm" not in hours_of_operation.lower():
+				hours_of_operation = "<MISSING>"
+			if not hours_of_operation:
+				hours_of_operation = "<MISSING>"
+
 			all_scripts = base.find_all('script')
 			for script in all_scripts:
 				if "lat=" in str(script):
