@@ -1,7 +1,7 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 
@@ -41,11 +41,21 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
+        'authority': 'www.indochino.com',
+        'method': 'GET',
+        'path': '/showrooms',
+        'accept-encoding': 'gzip, deflate, br',
+        'scheme': 'https',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+    }
     output_list = []
     url = "https://www.indochino.com/showrooms"
-    request = requests.get(url)
+    session = SgRequests()
+    request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
-    store_list = response.xpath('//div[contains(@class, "showroomLocations__LOC")]')
+    store_list = response.xpath('//div[contains(@class, "showroomLocations__LOC") and boolean(@name)]')
     for store in store_list:
         data_id = validate(store.xpath('./@data-id'))
         if data_id == "29463" or data_id == "29934" or data_id == "29560" or data_id == "28474":
