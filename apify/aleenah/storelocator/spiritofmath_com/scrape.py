@@ -36,9 +36,9 @@ def fetch_data():
     links=[]
 
     driver.get("https://www.spiritofmath.com/campuses/")
+    uls=driver.find_element_by_class_name('res-con').find_elements_by_tag_name('ul')
 
-    uls = driver.find_elements_by_class_name("list-unstyled")
-    for i in range(37):
+    for i in range(len(uls)):
         li = uls[i]
         tex=li.text.split("\n")
         if tex[0]=="Head Office":
@@ -90,7 +90,19 @@ def fetch_data():
     for link in links:
         print(link)
         driver.get(link)
-        news=driver.find_element_by_xpath('//div[@class="news-text"]').text
+        try:
+            news=driver.find_element_by_xpath('//div[@class="news-text"]').text
+        except:
+            try:
+                news = driver.find_element_by_class_name("news-text").text
+            except:
+
+                h=driver.page_source
+                if 'Mon' in h:
+
+                    news=re.findall(r'(Mon.*by appointment only)',h,re.DOTALL)[0].replace('<li style="text-align: left">',' ').replace('</li>','').replace('</b></span></p>','').replace('<ul>','')
+                else:
+                    news=''
         #print(news)
         try:
             tim = re.findall(r'(Hours.*pm|HOURS.*pm|Hours.*PM|HOURS.*PM).*(Open)*(OPEN)*',news,re.DOTALL)[0][0].replace("\n"," ")
