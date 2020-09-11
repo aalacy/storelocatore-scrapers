@@ -10,7 +10,7 @@ base_url = 'https://www.harringtonham.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').replace('\n', '').encode("utf8").strip()
+    return item.replace('\n', '').strip()
 
 def get_value(item):
     if item == None :
