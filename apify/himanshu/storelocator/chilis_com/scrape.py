@@ -36,7 +36,7 @@ def fetch_data():
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
             store_r = session.get(store_link, headers=headers)
-            store_soup = BeautifulSoup(store_r.text, "lxml")
+            store_soup = BeautifulSoup(store_r.text, "html5lib")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
             location_name = data['name'].replace("&#39;","'")
             street_address = data['address']['streetAddress'].replace("&#39;","'")
