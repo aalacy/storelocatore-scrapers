@@ -84,7 +84,10 @@ def fetch_data():
             output.append(get_value(details['address']['postalCode'])) #zipcode
             output.append(get_value(details['address']['addressCountry'])) #country code
             output.append('<MISSING>') #store_number
-            output.append(get_value(details['telephone'])) #phone
+            if 'telephone' in details:
+                output.append(get_value(details['telephone'])) #phone
+            else:
+                output.append('<MISSING>')
             output.append('Luxury Boutique Hotels | Andaz Hotels By Hyatt') #location type
             output.append(get_value(store['location']['latitude'])) #latitude
             output.append(get_value(store['location']['longitude'])) #longitude
