@@ -58,7 +58,7 @@ def fetch_data():
 			for i, row in enumerate(raw_address):
 				if zip_code in row:
 					city = raw_address[i-1].strip()
-					street_address = " ".join(raw_address[:i-1])		
+					street_address = " ".join(raw_address[:i-1])
 
 		if "," in city:
 			street_address = street_address + " " + city[:city.find(",")].strip()
@@ -66,7 +66,7 @@ def fetch_data():
 
 		if street_address[-1:] == ",":
 			street_address = street_address[:-1]
-		street_address = street_address.replace("\n"," ").replace("–","-").strip()		
+		street_address = street_address.replace("\n"," ").replace("–","-").strip()
 		state = "<MISSING>"
 		country_code = "GB"
 		store_number = "<MISSING>"
@@ -77,8 +77,11 @@ def fetch_data():
 		except:
 			phone = "<MISSING>"
 
-		hours_of_operation = item.find_all("p")[1].text.replace("\n"," ").replace("–","-")[5:].strip()
-		if len(hours_of_operation) < 20:
+		try:
+			hours_of_operation = item.find_all("p")[1].text.replace("\n"," ").replace("–","-")[5:].strip()
+			if len(hours_of_operation) < 20:
+				hours_of_operation = "<MISSING>"
+		except:
 			hours_of_operation = "<MISSING>"
 		latitude = item.find(class_="marker")["data-lat"]
 		longitude = item.find(class_="marker")["data-lng"]
