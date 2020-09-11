@@ -1,19 +1,16 @@
 import csv
 from sgrequests import SgRequests
-import sgzip
-from tenacity import retry, stop_after_attempt
+from sgzip import *
 from typing import *
 import json
-
-search = sgzip.ClosestNSearch()
-search.initialize()
+from concurrent.futures import *
 
 MISSING = '<MISSING>'
-
+website = 'verizonwireless.com'
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
-
-MAX_RESULTS = 25
-MAX_DISTANCE = 2
+SEARCH_RADIUS_MILES = 2
+paralellism = 15
+session = SgRequests().requests_retry_session()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,9 +19,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-@retry(stop=stop_after_attempt(7))
 def request_with_retries(url):
-    session = SgRequests()
     return session.get(url, headers=headers)
 
 def parse_store_locations(iter_lines: Iterator):
@@ -38,7 +33,8 @@ def parse_store_locations(iter_lines: Iterator):
             try:
                 return json.loads(json_str)
             except json.decoder.JSONDecodeError:
-                print(f"Cannot parse string to json (most likely due to 'no results' javascript) : {json_str}")
+                if json_str:
+                    print(f"Cannot parse string to json (most likely due to 'no results' javascript) : {json_str}")
                 return []
 
     return []
@@ -61,52 +57,45 @@ def get(record: Dict[str, str], key: str):
     except KeyError:
         return MISSING
 
+def populate_records(r) -> list:
+    json_results = parse_store_locations(r.iter_lines())
+
+    for j_result in json_results:
+        page_url = f"https://www.verizonwireless.com{j_result['storeUrl']}"
+        store_name = get(j_result, 'storeName')
+        address = get(j_result, 'address')
+        city = get(j_result, 'city')
+        state = get(j_result, 'state')
+        zipcode = get(j_result, 'zip')
+        country = 'US'
+        store_number = get(j_result, 'storeNumber')
+        phone = get(j_result, 'phone')
+        store_type = get(j_result, 'typeOfStore')
+        lat = get(j_result, 'lat')
+        lng = get(j_result, 'lng')
+        hours = get(j_result, 'openingHours')
+
+        yield [website, page_url, store_name, address, city, state, zipcode, country, store_number, phone,
+               store_type, lat, lng, hours]
+
+def fetch_data_for_coord(coord: Tuple[float, float]):
+    (lat, long) = (coord[0], coord[1])
+    url = f'https://www.verizonwireless.com/stores/storesearchresults/?lat={lat}&long={long}'
+    return request_with_retries(url)
 
 def fetch_data():
+    all_search_coords = sgzip.coords_for_radius(SEARCH_RADIUS_MILES, SearchableCountries.USA)
     ids = set()
-    coord = search.next_coord()
-    while coord:
-        x = coord[0]
-        y = coord[1]
-        website = 'verizonwireless.com'
-        url = f'https://www.verizonwireless.com/stores/storesearchresults/?lat={x}&long={y}'
-        r = request_with_retries(url)
-        result_coords = []
+    with ThreadPoolExecutor(max_workers=paralellism, thread_name_prefix='fetcher') as executor:
+        for raw_result in executor.map(fetch_data_for_coord, all_search_coords):
+            for res in populate_records(raw_result):
+                store_number = res[8]
+                if store_number in ids:
+                    continue
+                else:
+                    ids.add(store_number)
 
-        json_results = parse_store_locations(r.iter_lines())
-
-        for j_result in json_results:
-            page_url = f"https://www.verizonwireless.com{j_result['storeUrl']}"
-            store_name = get(j_result, 'storeName')
-            address = get(j_result, 'address')
-            city = get(j_result, 'city')
-            state = get(j_result, 'state')
-            zipcode = get(j_result, 'zip')
-            country = 'US'
-            store_number = get(j_result, 'storeNumber')
-            phone = get(j_result, 'phone')
-            store_type = get(j_result, 'typeOfStore')
-            lat = get(j_result, 'lat')
-            lng = get(j_result, 'lng')
-            hours = get(j_result, 'openingHours')
-
-            result_coords.append((lat, lng))
-
-            if store_number in ids:
-                continue
-            else:
-                ids.add(store_number)
-
-            yield [website, page_url, store_name, address, city, state, zipcode, country, store_number, phone, store_type, lat, lng, hours]
-
-        if len(result_coords) < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(result_coords) == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-
-        coord = search.next_coord()
+                yield res
 
 def scrape():
     data = fetch_data()
