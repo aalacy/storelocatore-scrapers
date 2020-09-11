@@ -34,7 +34,7 @@ def fetch_data():
     store_list = response.xpath('//ul[@class="dropdown-menu"]')[0].xpath('.//li/a/@href')
     for store in store_list:
         driver.get(store)
-        source = driver.page_source.encode("utf8")
+        source = driver.page_source
         data = etree.HTML(source)   
         try:
             temp = data.xpath('//script[@class="yext-schema-json"]//text()')[0]

@@ -11,7 +11,7 @@ base_url = 'https://www.batterywarehouse.net'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace('\r', '').replace('\n', '').strip()
+    return item.replace('\r', '').replace('\n', '').strip()
 
 def get_value(item):
     if item == None :
