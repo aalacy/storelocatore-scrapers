@@ -9,7 +9,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -54,7 +54,8 @@ def fetch_data():
                             # print(st['href'].replace("..","").replace("//",""))
                             r3 = session.get("https://stores.loft.com/" + st['href'].replace("..", "").replace("//", ""))
                             soup3 = BeautifulSoup(r3.text, "lxml")
-
+                            if soup3.find("h2",{"class":"closed-title"}):
+                                continue
                             page_url = "https://stores.loft.com/" + \
                                 st['href'].replace("..", "").replace("//", "")
                             # print(page_url)
@@ -110,6 +111,8 @@ def fetch_data():
                             #print(page_url)
                             continue
                         soup4 = BeautifulSoup(r4.text, "lxml")
+                        if soup4.find("h2",{"class":"closed-title"}):
+                            continue
                         streetAddress = soup4.find(
                             "span", {"itemprop": "streetAddress"}).text.strip()
                         state = soup4.find(
@@ -159,6 +162,8 @@ def fetch_data():
                         a["href"].replace("../../", "").strip()
                     r_loc = session.get(page_url)
                     soup_loc = BeautifulSoup(r_loc.text, "lxml")
+                    if soup_loc.find("h2",{"class":"closed-title"}):
+                        continue
                     street_address = soup_loc.find(
                         "span", {"itemprop": "streetAddress"}).text.strip()
                     city = soup_loc.find(
@@ -172,8 +177,11 @@ def fetch_data():
                         "span", {"itemprop": "telephone"}).text.strip()
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
-                    hours_of_operation = " ".join(list(soup_loc.find(
-                        "table", class_="c-location-hours-details").stripped_strings)).strip()
+                    try:
+                        hours = " ".join(list(soup_loc.find(
+                            "table", class_="c-location-hours-details").stripped_strings)).strip()
+                    except:
+                        hours = "<MISSING>"
                     # print(hours_of_operation)
                     tem_var = []
                     tem_var.append("https://www.loft.com/")
@@ -201,7 +209,8 @@ def fetch_data():
             # print("--------------------------")
 
             soup5 = BeautifulSoup(r5.text, "lxml")
-
+            if soup5.find("h2",{"class":"closed-title"}):
+                continue
             streetAddress = soup5.find(
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
@@ -210,8 +219,11 @@ def fetch_data():
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text
-            hours = " ".join(list(soup5.find(
-                "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+            try:
+                hours = " ".join(list(soup5.find(
+                    "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+            except:
+                hours = "<MISSING>"
             latitude = soup5.find("meta", {"itemprop": "latitude"})['content']
             longitude = soup5.find("meta", {"itemprop": "longitude"})[
                 'content']
@@ -264,6 +276,8 @@ def fetch_data():
                         page_url = "https://stores.loft.com/" + \
                             st['href'].replace("..", "").replace("//", "")
                         soup3 = BeautifulSoup(r3.text, "lxml")
+                        if soup3.find("h2",{"class":"closed-title"}):
+                            continue
                         streetAddress = soup3.find(
                             "span", {"itemprop": "streetAddress"}).text.strip()
                         state = soup3.find(
@@ -276,8 +290,11 @@ def fetch_data():
                             list(soup3.find("h1", {"itemprop": "name"}).stripped_strings))
                         phone = soup3.find(
                             "span", {"itemprop": "telephone"}).text
-                        hours = " ".join(list(soup3.find(
-                            "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                        try:
+                            hours = " ".join(list(soup3.find(
+                                "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+                        except:
+                            hours = "<MISSING>"
                         latitude = soup3.find("meta", {"itemprop": "latitude"})[
                             'content']
                         longitude = soup3.find("meta", {"itemprop": "longitude"})[
@@ -309,6 +326,8 @@ def fetch_data():
                     page_url = one_link
                     r4 = session.get(one_link)
                     soup4 = BeautifulSoup(r4.text, "lxml")
+                    if soup4.find("h2",{"class":"closed-title"}):
+                        continue
                     streetAddress = soup4.find(
                         "span", {"itemprop": "streetAddress"}).text.strip()
                     state = soup4.find(
@@ -356,7 +375,8 @@ def fetch_data():
             # print("--------------------------")
 
             soup5 = BeautifulSoup(r5.text, "lxml")
-
+            if soup5.find("h2",{"class":"closed-title"}):
+                continue
             streetAddress = soup5.find(
                 "span", {"itemprop": "streetAddress"}).text.strip()
             state = soup5.find("span", {"itemprop": "addressRegion"}).text
@@ -365,8 +385,11 @@ def fetch_data():
             name = " ".join(
                 list(soup5.find("h1", {"itemprop": "name"}).stripped_strings))
             phone = soup5.find("span", {"itemprop": "telephone"}).text
-            hours = " ".join(list(soup5.find(
-                "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+            try:
+                hours = " ".join(list(soup5.find(
+                    "table", {"class": "c-location-hours-details"}).find("tbody").stripped_strings))
+            except:
+                hours = "<MISSING>"
             latitude = soup5.find("meta", {"itemprop": "latitude"})['content']
             longitude = soup5.find("meta", {"itemprop": "longitude"})[
                 'content']
