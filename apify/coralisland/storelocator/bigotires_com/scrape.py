@@ -11,7 +11,7 @@ base_url = 'https://www.bigotires.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -52,12 +52,12 @@ def fetch_data():
 
             source = json.loads(request.text)
 
-            if 'storesType' not in source.keys():
+            if 'storesType' not in list(source.keys()):
                 continue
 
             store_list = source['storesType']
 
-            if 'stores' not in store_list.keys():
+            if 'stores' not in list(store_list.keys()):
                 continue
 
             store_list = store_list['stores']

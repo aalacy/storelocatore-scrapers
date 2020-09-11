@@ -14,7 +14,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -46,7 +46,7 @@ def fetch_data():
     request = session.get(url)
     source = validate(request.text.split('var wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_global_settings')[0])[:-1]
     store_list = json.loads(source)
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         output = []
         output.append(base_url) # url
         output.append(get_value(store['title'])) #location name

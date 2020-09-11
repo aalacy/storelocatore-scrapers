@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -64,7 +64,7 @@ def fetch_data():
             output.append(get_value(store['lng'])) #longitude
             store_hours = []
             if store['hours']:
-                for day, hour in store['hours'].items():
+                for day, hour in list(store['hours'].items()):
                     hour = validate(hour)
                     if hour == '':
                         hour = 'closed'
