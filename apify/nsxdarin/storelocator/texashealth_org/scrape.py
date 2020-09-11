@@ -56,16 +56,16 @@ def fetch_data():
                 for item in items:
                     if '<div class="field-address-line-1">' in item:
                         name = item.split('"profile-key-data field-title">')[1].split('<')[0]
-                        add = line2.split('<div class="field-address-line-1">')[1].split('<')[0]
+                        add = item.split('<div class="field-address-line-1">')[1].split('<')[0]
                         try:
                             add = add + ' ' + line2.split('<div class="field-address-line-2">')[1].split('<')[0]
                             add = add.strip()
                         except:
                             pass
-                        city = line2.split('<span class="field-city">')[1].split('<')[0]
-                        state = line2.split('<span class="field-state">')[1].split('<')[0]
-                        zc = line2.split('<span class="field-zip-code">')[1].split('<')[0]
-                        phone = line2.split('"field-phone-number" href="tel:')[1].split('"')[0]
+                        city = item.split('<span class="field-city">')[1].split('<')[0]
+                        state = item.split('<span class="field-state">')[1].split('<')[0]
+                        zc = item.split('<span class="field-zip-code">')[1].split('<')[0]
+                        phone = item.split('"field-phone-number" href="tel:')[1].split('"')[0]
                         locinfo.append(name + '|' + add + '|' + city + '|' + state + '|' + zc + '|' + phone)
             if 'Image&quot;:&quot;&quot;,&quot;Latitude&quot;:&quot;' in line2:
                 items = line2.split('Image&quot;:&quot;&quot;,&quot;Latitude&quot;:&quot;')
@@ -83,6 +83,8 @@ def fetch_data():
             phone = locinfo[x].split('|')[5]
             lat = ll[x].split('|')[0]
             lng = ll[x].split('|')[1]
+            if phone == '':
+                phone = '<MISSING>'
             yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
