@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -30,7 +30,7 @@ def eliminate_space(items):
     rets = []
     for item in items:
         item = validate(item)
-        if item != '':
+        if item.strip(u'\u200b') != '':
             rets.append(item)
     return rets
 

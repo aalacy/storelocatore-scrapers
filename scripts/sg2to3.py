@@ -27,8 +27,8 @@ def process_internal(base_path):
             content = oldfile.readlines()
             has_iter_lines = any(['iter_lines()' in x for x in content])
             for line in content:
-                if ".encode('utf-8')" in line or '.encode("utf-8")' in line:
-                    newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', ""))
+                if ".encode('utf-8')" in line or '.encode("utf-8")' or '.encode("utf8")' or ".encode('ascii', 'ignore')" in line:
+                    newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', "").replace('.encode("utf8")', "").replace(".encode('ascii', 'ignore')", ""))
                 elif 'r = session.' in line and has_iter_lines:
                     newfile.write(line)
                     newfile.write(get_padding(line) + "if r.encoding is None: r.encoding = 'utf-8'\n")
@@ -62,11 +62,11 @@ def process(base_path):
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs[0:200]:
+        for dir in dirs[0:100]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/coralisland/storelocator')

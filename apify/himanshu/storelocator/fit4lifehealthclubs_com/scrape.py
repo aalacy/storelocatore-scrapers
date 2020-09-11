@@ -68,7 +68,11 @@ def fetch_data():
 
         hours_of_operation = " ".join(hour)
         if location_name=="Fayetteville - Owens Dr.":
-            page_url = "<MISSING>"
+            page_url = "https://fit4lifehealthclubs.com/fayetteville-owen-dr/"
+            phone = "910-223-9970"
+        if location_name == "Mt. Olive":
+            street_address = street_address.replace("Mount Olive","").strip()
+            
         store=[]
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')

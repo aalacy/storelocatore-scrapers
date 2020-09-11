@@ -76,7 +76,7 @@ def fetch_data():
 		if not dealer:
 			phone = item.find(class_="main-container").find_all("p")[0].a.text.strip()
 			hours_of_operation = item.find(class_="main-container").find_all("p")[1].text.strip()
-			script = item.find('script', attrs={'type': "application/ld+json"}).text
+			script = item.find(class_="column main").find('script', attrs={'type': "application/ld+json"}).text
 			script = script[script.find("{"):script.rfind("}")+1].strip() 
 			geo = json.loads(script)
 
@@ -84,7 +84,7 @@ def fetch_data():
 			longitude = geo['geo']['longitude']
 		else:
 			phone = item.find(id="left").a.text.strip()
-			hours_of_operation = item.find(id="left").find_all("p")[1].text.replace("\r\n"," ").strip()
+			hours_of_operation = item.find(id="left").find_all("p")[1].text.replace("\n"," ").strip()
 			
 			if street_address == "1087 Meridian Ave. Ste 10":
 				latitude = '37.304393'

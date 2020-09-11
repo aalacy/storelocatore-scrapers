@@ -17,7 +17,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -84,7 +84,10 @@ def fetch_data():
             output.append(get_value(details['address']['postalCode'])) #zipcode
             output.append(get_value(details['address']['addressCountry'])) #country code
             output.append('<MISSING>') #store_number
-            output.append(get_value(details['telephone'])) #phone
+            if 'telephone' in details:
+                output.append(get_value(details['telephone'])) #phone
+            else:
+                output.append('<MISSING>')
             output.append('Luxury Boutique Hotels | Andaz Hotels By Hyatt') #location type
             output.append(get_value(store['location']['latitude'])) #latitude
             output.append(get_value(store['location']['longitude'])) #longitude

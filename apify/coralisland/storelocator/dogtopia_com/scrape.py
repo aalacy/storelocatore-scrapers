@@ -10,7 +10,7 @@ base_url = 'https://www.dogtopia.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -47,7 +47,7 @@ def fetch_data():
         location_hours_info = store['store_info']['location_hours_info'][0]
         hours = {"monday": {}, "tuesday": {}, "wednesday": {}, "thursday": {}, "friday": {}, "saturday": {}, "sunday": {}}
         extra = ""
-        for idx, item in location_hours_info.items():
+        for idx, item in list(location_hours_info.items()):
             label = validate(idx).split('_')
             if label[0] == "coming":
                 continue
@@ -60,8 +60,8 @@ def fetch_data():
             hours[label[0]] = tmp
         store_hours = ""
         count = 0
-        for idx, item in hours.items():
-            if len(item.keys()) < 2:
+        for idx, item in list(hours.items()):
+            if len(list(item.keys())) < 2:
                 store_hours += idx + ' Closed '
             else:
                 store_hours += idx + item['open'] + '-' + item['close'] + ' '

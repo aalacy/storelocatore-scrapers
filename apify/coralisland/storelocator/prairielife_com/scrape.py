@@ -15,7 +15,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -79,7 +79,7 @@ def fetch_data():
         labels = eliminate_space(hour_info[1].xpath('./div')[0].xpath('.//text()'))
         hours = eliminate_space(hour_info[1].xpath('./div')[1].xpath('.//text()'))
         store_hours = ""
-        for x in xrange(0, len(labels)):
+        for x in range(0, len(labels)):
             store_hours += labels[x] + hours[x] + ' '
             
         output = []

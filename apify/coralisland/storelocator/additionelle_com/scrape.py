@@ -4,7 +4,7 @@ import pdb
 import requests
 from lxml import etree
 import json
-
+import unidecode
 
 base_url = 'https://www.additionelle.com'
 
@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -59,6 +59,8 @@ def fetch_data():
         for store in store_list:
             output = []
             output.append(base_url) # url
+            if 'closed' in store['name'].lower() or 'ferme' in unidecode.unidecode(store['name']).lower():
+                continue
             output.append(get_value(store['name'])) #location name
             output.append(get_value(store['address1'])) #address
             output.append(get_value(store['city'])) #city
