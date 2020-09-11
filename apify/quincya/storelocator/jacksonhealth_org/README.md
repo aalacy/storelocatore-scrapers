@@ -1,0 +1,1 @@
+--ignore LatLngDuplicationValidator (Few addresses have multiple poi)
