@@ -3,12 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-# from shapely.prepared import prep
-# from shapely.geometry import Point
-# from shapely.geometry import mapping, shape
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -58,19 +52,24 @@ def fetch_data():
         #     print("~~~~~~~~~~~")
         for a in div.find_all("a"):
             page_url = a['href']
+            # print(page_url)
             r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
 
             address = soup_loc.find("section", class_="sec-1")
             loc = address.find("a")
-            addr = loc.find("address")
+            addr = soup_loc.find_all("address")[-1]
             list_add = list(addr.stripped_strings)
+
             list_add = [el.replace('\r\n', ',') for el in list_add]
+            # print(list_add)
+            if soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")}):
+                latitude = soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")})['href'].split("@")[1].split(",")[0]
+                longitude=soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")})['href'].split("@")[1].split(",")[1].split(",")[0]
+                
             if "MX" in " ".join(list_add) or "Mexico" in " ".join(list_add):
                 continue
-            # print(list_add)
-            # print(len(list_add))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        
             ca_zip_list = re.findall(
                 r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(list_add)))
 
@@ -94,18 +93,15 @@ def fetch_data():
                 street_address = list_add[1].strip()
                 city = list_add[2].strip()
                 state = list_add[3].split()[0].strip()
-            if "@" in loc["href"]:
-                latitude = loc["href"].split("@")[1].split(",")[0].strip()
-                longitude = loc["href"].split("@")[1].split(",")[1].strip()
-            else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            # print(latitude, longitude)
+            
+    
             phone_list = list(soup_loc.find(
                 "section", class_="sec-2").stripped_strings)
             if "(MEXICO)" in " ".join(phone_list):
                 continue
             phone = phone_list[1].strip()
+            if "Thompson" in phone:
+                phone="<MISSING>" 
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
 
