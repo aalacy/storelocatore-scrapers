@@ -72,28 +72,40 @@ def fetch_data():
         hours_of_operation = ""
         street_address1 = ''
         street_address2 = ''
-
+        store_name=''
         # print("location_url ==== ",loc['collection'])
         if "DocumentList" in loc:
             current_results_len = len(loc['DocumentList']) 
+            
             for data in loc['DocumentList']:
+                store_name = data['storeName']
                 if "address1_ntk" in data:
                     street_address1 = data['address1_ntk']
                 
                 if "address2_ntk" in data:
                     street_address2 = data['address2_ntk']
-
+                
+                
                 street_address = street_address1+ ' '+street_address2
+             
+           
                 soup = BeautifulSoup(data['working_hours_ntk'], "lxml")
-                hours_of_operation =  " ".join(list(soup.stripped_strings))
+
+                hours_of_operation =  " ".join(list(soup.stripped_strings)).lower().replace("pm"," pm ").replace("am",' am ').replace("sun"," sun ").replace("mon"," mon ").replace("wed"," wed ").replace("thu"," thu ").replace("fri"," fri ").replace("sat"," sat ").replace("tue"," tue ")
                 # print(hours_of_operation)
     
                 # do your logic.
                 page_url = "https://www.menswearhouse.com/store-locator/"+str(data['stloc_id'])
                 store_number = str(data['stloc_id'])
                 result_coords.append((latitude, longitude))
-                store = [locator_domain, data['storeName'], street_address.replace(data['state_ntk'],""), data['city_ntk'], data['state_ntk'], data['zipcode_ntk'], country_code,
-                        store_number, data['phone_ntk'], location_type, data['latlong'].split(",")[0], data['latlong'].split(",")[1], hours_of_operation,page_url]
+                if "phone_ntk" in data:
+                    phone =data['phone_ntk']
+                else:
+                    phone = "<MISSING>"
+                
+                # street_address = street_address.replace(store_name,'')
+                store = [locator_domain, store_name.capitalize(), street_address.replace(data['state_ntk'],"").lower(), data['city_ntk'].lower(), data['state_ntk'], data['zipcode_ntk'], country_code,
+                        store_number, phone, location_type, data['latlong'].split(",")[0], data['latlong'].split(",")[1], hours_of_operation,page_url]
 
                 if store[2] + store[-3] in addresses:
                     continue
