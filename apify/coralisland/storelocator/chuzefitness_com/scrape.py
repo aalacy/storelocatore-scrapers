@@ -19,7 +19,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.decode('ascii').strip().replace('&#038;', '')
+    return item.strip().replace('&#038;', '')
 
 def get_value(item):
     if item == None :
