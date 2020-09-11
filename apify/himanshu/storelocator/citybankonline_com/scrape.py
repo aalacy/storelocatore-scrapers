@@ -62,14 +62,21 @@ def fetch_data():
     for location in soup.find("div",{'class':"sf_cols"}).find_all("a",{"href":re.compile("/locations/")}):
         # print(base_url + location["href"])
         page1= base_url + location["href"]
+       
         try:
             location_request = session.get(page1.replace("https://www.city.bankhttps://staging.city.bank/locations/mortgage-southlake",'https://www.city.bank/locations/mortgage-southlake'),headers=headers)
         except:
-            
             continue
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"main-content"}).find('div',{'class':"sfContentBlock"}).stripped_strings)
-        
+        type_data = list(location_soup.find("div",{"class":"sf_colsOut col-right"}).stripped_strings)
+        if 'ATM' in type_data:
+            location_type = "Branch + ATM"
+        elif 'mortgage' in page1:
+            location_type = "Mortgage Service"
+        else:
+            location_type = "Branch Only"
+            
 
         # location_name = location_details
         
@@ -98,6 +105,7 @@ def fetch_data():
 
         
         phone = location_details[-1].replace("Phone:",'').replace("Phone:",'').strip().replace("PH:",'')
+
         
         
         
@@ -128,7 +136,7 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(location_type)
         store.append(geo_location.split("!3d")[1].split("!")[0])
         store.append(geo_location.split("!2d")[1].split("!")[0])
         store.append(hours.replace("\t"," "))

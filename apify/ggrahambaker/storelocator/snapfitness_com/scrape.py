@@ -4,24 +4,12 @@ import csv
 import time
 from random import randint
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-from selenium import webdriver
+from sgselenium import SgSelenium
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +24,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.snapfitness.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     time.sleep(2)
 
     urls = ['https://www.snapfitness.com/ca/gyms/?q=canada', 'https://www.snapfitness.com/us/gyms/?q=united%20states']
@@ -88,10 +76,13 @@ def fetch_data():
             location_name = main.h3.text
 
         conts = main.find_all('li')
-        phone_number = main.find(class_="link_phonenumber").text.strip()
-        if not phone_number:
+        try:
+            phone_number = main.find(class_="link_phonenumber").text.strip()
+            if not phone_number:
+                phone_number = '<MISSING>'
+        except:
             phone_number = '<MISSING>'
-
+            
         addy = str(main.find('span'))
         addy = addy.replace('<span>',"").replace('</span>',"").strip().split('<br/>')
 

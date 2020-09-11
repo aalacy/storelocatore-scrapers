@@ -1,10 +1,14 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 base_url = 'https://fasteddiesbilliards.com'
@@ -66,7 +70,7 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://fasteddiesbilliards.com"
-    session = requests.Session()
+    #session = requests.Session()
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'upgrade-insecure-requests': '1',

@@ -59,6 +59,11 @@ def fetch_data():
         if 'paragraph">(' in line and CFound:
             print(name)
             phone = line.split('paragraph">')[1].split('<')[0]
+            if name == 'Austin':
+                add = '1011 S Congress Ave, Bldg 1, Ste. 120'
+                city = 'Austin'
+                state = 'TX'
+                zc = '78704'
             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

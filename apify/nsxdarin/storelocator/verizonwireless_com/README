@@ -1,3 +1,12 @@
+## Current
+- Validation caveats:
+  - `--ignore StreetAddressHasNumber` - false positive
+  - `--ignore StreetAddressHasStateName` - false positive
+  - `--ignore GeoConsistencyValidator` - false positive
+  - `--ignore StateLevelCountValidator` - counting much more than previously
+  - `--ignore LatLngDuplicationValidator` - Same coords with different URLs and names, possibly different levels at one mall.
+
+## History
 rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/zeeshan/storelocator/verizonwireless_com/scrape.py
 
 rewriting this on 2/21 - the previous script pulled all the stores from the store directory located here https://www.verizonwireless.com/stores but that directory doesn't show

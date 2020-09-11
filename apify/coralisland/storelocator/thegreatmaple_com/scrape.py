@@ -5,6 +5,12 @@ import requests
 from lxml import etree
 import json
 
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
 base_url = 'https://thegreatmaple.com'
 
 def validate(item):    
@@ -42,7 +48,7 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://thegreatmaple.com/"
-    session = requests.Session()
+    #session = requests.Session()
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'upgrade-insecure-requests': '1',
@@ -58,13 +64,14 @@ def fetch_data():
         store = etree.HTML(session.get(store_link, headers=headers).text)
         try:
            details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
+           
         except:
            store = etree.HTML(session.get(store_link, headers=headers).text)
 
            details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[0].xpath('.//text()'))
-
-        #if store_link =='http://thegreatmaple.com/sandiego':
-        #    details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
+        
+        if store_link =='http://thegreatmaple.com/sandiego':
+            details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
         point = 0
         #print(details)
         for idx, de in enumerate(details):
@@ -77,6 +84,7 @@ def fetch_data():
             output.append(details[point-4]) #location name
         else:
             output.append('<MISSING>') #location name
+        #print(details[point-3])
         output.append(details[point-3]) #address
         address = details[point-2].strip().split(',')
 #        print(address)
@@ -89,7 +97,22 @@ def fetch_data():
         output.append("Great Maple | A Modern American Eatery") #location type
         output.append(validate(store.xpath('.//div[contains(@class, "tatsu-gmap map_")]/@data-latitude'))) #latitude
         output.append(validate(store.xpath('.//div[contains(@class, "tatsu-gmap map_")]/@data-longitude'))) #longitude
-        output.append(validate(details[point+1:])) #opening hours
+        hours = validate(details[point+1:]).replace('•','')
+        try:
+            hours = hours.split('HOURS')[0]
+        except:
+            pass
+        try:
+            hours = hours.split('Happy')[0]
+        except:
+            pass
+        try:
+            hours = hours.split('Check')[0]
+        except:
+            pass
+        
+        output.append(hours) #opening hours
+       # print(output)
         output_list.append(output)        
     return output_list
 
