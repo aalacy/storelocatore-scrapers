@@ -30,7 +30,7 @@ def eliminate_space(items):
     rets = []
     for item in items:
         item = validate(item)
-        if item != '':
+        if item.strip(u'\u200b') != '':
             rets.append(item)
     return rets
 
