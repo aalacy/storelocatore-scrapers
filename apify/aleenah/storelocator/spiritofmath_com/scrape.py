@@ -41,9 +41,11 @@ def fetch_data():
     for i in range(len(uls)):
         li = uls[i]
         tex=li.text.split("\n")
+
         if tex[0]=="Head Office":
             continue
         addr=tex[1]
+
 
         if "Pakistan" in addr:
             continue
@@ -64,6 +66,7 @@ def fetch_data():
                 countries.append("<MISSING>")
 
         e = re.findall(r'.*( [A-Z]{2}[ \,]*)$', addr)
+
         if e != []:
             addr = addr.replace(e[0], "")
             states.append( e[0].strip().strip(","))
@@ -74,18 +77,33 @@ def fetch_data():
                 states.append(e[0].strip().strip(","))
             else:
                 states.append("<MISSING>")
+        print(tex)
         addr=addr.strip().strip(",")
-        o =addr.split(",")[-1].strip()
-        addr=addr.replace(o,"").strip().strip(",")
-        cities.append(o)
-        street.append(addr)
+        print(addr)
+        if ',' in addr:
+
+            o =addr.split(",")[-1].strip()
+            addr=addr.replace(o,"").strip().strip(",")
+        else:
+
+            o='<MISSING>'
+
+        if 'Phone' in addr:
+            street.append('<MISSING>')
+            e=addr
+            cities.append('<MISSING>')
+        else:
+            street.append(addr)
+            cities.append(o)
+            e = re.findall(r'([0-9\-]+.*)', tex[2].strip())[0]
         locs.append(tex[0])
-        e=re.findall(r'([0-9\-]+.*)', tex[2].strip())
+
         if e != []:
-            phones.append(e[0].replace("MATH ",""))
+            phones.append(e.replace("MATH ","").replace('or','').replace('Phone:','').strip())
         else:
             phones.append("<MISSING>")
         links.append(li.find_element_by_tag_name("a").get_attribute("href"))
+    
 
     for link in links:
         print(link)
@@ -111,29 +129,13 @@ def fetch_data():
             except:
                 tim=tim
             print (tim)
-            timing.append(tim)
+            if 'Campus Hours:' in tim:
+                tim=tim.split('Campus Hours:')[1]
+            timing.append(tim.replace('Hours: ','').replace('HOURS OF OPERATION ','').replace('HOURS ','').split('Campus Hours:'))
         except:
             timing.append("<MISSING>")
 
-    """ 
-    links.append(li.find_element_by_tag_name("a").get_attribute("href"))
-    to extract lat long and country
-    for link in links:
-        driver.get(link)
-        div=driver.find_element_by_class_name("popup-holder")
-        scripts= div.find_elements_by_css_selector("script")
-        parser=Parser()
-        tex=""
-        for s in scripts:
-            tex+=s.text
-        print(tex)
-        la= re.findall(r'var myLatLng = {lat: (.*),',tex)[0]
-        lat.append(la)
-        lo= re.findall(r'var myLatLng = {lat: .* lng: (.*)}',tex)[0]
-        long.append(lo)
-        cord=(la,lo)
-        countries.append(reverse_geocoder.search(cord)[0]["cc"])
-    """
+
 
     all = []
     for i in range(0, len(locs)):
