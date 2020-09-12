@@ -33,8 +33,10 @@ def fetch_data():
     base_url = "https://www.lapetite.com"
     while zip_code:
         result_coords =[]
+        # print("zip_code === "+zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         try:
-            r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=100",headers=headers,timeout=10)
+            r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=50",headers=headers,timeout=10)
             soup = BeautifulSoup(r.text,"lxml")
         except:
             pass
@@ -46,14 +48,14 @@ def fetch_data():
             address2 = location.find("span",{'class':"cityState"}).text
             store_id = location["data-school-id"]
            
-            if location.find("span",{'class':"tel"}) != None:
-                temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
-                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            elif location.find("p",{'class':"phone"}) != None:
-                temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
-                phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            else:
-                phone = "<MISSING>"
+            # if location.find("span",{'class':"tel"}) != None:
+            #     temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
+            #     phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+            # elif location.find("p",{'class':"phone"}) != None:
+            #     temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
+            #     phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+            # else:
+            #     phone = "<MISSING>"
             hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))
 
             if name.split(" ")[0] == "Childtime":
@@ -64,14 +66,6 @@ def fetch_data():
                 location_type = "Tutor Time"
             elif name.split(" ")[0] == "Everbrook":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                r_everybrook = session.get(page_url,headers=headers)
-                soup_everybrook = BeautifulSoup(r_everybrook.text,"lxml")
-                if soup_everybrook.find("div",{"class":"school-info-row vcard"}) is not None:
-                    temp_phone = soup_everybrook.find("div",{"class":"school-info-row vcard"}).find("span",{"class":"tel show-for-large"}).text.replace('.','')
-                    phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-                else:
-                    pass
-                
                 location_type = "Everbrook Academy"
             elif name.split(" ")[-1] == "Montessori":
                 page_url = location.find("a",{'class':"schoolNameLink"})['href']
@@ -85,6 +79,17 @@ def fetch_data():
             else:
                 page_url = "https://www.lapetite.com" + location.find("a",{'class':"schoolNameLink"})['href']
                 location_type = "lapetite"
+                
+            if location_type == "lapetite":
+                phone = "(877)861-5078"
+            else:
+                page_r = session.get(page_url,headers=headers)
+                page_soup = BeautifulSoup(page_r.text,"lxml")
+                if page_soup.find("div",{"class":"school-info-row vcard"}) is not None:
+                    temp_phone = page_soup.find("div",{"class":"school-info-row vcard"}).find("span",{"class":"tel show-for-large"}).text.replace('.','')
+                    phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+                else:
+                    pass
 
             store = []
             store.append(base_url)
