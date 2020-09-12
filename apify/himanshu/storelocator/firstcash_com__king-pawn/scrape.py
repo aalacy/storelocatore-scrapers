@@ -32,13 +32,20 @@ def fetch_data():
             store.append(store_data["brand"] if store_data["brand"] else "<MISSING>" )
             store.append(store_data["address"]["address1"] +store_data["address"]["address2"] if store_data["address"]["address2"] != None else store_data["address"]["address1"])
             store.append(store_data["address"]["city"] if store_data["address"]["city"] else "<MISSING>")
-            store.append(store_data["address"]["state"] if store_data["address"]["state"] else "<MISSING>")
-            store.append(store_data["address"]["zipCode"] if store_data["address"]["zipCode"] else "<MISSING>")
+            if len(store_data["address"]["state"]) == 2:
+                state = store_data["address"]["state"]
+            store.append(state if state else "<MISSING>")
+            zipp = store_data["address"]["zipCode"]
+            if "00000" in store_data["address"]["zipCode"]:
+                zipp = "<MISSING>"
+            store.append(zipp if zipp else "<MISSING>")
             store.append("US")
             store.append(store_data["storeNumber"] if store_data["storeNumber"] else "<MISSING>")
             phone ="("+store_data["phone"][0:3]+") "+store_data["phone"][3:6]+"-"+store_data["phone"][6:10]
+            if "() -" in phone:
+                phone = "<MISSING>"
             store.append(phone if phone else "<MISSING>" )
-            store.append(store_data["brand"] if store_data["brand"] else "<MISSING>")
+            store.append(store_data["brand"].replace("0","").replace("1","").replace("2","").replace("3","").replace("4","").replace("5","").replace("6","").replace("7","").replace("8","").replace("9","").strip() if store_data["brand"] else "<MISSING>")
             store.append(store_data['latitude'] if store_data['latitude'] else "<MISSING>")
             store.append(store_data['longitude'] if store_data['longitude'] else "<MISSING>")
             hours_request = session.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
