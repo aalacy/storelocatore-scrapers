@@ -76,8 +76,7 @@ def fetch_data():
         for day in days_of_week:
             store_hours += day.capitalize() + ' ' + store[day+'-hours'] + ', '
         output.append(get_value(store_hours[:-2].replace("–","-"))) #opening hours
-        if '(' not in get_value(city):
-            output_list.append(output)
+        output_list.append(output)
     return output_list
 
 def scrape():
