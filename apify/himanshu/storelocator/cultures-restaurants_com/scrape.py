@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-
+import json
 
 session = SgRequests()
 
@@ -11,36 +11,35 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://cultures-restaurants.com/wp-admin/admin-ajax.php?action=store_search&lat=45.501689&lng=-73.56725599999999&max_results=25&search_radius=50&autoload=1"
-    r = session.get(base_url).json()
+    base_url = "https://storerocket.global.ssl.fastly.net/api/user/0kDJ39Qpmn/locations?radius=20"
+    r = session.get(base_url).json()['results']['locations']
     return_main_object = []
     for i in range(len(r)):
         store = []
         store.append("https://cultures-restaurants.com")
-        store.append(r[i]['store'])
-        store.append(r[i]['address'])
+        store.append(base_url)
+        store.append(r[i]['name'])
+        store.append((r[i]['address_line_1'].strip() + " " + r[i]['address_line_2'].strip()).strip())
         store.append(r[i]['city'])
         store.append(r[i]['state'].strip())
-        if r[i]['zip']!="":
-            store.append(r[i]['zip'])
+        if r[i]['postcode']!="":
+            store.append(r[i]['postcode'])
         else:
             store.append("<MISSING>")
-        if r[i]['country'] =='Canada' or r[i]['country'] == "Cannada":
-            store.append("CA")
-        else:
-            store.append(r[i]['country'])
+        store.append(r[i]['country'])
         store.append(r[i]['id'])
         store.append(r[i]['phone'])
-        store.append('Cultures Restaurants')
+        store.append("<MISSING>")
         store.append(r[i]['lat'])
         store.append(r[i]['lng'])
-        store.append("<MISSING>")
+        hours = json.dumps(r[i]['hours']).replace("null","closed").replace('"',"").replace(",","")[1:-1]
+        store.append(hours)
         return_main_object.append(store)
     return return_main_object
 
