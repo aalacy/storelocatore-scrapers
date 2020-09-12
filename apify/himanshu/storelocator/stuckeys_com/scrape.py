@@ -53,8 +53,18 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(loc[i]['lat'] if loc[i]['lat'] else "<MISSING>")
         tem_var.append(loc[i]['lng'] if loc[i]['lng'] else  "<MISSING>")
-        tem_var.append("<MISSING>")
-        tem_var.append(loc[i]['gu'])
+        link = loc[i]['gu']
+        print(link)
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text,"lxml")
+        try:
+            hours = base.find(class_="store_locator_single_opening_hours").text.replace("Clock","Clock ").replace("–","-").replace("Opening Hours","").strip()
+            if "0." in hours:
+                hours = "<MISSING>"
+        except:
+            hours = "<MISSING>"
+        tem_var.append(hours)
+        tem_var.append(link)
         #print(tem_var)
         if tem_var[2] in addressess:
             continue
