@@ -28,8 +28,7 @@ def fetch_data():
     json_url = "https://app.locatedmap.com/initwidget/?instanceId=b8d5e841-7e84-4b86-af79-9341996bc5ef&compId=comp-izqi4x5u&viewMode=json&styleId=style-jr7yn9r0"
     r = session.get(json_url,headers=headers)
     json_data = json.loads(r.json()['mapSettings'])[0]['fields']['unpublishedLocations']
-   
-   
+    
     for dt in json_data:
         location_name = dt['name']
         temp_add = dt['formatted_address'].split(",")
@@ -51,15 +50,16 @@ def fetch_data():
                 state = state_zip[-2]
                 zipp = state_zip[-1]
 
-            phone = dt['tel']
-            location_type = "<MISSING>"
-            latitude = dt['latitude']
-            longitude = dt['longitude']
+        phone = dt['tel']
+        location_type = "Ben's Pretzels"
+        latitude = dt['latitude']
+        longitude = dt['longitude']
 
-            if dt['opening_hours'] == "":
-                hours_of_operation = "<MISSING>"
-            else:
-                hours_of_operation = dt['opening_hours'].replace("Ben's Soft Pretzels is located inside Spartan Stadium at Michigan State University","<MISSING>").replace("Ben's Soft Pretzels at Ohio Stadium at The Ohio State University","<MISSING>")
+        if dt['opening_hours'] == "":
+            hours_of_operation = "<MISSING>"
+        else:
+            hours_of_operation = dt['opening_hours'].replace("Ben's Soft Pretzels is located inside Spartan Stadium at Michigan State University","<MISSING>").replace("Ben's Soft Pretzels at Ohio Stadium at The Ohio State University","<MISSING>")
+    
         
         store = []
         store.append(base_url)
