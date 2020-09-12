@@ -4,6 +4,7 @@ import pdb
 from sgrequests import SgRequests
 from lxml import etree
 import json
+import re
 
 base_url = 'https://www.indochino.com'
 
@@ -74,7 +75,9 @@ def fetch_data():
         output.append(base_url) # url
         output.append(link) # url
         output.append(validate(store.xpath('./@name'))) #location name
-        output.append(get_value(store.xpath('.//div[@class="street"]//text()')).replace("\n"," ").replace("  "," ")) #address
+        address = get_value(store.xpath('.//div[@class="street"]//text()')).replace("\n"," ").replace("  "," ")
+        address = (re.sub(' +', ' ', address)).strip()
+        output.append(address) #address
         city = city_state[:-4].strip()
         state = city_state[-2:].strip()
         if city.lower() == "new":
