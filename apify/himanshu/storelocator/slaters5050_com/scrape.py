@@ -107,6 +107,8 @@ def fetch_data():
             addresses123.append(address[0])
             # print(address)
             hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).split("Happy Hour")[0]
+            if "Wake" in hours:
+                hours = hours[:hours.find("Wake")].strip()
             try:
                 phone = location_soup.find("p",{'class':"phone"}).text.strip()
             except:
@@ -118,6 +120,8 @@ def fetch_data():
             # print(address[-1].split(",")[0])
             try:
                 hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings))
+                if "Wake" in hours:
+                    hours = hours[:hours.find("Wake")].strip()
             except:
                 hours = "<MISSING>"
             # print(hours)
