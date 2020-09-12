@@ -1,126 +1,161 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import usaddress
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-def cut(arr):
-    for i, a in enumerate(arr):
-        if 'Hours' in a:
-            return i
 
 def fetch_data():
-    locator_domain = 'http://www.tasteofphilly.biz/'
-    ext = 'locations/'
-
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-
-    stores = driver.find_elements_by_css_selector('div.top-menu-lr')
-    link_list = []
+    data = []
+    p = 0    
+    url = 'https://www.tasteofphilly.biz/locations/'   
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text,'html.parser')
+    stores = soup.findAll('div',{'class':'top-menu-lr'})    
     for store in stores:
-        link_list.append(store.find_element_by_css_selector('a').get_attribute('href'))
-
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        if 'famous' in link:
+        title = store.find('a').text
+        link = 'https://www.tasteofphilly.biz'+store.find('a')['href']       
+        r = session.get(link, headers=headers, verify=False)
+        if 'famous' in r.url:
             continue
-
-        driver.implicitly_wait(10)
-        main = driver.find_element_by_css_selector('div.top-menu-lr').text.split('\n')
-
-        location_name = driver.find_element_by_css_selector('h1.post-title').text
-
-        if len(main) == 1:
-            content = driver.find_element_by_css_selector('div.post-entry').text.split('\n')
-
-            street_address = content[0]
-            city, state, zip_code = addy_ext(content[1])
-            phone_number = content[2]
-            hours = content[6]
-
-            src = driver.find_element_by_css_selector('iframe').get_attribute('src')
-            start = src.find('&sll=')
-            end = src.find('&ssp')
-            if start > 1:
-                coords = src[start + 5: end].split(',')
-                lat = coords[0]
-                longit = coords[1]
+        soup = BeautifulSoup(r.text,'html.parser')
+        try:
+            flag = 0
+            content = soup.find('meta',{'property':'og:description'})['content']
+            #print(content)
+            if content.find('thanks!') > -1:
+                det = content.split('thanks! ',1)[1]
+            elif content.find(']') > -1:
+                det = content.split('] ',1)[1]
+            elif content.find('DRIVERS! ') > -1:
+                det = content.split('] ')[1]
+            elif content.find('OPEN! ',1) > -1:
+                det = content.split('OPEN! ',1)[1]
             else:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
+                det = content
+            det = det.split('Contact Us')[0]
+            try:
+                det = det.split(' WE DELIVER')[0]
+                flag = 1
+            except:
+                pass
+            try:
+                det = det.split('(Email')[0]
+            except:
+                pass
+            try:
+                det = det.split('Hours')[0]
+            except:
+                pass
+                    
+          
+            address= 'N/A'
+            if len(det.rstrip().split(' ')[-1]) > 5:
+                if det.find('(') > -1:
+                    phone= det.rstrip().split('(')[1]
+                    phone = '('+phone
+                else:
+                    phone= det.rstrip().split(' ')[-1]
+                
+            else:               
+               phone= det.rstrip().split(' ')[0]
+               
+            address = det.replace(phone,'')
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
 
-        elif len(main) == 6:
-            phone_number = main[3]
-            addy = main[4].split('.')
-            street_address = addy[0]
-            city, state, zip_code = addy_ext(addy[1].strip())
-
-            src = driver.find_element_by_css_selector('iframe').get_attribute('src')
-
-            start = src.find('!2d')
-            end = src.find('!3m2')
-            if start > 1:
-                coords = src[start + 3: end].split('!3d')
-                lat = coords[1][:10]
-                longit = coords[0][:10]
-            else:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')            
+            
             hours = '<MISSING>'
+            try:
+                hours = soup.text.split('Hours')[1]
+                try:
+                    hours = hours.split('Other')[0]
+                except:
+                    pass
+                try:
+                    hours = hours.split('ORDER')[0]
+                except:
+                    pass
+                try:
+                    hours = hours.split('We')[0]
+                except:
+                    pass
+                try:
+                    hours = hours.split('Contact')[0]
+                except:
+                    pass
 
-        else:
-            street_address = main[0]
-            city, state, zip_code = addy_ext(main[1])
-
-            phone_number = main[2]
-            hours_idx = cut(main) + 1
-            hours = ''
-            for h in main[hours_idx:]:
-                if ':' in h or '-' in h:
-                    if 'Free' not in h and 'Delivery' not in h:
-                        hours += h + ' '
-
-            src = driver.find_element_by_css_selector('iframe').get_attribute('src')
-
-            start = src.find('&sll=')
-            end = src.find('&ssp')
-            if start > 1:
-                coords = src[start + 5: end].split(',')
-                lat = coords[0]
-                longit = coords[1]
-            else:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        country_code = 'US'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
+                hours = hours.replace('\n',' ').lstrip().rstrip()
+            except:
+                pass
+            lat = '<MISSING>'
+            longt = '<MISSING>'
+            
+            try:
+                coord = soup.find('iframe')['src']
+                #print(coord)
+                
+                lat,longt = coord.split('sll=',1)[1].split('&',1)[0].split(',')
+                
+            except:
+                if link.find('parker') > -1:
+                    lat = '39.518112'
+                    longt = '-104.735327'
+            data.append([
+                        'https://www.tasteofphilly.biz',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+                
+        except:
+            pass
+        
+    
+    return data
 
 def scrape():
     data = fetch_data()
