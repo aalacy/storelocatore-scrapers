@@ -5,7 +5,6 @@ import re
 import json
 
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -25,16 +24,14 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "accept": "application/json, text/javascript, */*; q=0.01",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-
-
     }
+
     return_main_object =[]
     addressess =[]
     base_url= "https://stuckeys.com/wp-admin/admin-ajax.php"
     data = "action=get_all_stores&lat=&lng="
     loc = session.post(base_url,headers=headers,data=data).json()
-    # soup= BeautifulSoup(r.text,"lxml")
-
+    
     for i in loc.keys():
         tem_var =[]
     # print("=================================",q)
