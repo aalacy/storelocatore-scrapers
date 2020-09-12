@@ -1,9 +1,24 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+from sgrequests import SgRequests
+from io import StringIO
+from html.parser import HTMLParser
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.text = StringIO()
+    def handle_data(self, d):
+        self.text.write(d)
+    def get_data(self):
+        return self.text.getvalue()
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 base_url = 'https://prairielife.com'
 
@@ -36,69 +51,50 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         for row in data:
             writer.writerow(row)
 
-def toggle_quote(source):
-    res = []
-    for x in source:
-        tmp = ""
-        if x == "'":
-            tmp = '"'
-        elif x == '"':
-            tmp = "'"
-        else:
-            tmp = x
-        res.append(tmp)
-    return "".join(res)
+headers = {
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
+    'referer': 'https://www.genesishealthclubs.com/locations',
+    'host': 'www.genesishealthclubs.com'
+}
 
 def fetch_data():
-    output_list = []
-    url = "https://prairielife.com/locations/"
-    request = requests.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[@class="location"]')
-
-    geoinfo_tmp = toggle_quote(list(validate(request.text.split('features = ')[1].split('features.forEach')[0][:-21])))
-    geoinfo_tmp = re.sub("(\w) (\w)", r'\1 \2', geoinfo_tmp)
-    geoinfo_tmp = json.loads(re.sub("(\w+):", r'"\1":',  geoinfo_tmp).encode('utf8'))
-    geoinfo = {}
-    for x in geoinfo_tmp:
-        geoinfo[validate(x['title'])] = {"lat": x['position']['lat'], "lng": x['position']['lng']}
-
-    for store in store_list:
-        detail_url = store.xpath(".//a[@class='btn-locations']/@href")[0]
-        detail_request = requests.get(base_url + detail_url[2:])
-        detail = etree.HTML(detail_request.text)
-
-        title = get_value(store.xpath(".//h3//text()"))
-        info = eliminate_space(store.xpath('./text()'))
-
-        hour_info = detail.xpath("//div[@class='column B']/div[contains(@class, 'x-long')]")
-        labels = eliminate_space(hour_info[1].xpath('./div')[0].xpath('.//text()'))
-        hours = eliminate_space(hour_info[1].xpath('./div')[1].xpath('.//text()'))
-        store_hours = ""
-        for x in range(0, len(labels)):
-            store_hours += labels[x] + hours[x] + ' '
-            
-        output = []
-        output.append(base_url) # url
-        output.append(title) #location name
-        output.append(info[0]) #address
-        output.append(info[1].split(', ')[0]) #city
-        output.append(info[1].split(', ')[1].split(' ')[0]) #state
-        output.append(info[1].split(', ')[1].split(' ')[1]) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(info[2]) #phone
-        output.append("PrairieLife FITNESS - Premium GYM") #location type
-        output.append(geoinfo[title]['lat']) #latitude
-        output.append(geoinfo[title]['lng']) #longitude
-        output.append(store_hours) #opening hours
-        output_list.append(output)
-
-    return output_list
+    session = SgRequests()
+    url = "https://www.genesishealthclubs.com/geoClub.php?getClubData=1&club_id={}"
+    store_id = 1
+    misses = 0
+    while True:
+        store_endpoint = url.format(store_id)
+        data = session.get(store_endpoint, headers=headers).json()
+        if 'path' not in data:
+            print(store_id)
+            if misses >= 100:
+                break
+            else:
+                misses += 1
+                store_id += 1
+                continue
+        else:
+            misses = 0
+        locator_domain = 'genesishealthclubs.com'
+        location_name = get_value(data['name'])
+        street_address = get_value(data['address'])
+        city = get_value(data['city'])
+        state = get_value(data['state'])
+        zipcode = get_value(data['zip_code'])
+        country_code = 'US'
+        store_number = data['id']
+        phone = get_value(data['phone'])
+        location_type = '<MISSING>'
+        latitude = get_value(data['latitude'])
+        longitude = get_value(data['longitude'])
+        hours_of_operation = ', '.join([strip_tags(x) for x in data['hours'].replace('</div><div', '</div>\n<div').splitlines()])
+        page_url = 'https://www.genesishealthclubs.com/locations/{}.html'.format(data['path'])
+        store_id += 1
+        yield [locator_domain, location_name, street_address, city, state, zipcode, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
 def scrape():
     data = fetch_data()
