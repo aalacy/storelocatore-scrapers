@@ -1,7 +1,7 @@
 import csv
 import re
 import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
@@ -13,7 +13,7 @@ base_url = 'https://www.atomicwings.com/'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)
@@ -32,19 +32,20 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     output_list = []
     url = "https://api.responsival.net/atomicwings/locations.php"
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
     store_list = json.loads(request.text)
     for store in store_list:
         output = []
         output.append(base_url) # url
+        output.append(url)
         output.append(store['name']) #location name
         address = usaddress.parse(store['address'])
         street = ''
@@ -66,15 +67,15 @@ def fetch_data():
         output.append(get_value(zipcode)) #zipcode
         output.append('US') #country code
         output.append('<MISSING>') #store_number
-        output.append(get_value(store['phone'])) #phone
-        output.append("Atomic Wings") #location type
+        output.append(get_value(store['phone']).replace("WING (9464)","9464")) #phone
+        output.append('<MISSING>') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
         store_hours = '  '
         days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         for day in days_of_week:
             store_hours += day.capitalize() + ' ' + store[day+'-hours'] + ', '
-        output.append(get_value(store_hours[:-2])) #opening hours
+        output.append(get_value(store_hours[:-2].replace("–","-"))) #opening hours
         if '(' not in get_value(city):
             output_list.append(output)
     return output_list
