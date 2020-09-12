@@ -76,15 +76,24 @@ def fetch_data():
 			phone =  re.findall("[\d]{5} [\d]{3} [\d]{3}", str(item).replace("0192 3886","01923 886"))[0]
 		except:
 			phone = "<MISSING>"
-
-		try:
-			hours_of_operation = item.find_all("p")[1].text.replace("\n"," ").replace("–","-")[5:].strip()
-			if len(hours_of_operation) < 20:
-				hours_of_operation = "<MISSING>"
-		except:
-			hours_of_operation = "<MISSING>"
 		latitude = item.find(class_="marker")["data-lat"]
 		longitude = item.find(class_="marker")["data-lng"]
+
+		req = session.get(link, headers = HEADERS)
+		base = BeautifulSoup(req.text,"lxml")
+		try:
+			hours_of_operation = base.find(class_="c-split-vertical__right -type-text").find_all("p")[1].text.replace("Hours","").replace("–","-").replace("\n"," ").strip()
+			if "pm" not in hours_of_operation.lower():
+				try:
+					hours_of_operation = base.find(class_="c-split-vertical__right -type-text").find_all("p")[-4].text.replace("Hours","").replace("–","-").replace("\n"," ").strip()
+					if "pm" not in hours_of_operation.lower():
+						hours_of_operation = "<MISSING>"
+				except:
+					hours_of_operation = "<MISSING>"
+			if "(" in hours_of_operation:
+				hours_of_operation = hours_of_operation[:hours_of_operation.find("(")].strip()
+		except:
+			hours_of_operation = "<MISSING>"
 
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
