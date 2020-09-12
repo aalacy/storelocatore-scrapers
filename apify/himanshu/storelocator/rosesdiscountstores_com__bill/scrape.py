@@ -19,9 +19,16 @@ def fetch_data():
     for i in range(len(data)):
         store_data = data[i]
         store = []
-        store.append("https://www.rosesdiscountstores.com/bill")
+        store.append("https://www.rosesdiscountstores.com/")
         store.append(store_data["name"])
-        store.append(" ".join(store_data["address"].split(",")[0:-3]))
+        try:
+            st = (" ".join(store_data["visibleAddress"].split(",")[:-3]))
+        except:
+            st = (" ".join(store_data["address"].split(",")[:-3]))
+            # print(st)
+        if "38703" in store_data["postcode"]:
+            st = "3001 US Highway 82, East St"
+        store.append(st)
         if store[-1] == "":
             store[-1] = store_data["address"].split(",")[0]
         store.append(store_data["city"] if store_data["city"] else store_data["address"].split(",")[1])
@@ -49,8 +56,9 @@ def fetch_data():
             hours = store_data["hours"]
         store.append(hours.strip() if hours else "<MISSING>")
         store.append("<MISSING>")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        yield store
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]        
+        yield store 
+    
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import html5lib
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,21 +26,21 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.chilis.com"
-    # state_r = session.get("https://www.chilis.com/locations/us/all",headers=headers)
-    # state_soup = BeautifulSoup(state_r.text, "lxml")
-    # for link in state_soup.find_all("a",{"class":"city-link"}):
-    #     city_link = base_url + link['href']
-    #     city_r = session.get(city_link, headers=headers)
-    #     city_soup = BeautifulSoup(city_r.text, "lxml")
-    r  = session.get("https://www.chilis.com/sitemap",headers=headers)
-    state_soup = BeautifulSoup(r.text, "lxml")
-    for link in state_soup.find("section",{"id":"page-container"}).find_all("a")[:125]:
-        city_link = link['href']
-        try:
-            city_r = session.get(city_link,headers=headers)
-            city_soup = BeautifulSoup(city_r.text, "lxml")
-        except:
-            continue
+    state_r = session.get("https://www.chilis.com/locations/us/all",headers=headers)
+    state_soup = BeautifulSoup(state_r.text, "lxml")
+    for link in state_soup.find_all("a",{"class":"city-link"}):
+        city_link = base_url + link['href']
+        city_r = session.get(city_link, headers=headers)
+        city_soup = BeautifulSoup(city_r.text, "lxml")
+    # r  = session.get("https://www.chilis.com/sitemap",headers=headers)
+    # state_soup = BeautifulSoup(r.text, "lxml")
+    # for link in state_soup.find("section",{"id":"page-container"}).find_all("a")[:125]:
+    #     city_link = link['href']
+    #     try:
+    #         city_r = session.get(city_link,headers=headers)
+    #         city_soup = BeautifulSoup(city_r.text, "lxml")
+    #     except:
+    #         continue
 
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
