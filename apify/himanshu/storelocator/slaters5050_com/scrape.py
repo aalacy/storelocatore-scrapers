@@ -33,15 +33,15 @@ def fetch_data():
     soup1 = BeautifulSoup(r1.text,"lxml")
     # print(soup1)
     addresses123 = []
-    name1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[0]
-    address2 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[1]
-    city1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[2].split(",")[0]
-    state1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[2].split(",")[1].split( )[0]
-    zip1= list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[2].split(",")[1].split( )[-1]
-    phone1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[-2]
-    # hours1 = " ".join(list(soup1.find("div",{'class':"wpb_text_column wpb_content_element  vc_custom_1575776937348"}).stripped_strings))
-    # print(soup1.find_all("div",{'class':"wpb_text_column wpb_content_element"}))
-    hours1 = (soup1.find(text='HOURS').parent.parent.text.replace("HOURS",''))
+    raw_data = soup1.find("div",{'class':"vc_column-inner vc_custom_1512389166631"})
+    name1 = raw_data.h2.text.strip()
+    raw_address = str(raw_data.p)[3:-4].split("<br/>")
+    address2 = raw_address[0].strip()
+    city1 = raw_address[1].split(",")[0].strip()
+    state1 = raw_address[1].split(",")[1].split( )[0]
+    zip1 = raw_address[1].split(",")[1].split( )[-1]
+    phone1 = raw_address[2].strip()
+    hours1 = (soup1.find(text='HOURS').parent.parent.text.replace("HOURS",'')).strip()
     longitude1 = soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
     latitude1 = soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0]
     store = []
@@ -67,9 +67,11 @@ def fetch_data():
     for location in soup.find_all("li",{'class':re.compile("menu-item menu-item-type-post_type menu-item-object-locations")}):
         location_request = session.get(location.find("a")["href"],headers=headers)
         page_url =  location.find("a")["href"]
+        if page_url == "https://slaters5050.com/locations/las-vegas/":
+            continue
         # print(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
-        name = location_soup.find("main",{'role':"main"}).find("h1").text.strip()
+        name = location_soup.find("main",{'role':"main"}).find("h1").text.replace("–","-").strip()
         address = list(location_soup.find("p",{'class':"address"}).stripped_strings)
         if "Guests must have JBPHH base access" in address[-1]:
             del address[-1]
@@ -105,7 +107,10 @@ def fetch_data():
             addresses123.append(address[0])
             # print(address)
             hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).split("Happy Hour")[0]
-            phone = location_soup.find("p",{'class':"phone"}).text.strip()
+            try:
+                phone = location_soup.find("p",{'class':"phone"}).text.strip()
+            except:
+                phone = "<MISSING>"
         else:
             # print(page_url)
             state = address[-1].split(",")[-1]
@@ -122,7 +127,7 @@ def fetch_data():
         store.append("https://slaters5050.com")
         store.append(name)
         store.append(address1)
-        store.append(city)
+        store.append(city.strip())
         store.append(state.replace("96820",''))
         store.append(zipp)
         store.append("US")
@@ -133,10 +138,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").replace("Restaurant Hours","").encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
-        if "661.218.5050" in store:
-            pass
-        else:
-            yield store
+        yield store
         # # return_main_object.append(store)
         # print(store)
    
