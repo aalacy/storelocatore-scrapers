@@ -56,6 +56,7 @@ def fetch_data():
     url = "https://www.planetbeauty.com/storelocator/index/loadstore/"
     data = { "curPage": 1 }
     request = session.post(url, headers = headers, data = data)
+    print(request.text)
     store_list = json.loads(request.text)['storesjson']
     for store in store_list:
         detail_url = base_url + validate(store["rewrite_request_path"])
