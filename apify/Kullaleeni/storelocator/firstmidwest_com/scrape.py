@@ -1,9 +1,13 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
 
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,168 +22,100 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-
     data = []
-    p = 1
-    links = []
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.firstmidwest.com/locations/'
-    page = requests.get(url, verify=False)
-    soup = BeautifulSoup(page.text, "html.parser")
-    mainlist = soup.find('div',{'class':'rio-regionList'})
-    mainlist = mainlist.findAll('a',{'class':'gaq-link'})
-    print(len(mainlist))
-    mainlist.append('https://www.firstmidwest.com/locations/')
-    for states in mainlist:
-        if states == 'https://www.firstmidwest.com/locations/':
-            statelink = states
-        else:
-            statelink = "https://www.firstmidwest.com"+ states['href']
-        #print(statelink)
-        page = requests.get(statelink, verify=False)
-        soup = BeautifulSoup(page.text, "html.parser")
+    
+    url = 'https://locations.firstmidwest.com/directory'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    state_list = soup.findAll('a', {'class': 'Directory-listLink'})
+    #print("states = ",len(state_list))
+    p = 0
+    for states in state_list:
+        states = 'https://locations.firstmidwest.com/'+states['href']
 
-        maindiv = soup.find('div',{'id':'rls-map'})
-        #print(maindiv)
-        maindiv = str(maindiv)
-        start = 0
-        num = 0
-        while True:
-            start = maindiv.find('a href=',start)
-            if start != -1:
-                start =  maindiv.find('"',start)+1
-                end = maindiv.find('"', start)
-                link = maindiv[start:end]
-                if link.find("google") == -1:
-                    link = link.replace("/","")
-                    link = link.replace('\\', "/")
-                    link = link[0:len(link)-1]
-                    flag = True
-                    i = 0
-                    while i < len(links):
-                        if link == links[i]:
-                            flag = False
-                            break
-                        i += 1
-                    if flag:
-                        links.append(link)
-                        num += 1
-                    #print(link)
-                start = end + 1
+        #print(states)
+        r = session.get(states, headers=headers, verify=False)  
+        soup =BeautifulSoup(r.text, "html.parser")   
+        branchlist = soup.findAll('a', {'class': 'Directory-listLink'})
+        #print(len(branchlist))
+        for branch in branchlist:
+            branch = 'https://locations.firstmidwest.com/'+branch['href']
+            #print(branch)
+            r = session.get(branch, headers=headers, verify=False)  
+            soup =BeautifulSoup(r.text, "html.parser")   
+            divlist = soup.findAll('li', {'class': 'Directory-listTeaser'})
+            linklist = []
+            flag = 0
+            if len(divlist) == 0:
+                #content = soup.find('div',{'class':'core'}).text
+                linklist.append(branch)
+                flag =1
+                #print(content)
             else:
-                break
-        #print(num)
+                for div in divlist:
+                    link = div.find('a',{'class':'Teaser-titleLink'})['href']
+                    link = 'https://locations.firstmidwest.com/'+link.replace('../','')
+                    linklist.append(link)
+            for link in linklist:
+                if flag == 0:
+                    r = session.get(link, headers=headers, verify=False)
+                    soup =BeautifulSoup(r.text, "html.parser")
+                title = soup.find('title').text
+                try:
+                    title = title.split(':')[0]
+                except:
+                    pass
+                content = soup.find('div',{'class':'Core'})
+                street = content.find('span',{'class':'c-address-street-1'}).text
+                city = content.find('span',{'class':'c-address-city'}).text
+                state = content.find('span',{'class':'c-address-state'}).text
+                pcode = content.find('span',{'class':'c-address-postal-code'}).text
+                try:
+                    phone = content.find('div',{'itemprop':'telephone'}).text
+                except:
+                    phone = '<MISSING>'
+                try:
+                    hours = content.find('table',{'class':'c-hours-details'}).text
+                    hours = hours.replace('Day of the WeekHours','').replace('PM','PM ').replace('Closed','Closed ')
+                    hours = hours.replace('Mon','Mon ').replace('Tue','Tue ').replace('Wed','Wed ').replace('Thu','Thu ').replace('Fri','Fri ').replace('Sat','Sat ').replace('Sun','Sun ')
+                except:
+                    hours = '<MISSING>'
 
-    print(len(links))
-    ind = 0
-    while True:
-        try:
-        #print(link)
-            link = links[ind]
-            page = requests.get(link, verify=False)
-            soup = BeautifulSoup(page.text, "html.parser")
-            title = soup.find('div',{'id':'rio-locName'}).text
-            address = soup.find('div', {'class': 'rio-addrText'})
-            address = address.findAll('span')
-            if len(address) == 4:
-                street = address[0].text
-                city = address[1].text
-                state = address[2].text
-                pcode = address[3].text
-            elif len(address) == 5:
-                street = address[0].text + " " + address[1].text
-                city = address[2].text
-                state = address[3].text
-                pcode = address[4].text
-            try:
-                phone = soup.find('span',{'class':'rio-phoneText'}).text
-            except:
-                phone = "<MISSING>"
-            try:
-                hoursd =  soup.find('div',{'id':'rio-locHoursServices'})
-                hoursd = hoursd.findAll('div',{'class':'hours'})
-                lhours = hoursd[0].text
-                lhours = re.sub(pattern," ",lhours)
-                dhours = hoursd[1].text
-                dhours = re.sub(pattern, " ", dhours)
-                hours = "Lobby Hours : " + lhours + " | Drive Up Hours : " + dhours
+                ltype = 'Branch'
+                try:
+                    if content.find('div',{'itemprop':'containsPlace'}).text.find('ATM Hours') > -1:
+                        ltype = ltype + ' | ATM'
+                except:
+                    pass
 
-
-
-            except:
-                hours= "<MISSING>"
-            try:
-                hoursd = soup.find('div', {'id': 'rio-atmHours'})
-                hoursd = hoursd.find('div', {'class': 'hours'}).text
-                hoursd = re.sub(pattern, " ",hoursd)
-                if hours == "<MISSING>":
-                    temp = "ATM Hours : "
-                    hours = temp + hoursd
-                else:
-                    temp ="|ATM Hours : "
-                    hours = hours + temp + hoursd
-
-            except:
-                pass
-            try:
-               services = soup.find('div', {'id': 'rio-locServices'}).text
-               services= services.replace("\n","|")
-               services = services[1:len(services)-2]
-               services = services[services.find("|")+1:len(services)]
-               services = services.replace("ATM|ATM 24 Hr","ATM")
-            except:
-                pass
-            soup = str(soup)
-            start = soup.find('RLS.centerLat')
-            start = soup.find('=',start) + 2
-            end =  soup.find(';',start)
-            lat = soup[start:end]
-            start = soup.find('RLS.centerLng')
-            start = soup.find('=', start) + 2
-            end = soup.find(';', start)
-            longt = soup[start:end]
-
-            start = link.find('banking-')
-            start = link.find('-',start)+1
-            end = link.find('.', start)
-            store = link[start:end]
-            store = store.replace("atm","")
-            if store.isdigit():
-                pass
-            else:
-                store = "<MISSING>"
-            data.append([
-                'https://www.firstmidwest.com',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                services,
-                lat,
-                longt,
-                hours
-            ])
-            #print(p,",",data[p-1])
-            p += 1
-            ind += 1
-            if ind == len(links):
-                break
-        except:
-            pass
-
+                state =state.replace('Wisconsin','WI')
+                data.append([
+                        'https://www.firstmidwest.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        ltype,
+                        '<MISSING>',
+                        '<MISSING>',
+                        hours
+                    ])
+                #print(p,data[p])
+                p += 1
+            
+        
     return data
 
 
-
-
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-
