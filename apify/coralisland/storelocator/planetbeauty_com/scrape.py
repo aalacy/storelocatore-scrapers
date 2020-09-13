@@ -1,9 +1,9 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
+from sgrequests import SgRequests
 
 base_url = 'https://www.planetbeauty.com/'
 
@@ -31,18 +31,35 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         for row in data:
             writer.writerow(row)
 
+headers = {
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.9",
+    "path": "/storelocator/index/loadstore/",
+    "method": "POST",
+    "authority": "www.planetbeauty.com",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "content-length": "9",
+    "origin": "https://www.planetbeauty.com",
+    "referer": "https://www.planetbeauty.com/storelocator/",
+    "scheme": "https",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36",
+    "x-requested-with": "XMLHttpRequest"
+}
+
 def fetch_data():
+    session = SgRequests()
     output_list = []
     url = "https://www.planetbeauty.com/storelocator/index/loadstore/"
-    request = requests.post(url)
+    data = { "curPage": 1 }
+    request = session.post(url, headers = headers, data = data)
     store_list = json.loads(request.text)['storesjson']
     for store in store_list:
         detail_url = base_url + validate(store["rewrite_request_path"])
-        detail = etree.HTML(requests.get(detail_url).text)
+        detail = etree.HTML(session.get(detail_url).text)
         hours = get_value(eliminate_space(detail.xpath('.//div[@class="open_hour"]//text()')))
         city_state = validate(eliminate_space(detail.xpath('.//span[@class="group-info"]//text()'))[1])
         output = []
@@ -59,7 +76,7 @@ def fetch_data():
         output.append(validate(store['latitude'])) #latitude
         output.append(validate(store['longitude'])) #longitude
         output.append(hours) #opening hours
-
+        output.append(detail_url) #page_url
         output_list.append(output)
 
     return output_list
