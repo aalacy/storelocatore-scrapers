@@ -61,14 +61,9 @@ def fetch_data():
         print("Link %s of %s" %(i+1,total_links))
 
         req = session.get(link, headers = HEADERS)
-        time.sleep(randint(1,2))
-        try:
-            base = BeautifulSoup(req.text,"lxml")
-            print(link)
-        except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
-        
+        base = BeautifulSoup(req.text,"lxml")
+        print(link)
+                
         main = base.find(class_='location')
         try:
             location_name = main.h1.text
@@ -93,7 +88,7 @@ def fetch_data():
 
         street_address = addy[0].strip()
         zip_code = addy[1][-5:]
-        if " " in zip_code:            
+        if " " in zip_code:
             zip_code = addy[1][-7:].strip()
 
         else:
@@ -116,7 +111,7 @@ def fetch_data():
         longit = coords[1]
 
         try:
-            hours = base.find(id='overviewSection').h2.text.replace("to members","").strip()
+            hours = base.find(class_='staff-days').text.replace("\n\n\n"," ").replace("\n"," ").strip()
             if not hours:
                 hours = '<MISSING>'
         except:

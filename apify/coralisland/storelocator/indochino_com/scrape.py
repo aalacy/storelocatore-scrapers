@@ -4,6 +4,7 @@ import pdb
 from sgrequests import SgRequests
 from lxml import etree
 import json
+import re
 
 base_url = 'https://www.indochino.com'
 
@@ -22,7 +23,7 @@ def get_value(item):
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -36,7 +37,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -57,26 +58,38 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[contains(@class, "showroomLocations__LOC") and boolean(@name)]')
     for store in store_list:
-        data_id = validate(store.xpath('./@data-id'))
-        if data_id == "29463" or data_id == "29934" or data_id == "29560" or data_id == "28474":
+        link = "https://www.indochino.com" + store.xpath('./a/@href')[0].strip()
+        if "virtual" in link:
             continue
+        data_id = validate(store.xpath('./@data-id'))
+        # if data_id == "29463" or data_id == "29934" or data_id == "29560" or data_id == "28474":
+        #     continue
         country = validate(store.xpath('./@class'))
         if 'cnt-US' in country:
             country = 'US'
         else:
             country = 'CA'
         city_state = get_value(store.xpath('.//div[@class="city"]//text()'))
+
         output = []
         output.append(base_url) # url
+        output.append(link) # url
         output.append(validate(store.xpath('./@name'))) #location name
-        output.append(get_value(store.xpath('.//div[@class="street"]//text()'))) #address
-        output.append(city_state[:-4]) #city
-        output.append(city_state[-2:]) #state
+        address = get_value(store.xpath('.//div[@class="street"]//text()')).replace("\n"," ").replace("  "," ")
+        address = (re.sub(' +', ' ', address)).strip()
+        output.append(address) #address
+        city = city_state[:-4].strip()
+        state = city_state[-2:].strip()
+        if city.lower() == "new":
+            city = "New York"
+            state = "NY"
+        output.append(city) #city
+        output.append(state) #state
         output.append("<MISSING>") #zipcode
         output.append(country) #country code
         output.append(data_id) #store_number
         output.append(get_value(store.xpath('.//div[@class="tel"]//text()'))) #phone
-        output.append("INDOCHINO | Men's Custom Suits") #location type
+        output.append("<MISSING>") #location type
         output.append(validate(store.xpath('./@data-latitude'))) #latitude
         output.append(validate(store.xpath('./@data-longitude'))) #longitude
         output.append(get_value(eliminate_space(store.xpath('.//div[@class="showroomLocations__hours"]//text()'))[1:]).replace('\n', '')) #opening hours

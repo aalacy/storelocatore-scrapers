@@ -45,16 +45,19 @@ def fetch_data():
     hours_of_operation = ""
 
     for script in soup.find_all('div', {'class': 'mmtl-col mmtl-col-sm-3'}):
-        
-        list_store_data = list(script.stripped_strings)
-        if script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text) is not None:
-            url = script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text)['href']
-            if "https:" in url:
-                page_url =  url
+        try:
+            url = script.find("h4").find("a")
+            if url:
+                if "https:" in url['href']:
+                    page_url =  url['href']
+                else:
+                    page_url = base_url + url['href']
             else:
-                page_url = base_url + url
-        else:
+                page_url = "<MISSING>"
+        except:
             page_url = "<MISSING>"
+
+        list_store_data = list(script.stripped_strings)
         
         if len(list_store_data) > 1:
 
@@ -86,13 +89,12 @@ def fetch_data():
 
             # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
             # print('~~~~~~~~~~~~~~~~')
-
             if len(list_store_data) > 3:
                 # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
                 # print(list_store_data[1].split(','))
                 # print('~~~~~~~~~~~~~~~~')
                 location_name = list_store_data[0]
-                phone = list_store_data[-2]
+                phone = list_store_data[-2].replace(".","-")
                 hours_of_operation = list_store_data[-1]
                 # city = location_name
 
@@ -124,7 +126,7 @@ def fetch_data():
                 # # print(list_store_data[1].split(','))
                 # print('~~~~~~~~~~~~~~~~')
                 hours_of_operation = list_store_data[-1]
-                phone = list_store_data[-2]
+                phone = list_store_data[-2].replace(".","-")
 
                 zipp = list_store_data[0].split(',')[-1].split(' ')[-1]
                 state = list_store_data[0].split(',')[-1].split(' ')[-2]
@@ -148,10 +150,10 @@ def fetch_data():
                     latitude = maps['href'].split("@")[1].split(",")[0]
                     longitude = maps['href'].split("@")[1].split(",")[1]
                 else:
-                    latitude = '<MISSING>'
-                    longitude = '<MISSING>'
-
-
+                    maps = location_soup.find("iframe")['src']
+                    
+                    latitude = maps.split("!3d")[1].split("!")[0]
+                    longitude = maps.split("!2d")[1].split("!")[0]
             else:
                 latitude = '<MISSING>'
                 longitude = '<MISSING>'
@@ -160,7 +162,7 @@ def fetch_data():
                 phone = '<MISSING>'
 
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+            store = [locator_domain, location_name, street_address.replace("5550 Lake Murray Blvd","1550 Lake Murray Blvd").replace("1535 E. Ontario","1535 E. Ontario Avenue"), city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             return_main_object.append(store)

@@ -12,7 +12,7 @@ def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -44,7 +44,7 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "anthonys"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -53,42 +53,26 @@ def fetch_data():
     for script_reservation in soup.find_all("div", {"class": "text"}):
 
         for script_reservation_a in script_reservation.find_all('a'):
-            r_location = session.get(script_reservation_a['href'], headers=headers)
+            link = script_reservation_a['href']
+            r_location = session.get(link, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
 
             for script in soup_location.find_all('div', {'id': 'contentbody'}):
                 address_list = list(script.stripped_strings)
-                # print("address_list ==== " + str(address_list))
 
                 street_address = address_list[1]
                 city = address_list[2].split(',')[0]
                 state = address_list[2].split(',')[1].strip().split(' ')[0]
                 zipp = address_list[2].split(',')[1].strip().split(' ')[-1]
-                phone = address_list[3].replace("PH:", "").strip()
+                phone = address_list[4].replace("PH:", "").strip()
+                hours_of_operation = script.h3.text.replace("Hours:","").replace("\r\n\t"," ").strip()
+                if "pm" not in hours_of_operation.lower():
+                    raw_hours = soup_location.find(id="intro").find_all("p")[1].text.strip().split("\n")[1]
+                    hours_of_operation = raw_hours[raw_hours.find(":")+1:].strip()
+                location_name = soup_location.find(id="stylized").text.strip()
 
-                start_hour_tag = "DINING"
-                if "DINING" not in address_list:
-                    start_hour_tag = "Lunch"
-
-                if "Live Music!" in address_list:
-                    hours_of_operation = ",".join(
-                        address_list[address_list.index(start_hour_tag):address_list.index('Live Music!')])
-                elif "PARKING" in address_list:
-                    hours_of_operation = ",".join(
-                        address_list[address_list.index(start_hour_tag):address_list.index('PARKING')])
-                elif "Large Parties/Semi-Private/Private Dining" in address_list:
-                    hours_of_operation = ",".join(address_list[address_list.index(start_hour_tag):address_list.index(
-                        'Large Parties/Semi-Private/Private Dining')])
-                elif "BREWER'S NIGHT" in address_list:
-                    hours_of_operation = ",".join(
-                        address_list[address_list.index(start_hour_tag):address_list.index("BREWER'S NIGHT")])
-
-                # print("hours_of_operation === " + hours_of_operation)
-
-                location_name = city
-
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                store = [locator_domain, link, location_name, street_address, city, state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation.replace(",","")]
 
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
