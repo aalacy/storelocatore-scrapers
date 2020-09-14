@@ -60,14 +60,14 @@ def fetch_data():
             if temp == 0:
                 temp = 12
             starttemp = (int)(hr['from']['hours'])
-            
+            if starttemp == 0:
+               starttemp = 12
                 
             start = str(starttemp) +' : '+hr['from']['minutes']+ ' AM - '
             end = str(temp)+' : '+hr['to']['minutes']+ ' PM '
             hours = hours +day + ' '+start + end
 
-            if starttemp == 0:
-                hours = hours +day + ' Closed'
+            
             
 
             
@@ -93,6 +93,7 @@ def fetch_data():
             ])
         #print(p,data[p])
         p += 1
+        #input()
         
 
                 
