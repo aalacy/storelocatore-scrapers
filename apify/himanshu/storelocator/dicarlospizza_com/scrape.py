@@ -28,6 +28,7 @@ def json_extract(obj, key):
 
 session = SgRequests()
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
