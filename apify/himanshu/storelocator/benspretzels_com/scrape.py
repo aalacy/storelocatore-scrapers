@@ -28,7 +28,6 @@ def fetch_data():
     json_url = "https://app.locatedmap.com/initwidget/?instanceId=b8d5e841-7e84-4b86-af79-9341996bc5ef&compId=comp-izqi4x5u&viewMode=json&styleId=style-jr7yn9r0"
     r = session.get(json_url,headers=headers)
     json_data = json.loads(r.json()['mapSettings'])[0]['fields']['unpublishedLocations']
-    
     for dt in json_data:
         location_name = dt['name']
         temp_add = dt['formatted_address'].split(",")
@@ -59,6 +58,9 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
         else:
             hours_of_operation = dt['opening_hours'].replace("Ben's Soft Pretzels is located inside Spartan Stadium at Michigan State University","<MISSING>").replace("Ben's Soft Pretzels at Ohio Stadium at The Ohio State University","<MISSING>")
+        if location_name == "Ben's Soft Pretzels- Terre Haute Walmart":
+            street_address = street_address.replace("Terre","")
+            city = "Terre Haute"
     
         
         store = []
