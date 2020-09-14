@@ -31,6 +31,9 @@ def fetch_data():
         street_address = " ".join(raw_address[:-1])
         street_address = (re.sub(' +', ' ', street_address)).strip()
         city = raw_address[-1].strip()
+        if "St. John's" in street_address:
+            street_address = street_address.replace("St. John's","").strip()
+            city = "St. John's"
         store.append(street_address)
         store.append(city)
         store.append(state)
