@@ -30,17 +30,9 @@ def fetch_data():
     state_soup = BeautifulSoup(state_r.text, "lxml")
     for link in state_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
+        
         city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
-    # r  = session.get("https://www.chilis.com/sitemap",headers=headers)
-    # state_soup = BeautifulSoup(r.text, "lxml")
-    # for link in state_soup.find("section",{"id":"page-container"}).find_all("a")[:125]:
-    #     city_link = link['href']
-    #     try:
-    #         city_r = session.get(city_link,headers=headers)
-    #         city_soup = BeautifulSoup(city_r.text, "lxml")
-    #     except:
-    #         continue
 
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
@@ -81,12 +73,54 @@ def fetch_data():
             addressess.append(store[2])
             yield store
 
+    ca_r = session.get("https://www.chilis.com/locations/ca/all",headers=headers)
+    ca_soup = BeautifulSoup(ca_r.text, "lxml")
+    for link in ca_soup.find_all("a",{"class":"city-link"}):
+        city_link = base_url + link['href']
+
+        city_r = session.get(city_link, headers=headers)
+        city_soup = BeautifulSoup(city_r.text, "lxml")
+
+        jd = json.loads(str(city_soup).split("locationsList:")[1].split("};</script>")[0])
+        for value in jd:
+
+            location_name = value['name']
+            street_address = value['address']
+            city = value['city']
+            state = value['state']
+            zipp = value['zipCode']
+            country_code = "CA" 
+            store_number = "<MISSING>"
+            phone = value['phone']
+            location_type = "<MISSING>"
+            latitude = value['latitude']
+            longitude = value['longitude']
+            hours_of_operation = "<MISSING>"
+            page_url = city_link
+            
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append(country_code)
+            store.append(store_number) 
+            store.append(phone)
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(page_url)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            yield store
+
 def scrape():
     data = fetch_data()
-
     write_output(data)
-
-
 scrape()
 
 
