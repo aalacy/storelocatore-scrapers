@@ -10,7 +10,7 @@ base_url = 'https://www.lunchboxwax.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '').replace('\t', '')
+    return item.strip().replace('\n', '').replace('\t', '')
 
 def get_value(item):
     if item == None :

@@ -17,7 +17,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -72,7 +72,7 @@ def fetch_data():
     request = session.get(url)
     source = validate(request.text.split('var map_data = ')[1].split('};')[0])+'}'
     store_list = json.loads(source)['offices']
-    for key, store in store_list.items():        
+    for key, store in list(store_list.items()):        
         output = []
         output.append(base_url) # url
         output.append(get_value(store['url'])) # page url
@@ -94,7 +94,7 @@ def fetch_data():
             output.append(get_value(store['longitude'])) #longitude
             store_hours = []        
             if store['hours']:
-                for key, value in store['hours'].items():
+                for key, value in list(store['hours'].items()):
                     store_hours.append(key + ' ' + validate(value).replace('&nbsp;&ndash;&nbsp;','-'))
             output.append(get_value(store_hours)) #opening hours
             output_list.append(output)
