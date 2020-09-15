@@ -36,13 +36,19 @@ def fetch_data():
     content = re.sub(cleanr,' ',str(divlist))
     content =re.sub(cleanr,'\n',str(content))
     for i in range(1,len(titlelist)):
+        #if i == 1:
+         #   det,content= content.split(titlelist[0].text,1)
+        #else:
+       
         det,content = content.split(titlelist[i].text,1)
-        if i == 1:
-            det = det.split(titlelist[0].text,1)[1]
+        
         det = det.lstrip()
-        if i == (len(titlelist)-1):
+        if i == (len(titlelist)):
+          
             det = content
-        #print(det)
+        if i == 1:
+            det = det.split(titlelist[i-1].text)[1]
+        
         if det.find('location is closed') > -1:
             continue
         title = titlelist[i-1].text
