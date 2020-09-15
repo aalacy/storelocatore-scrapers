@@ -37,7 +37,10 @@ def fetch_data():
                 continue
             if "close" in note.lower():
                 hours_of_operation = note
-        phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
+        try:
+            phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
+        except:
+            phone = '<MISSING>'
         try:
             store_number = store.find_element_by_css_selector("div.adr ~ p > a[href*='order.cava.com']").get_attribute('href')
             store_number = re.findall(r'stores\/{1}(\d*)', store_number)[0]
