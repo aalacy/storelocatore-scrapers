@@ -1,11 +1,10 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://paradisshopnsave.com'
 
@@ -38,7 +37,8 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://paradisshopnsave.com/location"
-    request = requests.get(url)
+    session = SgRequests()
+    request = session.get(url)
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="location-shop"]')
     for store in store_list:
