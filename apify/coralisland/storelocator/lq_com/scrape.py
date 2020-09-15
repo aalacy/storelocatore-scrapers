@@ -16,7 +16,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :

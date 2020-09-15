@@ -10,7 +10,7 @@ base_url = 'https://www.primroseschools.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -45,7 +45,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     request = session.get(url, headers=headers)
-    response = etree.HTML(request.text.encode("utf8"))    
+    response = etree.HTML(request.text)    
     store_list = response.xpath('//a[@class="location-school"]/@href')
     for link in store_list:
         link = base_url + link

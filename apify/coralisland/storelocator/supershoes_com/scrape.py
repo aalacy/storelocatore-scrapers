@@ -12,7 +12,7 @@ base_url = 'https://www.supershoes.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -62,7 +62,7 @@ def fetch_data():
         request = session.post(url, data=data, headers=headers)
         response = etree.HTML(request.text)
         store_list = response.xpath('//div[@id="nearest"]/ul/li')
-        print('~~~~~~~~~~~', city, len(store_list))
+        print(('~~~~~~~~~~~', city, len(store_list)))
         for store in store_list:
             store = eliminate_space(store.xpath('.//text()'))
             output = []

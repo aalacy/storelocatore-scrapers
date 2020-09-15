@@ -12,7 +12,7 @@ base_url = 'https://paradisshopnsave.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '').replace('\t', '')
+    return item.strip().replace('\n', '').replace('\t', '')
 
 def get_value(item):
     item = validate(item)
@@ -39,14 +39,14 @@ def fetch_data():
     output_list = []
     url = "https://paradisshopnsave.com/location"
     request = requests.get(url)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="location-shop"]')
     for store in store_list:
         title = validate(store.xpath('.//div[@class="location-shop-title"]/text()'))
         location_address = store.xpath('.//div[@class="location-address"]/text()')
         hours_url = store.xpath('.//div[@class="store-hours"]/a/@href')[0]
         detailrequest = requests.get(hours_url)
-        detail = etree.HTML(detailrequest.text.encode("utf-8"))
+        detail = etree.HTML(detailrequest.text)
         hour_table = detail.xpath('//table')
         store_hours = ""
 
@@ -54,7 +54,7 @@ def fetch_data():
         store_hours += validate(hour_table[0].xpath('.//tr')[0].xpath(".//text()")) + ':'
         label_list = hour_table[0].xpath(".//tr")[1].xpath('.//td//text()')
         new_label_list = []
-        for x in xrange(0, len(label_list) / 2):
+        for x in range(0, len(label_list) / 2):
             new_label_list.append(label_list[x * 2] + ' ' + label_list[(x * 2) + 1])
 
         hour_list = hour_table[0].xpath(".//tr")[2].xpath('.//td//text()')
