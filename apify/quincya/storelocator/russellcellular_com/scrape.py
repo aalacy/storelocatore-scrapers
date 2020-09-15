@@ -25,7 +25,6 @@ def fetch_data():
 
 	data = []
 	found_poi = []
-	MAX_RESULTS = 3
 
 	search = sgzip.ClosestNSearch()
 	# Initialize the search for the US only
@@ -52,7 +51,8 @@ def fetch_data():
 		items = base.find_all('div', attrs={'style': "display:none"})
 		for item in items:
 			location_name = item.strong.text.strip()
-			
+			if "soon" in location_name.lower():
+				continue
 			raw_address = str(item.find(class_="infobox")).split("<br/>")[1:-2]
 			street_address = " ".join(raw_address[:-1]).strip()
 			if street_address in found_poi:
@@ -76,11 +76,11 @@ def fetch_data():
 			except:
 				latitude = "<MISSING>"
 				longitude = "<MISSING>"
+				
 			data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
-		if len(items) <= MAX_RESULTS:
-			print("max count update..")
-			search.max_count_update(result_coords)
+		print("max count update..")
+		search.max_count_update(result_coords)
 		coords = search.next_coord()
 
 	return data
