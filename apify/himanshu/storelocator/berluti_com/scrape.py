@@ -21,6 +21,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
@@ -46,111 +47,111 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    # print("data ==== "+str(soup))
-
-    r_us = session.get(
-        "http://store.berluti.com/search?country=us", headers=headers)
+    r_us = session.get("http://store.berluti.com/search?country=us", headers=headers)
     soup_us = BeautifulSoup(r_us.text, "lxml")
 
-    for script_us in soup_us.find_all('div', {'class': 'container'}):
-        address_list = list(script_us.stripped_strings)
+    for script_us in soup_us.find_all('div', {'class': 'container'})[1:]:
 
-        if 'Closed' in address_list:
-            # print(str(address_list))
-            # print(len(address_list))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~")
-            location_name = address_list[0]
-            country_code = "US"
-            if len(address_list) > 14:
-                street_address = address_list[1] + ", " + address_list[2]
-                city = address_list[3].strip()
-                state = address_list[6].split()[0].strip()
-                zipp = address_list[6].split()[-1].strip()
-                phone = address_list[7].strip()
+        page_url = "https://store.berluti.com"+script_us.find("div",{"class":"col-xs-12"}).find("a")["href"]
+        r_page = session.get(page_url, headers=headers)
+        soup_page = BeautifulSoup(r_page.text, "html5lib")
+        jd = json.loads(soup_page.find("script",{"type":"application/ld+json"}).text)
+        location_name = jd['name']
+        street_address = jd['address']['streetAddress'].replace("754 5th Avenue","754 5th Avenue 2nd floor").replace("3333 Bristol Street","3333 Bristol Street Level 2")
+        city = jd['address']['addressLocality']
+        temp_state_zip = jd['address']['postalCode'].split(" ")
+        if len(temp_state_zip)==2:
+            state = temp_state_zip[0]
+            zipp = temp_state_zip[1]
+        else:
+            zipp = temp_state_zip[0]
+            ct =["San Francisco","Beverly Hills"]
+            if city in ct:
+                state = "CA"
             else:
-                street_address = address_list[1].strip()
-                city = address_list[2].strip()
-                state = address_list[4].strip()
-                zipp = address_list[5].split()[-1].strip()
-                phone = address_list[6].strip()
-                # print(address_list)
-                # print(city)
-                # print("~~~~~~~~~~~~~~~~~~~~`")
+                state = "WA"
+            
+        phone = jd['telephone'].replace("+1","").strip()
+        try:
+            hours_of_operation = " ".join(list(soup_page.find("div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
+        except:
+            hours_of_operation = "<MISSING>"
 
-            hours_url = "http://store.berluti.com" + \
-                script_us.find("a", {
-                               "class": "components-outlet-item-search-result-basic__link__details__link"})["href"]
-            page_url = hours_url
-            # print("script_us === " + str(hours_url))
-            r_hours = session.get(hours_url, headers=headers)
-            soup_hours = BeautifulSoup(r_hours.text, "lxml")
+        latitude = soup_page.find("meta", {"itemprop": "latitude"})["content"]
+        longitude = soup_page.find("meta", {"itemprop": "longitude"})["content"]
+        
 
-            hours_of_operation = " ".join(list(soup_hours.find(
-                "div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
-            latitude = soup_hours.find(
-                "meta", {"itemprop": "latitude"})["content"]
-            longitude = soup_hours.find(
-                "meta", {"itemprop": "longitude"})["content"]
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)   
+        store.append("US")
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
+        
 
-            # print(latitude, longitude)
+    r_ca = session.get("http://store.berluti.com/search?country=ca", headers=headers)
+    soup_ca = BeautifulSoup(r_ca.text, "lxml")
 
-            # print("hours_of_operationty ====== " + str(hours_of_operation))
+    for script_ca in soup_ca.find_all('div', {'class': 'container'})[1:]:
+        page_url = "https://store.berluti.com"+script_ca.find("div",{"class":"col-xs-12"}).find("a")["href"]
+        r_page = session.get(page_url, headers=headers)
+        soup_page = BeautifulSoup(r_page.text, "html5lib")
+        jd = json.loads(soup_page.find("script",{"type":"application/ld+json"}).text)
+        location_name = jd['name']
+        street_address = jd['address']['streetAddress']
+        city = jd['address']['addressLocality']
+        zipp = jd['address']['postalCode']
+        if city == "Toronto":
+            state = "ON" 
+        if city == "Vancouver":
+            state = "BC"
+    
+        phone = jd['telephone'].replace("+1","").strip()
+        try:
+            hours_of_operation = " ".join(list(soup_page.find("div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
+        except:
+            hours_of_operation = "<MISSING>"
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            yield store
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        latitude = soup_page.find("meta", {"itemprop": "latitude"})["content"]
+        longitude = soup_page.find("meta", {"itemprop": "longitude"})["content"]
+        
 
-    r_ca = session.get(
-        "http://store.berluti.com/search?country=ca", headers=headers)
-    soup_us = BeautifulSoup(r_ca.text, "lxml")
-
-    for script_us in soup_us.find_all('div', {'class': 'container'}):
-        address_list = list(script_us.stripped_strings)
-
-        if 'Closed' in address_list:
-            # print(str(address_list))
-            # print(len(address_list))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~")
-            location_name = address_list[0]
-            country_code = "CA"
-            street_address = address_list[1].strip()
-            city = address_list[2].strip()
-            state = address_list[4].strip()
-            zipp = address_list[5].split("  ")[-1].strip()
-            phone = address_list[6].strip()
-
-            hours_url = "http://store.berluti.com" + \
-                script_us.find("a", {
-                               "class": "components-outlet-item-search-result-basic__link__details__link"})["href"]
-            page_url = hours_url
-            # print("script_us === " + str(hours_url))
-            r_hours = session.get(hours_url, headers=headers)
-            soup_hours = BeautifulSoup(r_hours.text, "lxml")
-
-            hours_of_operation = " ".join(list(soup_hours.find(
-                "div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
-            latitude = soup_hours.find(
-                "meta", {"itemprop": "latitude"})["content"]
-            longitude = soup_hours.find(
-                "meta", {"itemprop": "longitude"})["content"]
-
-            # print(latitude, longitude)
-
-            # print("hours_of_operationty ====== " + str(hours_of_operation))
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            yield store
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)   
+        store.append("CA")
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
 def scrape():
     data = fetch_data()

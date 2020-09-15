@@ -21,7 +21,7 @@ def fetch_data():
     addresses = []
     base_url = "https://healthcare.ascension.org"
     for loc_type in ["Emergency Care","Express Care","Hospital/Medical Center","Imaging","Laboratory","Other","Pharmacy","Primary Care/Clinic","Specialty Care","Urgent Care"]:
-        payload = "{\r\n    \"geoDistanceOptions\":\r\n    {\r\n        \"location\":\"Phoenix, AZ  85029\",\r\n        \"radius\":\"5500\"\r\n    },\r\n    \"facilityName\":\"\",\r\n    \"locationType\":\""+str(loc_type)+"\",\r\n    \"page\":1,\r\n    \"pageSize\":5000,\r\n    \"stateCode\":\"\",\r\n    \"filters\":\r\n    {\r\n        \"locationType\":[\""+str(loc_type)+"\"]\r\n        }\r\n}"
+        payload = "{\r\n    \"geoDistanceOptions\":\r\n    {\r\n        \"location\":\"Phoenix, AZ  85029\",\r\n        \"radius\":\"6000\"\r\n    },\r\n    \"facilityName\":\"\",\r\n    \"locationType\":\""+str(loc_type)+"\",\r\n    \"page\":1,\r\n    \"pageSize\":60000,\r\n    \"stateCode\":\"\",\r\n    \"filters\":\r\n    {\r\n        \"locationType\":[\""+str(loc_type)+"\"]\r\n        }\r\n}"
         headers = {
             'accept': '*/*',
             'content-type': 'application/json; charset=UTF-8',
@@ -47,7 +47,13 @@ def fetch_data():
             page_url = base_url+info['Url'].replace(" ","%20")
             latitude = info['Address']['Latitude']
             longitude = info['Address']['Longitude']
-            hours = re.sub(r'\s+'," ",info['Hours']).strip()
+            hours = re.sub(r'\s+'," ",info['Hours']).replace("Call us for daily hours.",'').replace("Call us for daily hours",'').replace("Visiting Hours:",'').replace("Emergency Dept: ",'').replace("Basani: ",'').replace("Business Office Hours:",'').replace("Hours Vary By Office",'').replace(" (Call for Holiday Hours)",'').replace("Varies","").replace("Contact us for hours. ",'').replace("Clinic & Same Day Appointments: ",'').replace("Contact us for daily hours.",'').replace("Appointments: First, third and fifth Thursday of every month.",'').replace("Family Medicine: ",'').lstrip().replace(" Lab: by appointment only","").replace("Urgent Care: 920-223-7305",'').replace("24/7","Open 24/7")
+
+            if hours.strip():
+                hours=hours
+            else:
+                hours = "<MISSING>"
+
 
             
             store = []
@@ -67,9 +73,9 @@ def fetch_data():
             store.append(page_url)
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            if store[2] in addresses:
+            if str(store[2]+str(phone)+store[-1]) in addresses:
                 continue
-            addresses.append(store[2]) 
+            addresses.append( str(store[2]+str(phone) +store[-1])) 
             yield store
     
 def scrape():
