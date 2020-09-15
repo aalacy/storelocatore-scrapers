@@ -1,1 +1,3 @@
---ignore LatLngDuplicationValidator (Address with 2 poi)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed scraped correctly)
+--ignore GeoConsistencyValidator (1 POI with bad address)
+--ignore LatLngDuplicationValidator (Same addresses with multiple poi)
