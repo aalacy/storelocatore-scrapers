@@ -21,6 +21,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
@@ -80,22 +81,32 @@ def fetch_data():
                             phone ="("+phone_list[0] 
                     else:
                         phone =  list(loc1.find("p",class_="stores").find_next("p").find_next("p").stripped_strings)[0]
-                        
-                    
                 else:
                     city="<MISSING>"
                     state = "<MISSING>"
                     zipp = "<MISSING>"
                     phone= "<MISSING>"
                 hours_of_operation = " ".join(list(loc1.find_all("p")[-1].stripped_strings)).replace("Hours","").replace("(Drive Thru Only)","")
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                store = ["<MISSING>" if x == "" else x for x in store]
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
                 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)   
+                store.append(country_code)
+                store.append(store_number)
+                store.append(phone)
+                store.append(location_type)
+                store.append("<MISSING>")
+                store.append("<MISSING>")
+                store.append(hours_of_operation)
+                store.append(page_url)
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                if store[2] in addressess:
+                    continue
+                addressess.append(store[2])
                 yield store
                 
             except:
@@ -110,88 +121,129 @@ def fetch_data():
 
     for store_url in list_store_url:
         if "nevada" not in store_url and "new-mexico" not in store_url:
-            # print(store_url)
-            r_store = session.get(store_url, headers=headers)
-            soup_store = BeautifulSoup(r_store.text, "lxml")
-            table = soup_store.find('table')
-            # print(table)
-            for tr in table.find_all('tr')[1:]:
-                page_url = store_url
-                if 'http://kevajuice.com/colorado/'in page_url:
-                    page_url = 'http://www.kevajuicecolorado.com/index2.html'
-                address = list(tr.find_all('td')[0].stripped_strings)
-                # print(address)
-                # print('~~~~~~~~~~~~~~')
-                if address == []:
-                    location_name = "<MISSING>"
-                    street_address = "<MISSING>"
-                    city = "<MISSING>"
-                    state = "<MISSING>"
-                    zipp = "<MISSING>"
-                elif len(address) == 1:
-                    location_name = address[0].strip()
-                    street_address = "<MISSING>"
-                    city = "<MISSING>"
-                    state = "<MISSING>"
-                    zipp = "<MISSING>"
-                elif len(address) == 2:
-                    street_address = address[0].strip()
-                    location_name = address[1].replace(
-                        "Located in the", "").strip()
-                    city = "<MISSING>"
-                    state = "<MISSING>"
-                    zipp = "<MISSING>"
+            if 'http://kevajuice.com/colorado/'in store_url:
+                data_url = ['https://keva-juice-broadmoor-towne-center.square.site/','https://keva-juice-university-village-colorado.square.site/']
+                for i in data_url:
+                    page_url = i
+                    col_r = session.get(page_url, headers=headers)
+                    col_soup = BeautifulSoup(col_r.text, "lxml")
+                    jd = json.loads(str(col_soup).split('","verticalsHidden":true}}},')[1].split(']}}},"id":')[0])['content']['properties']['syncedLocation']
+                    location_name = jd['business_name']
+                    street_address = jd['street'] + " " + jd['street2']
+                    city = jd['city'].replace("Colo Spgs","Colorado Springs")
+                    state = jd['region']
+                    zipp = jd['postal_code']
+                    country_code = jd['country_code']
+                    store_number = "<MISSING>"
+                    phone = jd['phone'].replace("+1 ","")
+                    location_type = "<MISSING>"
+                    latitude = jd['lat']
+                    longitude = jd['lng']
+                    hoo = []
+                    for h in jd['hours']:
+                        weekday = h['day']+":"+h['time']
+                        hoo.append(weekday)
 
-                else:
-                    location_name = address[0].strip()
-                    street_address = " ".join(address[1:-1]).strip()
-                    city = address[-1].split(',')[0].strip()
-                    state = address[-1].split(',')[-1].split()[0].strip()
-                    zipp = address[-1].split(',')[-1].split()[-1].strip()
-                if "Lubbock Keva" == location_name.strip():
-                    page_url = "https://www.kevajuicelubbock.com/"
-                if "http://kevajuice.com/utah/" == page_url:
-                    page_url = "https://www.kevajuiceutah.com/"
-                hours_of_operation = " ".join(
-                    list(tr.find_all('td')[1].stripped_strings)).strip().replace("Follows Airport Hours", "").replace("Follows Mall Hours ", "").replace("May vary", "").strip()
-                phone_list = list(tr.find_all('td')[2].stripped_strings)
-                if "Store Website" in " ".join(phone_list):
-                    phone_list.remove("Store Website")
-                if phone_list:
-                    phone = phone_list[0]
-                else:
-                    phone = "<MISSING>"
+                    hours_of_operation = ",".join(hoo)
+                    
+                    store = []
+                    store.append(base_url)
+                    store.append(location_name)
+                    store.append(street_address)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zipp)   
+                    store.append(country_code)
+                    store.append(store_number)
+                    store.append(phone)
+                    store.append(location_type)
+                    store.append(latitude)
+                    store.append(longitude)
+                    store.append(hours_of_operation)
+                    store.append(page_url)
+                    store = [x.replace("–","-") if type(x) == str else x for x in store]
+                    if store[2] in addressess:
+                        continue
+                    addressess.append(store[2])
+                    yield store
 
-                try:
-                    coord = tr.find_all('td')[3].a['href']
-
-                    if "&sll" in coord:
-                        latitude = coord.split("&sll=")[1].split(',')[0]
-                        longitude = coord.split("&sll=")[1].split(',')[
-                            1].split('&')[0]
+            else:
+                r_store = session.get(store_url, headers=headers)
+                soup_store = BeautifulSoup(r_store.text, "lxml")
+                table = soup_store.find('table')
+                # print(table)
+                for tr in table.find_all('tr')[1:]:
+                    page_url = store_url
+                    # print(page_url)
+                    address = list(tr.find_all('td')[0].stripped_strings)
+                    # print(address)
+                    # print('~~~~~~~~~~~~~~')
+                    if address == []:
+                        location_name = "<MISSING>"
+                        street_address = "<MISSING>"
+                        city = "<MISSING>"
+                        state = "<MISSING>"
+                        zipp = "<MISSING>"
+                    if len(address) == 1:
+                        # print(address)
+                        location_name = address[0].strip()
+                        street_address = "<MISSING>"
+                        city = "<MISSING>"
+                        state = "<MISSING>"
+                        zipp = "<MISSING>"
+                    if len(address) == 3:
+                        location_name = address[0].strip()
+                        street_address = " ".join(address[1:-1]).strip()
+                        city = address[-1].split(',')[0].strip()
+                        state = address[-1].split(',')[-1].split()[0].strip().replace("Texas","TX")
+                        zipp = address[-1].split(',')[-1].split()[-1].strip()
+                    if "Lubbock Keva" == location_name.strip():
+                        page_url = "https://www.kevajuicelubbock.com/"
+                    if "http://kevajuice.com/utah/" == page_url:
+                        page_url = "https://www.kevajuiceutah.com/"
+                    hours_of_operation = " ".join(
+                        list(tr.find_all('td')[1].stripped_strings)).strip().replace("Follows Airport Hours", "").replace("Follows Mall Hours ", "").replace("May vary", "").strip()
+                    phone_list = list(tr.find_all('td')[2].stripped_strings)
+                    if "Store Website" in " ".join(phone_list):
+                        phone_list.remove("Store Website")
+                    if phone_list:
+                        phone = phone_list[0]
                     else:
+                        phone = "<MISSING>"
 
+                    try:
+                        coord = tr.find_all('td')[3].a['href']
+
+                        if "&sll" in coord:
+                            latitude = coord.split("&sll=")[1].split(',')[0]
+                            longitude = coord.split("&sll=")[1].split(',')[1].split('&')[0]
+                        else:
+                            latitude = "<MISSING>"
+                            longitude = "<MISSING>"
+                    except:
                         latitude = "<MISSING>"
                         longitude = "<MISSING>"
-                except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
 
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                store = ["<MISSING>" if x == "" else x for x in store]
-                store = [str(x).encode('ascii', 'ignore').decode(
-                    'ascii').strip() if x else "<MISSING>" for x in store]
-
-                if (store[1] + " " + store[2]) in addresses:
-                    continue
-                addresses.append(store[1] + " " + store[2])
-                # print("data = " + str(store))
-                # print(
-                #    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-
-
+                    store = []
+                    store.append(base_url)
+                    store.append(location_name)
+                    store.append(street_address)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zipp)   
+                    store.append(country_code)
+                    store.append("<MISSING>")
+                    store.append(phone)
+                    store.append(location_type)
+                    store.append(latitude)
+                    store.append(longitude)
+                    store.append(hours_of_operation)
+                    store.append(page_url)
+                    store = [x.replace("–","-") if type(x) == str else x for x in store]
+                    if store[2] in addressess:
+                        continue
+                    addressess.append(store[2])
+                    yield store
 
 def scrape():
     data = fetch_data()
