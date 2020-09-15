@@ -1,11 +1,10 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://www.marketstreetunited.com'
 
@@ -37,13 +36,12 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.marketstreetunited.com/Sysnify.Relationshop.v2/StoreLocation/SearchStore?__RequestVerificationToken=euPudG87EY_RqGcvZOq1c5YJkWkCDyQFs0jo4DZBA8p6EG-7lSCtr1kZDndiv7LEI-rBU3A6S9WsnvfuryBXvlkNks85izIa4cne7GA_5nw1&zipcode=&cityStore=&banner=false&isDelivery=false&isPickup=false&_=1565870079052"
+    url = 'https://www.marketstreetunited.com/RS.Relationshop/StoreLocation/GetAllStoresPosition' 
     headers = {
         "Accept": "*/*",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Cookie": "_gcl_au=1.1.1235651713.1565818178; _ga=GA1.2.890403004.1565818181; _gid=GA1.2.282974722.1565818181; _fbp=fb.1.1565818183410.190159251; hubspotutk=8bca51f6370b3b8ceb7860a3b934c931; COOKIE_CURRENT_PAGE=%2frs%2fWeeklyAd; COOKIE_IS_PRIVATE=False; showhideMenuData=1,1,1; __RequestVerificationToken=4NjnTYnBz3CjKes_oD0sKDF8c_OAbLPhH_OuMA4j9n0kvUFWSkrn_weHJYS0xYktdCen2j9CblObdfeHZNY0-IeNA_ZZ9MYENIj031tFjXE1; ASP.NET_SessionId=exh1ly3z4ucwsibxwfrmvpgz; __hstc=17894758.8bca51f6370b3b8ceb7860a3b934c931.1565818184323.1565818184323.1565870001804.2; __hssrc=1; __hssc=17894758.3.1565870001804",
         "Host": "www.marketstreetunited.com",
         "Referer": "https://www.marketstreetunited.com/rs/StoreLocator",
         "Sec-Fetch-Mode": "cors",
@@ -51,8 +49,8 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest"
     }
-    response = requests.get(url, headers=headers)
-    store_list = json.loads(response.text.split('var stores = ')[1].split('var ')[0][:-11])
+    session = SgRequests()
+    store_list = session.get(url, headers=headers).json()
     for store in store_list:
         output = []
         output.append(base_url) # url
