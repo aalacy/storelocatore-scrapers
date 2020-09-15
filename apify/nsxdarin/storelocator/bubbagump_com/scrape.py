@@ -55,6 +55,9 @@ def fetch_data():
             lng = line.split('<meta name="ICBM" content="')[1].split(',')[1].split('"')[0].strip()
             g = next(lines)
             g = str(g.decode('utf-8'))
+            if '<strong>' not in g:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
             if country == 'US' or country == 'CA':
                 phone = g.split('<span class="desktop">Ph:')[1].split('<')[0].strip()
                 add = g.split('<strong>')[1].split('<')[0]
