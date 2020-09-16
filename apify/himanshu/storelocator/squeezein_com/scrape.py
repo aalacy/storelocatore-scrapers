@@ -3,8 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+from sgselenium import SgSelenium
+import time
 
 session = SgRequests()
 
@@ -20,6 +20,10 @@ def write_output(data):
 
 
 def fetch_data():
+
+    driver = SgSelenium().chrome()
+    time.sleep(2)
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
@@ -54,6 +58,28 @@ def fetch_data():
         store_url = item['href']
         if store_url[0] == "/":
             store_url = base_url + store_url
+
+        print(store_url)
+        driver.get(store_url)
+        time.sleep(8)
+
+        base = BeautifulSoup(driver.page_source,"lxml")
+        try:
+            map_link = base.iframe["src"]
+            if "maps" not in map_link:
+                map_link = base.find_all("iframe")[1]["src"]
+            lat_pos = map_link.rfind("!3d")
+            latitude = map_link[lat_pos+3:map_link.find("!",lat_pos+5)].strip()
+            lng_pos = map_link.find("!2d")
+            longitude = map_link[lng_pos+3:map_link.find("!",lng_pos+5)].strip()
+        except:
+            try:
+                raw_gps = driver.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
+                latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
+                longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
+            except:
+                latitude = '<MISSING>'
+                longitude = '<MISSING>'
 
         # print(store_url)
         r_store = session.get(store_url, headers=headers)
@@ -109,8 +135,6 @@ def fetch_data():
 
             country_code = 'US'
             store_number = '<MISSING>'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
             # location_name = city
 
             store = [locator_domain, store_url, location_name, street_address, city, state, zipp, country_code,
@@ -120,7 +144,7 @@ def fetch_data():
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
-
+    driver.close()
     return return_main_object
 
 
