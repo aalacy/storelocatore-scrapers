@@ -31,6 +31,7 @@ def fetch_data():
     MAX_DISTANCE = 1
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
+
     base_url = "https://secondcup.com"
 
     while zip_code:
@@ -46,8 +47,8 @@ def fetch_data():
         }
         data = {
             "postal_code": str(zip_code),
-            "honeypot_time": "Ech6g3iMi-H6Z4jue6vfKvtnbaIuyYaIvYUFbqGLSOk",
-            "form_build_id": "form-Ew0fgdBS1W2ylO2VK6tOdFIZ8cytvafKxI0jfcerTSk",
+            "honeypot_time": "pIzl-k4PaWoID2Ll9VBf7TcOMzV2H4x-hCFYLjld9D4",
+            "form_build_id": "form-977IeJvoXbzPQq8czQxsGHhb6aFcBY1-y7C3HTufXk0",
             "form_id": "postal_code_form",
             "url": ""
         }
@@ -77,7 +78,6 @@ def fetch_data():
 
             page_url = base_url+link['href']
             #print(page_url)
-
             r1 = session.get(page_url)
             #print(f'{page_url} : {r1.status_code}')
 
@@ -87,10 +87,11 @@ def fetch_data():
                 continue
 
             soup1 = BeautifulSoup(r1.text, "lxml")
-            location_name = soup1.find(
-                "div", {"class": "l-location__title"}).text.strip()
-            addr = list(soup1.find(
-                "div", {"class": "m-location-features__address"}).stripped_strings)
+            location_name = soup1.find("div", {"class": "l-location__title"}).text.strip()
+            #print(location_name)
+            #print()
+            
+            addr = list(soup1.find("div", {"class": "m-location-features__address"}).stripped_strings)
             #print(addr)
             if addr:
                 street_address = addr[0]
@@ -118,8 +119,7 @@ def fetch_data():
             if len(closed_message) == 1:
                 hours = closed_message[0].get_text()
             else:
-                hours = " ".join(
-                    list(soup1.find("ul", {"class": "m-location-hours__list"}).stripped_strings))
+                hours = " ".join(list(soup1.find("ul", {"class": "m-location-hours__list"}).stripped_strings))
             #print('hours: ', hours)
 
             result_coords.append((0, 0))
