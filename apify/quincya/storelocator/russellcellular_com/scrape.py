@@ -55,6 +55,8 @@ def fetch_data():
 				continue
 			raw_address = str(item.find(class_="infobox")).split("<br/>")[1:-2]
 			street_address = " ".join(raw_address[:-1]).strip()
+			if "{" in street_address:
+				street_address = street_address[:street_address.find("{")].strip()
 			if street_address in found_poi:
 				continue
 			print(street_address)
