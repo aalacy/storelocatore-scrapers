@@ -33,8 +33,10 @@ def fetch_data():
 			opened = store['hasOpened']
 			if not opened:
 				continue
-			location_name = store['neighborhood']			
-			street_address = (store['address1'] + " " + store['address2']).strip()
+			location_name = store['neighborhood']
+			street_address = store['address1'].strip()
+			if not street_address[:1].isnumeric():
+				street_address = store['address2'].strip()
 			city = store['city'].strip()
 			state = store['state']
 			zip_code = store['zip']
