@@ -2,12 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/json',
-           'X-Requested-With': 'XMLHttpRequest'
-           }
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,7 +10,21 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=40.0&longitude=-95.0&radius=10000&maxResults=30000&country=us&language=en-us&showClosed=&hours24Text=Open%2024%20hr'
+    session = SgRequests()
+    url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=40.0&longitude=-95.0&radius=20000&maxResults=30000&country=us&language=en-us&showClosed=&hours24Text=Open%2024%20hr'
+
+    headers = {
+        "Host": "www.mcdonalds.com",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-CA,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "X-Requested-With": "XMLHttpRequest",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Referer": "https://www.mcdonalds.com/us/en-us/restaurant-locator.html"
+    }
+
     r = session.get(url, headers=headers)
     array = json.loads(r.content)
 
