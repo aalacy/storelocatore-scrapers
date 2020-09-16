@@ -61,6 +61,8 @@ def fetch_data():
         lat=''
         lng=''
         country="US"
+        if "SACRAMENTO (65th)" in name:
+            phone = "(916) 394-9166"
         store.append(base_url)
         store.append(name if name else "<MISSING>")
         store.append(address if address else "<MISSING>")
