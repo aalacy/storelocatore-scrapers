@@ -1,5 +1,9 @@
 import csv
 from sgselenium import SgSelenium
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 import re
 from bs4 import BeautifulSoup
 import requests
@@ -41,13 +45,15 @@ def fetch_data():
         page_url.append("https://www.arhaus.com"+sl)
 
     for url in page_url:
-        #print(url)
+        print(url)
         try:
             driver.get(url)
         except:
             driver.get(url)
 
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+
         locs.append(soup.find('h1', {'class': 'store-details__header-heading'}).text)
         street.append(soup.find('span', {'class': 'store-details__street-address-1'}).text)
         cities.append(soup.find('span', {'class': 'store-details__street-city'}).text.strip())
