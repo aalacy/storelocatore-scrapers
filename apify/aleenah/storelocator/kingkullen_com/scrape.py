@@ -2,7 +2,8 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import requests
-
+import time
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,6 +20,7 @@ def write_output(data):
 
 
 all=[]
+driver = SgSelenium().chrome()
 
 def fetch_data():
     # Your scraper here
@@ -37,12 +39,16 @@ def fetch_data():
 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36',
 'Cookie': 'SA_SIDSRC=154=1; UMA_SIDGUID=s=740687418&g=7cc97cbf-b282-4718-810b-cdc95ab74d82; TS0111b575=01391bcd08dba9000278fe5190d83cb0363562ecec84d654b841ca923f8d9145f8d61fdf0737c6214f402176927004db3605b3a2d3fccb3420c9eae67a4a8f1a11d17a29bd8c047ab4d0f79c85ed73477d96ce6f8b; _ga=GA1.2.1018485784.1598557924; _gid=GA1.2.447398689.1598557924; TS01ae7bf1=01391bcd0879cababf4c6076a58393dd9157d28b85cae1127239898f6a7d9e8b7ff3c0d009d4bb3b5b30352d7f725f938bb25ee2aa; _dc_gtm_UA-5496062-8=1; _dc_gtm_UA-3893611-1=1; _dc_gtm_UA-56824083-4=1; _gali=LocationsSeachInnerCell'}
 
+    driver.get('http://kingkullen.mywebgrocer.com/StoreLocator.aspx?')
+    time.sleep(3)
+    url=driver.current_url
 
-    res = requests.post("http://kingkullen.mywebgrocer.com/StoreLocator.aspx?s=740687418&g=7cc97cbf-b282-4718-810b-cdc95ab74d82&uc=370A037",headers=headers,data='postBack=1&action=GL&stateSelIndex=1&citySelIndex=0&selStates=NY&selCities=&txtZipCode=&selZipCodeRadius=5')
+    print(url)
+    res = requests.post(url,headers=headers,data='postBack=1&action=GL&stateSelIndex=1&citySelIndex=0&selStates=NY&selCities=&txtZipCode=&selZipCodeRadius=5')
     print(res)
 
     soup = BeautifulSoup(res.text, 'html.parser')
-    print(soup)
+    #soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores = soup.find('table', {'id': 'LocatorResultsTbl'}).find_all('div', {'class': 'StoreBox'})
 
     print(len(stores))
