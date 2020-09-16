@@ -34,16 +34,26 @@ def fetch_data():
             continue
 
         try:
-            link = store_data["Links"][0]["Url"]
+            link = store_data["Links"][0]["Url"].replace("/.","/")
             req = session.get(link,headers=headers)
             base = BeautifulSoup(req.text,"lxml")
             try:
                 hours = base.find(id="hours-list").text.strip().replace("\t","").replace("\r\n","").replace("\n"," ")
                 hours_of_operation = (re.sub(' +', ' ', hours)).strip()
             except:
-                hours_of_operation = '<MISSING>'
+                hours_link = link + "Website/Hours"
+                req = session.get(hours_link,headers=headers)
+                base = BeautifulSoup(req.text,"lxml")
+                try:
+                    hours = base.find(class_="table w-100").text.strip().replace("\t","").replace("\r\n","").replace("\n"," ")
+                    hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+                except:
+                    hours_of_operation = '<MISSING>'
         except:
-            link = base_link
+            link = '<MISSING>'
+            hours_of_operation = '<MISSING>'
+        if "ordermyfavorite" not in link.lower():
+            link = '<MISSING>'
         store.append(link)
         store.append(store_data["Name"])
         store.append(street_address)
