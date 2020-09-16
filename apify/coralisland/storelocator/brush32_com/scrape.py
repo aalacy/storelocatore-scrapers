@@ -1,14 +1,12 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
-import json
 import usaddress
-
+from sgrequests import SgRequests
+import re
 
 base_url = 'https://www.brush32.com'
-
 
 def validate(item):    
     if item == None:
@@ -66,39 +64,31 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.brush32.com/dentist-offices/"
+    url = "https://www.brush32.com/locations/"
     page_url = ''
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
-    source = validate(request.text.split('var map_data = ')[1].split('};')[0])+'}'
-    store_list = json.loads(source)['offices']
-    for key, store in list(store_list.items()):        
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['url'])) # page url
-        output.append(get_value(store['full_name'])) #location name
-        if 'Brush32' in get_value(store['full_name']):
-            output.append(get_value(store['street_address'])) #address
-            address = validate(store['city_state_zip']).split(', ')
-            output.append(address[0]) #city
-            output.append(address[1].strip().split(' ')[0]) #state
-            output.append(address[1].strip().split(' ')[1]) #zipcode
-            output.append('US') #country code
-            output.append(get_value(store['ID'])) #store_number
-            phone = ''
-            if 'phone' in store:
-                phone = store['phone']
-            output.append(get_value(phone)) #phone
-            output.append('Dentist Offices') #location type
-            output.append(get_value(store['latitude'])) #latitude
-            output.append(get_value(store['longitude'])) #longitude
-            store_hours = []        
-            if store['hours']:
-                for key, value in list(store['hours'].items()):
-                    store_hours.append(key + ' ' + validate(value).replace('&nbsp;&ndash;&nbsp;','-'))
-            output.append(get_value(store_hours)) #opening hours
-            output_list.append(output)
-    return output_list
+    source = etree.HTML(request.text)
+    stores = source.xpath('//section[@class="section-locations-grid"]//li[@class="locations-list-item"]')
+    for store in stores:
+        lat = store.attrib['data-lat']
+        lng = store.attrib['data-lng']
+        name = store.xpath('.//h3[@class="location-title"]/text()')[0]
+        raw_address = [x.strip() for x in store.xpath('.//address[@class="location-address"]')[0].itertext() if x.strip()]
+        street = raw_address[1]
+        csz = raw_address[2].split()
+        zipcode = csz[-1].strip()
+        state = csz[-2].strip()
+        city = raw_address[2].split(',')[0].strip()
+        phone = store.xpath('.//a[@class="office-phone-swap"]/text()')[0].strip()
+        page_url = store.xpath('(.//div[@class="location-links"]/a)[1]/@href')[0]
+        locator_domain = 'brush32.com'
+        location_type = '<MISSING>'
+        hours = '<MISSING>'
+        country = 'US'
+        store_number = '<MISSING>'
+        if 'brush32' in page_url:
+            yield [locator_domain, page_url, name, street, city, state, zipcode, country, store_number, phone, location_type, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
