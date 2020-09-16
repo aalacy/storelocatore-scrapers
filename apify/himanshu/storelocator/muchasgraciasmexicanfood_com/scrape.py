@@ -34,7 +34,7 @@ def fetch_data():
 
     items = base.find_all(class_="item")
 
-    for location_soup in items:
+    for i, location_soup in enumerate(items):
         location_name = location_soup.find(class_="p-title").text.strip()
         addr = location_soup.find(class_="p-area").text.replace("  ",",").strip().split(",")
         street_address = addr[0].strip()
@@ -60,8 +60,6 @@ def fetch_data():
             phone = re.findall("\([\d]{3}\) [\d]{3}-[\d]{4}", location_soup.text)[0]
         except:
             phone = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         
         days = ""
         hours = ""
@@ -76,6 +74,16 @@ def fetch_data():
             hours_of_operation = hours + days
         else:
             hours_of_operation = "<MISSING>"
+
+        driver.find_elements_by_class_name("item")[i].click()
+        time.sleep(2)
+        try:
+            raw_gps = driver.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
+            latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
+            longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         store = []
         store.append("muchasgraciasmexicanfood.com")
