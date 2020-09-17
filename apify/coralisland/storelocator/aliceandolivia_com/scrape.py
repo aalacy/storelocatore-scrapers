@@ -1,9 +1,4 @@
 import csv
-import re
-import pdb
-from lxml import etree
-import json
-import usaddress
 from sgrequests import SgRequests
 
 base_url = 'https://www.aliceandolivia.com'
