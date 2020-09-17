@@ -35,8 +35,9 @@ def fetch_data():
     MAX_DISTANCE = 50.0
     coord = search.next_coord()
     while coord:
+
         result_coords = []
-       # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
@@ -52,7 +53,7 @@ def fetch_data():
             city = value['address']['city']
             state = value['address']['stateCode']
             zipp = value['address']['postalCode']
-            country_code = "CA"
+            country_code = "US"
             try:
                 phone = value['phoneNumber']
             except:
@@ -121,7 +122,7 @@ def fetch_data():
             city = value['address']['city']
             state = value['address']['stateCode']
             zipp = value['address']['postalCode']
-            country_code = "CA"
+            country_code = "US"
             try:
                 phone = value['phoneNumber']
             except:

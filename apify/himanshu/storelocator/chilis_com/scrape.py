@@ -30,6 +30,7 @@ def fetch_data():
     state_soup = BeautifulSoup(state_r.text, "lxml")
     for link in state_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
+        # print(city_link)
         
         city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
@@ -39,10 +40,10 @@ def fetch_data():
             store_r = session.get(store_link, headers=headers)
             store_soup = BeautifulSoup(store_r.text, "html5lib")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
-            location_name = data['name'].replace("&#39;","'")
-            street_address = data['address']['streetAddress'].replace("&#39;","'")
-            city = data['address']['addressLocality'].replace("&#39;","'")
-            state = data['address']['addressRegion'].replace("&#39;","'")
+            location_name = data['name'].replace("&#39;","'").replace("&amp;","")
+            street_address = data['address']['streetAddress'].replace("&#39;","'").replace("A&amp;B","A&B").replace("&amp;","")
+            city = data['address']['addressLocality'].replace("&#39;","'").replace("&amp;","")
+            state = data['address']['addressRegion'].replace("&#39;","'").replace("&amp;","")
             zipp = data['address']['postalCode']
             country_code = "US" 
             store_number = "<MISSING>"
@@ -50,7 +51,7 @@ def fetch_data():
             location_type = data['@type']
             latitude = data['geo']['latitude']
             longitude = data['geo']['longitude']
-            hours_of_operation = store_soup.find("table").text
+            hours_of_operation = store_soup.find("table").text.strip()
             page_url = data['url'] 
             
             store = []
@@ -77,6 +78,7 @@ def fetch_data():
     ca_soup = BeautifulSoup(ca_r.text, "lxml")
     for link in ca_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
+        # print(city_link)
 
         city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
@@ -84,15 +86,15 @@ def fetch_data():
         jd = json.loads(str(city_soup).split("locationsList:")[1].split("};</script>")[0])
         for value in jd:
 
-            location_name = value['name']
-            street_address = value['address']
-            city = value['city']
-            state = value['state']
+            location_name = value['name'].replace("&amp;","")
+            street_address = value['address'].replace("&amp;","")
+            city = value['city'].replace("&amp;","")
+            state = value['state'].replace("&amp;","")
             zipp = value['zipCode']
             country_code = "CA" 
             store_number = "<MISSING>"
             phone = value['phone']
-            location_type = "<MISSING>"
+            location_type = "Restaurant"
             latitude = value['latitude']
             longitude = value['longitude']
             hours_of_operation = "<MISSING>"
@@ -113,6 +115,8 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
