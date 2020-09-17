@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=",")
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
         # print("data::" + str(data))
         for i in data or []:
@@ -50,196 +50,50 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
 
     for val in soup.find_all('div', class_="et_section_regular"):
-        # print(val)
+ 
         for location in val.find_all('div', {'id': 'locdesc'}):
             if location != []:
                 location_name = location.find('h1').text
-                # print(location_name)
                 location_details = location.find('a')
-
                 r_location = session.get(
                     base_url + location_details['href'], headers=headers)
+                page_url = base_url + location_details['href']
                 soup_loc = BeautifulSoup(r_location.text, "lxml")
-                # print(soup_loc)
-                for ad in soup_loc.find('div', class_="et_pb_section_1").find_all(
-                        'div', {'class': 'et_pb_text_inner'}):
-                    for p_tag in ad.find_all('p'):
-                        # print(p_tag)
-                        # print("~~~~~~~~~~~~~~~~~~~~~~~~")
+                supersup=soup_loc.find("iframe",{"src":re.compile("mapquest.com")})['src']
+                try:
+                    ph = str(soup_loc.find("div",{"class":"et_pb_column_5"})).split("<strong>P")[1]
+                    phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(ph))
+                    phone = phone_list[0]
+                except:
+                    phone = "<MISSING>"
+                    pass
+                r_locations = BeautifulSoup(session.get(supersup, headers=headers).text,'lxml')
+                data = json.loads(r_locations.find("script",{"id":"MQPlace"}).text)
+                location_name = (soup_loc.find("div",{"class":"et_pb_column_5"}).find("strong").text)
+                street_address=data['address']['address1']
+                city=data['address']['locality']
+                state=data['address']['region']
+                zip=data['address']['postalCode']
+                latitude = data['displayLatLng']['lat']
+                longitude = data['displayLatLng']['lng']
+                if "https://risingroll.com/gainesville-fl-university-of-florida/" in page_url:
+                    phone = "352-294-2213"
 
-                        if "Owner" in p_tag.text or "Tampa" in p_tag.text:
+                if "https://risingroll.com/dunwoody-ga/" in page_url:
+                    phone = "770.698.8000"
+                store = [locator_domain, location_name.strip().replace("\n",' '), street_address, city, state, zip, country_code,
+                                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-                            tag_address = p_tag.text.replace(
-                                '\xa0', "").replace('\n', " \ ").split(' \ ')
-                            # print(len(tag_address))
-                            # print(tag_address)
-                            # print("~~~~~~~")
+                store = ["<MISSING>" if x ==
+                            "" else x for x in store]
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store
 
-                            if len(tag_address) == 3:
-                                location_name = "".join(tag_address[0].strip())
-                                street_address = "".join(
-                                    tag_address[1].strip())
-                                city = "".join(
-                                    tag_address[-1]).split(',')[0]
-                                state = "".join(
-                                    tag_address[-1]).split(',')[-1].split()[0]
-                                zip = "".join(
-                                    tag_address[-1]).split(',')[-1].split()[-1]
-                                phone = "<MISSING>"
-                                # print(location_name + " \ " + street_address +
-                                #       " \ " + city + " \ " + state + " \ " + zip)
-                            if len(tag_address) == 5:
-                                location_name = "".join(tag_address[0].strip())
-                                city = "".join(tag_address[1]).split(
-                                    ',')[-2].strip()
-                                state = "".join(tag_address[1]).split(
-                                    ',')[-1].split()[0]
-                                zip = "".join(tag_address[1]).split(
-                                    ',')[-1].split()[-1]
-                                street1 = "".join(
-                                    tag_address[1].split(',')[:-2])
-                                street2 = "".join(tag_address[-3])
-                                street_address = street1 + " " + street2
-                            if len(tag_address) == 7:
-                                location_name = "".join(tag_address[0].strip())
-                                city = "".join(
-                                    tag_address[2]).split(',')[-2].strip()
 
-                                state = "".join(
-                                    tag_address[2]).split(',')[-1].split()[0]
-                                zip = "".join(
-                                    tag_address[2]).split(',')[-1].split()[-1]
-                                street1 = "".join(
-                                    tag_address[1])
-                                street2 = " ".join(tag_address[3:-2])
-                                street_address = street1 + " " + street2
-                            if len(tag_address) == 1 or len(tag_address) == 4 or len(tag_address) == 6:
-                                for br in p_tag.find_all('br'):
-                                    br.replace_with(" \\ ")
-                                tag_address = p_tag.text.replace(
-                                    '\xa0', "").replace("\n", "").split(' \\ ')
-                                if len(tag_address) == 7:
-                                    location_name = " ".join(tag_address[:-5])
-                                    # print(location_name)
-                                    city = "".join(
-                                        tag_address[4].split(",")[0])
-                                    state = "".join(
-                                        tag_address[4].split(",")[1].split()[0])
-                                    zip = "".join(
-                                        tag_address[4].split(",")[1].split()[-1])
-                                    street_address = " ".join(
-                                        tag_address[-5:-3])
-                                if len(tag_address) == 6:
 
-                                    location_name = "".join(tag_address[0:-5])
-                                    if "VA" in "".join(tag_address[-3]) or "GA" in "".join(tag_address[-3]):
-                                        city = "".join(
-                                            tag_address[-3].split(",")[0])
-                                        state = "".join(
-                                            tag_address[-3].split(",")[1].split()[0])
-                                        zip = "".join(
-                                            tag_address[-3].split(",")[1].split()[-1])
-                                        street_address = " ".join(
-                                            tag_address[1:3])
-                                    if "FL" in "".join(tag_address[-4]):
-                                        city = "".join(
-                                            tag_address[-4].split(',')[0])
-                                        state = "".join(
-                                            tag_address[-4].split(',')[1].split()[0])
-                                        zip = "".join(
-                                            tag_address[-4].split(',')[1].split()[-1])
-                                        street1 = "".join(tag_address[1])
-                                        street2 = "".join(tag_address[3])
-                                        street_address = street1 + " " + street2
-                                        # print(location_name + " \ " + street_address +
-                                        #       " \ " + city + " \ " + state + " \ " + zip)
 
-                                    if "KY" in "".join(tag_address[-2]):
-                                        city = "".join(
-                                            tag_address[-2].split(',')[0])
-                                        state = "".join(
-                                            tag_address[-2].split(',')[1].split()[0])
-                                        zip = "".join(
-                                            tag_address[-2].split(',')[1].split()[-1])
-                                        street_address = " ".join(
-                                            tag_address[-4:-2])
-                                if len(tag_address) == 5:
-                                    location_name = "".join(tag_address[0])
-                                    if "TX" in "".join(tag_address[2]):
-                                        city = "".join(tag_address[2]).split(
-                                            ',')[-2].strip()
-                                        state = "".join(tag_address[2]).split(
-                                            ',')[-1].split()[0]
-                                        zip = "".join(tag_address[2]).split(
-                                            ',')[-1].split()[-1]
-                                        street_address = "".join(
-                                            tag_address[1])
-                                    if "GA" in "".join(tag_address[1]):
-                                        city = "".join(
-                                            tag_address[1].split(',')[1])
-                                        state = "".join(
-                                            tag_address[1].split(',')[2].split()[0])
-                                        zip = "".join(
-                                            tag_address[1].split(',')[2].split()[-1])
-                                        street1 = "".join(
-                                            tag_address[1].split(',')[0])
-                                        street2 = "".join(
-                                            tag_address[2].strip())
-                                        street_address = street1 + " " + street2
-                                if len(tag_address) == 4:
-
-                                    if "NE" in "".join(tag_address[0]):
-
-                                        location_name = p_tag.find_previous_sibling(
-                                            'p').text
-                                        city = "".join(
-                                            tag_address[1].split(',')[0].strip())
-                                        state = "".join(tag_address[1].split(',')[
-                                                        1].split()[0].strip())
-                                        zip = "".join(tag_address[1].split(',')[
-                                                       1].split()[-1].strip())
-                                        street_address = "".join(
-                                            tag_address[0].strip())
-                                    if "NE" not in "".join(tag_address[0]):
-                                        location_name = "".join(
-                                            tag_address[0].strip())
-                                        city = "".join(
-                                            tag_address[1].split(',')[-2].strip())
-                                        state = "".join(
-                                            tag_address[1].split(',')[-1].split()[0])
-                                        zip = "".join(
-                                            tag_address[1].split(',')[-1].split()[-1])
-                                        street_address = " ".join(
-                                            tag_address[1].split(',')[:-2])
-                            # print(location_name + " \ " + street_address +
-                            #       " \ " + city + " \ " + state + " \ " + zip)
-
-                        if "Owner" in p_tag.text or "Tampa" in p_tag.text:
-                            # print(p_tag)
-                            # print(p_tag.find_next_sibling('p').text)
-                            tag_phone = p_tag.find_next_sibling('p')
-                            if tag_phone is None:
-                                phone = "<MISSING>"
-                            if tag_phone is not None:
-                                for br in tag_phone.find_all('br'):
-                                    br.replace_with(" \\ ")
-                                # print(tag_phone.text)
-                                tag_p = tag_phone.text.replace(
-                                    '\xa0', "").replace("\n", "").split(' \\ ')
-                                if tag_p == ['']:
-                                    phone = "<MISSING>"
-                                    # print(phone)
-                                else:
-                                    phone = "".join(tag_p[0])
-                            store = [locator_domain, location_name, street_address, city, state, zip, country_code,
-                                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
-                            store = ["<MISSING>" if x ==
-                                     "" else x for x in store]
-                            return_main_object.append(store)
-                            # print("data = " + str(store))
-                            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    return return_main_object
 
 
 def scrape():

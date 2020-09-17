@@ -87,6 +87,12 @@ def fetch_data():
                     phone = phone_list[0]
 
                 city = city_state_zipp.replace(zipp, "").replace(state, "").replace(",", "")
+                temp_loc_type = soup_location.find("ol",{"class":"breadcrumb"}).find("li",{"class":"active"}).text
+                if "(temporarily closed)" in temp_loc_type:
+                    location_type = "temporarily closed"
+                else:
+                    location_type = "<MISSING>"
+
 
                 hours_list = list(soup_location.find("div",{"class":"field-hours-of-operation"}).stripped_strings)
                 latitude = soup_location.find("meta",{"property":"latitude"})["content"]
