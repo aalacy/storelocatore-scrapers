@@ -73,8 +73,13 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        if typ == '':
-            typ = 'American Eagle'
+        if 'American Eagle' in name:
+            if 'Aerie' in name:
+                typ = 'American Eagle & Aerie'
+            else:
+                typ = 'American Eagle'
+        if 'Aerie' in name and 'American Eagle' not in name:
+            typ = 'Aerie'
         store = '<MISSING>'
         if city != '' and hours != 'CLOSED':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
