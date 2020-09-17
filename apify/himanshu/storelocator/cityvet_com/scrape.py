@@ -42,10 +42,12 @@ def fetch_data():
         js_text = soup.find_all("script", {"type":"text/javascript"})[1].text.split("0,0,0,0,0,0,0];")[1].split("for (e = 0; e < locArray")[0].split("locArray")
         for i in js_text:
             temp = i.replace("[0]","").replace("[1]","").replace("[2]","").replace("[3]","").replace("[4]","").replace("[5]","").replace("[6]","").replace("[7]","").replace("[8]","").replace("[9]","").replace("[10]","").replace("[11]","").replace("[12]","")
-            if len(temp)>10:  
-                
-                page_url = "https://www.cityvet.com/" + temp.split("locWebURL =")[1].split(";")[0].replace("'","").strip()
-                
+            
+            if len(temp)>200:
+                try:
+                    page_url = "https://www.cityvet.com/" + temp.split("locWebURL =")[1].split(";")[0].replace("'","").strip()
+                except:
+                    continue
                 
                 add = temp.split("locInfoAddr2")[0].split("locInfoID   = '")[0].replace("';\n            ","").replace("    = '","").split(",")
                 street_address = add[0]
@@ -82,7 +84,7 @@ def fetch_data():
                 store.append(location_type)
                 store.append(latitude)
                 store.append(longitude)
-                store.append(hours_of_operation1)
+                store.append(hours_of_operation)
                 store.append(page_url)
                 # if store[2] in address:
                 #     continue
