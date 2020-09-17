@@ -22,7 +22,7 @@ base_url = 'https://www.fruttabowls.com'
 def validate(items):
     rets = []
     for item in items:
-        item = item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
+        item = item.replace('\u202d', '').replace('\u202c', '').replace('\xa0', '').strip()
         if item == '':
             item = '<MISSING>'
         rets.append(item)

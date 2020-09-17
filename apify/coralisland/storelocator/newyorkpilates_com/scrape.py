@@ -23,7 +23,7 @@ missing = '<MISSING>'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def eliminate_space(items):
     rets = []
