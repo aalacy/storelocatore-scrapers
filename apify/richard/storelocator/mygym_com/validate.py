@@ -1,22 +1,10 @@
-import subprocess
 import sys
-
+import subprocess
 import sgvalidator
-
 
 # force an install/upgrade of the sgvalidator package
 subprocess.call([sys.executable, "-m", "pip", "uninstall", "sgvalidator"])
-subprocess.call(
-    [
-        sys.executable,
-        "-m",
-        "pip",
-        "install",
-        "--upgrade",
-        "--no-cache-dir",
-        "sgvalidator",
-    ]
-)
+subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade",  "--no-cache-dir", "sgvalidator"])
 data_location = None
 
 try:
