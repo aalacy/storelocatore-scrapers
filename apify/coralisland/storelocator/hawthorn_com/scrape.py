@@ -115,7 +115,7 @@ def fetch_data():
         output.append(latitude) #latitude
         output.append(longitude) #longitude
         output.append(hours) #opening hours
-        output.append(detail_url) #page_url
+        output.append('https://www.wyndhamhotels.com' + detail_url) #page_url
         output_list.append(output)
 
     return output_list
