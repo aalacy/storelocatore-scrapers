@@ -30,7 +30,6 @@ def fetch_data():
 		lat = coord_search[0]
 		lng = coord_search[1]
 		base_link = "https://mdsinternal.pfsbrands.com/store_locator/getstoresfull.php?lat=%s&lon=%s&brand=28" %(lat,lng)
-		print(base_link)
 
 		req = session.get(base_link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
@@ -39,9 +38,14 @@ def fetch_data():
 		locator_domain = "champschicken.com"
 
 		for store in stores:
-			link = "https://champschicken.com/locations/" + store['name'].lower().replace(" ","-").replace("#","") + '-' + store['city'].lower() + '-' + store['state'].lower() + ".html"
+			link = "https://champschicken.com/locations/" + store['name'].lower() + '-' + store['city'].lower() + '-' + store['state'].lower() + ".html"
+			link = link.replace(" ","-").replace("'","-").replace("-&-","-").replace("#","").replace(",","").replace("(","-").replace(")","-").replace(".-","-")
+			link = (re.sub('-+', '-', link)).strip()
+			if len(link.split("/")) == 6:
+				link = "/".join(link.split("/")[:-1]) + "-" + link.split("/")[-1]
 			if link in found_poi:
 				continue
+			print(link)
 			found_poi.append(link)
 			location_name = "Champs Chicken - " + store['name']
 			try:
@@ -73,7 +77,7 @@ def fetch_data():
 			latitude = store['lat']
 			longitude = store['lon']
 			
-			data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
 def scrape():
