@@ -10,7 +10,7 @@ base_url = 'http://kuehne-nagel.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -44,7 +44,7 @@ def fetch_data():
 
     for region in regions:
         if region['region'] == 'North America':
-	        for idx, country in region['regionList'][0]['countryList'].items():
+	        for idx, country in list(region['regionList'][0]['countryList'].items()):
 	            country_code = country['country_code']
 	            if country_code == 'US' or country_code == 'CA':
 		            for office in country['officeList']:
