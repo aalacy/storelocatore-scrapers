@@ -42,7 +42,7 @@ def fetch_data():
     brand_id = "RI"
     domain_url = "https://residence-inn.marriott.com"
 
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().chrome()
     initial_search(driver, brand_id)
     # attempt to handle server error on initial search
     if "Our server is being stubborn, please try again" in driver.page_source:
