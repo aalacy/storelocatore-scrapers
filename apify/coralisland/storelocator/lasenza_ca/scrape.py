@@ -12,7 +12,7 @@ base_url = 'https://www.lasenza.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -53,7 +53,7 @@ def fetch_data():
     }
     request = session.get(url, headers=headers)
     store_list = json.loads(request.text)['stores']    
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         output = []
         if 'us' in store['countryCode'].lower() or 'ca' in store['countryCode'].lower():
             output.append(base_url) # url

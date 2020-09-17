@@ -10,7 +10,7 @@ base_url = 'https://www.pompstire.com'
 def validate(document):
     rets = []
     for item in document:
-        item = item.encode('ascii', 'ignore').encode("utf8").replace(u'\u2019', '').strip()
+        item = item.replace('\u2019', '').strip()
         rets.append(item)
     return rets
 
@@ -26,7 +26,7 @@ def fetch_data():
     output_list = []
     url = "https://www.pompstire.com/locations.aspx"
     request = requests.get(url)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text)
     store_list = response.xpath('//div[@id="LocationListView"]/div')
     for idx, store in enumerate(store_list):
         output = []

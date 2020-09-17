@@ -14,7 +14,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace('&amp; ', '').strip()
+    return item.replace('&amp; ', '').strip()
 
 def get_value(item):
     if item == None :
@@ -69,7 +69,7 @@ def fetch_data():
         if store['hours']:
             h_temp = []
             store_hours = json.loads(store['hours'])
-            for key, hour in store_hours.items():
+            for key, hour in list(store_hours.items()):
                 try:
                     if 'open' in hour and hour['open'] is not None and hour['open'] != '':
                         temp = key + ' ' + hour['open'] 

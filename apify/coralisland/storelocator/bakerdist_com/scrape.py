@@ -17,7 +17,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -94,7 +94,7 @@ def fetch_data():
                     days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                     hours = store['formatted_hours']
                     store_hours = []
-                    for key, hour in hours.items():
+                    for key, hour in list(hours.items()):
                         store_hours.append(days_of_week[int(key)-1] + ' ' + validate(hour['open']) + '-' + validate(hour['close']))
                     output.append(get_value(store_hours)) #opening hours
                     writer.writerow(output)

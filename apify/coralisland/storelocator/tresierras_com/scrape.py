@@ -11,7 +11,7 @@ base_url = 'http://tresierras.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)

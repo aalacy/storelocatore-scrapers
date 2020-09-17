@@ -15,7 +15,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.replace(u'\u2014', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2014', '-').strip()
 
 def get_value(item):
     if item == None :
