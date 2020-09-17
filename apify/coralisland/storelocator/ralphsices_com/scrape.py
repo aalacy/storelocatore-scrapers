@@ -11,7 +11,7 @@ base_url = 'https://www.ralphsices.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace("&#39;", "'").replace("&amp;", '&').replace('&#44;', '').strip()
+    return item.replace("&#39;", "'").replace("&amp;", '&').replace('&#44;', '').strip()
 
 def get_value(item):
     if item == None :

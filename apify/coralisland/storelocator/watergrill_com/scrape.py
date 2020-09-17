@@ -15,7 +15,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -74,7 +74,7 @@ def fetch_data():
         try:
             store_link = base_url + store_link
             store = etree.HTML(session.get(store_link).text)
-            detail = store.xpath('.//div[@class="address"]//text()')[0].encode("utf8").split('\xc3\xa2\xc2\x80\xc2\xa2 \xc3\x82\xc2\xa0')
+            detail = store.xpath('.//div[@class="address"]//text()')[0].split('\xc3\xa2\xc2\x80\xc2\xa2 \xc3\x82\xc2\xa0')
             address = parse_address(validate(store.xpath('.//div[@class="address"]//text()')).replace(detail[1], ''))            
             output = []
             output.append(base_url) # url

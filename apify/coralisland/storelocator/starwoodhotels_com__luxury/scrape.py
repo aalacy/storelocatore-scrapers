@@ -10,7 +10,7 @@ base_url = 'https://the-luxury-collection.marriott.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -54,7 +54,7 @@ def fetch_data():
     request = requests.get(url, headers=headers)
     location_text = request.text.split('MARRIOTT_GEO_DATA = ')[1].split('</script>')[0][:-4]
     store_list = json.loads(location_text)['properties']
-    for idx, store in store_list.items():
+    for idx, store in list(store_list.items()):
         if validate(store['country']) != 'US':
             continue
         city = validate(store['city'].split('_')[:-3]).title()

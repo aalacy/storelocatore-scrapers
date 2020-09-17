@@ -79,7 +79,7 @@ def fetch_data():
 
     total_links = len(store_list)
     for i, detail_url in enumerate(store_list):        
-        print("Link %s of %s" %(i+1,total_links))        
+        print(("Link %s of %s" %(i+1,total_links)))        
         detail_url = 'https://www.wyndhamhotels.com' + validate(detail_url.xpath('.//a')[0].xpath('./@href'))
         detail_request = session.get(detail_url)
         print(detail_url)

@@ -17,7 +17,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -74,7 +74,7 @@ def fetch_data():
         }
         request = session.get(url, headers=headers)
         store_list = json.loads(request.text)['stores']
-        for key, store in store_list.items():
+        for key, store in list(store_list.items()):
             store_id = get_value(store['storeid'])
             if store_id not in history:
                 history.append(store_id)
