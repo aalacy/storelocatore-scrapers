@@ -1,11 +1,9 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://revelatorcoffee.com/pages/locations'
 
@@ -64,15 +62,15 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    session = SgRequests()
     output_list = []
     url = "https://revelatorcoffee.com/pages/locations"
-    session = requests.Session()
     source = session.get(url).text    
     response = etree.HTML(source)
-    store_list = response.xpath('//div[@class="rte feature-copy"]//a/@href')
+    store_list = response.xpath('//a[contains(@href, "https://revelatorcoffee.com/pages")]/@href')
     for store_link in store_list:
         store = etree.HTML(session.get(store_link).text)
-        st_list = store.xpath('.//div[@class="rte feature-copy"]//table//tr')
+        st_list = store.xpath('.//div[@class="rte grid__item"]//table//tr')
         for st in st_list:
             output = []
             detail = st.xpath('.//td')[1].xpath('.//p')
