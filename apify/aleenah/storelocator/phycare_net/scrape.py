@@ -2,6 +2,7 @@ import csv
 from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+import re
 
 
 driver = SgSelenium().chrome()
@@ -40,6 +41,11 @@ def fetch_data():
         del addr[-1]
         state=' '.join(addr)
         tim=tims[stores.index(store)].text.replace('M-F','Mon-Friday')
+        driver.get(store.get('url'))
+        print(store.get('url'))
+        soup= BeautifulSoup(driver.page_source, 'html.parser')
+        #print(soup)
+        lat,long=re.findall(r'"latitude":(.*),"longitude":([^}]+)',str(soup))[0]
 
 
         row = []
@@ -53,8 +59,8 @@ def fetch_data():
         row.append("<MISSING>")  # store #
         row.append(store.get('phone'))  # phone
         row.append("<MISSING>")  # type
-        row.append(store.get('cx'))  # lat
-        row.append(store.get('cy'))  # long
+        row.append(lat)  # lat
+        row.append(long)  # long
         row.append(tim)  # timing
         row.append(store.get('url'))  # page url
 

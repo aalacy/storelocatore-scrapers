@@ -10,7 +10,7 @@ base_url = 'https://st-regis.marriott.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -47,7 +47,7 @@ def fetch_data():
     request = session.get(url, headers=headers)
     source = validate(request.text.split('window.MARRIOTT_DIRECTORY_DATA = ')[1].split('</script>')[0])[:-1]
     store_list = json.loads(source)['properties']
-    for key, store in store_list.items():        
+    for key, store in list(store_list.items()):        
         output = []
         if store['country'] == 'CA' or store['country'] == 'US':
             output.append(base_url) # url
