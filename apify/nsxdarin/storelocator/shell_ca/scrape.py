@@ -25,30 +25,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_location_data(location):
-
-    if (location.get('country_code') == 'CA'):
-        return [
-            locator_domain,
-            location.get('website_url'),
-            location.get('name'),
-            location.get('address'),
-            location.get('city'),
-            location.get('state'),
-            location.get('postcode'),
-            location.get('country_code'),
-            location.get('id'),
-            location.get('telephone'),
-            location.get('type'),
-            location.get('lat'),
-            location.get('lng'),
-            INACCESSIBLE
-        ]
-
-
-locator_domain = 'shell.ca'
-
-
 def fetch_within_bounds(sw, ne):
     params = {
         'sw[]': sw,
@@ -74,7 +50,7 @@ def fetch_within_bounds(sw, ne):
         else:
             if item.get('country_code') == 'CA':
                 yield [
-                    locator_domain,
+                    'shell.ca',
                     item.get('website_url'),
                     item.get('name'),
                     item.get('address'),
