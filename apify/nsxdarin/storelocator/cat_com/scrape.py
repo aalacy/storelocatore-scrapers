@@ -40,7 +40,7 @@ def fetch_data():
                         phone = '<MISSING>'
                         for pnum in pnums:
                             if '"phoneNumberType":"GENERAL INFO' in pnum:
-                                phone = pnum.split('"phoneNumber":"')[1].split('"')[0]
+                                phone = pnum.split('"phoneNumber":"')[1].split('"')[0].encode("ascii", errors="ignore").decode()
                         city = item.split('"siteCity":"')[1].split('"')[0].encode("ascii", errors="ignore").decode()
                         state = item.split('"siteState":"')[1].split('"')[0]
                         zc = item.split(',"sitePostal":"')[1].split('"')[0]
@@ -49,7 +49,7 @@ def fetch_data():
                         donetyps = []
                         for snum in snums:
                             if '"serviceDesc":"' in snum:
-                                styp = snum.split('"serviceDesc":"')[1].split('"')[0]
+                                styp = snum.split('"serviceDesc":"')[1].split('"')[0].encode("ascii", errors="ignore").decode()
                                 if typ == '':
                                     typ = styp
                                 else:
@@ -90,6 +90,8 @@ def fetch_data():
                         if country == 'CA' or country == 'US':
                             if 'Sales"},' in item:
                                 loc = '<MISSING>'
+                                if state == '':
+                                    state = '<MISSING>'
                                 if store not in allstores:
                                     allstores.append(store)
                                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
