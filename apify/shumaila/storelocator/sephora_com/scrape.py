@@ -34,9 +34,11 @@ def fetch_data():
     linklist = soup.findAll('a', {'class': 'css-121wlog'})
     print("states = ",len(linklist))
     for link in linklist:
-        link = 'https://www.sephora.com/'+link['href']
+        link = 'https://www.sephora.com'+link['href']
+        #print(link)
         r = session.get(link, headers=headers, verify=False)
-        r = r.text.split('{"storeInfo":')[1].split('}},{')[0]
+        r = r.text.split('"stores":[')[1].split('}],')[0]
+        r = r +'}'
         #print(r)
         loc = json.loads(r)
         street = loc['address']['address1']
