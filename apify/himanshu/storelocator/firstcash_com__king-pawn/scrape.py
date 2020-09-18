@@ -6,6 +6,7 @@ import json
 import datetime
 import requests
 import unicodedata
+import pgeocode
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -17,11 +18,14 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 def fetch_data():
-    r = session.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
+    r = requests.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
     key = r.text.split("&key=")[1].split('");')[0]
     page = 1
     while True:
-        location_request = requests.request("GET","http://find.cashamerica.us/api/stores?p="+str(page)+"&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
+        try:
+            location_request = requests.request("GET","http://find.cashamerica.us/api/stores?p="+str(page)+"&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
+        except:
+            pass
         data = location_request.json()
         if "message" in data:
             break
@@ -32,10 +36,14 @@ def fetch_data():
             store.append(store_data["brand"] if store_data["brand"] else "<MISSING>" )
             store.append(store_data["address"]["address1"] +store_data["address"]["address2"] if store_data["address"]["address2"] != None else store_data["address"]["address1"])
             store.append(store_data["address"]["city"] if store_data["address"]["city"] else "<MISSING>")
-            if len(store_data["address"]["state"]) == 2:
+            if store_data["address"]["state"] in ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]:
                 state = store_data["address"]["state"]
             store.append(state if state else "<MISSING>")
             zipp = store_data["address"]["zipCode"]
+            nomi = pgeocode.Nominatim('us')
+            if nomi.query_postal_code(str(zipp))['country code'] != "US":
+                continue
+ 
             if "00000" in store_data["address"]["zipCode"]:
                 zipp = "<MISSING>"
             store.append(zipp if zipp else "<MISSING>")
@@ -48,7 +56,7 @@ def fetch_data():
             store.append(store_data["brand"].replace("0","").replace("1","").replace("2","").replace("3","").replace("4","").replace("5","").replace("6","").replace("7","").replace("8","").replace("9","").strip() if store_data["brand"] else "<MISSING>")
             store.append(store_data['latitude'] if store_data['latitude'] else "<MISSING>")
             store.append(store_data['longitude'] if store_data['longitude'] else "<MISSING>")
-            hours_request = session.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
+            hours_request = requests.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
             hours_details = hours_request.json()["weeklyHours"]
             hours = ""
             for k in range(len(hours_details)):
