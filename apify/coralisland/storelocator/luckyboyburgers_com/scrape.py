@@ -2,7 +2,6 @@ import csv
 import re
 from lxml import etree
 import json
-import usaddress
 import phonenumbers
 from sgrequests import SgRequests
 
