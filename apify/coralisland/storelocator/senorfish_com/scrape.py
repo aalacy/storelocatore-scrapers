@@ -1,13 +1,10 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
-
-base_url = 'http://www.xn--seorfish-e3a.com'
+from sgrequests import SgRequests
 
 def validate(item):    
     if item == None:
@@ -16,7 +13,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
+    return item.replace('\u2013', '-').replace('\xa0', ' ').strip()
 
 def get_value(item):
     if item == None :
@@ -64,9 +61,9 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    session = SgRequests()
     output_list = []
     url = "http://www.xn--seorfish-e3a.com/locations/"
-    session = requests.Session()
     source = session.get(url).text
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="fl-rich-text"]')
@@ -74,7 +71,7 @@ def fetch_data():
         store = eliminate_space(store.xpath('.//text()'))
         output = []
         details = eliminate_space(store[1].split('   '))
-        output.append(base_url) # url
+        output.append('senorfish.com') # url
         output.append(store[0]) #location name
         if len(details) != 5:
             address = parse_address(', '.join(details[:2]).replace('.', ''))
