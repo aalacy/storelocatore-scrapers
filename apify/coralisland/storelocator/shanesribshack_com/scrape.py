@@ -1,11 +1,9 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://www.shanesribshack.com'
 
@@ -59,14 +57,14 @@ def parse_address(address):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     output_list = []
     url = "https://www.shanesribshack.com/locations/"
-    session = requests.Session()
+    session = SgRequests()
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'Cookie': 'ARRAffinity=c56588c17a93aaac773652dc3876586afcaa27360b8b3b216d847fbd3a031f74; curLat=34.0456390380859; curLong=-118.241638183594; ip_Store=Glendale; myShanes=1793; locationName=Hartsfield-Jackson International Airport; userSet=true',
@@ -99,7 +97,7 @@ def fetch_data():
             output.append(get_value(phone)) #phone
             output.append("Shane's Rib Shack") #location type
             links = eliminate_space(store.xpath('.//a/@href'))
-            geo_loc = links[1].split('/@')
+            geo_loc = [l for l in links if 'google.com' in l][0].split('/@')
             if len(geo_loc) > 1:
                 geo_loc = geo_loc[1].split(',/data')[0].split(',')
                 output.append(geo_loc[0]) #latitude
@@ -107,9 +105,11 @@ def fetch_data():
             else:
                 output.append('<INACCESSIBLE>') #latitude
                 output.append('<INACCESSIBLE>') #longitude
-            details = etree.HTML(session.get(base_url+links[2]).text)
+            page_url = base_url+[l for l in links if '/locations' in l][0]
+            details = etree.HTML(session.get(page_url).text)
             store_hours = validate(details.xpath('.//span[@class="d-block"]')[-2].xpath('.//text()'))
             output.append(get_value(store_hours)) #opening hours
+            output.append(page_url) #page_url
             output_list.append(output)
     return output_list
 
