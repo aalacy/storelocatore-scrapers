@@ -36,7 +36,7 @@ def fetch_data():
                 city_soup = BeautifulSoup(city_request.text,"lxml")
                 for location in city_soup.find_all("li",{"class":'store-results__results__item'}):
                     page_url = base_url + location.find("a")["href"]
-                    # print(page_url)
+                    #print(page_url)
                     if location.find("p",{"class":"my-store__direction"}) == None:
                         continue
                     address = json.loads(location.find("p",{"class":"my-store__direction"})["data-location"])
@@ -59,7 +59,7 @@ def fetch_data():
                     store.append(address["latitude"])
                     store.append(address["longitude"])
                     hours = " ".join(list(location_soup.find("div",{"class":"store-page-masthead__store__wrapper"}).find("div",{"class":"right-column"}).stripped_strings))
-                    store.append(hours if hours else "<MISSING>")
+                    store.append(hours.replace('Closed Now ','') if hours else "<MISSING>")
                     store.append(page_url)
                     # print(store)
                     yield store
