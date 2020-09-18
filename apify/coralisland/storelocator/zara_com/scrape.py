@@ -104,7 +104,10 @@ def fetch_data():
                     store_hours = []
                     if len(store.get(('openingHours'))) > 0:
                         for hour in store.get('openingHours'):
-                            store_hours.append(days_of_week[hour['weekDay']-1] + ' ' + hour['openingHoursInterval'][0]['openTime'] + '-' + hour['openingHoursInterval'][0]['closeTime'])                        
+                            if hour['openingHoursInterval']:
+                                store_hours.append(days_of_week[hour['weekDay']-1] + ' ' + hour['openingHoursInterval'][0]['openTime'] + '-' + hour['openingHoursInterval'][0]['closeTime'])    
+                            else:
+                                store_hours.append(days_of_week[hour['weekDay']-1] + ' closed')
                     output.append(get_value(store_hours)) #opening hours
                     writer.writerow(output)
     return output_list
