@@ -12,7 +12,7 @@ base_url = 'https://www.ywca.org/'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '').replace('\t\t', '')
+    return item.strip().replace('\n', '').replace('\t\t', '')
 
 def get_value(item):
     item = validate(item)

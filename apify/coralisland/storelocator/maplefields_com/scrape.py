@@ -17,7 +17,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -88,7 +88,7 @@ def fetch_data():
         output.append(get_value(store['lng'])) #longitude
         hours = json.loads(store['open_hours'])
         store_hours = []
-        for key, hour in hours.items():
+        for key, hour in list(hours.items()):
             store_hours.append(key + ' ' + validate(hour))
         output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
