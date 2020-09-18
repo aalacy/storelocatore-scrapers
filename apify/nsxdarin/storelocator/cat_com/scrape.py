@@ -61,33 +61,61 @@ def fetch_data():
                                             typ = typ + ', ' + styp
                             try:
                                 if '"storeHoursMon":""' in item:
-                                    hours = 'Mon: Closed'
+                                    hours = hours + '; Mon: Closed'
                                 else:
-                                    hours = 'Mon: ' + item.split('"storeHoursMon":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursMon":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursMon":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Mon: ' + opn + '-' + close
                                 if '"storeHoursTue":""' in item:
                                     hours = hours + '; Tue: Closed'
                                 else:
-                                    hours = hours + '; Tue: ' + item.split('"storeHoursTue":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursTue":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursTue":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Tue: ' + opn + '-' + close
                                 if '"storeHoursWed":""' in item:
                                     hours = hours + '; Wed: Closed'
                                 else:
-                                    hours = hours + '; Wed: ' + item.split('"storeHoursWed":"')[1].split('"')[0]
-                                if '"storeHoursThu":""' in item:
+                                    opn = item.split('"storeHoursWed":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursWed":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Wed: ' + opn + '-' + close
+                                if '"storeHoursThu:""' in item:
                                     hours = hours + '; Thu: Closed'
                                 else:
-                                    hours = hours + '; Thu: ' + item.split('"storeHoursThu":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursThu":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursThu":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Thu: ' + opn + '-' + close
                                 if '"storeHoursFri":""' in item:
                                     hours = hours + '; Fri: Closed'
                                 else:
-                                    hours = hours + '; Fri: ' + item.split('"storeHoursFri":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursFri":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursFri":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Fri: ' + opn + '-' + close
                                 if '"storeHoursSat":""' in item:
                                     hours = hours + '; Sat: Closed'
                                 else:
-                                    hours = hours + '; Sat: ' + item.split('"storeHoursSat":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursSat":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursSat":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Sat: ' + opn + '-' + close
                                 if '"storeHoursSun":""' in item:
                                     hours = hours + '; Sun: Closed'
                                 else:
-                                    hours = hours + '; Sun: ' + item.split('"storeHoursSun":"')[1].split('"')[0]
+                                    opn = item.split('"storeHoursSun":"')[1].split(' ')[0]
+                                    close = item.split('"storeHoursSun":"')[1].split(' - ')[1].split('"')[0]
+                                    opn = opn[:2] + ':' + opn[-2:]
+                                    close = close[:2] + ':' + close[-2:]
+                                    hours = hours + '; Sun: ' + opn + '-' + close
                             except:
                                 hours = '<MISSING>'
                             if country == 'CA' or country == 'US':
