@@ -27,7 +27,7 @@ def fetch_data():
                         store = item.split('"dealerLocationId":')[1].split(',')[0]
                         website = 'cat.com'
                         hours = ''
-                        name = item.split(',"dealerName":"')[1].split('"')[0]
+                        name = item.split(',"dealerName":"')[1].split('"')[0].encode("ascii", errors="ignore").decode()
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
                         try:
@@ -35,13 +35,13 @@ def fetch_data():
                         except:
                             country = ''
                         add = item.split('"siteAddress":"')[1].split('"')[0] + ' ' + item.split('"siteAddress1":"')[1].split('"')[0]
-                        add = add.strip()
+                        add = add.strip().encode("ascii", errors="ignore").decode()
                         pnums = item.split('"phoneNumberTypeId":')
                         phone = '<MISSING>'
                         for pnum in pnums:
                             if '"phoneNumberType":"GENERAL INFO' in pnum:
                                 phone = pnum.split('"phoneNumber":"')[1].split('"')[0]
-                        city = item.split('"siteCity":"')[1].split('"')[0]
+                        city = item.split('"siteCity":"')[1].split('"')[0].encode("ascii", errors="ignore").decode()
                         state = item.split('"siteState":"')[1].split('"')[0]
                         zc = item.split(',"sitePostal":"')[1].split('"')[0]
                         typ = ''
