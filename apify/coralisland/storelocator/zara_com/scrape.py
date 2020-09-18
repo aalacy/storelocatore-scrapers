@@ -1,14 +1,11 @@
 import csv
 import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
 
-
 base_url = 'https://www.prestigepreschoolacademy.com'
-
 
 def validate(item):    
     if item == None:
@@ -67,7 +64,7 @@ def fetch_data():
     with open('./cities.json') as data_file:    
         city_list = json.load(data_file)
     page_url = ''
-    session = requests.Session()
+    session = SgRequests()
     headers = {
         'accept': 'application/json, text/javascript, */*; q=0.01',
         'accept-encoding': 'gzip, deflate, br',
