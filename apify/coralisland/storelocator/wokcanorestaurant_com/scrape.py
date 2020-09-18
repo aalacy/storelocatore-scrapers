@@ -1,11 +1,9 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://wokcanorestaurant.com'
 
@@ -66,11 +64,14 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://wokcanorestaurant.com/locations/"
-    session = requests.Session()
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
-    store_list = response.xpath('//div[contains(@class, "panel-grid panel-")]//div[@class="siteorigin-widget-tinymce textwidget"]')
+    store_list = response.xpath('//div[@class="et_pb_text_inner"]')
     for store in store_list:
+        content = ' '.join([x for x in store.itertext()])
+        if 'tel:' not in content.lower():
+            continue
         output = []
         output.append(base_url) # url
         output.append(validate(store.xpath('.//h2//text()'))) #location name        
@@ -87,7 +88,7 @@ def fetch_data():
         geo_loc = validate(store.xpath('.//p//a/@href')).split('/@')[1].split(',17z')[0].split(',')
         output.append(geo_loc[0]) #latitude
         output.append(geo_loc[1]) #longitude
-        output.append(get_value(details[2:]).replace('Hrs:', '')) #opening hours
+        output.append(get_value(details[2:]).replace('Hrs:', '').strip()) #opening hours
         output_list.append(output)
     return output_list
 
