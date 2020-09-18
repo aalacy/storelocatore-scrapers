@@ -24,7 +24,7 @@ def fetch_data():
                 items = line.split('"dealerId":')
                 for item in items:
                     if '"territoryId":' in item:
-                        store = item.split(',')[0]
+                        store = item.split('"dealerLocationId":')[1].split(',')[0]
                         website = 'cat.com'
                         hours = ''
                         name = item.split(',"dealerName":"')[1].split('"')[0]
