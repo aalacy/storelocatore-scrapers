@@ -10,7 +10,7 @@ base_url = 'http://pizzadepot.ca'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace("'", '').strip()
+    return item.replace("'", '').strip()
 
 def get_value(item):
     if item == None :

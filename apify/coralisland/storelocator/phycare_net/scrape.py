@@ -10,7 +10,7 @@ base_url = 'https://www.urgentteam.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -45,7 +45,7 @@ def fetch_data():
     store_list = response.xpath('//div[@class="view-content"]/div[contains(@class, "views-row ")]')
     data_list = json.loads(validate(source.split('jQuery.extend(Drupal.settings,')[1].split(');</script>')[0]))['geofieldMap']
     geolocation_list = {}
-    for key, geo in data_list.items():
+    for key, geo in list(data_list.items()):
         geolocation_list[geo['data']['properties']['description']] = geo['data']['coordinates']         
     for idx, store in enumerate(store_list):
         output = []
