@@ -48,45 +48,45 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     # for section in soup.find_all('section',class_='loc-row'):
     for loc_col in soup.find_all('div', {'class': 'loc-col'}):
-
-        if loc_col.find('h2', class_='elementor-heading-title') != None:
-            location_name = loc_col.find(
-                'h2', class_='elementor-heading-title').text.strip()
-            address = loc_col.find('p', class_='elementor-heading-title')
-            latitude = address.find('a')['href'].split(
-                '@')[-1].split(',')[0].strip()
-            longitude = address.find('a')['href'].split(
-                '@')[-1].split(',')[1].strip()
-            list_address = list(address.stripped_strings)
-            street_address = list_address[0].strip()
-            city = list_address[-1].split(',')[0].strip()
-            state = list_address[-1].split(',')[-1].split()[0].strip()
-            if "Memphis" in state:
-                state = "<MISSING>"
-            zipp = list_address[-1].split(',')[-1].split()[-1].strip()
-            hours_of_operation = loc_col.find(
-                'div', class_='loc-hours').text.strip().replace('\n', "   ").replace('Hours:', '').strip()
-            phone = loc_col.find_all(
-                'div', class_='elementor-widget-container')[-1].text.strip()
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(
-                hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            return_main_object.append(store)
-            # print(str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        location_name = loc_col.h3.text.strip()
+        address = loc_col.find('p', class_='elementor-heading-title')
+        latitude = address.find('a')['href'].split(
+            '@')[-1].split(',')[0].strip()
+        longitude = address.find('a')['href'].split(
+            '@')[-1].split(',')[1].strip()
+        list_address = list(address.stripped_strings)
+        street_address = list_address[0].strip()
+        city = list_address[-1].split(',')[0].replace("38107","").strip()
+        state = list_address[-1].split(',')[-1].split()[0].strip()
+        if "Memphis" in state:
+            state = "TN"
+        zipp = list_address[-1].split(',')[-1].split()[-1].strip()
+        hours_of_operation = loc_col.find(
+            'div', class_='loc-hours').text.strip().replace('\n', "   ").replace('Hours:', '').strip()
+        if "Drive" in hours_of_operation:
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Drive")].strip()
+        hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+        phone = loc_col.find_all(
+            'div', class_='elementor-widget-container')[-1].text.strip()
+        store = []
+        store.append(base_url if base_url else "<MISSING>")
+        store.append(location_name if location_name else "<MISSING>")
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country_code if country_code else "<MISSING>")
+        store.append(store_number if store_number else "<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append(location_type if location_type else "<MISSING>")
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append(
+            hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        return_main_object.append(store)
+        # print(str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
     # store_name=[]

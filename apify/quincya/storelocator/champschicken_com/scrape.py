@@ -1,15 +1,9 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
+import json
+import sgzip
 import re
-
-from sgselenium import SgSelenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,87 +19,65 @@ def fetch_data():
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
-
 	session = SgRequests()
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
-
-	states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
-				"HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
-				"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
-				"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
-				"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+	locator_domain = "champschicken.com"
 
 	data = []
 	found_poi = []
-	for state in states:
-		print("Search: " + state)
-		driver.get("https://champschicken.com/locate/?loc=" + state)
-		element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-			(By.ID, "skin_wrap_inner")))
-		time.sleep(4)
 
-		base = BeautifulSoup(driver.page_source,"lxml")
+	for coord_search in sgzip.coords_for_radius(50):
+		lat = coord_search[0]
+		lng = coord_search[1]
+		base_link = "https://mdsinternal.pfsbrands.com/store_locator/getstoresfull.php?lat=%s&lon=%s&brand=28" %(lat,lng)
 
-		items = base.find_all(class_="result")
-		print("Found %s POI" %len(items))
-		if not items:
-			continue
+		req = session.get(base_link, headers = HEADERS)
+		base = BeautifulSoup(req.text,"lxml")
 
+		stores = json.loads(base.text)["stores"]
 		locator_domain = "champschicken.com"
 
-		for item in items:
-			location_name = str(item.h3)[4:].split("<span")[0].strip()
-			link = item.a['href']
+		for store in stores:
+			link = "https://champschicken.com/locations/" + store['name'].lower() + '-' + store['city'].lower() + '-' + store['state'].lower() + ".html"
+			link = link.replace(" ","-").replace("'","-").replace("-&-","-").replace("#","").replace(",","").replace("(","-").replace(")","-").replace(".-","-")
+			link = (re.sub('-+', '-', link)).strip()
+			if len(link.split("/")) == 6:
+				link = "/".join(link.split("/")[:-1]) + "-" + link.split("/")[-1]
 			if link in found_poi:
 				continue
-			found_poi.append(link)
 			print(link)
-
-			raw_address = str(item.p).replace("\xa0"," ").replace("<p>","").replace("</p>","").split("<br/>")
-			street_address = raw_address[0].replace(" , Attn: Cadillac Food Service - Cafeteria","").strip()
-			city = raw_address[1].split(",")[0].strip()
-			state = raw_address[1].split(",")[1].strip().split()[0]
-			zip_code = raw_address[1].split(",")[1].strip().split()[1]
-			country_code = "US"
-			store_number = "<MISSING>"
-			location_type = "<MISSING>"
+			found_poi.append(link)
+			location_name = "Champs Chicken - " + store['name']
 			try:
-				phone = re.findall(r'\([0-9]{3}\) [0-9]{3}-[0-9]{4}', item.text)[0]
+				street_address = (store['street_1'] + " " + store['street_2']).strip()
 			except:
-				try:
-					phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', item.text)[0]
-				except:
-					phone = "<MISSING>"
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-
-			req = session.get(link, headers = HEADERS)
-			base = BeautifulSoup(req.text,"lxml")
-			hours_of_operation = base.find(class_="details").find_all("p")[3].text.replace(" PM", " PM ")
-			hours_of_operation = re.sub('[0-9]{1}\.' , '', hours_of_operation)
-			hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-			if "pm" not in hours_of_operation.lower():
+				street_address = store['street_1'].strip()
+			if "Attn:" in street_address:
+				street_address = street_address[:street_address.find("Attn:")].strip()
+			city = store['city']
+			state = store['state']
+			zip_code = store['zip']
+			if not zip_code:
+				zip_code = "<MISSING>"
+			country_code = "US"
+			store_number = store['id']
+			location_type = "<MISSING>"
+			phone = store['phone']
+			if not phone:
+				phone = "<MISSING>"
+			try:
+				hours_of_operation = "Mon: " + store['monday_from'] + " " + store['monday_to'] + " " + "Tue: " + store['tuesday_from'] + " " + store['tuesday_to'] + " " + "Wed: " + store['wednesday_from'] + " " + store['wednesday_to']\
+				 + " " + "Thu: " + store['thursday_from'] + " " + store['thursday_to'] + " " + "Fri: " + store['friday_from'] + " " + store['friday_to'] + " " + "Sat: " + store['saturday_from'] + " " + store['saturday_to']\
+				 + " " + "Sun: " + store['sunday_from'] + " " + store['sunday_to']
+				hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+				if hours_of_operation == "Mon: Tue: Wed: Thu: Fri: Sat: Sun:":
+					hours_of_operation = "<MISSING>"
+			except:
 				hours_of_operation = "<MISSING>"
-			if not hours_of_operation:
-				hours_of_operation = "<MISSING>"
-
-			all_scripts = base.find_all('script')
-			for script in all_scripts:
-				if "lat=" in str(script):
-					script = str(script)
-					lat_pos = script.find('lat=') + 4
-					latitude = script[lat_pos:script.find('&',lat_pos)]
-					long_pos = script.find('lon=') + 4
-					longitude = script[long_pos:script.find('&',long_pos)]
-					break
-			if street_address == "22993 PROFESSIONAL LN":
-				latitude = "37.665968"
-				longitude = "-92.6307749"
-				
+			latitude = store['lat']
+			longitude = store['lon']
+			
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
 	return data
 
 def scrape():

@@ -10,7 +10,7 @@ base_url = 'http://www.tcbycanada.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -39,7 +39,7 @@ def fetch_data():
     output_list = []
     url = "http://www.tcbycanada.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=fr&t=1567446471949"
     request = requests.get(url)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text)
     store_list = response.xpath('//locator//store//item')
     for store in store_list:
         address = validate(store.xpath('.//address//text()'))

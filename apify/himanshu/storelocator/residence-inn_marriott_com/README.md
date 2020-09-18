@@ -11,4 +11,4 @@ Please make sure that:
 
 addresss with no number,address contains state name,lat & lng length short this website
 
-and i checked all data is true this website 
+and i checked all data is true for this website 

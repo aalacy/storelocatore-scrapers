@@ -1,11 +1,10 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'http://1ststopinc.com'
 
@@ -16,7 +15,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -65,8 +64,8 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "http://1ststopinc.com/"
-    session = requests.Session()
+    url = "https://1ststopinc.com/"
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
     store = eliminate_space(response.xpath('//footer//text()'))

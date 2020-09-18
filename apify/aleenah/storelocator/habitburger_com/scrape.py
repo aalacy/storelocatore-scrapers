@@ -81,6 +81,8 @@ def fetch_data():
                 t=t.replace("<br>"," ")
             if "> " in t:
                 t=t.replace("> ","")
+            if t.strip() == '>':
+                t='<MISSING>'
             timing.append(t)
         except:
             timing.append("<MISSING>")

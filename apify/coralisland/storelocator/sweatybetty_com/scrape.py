@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('\n', '')
+    return item.strip().replace('\n', '')
 
 def get_value(item):
     if item == None :

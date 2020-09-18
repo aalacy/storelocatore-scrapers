@@ -10,7 +10,7 @@ base_url = 'https://www.asics.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -46,7 +46,7 @@ def fetch_data():
         hours = ""
         labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         index = 0
-        for idx, item in store_hours.items():
+        for idx, item in list(store_hours.items()):
             hours += validate(labels[index] + ": " + item['from'][0] + ':' + item['from'][1] + '-' + item['to'][0] + ':' + item['to'][1] + ' ')
             index += 1
         if store['show_schedule'] == "0":

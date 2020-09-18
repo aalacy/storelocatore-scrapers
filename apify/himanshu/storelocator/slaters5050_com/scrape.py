@@ -72,6 +72,8 @@ def fetch_data():
         # print(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find("main",{'role':"main"}).find("h1").text.replace("–","-").strip()
+        if "Mamala Bay - Closed" in name:
+            continue
         address = list(location_soup.find("p",{'class':"address"}).stripped_strings)
         if "Guests must have JBPHH base access" in address[-1]:
             del address[-1]

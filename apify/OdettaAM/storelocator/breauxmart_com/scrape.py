@@ -1,9 +1,11 @@
 import time
 import csv
 import json
-import requests
+from sgrequests import SgRequests
 
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -18,17 +20,11 @@ def write_output(data):
 
 
 
-def fetch_data():
-    # Your scraper here
+def fetch_data():  
     data=[]
-    #response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=f448f7cbfbefb4b7eb6f24bd81be0705')
-    #response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=40343be1840f5a5e915146d700a4f50b')
-    response = requests.get('https://api-2.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=0dc33c6f693b5797f6941e824ef0de6d')
-    
-    responseJson = json.loads(response.text)
-    #print(responseJson)
-    stores = responseJson.get("items")
-    
+    url = 'https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=c9de29dbcae8efaea902e85213fd35b3'
+    stores = session.get(url, headers=headers, verify=False).json()['items']
+   
     print(len(stores))
     for i in range(len(stores)):
         location_name = stores[i]['name']

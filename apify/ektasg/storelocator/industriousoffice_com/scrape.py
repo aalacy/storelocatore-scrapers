@@ -31,9 +31,10 @@ def fetch_data():
     p = 0
     cleanr = re.compile(r'<[^>]+>')
     for states in state_list:        
-        states = states['href']
-        #print(states)
+        states = states['href']        
         r = session.get(states, headers=headers, verify=False)
+        if r.text.find('Coming Soon') > -1:
+            continue
         try:
             r = r.text.split('var marketLocations = ',1)[1].split('];',1)[0]
             loclist = json.loads(r+']')

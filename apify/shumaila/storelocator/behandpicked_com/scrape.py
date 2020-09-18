@@ -1,10 +1,8 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
 import usaddress
-
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -25,127 +23,107 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    
-    url = 'https://behandpicked.com/store-locations'
+    p = 0
+    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r'\s\s+') 
+    url = 'https://behandpicked.com/handpicked-stores/'
     r = session.get(url, headers=headers, verify=False)
   
     soup =BeautifulSoup(r.text, "html.parser")
    
-    link_list = soup.findAll('div', {'class': 'shg-c-lg-4 shg-c-md-4 shg-c-sm-4 shg-c-xs-12'})
-    
-    print("link = ",len(link_list))
-    p = 0
-    for links in link_list:
+    divlist = soup.find('div',{'class':'body'}).find('div',{'class':'container'})
+    titlelist = soup.find('div',{'class':'body'}).find('div',{'class':'container'}).findAll('strong')
+    content = re.sub(cleanr,' ',str(divlist))
+    content =re.sub(cleanr,'\n',str(content))
+    for i in range(1,len(titlelist)):
+        #if i == 1:
+         #   det,content= content.split(titlelist[0].text,1)
+        #else:
+       
+        det,content = content.split(titlelist[i].text,1)
+        
+        det = det.lstrip()
+        if i == (len(titlelist)):
+          
+            det = content
+        if i == 1:
+            det = det.split(titlelist[i-1].text)[1]
+        
+        if det.find('location is closed') > -1:
+            continue
+        title = titlelist[i-1].text
+        address = det.split('Phone')[0]
+        phone = det.split('Phone')[1].split('E-mail')[0]
         try:
-            title = links.find('strong').text
-            title = title.replace('>','').lstrip()
-            links = links.find('a')
-            #print(states.text.strip())
+            hours = det.split('Hours')[1].split('Th')[0]
+        except:
+            hours = det.split('Hours')[1].split('E-mail')[0]
+            phone = det.split('Phone')[1].split('\n')[-1]
             
-            link = links['href']
-            #print(link)        
-            r = session.get(link, headers=headers, verify=False)
-            ccode = 'US'
-            soup = BeautifulSoup(r.text, "html.parser")
-            address = soup.find('div', {'id': 's-6ce2c10f-fdec-427c-b554-d5f32de0ceb1'}).text
-            #print(address)
-            phone = soup.find('div', {'id': 's-04d3662a-c533-428e-b658-f34783561e24'}).find('h4').text
-            if phone.find("Phone") == -1:
-                phone = soup.find('div', {'id': 's-04d3662a-c533-428e-b658-f34783561e24'})
-                phone = phone.findAll('h4')
-                phone = phone[1].text
-            #print(phone)
-            #print(title)
-            phone = phone.replace('Phone:','')
-            phone = phone.replace('Phone #','')
-            phone = phone.lstrip()
-            
-            detail = str(soup)
-            start = detail.find('data-latitude')
-            start = detail.find('"',start)+1
-            end = detail.find('"',start)
-            lat = detail[start:end]
-            start = detail.find('data-longitude')
-            start = detail.find('"',start)+1
-            end = detail.find('"',start)
-            longt = detail[start:end]
-            address = address.replace('Address:','')
-            address = address.replace('\n','')
-            address = address.lstrip()
-            address = usaddress.parse(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                        temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                    "USPSBoxID") != -1:
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
-            city = city.lstrip()
-            city = city.replace(",",'')
-            street = street.replace(",",'')
-            street = street.lstrip()
-            state = state.lstrip()
-            pcode = pcode.lstrip()
-
-            if len(city) < 2:
-                city = "<MISSING>"
-            if len(street) < 2:
-                street = "<MISSING>"
-            if len(state) < 2:
-                state = "<MISSING>"
-            if len(pcode) < 2:
-                pcode = "<MISSING>"
-            phone = phone.replace('.','-')
-            if phone.find('\n') > -1:
-                phone = phone[0:phone.find('\n')]
-            if len(phone) < 2:
-                phone =  "<MISSING>"
-            data.append([
-                            'https://behandpicked.com/',
-                            link,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            'US',
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            "<INACCESSIBLE>"
-                        ])
-            #print(p,data[p])
-            p += 1
+        lat = '<MISSING>'
+        longt = '<MISSING>'
+        store = '<MISSING>'
+        ltype = '<MISSING>'
+        try:
+            address = address.split('\n',1)[0].lstrip()
         except:
             pass
-      
+        try:
+            phone = phone.split('\n',1)[0].lstrip()
+        except:
+            pass
+        try:
+            hours = hours.split('\n',1)[0].lstrip()
+        except:
+            pass
+        try:
+            hours = hours.split('Locate',1)[0].lstrip()
+        except:
+            pass
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
 
-           
-            
-                
-                
-                
-             
-                
-           
-                
-
-                
-                
-            
+        street = street.lstrip().replace(',','')
+        city = city.lstrip().replace(',','')
+        state = state.lstrip().replace(',','')
+        pcode = pcode.lstrip().replace(',','')
+        
+        #print(det)        
+        data.append([
+                        'https://behandpicked.com/',
+                        'https://behandpicked.com/handpicked-stores/',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        store,
+                        phone.replace(': ',''),
+                        ltype,
+                        lat,
+                        longt,
+                        hours.replace(': ','').replace('&amp;','-'),
+                    ])
+        #print(p,data[p])
+        p += 1
+  
+   
         
     return data
 

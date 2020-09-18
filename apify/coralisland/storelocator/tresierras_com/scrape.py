@@ -1,17 +1,17 @@
 import csv
 import re
 import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
+from sgrequests import SgRequests
 
 base_url = 'http://tresierras.com'
 
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)
@@ -58,9 +58,9 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    session = SgRequests()
     output_list = []
     url = "http://tresierras.com/locations.aspx"
-    session = requests.Session()
     request = session.get(url)
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@id="subRightCol2"]//div[@class="addressShowText"]')

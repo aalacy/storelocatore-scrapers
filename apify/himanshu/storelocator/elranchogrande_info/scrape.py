@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,28 +26,43 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for row in soup.find("div",{'class':"post-content"}).find_all("div",recursive=False)[0::2]:
-        hours = " ".join(list(row.find_all('div',{'class':"fusion-text"})[-1].stripped_strings))
         for location in row.find('div').find_all("div",{'class':"fusion_builder_column"},recursive=False)[:-1]:
             if location.find("strong") == None:
                 continue
             name = location.find("strong").text
+            if "coming" in name.lower():
+                continue
             phone = list(location.find("div",{'class':"fusion-text"}).stripped_strings)[-1]
-            geo_location = location.find("a",text="View Map")["href"]
+            geo_location = location.find_all("a")[-1]["href"]
             address = geo_location.split("/")[5].replace("+",' ')
+            street_address = address.split(",")[0].replace("-",' ')
+            try:
+                float(street_address)
+                raw_address = location.p.text.replace("\n"," ")
+                raw_address = raw_address[:raw_address.find("Phone")].replace(",","").strip().split()
+                street_address = " ".join(raw_address[:-3])
+                city = raw_address[-3]
+                state = raw_address[-2]
+                zip_code = raw_address[-1]
+            except:
+                city = address.split(",")[1]
+                state = address.split(",")[-2].split(" ")[-2]
+                zip_code = address.split(",")[-2].split(" ")[-1]
             store = []
             store.append("https://elranchogrande.info")
+            store.append("https://elranchogrande.info/locations/")
             store.append(name)
-            store.append(address.split(",")[0])
-            store.append(address.split(",")[1])
-            store.append(address.split(",")[-2].split(" ")[-2])
-            store.append(address.split(",")[-2].split(" ")[-1])
+            store.append(street_address)
+            store.append(city.strip())
+            store.append(state)
+            store.append(zip_code)
             store.append("US")
             store.append("<MISSING>")
             store.append(phone)
-            store.append("el rancho grande")
+            store.append("<MISSING>")
             store.append(geo_location.split("/@")[1].split(",")[0])
             store.append(geo_location.split("/@")[1].split(",")[1])
-            store.append(hours)
+            store.append("<MISSING>")
             return_main_object.append(store)
     return return_main_object
 

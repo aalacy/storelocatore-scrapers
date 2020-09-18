@@ -9,7 +9,7 @@ import json
 base_url = 'https://www.greenleafsbananas.com'
 
 def validate(item):
-    item = ''.join(item).replace(u'\xa0', '').replace(u'\u2019', '').strip()
+    item = ''.join(item).replace('\xa0', '').replace('\u2019', '').strip()
     if item == '':
         item = '<MISSING>'
     return item

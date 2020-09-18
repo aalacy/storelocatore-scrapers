@@ -25,9 +25,18 @@ def fetch_data():
         store.append("https://cultures-restaurants.com")
         store.append(base_url)
         store.append(r[i]['name'])
-        store.append((r[i]['address_line_1'].strip() + " " + r[i]['address_line_2'].strip()).strip())
-        store.append(r[i]['city'])
-        store.append(r[i]['state'].strip())
+        state = r[i]['state'].strip()
+        raw_address = r[i]['address']
+        raw_address = raw_address[:raw_address.rfind(state)].strip()[:-1].split(",")
+        street_address = " ".join(raw_address[:-1])
+        street_address = (re.sub(' +', ' ', street_address)).strip()
+        city = raw_address[-1].strip()
+        if "St. John's" in street_address:
+            street_address = street_address.replace("St. John's","").strip()
+            city = "St. John's"
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
         if r[i]['postcode']!="":
             store.append(r[i]['postcode'])
         else:

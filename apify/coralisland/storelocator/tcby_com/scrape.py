@@ -10,7 +10,7 @@ base_url = 'http://www.tcby.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -39,7 +39,7 @@ def fetch_data():
     output_list = []
     url = "https://www.tcby.com/find-a-store/"
     request = requests.get(url)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text)
     state_list = eliminate_space(response.xpath('//select[@class="usa-select"]//option//text()'))[1:]
     for state in state_list:
         store_list = json.loads(requests.get("https://www.tcby.com/api/geo/" + state).text)

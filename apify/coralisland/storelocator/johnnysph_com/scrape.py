@@ -12,7 +12,7 @@ base_url = 'https://johnnysph.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace('Hours', '')
+    return item.strip().replace('Hours', '')
 
 def get_value(item):
     item = validate(item)
@@ -69,7 +69,7 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_html = response.xpath('.//div[@class="locations "]')
     store_list = json.loads(request.text.split('var gmwMapObjects = ')[1].split('/* ]]> */')[0][:-2])
-    for idx, store in store_list.items():
+    for idx, store in list(store_list.items()):
         store = store['locations'][0]
         info = etree.HTML(store['info_window_content'])
         title = validate(info.xpath('.//a//text()'))

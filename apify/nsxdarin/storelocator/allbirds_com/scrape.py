@@ -34,7 +34,7 @@ def fetch_data():
             hours = '<MISSING>'
         if 'Auckland</h2>' in line:
             CFound = False
-        if 'See Map</a></p>' in line and CFound:
+        if 'see map</a></p>' in line.lower() and CFound:
             murl = line.split('href="')[1].split('"')[0]
             r2 = session.get(murl, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'

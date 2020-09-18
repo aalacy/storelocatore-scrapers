@@ -3,143 +3,137 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-# from shapely.prepared import prep
-# from shapely.geometry import Point
-# from shapely.geometry import mapping, shape
-
 
 
 session = SgRequests()
 
+
+
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-# def hasNumbers(inputString):
-#     return any(char.isdigit() for char in inputString)
-
-# countries = {}
-
-
-# def getcountrygeo():
-#     data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
-
-#     for feature in data["features"]:
-#         geom = feature["geometry"]
-#         country = feature["properties"]["ADMIN"]
-#         countries[country] = prep(shape(geom))
-
-
-# def getplace(lat, lon):
-#     point = Point(float(lon), float(lat))
-#     for country, geom in countries.items():
-#         if geom.contains(point):
-#             return country
-
-#     return "unknown"
-
-
+ 
 def fetch_data():
-
-    # getcountrygeo()  # it is use to get country from lat longitude
-
+    addressess = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': '*/*',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
+    base_url = "https://buckhorngrill.com"
+   
+    r = session.get("https://buckhorngrill.com/locations/",headers=headers)
+    soup=BeautifulSoup(r.text,'lxml')
 
-    addresses = []
-    base_url = "https://buckhorngrill.com/"
+    data_link = str(soup).split('var link = "')
+    for i in data_link[1:]:
+        link = i.split("var location_type")[0].replace('";\n','').strip()
+        
+        link_r = session.get(link,headers=headers)
+        link_soup = BeautifulSoup(link_r.text,'lxml')
 
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
-    page_url =""
-
-    r = session.get("https://buckhorngrill.com/location/")
-    soup = BeautifulSoup(r.text,'lxml')
-    for loc_row in soup.find_all('div',class_='location-row'):
-        location_name = loc_row.find('h4').text
-        address = loc_row.find('h4').find_next('p').text.split(',')
-        if len(address) == 3:
-            street_address = address[0].strip()
-            city = address[1].strip()
-            state = address[-1].strip()
+        location_name = link_soup.find("h2",{"class":"location-title"}).text
+        # print(name)
+        addr = link_soup.find("p",{"class":"location-address"}).text.split(",")
+        # print(addr)
+        # print(len(addr))
+        if len(addr) == 3:
+            street_address = addr[0]
+            city = addr[1].strip()
+            temp_state_zip = addr[2].strip().split(" ")
+            if len(temp_state_zip)==2:
+                state = temp_state_zip[0].upper()
+                zipp = temp_state_zip[1]
+            else:
+                state = temp_state_zip[0]
+                zipp = "<MISSING>"
+        elif len(addr) == 2:
+           
+            if location_name == "Walnut Creek":
+                city = "Walnut Creek"
+                street_address = addr[0].replace(city,"").strip()
+                temp_state_zip = addr[1].strip().split(" ")
+                state = temp_state_zip[0]
+                zipp = temp_state_zip[1]
+            if location_name == "SF Metreon: Temporarily Closed":
+                city = "San Francisco"
+                street_address = addr[0].replace(city,"").strip()
+                temp_state_zip = addr[1].strip().split(" ")
+                state = temp_state_zip[0]
+                zipp = temp_state_zip[1]
+            if location_name == "Roseville: Temporarily Closed":
+                city = "Roseville"
+                street_address = addr[0].replace(city,"").strip()
+                temp_state_zip = addr[1].strip().split(" ")
+                state = temp_state_zip[0]
+                zipp = temp_state_zip[1]
+            if location_name == "Pleasanton: Temporarily Closed":
+                city = "Pleasanton"
+                street_address = addr[0].replace(city,"").strip()
+                temp_state_zip = addr[1].strip().split(" ")
+                state = temp_state_zip[0]
+                zipp = temp_state_zip[1]
+            if location_name == "Modesto":
+                city = location_name
+                state = "California"
+                street_address = " ".join(addr).replace(city,"").replace(state,"").strip()
+                zipp = "<MISSING>"
+        else:
+            city = location_name.split(" ")[0]
+            if location_name == "Vacaville":
+                street_address = addr[0]
+                city = "Vacaville"
+            temp_addr = addr[0].split(" ")
+            street_address = " ".join(temp_addr[:-1]).replace(city,"").strip()
+            state = temp_addr[-1]
             zipp = "<MISSING>"
-        elif len(address) ==2:
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[-1]))
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-                street_address = " ".join(address[0].split()[:-1]).strip().replace("San","").replace('Walnut',"").strip()
-                city = " ".join(address[0].split()[-2:]).replace('Blvd','').replace('Rd','').replace('Suite#1339','').strip()
-                state = address[-1].split()[0].strip()
-            else:
-                zipp = "<MISSING>"
-                street_address = address[0]+ " "+" ".join(address[-1].split()[:2]).strip()
-                city = address[-1].split()[-2].strip()
-                state = address[-1].split()[-1].strip()
-        else:
+        
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = link_soup.find("h5",{"class":"phone-number"}).text
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = link_soup.find_all("div",{"class":"hours"})
+        hour = []
+        for h in hoo:
+            hour.append(" ".join(list(h.stripped_strings)).replace("Current Hours:","").replace("Hours:","").strip())
+        
+        hours_of_operation = ", ".join(hour)
 
-            if "CA" in address[0]:
-                street_address = " ".join(address[0].split()[:-3]).strip()
-                city = " ".join(address[0].split()[3:-1]).strip()
-                state = "".join(address[0].split()[-1].strip())
-                zipp = "<MISSING>"
-            elif "California" in  address[0]:
-                street_address =" ".join(address[0].split()[:-2]).strip()
-                city = address[0].split()[-2]
-                state = address[0].split()[-1]
-                zipp = "<MISSING>"
-            else:
-                street_address = address[0].strip()
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zipp = "<MISSING>"
-        # print(street_address+ " | "+city+ " | "+state+ " | "+zipp)
-        phone_tag = loc_row.find('h4').find_next('p').find_next('p').text
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(phone_tag)))
-        if phone_list:
-            phone = phone_list[0].strip()
-        else:
-            phone= "<MISSING>"
-        loc_col = loc_row.find('div',class_='loc-col')
-        list_hours = list(loc_col.stripped_strings)
-        hours_of_operation = " ".join(list_hours[4:]).strip()
-        page_url = loc_row.find(lambda tag: (tag.name == "a") and "View All Menus" in tag.text)['href']
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        page_url = link
 
-        if str(store[2]) + str(store[-3]) not in addresses:
-            addresses.append(str(store[2]) + str(store[-3]))
 
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address.replace('1650 East Monte Vista','1650 East Monte Vista Ave'))
+        store.append(city)
+        store.append(state.replace('Ave','<MISSING>'))
+        store.append(zipp)   
+        store.append(country_code)
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+    
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
 
 
 def scrape():
+    # fetch_data()
     data = fetch_data()
     write_output(data)
-
-
 scrape()

@@ -1,10 +1,9 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
+from sgrequests import SgRequests
 
 base_url = 'https://www.wyndhamhotels.com'
 
@@ -16,7 +15,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -37,7 +36,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         for row in data:
             writer.writerow(row)
 
@@ -77,12 +76,12 @@ def fetch_data():
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
     }
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
-    pdb.set_trace()
     store_list = response.xpath('//div[@class="aem-rendered-content"]')[0].xpath('.//div[@class="state-container"]//li[@class="property"]')
     for detail_url in store_list:
+        session = SgRequests()
         detail_url = validate(detail_url.xpath('.//a')[0].xpath('./@href'))
         detail_request = session.get('https://www.wyndhamhotels.com' + detail_url)
         detail = etree.HTML(detail_request.text)
@@ -91,16 +90,15 @@ def fetch_data():
         address = parse_address(address)
 
         phone = validate(detail.xpath('.//div[contains(@class, "property-phone")]')[0].xpath('.//text()')).replace('-', '')
-        store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0])
-
-        more_detail_url = "https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId=" + store_id + "&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-        detail_request = session.get(more_detail_url)
-        detail = json.loads(detail_request.text)['properties'][0]
-        state = validate(detail['stateCode'])
-        title = validate(detail['name'])
-        latitude = validate(detail['latitude'])
-        longitude = validate(detail['longitude'])
-        country_code = validate(detail['countryCode'])
+        store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0]) 
+       
+        maps_url = detail.xpath('//a[@class="property-address-mobile"]')[0].attrib['href']
+        lat_lng = maps_url.split("&daddr=")[1].split("&", 1)[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+        title = detail.xpath('//h1[contains(@class, "property-name")]/span/text()')[0]
+        print(title)
+        country_code = 'us' 
         hours = "24 hours open"
 
         output = []
@@ -117,7 +115,7 @@ def fetch_data():
         output.append(latitude) #latitude
         output.append(longitude) #longitude
         output.append(hours) #opening hours
-        pdb.set_trace()
+        output.append('https://www.wyndhamhotels.com' + detail_url) #page_url
         output_list.append(output)
 
     return output_list

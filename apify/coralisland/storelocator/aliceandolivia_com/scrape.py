@@ -1,60 +1,7 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
-import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://www.aliceandolivia.com'
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,38 +12,35 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.aliceandolivia.com/front/app/store/search?execution=e6s1"
     page_url = 'https://www.aliceandolivia.com/store-locator.html'
-    session = requests.Session()
-    source = session.get(url).text
-    request = session.get(url)
-    source = validate(request.text.split('var storeResult = ')[1].split('storeSearch')[0])[:-1]
-    store_list = json.loads(source)['store']
-    for store in store_list:
-        store = store['store']
-        country = get_value(store['address']['country'])
-        if country == 'US':
-            output = []
-            output.append(base_url) # url
-            output.append(page_url) # page url
-            output.append(get_value(store['name'])) #location name
-            output.append(get_value(store['address']['address1'])) #address
-            output.append(get_value(store['address']['city'])) #city
-            output.append(get_value(store['address']['province'])) #state
-            output.append(get_value(store['address']['postalCode'])) #zipcode
-            output.append(country) #country code
-            output.append(get_value(store['storeId'])) #store_number
-            output.append(get_value(store['phoneNumber'])) #phone
-            output.append(get_value(store['storeType'])) #location type
-            output.append(get_value(store['latitude'])) #latitude
-            output.append(get_value(store['longitude'])) #longitude
-            store_hours = []
-            if store['hours']:
-                store_hours = get_value(eliminate_space(etree.HTML(store['hours']).xpath('.//text()')))
-            if 'CLOSED FOR THE SEASON!' not in store_hours:
-                output.append(store_hours) #opening hours
-                output_list.append(output)
-    return output_list
+    session = SgRequests() 
+    headers = {
+        "authority": "www.aliceandolivia.com",
+        "path": "/on/demandware.store/Sites-aando-Site/default/Stores-FindStores?showMap=false&radius=300&postalCode=94107&radius=10000%20miles",
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "referer": "https://www.aliceandolivia.com/stores/?horizontalView=true&isForm=true",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+        "scheme": "https"
+    }
+    stores = session.get('https://www.aliceandolivia.com/on/demandware.store/Sites-aando-Site/default/Stores-FindStores?showMap=false&radius=300&postalCode=94107&radius=10000%20miles', headers = headers).json()['stores']
+    for store in stores:
+        country = store['countryCode']
+        if country.lower() not in ['us', 'ca']:
+            continue
+        name = store['name']
+        street = store['address1']
+        city = store['city']
+        state = store['stateCode']
+        zipcode = store['postalCode']
+        latitude = store['latitude']
+        longitude = store['longitude']
+        phone = store['phone']
+        hours = store['storeHours']
+        store_number = store['ID']
+        page_url = '<MISSING>'
+        location_type = '<MISSING>'
+        yield [base_url, page_url, name, street, city, state, zipcode, country, store_number, phone, location_type, latitude, longitude, hours]
 
 def scrape():
     data = fetch_data()

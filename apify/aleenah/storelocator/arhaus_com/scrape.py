@@ -1,5 +1,9 @@
 import csv
 from sgselenium import SgSelenium
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 import re
 from bs4 import BeautifulSoup
 import requests
@@ -34,28 +38,30 @@ def fetch_data():
     urls=[]
     res=requests.get("https://www.arhaus.com/store/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    statel=soup.find_all('a',{'class':'store_locator-store--name js-state'}, href=True)
+    statel=re.findall(r'<a class="store-directory__link" href="([^"]+)"',str(soup))
+    print(len(statel))
 
     for sl in statel:
-        urls.append(sl.get('href'))
-
-    for sl in urls:
-        driver.get("https://www.arhaus.com/store/"+sl)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        statel = soup.find_all('a', {'class': 'store_locator-store--name js-store'})
-        for l in statel:
-            page_url.append(l.get("href"))
+        page_url.append("https://www.arhaus.com"+sl)
 
     for url in page_url:
-        driver.get("https://www.arhaus.com"+url)
+        print(url)
+        try:
+            driver.get(url)
+        except:
+            driver.get(url)
+
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        locs.append(soup.find('h1', {'class': 'store_locator-h1'}).text)
-        street.append(soup.find('span', {'class': 'store_info-address'}).text)
-        cities.append(soup.find('span', {'class': 'js-store-city'}).text.strip())
-        states.append(soup.find('span', {'class': 'js-store-state'}).text.strip())
-        zips.append(soup.find('span', {'class': 'js-store-zip'}).text.strip())
-        timing.append(soup.find('div', {'class': 'store_hours-container'}).text.strip().replace("\n"," "))
-        phones.append(soup.find('a', {'class': 'store_info-phone'}).text.strip())
+
+        locs.append(soup.find('h1', {'class': 'store-details__header-heading'}).text)
+        street.append(soup.find('span', {'class': 'store-details__street-address-1'}).text)
+        cities.append(soup.find('span', {'class': 'store-details__street-city'}).text.strip())
+        states.append(soup.find('span', {'class': 'store-details__street-state'}).text.strip())
+        zips.append(soup.find('span', {'class': 'store-details__street-zip'}).text.strip())
+        timing.append(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
+        #print(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
+        phones.append(soup.find('div', {'class': 'store-details__phone'}).text.strip())
 
     all = []
     for i in range(0, len(locs)):
@@ -83,4 +89,3 @@ def scrape():
     write_output(data)
 
 scrape()
-

@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -37,8 +37,7 @@ def fetch_data():
    
     for i in data:
         h =i.find_all("h6")
-        
-        
+                
         for h1 in h:
             store_name.append(h1.text)
         
@@ -46,35 +45,42 @@ def fetch_data():
         for j in k:
             tem_var =[]
             k1= (list(j.stripped_strings))
-            if k1 !=[]:
+            if k1 !=[] and len(k1) !=1:
+                street_address = list(j.stripped_strings)[0]
+                if "copyright" in street_address.lower():
+                    continue
+                # print(street_address)
+                city = list(j.stripped_strings)[1].replace("No. ","").split(",")[0]
+                state = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[0]
+                zipcode = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[1]
+
                 if len(list(j.stripped_strings)) != 2:
-                    street_address = list(j.stripped_strings)[0]
-                    city = list(j.stripped_strings)[1].replace("No. ","").split(",")[0]
-                    state = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[0]
-                    zipcode = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[1]
                     phone  = list(j.stripped_strings)[2]
                     hours = (" ".join(list(j.stripped_strings)[3:]).replace("Downtown Ordering DoorDash Delivery",""))
+                else:
+                    phone = "<MISSING>"
+                    hours = "<MISSING>"
 
-
-                    tem_var.append(street_address)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zipcode)
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(phone)
-                    tem_var.append("apolloburgers")
-                    tem_var.append("<MISSING>")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(hours)
-                    store_detail.append(tem_var)
+                tem_var.append(street_address)
+                tem_var.append(city)
+                tem_var.append(state)
+                tem_var.append(zipcode)
+                tem_var.append("US")
+                tem_var.append("<MISSING>")
+                tem_var.append(phone)
+                tem_var.append("apolloburgers")
+                tem_var.append("<MISSING>")
+                tem_var.append("<MISSING>")
+                tem_var.append(hours)
+                store_detail.append(tem_var)
                     
    
   
-    print(store_detail)
+    # print(store_detail)
     for i in range(len(store_name)):
         store = list()
         store.append("https://apolloburgers.com")
+        store.append(base_url)
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store) 

@@ -1,9 +1,8 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
+from sgrequests import SgRequests
 
 base_url = 'http://kingtaco.com'
 
@@ -15,7 +14,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -41,9 +40,18 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    session = SgRequests()
     output_list = []
-    url = "http://kingtaco.com/locations.html"
-    request = requests.get(url)
+    url = "https://kingtaco.com/locations.html"
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36",
+        "authority": "kingtaco.com",
+        "method": "GET",
+        "path": "/locations.html",
+        "scheme": "https"
+    }
+    request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
     store_list = response.xpath('//article')[1:-5]
     for store in store_list:

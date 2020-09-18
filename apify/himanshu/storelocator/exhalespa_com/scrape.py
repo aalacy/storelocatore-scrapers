@@ -1,13 +1,10 @@
 import csv
 import time
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
  
-
-
 
 session = SgRequests()
 
@@ -60,7 +57,11 @@ def fetch_data():
             soup_location = BeautifulSoup(r_location.text, "lxml")
 
             if soup_location.find("div",{"class":"page_heading Configurable-Text"}):
-                location_name = soup_location.find("div",{"class":"page_heading Configurable-Text"}).find("h2").text
+                try:
+                    location_name = soup_location.find("div",{"class":"page_heading Configurable-Text"}).find("h1").text
+                except:
+                    location_name = soup_location.find("div",{"class":"page_heading Configurable-Text"}).find("h2").text
+
                 full_address = list(soup_location.find("div",{"class":"address"}).stripped_strings)
                 street_address = full_address[0]
 
@@ -86,12 +87,21 @@ def fetch_data():
                     phone = phone_list[0]
 
                 city = city_state_zipp.replace(zipp, "").replace(state, "").replace(",", "")
+                temp_loc_type = soup_location.find("ol",{"class":"breadcrumb"}).find("li",{"class":"active"}).text
+                if "(temporarily closed)" in temp_loc_type:
+                    location_type = "temporarily closed"
+                else:
+                    location_type = "<MISSING>"
+
 
                 hours_list = list(soup_location.find("div",{"class":"field-hours-of-operation"}).stripped_strings)
                 latitude = soup_location.find("meta",{"property":"latitude"})["content"]
                 longitude = soup_location.find("meta",{"property":"longitude"})["content"]
                 if hours_list:
-                    hours_of_operation = " ".join(hours_list[1:])
+                    hours_of_operation = " ".join(hours_list[1:]).replace("We are open! Please contact us for most up-to-date hours of operation and available services.","<MISSING>")
+                    hours_of_operation = hours_of_operation.replace("Exhale at 45PROVINCE is a private facility for residents only. Hours vary and are based on appointment requests and class times.","<MISSING>")
+                    hours_of_operation = hours_of_operation.replace("Hours vary. Please see this week's class schedule for times.","<MISSING>")
+                    hours_of_operation = hours_of_operation.replace("Hours vary and are based on appointment requests and class times.","<MISSING>")
                 # print("hours_of_operation === "+ str(hours_of_operation))
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

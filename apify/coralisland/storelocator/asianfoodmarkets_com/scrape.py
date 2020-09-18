@@ -12,7 +12,7 @@ base_url = 'http://asianfoodmarkets.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace('\r', '').replace('\t', '').replace('\n', '').strip()
+    return item.replace('\r', '').replace('\t', '').replace('\n', '').strip()
 
 def get_value(item):
     if item == None :

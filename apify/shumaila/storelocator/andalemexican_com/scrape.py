@@ -1,7 +1,10 @@
-# Import libraries
-import requests
 from bs4 import BeautifulSoup
-import csv
+import csv, re
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -9,67 +12,66 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain",'page_url', "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
+    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r'\s\s+') 
     data = []
+    p = 0
     url = 'https://www.andalemexican.com/locations'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    # print(soup)
-    repo_list = soup.findAll('div', {'class': 'summary-thumbnail-outer-container'})
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    repo_list = soup.findAll('div', {'class': 'summary-content sqs-gallery-meta-container'})
+    print(len(repo_list))
+    
     for repo in repo_list:
-        detail = repo.find('a', {'class': 'summary-thumbnail-container sqs-gallery-image-container'})
-        title = detail['data-title']
-        descr = detail['data-description']
-        start = descr.find("</p>")+7
-        end = descr.find("<br />")
-        address = descr[start:end]
-        start = end+6
-        end = descr.find("<br />",start)
-        state = descr[start:end]
-        start = state.find(",")
-        city = state[0:start]
-        state = state[start+2:len(state)]
-
+        title = repo.find('a',{'class':'summary-title-link'})
+        link = 'https://www.andalemexican.com' +title['href']
+        title= title.text
+        content = repo.find('div',{'class':'summary-excerpt'}).findAll('p')
+        for ct in content:
+            if ct.text.find("Fax") > -1:
+                address = ct
+            elif ct.text.find("Hours") > -1:
+                hours = ct.text
+        #address = content[3]
+        address= re.sub(cleanr,'\n',str(address))
+        address= re.sub(pattern,'\n',address.lstrip()).split('\n')
+        #print(address)
+        #hours = content[4].text
+        street = address[0]      
+        city,state = address[1].split(', ',1)
         try:
-            state, xip = state.split(" ")
+            state,pcode = state.lstrip().split(' ',1)
         except:
-            xip = "<MISSING>"
-        start = descr.find("<strong>")+8
-        end = descr.find("</strong>")
-        phone = descr[start:end]
-        start= descr.find("Hours:")+9
-        start = descr.find("<",start) + 6
-        end = descr.find("</p>",start)
-        hours = descr[start:end]
-        if hours[0] == ">":
-            hours = hours[1:len(hours)]
-
-        print(hours)
+            pcode = '<MISSING>'
+        phone = address[2]
+       
         data.append([
-            url,
+            'https://www.andalemexican.com/locations',
+            link,
             title,
-            address,
+            street,
             city,
             state,
-            xip,
+            pcode,
             'US',
             "<MISSING>",
             phone,
             "<MISSING>",
             "<MISSING>",
             "<MISSING>",
-            hours
+            hours.replace('Hours:','')
         ])
 
-        # print(address)
-
+        #print(p,data[p])
+        p += 1
+        
     return data
 
 

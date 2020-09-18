@@ -15,7 +15,7 @@ def validate(item):
             item = item[:-1]
         else:
             break
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -49,7 +49,7 @@ def fetch_data():
 
     geoinfo_tmp = request.text.split('position: ')
     geoinfo = {}
-    for x in xrange(2, len(geoinfo_tmp)):
+    for x in range(2, len(geoinfo_tmp)):
         tmp = validate(geoinfo_tmp[x].split('icon: ')[0])
         lat = tmp.split('lat: ')[1].split(',')[0]
         lng = tmp.split('lng: ')[1].split('}')[0]

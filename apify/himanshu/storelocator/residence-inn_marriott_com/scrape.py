@@ -1,145 +1,123 @@
 import csv
-from bs4 import BeautifulSoup
 import re
 import json
-from sgselenium import SgSelenium
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
-import time
+import csv
+from sgrequests import SgRequests
+session = SgRequests()
+from bs4 import BeautifulSoup
 import unicodedata
+base_url = 'https://residence-inn.marriott.com/'
 
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
+    with open('data.csv', mode='w',newline="") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
 
-
-
-
-def initial_search(driver, brand_id):
-    # driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" +
-    #    str(brand_id) + "&destinationAddress.country=US")
-    driver.get("https://www.marriott.com/search/default.mi")
-    element = WebDriverWait(driver, 30).until(
-        lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
-    element.send_keys("residenceinn")
-    WebDriverWait(driver, 30).until(lambda x: x.find_element_by_xpath(
-        '//input[@value="Search Hotels"]')).click()
-
-
 def fetch_data():
-
-    addresses = []
-    brand_id = "RI"
-    domain_url = "https://residence-inn.marriott.com"
-
-    driver = SgSelenium().firefox()
-    initial_search(driver, brand_id)
-    # attempt to handle server error on initial search
-    if "Our server is being stubborn, please try again" in driver.page_source:
-        initial_search(driver, brand_id)
-
-    WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, 'div.js-property-list-container')))
-
-    while True:
-
-        soup = BeautifulSoup(driver.page_source, "lxml")
-
-        for location in soup.find('div', {'class': 'js-property-list-container'}).find_all("div", {"data-brand": str(brand_id)}, recursive=False):
-            if location["data-brand"] != brand_id:
-                continue
-            name = location.find("span", {"class": "l-property-name"}).text
-            address = location.find("div", {"data-address-line1": True})
-            street_address = address["data-address-line1"]
-            if location.find("div", {"data-address-line2": True}):
-                street_address = street_address + \
-                    " " + address["data-address-line2"]
-            city = address["data-city"]
-            state = address["data-state"]
-            if state in ["QROO", "JAL", "DF", "NL", "YUC"]:
-                continue
-            store_zip = address["data-postal-code"]
-            phone = address["data-contact"]
-            if "+1" not in phone:
-                continue
-            lat = json.loads(location["data-property"])["lat"]
-            lng = json.loads(location["data-property"])["longitude"]
-            page_url = "https://www.marriott.com" + \
-                location.find(
-                    "span", {"class": "l-property-name"}).parent.parent["href"]
-            store = []
-            store.append(domain_url)
-            store.append(name if name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            if store[-1] == "":
-                continue
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            ca_zip_list = re.findall(
-                r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(store_zip))
-            us_zip_list = re.findall(re.compile(
-                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(store_zip))
-            if ca_zip_list:
-                zipp = ca_zip_list[-1]
-                country_code = "CA"
-
-            elif us_zip_list:
-                zipp = us_zip_list[-1]
-                country_code = "US"
-            else:
-                continue
-            store.append(zipp if zipp else "<MISSING>")
-            if len(store[-1]) == 10:
-                store[-1] = store[-1].replace(" ", "-")
-            store.append(country_code)
-            store.append("<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append("Residence Inn")
-            store.append(lat)
-            store.append(lng)
-            store.append("<MISSING>")
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize(
-                        'NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–", "-") if type(x) ==
-                     str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode(
-                'ascii').strip() if type(x) == str else x for x in store]
-            yield store
-            # print("data === ",store)
-            # print("data === ",str(store))
-        # if len(soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)})) <= 0:
-        #     break
-
-        time.sleep(2)
-        try:
-            WebDriverWait(driver, 20).until(
-                lambda x: x.find_element_by_xpath("//a[@title='Next']")).click()
-        except (NoSuchElementException, TimeoutException, WebDriverException):
-            break
-
-    driver.close()
-
-
+    output_list = []
+    url = "https://pacsys.marriott.com/data/marriott_properties_RI_en-US.json"
+    
+    headers = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+    }
+    address=[]
+    request = session.get(url, headers=headers)
+    soup = BeautifulSoup(request.text,"lxml")
+    data = (soup.text)
+    store_list = json.loads(data)
+    data_8 = (store_list['regions'])
+    for i in data_8:
+        for j in i['region_countries']:
+            for k in j['country_states']:
+                for h in k['state_cities']:
+                    for g in (h['city_properties']):
+                        if "USA" in (g['country_name']):
+                            zipp = (g['postal_code'])
+                            location_name = (g['name'])
+                            street_address = (g['address'])
+                            city = (g['city'])
+                            state = (g['state_name'])
+                            country_code = (g['country_name'])
+                            phone = (g['phone'])
+                            latitude = (g['latitude'])
+                            longitude = (g['longitude'])
+                            key = (g['marsha_code'])
+                            page_url = "https://www.marriott.com/hotels/travel/"+str(key)
+                            # print(page_url)
+                            output = []
+                            output.append(base_url if base_url else "<MISSING>" ) # url
+                            output.append(location_name if location_name else "<MISSING>") #location name
+                            output.append(street_address if street_address else "<MISSING>") #address
+                            output.append(city if city else "<MISSING>")#city
+                            output.append(state if state else "<MISSING>") #state
+                            output.append(zipp if zipp else "<MISSING>") #zipcode
+                            output.append(country_code if country_code else "<MISSING>") #country code
+                            output.append("<MISSING>") #store_number
+                            output.append(phone if phone else "<MISSING>") #phone
+                            output.append("Residence Inn by Marriott") #location type
+                            output.append(latitude if latitude else "<MISSING>") #latitude
+                            output.append(longitude if longitude else "<MISSING>") #longitude
+                            output.append("<MISSING>") 
+                            output.append(page_url if page_url else "<MISSING>")#opening hours  
+                            if output[2] in address :
+                                continue
+                            address.append(output[2])    
+                            for i in range(len(output)):
+                                if type(output[i]) == str:
+                                    output[i] = ''.join((c for c in unicodedata.normalize('NFD', output[i]) if unicodedata.category(c) != 'Mn'))
+                            output = [x.replace("–","-") if type(x) == str else x for x in output]
+                            output = [x.encode('ascii', 'ignore').decode('ascii') if type(x) == str else x for x in output]      
+                            yield output
+    for i1 in data_8:
+        # print(i1)
+        for j1 in i1['region_countries']:
+            for k1 in j1['country_states']:
+                # print(k1)
+                for h1 in k1['state_cities']:
+                    for g1 in (h1['city_properties']):
+                        if "CA" in (g1['country_code']):
+                            zipp = (g1['postal_code'])
+                            location_name = (g1['name'])
+                            street_address = (g1['address'])
+                            city = (g1['city'])
+                            state = (g1['state_name'])
+                            country_code = (g1['country_name'])
+                            phone = (g1['phone'])
+                            latitude = (g1['latitude'])
+                            longitude = (g1['longitude'])
+                            key = (g1['marsha_code'])
+                            page_url = "https://www.marriott.com/hotels/travel/"+str(key)
+                            # print(page_url)
+                            output = []
+                            output.append(base_url if base_url else "<MISSING>" ) # url
+                            output.append(location_name if location_name else "<MISSING>") #location name
+                            output.append(street_address if street_address else "<MISSING>") #address
+                            output.append(city if city else "<MISSING>")#city
+                            output.append(state if state else "<MISSING>") #state
+                            output.append(zipp if zipp else "<MISSING>") #zipcode
+                            output.append(country_code if country_code else "<MISSING>") #country code
+                            output.append("<MISSING>") #store_number
+                            output.append(phone if phone else "<MISSING>") #phone
+                            output.append("Residence Inn by Marriott") #location type
+                            output.append(latitude if latitude else "<MISSING>") #latitude
+                            output.append(longitude if longitude else "<MISSING>") #longitude
+                            output.append("<MISSING>") 
+                            output.append(page_url if page_url else "<MISSING>")#opening hours 
+                            if output[2] in address :
+                                continue
+                            address.append(output[2])    
+                            for i in range(len(output)):
+                                if type(output[i]) == str:
+                                    output[i] = ''.join((c for c in unicodedata.normalize('NFD', output[i]) if unicodedata.category(c) != 'Mn'))
+                            output = [x.replace("–","-") if type(x) == str else x for x in output]
+                            output = [x.encode('ascii', 'ignore').decode('ascii') if type(x) == str else x for x in output]  
+                            yield output
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

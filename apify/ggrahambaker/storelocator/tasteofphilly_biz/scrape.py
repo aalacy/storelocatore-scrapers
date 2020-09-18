@@ -23,13 +23,16 @@ def fetch_data():
     url = 'https://www.tasteofphilly.biz/locations/'   
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text,'html.parser')
-    stores = soup.findAll('div',{'class':'top-menu-lr'})    
+    stores = soup.findAll('div',{'class':'top-menu-lr'})
+   
     for store in stores:
         title = store.find('a').text
-        link = 'https://www.tasteofphilly.biz'+store.find('a')['href']       
+        link = 'https://www.tasteofphilly.biz'+store.find('a')['href']
+        #print(p,link)
         r = session.get(link, headers=headers, verify=False)
-        if 'famous' in r.url:
-            continue
+        #print(link)
+        '''if 'famous' in r.url:
+            continue'''
         soup = BeautifulSoup(r.text,'html.parser')
         try:
             flag = 0
@@ -40,7 +43,7 @@ def fetch_data():
             elif content.find(']') > -1:
                 det = content.split('] ',1)[1]
             elif content.find('DRIVERS! ') > -1:
-                det = content.split('] ')[1]
+                det = content.split('DRIVERS! ')[1]
             elif content.find('OPEN! ',1) > -1:
                 det = content.split('OPEN! ',1)[1]
             else:
@@ -73,6 +76,7 @@ def fetch_data():
                phone= det.rstrip().split(' ')[0]
                
             address = det.replace(phone,'')
+            
             address = usaddress.parse(address)
             i = 0
             street = ""
@@ -95,7 +99,10 @@ def fetch_data():
             city = city.lstrip().replace(',','')
             state = state.lstrip().replace(',','')
             pcode = pcode.lstrip().replace(',','')            
-            
+            try:
+                street =street.split('!')[1]
+            except:
+                pass
             hours = '<MISSING>'
             try:
                 hours = soup.text.split('Hours')[1]

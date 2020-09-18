@@ -2,6 +2,10 @@ import csv
 import re
 import time
 from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 driver = SgSelenium().chrome()
 time.sleep(2)
@@ -21,7 +25,10 @@ def write_output(data):
 def fetch_data():
     data = []
     driver.get(BASE_URL)
-    time.sleep(8)
+    time.sleep(2)
+    element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+        (By.CLASS_NAME, "vcard")))
+    time.sleep(2)
     stores = driver.find_elements_by_css_selector('div.vcard')
     for store in stores:
         location_name = store.find_element_by_css_selector('h3').text
@@ -37,7 +44,10 @@ def fetch_data():
                 continue
             if "close" in note.lower():
                 hours_of_operation = note
-        phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
+        try:
+            phone = store.find_element_by_css_selector('div.vcard > div.adr > div > a').text
+        except:
+            phone = '<MISSING>'
         try:
             store_number = store.find_element_by_css_selector("div.adr ~ p > a[href*='order.cava.com']").get_attribute('href')
             store_number = re.findall(r'stores\/{1}(\d*)', store_number)[0]

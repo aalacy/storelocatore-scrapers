@@ -16,7 +16,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace('</br>', ' ').replace('\n', '').strip()
+    return item.replace('</br>', ' ').replace('\n', '').strip()
 
 def get_value(item):
     if item == None :
@@ -56,7 +56,7 @@ def fetch_data():
     session = requests.Session()
     request = session.get(url)
     store_list = json.loads(request.text.split('vbq.stores = ')[1].split('};')[0] + '}')
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         output = []
         if get_value(store['countryCode']) == 'US':
             output.append(base_url) # url
