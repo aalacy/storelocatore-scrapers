@@ -22,12 +22,12 @@ def run2to3(base_path):
     subprocess.run(["2to3", "-wn", '{}/scrape-tmp.py'.format(base_path)])
 
 def process_internal(base_path):
-    with open('{}/scrape.py'.format(base_path)) as oldfile:
+    with open('{}/scrape.py'.format(base_path), 'rU') as oldfile:
         with open('{}/scrape-tmp.py'.format(base_path), 'w') as newfile:
             content = oldfile.readlines()
             has_iter_lines = any(['iter_lines()' in x for x in content])
             for line in content:
-                if ".encode('utf-8')" in line or '.encode("utf-8")' or '.encode("utf8")' or ".encode('ascii', 'ignore')" in line:
+                if ".encode('utf-8')" in line or '.encode("utf-8")' or '.encode("utf8")' in line or ".encode('ascii', 'ignore')" in line:
                     newfile.write(line.replace(".encode('utf-8')", "").replace('.encode("utf-8")', "").replace('.encode("utf8")', "").replace(".encode('ascii', 'ignore')", ""))
                 elif 'r = session.' in line and has_iter_lines:
                     newfile.write(line)
@@ -71,4 +71,4 @@ def run(root):
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/tayyabaq/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/tayyabaq/storelocator/banditsbbq_com')
