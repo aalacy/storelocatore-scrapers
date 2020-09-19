@@ -5,6 +5,7 @@ import urllib.parse as urlparse
 from urllib.parse import parse_qs
 from lxml import (html, etree,)
 from pdb import set_trace as bp
+import usaddress
 
 xpath = base.xpath
 
@@ -13,6 +14,33 @@ class HomeSmart(base.Base):
     csv_filename = 'data.csv'
     domain_name = 'homesmart.com'
     url = 'https://homesmart.com/offices-agents-search/?cmd=search'
+    
+    def handle_missing(self, x):
+        if not x or not x.strip():
+            return '<MISSING>'
+        return x
+
+    def parse_address(self, address):
+        address = usaddress.parse(address)
+        street = ''
+        city = ''
+        state = ''
+        zipcode = ''
+        for addr in address:
+            if addr[1] == 'PlaceName':
+                city += addr[0].replace(',', '') + ' '
+            elif addr[1] == 'ZipCode':
+                zipcode = addr[0].replace(',', '')
+            elif addr[1] == 'StateName':
+                state = addr[0].replace(',', '')
+            else:
+                street += addr[0].replace(',', '') + ' '
+        return {
+            'street': self.handle_missing(street),
+            'city' : self.handle_missing(city),
+            'state' : self.handle_missing(state),
+            'zipcode' : self.handle_missing(zipcode)
+        }
 
     def map_data(self, row):
         
@@ -22,9 +50,13 @@ class HomeSmart(base.Base):
             google_maps_url = google_maps_url.replace("#", "%23")
             query_params = parse_qs(urlparse.urlparse((google_maps_url)).query)
             address = str(query_params['q'])
-            address_split = re.findall(r'(.+)  (.+) ([A-Z]{2}) ([0-9]{5})', address)
-            if address_split:
-                street_address, city, state, zipcode = address_split[0]
+        
+        parsed = self.parse_address(address)
+        street_address = parsed['street']
+        city = parsed['city']
+        state = parsed['state']
+        zipcode = parsed['zipcode']
+
         geo = self.get_geo(address)
         office_number = None
         image_url = str(xpath(row, './/div[@id="office-photo"]//img//@src'))
