@@ -25,9 +25,9 @@ def fetch_data():
     while True:
         r = requests.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
         try:
-	    store_data = r.json()["data"]
-	except ValueError:
-	    break
+            store_data = r.json()["data"]
+        except ValueError:
+            break
         for content in store_data:
             location_name.append(content["displayName"])
             if content["line2"]:
