@@ -32,7 +32,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest"
         }
     request = requests.get(url, headers=headers)
-    response = etree.HTML(request.text)
+    response = etree.HTML(request.text.encode('utf-8'))
     store_list = response.xpath('//marker')
     index = 0
     for store in store_list:
