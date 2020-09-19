@@ -51,7 +51,7 @@ def fetch_data():
         except:
             driver.get(url)
 
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
+        WebDriverWait(driver, 190).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         locs.append(soup.find('h1', {'class': 'store-details__header-heading'}).text)
