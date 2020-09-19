@@ -88,7 +88,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            store = [unidecode.unidecode(x).decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [unidecode.unidecode(x).strip() if x else "<MISSING>" for x in store]
             yield store
             # print("data == " + str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
