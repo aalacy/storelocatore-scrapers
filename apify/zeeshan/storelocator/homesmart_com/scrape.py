@@ -1,7 +1,8 @@
 import re 
 import base
 import requests
-
+import urllib.parse as urlparse
+from urllib.parse import parse_qs
 from lxml import (html, etree,)
 
 from pdb import set_trace as bp
@@ -19,21 +20,19 @@ class HomeSmart(base.Base):
         address, street_address, city, state, zipcode = None, None, None, None, None
         google_maps_url = xpath(row, './/a[@id="location"]//@href')
         if google_maps_url:
-            query_params = base.query_params(google_maps_url)
-            address = query_params['q']
+            query_params = parse_qs(urlparse.urlparse((google_maps_url)).query)
+            address = str(query_params[b'q'])
             address_split = re.findall(r'(.+)  (.+) ([A-Z]{2}) ([0-9]{5})', address)
             if address_split:
                 street_address, city, state, zipcode = address_split[0]
 
-        geo = self.get_geo(address)
-
         office_number = None
-        image_url = xpath(row, './/div[@id="office-photo"]//img//@src')
+        image_url = str(xpath(row, './/div[@id="office-photo"]//img//@src'))
         if image_url:
            office_number = image_url.split('/')[-1]
 
         phone_number = None
-        phone_number_string = xpath(row, './/div[@id="office-contact"]//p[2]//text()')
+        phone_number_string = str(xpath(row, './/div[@id="office-contact"]//p[2]//text()'))
         if phone_number_string:
             phone_number = re.findall(r'(\([0-9]{3}\) [0-9]{3}-[0-9]{4})', phone_number_string)
             phone_number = phone_number[0] if phone_number else phone_number
