@@ -14,7 +14,7 @@ def validate(items):
         if item is '<MISSING>':
             continue
         if type(item) is str:
-            item = item.encode('ascii','ignore').encode('utf-8').strip()
+            item = item.encode('ascii','ignore').strip()
 
         rets.append(item)
     return rets
@@ -51,9 +51,9 @@ def fetch_data():
         for info in hour_infos:
             hour = info.split('<td>')[1:]
             if '</time>' in hour[1]:
-                store_hours += hour[0].split('</td>')[0] + u" " + hour[1].split('<time>').pop().split('</time>')[0] + u","
+                store_hours += hour[0].split('</td>')[0] + " " + hour[1].split('<time>').pop().split('</time>')[0] + ","
             else:
-                store_hours += hour[0].split('</td>')[0] + u" " + hour[1].split('</td>')[0] + u","
+                store_hours += hour[0].split('</td>')[0] + " " + hour[1].split('</td>')[0] + ","
         output.append(base_url)
         output.append(store.get('store'))
         output.append(store.get('address'))

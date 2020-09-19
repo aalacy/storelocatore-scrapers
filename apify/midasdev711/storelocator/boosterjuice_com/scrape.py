@@ -40,7 +40,7 @@ def fetch_data():
             for x in hours:
                 if x.get('isClosed') == True:
                     continue
-                store_hours.append((x.get('day') or u' ') + u' ' + (x.get('open') or u' ') + u' ' + (x.get('close') or u' '))
+                store_hours.append((x.get('day') or ' ') + ' ' + (x.get('open') or ' ') + ' ' + (x.get('close') or ' '))
         hours = '<MISSING>'
         if len(store_hours) > 0:
             hours = ', '.join(store_hours)

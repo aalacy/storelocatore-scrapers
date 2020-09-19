@@ -24,7 +24,7 @@ def validate(items):
         if item is '<MISSING>':
             pass
         else:
-            item = item.encode('utf-8').strip()
+            item = item.strip()
         if item != '':
             rets.append(item)
     return rets
@@ -41,25 +41,25 @@ def fetch_data():
     output_list = []
     url = "https://www.bakedbymelissa.com/locations/"
     driver.get(url)
-    source = driver.page_source.encode('ascii', 'ignore').encode("utf-8")
+    source = driver.page_source
     data = source.split('initial_locations:  ').pop().split('min_zoom')[0]
     store_data = json.loads(data[:-10])
     for store in store_data:
         output = []
-        address = store.get('address').encode('utf-8')
+        address = store.get('address')
         parsed_address = dict(usaddress.parse(address))
-        parsed_address = {v: k for k, v in parsed_address.items()}
-        street_address = (parsed_address.get("AddressNumber") or u'') + u' ' + (parsed_address.get("StreetNamePreDirectional") or u'') + u' ' + (parsed_address.get("StreetName") or u'') + u' ' + (parsed_address.get("StreetNamePostType") or u'')
+        parsed_address = {v: k for k, v in list(parsed_address.items())}
+        street_address = (parsed_address.get("AddressNumber") or '') + ' ' + (parsed_address.get("StreetNamePreDirectional") or '') + ' ' + (parsed_address.get("StreetName") or '') + ' ' + (parsed_address.get("StreetNamePostType") or '')
         if street_address == '   ':
             tmp = address.split(' ')
             street_address = ' '.join(tmp[:-3])
-        cityaddress = store.get('address_display').encode('utf-8').split('<br />')[1]
+        cityaddress = store.get('address_display').split('<br />')[1]
         cityaddress = dict(usaddress.parse(cityaddress))
-        cityaddress = {v: k for k, v in cityaddress.items()}
+        cityaddress = {v: k for k, v in list(cityaddress.items())}
         city = cityaddress.get("PlaceName")
-        if parsed_address.get("StateName") == u'NY':
+        if parsed_address.get("StateName") == 'NY':
             city = 'New York'
-        hourHTML = etree.HTML(store.get('notes').encode("utf-8"))
+        hourHTML = etree.HTML(store.get('notes'))
         hours = hourHTML.xpath('//p')
         store_hours = ""
         for hour in hours:

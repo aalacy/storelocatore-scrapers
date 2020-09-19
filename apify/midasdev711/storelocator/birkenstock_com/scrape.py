@@ -14,7 +14,7 @@ def validate(items):
             continue
         if type(item) != str:
             item = str(item)
-        item = item.encode('utf-8').strip()
+        item = item.strip()
         if item != '':
             rets.append(item)
     return rets
@@ -47,7 +47,7 @@ def fetch_data():
                     storeHours.remove('\n')
                 else:
                     break
-            for x in xrange(0,len(storeHours)/2):
+            for x in range(0,len(storeHours)/2):
                 store_hours += storeHours[x] + " " + storeHours[x+len(storeHours)/2] + ","
             store_hours = store_hours[:-1]
         if store.get('phone'):

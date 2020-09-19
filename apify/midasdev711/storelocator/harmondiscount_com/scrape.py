@@ -14,7 +14,7 @@ def validate(items):
             continue
         if type(item) != str:
             item = str(item)
-        item = item.encode('utf-8').strip()
+        item = item.strip()
         if item != '':
             rets.append(str(item))
     return rets
@@ -48,7 +48,7 @@ def fetch_data():
         for x in list(store.get('regularHours').keys()):
             if store.get('regularHours')[x].get('label'):
                 hour_flag = False
-            storeHours += x + u' ' + store.get('regularHours')[x].get('label') + u','
+            storeHours += x + ' ' + store.get('regularHours')[x].get('label') + ','
         storeHours = storeHours[:-1]
         if hour_flag:
             storeHours = 'Assortment and hours vary by store. Please contact the store for additional information.'
