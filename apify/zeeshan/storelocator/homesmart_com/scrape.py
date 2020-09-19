@@ -4,7 +4,6 @@ import requests
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
 from lxml import (html, etree,)
-
 from pdb import set_trace as bp
 
 xpath = base.xpath
@@ -18,10 +17,11 @@ class HomeSmart(base.Base):
     def map_data(self, row):
         
         address, street_address, city, state, zipcode = None, None, None, None, None
-        google_maps_url = xpath(row, './/a[@id="location"]//@href')
+        google_maps_url = str(xpath(row, './/a[@id="location"]//@href'))
         if google_maps_url:
+            google_maps_url = google_maps_url.replace("#", "%23")
             query_params = parse_qs(urlparse.urlparse((google_maps_url)).query)
-            address = str(query_params[b'q'])
+            address = str(query_params['q'])
             address_split = re.findall(r'(.+)  (.+) ([A-Z]{2}) ([0-9]{5})', address)
             if address_split:
                 street_address, city, state, zipcode = address_split[0]
