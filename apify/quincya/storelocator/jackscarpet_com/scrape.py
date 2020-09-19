@@ -22,16 +22,12 @@ def fetch_data():
 
     req = requests.get(base_link, headers=headers)
 
-    try:
-        base = BeautifulSoup(req.text, 'html.parser')
-    except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+    base = BeautifulSoup(req.text, 'html.parser')
     
     data = []
     locator_domain = "jackscarpet.com"
     location_name = base.find('h1').text.strip()
-    raw_data = base.find('address').strip().split("<br/>")
+    raw_data = str(base.find('address')).strip().split("<br/>")
     street_address = raw_data[0][raw_data[0].find(">")+1:]
     city = raw_data[1][:raw_data[1].find(',')].strip()
     state = raw_data[1][raw_data[1].find(',')+1:raw_data[1].rfind(' ')].strip()
@@ -46,11 +42,7 @@ def fetch_data():
 
     req = requests.get(link, headers=headers)
 
-    try:
-        base = BeautifulSoup(req.text,"lxml")
-    except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+    base = BeautifulSoup(req.text,"lxml")
 
     base_str = str(base)
     base_str = base_str[-508:-480]
