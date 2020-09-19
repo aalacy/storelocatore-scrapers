@@ -19,12 +19,12 @@ class ValueVillage(base.Base):
         hxt = html.fromstring(row.get('info', ''))
 
         location_type = None
-        link = xpath(hxt, './/a[1]/@href')
+        link = str(xpath(hxt, './/a[1]/@href'))
         if link:
             link = link.split('/')[-1]
             location_type = '-'.join(link.split('-')[:-1])
 
-        csz = xpath(hxt, '//div[@class="csz"]//text()') # Abbotsford, BC V2T 1V6 
+        csz = str(xpath(hxt, '//div[@class="csz"]//text()')) # Abbotsford, BC V2T 1V6 
         city, region_zip = csz.split(',')
 
         region_zip = region_zip.strip()
