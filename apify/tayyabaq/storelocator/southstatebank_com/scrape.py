@@ -111,7 +111,7 @@ def fetch_data():
             if street == i[3]:
                 cnt= True
         if cnt == False:
-            data.append([url2,link,location_name,street,cty,state,pcode,ccode,store,phone,ltype,lat,long,hours])
+            data.append([url2,link,location_name,street,cty,state,pcode,ccode,store,phone,ltype,lat,int,hours])
     return data
 
 

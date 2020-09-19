@@ -33,7 +33,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     # Fetch stores
     divlist = soup.findAll('div',{'class':'two-col-f'})
-    print(len(divlist))
+    print((len(divlist)))
     for n in range(0,len(divlist)-2):
         title = divlist[n].find('h6').text
         try:

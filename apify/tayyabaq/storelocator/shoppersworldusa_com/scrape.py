@@ -6,14 +6,14 @@ import re, time
 import usaddress
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if row:
-                writer.writerow([unicode(s).encode("utf-8") for s in row])
+                writer.writerow([str(s) for s in row])
 
 def get_driver():
     options = Options() 
@@ -36,11 +36,11 @@ def fetch_data():
     for i in range(0,len(loc)):
         if loc[i]!="" and loc[i]!=" " and 'COMING SOON' not in loc[i]:
             try:
-                tagged = usaddress.tag(loc[i].replace(u'\u2022', ''))[0]
+                tagged = usaddress.tag(loc[i].replace('\u2022', ''))[0]
                 street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
             except:
                 try:
-                    tagged = usaddress.tag(str(loc[i].replace(u'\u2022', '').split(",")[1:].join()))[0]
+                    tagged = usaddress.tag(str(loc[i].replace('\u2022', '').split(",")[1:].join()))[0]
                     street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
                 except:
                     if len(loc[i].split(","))==4:

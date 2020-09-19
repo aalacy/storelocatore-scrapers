@@ -6,7 +6,7 @@ import usaddress
 from bs4 import BeautifulSoup
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "page_url","location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -42,7 +42,7 @@ def fetch_data():
     for n in range(3,len(stores_text),5):
         phone.append(stores_text[n])
     for n in range(4,len(stores_text),5):
-        hours_of_operation.append(stores_text[n].replace(u'\u2013',''))
+        hours_of_operation.append(stores_text[n].replace('\u2013',''))
     for n in range(0,len(location_name)): 
         data.append([
             'http://bocagranderestaurant.com',
