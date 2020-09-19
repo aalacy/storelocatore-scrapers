@@ -24,8 +24,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print '[!] Error Occured. '
-		print '[?] Check whether system is Online.'
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	rows = base.findAll('h5')
 
@@ -38,12 +38,12 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print '[!] Error Occured. '
-			print '[?] Check whether system is Online.'
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locator_domain = "he-equipment.com"
 		
-		raw_data = base.find('div', attrs={'class': 'medium-3 columns locationInformation sidebarList'}).p.encode('utf-8').strip().replace('<p>',"").replace('&amp;',"&").replace("\n","").split('<br/>')
+		raw_data = base.find('div', attrs={'class': 'medium-3 columns locationInformation sidebarList'}).p.strip().replace('<p>',"").replace('&amp;',"&").replace("\n","").split('<br/>')
 		location_name = base.find('h1').text.strip()
 		street_address = raw_data[1]
 		last_line = raw_data[2]
@@ -52,7 +52,7 @@ def fetch_data():
 		zip_code = last_line[last_line.rfind(' ')+1:].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
-		phone = base.find('a', attrs={'class': 'tel'}).text.encode('utf-8').strip()
+		phone = base.find('a', attrs={'class': 'tel'}).text.strip()
 		header = base.find('section', attrs={'class': 'row pageTitle'})
 		try:
 			location_type = header.find('h3').text.strip()
@@ -61,10 +61,10 @@ def fetch_data():
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 		hours = base.find('div', attrs={'class': 'medium-3 columns locationInformation sidebarList'})
-		hours_of_operation = hours.findAll('p')[2].get_text(separator=u' ').encode('utf-8').strip()
+		hours_of_operation = hours.findAll('p')[2].get_text(separator=' ').strip()
 
 		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-		print "Got page details"
+		print("Got page details")
 
 	return data
 

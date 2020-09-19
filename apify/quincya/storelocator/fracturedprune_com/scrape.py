@@ -24,8 +24,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print '[!] Error Occured. '
-		print '[?] Check whether system is Online.'
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	license = base.findAll('div', attrs={'class': 'location-container'})[1]
 	license_type = license.find('h2').text
@@ -40,8 +40,8 @@ def fetch_data():
 	data = []
 	def get_types(location_type,rows,data):
 		for row in rows:
-			location_name = row.find('a').text.encode('utf-8').strip()
-			raw_data = row.find('span', attrs={'class': 'address'}).encode('utf-8').split('<br/>')
+			location_name = row.find('a').text.strip()
+			raw_data = row.find('span', attrs={'class': 'address'}).split('<br/>')
 			street_address = raw_data[0][raw_data[0].find('>')+1:].replace("&amp;","&").strip()
 			raw_data[1] = raw_data[1].strip()
 			if "Suite" in raw_data[1]:
@@ -51,7 +51,7 @@ def fetch_data():
 			zip_code = raw_data[1][raw_data[1].rfind(' ')+1:].replace("</span>","").strip()
 			country_code = "US"
 			store_number = "<MISSING>"
-			phone = row.find('span', attrs={'class': 'phone'}).text.replace("Phone:", "").encode('utf-8').strip()
+			phone = row.find('span', attrs={'class': 'phone'}).text.replace("Phone:", "").strip()
 
 			link = row.find('a')['href']
 
@@ -60,23 +60,23 @@ def fetch_data():
 			try:
 				page_base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				print '[!] Error Occured. '
-				print '[?] Check whether system is Online.'
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
 			try:
-				latitude = page_base.find('span', attrs={'class': 'latitude'}).text.encode('utf-8').strip()
-				longitude = page_base.find('span', attrs={'class': 'longitude'}).text.encode('utf-8').strip()
+				latitude = page_base.find('span', attrs={'class': 'latitude'}).text.strip()
+				longitude = page_base.find('span', attrs={'class': 'longitude'}).text.strip()
 			except:
 				latitude = "<MISSING>"
 				longitude = "<MISSING>"
 			try:	
-				hours_of_operation = page_base.find('ul', attrs={'class': 'hours_list'}).text.encode('utf-8').strip()
+				hours_of_operation = page_base.find('ul', attrs={'class': 'hours_list'}).text.strip()
 			except:
 				hours_of_operation = "<MISSING>"
 			if hours_of_operation == "":
 				hours_of_operation = "<MISSING>"
 
 			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-			print "Got page details"
+			print("Got page details")
 
 		return data
 	data = get_types(license_type,license_rows,data)

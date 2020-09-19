@@ -24,8 +24,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print '[!] Error Occured. '
-		print '[?] Check whether system is Online.'
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	sections = base.findAll('section')
 	sections.pop(0)
@@ -34,7 +34,7 @@ def fetch_data():
 	for section in sections:
 		locator_domain = "hsoil.com"
 		location_name = section.find('h4').text.strip()
-		raw_data = section.findAll('div', attrs={'class': 'columns small-12 medium-6'})[0].p.encode('utf-8').strip().replace('<p>',"").replace('</p>',"").split('<br/>')
+		raw_data = section.findAll('div', attrs={'class': 'columns small-12 medium-6'})[0].p.strip().replace('<p>',"").replace('</p>',"").split('<br/>')
 
 		if len(raw_data) == 3:
 			street_address = raw_data[0] + " " + raw_data[1]
@@ -48,7 +48,7 @@ def fetch_data():
 		zip_code = raw_data[last_line][raw_data[last_line].rfind(' ')+1:].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
-		phone = section.findAll('div', attrs={'class': 'columns small-12 medium-6'})[1].a.text.encode('utf-8').strip()
+		phone = section.findAll('div', attrs={'class': 'columns small-12 medium-6'})[1].a.text.strip()
 		location_type = location_name[location_name.rfind(' ')+ 1:].strip()
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"

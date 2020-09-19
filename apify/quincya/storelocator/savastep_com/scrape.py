@@ -22,10 +22,10 @@ def fetch_data():
 
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print "Got page"
+        print("Got page")
     except (BaseException):
-        print '[!] Error Occured. '
-        print '[?] Check whether system is Online.'
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     rows = base.findAll('span', attrs={'style': 'font-size: medium;'})
 
@@ -36,8 +36,8 @@ def fetch_data():
         if new_set:
             new_set = False
             continue
-        row_data = rows[row_num].text.encode('utf-8').strip()
-        print row_data
+        row_data = rows[row_num].text.strip()
+        print(row_data)
         locator_domain = "savastep.com"
         if "corner of" in row_data:
             continue

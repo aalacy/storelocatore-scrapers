@@ -24,10 +24,10 @@ def fetch_data():
 
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print "Got today page"
+        print("Got today page")
     except (BaseException):
-        print '[!] Error Occured. '
-        print '[?] Check whether system is Online.'
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     content = base.find('div', attrs={'id': 'mainbody'})
     items = content.findAll('tr')
@@ -52,12 +52,12 @@ def fetch_data():
 
         try:
             new_base = BeautifulSoup(req.text,"lxml")
-            print "Got store details page"
+            print("Got store details page")
         except (BaseException):
-            print '[!] Error Occured. '
-            print '[?] Check whether system is Online.'
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
-        page_details = new_base.find('div', attrs={'id': 'mainbody'}).encode('utf-8')
+        page_details = new_base.find('div', attrs={'id': 'mainbody'})
         page_details = page_details[:-15]
         raw_str = page_details[page_details.rfind('div>')+7:page_details.rfind('<br/>')-4].replace("&amp;","&")
         street_address = raw_str[:raw_str.find('<br')-1].strip()
