@@ -47,7 +47,7 @@ def fetch_data():
     for page_url in page_urls:
         print(page_url)
         response = etree.HTML(session.get(page_url).text)
-        name = response.xpath('//div[@id="Nap-geomodifier"]/text()')[0].strip()
+        name = response.xpath('//div[@class="Nap-geomodifier"]/text()')[0].strip()
         street = response.xpath('//span[@class="c-address-street-1"]/text()')[0].strip()
         city = response.xpath('//span[@class="c-address-city"]/text()')[0].strip()
         state = response.xpath('//abbr[@class="c-address-state"]/text()')[0].strip()
@@ -59,6 +59,7 @@ def fetch_data():
         lng = response.xpath('//meta[@itemprop="longitude"]/@content')[0]
         location_type = '<MISSING>'
         store_number = '<MISSING>'
+        country = 'US'
         yield [url, page_url, name, street, city, state, zipcode, country, store_number, phone, location_type, lat, lng, hours]
 
 def scrape():
