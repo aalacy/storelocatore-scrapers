@@ -71,4 +71,4 @@ def run(root):
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/zeeshan/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/coralisland/storelocator')

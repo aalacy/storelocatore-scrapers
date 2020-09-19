@@ -10,7 +10,7 @@ class Wendys:
     csv_fieldnames = ['locator_domain', 'page_url', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
 
     def encode(self, string):
-        return string.encode('utf-8')
+        return string
 
     def handle_missing(self, field):
         if field == None or (type(field) == type('x') and len(field.strip()) == 0):
