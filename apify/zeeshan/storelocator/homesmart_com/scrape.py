@@ -25,7 +25,7 @@ class HomeSmart(base.Base):
             address_split = re.findall(r'(.+)  (.+) ([A-Z]{2}) ([0-9]{5})', address)
             if address_split:
                 street_address, city, state, zipcode = address_split[0]
-
+        geo = self.get_geo(address)
         office_number = None
         image_url = str(xpath(row, './/div[@id="office-photo"]//img//@src'))
         if image_url:
