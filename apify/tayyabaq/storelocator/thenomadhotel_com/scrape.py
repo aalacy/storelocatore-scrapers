@@ -1,14 +1,8 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import re, time
+from sgrequests import SgRequests
+from lxml import etree
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,77 +14,52 @@ def write_output(data):
                 writer.writerow(row)
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    #Driver
-    driver=get_driver()
-    driver.get('https://www.thenomadhotel.com')
-    time.sleep(8)
-    locations= driver.find_elements_by_xpath("//ul[@class='city-selector']/li/a")
-    location = [locations[n].get_attribute('href') for n in range(0,len(locations))]
-    time.sleep(3)
-    for n in range(0,len(location)-1):
-        driver.get(location[n])
-        time.sleep(12)
-        try:
-            location_name.append(driver.find_element_by_class_name("name").text)
-            address = driver.find_element_by_class_name("address-link-wrapper").text
-            street_address.append(address.split("\n")[0])
-            city.append(address.split("\n")[1].split(",")[0])
-            state.append(address.split("\n")[1].split(",")[1].split()[0])
-            zipcode.append(address.split("\n")[1].split(",")[1].split()[1])
-            phone.append(driver.find_element_by_class_name("phone").text)
-        except:
-            try:
-                location_name.append(driver.find_element_by_class_name("title").text)
-                address = driver.find_element_by_class_name("address-link-wrapper")
-                street_address.append(driver.find_element_by_xpath("//span[@class='address1'][2]").text)
-                city.append(driver.find_element_by_class_name("city").text)
-                st = driver.find_element_by_class_name("state").text
-                if st==[] or st=="":
-                    state.append('<MISSING>')
-                else:
-                    state.append(st)
-                zipcode.append(driver.find_element_by_class_name("zip").text)        
-            except:
-                address = driver.find_elements_by_xpath("//div[@class='main-address']/div/p")
-                location_name.append(address[0].text)
-                street_address.append(address[-3].text)
-                try:
-                    city.append(address[-2].text.split(",")[0])
-                    state.append(address[-2].text.split(",")[1].split()[0])
-                    zipcode.append(address[-2].text.split(",")[1].split()[1])
-                except:
-                    a=address[-2].text.split()[1:2]
-                    city.append(' '.join(a))
-                    state.append(address[-2].text.split()[-2])
-                    zipcode.append(address[-2].text.split()[-1])
-            try:
-                phone.append(address[-1].text)
-            except:
-                try:
-                    phone.append(driver.find_element_by_class_name("phone").text)
-                except:
-                    phone.append("<MISSING>")
-    for n in range(0,len(location_name)):
-        data.append([
+    session = SgRequests()
+    response = etree.HTML(session.get('https://www.thenomadhotel.com').text)
+    urls = response.xpath("//div[contains(@class, 'nav-bar')]/nav/a/@href")
+    contact_response = etree.HTML(session.get('https://www.thenomadhotel.com/contact/').text)
+    locations = contact_response.xpath('//div[@id="all"]//section[@class="contact-info"]')
+    for i in range(len(locations)):
+        location = locations[i]
+        name = location.xpath(".//h2/text()")[0].strip()
+        print(name)
+        phone = location.xpath(".//p/a[contains(@href, 'tel:')]/@href")[0].strip().split("tel:")[1]
+        street_1 = location.xpath(".//address//a/text()")
+        street_2 = location.xpath(".//div//a/text()")
+        street = street_1[0].strip() if street_1 else street_2[0].strip()
+        csz_1 = location.xpath(".//address/text()")
+        csz_2 = location.xpath(".//div/p/text()")
+        if '+44' in phone:
+            csz = csz_1[0].strip()
+            city = csz.split(',')[0].strip()
+            state = '<MISSING>' 
+            zipcode = csz.split(',')[1].strip()
+            country = 'GB'
+        else:
+            csz = csz_1[0].strip() if csz_1 else csz_2[0].strip()
+            city = csz.split(',')[0].strip()
+            state = csz.split(',')[1].strip().split(' ', 1)[0].strip()
+            zipcode = csz.split(',')[1].strip().split(' ', 1)[1].strip()
+            country = 'US'
+        yield [
             'https://www.thenomadhotel.com',
-            'https://www.thenomadhotel.com',
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
+            urls[i],
+            name,
+            street,
+            city,
+            state,
+            zipcode,
+            country,
             '<MISSING>',
-            phone[n],
+            phone,
             '<MISSING>',
             '<MISSING>',
             '<MISSING>',
             '<MISSING>'
-        ])
-    driver.quit()
-    return data
+        ]
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 scrape()
