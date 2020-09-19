@@ -43,6 +43,8 @@ def process_internal(base_path):
                     newfile.write(get_padding(line) + "if r3.encoding is None: r3.encoding = 'utf-8'\n")
                 elif 'iter_lines()' in line:
                     newfile.write(line.replace('iter_lines()', 'iter_lines(decode_unicode=True)'))
+                elif "mode='wb'" in line or 'mode="wb"' in line:
+                    newfile.write(line.replace("mode='wb'", "mode='w'").replace('mode="wb"', 'mode="w"'))
                 else:
                     newfile.write(line)
     run2to3(base_path)
@@ -62,11 +64,11 @@ def process(base_path):
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs[0:100]:
+        for dir in dirs[0:500]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/coralisland/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/tayyabaq/storelocator')
