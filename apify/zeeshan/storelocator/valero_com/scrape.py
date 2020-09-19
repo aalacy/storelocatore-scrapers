@@ -1,5 +1,5 @@
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import base
 import requests
 
@@ -51,7 +51,7 @@ class Valero(base.Base):
             ,'center_Lat': '29.090556922520893'
             ,'center_Long': '-98.90039058802654'
         }
-        query_params = {'SPHostUrl': urllib.quote_plus('https://www.valero.com/en-us')}
+        query_params = {'SPHostUrl': urllib.parse.quote_plus('https://www.valero.com/en-us')}
         r = session.post(self.url, data=payload, params=query_params)
         if r.status_code == 200:
             for store in r.json()['StoreList']:

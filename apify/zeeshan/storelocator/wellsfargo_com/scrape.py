@@ -1,6 +1,6 @@
 import re 
 import base
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import requests
 
 from lxml import (html, etree,)
@@ -47,7 +47,7 @@ class WellsFargo(base.Base):
             ,'X-Requested-With': 'XMLHttpRequest'
         })
 
-        for code, state in self.us_states_with_codes.iteritems():
+        for code, state in self.us_states_with_codes.items():
 
             cities_request = session.get('https://www.wellsfargo.com/locator/as/getCities/%s' % code.lower())
             if cities_request.status_code == 200:
@@ -57,7 +57,7 @@ class WellsFargo(base.Base):
                     for city in cities:
                         search_query = '%s, %s' % (city, state)
                         query_params = {
-                            'searchTxt': urllib.quote_plus(search_query)
+                            'searchTxt': urllib.parse.quote_plus(search_query)
                             ,'mlflg': 'N'
                             ,'sgindex': '99'
                             ,'chflg': 'Y'

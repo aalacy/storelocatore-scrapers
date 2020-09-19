@@ -32,7 +32,7 @@ class Marriott(base.Base):
             for url in location_urls:
                 r2 = requests.get(url, headers=self.headers)
                 if r2.status_code == 200:
-                    text = r2.text.encode('ascii', 'ignore')
+                    text = r2.text
                     hxt = html.fromstring(text)
                     image_source = xpath(hxt, "//div[contains(@class,'l-header-section')]//img/@src")
                     location_type = image_source.split('/')[5] if image_source else None

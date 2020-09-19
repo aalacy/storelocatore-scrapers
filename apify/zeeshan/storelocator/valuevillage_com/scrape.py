@@ -1,6 +1,6 @@
 import base 
 import requests
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from lxml import html
 from pdb import set_trace as bp
@@ -62,7 +62,7 @@ class ValueVillage(base.Base):
         r = requests.get(self.url, headers=self.headers)
         if r.status_code == 200:
             for keyword in r.json()['data']:
-                search = urllib.quote_plus(keyword)
+                search = urllib.parse.quote_plus(keyword)
                 query_params = {
                     'template': 'search'
                     ,'level': 'search'

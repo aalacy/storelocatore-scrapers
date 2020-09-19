@@ -21,18 +21,18 @@ class Adidas(base.Base):
     def map_data(self, row):
         return {
             'locator_domain': self.domain_name
-            ,'location_name': row.get('name', '').encode('ascii', 'ignore')
-            ,'street_address': row.get('street1', '').encode('ascii', 'ignore')
-            ,'city': row.get('city', '').encode('ascii', 'ignore')
-            ,'state': row.get('state', '').encode('ascii', 'ignore')
-            ,'zip': row.get('postal_code', '').encode('ascii', 'ignore')
-            ,'country_code': row.get('country', '').encode('ascii', 'ignore')
-            ,'store_number': row.get('id', '').encode('ascii', 'ignore')
+            ,'location_name': row.get('name', '')
+            ,'street_address': row.get('street1', '')
+            ,'city': row.get('city', '')
+            ,'state': row.get('state', '')
+            ,'zip': row.get('postal_code', '')
+            ,'country_code': row.get('country', '')
+            ,'store_number': row.get('id', '')
             ,'phone': None
-            ,'location_type': row.get('storetype', '').encode('ascii', 'ignore')
+            ,'location_type': row.get('storetype', '')
             ,'naics_code': None
-            ,'latitude': row.get('latitude_google', '').encode('ascii', 'ignore')
-            ,'longitude': row.get('longitude_google', '').encode('ascii', 'ignore')
+            ,'latitude': row.get('latitude_google', '')
+            ,'longitude': row.get('longitude_google', '')
             ,'hours_of_operation': None
         }
 
@@ -68,7 +68,7 @@ class Adidas(base.Base):
                     if store_number in self.seen: continue
                     else: self.seen.add(store_number)
 
-                    print store_number
+                    print(store_number)
 
                     yield location
 

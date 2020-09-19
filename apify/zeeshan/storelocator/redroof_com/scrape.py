@@ -64,7 +64,7 @@ class RedRoof(base.Base):
 
             store_number = link.split('/')[-1]
             hotel_page = session.get(link)
-            hotel_page_text = hotel_page.text.encode('ascii', 'ignore')
+            hotel_page_text = hotel_page.text
             hxt2 = html.fromstring(hotel_page_text)
 
             obj = xpath(hxt2, '//div[@class="c-content-block"]|//header[@class="header"]')
