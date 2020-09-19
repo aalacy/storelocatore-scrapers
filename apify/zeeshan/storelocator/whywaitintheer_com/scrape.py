@@ -39,11 +39,11 @@ class Whywaitintheer(base.Base):
         if hours_of_operation:
             hours_of_operation = ' '.join(hours_of_operation)
             hours_of_operation = re.sub('\s+', ' ', hours_of_operation)
-            hours_of_operation = hours_of_operation.split('Hours: ')[-1].encode('ascii', 'ignore')
+            hours_of_operation = hours_of_operation.split('Hours: ')[-1]
 
         name = row.xpath('//h1//text()')
         name = name[0] if name else None
-        name = name.encode('ascii', 'ignore')
+        name = name
 
         return {
             'locator_domain': self.domain_name

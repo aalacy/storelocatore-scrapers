@@ -64,11 +64,11 @@ def process(base_path):
 def run(root):
     if root.endswith('storelocator'):
         (_, dirs, _) = next(os.walk(root))
-        for dir in dirs[0:500]:
+        for dir in dirs[0:1500]:
             print("processing {}".format(dir))
             process('{}/{}'.format(root, dir))
     else:
         print("processing {}".format(root))
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/tayyabaq/storelocator/banditsbbq_com')
+run('/Users/tenzing/code/crawl-service/apify/zeeshan/storelocator')

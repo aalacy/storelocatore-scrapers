@@ -51,7 +51,7 @@ class Kort(base.Base):
             }
             r = session.post(self.url, data=payload)
             if r.status_code == 200:
-                hxt = html.fromstring(r.text.encode('ascii', 'ignore'))
+                hxt = html.fromstring(r.text)
                 for hospital in hxt.xpath('//hospital'):
                     yield hospital
 

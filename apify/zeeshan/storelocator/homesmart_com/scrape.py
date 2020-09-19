@@ -78,7 +78,7 @@ class HomeSmart(base.Base):
                 ,'Accept-Encoding': 'gzip, deflate, br'
 
             })
-            for code, _ in data.iteritems():
+            for code, _ in data.items():
                 payload = {
                     'officeSearch': '' 
                     ,'state': code
