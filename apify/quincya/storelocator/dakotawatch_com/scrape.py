@@ -17,25 +17,15 @@ def fetch_data():
 
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     headers = {'User-Agent' : user_agent}
-
-
     req = requests.get(base_link, headers=headers)
-
-    try:
-        base = BeautifulSoup(req.text,"lxml")
-        print("Got today page")
-    except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
-
-
-    items = base.findAll('div', attrs={'class': 'store-ul'})
+    base = BeautifulSoup(req.text,"lxml")
+    items = base.find_all('div', attrs={'class': 'store-ul'})
 
     data = []
     for item in items:
         locator_domain = "dakotawatch.com"
         location_name = item.find('span').text.strip()
-        raw_data = item.find('div').replace("<div>\r\n ","").split('<br/>')
+        raw_data = str(item.find('div')).replace("<div>\r\n ","").split('<br/>')
         street_address = raw_data[0].replace(",","").strip()
         city = raw_data[1].replace(",","").strip()
         state = raw_data[2].replace(",","").strip()
@@ -50,12 +40,7 @@ def fetch_data():
 
         req = requests.get(link, headers=headers)
 
-        try:
-            new_base = BeautifulSoup(req.text,"lxml")
-            print("Got store details page")
-        except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+        new_base = BeautifulSoup(req.text,"lxml")
 
         full_page = str(new_base)
         start_point = full_page.find('myLatLng')
