@@ -76,7 +76,9 @@ def fetch_data():
             city = city.lstrip().replace(',','')
             state = state.lstrip().replace(',','')
             pcode = pcode.lstrip().replace(',','')
-            hours = det[3].text.replace('AM',' AM ').replace('PM',' PM ')
+            hours = det[3].text.replace('AM',' AM ').replace('PM',' PM ')        
+            if hours.find('@') > -1:
+                hours = det[4].text.replace('AM',' AM ').replace('PM',' PM ')
             data.append([
                         'https://www.mariaempanada.com/',
                         'https://www.mariaempanada.com/find-us',                   
