@@ -60,7 +60,7 @@ def fetch_data():
 		location_type = "<MISSING>"
 
 		try:
-			phone = re.findall("[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
+			phone = item.a.text.replace("Phone:","").strip()
 		except:
 			phone = "<MISSING>"
 
