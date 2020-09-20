@@ -35,8 +35,8 @@ def fetch_data():
 
 	for store in stores:
 		location_name = store['name'].strip()
-		link  = store['web']
-		print(link)
+		# link  = store['web']
+		# print(link)
 
 		street_address = store['address'].strip()
 		city = store['city']
@@ -48,16 +48,21 @@ def fetch_data():
 		latitude = store['lat']
 		longitude = store['lng']
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+		hours_of_operation = ""
+		raw_hours = store['hours']
+		for hours in raw_hours:
+			day = hours['day']
+			opens = hours['begin']
+			closes = hours['end']
+			if opens != "" and closes != "":
+				clean_hours = day + " " + opens + "-" + closes
+			else:
+				clean_hours = day + " Closed"
+			hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
 
-		location_type = base.find(class_="columns is-multiline").text.strip().replace("\n",",").replace("®","")
-		if not location_type:
-			location_type = "<MISSING>"
-		hours_of_operation = base.find(id="hours").text.replace("Hours","").replace("\t","").replace("\n\n"," ").replace("\n","").strip()
-		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+		location_type = "<MISSING>"
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
 def scrape():
