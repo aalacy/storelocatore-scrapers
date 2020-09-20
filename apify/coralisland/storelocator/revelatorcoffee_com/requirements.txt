@@ -1,4 +1,4 @@
-lxml==4.3.4
-beautifulsoup4==4.7.1
-usaddress==0.5.10
+bs4==0.0.1
+usaddress
 sgrequests
+lxml
