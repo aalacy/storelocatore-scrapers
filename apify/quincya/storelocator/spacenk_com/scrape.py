@@ -71,6 +71,7 @@ def fetch_data():
 	for final in final_links:
 		final_link = final[0]
 
+		print(final_link)
 		driver.get(final_link)
 		time.sleep(randint(1,2))
 
@@ -89,8 +90,7 @@ def fetch_data():
 		except:
 			# Duplicates have no hours so skip
 			continue
-		
-		print(final_link)
+				
 		locator_domain = "spacenk.com"
 		location_name = item.h1.text
 		# print(location_name)
