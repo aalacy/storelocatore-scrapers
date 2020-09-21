@@ -1,5 +1,6 @@
 import csv
-from sgrequests import SgRequests
+import time
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 
 def write_output(data):
@@ -12,36 +13,35 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-session = SgRequests()
+driver = SgSelenium().chrome()
 def fetch_data():
 
     all=[]
-    res = session.get("http://greshampetroleum.com/locations.php")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    data = soup.find_all('table')[4].find_all('td')[4]
+    driver.get("http://greshampetroleum.com/locations")
+    time.sleep(5)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    #print(soup)
+    locs = soup.find_all('div',{'class':'storepoint-name'})
+    addrs=soup.find_all('div',{'class':'storepoint-address'})
+    phones=soup.find_all('a',{'class':'storepoint-sidebar-phone'})
 
-    hs=data.find_all('h3')
-    ps=data.find_all('p')[0::2]
-    print(len(ps))
 
-    for h in range(len(hs)):
-        loc=hs[h].text.strip()
-        #print(loc)
-        p=ps[h].text.replace("|","").replace('\xa0','').replace('\r','').strip().split('\n')
-        street=p[0]
-        phone=p[-1]
-        del p[0]
-        del p[-1]
-        if len(p) ==1:
-            sz=p[0].strip().split(",")
-        else:
+    print(len(locs))
 
-            sz = p[1].strip().split(",")
+    for i in range(len(locs)):
+        phone =phones[i].text
+        addr = addrs[i].text
+        addr = addr.split(',')
+        loc=locs[i].text
 
-        city = sz[0]
-        sz = sz[1].strip().split(" ")
+        sz = addr[-1].strip().split(" ")
         state = sz[0]
         zip = sz[1].split("-")[0]
+
+        addr=addr[0]
+        city=loc.split('-')[-1].strip()
+        street=addr.replace('&nbsp;','').replace(city,'').strip()
+
 
         all.append([
             "http://greshampetroleum.com",
@@ -57,7 +57,7 @@ def fetch_data():
             "<MISSING>",  # lat
             "<MISSING>",  # long
             "<MISSING>",  # timing
-            "http://greshampetroleum.com/locations.php"])
+            "http://greshampetroleum.com/locations"])
 
     return all
 
