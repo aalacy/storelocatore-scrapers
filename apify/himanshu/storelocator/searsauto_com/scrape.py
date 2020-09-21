@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 
 
@@ -29,7 +30,7 @@ def fetch_data():
     base_url= "https://www.searsauto.com/find-a-store?q=395007"
 
    
-    r = session.post(base_url,headers=headers,data=body)
+    r = requests.post(base_url,headers=headers,data=body)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
