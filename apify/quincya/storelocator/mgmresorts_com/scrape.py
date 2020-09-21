@@ -39,7 +39,7 @@ def fetch_data():
 			all_links.append(link)
 
 	for link in all_links:
-		if "mgmresorts.com" not in link or "mgmnorthfieldpark" in link:
+		if "mgmresorts.com" not in link:
 			continue
 
 		print(link)
@@ -48,7 +48,7 @@ def fetch_data():
 
 		location_name = base.title.text.strip()
 
-		if "hotels" in link:			
+		if "hotels" in link:
 			raw_address = base.find(class_="details-text grid-item width-1 m-1-2 l-5-16 xl-3-8").p.text.strip().split(",")
 			street_address = raw_address[0].strip()
 			if street_address == "3772 Las Vegas Blvd S":
@@ -79,6 +79,7 @@ def fetch_data():
 			state = city_line[1].strip()[:-6].strip()
 			zip_code = city_line[1][-6:].strip()
 			phone = base.find(class_="phone-nbr").text.strip()
+		street_address = street_address.replace("1777 3rd Ave","1777 Third St.")
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
