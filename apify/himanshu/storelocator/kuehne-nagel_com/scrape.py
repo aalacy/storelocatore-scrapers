@@ -21,7 +21,11 @@ def fetch_data():
     for url in ['https://ca.kuehne-nagel.com/en_gb/other-links/our-locations-in-canada/','https://us.kuehne-nagel.com/en_gb/top-links/usa-locations']:
         soup = BS(session.get(url).text, "lxml")
         
-        json_data = json.loads(json.loads(soup.find(lambda tag: (tag.name == "script") and "var inlineSettings =" in tag.text).text.split("var inlineSettings =")[1].split("if (typeof")[0].replace("};","}").strip())['locationList'])
+        try:
+            json_data = json.loads(json.loads(soup.find(lambda tag: (tag.name == "script") and "var inlineSettings =" in tag.text).text.split("var inlineSettings =")[1].split("if (typeof")[0].replace("};","}").strip())['locationList'])
+        except:
+            # print(url)
+            pass
         for data in json_data:
             location_name = data['locationName']
 
@@ -58,6 +62,7 @@ def fetch_data():
             store.append(hours)
             store.append(url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print(store)
             yield store
         
 def scrape():
