@@ -6,10 +6,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 import time
 
 driver = SgSelenium().chrome()
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +37,7 @@ def fetch_data():
     ids=[]
     page_url=[]
     urls=[]
-    res=requests.get("https://www.arhaus.com/store/")
+    res=session.get("https://www.arhaus.com/store/")
     soup = BeautifulSoup(res.text, 'html.parser')
     statel=re.findall(r'<a class="store-directory__link" href="([^"]+)"',str(soup))
     print(len(statel))
