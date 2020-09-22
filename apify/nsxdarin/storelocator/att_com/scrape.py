@@ -22,7 +22,8 @@ def fetch_data():
             lurl = line.split('>')[1].split('<')[0]
             count = lurl.count('/')
             if count == 6:
-                locs.append(lurl)
+                if 'new-iphone' not in lurl:
+                    locs.append(lurl)
     for loc in locs:
         print('Pulling Location %s...' % loc)
         website = 'att.com'
