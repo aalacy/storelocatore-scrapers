@@ -6,7 +6,7 @@ import json
 import time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -25,9 +25,9 @@ def fetch_data():
     while True:
         r = requests.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
         try:
-	    store_data = r.json()["data"]
-	except ValueError:
-	    break
+            store_data = r.json()["data"]
+        except ValueError:
+            break
         for content in store_data:
             location_name.append(content["displayName"])
             if content["line2"]:

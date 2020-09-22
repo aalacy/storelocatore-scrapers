@@ -29,7 +29,7 @@ class FatTuesday(base.Base):
             ,'naics_code': None
             ,'latitude': row.get('lat', '<MISSING>')
             ,'longitude': row.get('lng', '<MISSING>')
-            ,'hours_of_operation': row.get('hours', '<MISSING>').encode('ascii', 'ignore')
+            ,'hours_of_operation': row.get('hours', '<MISSING>')
         }
 
     def crawl(self):

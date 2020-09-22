@@ -30,6 +30,7 @@ def fetch_data():
         hours = ''
         phone = ''
         name = ''
+        add = ''
         lat = ''
         lng = ''
         city = ''
@@ -58,17 +59,16 @@ def fetch_data():
                                 hours = hours + '; ' + dname + ': ' + hrs
                         except:
                             hours = 'CLOSED'
-            if 'itemprop="address" data-country="' in line2:
-                city = line2.split('<meta itemprop="addressLocality" content="')[1].split('"')[0]
-                add = line2.split('"streetAddress" content="')[1].split('"')[0]
+            if '<span class="c-address-street-1">' in line2:
+                add = line2.split('<span class="c-address-street-1">')[1].split('<')[0]
+                if '<span class="c-address-street-2">' in line2:
+                    add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0]
+                city = line2.split('<span class="c-address-city">')[1].split('<')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-                lat = line2.split('data-lat="')[1].split('"')[0]
-                lng = line2.split('data-long="')[1].split('"')[0]
-                try:
-                    phone = line2.split('data-ya-track="phone">')[1].split('<')[0]
-                except:
-                    phone = '<MISSING>'
+                phone = line2.split('data-ya-track="phone">')[1].split('<')[0]
+                lat = line2.split('type="text/data">{"latitude":')[1].split(',')[0]
+                lng = line2.split(',"longitude":')[1].split('}')[0]
         if hours == '':
             hours = '<MISSING>'
         if phone == '':

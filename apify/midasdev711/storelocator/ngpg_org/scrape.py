@@ -32,7 +32,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest"
         }
     request = requests.get(url, headers=headers)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text.encode('utf-8'))
     store_list = response.xpath('//marker')
     index = 0
     for store in store_list:
@@ -40,10 +40,10 @@ def fetch_data():
         output = []
         detailurl = store.xpath('./@web')[0]
         detailrequest = requests.get('https://www.ngpg.org' + detailurl)
-        detailresponse = etree.HTML(detailrequest.text.encode("utf-8"))
+        detailresponse = etree.HTML(detailrequest.text)
         details = detailresponse.xpath('//div[contains(@class, "cleft-subleft")]//text()')
         details = ''.join(details).split('Hours:').pop().strip().replace('\r\n', '')
-        store_hours = details.encode("utf-8").replace('\xe2\x80\x93', '').replace('\xc2\xa0', '').split('Insurance:')[0]
+        store_hours = details.replace('\xe2\x80\x93', '').replace('\xc2\xa0', '').split('Insurance:')[0]
         if 'p.m' not in store_hours and 'pm' not in store_hours:
             store_hours = "available 24 hours a day, seven days a week"
         if not store_hours.endswith('p.m.') and not store_hours.endswith('pm'):

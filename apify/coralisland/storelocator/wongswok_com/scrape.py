@@ -14,7 +14,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -52,7 +52,7 @@ def fetch_data():
     source = session.get(url, headers=headers).text    
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="col sqs-col-4 span-4"]')
-    count = len(store_list)/3
+    count = len(store_list)//3
     for idx in range(0, count):
         idx = idx * 3
         details = eliminate_space(store_list[idx].xpath('.//text()'))

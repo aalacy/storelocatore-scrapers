@@ -12,7 +12,7 @@ base_url = 'https://www.simonsportswear.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -100,7 +100,7 @@ def fetch_data():
         output.append("<MISSING>") #longitude
         output.append("<MISSING>") #opening hours
         output_list.append(output)
-    for idx in range(0, len(temp)/5):
+    for idx in range(0, len(temp)//5):
         output = []
         output.append(base_url) # url
         output.append(temp[idx*5+0]) #location name

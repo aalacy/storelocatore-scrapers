@@ -1,89 +1,117 @@
 import csv
-from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import re
 import json
-import time
-from sgrequests import SgRequests
+import sgzip
+import csv
+import re
+import json
+import unicodedata
 session = SgRequests()
- 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('data.csv', mode='w', newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-   
-
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 100
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes=['US'])
+    zip_code = search.next_zip()
+    current_results_len = 0
+    address = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+        'Content-Type': 'application/json',
+        'Referer': 'https://www.bmwusa.com/?bmw=grp:BMWcom:header:nsc-flyout'
     }
-    base_url = "https://www.careeronestop.org"
-    region_list = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
-    
-    for region in region_list:
+    while zip_code:
+        result_coords =[]
         
-        location_url = "https://www.careeronestop.org/localhelp/americanjobcenters/find-american-job-centers.aspx?&location="+str(region)+"&radius=100&ct=0&y=0&w=0&e=0&sortcolumns=Location&sortdirections=ASC&curPage=1&pagesize=500"
-
-        try:
-            soup = bs(session.get(location_url,headers=headers).content,'lxml')
-        
-
-            for tr in soup.find_all("table")[-1].find("tbody").find_all("tr"):
-
-                page_url = base_url + tr.td.a['href']
-                location_name = tr.td.a.text
-                
-                location_type = tr.td.fieldset.text.replace("programtype","")
-                store_number = tr.find_all("td")[1]['id'].replace("locationtd_","").strip()
-
-                tag = list(tr.find_all("td")[-1].stripped_strings)
-
-                phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(tag[1]))
-
-                if phone_list:
-                    phone = phone_list[-1]
+        addressess = []
+        headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        }
+        base_url = "https://www.careeronestop.org/"
+        location_url = "https://www.careeronestop.org/Localhelp/AmericanJobCenters/find-american-job-centers.aspx?&location="+str(zip_code)+"&radius=100&pagesize=500"
+        r = session.get(location_url,headers=headers)
+        soup = BeautifulSoup(r.text,"lxml")
+        table = soup.find("table",{"class":"cos-table cos-table-mobile"}).find("tbody").find_all("tr")
+        for tr in table:
+            location_name = tr.find("a",{"class":"notranslate"}).text
+            page_url = tr.find("a",{"class":"notranslate"})['href']
+            data_link = ("https://www.careeronestop.org/"+page_url)
+            r1 = session.get(data_link,headers=headers)
+            soup = BeautifulSoup(r1.text,"lxml")
+            addr = (soup.find_all("script",{"type":"text/javascript"})[11])
+            data_main = (str(addr).split("locinfo = ")[1].split("var mapapi =")[0].replace(";",""))
+            json_data = json.loads(data_main)
+            street_address1 = json_data['ADDRESS1']
+            city = json_data['CITY']
+            state = json_data['STATE']
+            zipp = json_data['ZIP']
+            latitude = json_data['LAT']
+            longitude = json_data['LON']
+            location_name = soup.find("div",{"id":"detailsheading"}).text
+            try:
+                phone = soup.find("a",{"class":"notranslate"}).text
+            except:
+                phone = "mp"
+            st_data = soup.find_all("span",{"class":"notranslate"})[2].text.split(",")[0].replace(city,"").replace(street_address1,"")
+            street_address = street_address1 +" "+ st_data
+            try:
+                hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[3].text
+                if "Hours" in hs: 
+                    data_hs = (hs)
                 else:
-                    phone = tag[1].replace("1-800-285-WORKS","1-800-285-1155").replace("209-558-WORK (9675)","209-558 (9675)")
-                hours = tag[2].replace("Hours:","")
-
-                location_soup = bs(session.get(page_url, headers=headers).content, "lxml")
-
-                data = json.loads(str(location_soup).split("var locinfo =")[1].split(";")[0].strip())
-
-            
-                store=[]
-                store.append(base_url)
-                store.append(location_name)
-                store.append(data['ADDRESS1'])
-                store.append(data['CITY'])
-                store.append(data['STATE'])
-                store.append(data['ZIP'])
-                store.append("US")
-                store.append(store_number)
-                store.append(phone)
-                store.append(location_type)
-                store.append(data['LAT'])
-                store.append(data['LON'])
-                store.append(hours)
-                store.append(page_url)
-            
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                yield store
-
-        except:
-            continue  
-
-
+                    hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[4].text
+                    if "Hours" in hs: 
+                        data_hs = hs
+                    else:
+                        hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[2].text
+                        if "Hours" in hs: 
+                            data_hs = hs
+            except:
+                data_hs = "mp"   
+            store = []
+            store.append("https://www.careeronestop.org/")
+            store.append(location_name)
+            store.append(street_address.replace("      "," ").replace("7161  Gateway Drive","").strip())
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append(data_hs.replace("Hours","").replace("     "," ") if data_hs else "<MISSING>" )
+            store.append(data_link)
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            yield store
+        if len(json_data) < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(json_data) == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

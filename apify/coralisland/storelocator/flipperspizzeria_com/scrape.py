@@ -13,7 +13,7 @@ base_url = 'https://flipperspizzeria.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").replace('\r\n', '').strip()
+    return item.replace('\r\n', '').strip()
 
 def get_value(item):
     item = validate(item)

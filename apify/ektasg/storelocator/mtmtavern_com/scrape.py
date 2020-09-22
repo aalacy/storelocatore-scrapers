@@ -1,15 +1,13 @@
-import time
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import string
+import re, time, usaddress
 
+from sgrequests import SgRequests
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,53 +22,91 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    count=0
-    data=[]
-    driver.get("https://mtmtavern.com/locations-menus/")
-    time.sleep(10)
-    stores = driver.find_elements_by_css_selector('div.location-excerpt > a:nth-child(1)')
-    name = [stores[i].get_attribute('href') for i in range(0, len(stores))]
-    time.sleep(5)
-    for i in range(0,len(name)):
-        driver.get(name[i])
-        page_url = name[i]
-        time.sleep(5)
-        location_name= driver.find_element_by_id('LbHeading').text
-        address = driver.find_element_by_css_selector('span.lb-address').text
-        loc_type = '<MISSING>'
-        street_addr = address.split(",")[0].replace("\n", " ")
-        city = address.split(",")[1]
-        state = address.split(",")[2].split(" ")[-2]
-        zipcode = address.split(",")[2].split(" ")[-1]
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
-        phone = driver.find_element_by_xpath("//a[contains(@href,'tel:')]").text
-        hours_of_op = driver.find_element_by_id('BusinessHours').text.replace("\n", " ")
-        data.append([
-                'https://mtmtavern.com/',
-                page_url,
-                location_name,
-                street_addr,
-                city,
-                state,
-                zipcode,
-                'US',
-                '<MISSING>',
-                phone,
-                loc_type,
-                latitude,
-                longitude,
-                hours_of_op
-            ])
-        count = count + 1
-        print(count)
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://mtmtavern.com/locations-menus/'
+    r = session.get(url, headers=headers, verify=False) 
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.find('div',{'id':'LocationsList'}).findAll('div',{'class':'location-detail'})
+    print("states = ",len(divlist))
+    p = 0
+    for div in divlist:
+        try:
+            link = div.find('div',{'class':'h3'}).find('a')['href']
+            #print(link)
+            title = div.find('div',{'class':'h3'}).find('a').text            
+            address = div.find('div',{'class':'location-address'}).find('p').text.replace('\n','')
+            phone = div.find('div',{'class':'location-address'}).find('a').text
+                       
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
 
-    time.sleep(3)
-    driver.quit()
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+            r = session.get(link, headers=headers, verify=False)
+            try:
+                soup =BeautifulSoup(r.text, "html.parser")
+                hours = soup.find('div',{'id':'BusinessHours'})
+                hours = re.sub(cleanr,' ',str(hours))
+                hours = re.sub(pattern,' ',hours)
+            except:
+                hours = '<MISSING>'
+            if hours == 'None':
+                hours = '<MISSING>'
+            if city == '':
+                city,state = state.split(' ',1)
+            data.append([
+                        'https://mtmtavern.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        '<MISSING>',
+                        '<MISSING>',
+                        hours.replace('\n','')
+                    ])
+            #print(p,data[p])
+            p += 1
+                
+            
+            
+        except Exception as e:
+            print(e)
+            pass
+        
+           
+        
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

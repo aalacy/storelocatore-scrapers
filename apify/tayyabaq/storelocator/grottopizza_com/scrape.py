@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -30,18 +30,18 @@ def fetch_data():
       print('here')
     stores=re.findall(r'<a href="([^"]+)" class="cta-button italia white-text red-bg align-center centered parent-relative',str(driver.page_source))
     store_links = [stores[n].get_attribute('href') for n in range(0,len(stores))]
-    print(len(stores))
+    print((len(stores)))
     for n in range(1,len(store_links)):
         driver.get(store_links[n])
         time.sleep(2)
-        location_name.append(driver.find_element_by_class_name('block-heading').text.replace(u'\u2013',' '))
-        phone.append(driver.find_element_by_xpath("//div[@class='content-holder']/h2").text.replace(u'\u2013',' ').split("\n")[0])
-        address =driver.find_element_by_xpath("//div[@class='content-holder']/p[1]").text.replace(u'\u2013',' ')
+        location_name.append(driver.find_element_by_class_name('block-heading').text.replace('\u2013',' '))
+        phone.append(driver.find_element_by_xpath("//div[@class='content-holder']/h2").text.replace('\u2013',' ').split("\n")[0])
+        address =driver.find_element_by_xpath("//div[@class='content-holder']/p[1]").text.replace('\u2013',' ')
         street_address.append(address.split("\n")[0].split(",")[0])
         city.append(address.split("\n")[1].split(",")[0])
         state.append(address.split("\n")[1].split(",")[1].split()[0].strip())
         zipcode.append(address.split("\n")[1].split(",")[1].split()[1].strip())
-        hours_of_operation.append(driver.find_element_by_xpath("//div[@class='content-holder']/p[2]").text.replace(u'\u2013',' '))
+        hours_of_operation.append(driver.find_element_by_xpath("//div[@class='content-holder']/p[2]").text.replace('\u2013',' '))
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.grottopizza.com',

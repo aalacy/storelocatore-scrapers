@@ -34,7 +34,7 @@ def fetch_data():
     session = requests.Session()
     request = session.get(url)
     driver.get('https://freebirds.com/locations')
-    source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+    source = driver.page_source
     time.sleep(15)
     # bt_element_present = EC.presence_of_element_located((By.CLASS, 'row golden-links'))
     # WebDriverWait(driver, 10).until(elements)

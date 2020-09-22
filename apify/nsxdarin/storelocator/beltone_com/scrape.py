@@ -20,7 +20,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if 'href="http://locations.beltone.com/' in line:
+        if 'linktrack="State index page' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)

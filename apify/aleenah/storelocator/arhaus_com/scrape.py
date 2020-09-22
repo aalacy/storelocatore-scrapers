@@ -51,7 +51,7 @@ def fetch_data():
         except:
             driver.get(url)
 
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
+        WebDriverWait(driver, 190).until(EC.presence_of_element_located((By.CLASS_NAME, 'store-details__header-heading')))
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         locs.append(soup.find('h1', {'class': 'store-details__header-heading'}).text)
@@ -62,6 +62,8 @@ def fetch_data():
         timing.append(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
         #print(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
         phones.append(soup.find('div', {'class': 'store-details__phone'}).text.strip())
+        lat.append(re.findall(r'"latitude": (-?[\d\.]+)',str(soup))[0])
+        long.append(re.findall(r'"longitude": (-?[\d\.]+)',str(soup))[0])
 
     all = []
     for i in range(0, len(locs)):
@@ -76,10 +78,10 @@ def fetch_data():
         row.append("<MISSING>")  # store #
         row.append(phones[i])  # phone
         row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
+        row.append(lat[i])  # lat
+        row.append(long[i])  # long
         row.append(timing[i])  # timing
-        row.append("https://www.arhaus.com"+page_url[i])  # page url
+        row.append(page_url[i])  # page url
 
         all.append(row)
     return all

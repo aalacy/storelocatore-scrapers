@@ -12,7 +12,7 @@ base_url = 'https://www.nbarizona.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip().replace(';', '')
+    return item.strip().replace(';', '')
 
 def get_value(item):
     if item == None :

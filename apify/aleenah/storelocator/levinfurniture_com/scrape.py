@@ -3,71 +3,93 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(["locator_domain",'page_url', "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-session = SgRequests()
-all=[]
+
 def fetch_data():
     # Your scraper here
+    data = []
+    dup = []
+    dup.append('none')
+    p = 0
+    res1=session.get("https://www.levinfurniture.com/api/rest/pages/contacts", headers={'content-type': 'application/json'}, verify=False).json()['content']
+    #print(res1)
+    soupt = BeautifulSoup(res1,'html.parser')
+    linklist = soupt.findAll('avb-link')
+    for link in linklist:
+        try:
+            link = link['data-href']
+            if link.find('/locations') > -1:
+                nowlink = link.split('/locations/',1)[1]
+                nowlink = 'https://www.levinfurniture.com/api/rest/pages/locations%2F'+nowlink
+                r = session.get(nowlink, headers={'content-type': 'application/json'}, verify=False).json()
+                try:
+                    store = r['page_id']
+                    #print(store)
+                except:
+                    store = '<MISSING>'
+                r = r['content']
+                soup = BeautifulSoup(r,'html.parser')
+                #print(nowlink)
+                title =soup.find('h2').text.strip().split('\n')[0]
+                if link in dup:
+                    continue
+                else:
+                    dup.append(link)
+                try:
+                    title = title.split(': ')[1]
+                except:
+                    pass
+                #print(title)
+                address= soup.findAll('span',{'class':'dsg-contact-1__address-line'})
+                street = address[0].text
+                city,state = address[1].text.split(', ')
+                state,pcode = state.lstrip().split(' ',1)            
+                coord = soup.findAll('avb-link',{'class':'dsg-contact-1__link'})[0]['data-href']
+                lat,longt = coord.split('@',1)[1].split('/data',1)[0].split(',',1)
+                longt = longt.split(',',1)[0]       
+                phone = soup.findAll('avb-link',{'class':'dsg-contact-1__link'})[1].text.strip()        
+               
+                hours = soup.findAll('ul',{'class':'avb-list'})[1].text
+                data.append([
+                        'https://www.levinfurniture.com/',
+                        link,                   
+                        title,
+                        street.strip(),
+                        city.strip(),
+                        state.strip(),
+                        pcode.strip(),
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours.strip().replace('\r','').replace('\t','').replace('\n','').replace('PM','PM ')
+                    ])
+                #print(p,data[p])
+                p += 1
+                #input()
+                
+        except Exception as e :
+            #print(e)
+            pass
 
-    res=session.get("https://www.levinfurniture.com/api/rest/pages/contacts")
-    soup = str(BeautifulSoup(res.text, 'html.parser')).replace('\\t','').replace('\\r\\n','').replace('&lt;\/h3&gt;','').replace('&lt;\/span&gt;','').replace('&lt;\/div&gt;','')
-    #print(soup)
-
-    #divs = soup.find_all('h3', {'class': 'avb-typography__heading dsg-tools-main-heading dsg-tools-color-primary dsg-tools-fw-bold dsg-contact-3__location-name'})
-    locs =re.findall(r'dsg-tools-main-heading="">([^<]*)',soup)
-    del locs[0]
-    addrs=re.findall(r'address-line\\"\'>([^<]*)<span class=\'\\"dsg-contact-3__address-line\\"\'>([^<]*)',soup)
-    geos=re.findall(r'/@(-?[\d\.]+),(-?[\d\.]+)',soup)
-    phones=re.findall(r'"tel:([\-\d]+)',soup)
-
-    for i in range(len(phones)):
-        #print(locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-'))
-        url="https://www.levinfurniture.com/api/rest/pages/locations%2F"+locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-')
-        print(url)
-        res = session.get(url, headers={'content-type': 'application/json'}).json()
-        souper = BeautifulSoup(res['content'], 'html.parser')
-        soup = str(souper).replace('\\t', '').replace('\\r\\n', '').replace('&lt;\/h3&gt;', '').replace('&lt;\/span&gt;', '').replace('&lt;\/div&gt;', '').replace('&lt;\/li&gt;','').replace('&lt;\/ul&gt;','')
-        metadata = souper.findAll("li", {"class": "avb-list__item"})
-        tim = [x.getText().strip() for x in metadata if ' - ' in x.getText()]
-        tim=', '.join(tim)
-        street=str(addrs[i][0]).strip()
-        csz=str(addrs[i][1]).strip().split(',')
-        city=csz[0]
-        csz=csz[1].strip().split()
-        state=csz[0]
-        zip=csz[1]
-
-        all.append([
-            "https://www.levinfurniture.com",
-            locs[i],
-            street,
-            city,
-            state,
-            zip,
-            "US",
-            "<MISSING>",  # store #
-            phones[i],  # phone
-            "<MISSING>",  # type
-            geos[i][0],  # lat
-            geos[i][1],  # long
-            tim,  # timing
-            "https://www.levinfurniture.com/locations/"+locs[i].strip().replace('Mattress: ','').replace(' ','-').replace('\xa0','-').lower()])
-
-    return all
+    return data
 
 
 def scrape():

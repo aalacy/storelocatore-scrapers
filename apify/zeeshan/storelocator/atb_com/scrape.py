@@ -64,7 +64,7 @@ class Atb(base.Base):
         payload = '''<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:soap='http://schemas.microsoft.com/sharepoint/soap/'>        <soapenv:Body>          <GetListItems xmlns='http://schemas.microsoft.com/sharepoint/soap/'>                <listName>Branches</listName>                   <viewFields>                         <ViewFields>                           <FieldRef Name='ID' />                          <FieldRef Name='Title' />                           <FieldRef Name='Transit' />                             <FieldRef Name='Classification' />                          <FieldRef Name='Address' />                             <FieldRef Name='City' />                            <FieldRef Name='Postal' />                          <FieldRef Name='Phone' />                           <FieldRef Name='Fax' />                             <FieldRef Name='Hours' />                           <FieldRef Name='LAT' />                             <FieldRef Name='LONG' />                         </ViewFields>                     </viewFields>                     <rowLimit>0</rowLimit>                     <query>                         <Query>                             <OrderBy>                                   <FieldRef Name='Title' Ascending='True' />                              </OrderBy>                      </Query>                    </query>            </GetListItems>         </soapenv:Body>     </soapenv:Envelope>'''
         r = session.post(self.url, data=payload)
         if r.status_code == 200:
-            hxt = html.fromstring(r.text.encode('ascii', 'ignore'))
+            hxt = html.fromstring(r.text)
             for store in hxt.xpath('//row'):
                 yield store
 

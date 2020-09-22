@@ -1,18 +1,16 @@
 import csv
 import re
-import pdb
-import requests
 from lxml import etree
 import json
 import usaddress
-
+from sgrequests import SgRequests
 
 base_url = 'https://yourpie.com'
 
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)
@@ -31,18 +29,18 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     output_list = []
     url = "https://yourpie.com/wp-admin/admin-ajax.php?action=store_search&max_results=10000&search_radius=20002000&autoload=1"
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
     store_list = json.loads(request.text)
     for store in store_list:
-        if 'Coming Soon' in get_value(store['store']):
+        if 'Coming Soon' in get_value(store['store']) or store['coming_soon'].strip():
             continue
         hours = store.get('hours')
         store_hours = get_value(etree.HTML(hours).xpath('.//text()'))
@@ -60,6 +58,7 @@ def fetch_data():
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
         output.append(store_hours) #opening hours        
+        output.append(store['permalink']) #page_url
         output_list.append(output)
     return output_list
 

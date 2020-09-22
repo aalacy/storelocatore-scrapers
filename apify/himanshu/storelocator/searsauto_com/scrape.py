@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
 
 
 
@@ -21,76 +22,87 @@ def write_output(data):
 
 
 def fetch_data():
-    body ='{"lat":21.1597606,"lng":72.79591219999998,"top":154,"findAStore":true}'
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    "Content-Type": "application/json; charset=UTF-8"
-    }
-    base_url= "https://www.searsauto.com/find-a-store?q=395007"
-
-   
-    r = session.post(base_url,headers=headers,data=body)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-
-    k = (json.loads(soup.text))
-
-    for idx, val in enumerate(k['results']):
-        tem_var=[]
-        # print(val['detailsUrl'])
-        # exit()
-        street_address = val["address1"]
-        storeNumber = val["storeNumber"]
-        city = val['city']
-        state =val["state"]
-        zipcode = val["postalCode"]
-        phone = val['phone']
-        latitude =val['latitude']
-        longitude =val['longitude']
-        hours =val['hours']
-        time =''
-        for j in hours:
-            
-            if "open" in j:
-                time = time+ ' '+ j["dayOfWeek"]+' '+ j['open'] +'-'+ j["close"]
+    MAX_RESULTS = 20
+    MAX_DISTANCE = 200
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes=['US'])
+    zip_code = search.next_zip()
+    addressess = []
+    while zip_code:
+        result_coords =[]
         
-        if "Hanover Mal/1775 Washingt" in street_address:
-            tem_var.append("1775 Hanover Mal Washingt")
+
+
+
+        headers = {
+            'accept': 'application/json, text/plain, */*',
+            'accept-type': 'application/json',
+            'token': '$A_eyJhbGciOiJIUzUxMiJ9.eyJzVCI6bnVsbCwiYyI6bnVsbCwidSI6IkR4RG1EM2cyUSIsImUiOiJhbm9uLUR4RG1EM2cyUUByZWxheXNlcnZpY2VzLmNvbSIsInNJIjpudWxsLCJmIjoiQW5vbnltb3VzIiwiaSI6bnVsbCwibCI6IkR4RG1EM2cyUSIsInVUIjoiQU5PTllNT1VTX1VTRVIifQ.65Rk_8k1n_jK3ewJBHSp5XoAVe6tDBY11Hu7LErAMzlCU9BBXDwDV1pacR_B7hODyMA2EAoSViga4o6Xl2P9YQ',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36',
+            'Cookie': 'MyZipcode='+str(zip_code)
+            }
+        base_url= "https://www.searsauto.com"
+        location_url = "https://app.searsauto.com/sa-api/stores/"+str(zip_code)
+
+        json_data = session.get(location_url,headers=headers).json()['autoStores']
+    
+
+        for value in json_data:
+            location_name = "Sears Auto Center at " + value['city']
+            street_address = value['address1']+" "+value['address2'].strip()
+            city = value['city']
+            state = value['state']
+            zipp = value['postalCode']
+            store_number = value['storeNumber']
+            phone = value['phone']
+            location_type = value['storeType'] +" - "+value['locationType']
+            latitude = value['latitude']
+            longitude = value['longitude']
+            hours_of_operation = value['hours']
+            time =''
+            for j in hours_of_operation:
+                if "open" in j:
+                    time = time+ ' '+ j["dayOfWeek"]+' '+ j['open'] +'-'+ j["close"]
+
+            page_url = "https://www.searsauto.com"+value['detailsUrl']
+
+            store = []
+            store.append(base_url if base_url else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append('US')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type)
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(time.lower() if time.lower() else '<MISSING>')
+            store.append(page_url)
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            yield store
+    
+
+        if len(json_data) < MAX_RESULTS:
+        
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(json_data) == MAX_RESULTS:
+        
+            search.max_count_update(result_coords)
         else:
-            tem_var.append(street_address.replace("Raceway Ml/","").replace("/Willow Gr Mall",""))
-
-        store_name.append(city)
-        tem_var.append(city if city else "<MISSING>" )
-        tem_var.append(state if state else "<MISSING>" )
-        tem_var.append(zipcode if zipcode else "<MISSING>")
-        tem_var.append("US")
-        tem_var.append(storeNumber)
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(latitude)
-        tem_var.append(longitude)
-        tem_var.append(time)
-        tem_var.append("https://www.searsauto.com"+val['detailsUrl'])
-        store_detail.append(tem_var)
-      
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.searsauto.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        # store.append()
-        return_main_object.append(store) 
-
-    return return_main_object
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 
 
 def scrape():
+    # fetch_data()
     data = fetch_data()
     write_output(data)
-
-
 scrape()
 
 

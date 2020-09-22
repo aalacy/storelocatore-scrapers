@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -39,7 +39,7 @@ def fetch_data():
     moreinfo_links = [moreinfo[n].get_attribute('href') for n in range(0,len(moreinfo))]
     address=driver.find_elements_by_xpath("//div[@class='block']")
     for n in range(0,len(address)):
-        a=address[n].text.replace(u'\u2022',"").split("\n")
+        a=address[n].text.replace('\u2022',"").split("\n")
         if a[-4] not in street_address:
             street_address.append(a[-4])
             city.append(a[-3].split(",")[0])

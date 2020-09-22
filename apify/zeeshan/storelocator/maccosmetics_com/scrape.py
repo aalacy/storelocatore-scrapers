@@ -11,9 +11,9 @@ class MacCosmetics(base.Base):
     url = 'https://m.maccosmetics.com/stores'
 
     def map_data(self, row):
-        for key, value in row.iteritems():
+        for key, value in row.items():
             if row[key] and hasattr(row[key], 'encode'):
-                row[key] = value.encode('ascii', 'ignore')
+                row[key] = value
         return {
             'locator_domain': self.domain_name
             ,'location_name': row.get('DOORNAME')
@@ -62,7 +62,7 @@ class MacCosmetics(base.Base):
 
                 for country in ['USA', 'Canada']:
 
-                    cities = ','.join([','.join(state.keys()) for state in location_data[country].values()]).split(',')
+                    cities = ','.join([','.join(list(state.keys())) for state in list(location_data[country].values())]).split(',')
                     
                     for city in cities:
 
@@ -90,7 +90,7 @@ class MacCosmetics(base.Base):
                         ID = ID + 1
 
                         results = search.json()[0]['result']['value'].get('results', {})
-                        stores = results.values()
+                        stores = list(results.values())
 
                         for store in stores:
                             yield store

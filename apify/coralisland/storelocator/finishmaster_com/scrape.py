@@ -10,7 +10,7 @@ base_url = 'http://www.finishmaster.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -51,7 +51,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest"
     }
     request = requests.get(url, headers=headers)
-    store_list = json.loads(request.text.encode("utf8"))['marker']
+    store_list = json.loads(request.text)['marker']
     for store in store_list:
         store = store['@attributes']
         citystatezip = validate(store['citystatezip'])

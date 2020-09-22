@@ -27,17 +27,17 @@ def fetch_data():
     output_list = []
     url = "https://www.pgatoursuperstore.com/stores"
     request = requests.get(url)
-    response = etree.HTML(request.text.encode("utf-8"))
+    response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="store"]')
     for store in store_list:
         output = []
         details_link = store.xpath('.//div[@class="detailsLink"]//a/@href').pop()
         driver.get(base_url + details_link)
-        detail_source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+        detail_source = driver.page_source
         geo_info = detail_source.split('"geo"').pop().split('"url"').pop(0)[:-3][2:].replace('\n\t\t', '')
         geo_info = json.loads(geo_info)
-        latitude = str(geo_info.get(u'latitude'))
-        longitude = str(geo_info.get(u'longitude'))
+        latitude = str(geo_info.get('latitude'))
+        longitude = str(geo_info.get('longitude'))
         # pdb.set_trace()
         city_state_zip = store.xpath('.//div[@class="cityStateZip"]/text()')[0]
         city = city_state_zip.split(',')[0]

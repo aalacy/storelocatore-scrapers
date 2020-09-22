@@ -29,12 +29,14 @@ def fetch_data():
     location_url = "https://t-grill.com/locations"
     r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    add = soup.find_all("div",{"typography":"BodyAlpha"})
+    add = soup.find("div",{"data-ux":"ContentCards"}).find_all("div",{"data-typography":"BodyAlpha"})
 
     for i in add:
 
         temp = i.text
+        # print(temp)
         addr = temp.split(",")
+        # print(addr)
 
         tt = addr[1].split(" ")[2:]
     

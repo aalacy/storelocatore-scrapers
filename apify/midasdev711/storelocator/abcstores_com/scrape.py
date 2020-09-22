@@ -21,7 +21,7 @@ def validate(items):
         if item is '<MISSING>':
             continue
         
-        item = item.encode('utf-8').replace('\xef\xbb\xbf', '').strip()
+        item = item.replace('\xef\xbb\xbf', '').strip()
         if item != '':
             rets.append(item)
     return rets
@@ -38,7 +38,7 @@ def fetch_data():
     output_list = []
     url = "https://www.abcstores.com/storelocator/"
     driver.get(url)
-    source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+    source = driver.page_source
     data = source.split('AmLocation.Amastyload(').pop().split(');')[0]
     store_data = json.loads(data).get('items')
     for store in store_data:

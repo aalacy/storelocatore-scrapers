@@ -1,6 +1,3 @@
-#https://stockist.co/api/v1/u5383/locations/all.js?callback=_stockistAllStoresCallback
-
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -24,7 +21,7 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
+   
     data = []
     cleanr = re.compile(r'<[^>]+>')    
     url = 'https://stockist.co/api/v1/u5383/locations/all.js?callback=_stockistAllStoresCallback'
@@ -33,6 +30,7 @@ def fetch_data():
     r = r.text.split('_stockistAllStoresCallback(')[1].split(');')[0]
     loclist = json.loads(r)
     for loc in loclist:
+        #print(loc)
         title = loc['name']
         store = loc['id']
         lat = loc['latitude']
@@ -41,11 +39,15 @@ def fetch_data():
         city = loc['city']
         state = loc['state']
         pcode = loc['postal_code']
-        ccode = loc['country']
-        if ccode.find('Canada') > -1:
-            ccode = 'CA'
-        elif ccode.find('United') > -1:
+        try:
+            ccode = loc['country']
+            if ccode.find('Canada') > -1:
+                ccode = 'CA'
+            elif ccode.find('States') > -1:
+                ccode = 'US'
+        except:
             ccode = 'US'
+        
         phone = loc['phone']
         if state.find('Wisconsin') > -1:
             state = 'WI'

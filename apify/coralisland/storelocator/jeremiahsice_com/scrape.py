@@ -21,7 +21,7 @@ def fetch_data():
     session = requests.Session()
     request = session.get(url)
     store_list = json.loads(request.text)
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         output = []
         output.append(base_url) # url
         output.append( store['title']) #location name

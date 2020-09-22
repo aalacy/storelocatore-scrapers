@@ -12,7 +12,7 @@ base_url = 'https://rocksdiscountvitamins.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :
@@ -66,7 +66,7 @@ def fetch_data():
     request = session.get(url)
     source = request.text
     store_list = json.loads(validate(source.split('var wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_cat_ids')[0])[:-1])['1']
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         output = []        
         output.append(base_url) # url
         output.append(store['title']) #location name

@@ -1,14 +1,11 @@
 import csv
 import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
 
-
 base_url = 'https://www.prestigepreschoolacademy.com'
-
 
 def validate(item):    
     if item == None:
@@ -17,7 +14,7 @@ def validate(item):
         item = str(item)
     if type(item) == list:
         item = ' '.join(item)
-    return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
+    return item.replace('\u2013', '-').strip()
 
 def get_value(item):
     if item == None :
@@ -67,7 +64,7 @@ def fetch_data():
     with open('./cities.json') as data_file:    
         city_list = json.load(data_file)
     page_url = ''
-    session = requests.Session()
+    session = SgRequests()
     headers = {
         'accept': 'application/json, text/javascript, */*; q=0.01',
         'accept-encoding': 'gzip, deflate, br',
@@ -104,7 +101,10 @@ def fetch_data():
                     store_hours = []
                     if len(store.get(('openingHours'))) > 0:
                         for hour in store.get('openingHours'):
-                            store_hours.append(days_of_week[hour['weekDay']-1] + ' ' + hour['openingHoursInterval'][0]['openTime'] + '-' + hour['openingHoursInterval'][0]['closeTime'])                        
+                            if hour['openingHoursInterval']:
+                                store_hours.append(days_of_week[hour['weekDay']-1] + ' ' + hour['openingHoursInterval'][0]['openTime'] + '-' + hour['openingHoursInterval'][0]['closeTime'])    
+                            else:
+                                store_hours.append(days_of_week[hour['weekDay']-1] + ' closed')
                     output.append(get_value(store_hours)) #opening hours
                     writer.writerow(output)
     return output_list

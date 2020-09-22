@@ -30,10 +30,10 @@ def fetch_data():
     driver.find_element_by_xpath("//span[contains(@class,'glf-icon_close')]").click()
     state_opt = driver.find_elements_by_xpath("//select[@id='mainContent']/option")
     state_options = [state_opt[n].text for n in range(0,len(state_opt))]
-    print(len(state_opt))
+    print((len(state_opt)))
     for n in range(1,len(state_opt)):
         time.sleep(3)
-        print (state_options[n])
+        print((state_options[n]))
         driver.find_element_by_xpath("//select[@id='mainContent']/option[%d]"%(n)).click()
         time.sleep(3)
         location = driver.find_elements_by_class_name('td-sm')

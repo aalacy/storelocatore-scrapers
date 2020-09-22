@@ -72,7 +72,7 @@ class Airgas(base.Base):
                 ,'_requestConfirmationToken': 'eed8e9f8f7e5399041882152dee3af0b2c421c1c'
             }
             results_page = session.post(self.url, data=payload)
-            hxt = html.fromstring(results_page.text.encode('ascii', 'ignore'))
+            hxt = html.fromstring(results_page.text)
             branches = hxt.xpath('//div[@class="col-xs-half directions-list"]//li')
             for branch in branches:
                 yield branch
