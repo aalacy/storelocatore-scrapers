@@ -35,7 +35,7 @@ def fetch_data():
 
 	for store in stores:
 		location_name = store['name'].strip()
-		# link  = store['web']
+		link  = store['web']
 		# print(link)
 
 		street_address = store['address'].strip()
@@ -62,7 +62,7 @@ def fetch_data():
 
 		location_type = "<MISSING>"
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
 def scrape():
