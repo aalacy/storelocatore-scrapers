@@ -89,7 +89,9 @@ def fetch_data():
                     type="Open"
                     tim=ps[0].find_all('strong')[1].text
                     if tim.strip()=="":
-                        tim="".join(re.findall(r'.*<strong>(.*)</strong>(.*)</p>',str(ps[0]))[0])
+                        tim=" ".join(re.findall(r'.*<strong>(.*)</strong>(.*)</p>',str(ps[0]))[0])
+            if loc.find('Greenwich') > -1:
+                tim = tim + ' 12PM - 6PM'
             all.append([
                 "https://www.bobaguys.com",
                 url,
@@ -104,7 +106,7 @@ def fetch_data():
                 "<MISSING>",  # type
                 "<MISSING>",  # lat
                 "<MISSING>",  # long
-                tim  # timing
+                tim.replace('Fri',' Fri')  # timing
                 ])
             #print(p,all[p])
             p += 1
