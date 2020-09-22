@@ -48,7 +48,7 @@ def fetch_data():
                         try:
                             name = item.split('"name":"')[1].split('"')[0]
                             store = item.split('"')[0]
-                            typ = item.split('"type":"')[1].split('"')[0]
+                            typ = item.split('"storeDefinition":"')[1].split('"')[0]
                             loc = item.split('"url":"')[1].split('"')[0]
                             phone = item.split('"telephone":"')[1].split('"')[0]
                             add = item.split('"streetAddress":"')[1].split('"')[0]
