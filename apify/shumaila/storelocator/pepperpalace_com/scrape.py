@@ -1,6 +1,3 @@
-#https://stockist.co/api/v1/u5383/locations/all.js?callback=_stockistAllStoresCallback
-
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
