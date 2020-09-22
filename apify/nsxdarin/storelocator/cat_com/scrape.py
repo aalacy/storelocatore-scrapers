@@ -117,13 +117,13 @@ def fetch_data():
                         except:
                             hours = '<MISSING>'
                         if country == 'CA' or country == 'US':
-                            if 'Sales"},' in item:
-                                loc = '<MISSING>'
-                                if state == '':
-                                    state = '<MISSING>'
-                                if store not in allstores:
-                                    allstores.append(store)
-                                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            loc = '<MISSING>'
+                            if state == '':
+                                state = '<MISSING>'
+                            storeinfo = name + '|' + add + '|' + city + '|' + state
+                            if storeinfo not in allstores:
+                                allstores.append(storeinfo)
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(20, 70, 10):
         for y in range(-60, -160, -10):
             print(str(x) + ',' + str(y))
@@ -227,13 +227,13 @@ def fetch_data():
                             except:
                                 hours = '<MISSING>'
                             if country == 'CA' or country == 'US':
-                                if 'Sales"},' in item:
-                                    loc = '<MISSING>'
-                                    if state == '':
-                                        state = '<MISSING>'
-                                    if store not in allstores:
-                                        allstores.append(store)
-                                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                loc = '<MISSING>'
+                                if state == '':
+                                    state = '<MISSING>'
+                                storeinfo = name + '|' + add + '|' + city + '|' + state
+                                if storeinfo not in allstores:
+                                    allstores.append(storeinfo)
+                                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
