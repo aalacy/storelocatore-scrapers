@@ -1,3 +1,4 @@
 sgrequests
 sgzip==0.0.54
 tenacity
+sglogging
