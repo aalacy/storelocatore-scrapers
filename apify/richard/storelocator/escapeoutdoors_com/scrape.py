@@ -1,7 +1,7 @@
 from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
+from sgselenium import SgSelenium
+import time
+import re
 
 URL = "https://www.escapeoutdoors.com"
 
@@ -14,6 +14,7 @@ class Scraper(Scrape):
     def fetch_data(self):
         # store data
         locations_ids = []
+        locations_urls = []
         locations_titles = []
         street_addresses = []
         cities = []
@@ -26,14 +27,13 @@ class Scraper(Scrape):
         countries = []
         location_types = []
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+        driver = SgSelenium().chrome()
+        time.sleep(2)
 
         location_url = 'https://www.escapeoutdoors.com/pages/find-a-store'
         driver.get(location_url)
+        time.sleep(8)
+
         stores = driver.find_elements_by_css_selector('tbody')
 
         for store in stores:
@@ -50,7 +50,7 @@ class Scraper(Scrape):
             street_address = store.find_element_by_css_selector('p:nth-of-type(2)').text
 
             # State
-            state = store.find_element_by_css_selector('p:nth-of-type(3)').text.split(',')[1].strip()[:-5]
+            state = store.find_element_by_css_selector('p:nth-of-type(3)').text.split(',')[1].strip()[:-5].strip()
 
             # city
             city = store.find_element_by_css_selector('p:nth-of-type(3)').text.split(',')[0]
@@ -58,11 +58,11 @@ class Scraper(Scrape):
             # zip
             zipcode = store.find_element_by_css_selector('p:nth-of-type(3)').text.split(',')[1].strip()[-5:]
 
-            # Lat
-            lat = '<MISSING>'
-
-            # Long
-            lon = '<MISSING>'
+            map_link = store.find_element_by_tag_name("iframe").get_attribute("src")
+            lat_pos = map_link.rfind("!3d")
+            lat = map_link[lat_pos+3:map_link.find("!",lat_pos+5)].strip()
+            lng_pos = map_link.find("!2d")
+            lon = map_link[lng_pos+3:map_link.find("!",lng_pos+5)].strip()
 
             # Phone
             phone = store.find_element_by_css_selector('p:nth-of-type(4)').text.replace('Phone:', '').strip()
@@ -71,13 +71,15 @@ class Scraper(Scrape):
             try:
                 hour = store.find_element_by_css_selector('p:nth-of-type(7)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(8)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(9)').text
             except:
-                hour = store.find_element_by_css_selector('p:nth-of-type(7)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(8)').text
+                hour = store.find_element_by_css_selector('p:nth-of-type(6)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(7)').text
+            hour = (re.sub(' +', ' ', hour)).strip()
 
             # Country
             country = 'US'
 
             # Store data
             locations_ids.append(location_id)
+            locations_urls.append(location_url)
             locations_titles.append(location_title)
             street_addresses.append(street_address)
             states.append(state)
@@ -92,6 +94,7 @@ class Scraper(Scrape):
 
         for (
                 locations_title,
+                locations_url,
                 street_address,
                 city,
                 state,
@@ -105,6 +108,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            locations_urls,
             street_addresses,
             cities,
             states,
@@ -124,6 +128,7 @@ class Scraper(Scrape):
                     [
                         self.url,
                         locations_title,
+                        locations_url,
                         street_address,
                         city,
                         state,
