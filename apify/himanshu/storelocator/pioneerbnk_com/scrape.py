@@ -1,9 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
-
 
 session = SgRequests()
 
@@ -12,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,15 +22,21 @@ def fetch_data():
     base_url = "https://www.pioneerbnk.com"
     r = session.get("https://www.pioneerbnk.com/locations-hours/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
+
     return_main_object = []
-    for location in soup.find("div",{"class":"fusion-builder-row fusion-row"}).find_all("div",recursive=False):
-        if location.find("div",{"class":"fusion-text"}) == None:
-            continue
-        location_details = list(location.find("div",{"class":"fusion-text"}).stripped_strings)
-        lat = location.find("script").text.split('"latitude":"')[1].split('"')[0]
-        lng = location.find("script").text.split('"longitude":"')[1].split('"')[0]
+    links = soup.find(class_="post-content").find_all("a")
+
+    for i in links:
+        link = i["href"]
+        # print(link)
+
+        r = session.get(link,headers=headers)
+        location = BeautifulSoup(r.text,"lxml")
+
+        location_details = list(location.find_all("div",{"class":"fusion-text"})[-1].stripped_strings)
         store = []
         store.append("https://www.pioneerbnk.com")
+        store.append(link)
         store.append(location_details[0])
         store.append(location_details[0])
         store.append(location_details[1].split(",")[0])
@@ -48,8 +52,19 @@ def fetch_data():
             if "Hour" in location_details[i]:
                 hours = " ".join(location_details[i:])
                 break
+        if "Lobby" in hours:
+            hours = hours[hours.find("Lobby"):hours.find("Drive")].replace("Lobby Hours","").replace(":","").strip()
         store.append(phone)
-        store.append("pioneer bank")
+        location_type = "Bank"
+        if "atm" in hours.lower():
+            location_type = "ATM"
+        if "corporate" in link:
+            location_type = "Corporate Headquarters"
+        store.append(location_type)
+        map_link = location.find(class_="fusion-no-lightbox")["href"]
+        at_pos = map_link.rfind("@")
+        lat = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
+        lng = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
         store.append(lat)
         store.append(lng)
         store.append(hours if hours != "" else "<MISSING>")
