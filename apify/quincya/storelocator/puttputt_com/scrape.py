@@ -169,6 +169,8 @@ def fetch_data():
 					hours_of_operation = hours_of_operation + " " + p.text.replace("\n"," ").replace("!"," ").replace("–","-")
 			if hours_of_operation.count("Monday") > 1:
 				hours_of_operation = hours_of_operation[:hours_of_operation.rfind("Monday")].strip()
+			if hours_of_operation.count("Sunday") > 1:
+				hours_of_operation = hours_of_operation[:hours_of_operation.rfind("Sunday")].strip()
 			hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
 			if "*" in hours_of_operation:
 				hours_of_operation = hours_of_operation[:hours_of_operation.find("*")].strip()
