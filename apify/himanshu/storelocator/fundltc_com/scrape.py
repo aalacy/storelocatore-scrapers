@@ -29,6 +29,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find("table",{"width":"100%"}).find_all("a"):
         page_url = link['href']
+        # print(page_url)
         store_number = page_url.split("=")[-1]
 
         location_r = session.get(page_url)
@@ -36,7 +37,11 @@ def fetch_data():
 
         location_name = location_soup.find("span",{"id":"ctl00_ctl00_cphRight_cphText_lblFacilityName"}).text
         addr = list(location_soup.find("span",{"id":"ctl00_ctl00_cphRight_cphText_lblAddress"}).stripped_strings)
-        street_address = addr[0]
+        try:
+            street_address = addr[0]
+        except:
+            # print("No data..skipping")
+            continue
         city = addr[1].split(",")[0]
         state = addr[1].split(",")[1].split(" ")[1]
         zipp = addr[1].split(",")[1].split(" ")[2]
@@ -50,7 +55,7 @@ def fetch_data():
         store.append(state)
         store.append(zipp if zipp else "<MISSING>")   
         store.append("US")
-        store.append("<MISSING>")
+        store.append(page_url.split("=")[-1])
         store.append(phone)
         store.append("<MISSING>")
         store.append("<MISSING>")
