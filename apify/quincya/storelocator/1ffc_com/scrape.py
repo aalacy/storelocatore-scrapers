@@ -71,7 +71,7 @@ def fetch_data():
 
         locator_domain = "locations.1ffc.com"
 
-        location_name = item.find(id="location-name").text.strip()
+        location_name = item.find(class_="c-location-title").text.strip()
         # print(location_name)
 
         street_address = item.find(class_='c-address-street-1').text.strip()
