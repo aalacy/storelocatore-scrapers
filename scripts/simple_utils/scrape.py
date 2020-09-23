@@ -33,7 +33,7 @@ def scrape():
     record_mapping = {
         "page_url": ["path", "to", "record", "in", "dict", "from", "fetch_data"],
         "location_name": [],
-        "street_address": [],
+        "street_address": [["path", "to", "addr1"], ["path", "to", "addr2"]], # these well be concatenated with a space.
         "city": [],
         "state": [],
         "zip": [],
