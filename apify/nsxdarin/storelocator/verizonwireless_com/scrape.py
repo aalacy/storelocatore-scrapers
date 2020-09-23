@@ -5,7 +5,6 @@ from typing import *
 import json
 from concurrent.futures import *
 from sglogging import sglog
-import logging
 import time
 
 MISSING = '<MISSING>'
