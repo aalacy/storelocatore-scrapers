@@ -63,7 +63,10 @@ def fetch_data():
                     state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 country = 'US'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-                phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]
+                try:
+                    phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]
+                except:
+                    phone = ''
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
