@@ -1,8 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 
 
 session = SgRequests()
@@ -25,19 +23,26 @@ def fetch_data():
     base_url = "https://www.ginoseast.com"
     r = session.get("https://www.ginoseast.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    for data in soup.find("div",{"id":"page-5db3337c9f175d60ba85158a"}).find_all("div",{'class':"col sqs-col-4 span-4"}):
-        for link in data.find_all("a"):
-            r1 = session.get("https://www.ginoseast.com"+link['href'],headers=headers)
+    for data in soup.find("div",{"id":"page-5db3337c9f175d60ba85158a"}).find_all("h3"):
+        for link in data.find_all("a"):            
             page_url = "https://www.ginoseast.com"+link['href']
+            r1 = session.get(page_url,headers=headers)
+            # print(page_url)
             soup1 = BeautifulSoup(r1.text,"lxml")
-            name =(soup1.find("div",{"class":"sqs-block html-block sqs-block-html"}).find("div",{"class":"sqs-block-content"}).find("h1").text)
-            full = list(soup1.find_all("div",{"class":"col sqs-col-6 span-6"})[-1].find("div",{"class":"row sqs-row"}).stripped_strings)
+            name = soup1.h1.text.strip()
+            full = list(soup1.find_all("div",{"class":"col sqs-col-6 span-6"})[1].find("div",{"class":"row sqs-row"}).stripped_strings)
             phone = full[-1]
+            if "coming soon" in phone.lower():
+                continue
             city = full[-3].split(',')[0]
             state = full[-3].split(',')[1].strip().split( )[0]
             zipcode= full[-3].split(',')[1].strip().split( )[-1]
+            if zipcode == "60665":
+                zipcode = "60605"
             street = full[-4]
             hours = " ".join(full[1:-5])
+            if not hours:
+                hours = "<MISSING>"
             store=[]
             store.append("https://www.ginoseast.com")
             store.append(name)
