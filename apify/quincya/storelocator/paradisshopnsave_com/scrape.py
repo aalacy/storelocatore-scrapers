@@ -43,7 +43,7 @@ def fetch_data():
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
-		phone = item.find_all("a")[-1]["href"].replace("tel:","")
+		phone = item.find_all("a")[-1].text.split("Fax")[0].split(":")[1].strip()
 		raw_hours = item.find(class_="b2b-location-detail-info").text
 		hours_of_operation = raw_hours[raw_hours.find("Hours")+6:].replace("PM","PM ").strip()
 
