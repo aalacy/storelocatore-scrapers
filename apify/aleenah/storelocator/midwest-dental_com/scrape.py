@@ -71,7 +71,7 @@ def fetch_data():
                 longt,
                 hours
         ])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
         
 
