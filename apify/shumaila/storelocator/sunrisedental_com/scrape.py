@@ -64,6 +64,10 @@ def fetch_data():
         except:
             pass
         try:
+            city = city.split('Click')[0]
+        except:
+            pass
+        try:
             phone = phone.split('Address',1)[0]
         except:
             pass
