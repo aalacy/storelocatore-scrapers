@@ -1,5 +1,5 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -32,7 +32,7 @@ def fetch_data():
     store = '<MISSING>'
     hours = '<MISSING>'
     for loc in locs:
-        print(('Pulling Location %s...' % loc))
+        # print(('Pulling Location %s...' % loc))
         name = ''
         add = ''
         city = ''
@@ -42,27 +42,23 @@ def fetch_data():
         lng = ''
         phone = ''
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '<h3 class="address__hotel-name">' in line2:
-                name = line2.split('<h3 class="address__hotel-name">')[1].split('<')[0]
-            if '"streetAddress":"' in line2:
-                addinfo = line2.split('"streetAddress":"')[1].split('"')[0]
-                add = addinfo.split(',')[0]
-                city = addinfo.split(',')[1].strip()
-                state = addinfo.split(',')[2].strip().split(' ')[0]
-                zc = addinfo.split(',')[2].rsplit(' ',1)[1]
-            if 'target="_blank" rel="noopener noreferrer">' in line2:
-                addinfo = line2.split('target="_blank" rel="noopener noreferrer">')[1].split('</a>')[0]
-                add = addinfo.split('<')[0]
-                city = addinfo.split('<br>')[1].strip().split(',')[0]
-                state = addinfo.split('<br>')[1].strip().split(',')[1].strip().split(' ')[0]
-                zc = addinfo.rsplit(' ',1)[1]
-            if '<br><a href="tel:' in line2:
-                phone = line2.split('<br><a href="tel:')[1].split('"')[0]
-            if 'data-center-lat="' in line2:
-                lat = line2.split('data-center-lat="')[1].split('"')[0]
-                lng = line2.split('data-center-lng="')[1].split('"')[0]
+        base = BeautifulSoup(r2.text,"lxml")
+        
+        try:
+            if "opening" in base.find_all("h1")[1].text.lower():
+                continue
+        except:
+            pass
+
+        name = base.find(id="main-footer").h3.text.strip()
+        raw_address = str(base.find(id="main-footer").p.a).replace("<br/","").replace("</a","").split(">")[1:-1]
+        add = raw_address[0]
+        city = raw_address[-1].split(",")[0].strip()
+        state = raw_address[-1].split(",")[1].split()[0].strip()
+        zc = raw_address[-1].split(",")[1].split()[1].strip()
+        phone = base.find(id="main-footer").p.find_all("a")[-1].text.strip()
+        lat = base.find(class_="dwd_map_pin")["data-lat"]
+        lng = base.find(class_="dwd_map_pin")["data-lng"]
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
