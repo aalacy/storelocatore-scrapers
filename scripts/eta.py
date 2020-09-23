@@ -60,11 +60,5 @@ def __test():
         (rps, rs, es, rr, csf) = eta.update_and_get_stats(1)
         print(f"rec/s {rps}, remaining sec {rs}, elapsed sec {es}, remaining rec {rr}, counted so far {csf}")
 
-def listen_to_file(filepath: string):
-    pass
-
-
-
-
 if __name__ == "__main__":
     __test()
