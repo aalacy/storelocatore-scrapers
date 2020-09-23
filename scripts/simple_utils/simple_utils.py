@@ -343,18 +343,3 @@ def sg_record(page_url: str = MISSING,
         "locator_domain": locator_domain,
         "hours_of_operation": hours_of_operation
     }
-
-
-def normalize_mappings(record_mapping: Dict[str, list]) -> Dict[str, List[List[str]]]:
-    """
-    Normalizes mappings to the nested list form, for both the single and the nested variants.
-    """
-    normalized = {}
-    for k in record_mapping.keys():
-        mapping = record_mapping[k]
-        if isinstance(mapping[0], list):
-            normalized[k] = mapping
-        else:
-            # that means we need to wrap
-            normalized[k] = [mapping]
-    return normalized

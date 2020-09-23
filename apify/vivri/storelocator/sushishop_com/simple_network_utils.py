@@ -9,19 +9,30 @@ from bs4 import BeautifulSoup
 import simplejson as json
 from requests_toolbelt.utils import dump
 
+
+
 def fetch_json(locations_url: str,
               query_params: dict,
               data_params: dict,
               headers: dict,
               path_to_locations: List[str]) -> List[Dict[str, str]]:
+    """
+    Fetches locations json, and returns as a list of parsed dictionaries.
+    Assumes a regular structure with root element, and sibling-elements.
+
+    :param data_params: raw (non-urlencoded) data parameters as a dict.
+    :param locations_url: The url of the xml.
+    :param query_params: raw (non-urlencoded) queryparams.
+    :param headers: query headers.
+    :param path_to_locations: the path, in the json, to the locations array.
+    :return: a list of parsed dictionaries
+    """
 
     response = fetch_data(locations_url=locations_url, data_params=data_params, query_params=query_params,headers=headers)
 
     json_result = json.loads(urllib.parse.unquote(response.text), encoding="utf8")
 
-    drill_down_into(json_result, path_to_locations)
-
-    return json_result['data']['result_list']
+    return drill_down_into(json_result, path_to_locations)
 
 def fetch_xml(locations_url: str,
               query_params: dict,
