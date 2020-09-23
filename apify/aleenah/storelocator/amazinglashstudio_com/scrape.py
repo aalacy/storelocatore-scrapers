@@ -45,13 +45,7 @@ def fetch_data():
         if 'coming soon' in str(soup).lower():
             print('coming soon')
             continue
-        try:
-            if "coming soon" in soup.find('meta', {"name": "description"}).text.lower():
-                print(url)
-                print("coming soon")
-                continue
-        except:
-            print('exception')
+        
         jss = soup.find_all('script', {"type": "application/ld+json"})
         if len(jss) == 1:
             jss = jss[0]
