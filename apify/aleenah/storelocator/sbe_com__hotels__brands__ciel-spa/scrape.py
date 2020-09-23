@@ -1,63 +1,52 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
+import re, json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"
+                         ])
         # Body
         for row in data:
             writer.writerow(row)
 
 session = SgRequests()
 all=[]
-def fetch_data():
-    # Your scraper here
-    res=session.get("https://www.sbe.com/hotels/brands/ciel-spa")
-    soup = BeautifulSoup(res.text, 'html.parser')
-
-    urls=soup.find_all('li', {'class': 'cols ftr-itm box-shadow'})
-
-    for url in urls:
-        loc = url.find('h5').text
-        url=url.find('a').get('href')
-        #print(url)
-        res=session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        street = soup.find('span', {'class': 'address1'}).text.strip()
-        city = soup.find('span', {'class': 'city'}).text.replace(',', '').strip()
-        state = soup.find('span', {'class': 'state'}).text.strip()
-        zip = soup.find('span', {'class': 'postal_code'}).text.strip()
-        tim = soup.find('div', {'class': 'text-spaced-extra more_info'}).text.replace('Order Food Delivery with DoorDash', '').replace('\n', ' ').strip()
-        tim=tim.replace('Hours of Operation:','').replace('Open','').strip()
-        phone = soup.find('li', {'class': 'serif-face cols borderright'}).find('a').text.strip()
-        lat = soup.find('div', {'id': 'map_canvas'}).get('data-latitude')
-        long = soup.find('div', {'id': 'map_canvas'}).get('data-longitude')
-
-        if long.strip() =="":
-            long=re.findall(r'data-longitude="([^"]+)"',str(soup.find('div', {'id': 'map_canvas'})))[0]
-        #print(long)
-        all.append([
+def fetch_data(): 
+    r=session.get("https://www.sbe.com/hotels/brands/ciel-spa")
+    res = r.text.split('<script type="application/ld+json">')[2].split('</script>',1)[0]    
+    res = json.loads(res)    
+    title = res['name']
+    street = res['address']['streetAddress']
+    city  = res['address']['addressLocality']
+    state = res['address']['addressRegion']
+    pcode = res['address']['postalCode']
+    phone = res['telephone']
+    lat = r.text.split('{"lat":"',1)[1].split('"',1)[0]
+    longt = r.text.split('"lng":"',1)[1].split('"',1)[0]
+    hours = '<MISSING>'
+  
+    all.append([
             "https://www.sbe.com/hotels/brands/ciel-spa",
-            loc,
+            'https://www.sbe.com/hotels/brands/ciel-spa',
+            title,
             street,
             city,
             state,
-            zip,
+            pcode,
             'US',
             "<MISSING>",  # store #
             phone,  # phone
             "<MISSING>",  # type
             lat,  # lat
-            long,  # long
-            tim,  # timing
-            url])
+            longt,  # long
+            hours,  # timing
+           ])
 
     return all
 
