@@ -21,69 +21,48 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
-    return_main_object = []
+   
     base_url = "https://www.theoopsco.com/"
-    r = session.get("https://www.theoopsco.com/our-locations", headers=header)
-    soup = BeautifulSoup(r.text, "lxml")
-    for x in soup.find_all('div',{'class':'c4inlineContent'}):
-
-        locator_domain  = base_url
-        location_name = x.text.strip().split('\n')[0].strip().encode('ascii', 'ignore').decode('ascii').strip()
-
-        street_address = x.text.strip().split('\n')[1].strip().encode('ascii', 'ignore').decode('ascii').strip()
-        city = location_name
-        state = ''
-        zip = ''
-        country_code = 'US'
-        store_number = ''
-        phone = x.text.strip().split('\n')[2].strip().encode('ascii', 'ignore').decode('ascii').strip()
-        location_type = '<MISSING>'
-        latitude = ''
-        longitude = ''
-        hours = x.find(lambda tag: (tag.name == "p" ) and "Store Hours" in tag.text)
-        hr = []
-        for h in hours.find_all_next('p'):
-            list_h = list(h.stripped_strings)
-            list_h = [el.replace('\xa0',' ') for el in list_h]
-            if list_h == []:
-                break
-            hr.append("".join(list_h))
-        hours_of_operation = " ".join(hr)
-
-
-        page_url = "https://www.theoopsco.com/our-locations"
-
-
+    json_data = session.get("https://www.powr.io/cached/23423260.json", headers=header).json()['content']['locations']
+    for val in json_data:
+       
+        location_name = val['name']
+        addr = val['address'].split(",")
+        street_address = addr[0]
+        city = addr[1].strip()
+        state = addr[2].strip().split(" ")[0]
+        zipp = addr[2].strip().split(" ")[1]
+        phone = val['number']
+        latitude = val['lat']
+        longitude = val['lng']
+        page_url = val['website']
 
         store = []
-        store.append(locator_domain if locator_domain else '<MISSING>')
+        store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
         store.append(street_address if street_address else '<MISSING>')
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append('US')
+        store.append('<MISSING>')
         store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
+        store.append('<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-        store.append(page_url if page_url else '<MISSING>')
-        return_main_object.append(store)
-        # print(" data=="+str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    return return_main_object
-
+        store.append('<MISSING>')
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 
 def scrape():
     data = fetch_data()
-
     write_output(data)
-
-
 scrape()
 
 
