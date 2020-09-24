@@ -7,7 +7,9 @@ import sgzip
 import time 
 from datetime import datetime
 import time
+
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,6 +20,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def request_wrapper(url,method,headers,data=None):
    request_counter = 0
    if method == "get":
@@ -49,6 +52,7 @@ def request_wrapper(url,method,headers,data=None):
                    break
    else:
        return None
+
 def fetch_data():
     return_main_object = []
     address = []
@@ -62,11 +66,12 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://ctownsupermarkets.com"
+    print("Running..takes approx. 4-5 hours..")
     while zip_code:
         result_coords = []
-        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location=%22"+str(zip_code)+"%22&limit=25&api_key=ae29ff051811d0bf52d721ab2cadccb8&v=20181201&resolvePlaceholders=true&entityTypes=location&savedFilterIds=29721495"
+        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location=%22"+str(zip_code)+"%22&limit=50&api_key=ae29ff051811d0bf52d721ab2cadccb8&v=20181201&resolvePlaceholders=true&entityTypes=location&savedFilterIds=29721495"
         r = session.get(location_url,headers=headers)
-        #print(location_url)
+        # print(location_url)
         data = (r.text)
         json_data = json.loads(data)
         k = (json_data['response']['entities'])
@@ -129,6 +134,7 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
+        
 def scrape():
     data = fetch_data()
     write_output(data)
