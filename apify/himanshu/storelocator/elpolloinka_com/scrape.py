@@ -3,7 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+# import sgzip
+# import time
 
 
 
@@ -78,9 +79,7 @@ def fetch_data():
                 # print("data = " + str(store))
                 # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                if store[2] in addresses :
-                    continue
-                addresses.append(store[2])
+
                 return_main_object.append(store)
 
 
@@ -102,12 +101,17 @@ def fetch_data():
                 hours_of_operation = list_p[-1]
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+
+            
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
-            if store[2] in addresses :
+
+            if store[2] in addresses:
                 continue
             addresses.append(store[2])
+
+
 
             # print("data = " + str(store))
             # print(
