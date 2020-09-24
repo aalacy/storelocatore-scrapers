@@ -14,7 +14,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,6 +31,7 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     hours1=[]
+    page_url = []
   
     k1  = soup.find_all("div",{"class":"x-column x-sm vc x-1-1"})
     for i in k1:
@@ -42,6 +43,8 @@ def fetch_data():
 
         for a1 in a[:-1]:
             if "https:" in a1['href']:
+
+                page_url.append(a1['href'])
                 r = session.get(a1['href'],headers=headers)
                 soup1= BeautifulSoup(r.text,"lxml")
                 k = soup1.find_all("div",{"class":"col-lg-3"})
@@ -77,24 +80,29 @@ def fetch_data():
 
         for name in names[:-1]:
             store_name.append(name.text.replace("\n",""))
+
     del store_name[3]
+    del page_url[3]
 
 
-    arr=["https://www.opendining.net/menu/5bec37d9515ee9202e15a752#ordering-for-prompt","https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d"]
+    arr=["https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d"]
     for arr1 in arr:
+        page_url.append(arr1)
         tem_var=[]
         r = session.get(arr1,headers=headers)
         soup2= BeautifulSoup(r.text,"lxml")
-        v2=soup2.find("div",{"class":"restaurant-info"})
-
-        name = list(v2.stripped_strings)[0]
-        store_name.append(name)
-        st=list(v2.stripped_strings)[1]
-        city = list(v2.stripped_strings)[2].split(',')[0]
-        state = list(v2.stripped_strings)[2].split(',')[1].split( )[0]
-        zip1=list(v2.stripped_strings)[2].split(',')[1].split( )[1]
-        phone  = list(v2.stripped_strings)[3]
+        v2=list(soup2.find("div",{"class":"restaurant-info"}).stripped_strings)
+       
+        name = v2[0]
         
+        addr = v2[1].split(",")
+
+        st=addr[0]
+        city = addr[1].replace("\n\t\t\t\t\t\t\t","")
+        state = addr[2].strip().split(" ")[0]
+        zip1 = addr[2].strip().split(" ")[1]
+        phone = v2[2].strip()
+        store_name.append(name)
         tem_var.append(st)
         tem_var.append(city)
         tem_var.append(state)
@@ -106,23 +114,25 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
         store_detail.append(tem_var)
-    
+
     for i in range(len(store_name)):
         store = list()
         store.append("https://romapizzaandpasta.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         store.append(hours1[i])
+        store.append(page_url[i])
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store) 
 
     return return_main_object
+    
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
 
 
