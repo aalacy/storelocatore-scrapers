@@ -49,15 +49,15 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = ''
 
-    coords = session.get('https://la-mesa.com/locations/',headers = headers)
+    coords = session.get('https://la-mesa.com/locations/',headers=headers)
     c_soup = BeautifulSoup(coords.text,'lxml')
     c1 = []
     c2 = []
-    for coord in c_soup.find_all('div',class_='et_pb_map_pin'):
-        lat = coord['data-lat'].strip()
-        lng = coord['data-lng'].strip()
-        c1.append(lat)
-        c2.append(lng)
+    for coord in c_soup.find_all('div',class_='et_pb_code_inner'):
+        co = coord.find("iframe")['src'].split("2d")[1].split("!1")[0].replace("!2m3","").replace("!3m2","").split("!3d")
+        c1.append(co[1])
+        c2.append(co[0])
+
 
 
     r = session.get('https://la-mesa.com/',headers = headers)
@@ -66,10 +66,10 @@ def fetch_data():
     li = soup.find(lambda tag: (tag.name == "li") and "Locations" in tag.text).find('ul',class_='sub-menu')
     for a in li.find_all('a'):
         page_url = a['href']
+       
         r_loc = session.get(a['href'],headers = headers)
         soup_loc = BeautifulSoup(r_loc.text,'lxml')
-        div = soup_loc.find('div',class_='et_pb_row et_pb_row_0')
-        address= div.find('div',class_='et_pb_blurb_description')
+        address= soup_loc.find('div',class_='et_pb_blurb_description')
         list_address= list(address.stripped_strings)
         location_name =list_address[0].strip()
         street_address = list_address[1].strip()
@@ -77,27 +77,37 @@ def fetch_data():
         state = list_address[2].split(',')[-1].split()[0].strip()
         zipp = list_address[2].split(',')[-1].split()[-1].strip()
         phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(list_address[3:])))[0].strip()
-        hours = soup_loc.find(lambda tag: (tag.name == "h4") and "Hours of Operation" in tag.text).find_next('div',class_='et_pb_blurb_description')
-        list_hours = list(hours.stripped_strings)
-        hours_of_operation = "  ".join(list_hours).strip()
+        link_list = ["https://la-mesa.com/locations/papillion/829-tara-plz/","https://la-mesa.com/locations/bellevue/1405-fort-crook-rd-s/"]
+        if page_url in link_list:
+            hours = soup_loc.find_all("div",{"class":"et_pb_text_inner"})[4]
+            list_hours = list(hours.stripped_strings)
+            hours_of_operation = "  ".join(list_hours).strip()
+        else:
+
+            try:
+                hours = soup_loc.find("div",{"class":"et_pb_row et_pb_row_2"}).find("div",{"class":"et_pb_text_inner"})
+                list_hours = list(hours.stripped_strings)
+                hours_of_operation = "  ".join(list_hours).strip()
+            except:
+                hours = soup_loc.find("div",{"class":"et_pb_row et_pb_row_0"}).find("div",{"class":"et_pb_text_inner"})
+                list_hours = list(hours.stripped_strings)
+                hours_of_operation = "  ".join(list_hours).strip()
+
         latitude = c1.pop(0)
         longitude = c2.pop(0)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = [x if x else "<MISSING>" for x in store]
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
-
-
-
-
     return return_main_object
 def scrape():
     data = fetch_data()
