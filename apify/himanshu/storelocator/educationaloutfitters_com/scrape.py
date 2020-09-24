@@ -14,7 +14,7 @@ def log(*args, **kwargs):
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
-    import requests
+    import requests  # ignore_check
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()
