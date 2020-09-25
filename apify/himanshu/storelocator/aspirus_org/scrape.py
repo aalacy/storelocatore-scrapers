@@ -1,6 +1,6 @@
 import csv
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 import time
 import re
 import json
@@ -9,6 +9,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 
 
+
+session = SgRequests()
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
@@ -24,7 +26,7 @@ def request_wrapper(url,method,headers,data=None):
 	if method == "get":
 		while True:
 			try:
-				r = requests.get(url,headers=headers)
+				r = session.get(url,headers=headers)
 				return r
 				break
 			except:
@@ -37,9 +39,9 @@ def request_wrapper(url,method,headers,data=None):
 		while True:
 			try:
 				if data:
-					r = requests.post(url,headers=headers,data=data)
+					r = session.post(url,headers=headers,data=data)
 				else:
-					r = requests.post(url,headers=headers)
+					r = session.post(url,headers=headers)
 				return r
 				break
 			except:
@@ -57,7 +59,7 @@ def fetch_data():
 	lng_list = []
 	street_list =[]
 	loc_type_list = []
-	driver = SgSelenium().firefox()
+	driver = SgSelenium().chrome()
 	 # it will used in store data.
 	addresses = []
 	addresses1 = []
@@ -79,7 +81,7 @@ def fetch_data():
 	#     # do your logic here.
 		location_type = loc_type_soup.find("a").find("strong").text
 		
-		# print(location_type)
+		print(location_type)
 		loc_type_url = base_url + loc_type_soup.find("a")["href"]
 
 		driver.get(loc_type_url)
@@ -148,7 +150,7 @@ def fetch_data():
 				page_url = ""
 
 				page_url = base_url + location.find("a")["href"]
-				# print(page_url)
+				print(page_url)
 				store_number = page_url.split("-")[-1].strip()
 				r_location = request_wrapper(page_url,"get", headers=headers)
 				soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -165,7 +167,7 @@ def fetch_data():
 				phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))
 				ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address))
 				us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address))
-				state_list = re.findall(r'\b[A-Z]{2}\b', str(full_address))
+				state_list = re.findall(r'\b[A-Z]{2}\b ', str(full_address))
 
 				if ca_zip_list:
 					zipp = ca_zip_list[-1]
@@ -176,7 +178,7 @@ def fetch_data():
 					country_code = "US"
 
 				if state_list:
-					state = state_list[-1]
+					state = state_list[-1].strip()
 
 				if phone_list:
 					phone = phone_list[0]
@@ -202,6 +204,7 @@ def fetch_data():
 				addresses.append(str(store[-1]))
 				# print("data = " + str(store))
 				# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
 				yield store
 		# 		duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
 				

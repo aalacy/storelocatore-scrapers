@@ -57,14 +57,8 @@ def __test():
 
     for i in range(0,11): # overshoot for good measure!
         time.sleep(1)
-        (rps, rs, es, rr, csf) = eta.update_and_get_stats(1)
-        print(f"rec/s {rps}, remaining sec {rs}, elapsed sec {es}, remaining rec {rr}, counted so far {csf}")
-
-def listen_to_file(filepath: string):
-    pass
-
-
-
+        (rps, rs, es, rr, csf, step) = eta.update_and_get_stats(1)
+        print(f"rec/s {rps}, remaining sec {rs}, elapsed sec {es}, remaining rec {rr}, counted so far {csf}, last step took {step}")
 
 if __name__ == "__main__":
     __test()

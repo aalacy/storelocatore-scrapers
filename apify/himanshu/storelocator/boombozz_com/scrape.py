@@ -1,92 +1,57 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-
-session = SgRequests()
-
-requests.packages.urllib3.disable_warnings()
-
+import json
+import time
+from sgrequests import SgRequests
+session = SgRequests() 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
-    return_main_object = []
+    address = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://boombozz.com/"
-    loacation_url = 'https://boombozz.com/locations/'
-    r = session.get(loacation_url, headers=header,verify=False)
-    soup = BeautifulSoup(r.text, "lxml")
-    r = soup.find('div', {'id': 'allLocations'}).find_all('div', {'class': 'x-container'})
-
-    for idx, val in enumerate(r):
-
-        if idx != 0:
-            if len(val.find_all('div', {'class': 'x-column'})) == 3:
-                cb = val.find_all('div', {'class': 'x-column'})[1]
-
-                locator_domain = base_url
-                location_name = cb.find('h2', {'class': 'h-custom-headline'}).text.strip()
-                bn = cb.find_all('p')[0].text.split('|')
-                # print(len(bn) , cb.find_all('p')[0].text)
-                if len(bn) == 2:
-                    street_address = cb.find_all('p')[0].text.split('|')[0].strip()
-                    phone = cb.find_all('p')[0].text.split('|')[1].strip()
-
-                    vl = street_address.split(',')[0].replace('\n',' ').strip().split(' ')
-                    vk = street_address.split(',')[-1].strip().split(' ')
-
-
-                    state = vk[0].strip()
-                    zip = vk[1].strip()
-
-                    city = vl[-1]
-                    vl.pop(-1)
-                    street_address = ' '.join(vl)
-
-
-
-                    hours_of_operation = ''
-                    if len(cb.find_all('p')) == 2:
-                        hours_of_operation = cb.find_all('p')[1].text.replace('\n','')
-
-                    country_code = 'US'
-                    store_number = '<MISSING>'
-                    location_type = 'boombozz'
-                    latitude = '<MISSING>'
-                    longitude = '<MISSING>'
-
-                    store = []
-                    store.append(locator_domain if locator_domain else '<MISSING>')
-                    store.append(location_name if location_name else '<MISSING>')
-                    store.append(street_address if street_address else '<MISSING>')
-                    store.append(city if city else '<MISSING>')
-                    store.append(state if state else '<MISSING>')
-                    store.append(zip if zip else '<MISSING>')
-                    store.append(country_code if country_code else '<MISSING>')
-                    store.append(store_number if store_number else '<MISSING>')
-                    store.append(phone if phone else '<MISSING>')
-                    store.append(location_type if location_type else '<MISSING>')
-                    store.append(latitude if latitude else '<MISSING>')
-                    store.append(longitude if longitude else '<MISSING>')
-                    store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-                    return_main_object.append(store)
-                   # print("data === " + str(store))
-    return return_main_object
-
+    location_url = "https://boombozz.com/wp-admin/admin-ajax.php?action=store_search&lat=38.23184&lng=-85.71014&max_results=25&search_radius=50&autoload=1"
+    r = session.get(location_url,headers=headers)
+    data = (r.json())
+    for i in data:
+        location_type = "BoomBozz"
+        page_url_data  = (i['description'].split('https://boombozz.com/')[1].split('\" target=\"')[0])
+        page_url = ("https://boombozz.com/"+str(page_url_data))
+        r = session.get(page_url,headers=headers)
+        soup = BeautifulSoup(r.text,"lxml")
+        data = (soup.find("div",{"class":"hoursColumn"}))
+        hours = (" ".join(list(data.stripped_strings)[0:]))
+        store = []
+        store.append(base_url if base_url else "<MISSING>")
+        store.append(i['store'] if i['store'] else "<MISSING>") 
+        store.append(i['address'] if i['address'] else "<MISSING>")
+        store.append(i['city'] if i['city'] else "<MISSING>")
+        store.append(i['state'] if i['state'] else "<MISSING>")
+        store.append(i['zip'] if i['zip']  else "<MISSING>")
+        store.append(i['country'] if i['country'] else "<MISSING>")
+        store.append(i['id'] if i['id'] else"<MISSING>") 
+        store.append(i['phone'] if i['phone'] else "<MISSING>")
+        store.append(location_type if location_type else "<MISSING>")
+        store.append(i['lat'] if i['lat'] else "<MISSING>")
+        store.append(i['lng'] if i['lng'] else "<MISSING>")
+        store.append(hours.replace("Bar Opens One Hour Later","") if hours else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        if store[2] in address :
+            continue
+        address.append(store[2])
+        yield store 
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

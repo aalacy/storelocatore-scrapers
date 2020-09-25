@@ -4,23 +4,16 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-
-
-
 session = SgRequests()
-
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
 		# Header
 		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
 						 "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 		# Body
 		for row in data:
 			writer.writerow(row)
-
-
 def fetch_data():
 	headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -28,7 +21,6 @@ def fetch_data():
 		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
 	}
 	locator_domain = base_url = "https://www.augustahealth.com/"
-
 	r = session.get("https://www.augustahealth.com/primary-care/locations",headers=headers)
 	soup= BeautifulSoup(r.text,"lxml")
 	for link  in soup.find_all("div",class_="view-content")[1:]:
@@ -50,12 +42,10 @@ def fetch_data():
 		longitude = info.find("a",text = re.compile("Get Directions"))["href"].split("@")[1].split(",")[1]
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
 		# print("data = " + str(store))
 		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		yield store
-
 	r = session.get("https://www.augustahealth.com/urgent-care",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
 	for loc in soup.find_all("div",class_="location"):
@@ -70,11 +60,14 @@ def fetch_data():
 		state = add[-1].split(",")[-1].split()[0]
 		zipp = add[-1].split(",")[-1].split()[-1]
 		country_code = "US"
-		latitude = loc.find("p",class_="address").find("a")["href"].split("@")[1].split(",")[0]
-		longitude = loc.find("p",class_="address").find("a")["href"].split("@")[1].split(",")[1]
+		
 		try:
+			latitude = loc.find("p",class_="address").find("a")["href"].split("@")[1].split(",")[0]
+			longitude = loc.find("p",class_="address").find("a")["href"].split("@")[1].split(",")[1]
 			phone = loc.find("p",class_="phone").text.strip()
 		except:
+			latitude = "<MISSING>"
+			longitude = "<MISSING>"
 			phone = "<MISSING>"
 		hours_of_operation = loc.find("div",class_="hours").text.strip()
 		location_type = "urgent-care"
@@ -82,7 +75,6 @@ def fetch_data():
 		page_url ="https://www.augustahealth.com/urgent-care"
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
 		# print("data = " + str(store))
 		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
@@ -106,7 +98,6 @@ def fetch_data():
 	page_url ="https://www.augustahealth.com/laboratory/locations"
 	store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
 	# print("data = " + str(store))
 	# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 	store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
@@ -115,7 +106,6 @@ def fetch_data():
 	soup = BeautifulSoup(r.text,"lxml")
 	for div_blue in soup.find_all("h3"):
 		location_name = div_blue.text
-		
 		address = list(div_blue.find_next("div",class_="box-rounded-blue").find("p",class_="location").stripped_strings)
 		# print(address)
 		street_address = address[0].split("Suite")[0]
@@ -132,17 +122,11 @@ def fetch_data():
 		page_url ="https://www.augustahealth.com/laboratory/locations"
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
 		# print("data = " + str(store))
 		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		yield store
-	
-
-
-
 def scrape():
 	data = fetch_data()
 	write_output(data)
-
 scrape()

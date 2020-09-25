@@ -17,6 +17,7 @@ class Scrape:
                 [
                     "locator_domain",
                     "location_name",
+                    "page_url",
                     "street_address",
                     "city",
                     "state",

@@ -22,10 +22,6 @@ def fetch_data():
     country = 'US'
     for item in json.loads(r.content)['entries']:
         name = item['title']
-        try:
-            hours = item['hours'].replace('\n','').replace('<br \\/>','; ').replace('<br />','; ').replace('<br>','; ')
-        except:
-            hours = '<MISSING>'
         add = item['address_info'][0]['address'].replace('"',"'")
         city = item['address_info'][0]['city']
         state = item['address_info'][0]['state_province']
@@ -45,6 +41,26 @@ def fetch_data():
             store = item['location_id']
         except:
             store = '<MISSING>'
+        r2 = session.get(loc, headers=headers)
+        hours = ''
+        print(loc)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            line2 = str(line2.decode('utf-8'))
+            if '<span class="d-block pt-3 italic newtime">' in line2:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                if 'By Appointment Only' in g:
+                    hours = 'By Appointment Only'
+                else:
+                    g = next(lines)
+                    g = str(g.decode('utf-8'))
+                    hours = g.strip().replace('\t','').replace('\r','').replace('\n','')
+                    g = next(lines)
+                    g = str(g.decode('utf-8'))
+                    hours = hours + '; ' + g.split('>')[1].strip().replace('\t','').replace('\r','').replace('\n','').replace('&amp;','&')
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
