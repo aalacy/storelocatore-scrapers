@@ -9,7 +9,7 @@ import requests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('tsws.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -25,6 +25,7 @@ def fetch_data():
     json_data = requests.get(base_url1).json()['content']['locations']
     lat_lng = {}
     for coords in json_data:
+       
         lat_lng[coords['name'].replace("<p>","").replace("</p>","").replace("65th","65th Street").replace("Gateways Oaks","Gateway Oaks").replace("Elsie Ave","Elsie").replace("Stevens Creek","Steven's Creek")] = {"lat":coords['lat'],"lng":coords['lng']}
     lat_lng['Rocklin'] = {"lat":"<MISSING>","lng":"<MISSING>"}
     lat_lng['Stevenson Ranch'] = {"lat":"<MISSING>","lng":"<MISSING>"}
@@ -33,9 +34,9 @@ def fetch_data():
     
     soup= BS(requests.get("https://www.thesandwichspot.com/locations").text,"lxml")
 
-    for div in soup.find_all("div",{"id":re.compile("inlineContent-gridContainer")})[2:33]:
+    for div in soup.find_all("div",{"id":re.compile("inlineContent-gridContainer")})[2:35]:
         location_name = div.find("h4").text
-        #print(location_name)
+        # print(location_name)
         addr = list(div.find_all("div",{"data-packed":"false"})[1].stripped_strings)
         street_address = addr[0].replace("\xa0"," ")
         if len(addr[1].split(",")) == 3:
@@ -49,8 +50,14 @@ def fetch_data():
             zipp = addr[1].split(",")[1].split()[1]
         
         phone = addr[-1].replace("Phone:","").strip()
-        lat = lat_lng[location_name]['lat']
-        lng = lat_lng[location_name]['lng']
+        try:
+            lat = lat_lng[location_name]['lat']
+            lng = lat_lng[location_name]['lng']
+        except:
+            # print(location_name)
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+
         
         page_url = div.find_all("a")[-1]['href']
         location_soup = BS(requests.get(page_url).text, "lxml")
@@ -61,8 +68,6 @@ def fetch_data():
 
         yield store
    
-
-
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -28,23 +28,26 @@ def fetch_data():
                 places = line.split(',"locationName":"')
                 for place in places:
                     if '"countryCode":"' in place:
-                        country = 'CA'
-                        website = '7-eleven.ca'
-                        typ = place.split('"schemaTypes":["')[1].split('"')[0]
-                        purl = place.split('"websiteUrl":"')[1].split('"')[0]
-                        store = purl.rsplit('/',1)[1]
-                        city = place.split('"city":"')[1].split('"')[0]
-                        state = place.split('"state":"')[1].split('"')[0]
-                        zc = place.split('"zip":"')[1].split('"')[0]
-                        add = place.split('"address":"')[1].split('"')[0]
-                        phone = place.split('"phone":"')[1].split('"')[0]
-                        hours = 'Open 24/7'
-                        name = place.split('"')[0]
-                        lat = place.split('"yextDisplayLat":')[1].split(',')[0]
-                        lng = place.split('"yextDisplayLng":')[1].split(',')[0]
-                        if store not in locs:
-                            locs.append(store)
-                            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        try:
+                            country = 'CA'
+                            website = '7-eleven.ca'
+                            typ = place.split('"schemaTypes":["')[1].split('"')[0]
+                            purl = place.split('"websiteUrl":"')[1].split('"')[0]
+                            store = purl.rsplit('/',1)[1]
+                            city = place.split('"city":"')[1].split('"')[0]
+                            state = place.split('"state":"')[1].split('"')[0]
+                            zc = place.split('"zip":"')[1].split('"')[0]
+                            add = place.split('"address":"')[1].split('"')[0]
+                            phone = place.split('"phone":"')[1].split('"')[0]
+                            hours = 'Open 24/7'
+                            name = place.split('"')[0]
+                            lat = place.split('"yextDisplayLat":')[1].split(',')[0]
+                            lng = place.split('"yextDisplayLng":')[1].split(',')[0]
+                            if store not in locs:
+                                locs.append(store)
+                                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        except:
+                            pass
 
 def scrape():
     data = fetch_data()

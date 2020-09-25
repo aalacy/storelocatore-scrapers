@@ -1,57 +1,68 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from bs4 import BeautifulSoup
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/json',
-           'X-Requested-With': 'XMLHttpRequest'
+headers = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+    'content-type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     url = 'https://www.boasteak.com'
-    locs = []
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<div class="dropdown-item w-dyn-item"><a href="/locations/' in line:
-            items = line.split('<div class="dropdown-item w-dyn-item"><a href="/locations/')
-            for item in items:
-                if 'class="dropdown-link">' in item:
-                    lurl = 'https://www.boasteak.com/locations/' + item.split('"')[0]
-                    locs.append(lurl)
-    for loc in locs:
-        r2 = session.get(loc, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        website = 'boasteak.com'
-        typ = 'Restaurant'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '<h1 class="location-title lightest">' in line2:
-                name = line2.split('<h1 class="location-title lightest">')[1].split('<')[0]
-                if ',' in line2.split('<h5 class="location-detail">')[1].split('<')[0]:
-                    add = line2.split('<h5 class="location-detail">')[1].split(',')[0]
-                    city = line2.split('<h5 class="location-detail">')[1].split(',')[1].strip()
-                    state = line2.split('<h5 class="location-detail">')[1].split(',')[2].strip().split(' ')[0]
-                    zc = line2.split('<h5 class="location-detail">')[1].split(',')[2].strip().split(' ')[1].split('<')[0]
-                    phone = line2.split('<h5 class="location-detail">')[2].split('<')[0].replace('.','-')
-                    country = 'US'
-                    store = '<MISSING>'
-                    hours = line2.split('<div class="location-hours w-richtext">')[1].split('</p><h5><strong>')[0].replace('</p><p>','; ').replace('<h5>','')
-                    hours = hours.replace('</h5><p>',' - ').replace('</p>','; ')
-                    lat = '<MISSING>'
-                    lng = '<MISSING>'
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
+    soup = BeautifulSoup(r.text,'lxml')
+    dropdown = soup.find("div",{"class":"dropdown w-dyn-list"}).find_all("a")
+    for i in dropdown[:-1]:
+        page_url = url+i['href']
+        r1 = session.get(page_url,headers=headers)
+        soup1 = BeautifulSoup(r1.text,'lxml')
+        location_name = soup1.find("h1",{"class":"location-title lightest"}).text
+        addr = soup1.find_all("h5",{"class":"location-detail"})[1].text.split(",")
+        street_address = addr[0]
+        city = addr[1].strip()
+        state = addr[2].strip().split(" ")[0]
+        zipp = addr[2].strip().split(" ")[1]
+        temp_phone = soup1.find_all("h5",{"class":"location-detail"})[0].text.replace(".","")
+        phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
+        temp_coord = soup1.find("div",{"class":"location-map-image"}).find("a")['href'].split("@")[1].split(",")
+        latitude = temp_coord[0]
+        longitude = temp_coord[1]
+        temp_hoo = soup1.find("div",{"class":"location-hours w-richtext"}).find_all("p")
+        hour = []
+        for h in temp_hoo[2:-2]:
+            hour.append(h.text)
+        hours_of_operation = ", ".join(hour)
+    
+    
+        store = []
+        store.append(url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
+       
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

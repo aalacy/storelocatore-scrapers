@@ -22,6 +22,8 @@ def fetch_data():
     website = 'code3er.com'
     typ = '<MISSING>'
     store = '<MISSING>'
+    lat = '<MISSING>'
+    lng = '<MISSING>'
     for line in r.iter_lines(decode_unicode=True):
         if '"address-text">' in line:
             add = line.split('"address-text">')[1].split('<')[0]
