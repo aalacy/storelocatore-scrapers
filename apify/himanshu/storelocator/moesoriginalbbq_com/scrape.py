@@ -3,7 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,6 +15,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -80,6 +83,7 @@ def fetch_data():
         # print("data === " + str(full_address))
         location_url = location_list['website']
         page_url = location_url.replace("/lo/rome","/rome")
+        # print(page_url)
         # print("location_url == "+ location_url)
         r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -122,20 +126,38 @@ def fetch_data():
             else:
                 hours_of_operation = " ".join(list_hours).strip().split('Address:')[0]
         else:
-            hours = soup_location.find('div',{'id':'hours'})
-            list_hours = list(hours.stripped_strings)
-            list_hours = [el.replace('\xa0',' ') for el in list_hours]
+            try:
+                hours = soup_location.find('div',{'id':'hours'})
+                list_hours = list(hours.stripped_strings)
+                list_hours = [el.replace('\xa0',' ') for el in list_hours]
+            except:
+                hours = "<MISSING>"
         if "35603" in zipp:
             city = "Decatur"
             street_address = street_address.replace(" Decatur","")
         if "22902" in zipp:
             city = "Charlottesville"
             street_address = street_address.replace(" Charlottesville","")
+
+        if "Open:" in hours_of_operation:
+            hours_of_operation = hours_of_operation[hours_of_operation.find("Open:")+5:].strip()
+        if "Dining Room" in hours_of_operation:
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Dining Room")].strip()
+        if "Delivery" in hours_of_operation:
+            hours_of_operation = hours_of_operation[hours_of_operation.find("Delivery")+9:].strip()
+        if "Crubside" in hours_of_operation:
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Crubside")].strip()
+        if "Socially" in hours_of_operation:
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Socially")].strip()
+        hours_of_operation = hours_of_operation.replace("Dine In, Patio and Carry Out Available","").replace("Bar Open later","").replace("Call in and take out.","").replace("Hours (dine in and drive thru)","")\
+        .replace("Bar open as long as there's a crowd!","").replace("Take out and third party delivery thru Door Dash also available.","").strip()
         if "36575" in zipp:
             hours_of_operation = "Sun-Thu: 11am - 9pm, Fri - Sat: 11am - 10pm"
         if "temporarily" in hours_of_operation or "Temporarily" in hours_of_operation:
             hours_of_operation = "<MISSING>"
-        if "Permanently Closed" in hours_of_operation or "Currently" in hours_of_operation or "We are currently doing " in hours_of_operation:
+        if "Permanently Closed" in hours_of_operation:
+            continue
+        if "Currently" in hours_of_operation or "We are currently doing " in hours_of_operation or "Alabama Auburn" in hours_of_operation:
             hours_of_operation = "<MISSING>"
         store = [locator_domain, location_name, street_address.replace("120 Grove St.","700 NORTH LAKE BLVD").replace("6571 Highway 69 South","6571 Highway 69 South Suite A"), city.replace("Suite A Tuscaloosa","Tuscaloosa"), state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation.split(" 2101")[0].split("Curbside,")[0].replace("Hours of operation: ","").replace("Drive thru only","").replace("(Kitchen Closes @ 9pm) ","").replace("Open to in-house and patio dining. ","").replace("After a fire in the Smokehouse, we are serving from our Food Truck with limited menu.","").replace("Hours: Restaurant ",""),page_url]
@@ -148,6 +170,7 @@ def fetch_data():
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 return_main_object.append(store)
     return return_main_object
+
 def scrape():
     data = fetch_data()
     write_output(data)
