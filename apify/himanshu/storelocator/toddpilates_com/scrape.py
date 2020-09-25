@@ -40,7 +40,7 @@ def fetch_data():
         page_url = yelp_url
         # print(page_url)
         yelp_request = session.get(yelp_url, headers=headers)
-        yelp_soup = BeautifulSoup(yelp_request.text, "lxml")
+        yelp_soup = BeautifulSoup(yelp_request.text, "html5lib")
         jd = yelp_soup.find_all('script', text = re.compile('address'), attrs = {'type' : 'application/ld+json'})[0]
         # print(jd)
         location_details = json.loads(jd.text)
@@ -55,7 +55,7 @@ def fetch_data():
 
         store = []
         store.append("https://www.toddpilates.com")
-        store.append(location_details["name"])
+        store.append(location_details["name"].replace("&amp;","&"))
         store.append(location_details["address"]["streetAddress"].replace("\n", ","))
         store.append(location_details["address"]["addressLocality"])
         store.append(location_details["address"]["addressRegion"])
@@ -69,6 +69,7 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
 
 

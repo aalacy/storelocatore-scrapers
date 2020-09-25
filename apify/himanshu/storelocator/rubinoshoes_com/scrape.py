@@ -44,7 +44,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-    base_url= "https://cdn.shopify.com/s/files/1/0078/2191/8285/t/2/assets/sca.storelocatordata.json?794&formattedAddress=&boundsNorthEast=&boundsSouthWest="
+    base_url= "https://cdn.shopify.com/s/files/1/0078/2191/8285/t/46/assets/sca.storelocatordata.json?v=1600888879&formattedAddress=&boundsNorthEast=&boundsSouthWest="
     loc = session.get(base_url,headers=headers).json()
     # soup= BeautifulSoup(r.text,"lxml")
     
@@ -70,7 +70,7 @@ def fetch_data():
         tem_var.append(state.strip().encode('ascii', 'ignore').decode('ascii') if state.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
         tem_var.append(zip1.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(country)
-        tem_var.append("<MISSING>")
+        tem_var.append(i['id'])
         tem_var.append(phone.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append("<MISSING>")
         tem_var.append(lat)

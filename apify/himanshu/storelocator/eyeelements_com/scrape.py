@@ -52,20 +52,26 @@ def request_wrapper(url,method,headers,data=None):
         return None
 
 def fetch_data():
+    
     return_main_object = []
     addresses = []
     cords = sgzip.coords_for_radius(50)
     for cord in cords:
+        # print("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+str(cord[0])+"&lng="+str(cord[1]))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        r = request_wrapper("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),'get',headers=headers)
+        r = request_wrapper("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+str(cord[0])+"&lng="+str(cord[1]),'get',headers=headers)
         if r == None:
             continue
         if r.text == "null":
             continue
         else:
-            data = r.json()
+            try:
+                data = r.json()
+            except:
+                continue
+            
             for store_data in data:
                 store = []
                 store.append("https://www.eyeelements.com")
@@ -90,6 +96,7 @@ def fetch_data():
                 hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 times"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")
                 store.append(store_data["permalink"])
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
 
 def scrape():
