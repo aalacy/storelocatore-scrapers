@@ -85,23 +85,30 @@ def fetch_data():
     del page_url[3]
 
 
-    arr=["https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d"]
+    arr=["https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d","https://www.opendining.net/menu/5bec37d9515ee9202e15a752"]
     for arr1 in arr:
-        page_url.append(arr1)
         tem_var=[]
-        r = session.get(arr1,headers=headers)
-        soup2= BeautifulSoup(r.text,"lxml")
-        v2=list(soup2.find("div",{"class":"restaurant-info"}).stripped_strings)
-       
-        name = v2[0]
-        
-        addr = v2[1].split(",")
-
-        st=addr[0]
-        city = addr[1].replace("\n\t\t\t\t\t\t\t","")
-        state = addr[2].strip().split(" ")[0]
-        zip1 = addr[2].strip().split(" ")[1]
-        phone = v2[2].strip()
+        if arr1=="https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d":
+            page_url.append(arr1)
+            r = session.get(arr1,headers=headers)
+            soup2= BeautifulSoup(r.text,"lxml")
+            v2=list(soup2.find("div",{"class":"restaurant-info"}).stripped_strings)
+            name = v2[0]
+            addr = v2[1].split(",")
+            st=addr[0]
+            city = addr[1].replace("\n\t\t\t\t\t\t\t","")
+            state = addr[2].strip().split(" ")[0]
+            zip1 = addr[2].strip().split(" ")[1]
+            phone = v2[2].strip()
+        else:
+            page_url.append("<MISSING>")
+            name = "Clarksville"
+            st = "3441 Fort Campbell Blvd."
+            city = "Clarksville"
+            zip1 = "<MISSING>"
+            phone = "931-546-5005"
+            hours1.append("mon-sun 10am-midnight, buffet 10:30am-2pm")
+            
         store_name.append(name)
         tem_var.append(st)
         tem_var.append(city)
