@@ -13,7 +13,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 SEARCH_RADIUS_MILES = 2
 paralellism = 15
 session = SgRequests().requests_retry_session()
-log = sglog.SgLogSetup().get_logger(logger_name="verizonwireless.com")
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
