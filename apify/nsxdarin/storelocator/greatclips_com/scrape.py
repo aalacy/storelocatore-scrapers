@@ -26,7 +26,10 @@ def fetch_data():
         website = 'greatclips.com'
         typ = 'Salon'
         hours = ''
-        country = 'US'
+        if 'salons.greatclips.com/us/' in loc:
+            country = 'US'
+        if 'salons.greatclips.com/ca/' in loc:
+            country = 'CA'
         add = ''
         city = ''
         state = ''
