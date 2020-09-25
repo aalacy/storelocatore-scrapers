@@ -69,14 +69,14 @@ def fetch_data():
         final_req = session.get(final_link, headers = HEADERS)
         item = BeautifulSoup(final_req.text,"lxml")
 
-        locator_domain = "locations.1ffc.com"
+        locator_domain = "1ffc.com"
 
         location_name = item.find(class_="c-location-title").text.strip()
         # print(location_name)
 
-        street_address = item.find(class_='c-address-street-1').text.strip()
+        street_address = item.find(class_="Nap-address").find(class_='c-address-street-1').text.strip()
         try:
-            street_address = street_address + " " + item.find(class_='c-address-street-2').text.strip()
+            street_address = street_address + " " + item.find(class_="Nap-address").find(class_='c-address-street-2').text.strip()
             street_address = street_address.strip()
         except:
             pass
