@@ -76,6 +76,8 @@ def fetch_data():
                         if hours == '':
                             hours = '<MISSING>'
                         phone = phone.encode("ascii", errors="ignore").decode()
+                        if phone == '':
+                            phone = '<MISSING>'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
