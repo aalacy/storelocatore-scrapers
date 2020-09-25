@@ -30,7 +30,10 @@ def fetch_data():
                     if '"countryCode":"' in place:
                         country = 'CA'
                         website = '7-eleven.ca'
-                        typ = place.split('"schemaTypes":["')[1].split('"')[0]
+                        try:
+                            typ = place.split('"schemaTypes":["')[1].split('"')[0]
+                        except:
+                            typ = 'ConvenienceStore'
                         purl = place.split('"websiteUrl":"')[1].split('"')[0]
                         store = purl.rsplit('/',1)[1]
                         city = place.split('"city":"')[1].split('"')[0]
