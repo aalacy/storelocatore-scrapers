@@ -1,3 +1,4 @@
+import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -22,16 +23,23 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    data = []    
+    data = []
+    titlelist = []
+    titlelist.append('none')
     url = 'https://www.industriousoffice.com/locations'
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
-    state_list = soup.findAll('a', {'class': 'btn-location'})
-   # print("states = ",len(state_list))
+    state_list = soup.findAll('li', {'class': 'market'})
+    #print("states = ",len(state_list))
     p = 0
     cleanr = re.compile(r'<[^>]+>')
-    for states in state_list:        
-        states = states['href']        
+    for states in state_list:
+        #print(states.find('a').text)
+        if states.find('a').text.lower().find('coming soon') > -1 :
+            continue
+        states = states.find('a')['href']
+        if states.find('techspace') > -1:
+            continue
         r = session.get(states, headers=headers, verify=False)
         if r.text.find('Coming Soon') > -1:
             continue
@@ -51,7 +59,8 @@ def fetch_data():
                 link = loc['permalink'].replace('\\','')
                 if state == 'Wisconsin':
                     state = 'WI'
-                if phone != '':
+                if phone != '' and title.lower().find('techspace') == -1 and title not in titlelist :
+                    titlelist.append(title)
                     data.append([
                             'https://www.industriousoffice.com/',
                             link,                   
@@ -85,7 +94,8 @@ def fetch_data():
             longt = r['geo']['longitude']
             if state == 'Wisconsin':
                     state = 'WI'
-            if phone != '':
+            if phone != '' and title.lower().find('techspace') and title not in titlelist :
+                titlelist.append(title)
                 data.append([
                             'https://www.industriousoffice.com/',
                             link,                   
@@ -102,7 +112,7 @@ def fetch_data():
                             longt,
                             '<MISSING>'
                                     ])
-                    #print(p,data[p])
+                #print(p,data[p])
                 p += 1
                     
     return data
