@@ -37,16 +37,22 @@ def fetch_data():
         title = loc['title']
         if title.find('Locations') > -1:
             slink = 'https://www.potatocornerusa.com/'+loc['pageUriSEO']
-            #print(slink)
+            print(slink)
             
             r = session.get(slink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
-            linklist = soup.findAll('a',{'class':'ca1link'})
-            for link in linklist:            
-                link = link['href']                    
+            linklist = soup.findAll('h6')#('a',{'class':'ca1link'})
+            print(len(linklist))
+            for link in linklist:
+                #print(link.text)
+                try:
+                    link = link.find('a')['href']
+                except:
+                    continue
                 #print(link)
+                
                 page = session.get(link, headers=headers, verify=False)
-                time.sleep(5)
+                #time.sleep(5)
                 soup1 = BeautifulSoup(page.text,'html.parser')
                 #print(soup1)
                 try:
@@ -65,7 +71,7 @@ def fetch_data():
                             title = soup1.find('title').text.split('|')[0]
                             pass
                     
-                
+                #print(title)
                 if title.find('Coming Soon') == -1 and title not in titlelist:
                     titlelist.append(title)
                     ##print(title)
@@ -90,11 +96,16 @@ def fetch_data():
                     else:
                         phone = phone.replace("\u200e",'').replace("\xa0",'')
                     pcode = "<MISSING>"
-                    
+                    #print(address)
                     try:
                          street,city,state = address.split(', ')
                     except:
-                        pass
+                        try:
+                            street,state = address.split(', ')
+                            city = street.lstrip().split(' ')[-1]
+                            street = street.lsplit()
+                        except:
+                            pass
                     
                     try:
                         state,pcode = state.lstrip().split(' ')
@@ -108,10 +119,10 @@ def fetch_data():
                         'https://www.potatocornerusa.com/',
                         link,                   
                         title,
-                        street,
-                        city,
-                        state,
-                        pcode,
+                        street.replace('\\xa',''),
+                        city.replace('\\xa',''),
+                        state.replace('\\xa',''),
+                        pcode.replace('\\xa',''),
                         'US',
                         '<MISSING>',
                         phone,
