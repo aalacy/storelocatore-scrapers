@@ -1,6 +1,6 @@
 import base 
 import requests
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from lxml import html
 from pdb import set_trace as bp
@@ -19,12 +19,12 @@ class ValueVillage(base.Base):
         hxt = html.fromstring(row.get('info', ''))
 
         location_type = None
-        link = xpath(hxt, './/a[1]/@href')
+        link = str(xpath(hxt, './/a[1]/@href'))
         if link:
             link = link.split('/')[-1]
             location_type = '-'.join(link.split('-')[:-1])
 
-        csz = xpath(hxt, '//div[@class="csz"]//text()') # Abbotsford, BC V2T 1V6 
+        csz = str(xpath(hxt, '//div[@class="csz"]//text()')) # Abbotsford, BC V2T 1V6 
         city, region_zip = csz.split(',')
 
         region_zip = region_zip.strip()
@@ -62,7 +62,7 @@ class ValueVillage(base.Base):
         r = requests.get(self.url, headers=self.headers)
         if r.status_code == 200:
             for keyword in r.json()['data']:
-                search = urllib.quote_plus(keyword)
+                search = urllib.parse.quote_plus(keyword)
                 query_params = {
                     'template': 'search'
                     ,'level': 'search'

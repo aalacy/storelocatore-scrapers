@@ -58,9 +58,8 @@ def xpath(hxt, query_string):
         return hxp[0]
     return None
 
-def get_store_id(location):
-    store_id = str(xpath(location, './/a/@href'))
-    store_id = re.findall(r'[0-9]+', store_id)
+def get_store_id(url):
+    store_id = re.findall(r'[0-9]+', url)
     store_id = store_id[0] if store_id else None
     return store_id
 
@@ -75,9 +74,10 @@ def crawl_zip_code(code):
     }
     request = session.get(URL, params=query_params, headers=LIST_HEADERS)
     hxt = html.fromstring(request.text)
-    locations = hxt.xpath('//div[@class="col-sm-12 col-md-8 col-lg-8 col-xs-12"]')
-    for location in locations:
-        store_id = get_store_id(location)
+    location_urls = hxt.xpath('//a[contains(@href, "/store/")]/@href')
+    store_ids = set([get_store_id(x) for x in location_urls])
+    for store_id in store_ids:
+        fetch_store(store_id)
         yield store_id
 
 def fetch_store_ids():
@@ -105,7 +105,10 @@ def parse_store(store):
     location_type = '<MISSING>'
     latitude = handle_missing(store['location'][1])
     longitude = handle_missing(store['location'][0])
-    hours_of_operation = handle_missing(store['hours'])
+    if 'hours' in store:
+        hours_of_operation = handle_missing(store['hours'])
+    else:
+        hours_of_operation = '<MISSING>'
     return [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
 @retry(stop=stop_after_attempt(3))
@@ -117,7 +120,6 @@ def fetch_store(store_id):
             store_json = line[line.index('['):len(line) - line[::-1].index(']')].encode('latin1').decode('unicode-escape')
             store = json.loads(store_json)[0]
             return parse_store(store)
-    print(response.text)
     session = SgRequests()
     raise Exception("Store json not found for id {}".format(store_id))
 

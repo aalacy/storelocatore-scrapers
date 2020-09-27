@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 def write_output(data):
     line=[]
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -26,7 +26,7 @@ def fetch_data():
     location = soup.findAll("td", {"class": "hidden location"})
     location_name=[location[n].get_text() for n in range(0,len(location))]
     address = soup.findAll("td", {"class": "address"})
-    street_address = [address[n].get_text().split(",")[0].replace(u'\xa0',' ') for n in range(0,len(address))]
+    street_address = [address[n].get_text().split(",")[0].replace('\xa0',' ') for n in range(0,len(address))]
     state = [address[n].get_text().split(",")[1].split()[0].strip() for n in range(0,len(address))]
     zipcode = [address[n].get_text().split(",")[1].split()[1].strip() for n in range(0,len(address))]
     phones = soup.findAll("td", {"class": "phone"})

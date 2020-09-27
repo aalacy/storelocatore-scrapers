@@ -37,24 +37,24 @@ def fetch_data():
     stores = []
     results = session.get(URL, headers=HEADERS).json()['results']['locations']
     for result in results:
-        location_name = result['name'].encode('utf-8').replace('"',"'")
+        location_name = result['name'].replace('"',"'")
         locator_domain = 'striderite.com'
-        page_url = handle_missing(str(result['url'])).encode('utf-8')
+        page_url = handle_missing(str(result['url']))
         store_number = handle_missing(result['id'])
-        street_address = handle_missing(result['address_line_1']).encode('utf-8')
+        street_address = handle_missing(result['address_line_1'])
         if len(result['address_line_2']) > 0:
-            street_address += ' ' + result['address_line_2'].encode('utf-8')
+            street_address += ' ' + result['address_line_2']
         latitude = handle_missing(result['lat'])
         longitude = handle_missing(result['lng'])
-        city = handle_missing(result['city']).encode('utf-8')
-        state = handle_missing(result['state']).encode('utf-8')
-        zip_code = handle_missing(result['postcode']).encode('utf-8')
-        country_code = handle_missing(result['country']).encode('utf-8')
-        location_type = handle_missing(result['location_type_name']).encode('utf-8')
-        phone = handle_missing(result['phone']).encode('utf-8')
+        city = handle_missing(result['city'])
+        state = handle_missing(result['state'])
+        zip_code = handle_missing(result['postcode'])
+        country_code = handle_missing(result['country'])
+        location_type = handle_missing(result['location_type_name'])
+        phone = handle_missing(result['phone'])
         hours_of_operation = '<MISSING>' if len(result['hours']) == 0 or not result['hours']['mon'] else result['hours']
         hours = str(hours_of_operation)
-        hours = hours.encode('utf-8')
+        hours = hours
         stores.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours])
     return stores
 

@@ -14,54 +14,57 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 def fetch_data():
-    base_url = "https://www.redroof.com"
-    return_main_object=[]
-    r = session.get(base_url+'/hometowne-studios')
+    addressess = []
+    headers = {
+
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
+	}
+    base_url = "https://www.redroof.com/hometowne-studios"
+    location_url = "https://www.redroof.com/extendedstay/hometownestudios/all-locations"
+    r = session.get(location_url,headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find_all('a',href=re.compile("^/extendedstay/hometownestudios/property"))
-    for dt in main:
-        if "/extendedstay/hometownestudios/property/IL/OFallon/HTS1071" in dt['href'] :
+    link = soup.find("div",{"class":"rich-text-content"}).find_all("a")
+    for i in link:
+        page_url = "https://www.redroof.com/"+i['href']
+        r1 = session.get(page_url,headers=headers)
+        soup1 = BeautifulSoup(r1.text,'lxml')
+        jd = json.loads(str(soup1).split('Utilities.SDL.Add("ServicePropertyDetails", ')[1].split(');')[0])
+        location_name = jd['Description']
+        street_address = jd['Street1']
+        city = jd['City']
+        state = jd['State']
+        zipp = jd['PostalCode']
+        country_code = jd['Country']
+        store_number = "<MISSING>"
+        phone = jd['PhoneNumber']
+        location_type = jd['PropertyType']
+        latitude = jd['Latitude']
+        longitude = jd['Longitude']
+        hours_of_operation = "<MISSING>"
+
+
+        store = []
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append(country_code)
+        store.append(store_number if store_number else '<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append(location_type)
+        store.append(latitude if latitude else '<MISSING>')
+        store.append(longitude if longitude else '<MISSING>')
+        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
             continue
-        r1 = session.get(base_url+dt['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        main1=soup1.find('div',{'class':'hts-property-detail'})
-        storeno=dt['href'].split('/')[-1].strip()
-        if "HTS1071" in storeno:
-            continue
-        if main1!= None:
-            country = main1.find('meta',{'property':'s:addressCountry'})['content'].strip()
-            address=main1.find('meta',{'property':'s:streetAddress'})['content'].strip()
-            city=main1.find('meta',{'property':'s:addressLocality'})['content'].strip()
-            state=main1.find('meta',{'property':'s:addressRegion'})['content'].strip()
-            zip=main1.find('meta',{'property':'s:postalCode'})['content'].strip()
-            lat='<MISSING>'
-            lng='<MISSING>'
-            name=main1.find('span',{'property':'s:name','class':'hotel-sector'}).text.strip()
-            hour=''
-            hr=list(main1.find('div',{"class":'c-content-block__main'}).find('span',text=re.compile('Front Desk Hours')).parent.stripped_strings)
-            phone=soup1.find('span', itemprop="telephone").text.strip()
-            hour=' '.join(hr).replace('Front Desk Hours','')
-            page_url = base_url+dt['href']
-        else:
-            pass
-        store=[]
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
+        addressess.append(store[2])
         yield store
+
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

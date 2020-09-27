@@ -48,7 +48,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
@@ -60,21 +59,19 @@ def fetch_data():
     for p in loc.find_all('p'):
         list_p = list(p.stripped_strings)
 
-        if (len(list_p) == 4 and re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_p[-1]))) or  ((len(list_p) == 6 ) and "Opening Hours:" == list_p[0]):
+        if (len(list_p) == 4 and re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_p[-1]))) or  ((len(list_p) == 6 ) and "Opening Hours:" == list_p[0]):
             if len(list_p) ==4:
-
                 location_name =list_p[0]
                 street_address = " ".join(list_p[1].split()[:-3])
                 city =list_p[0].split(',')[0]
                 state = list_p[0].split(',')[-1]
                 zipp = list_p[1].split()[-1]
-                phone_list =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_p[-1]))
+                phone_list =re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_p[-1]))
                 phone = phone_list[0]
-                latitude = loc.iframe['src'].split('=')[-3].split(',')[0]
-                longitude = loc.iframe['src'].split('=')[-3].split(',')[-1].split('&')[0]
-                hour = loc.find_all('p')[3]
-                list_hour = list(hour.stripped_strings)
-                hours_of_operation = " ".join(list_hour[1:]).replace('&'," ")
+                
+                latitude = soup.find("iframe")['src'].split('=')[-3].split(',')[0]
+                longitude = soup.find("iframe")['src'].split('=')[-3].split(',')[-1].split('&')[0]
+                hours_of_operation = " ".join(list(p.find_next("p").stripped_strings)).replace("Opening Hours:","")
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                 store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
@@ -92,7 +89,7 @@ def fetch_data():
             city =list_p[0].split(',')[0]
             state = list_p[0].split(',')[-1]
             zipp = list_p[1].split()[-1]
-            phone = phone_list =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(list_p))
+            phone = phone_list =re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(list_p))
             phone = phone_list[0]
             if len(list_p ) ==6:
                 hours=" ".join(list_p[-2:]).split()
@@ -104,9 +101,17 @@ def fetch_data():
                 hours_of_operation = list_p[-1]
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+
+            
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
+
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+
+
 
             # print("data = " + str(store))
             # print(
@@ -115,7 +120,6 @@ def fetch_data():
             return_main_object.append(store)
         else:
             continue
-
 
 
     return return_main_object

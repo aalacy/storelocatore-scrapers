@@ -48,7 +48,7 @@ def fetch_data():
     state_options = [state_opt[n].text for n in range(0,len(state_opt))]
     for n in range(1,len(state_options)):
         time.sleep(3)
-        print (state_options[n])
+        print((state_options[n]))
         driver.find_element_by_xpath("//select[@name='selStates']/option[text()='%s']"%state_options[n]).click()
         driver.find_element_by_xpath("//select[@name='selZipCodeRadius']/option[text()='20 Miles']").click()
         driver.find_element_by_class_name('submitButton').click()

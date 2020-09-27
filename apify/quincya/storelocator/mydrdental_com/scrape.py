@@ -25,10 +25,10 @@ def fetch_data():
 
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print "Got today page"
+        print("Got today page")
     except (BaseException):
-        print '[!] Error Occured. '
-        print '[?] Check whether system is Online.'
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
 
     items = base.findAll('div', attrs={'class': 'address'})
@@ -59,16 +59,16 @@ def fetch_data():
 
         try:
             new_base = BeautifulSoup(req.text,"lxml")
-            print "Got store details page"
+            print("Got store details page")
         except (BaseException):
-            print '[!] Error Occured. '
-            print '[?] Check whether system is Online.'
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         phone = new_base.findAll('span', attrs={'class': 'mm-phone-number'})[1].text
         gps_link = new_base.find('a', attrs={'class': 'directions'})['href']
         latitude = gps_link[gps_link.find("=")+1:gps_link.find(",")].strip()
         longitude = gps_link[gps_link.find(",")+1:].strip()
-        hours_of_operation = new_base.find('ul', attrs={'class': 'loc_hours'}).get_text(separator=u' ').encode('utf-8').strip()
+        hours_of_operation = new_base.find('ul', attrs={'class': 'loc_hours'}).get_text(separator=' ').strip()
 
         data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

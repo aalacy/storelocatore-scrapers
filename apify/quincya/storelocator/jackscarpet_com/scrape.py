@@ -22,35 +22,27 @@ def fetch_data():
 
     req = requests.get(base_link, headers=headers)
 
-    try:
-        base = BeautifulSoup(req.text, 'html.parser')
-    except (BaseException):
-        print '[!] Error Occured. '
-        print '[?] Check whether system is Online.'
+    base = BeautifulSoup(req.text, 'html.parser')
     
     data = []
     locator_domain = "jackscarpet.com"
     location_name = base.find('h1').text.strip()
-    raw_data = base.find('address').encode('utf-8').strip().split("<br/>")
+    raw_data = str(base.find('address')).strip().split("<br/>")
     street_address = raw_data[0][raw_data[0].find(">")+1:]
     city = raw_data[1][:raw_data[1].find(',')].strip()
     state = raw_data[1][raw_data[1].find(',')+1:raw_data[1].rfind(' ')].strip()
     zip_code = raw_data[1][raw_data[1].rfind(' ')+1:].strip()
     country_code = "US"
     store_number = "<MISSING>"
-    phone = base.find('span', attrs={'id': 'phone-desktop'}).text.encode('utf-8').strip()
+    phone = base.find('span', attrs={'id': 'phone-desktop'}).text.strip()
     location_type = location_name[:location_name.rfind(',')].strip()
-    hours_of_operation = base.find('ul', attrs={'style': 'list-style:none; font-size:14px; padding-left:15px;'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").encode('utf-8').strip()
+    hours_of_operation = base.find('ul', attrs={'style': 'list-style:none; font-size:14px; padding-left:15px;'}).get_text(separator=' ').replace("\n"," ").replace("  "," ").strip()
     hours_of_operation = re.sub(' +', ' ', hours_of_operation)
     link = base.find('iframe')['src']
 
     req = requests.get(link, headers=headers)
 
-    try:
-        base = BeautifulSoup(req.text,"lxml")
-    except (BaseException):
-        print '[!] Error Occured. '
-        print '[?] Check whether system is Online.'
+    base = BeautifulSoup(req.text,"lxml")
 
     base_str = str(base)
     base_str = base_str[-508:-480]

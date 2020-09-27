@@ -42,10 +42,10 @@ def fetch_data():
             continue
         store = []
         store.append("https://bonanzasteakhouses.com")
-        store.append(store_data["loc"]["customByName"]["GMB Name"] + " " + store_data["loc"]["customByName"]["Geomodifier"])
+        store.append(store_data["loc"]["customByName"]["Geomodifier"])
         store.append(store_data["loc"]["address1"] + " " + store_data["loc"]["address2"])
         store.append(store_data["loc"]["city"])
-        store.append(store_data["loc"]["state"] if store_data["loc"]["state"] else "<MISSING>")
+        store.append(store_data["loc"]["state"] if store_data["loc"]["state"] else store_data["loc"]["country"])
         store.append(store_data["loc"]["postalCode"])
         store.append(store_data["loc"]["country"] if store_data["loc"]["country"] != "PR" else "US")
         store.append(store_data["loc"]["id"])

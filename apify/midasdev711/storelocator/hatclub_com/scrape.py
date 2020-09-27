@@ -15,8 +15,7 @@ def validate(items):
         if type(item) is int:
             pass
         else:
-            item = item.encode('ascii','ignore').encode('utf-8').replace(u'\xa0', '').strip()
-
+            item = item.replace('\xa0', '').strip()
         if item != '':
             rets.append(item)
     return rets

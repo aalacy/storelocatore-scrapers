@@ -12,7 +12,7 @@ base_url = 'https://www.jdbyrider.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').encode("utf8").strip()
+    return item.strip()
 
 def get_value(item):
     item = validate(item)
@@ -55,7 +55,7 @@ def fetch_data():
     keys = list(store_list.keys())
     store_hours = ""
 
-    for key, store in store_list.items():
+    for key, store in list(store_list.items()):
         if store:
             hours = store['_SalesHours']
             store_hours = ""

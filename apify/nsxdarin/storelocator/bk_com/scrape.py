@@ -33,7 +33,10 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
                         name = item.split('"name":"')[1].split('"')[0]
-                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        except:
+                            phone = '<MISSING>'
                         add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
                         add = add.strip()
                         add = add
@@ -73,6 +76,8 @@ def fetch_data():
                         if hours == '':
                             hours = '<MISSING>'
                         phone = phone.encode("ascii", errors="ignore").decode()
+                        if phone == '':
+                            phone = '<MISSING>'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

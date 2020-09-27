@@ -51,10 +51,10 @@ def fetch_data():
             phone = content.split('Phone')[1].split('\n',1)[1].replace('\n','')           
             hours = hours.replace('pm','pm ').replace('am',' am ').replace('CLOSED','CLOSED ')
             if link == '#':
-                link = '<MISSING>'
+                link = url
                 store = '<MISSING>'                
             else:
-                'https://www.pastosa.com' + link
+                link = 'https://www.pastosa.com' + link
                 store = link.split('=')[1]
             data.append([
                         'https://www.pastosa.com',

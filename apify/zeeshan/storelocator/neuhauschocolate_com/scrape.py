@@ -45,7 +45,7 @@ class NeuhausChocolate(base.Base):
         else:
             hours_of_operation = ''
 
-        phone = re.findall(r'\d+-\d+-\d+', etree.tostring(row))
+        phone = re.findall(r'\d+-\d+-\d+', str(etree.tostring(row)))
         phone = phone[0] if phone else None
 
         return {

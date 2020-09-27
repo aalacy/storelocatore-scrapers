@@ -68,6 +68,7 @@ def fetch_data():
                     state = h['address']["addressRegion"]
                 else:
                     state = "<MISSING>"
+                store_number = h['image'].split('/')[-2].strip()
                 phone = h['telephone']              
                 store = []
                 store.append("https://www.wyndhamhotels.com/microtel")
@@ -77,7 +78,7 @@ def fetch_data():
                 store.append(state if state else "<MISSING>")
                 store.append(zipp if zipp else "<MISSING>")
                 store.append(country_code)
-                store.append("<MISSING>") 
+                store.append(store_number) 
                 store.append(phone if phone else "<MISSING>" )
                 store.append("Microtel Inn & Suites by Wyndham")
                 store.append( latitude if latitude else "<MISSING>")

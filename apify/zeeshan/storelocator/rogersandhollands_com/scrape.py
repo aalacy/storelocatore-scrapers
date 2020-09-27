@@ -16,7 +16,7 @@ class RogersAndGollands(base.Base):
     url = 'https://rogersandhollands.com/ustorelocator/location/map'
 
     def map_data(self, row):
-        address = row.get('address').encode('ascii', 'ignore')
+        address = row.get('address')
         street_address, city, state, zipcode = None, None, None, None
         address =  re.findall(r'(.+), ([A-Z][a-z]+), ([A-Z]{2}) (\d{5})', address)
         if address:
@@ -55,7 +55,7 @@ class RogersAndGollands(base.Base):
         })
         request = session.get(self.url)
         if request.status_code == 200:
-            content = request.text.encode('ascii', 'ignore')
+            content = request.text
             data = re.findall(r'initial_locations:  (\[.+\])', content)
             rows = json.loads(data[0]) if data else None
             for row in rows:

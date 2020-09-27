@@ -57,17 +57,22 @@ def fetch_data():
     r= session.get('https://www.sparklemarkets.com/locations',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
 
-    for a  in soup.find_all(lambda tag: (tag.name == "a") and "Details" in tag.text):
-        if a['href'].split('/')[-1]:
-            # print(a['href'])
-            r_soup = session.get(a['href'],headers = headers)
+    for i  in soup.find_all(class_="bDfMI"):
+        if i.a['href'].split('/')[-1]:
+            page_url = locator_domain + i.a['href'][2:]
+            r_soup = session.get(page_url,headers = headers)
             soup_loc = BeautifulSoup(r_soup.text,'lxml')
+            # print(page_url)
             location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip().capitalize()
 
-            add = soup_loc.find('p',class_='font_7')
+            adds = soup_loc.find_all('p',class_='font_7')
+            for add in adds:
+                if "Address:" in add.text:
+                    break
             phone= add.find(lambda tag: (tag.name == "span") and "Phone:" in tag.text).nextSibling.encode('ascii', 'ignore').decode('ascii').strip()
             hours_of_operation = add.find(lambda tag: (tag.name == "span") and "Hours:" in tag.text).nextSibling.replace('\xa0','').replace('|','')
-            page_url = a['href']
+            if "(" in hours_of_operation:
+                hours_of_operation = hours_of_operation[:hours_of_operation.find("(")].strip()
             span = add.find(lambda tag: (tag.name == "span") and "Address:" in tag.text).nextSibling
             address = span.split(',')
             if len(address) == 2:
@@ -84,11 +89,12 @@ def fetch_data():
                 zipp = address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
                 # print(city)
         else:
-
-            add = a.find_parent('div',class_='style-jqwqcz8f1inlineContent')
+            page_url = i.a['href']
+            # print(page_url)
+            add = i
             location_name = add.h4.text.strip()
             # print(location_name)
-            address = add.find('div',class_="style-jqwqcz971")
+            address = add.find_all(class_="_1Z_nJ")[-1]
             list_address= list(address.stripped_strings)
             street_address = list_address[0]
             city = list_address[1].split(',')[0]
@@ -96,9 +102,6 @@ def fetch_data():
             zipp = list_address[1].split(',')[1].split()[-1]
             phone = list_address[-1]
             hours_of_operation = "<MISSING>"
-            page_url = "<MISSING>"
-
-
 
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

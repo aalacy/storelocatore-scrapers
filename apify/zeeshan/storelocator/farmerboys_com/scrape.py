@@ -1,6 +1,8 @@
 import re 
 import base
 import requests
+from sgselenium import SgSelenium
+import json
 
 from lxml import (html, etree,)
 
@@ -68,20 +70,12 @@ class FarmerBoys(base.Base):
             ,'upgrade-insecure-requests': '1'
             ,'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
         })
-        r = session.get(self.url)
-        if r.status_code == 200:
-
-            hxt = html.fromstring(r.text)
-            script = xpath(hxt, '//div[@class="entry-content"]//script//text()')
-            script = re.sub('\s+', ' ', script)
-            result = re.findall(r'(\[.*\])', script)
-            if result:
-                result = result[0]
-                for key in keys:
-                    result = result.replace(key, '"%s"' % key)
-                data = eval(result)
-                for row in data:
-                    yield row
+        
+        driver = SgSelenium().chrome()
+        driver.get(self.url)
+        data = driver.execute_script('return restaurants;')
+        for row in data:
+            yield row
 
 
 if __name__ == '__main__':

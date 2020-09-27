@@ -16,7 +16,7 @@ class DaylightDonuts(base.Base):
 
     def map_data(self, row):
         times = html.fromstring(row.get('hours')).xpath('//tr//td')
-        hours = ', '.join(['%s: %s' % (times[i].text, xpath(times[i+1], './time/text()')) for i in range(len(times)/2) if times[i] is not None and times[i+1] is not None])
+        hours = ', '.join(['%s: %s' % (times[i].text, xpath(times[i+1], './time/text()')) for i in range(len(times)//2) if times[i] is not None and times[i+1] is not None])
         return {
             'locator_domain': self.domain_name
             ,'location_name': row.get('store', '')

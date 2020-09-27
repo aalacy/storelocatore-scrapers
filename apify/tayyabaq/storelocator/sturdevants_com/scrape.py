@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -35,9 +35,9 @@ def fetch_data():
     time.sleep(6)
     stores = driver.find_elements_by_xpath("//table[@id='wpgmza_table_2']/tbody/tr/td")
     time.sleep(2)
-    for i in xrange(1,len(stores),6):
+    for i in range(1,len(stores),6):
         location_name.append(stores[i].text)
-    for i in xrange(3,len(stores),6):
+    for i in range(3,len(stores),6):
         a=stores[i].text.split(",")
         if len(a)>4:
             street_address.append(a[0]+a[1])
@@ -51,7 +51,7 @@ def fetch_data():
         except:
             state.append(stores[i].text.split(",")[-2].strip())
             zipcode.append("<MISSING>")
-    for i in xrange(4,len(stores),6):
+    for i in range(4,len(stores),6):
         phone.append(stores[i].text.split("\n")[0].split("Phone: ")[1])
         hours_of_operation.append(stores[i].text.split("\n")[1])
     for n in range(0,len(location_name)): 

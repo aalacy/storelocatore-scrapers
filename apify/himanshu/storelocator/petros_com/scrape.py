@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,6 +14,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
@@ -62,40 +64,47 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append(hours if hours else "<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append("Open 24 Hours" if "Open 24 Hours" in hours else hours.replace("–","-") if hours else "<MISSING>")
+            tem_var.append(base_url)
             new_array.append(tem_var)
     k = soup.find("div",{"class":"one_third last_column"})
     p = k.find_all("p")
     for p1 in p:
         tem_var =[]
-        if "SOUTHERN PINES (Coming Spring 2020)" in list(p1.stripped_strings) or "10725 S US Hwy 15 501 North" in list(p1.stripped_strings) :
-            pass
-        else:
-            full =list(p1.stripped_strings)
-            if len(full) != 0:
-                hours = " ".join(full[-3:-1]).replace("Unit A Southern Pines, NC 28387",'<MISSING>')
-                name = full[0]
-                street_address = " ".join(full[1:3])
-                phone = list(p1.stripped_strings)[-1]
+        full =list(p1.stripped_strings)
+        if len(full) > 1:
+            name = full[0]
+            if "10725 S US Hwy" in name:
+                name = "SOUTHERN PINES"
+                full.insert(0,"SOUTHERN PINES")
+                hours = " ".join(full[-4:-1])
+                city = full[-6].split(',')[0]
+                state = full[-6].split(',')[1].split( )[0]
+                zipcode = full[-6].split(',')[1].split( )[1]
+            else:
                 city = full[-4].split(',')[0]
                 state = full[-4].split(',')[1].split( )[0]
                 zipcode = full[-4].split(',')[1].split( )[1]
-                tem_var.append("https://www.petros.com/")
-                tem_var.append(name)
-                tem_var.append(street_address.replace("Love’s Travel Center ","").replace('#236',''))
-                tem_var.append(city)
-                tem_var.append(state.strip())
-                tem_var.append(zipcode.strip())
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append(hours if hours else "<MISSING>")
-                tem_var.append("<MISSING>")
-                new_array.append(tem_var)       
+                hours = " ".join(full[-3:-1]).replace("Unit A Southern Pines, NC 28387",'<MISSING>')
+            street_address = " ".join(full[1:3])
+            phone = list(p1.stripped_strings)[-1]
+            if "-" not in phone:
+                phone = "<MISSING>"
+            tem_var.append("https://www.petros.com/")
+            tem_var.append(name)
+            tem_var.append(street_address.replace("Love’s Travel Center ","").replace('#236',''))
+            tem_var.append(city)
+            tem_var.append(state.strip())
+            tem_var.append(zipcode.strip())
+            tem_var.append("US")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append("Open 24 Hours" if "Open 24 Hours" in hours else hours.replace("–","-") if hours else "<MISSING>")
+            tem_var.append(base_url)
+            new_array.append(tem_var)
     p = soup1.find_all("p")
     for p1 in p:
         tem_var =[]
@@ -103,6 +112,8 @@ def fetch_data():
             pass
         else:
             full =list(p1.stripped_strings)
+            if not full:
+                continue
             if full[0]=="TEMPORARILY CLOSED DUE TO COVID:":
                 del full[0]
             street_address=''
@@ -145,14 +156,45 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append(hours if hours else "<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append("Open 24 Hours" if "Open 24 Hours" in hours else hours.replace("–","-") if hours else "<MISSING>")
+            tem_var.append(base_url)
             new_array.append(tem_var)
+    p = soup.find("div",{"class":"entry"}).find_all("h3")
+    for p1 in p:
+        if "Johnson City" in p1.text:
+            tem_var =[]
+            full =list(p1.stripped_strings)
+            name = full[0]
+            street_address = full[1]
+            # replace("Phone number coming soon","<MISSING>")
+            phone = list(p1.stripped_strings)[-1]
+            city = full[2].split(',')[0]
+            state = full[2].split(',')[1].split( )[0]
+            zipcode = full[2].split(',')[1].split( )[1]
+            hours = "<MISSING>"
+            phone = full[-1]
+            tem_var.append("https://www.petros.com/")
+            tem_var.append(name)
+            tem_var.append(street_address)
+            tem_var.append(city)
+            tem_var.append(state.strip())
+            tem_var.append(zipcode.strip())
+            tem_var.append("US")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append(hours)
+            tem_var.append(base_url)
+            new_array.append(tem_var)
+            break
     for q in range(len(new_array)):
         if new_array[q][2] in adressessess :
             continue
         adressessess.append(new_array[q][2])
-        yield new_array[q] 
+        yield new_array[q]
+
 def scrape():
     data = fetch_data()
     write_output(data)

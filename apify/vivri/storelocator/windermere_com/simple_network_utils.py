@@ -32,9 +32,7 @@ def fetch_json(locations_url: str,
 
     json_result = json.loads(urllib.parse.unquote(response.text), encoding="utf8")
 
-    drill_down_into(json_result, path_to_locations)
-
-    return json_result['data']['result_list']
+    return drill_down_into(json_result, path_to_locations)
 
 def fetch_xml(locations_url: str,
               query_params: dict,

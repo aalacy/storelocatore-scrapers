@@ -29,48 +29,68 @@ def fetch_data():
     location_url = "https://t-grill.com/locations"
     r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    add = soup.find_all("div",{"typography":"BodyAlpha"})
+    box = soup.find("div",{"data-ux":"ContentCards"}).find_all("div",{"data-ux":"ContentCard"})
+    for card in box:
+        try:
+            page_url = card.find("a",{"data-ux":"ContentCardButton"})['href']
+            # print(page_url)
+            payload_link = page_url.replace("http://","").replace("hrpos.heartland.us","mobilebytes.com")
+            id_url = "https://online.hrpos.heartland.us/location"
+            payload_id = '{\"domain\":\"'+payload_link+'\",\"action\":\"subdomain_info\"}'
+            try:
+                location_id = session.post(id_url, headers=headers, data = payload_id).json()['payload']['LocationID']
+            except KeyError:
+                location_id = "14045"
+           
 
-    for i in add:
+            payload = '{\"domain\":\"'+payload_link+'\",\"locationId\":\"'+str(location_id)+'\",\"jwt\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjYXJ0SWQiOiIzOTZFOEI5Ni0yRjRFLTQ0QzMtQkMxRC04QzQ3N0E5NDA5MDQiLCJsb2NhdGlvbklkIjozMTc1LCJzb3VyY2VJcCI6IjEwNC4xOTQuMjIwLjIwMCIsImV4cCI6MTYwMDg0Njc5NywiaWF0IjoxNjAwODQzMTk3fQ.Z1EgfcCSjD78m78VX2sGZv6VoQd_xEdi_eWL7NkFz4I\",\"env_config\":\"prod\"}'
+           
+            url = "https://online.hrpos.heartland.us/setup"
+            json_data = session.post(url,headers=headers,data=payload).json()['payload']['setupFile']['SetupInfo']
+            jd = json.loads(json_data)
+            location_name = jd['name']
+            street_address = jd['address']['line']
+            city = jd['address']['city']
+            state = jd['address']['state']
+            zipp = jd['address']['zip']
+            country_code = jd['address']['country']
+            store_number = jd['locationId']
+            phone = jd['phone']
+            latitude = jd['address']['lat']
+            longitude = jd['address']['lon']
+            hours_of_operation = "Monday-Saturday : 10:30 AM-8:30 PM, Sunday:Closed"
+            page_url = page_url
+        except TypeError:
+            location_name = "Teriyaki Grill - Ruston"
+            street_address = "1913 E. Kentucky Avenue"
+            city = "Ruston"
+            state = "Louisiana"
+            zipp = "<MISSING>"
+            country_code = "US"
+            store_number = "<MISSING>"
+            phone = "3182540777"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            page_url = "<MISSING>"
 
-        temp = i.text
-        addr = temp.split(",")
-
-        tt = addr[1].split(" ")[2:]
-    
-        new_tt = [i.replace(u'\xa0', u' ') for i in tt]
-    
-        if len(new_tt) == 3:
-            part1 = " ".join(new_tt[:2])
-        else:
-            part1= " ".join(new_tt[:3])
-
-        part2 = new_tt[-1].split(" ")
-        part22 = part2[0]
-        street_address = part1 + " " + part22
-        phone = part2[1]
-        city = addr[0]
-        state = addr[1].split(" ")[1]
-        location_name = "Teriyaki Grill - " + city
-
-
+        phone = "("+phone[:3]+")"+phone[3:6]+"-"+phone[6:]
         store = []
         store.append(base_url)
         store.append(location_name)
         store.append(street_address)
         store.append(city)
         store.append(state)
-        store.append("<MISSING>")
-        store.append("US")
-        store.append("<MISSING>")
+        store.append(zipp)
+        store.append(country_code)
+        store.append(store_number)
         store.append(phone)
         store.append("Restaurant")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(location_url)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
         yield store
-
 
 def scrape():
     data = fetch_data()

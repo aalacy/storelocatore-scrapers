@@ -3,11 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 def getDecodedPhoneNo(encoded_phone_no):
         _dict = {}
         _dict["2"] = "ABC"
@@ -29,7 +24,6 @@ def getDecodedPhoneNo(encoded_phone_no):
         _dict["7"] = "PQRS"
         _dict["8"] = "TUV"
         _dict["9"] = "WXYZ"
-
         _real_phone = ""
         for _dg in encoded_phone_no:
             for key in _dict:
@@ -37,17 +31,14 @@ def getDecodedPhoneNo(encoded_phone_no):
                     _dg = key
             _real_phone += _dg
         return _real_phone
-
-
     # print("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-    base_url= "https://api.freshop.com/1/stores?app_key=mathernes&has_address=true&limit=-1&token=2564db6d962108b6e9af99b11eed9c9c"
+    base_url= "https://api.freshop.com/1/stores?app_key=mathernes&has_address=true&is_selectable=true&limit=100&token=18a138c0a67c308ca3e1da3d916d78af"
     locations = session.get(base_url,headers=headers).json()
-    
     # soup= BeautifulSoup(r.text,"lxml")
     # return_main_object=[]
     for loc in locations['items']:
@@ -67,6 +58,8 @@ def fetch_data():
             country = "CA"
         else:
             country = "US"
+        if "440 N. Third Street" in address:
+            address = "440 N. Third Street Suite 100"
         tem_var.append("https://www.mathernes.com")
         tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8211;",""))
         tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip())
@@ -83,16 +76,10 @@ def fetch_data():
         tem_var.append(loc['url'])
         # print(tem_var)
         return_main_object.append(tem_var)
-        
-
     return return_main_object
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
 
 

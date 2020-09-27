@@ -1,5 +1,4 @@
-import time
-import simple_scraper_pipeline as scrape_pipeline
+from simple_scraper_pipeline import SimpleScraperPipeline
 from simple_network_utils import fetch_json
 import simple_utils
 
@@ -68,18 +67,18 @@ def scrape():
     """
 
     record_mapping = {
-        "page_url": [["url_slug"]],
-        "location_name": [["name"]],
+        "page_url": ["url_slug"],
+        "location_name": ["name"],
         "street_address": [["location", "address"], ["location", "address2"]],
-        "city": [["location", "city"]],
-        "state": [["location", "state"]],
-        "zip": [["location", "zip"]],
-        "country_code": [["location", "country_code"]],
-        "store_number": [["external_id"]],
-        "phone": [["phone"]],
-        "location_type": [["legal"]],
-        "latitude": [["location", "latitude"]],
-        "longitude": [["location", "longitude"]],
+        "city": ["location", "city"],
+        "state": ["location", "state"],
+        "zip": ["location", "zip"],
+        "country_code": ["location", "country_code"],
+        "store_number": ["external_id"],
+        "phone": ["phone"],
+        "location_type": ["legal"],
+        "latitude": ["location", "latitude"],
+        "longitude": ["location", "longitude"],
     }
 
     constant_fields = {
@@ -98,11 +97,15 @@ def scrape():
         "page_url": lambda s: page_url_from_slug(s)
     }
 
-    scrape_pipeline.define_and_run( data_fetcher= lambda: fetch_data(),
-                                    record_mapping=record_mapping,
-                                    constant_fields=constant_fields,
-                                    required_fields=required_fields,
-                                    field_transform=field_transformers,
-                                    fail_on_outlier=False)
+    pipeline = SimpleScraperPipeline(scraper_name = "windermere.com",
+                                     data_fetcher= lambda: fetch_data(),
+                                     record_mapping=record_mapping,
+                                     constant_fields=constant_fields,
+                                     required_fields=required_fields,
+                                     field_transform=field_transformers,
+                                     fail_on_outlier=False)
 
-scrape()
+    pipeline.run()
+
+if __name__ == "__main__":
+    scrape()

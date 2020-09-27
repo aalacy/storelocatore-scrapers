@@ -88,6 +88,8 @@ def fetch_data():
             else:
                 store_number = "<MISSING>"
                 hours_of_operation = "<MISSING>"
+            page_url = "https://locations.capitalone.com/"+value['seoType']+"/"+state.lower()+"/"+value['slug']
+            # print(page_url)
 
             result_coords.append((lat,lng))
             store = []
@@ -104,7 +106,7 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             store.append(hours_of_operation)
-            store.append("<MISSING>")
+            store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
                 continue
@@ -158,6 +160,9 @@ def fetch_data():
             else:
                 store_number = "<MISSING>"
                 hours_of_operation = "<MISSING>"
+            
+            page_url = "https://locations.capitalone.com/"+value['seoType']+"/"+state.lower()+"/"+value['slug']
+            # print(page_url)
 
             result_coords.append((lat,lng))
             store = []
@@ -174,7 +179,7 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             store.append(hours_of_operation)
-            store.append("<MISSING>")
+            store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
                 continue

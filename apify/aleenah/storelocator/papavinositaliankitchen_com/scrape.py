@@ -1,64 +1,81 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
+import csv
+import string
+import re, time
+
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-session = SgRequests()
-all=[]
 def fetch_data():
-    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.papavinositaliankitchen.com/locations.html'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('td', {'class': "wsite-multicol-col"})
+   # print("states = ",len(state_list))
+    p = 0
+    for div in divlist:
+        try:
+            title = div.find('h2').text
+            #print(title)
+            content = div.find('div',{'class':'paragraph'})
+            content = re.sub(cleanr,'\n',str(content))
+            content = re.sub(pattern,'\n',content).lstrip().splitlines()
+            phone = content[1]
+            street = content[2]
+            city,state = content[3].split(', ')
+            state,pcode = state.lstrip().split(' ',1)
+            hours = ' '.join(content[4:])
+            hours = hours.replace('\u200b','')            
+            longt = div.find('iframe')['src'].split('long=',1)[1].split('&',1)[0]
+            lat = div.find('iframe')['src'].split('lat=',1)[1].split('&',1)[0]
+            data.append([
+                        'https://www.papavinositaliankitchen.com/',
+                        url,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+            
+        except Exception as e:
+            #print(e)
+            pass
+                
+        
+    return data
 
-    res=session.get("https://www.papavinositaliankitchen.com/locations.html")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    tds = soup.find_all('div', {'class': 'wsite-section-content'})[1].find('table').find_all('td')
-
-    for td in tds:
-        loc = td.find('h2').text
-        data=td.find('strong')
-        print(data)
-        phone, street, csz= re.findall(r'</font><br/>([0-9\.]+)<br/>(.*)<br/>(.*[\d]{5})<br/><span>',str(data))[0]
-        tim = data.text.replace(phone,'').replace(street,'').replace(csz,'').replace("Papa Vino's Italian Kitchen",'').replace('Hours','Hours: ').replace('pm','pm ').replace('day','day ').replace('  ',' ').strip()
-        csz=csz.split(',')
-        city=csz[0]
-        csz=csz[1].strip().split(' ')
-        state=csz[0]
-        zip=csz[1]
-        long,lat=re.findall(r'long=(.*)&lat=(.*)&domain',td.find('iframe').get('src'))[0]
-        print(lat,long)
-        all.append([
-            "https://www.papavinositaliankitchen.com",
-            loc.replace('\u200b',''),
-            street.replace('\u200b',''),
-            city.replace('\u200b',''),
-            state.replace('\u200b',''),
-            zip.replace('\u200b',''),
-            'US',
-            "<MISSING>",  # store #
-            phone.replace('\u200b',''),  # phone
-            "<MISSING>",  # type
-            lat.replace('\u200b',''),  # lat
-            long.replace('\u200b',''),  # long
-            tim.replace('\u200b',''),  # timing
-            "https://www.papavinositaliankitchen.com/locations.html"])
-    return(all)
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
-

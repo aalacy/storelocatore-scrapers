@@ -1,109 +1,151 @@
+from bs4 import BeautifulSoup
 import csv
-import re
-from lxml import etree
-import json
-import usaddress
+import string
+import re, time, usaddress
+
 from sgrequests import SgRequests
 
-base_url = 'https://revelatorcoffee.com/pages/locations'
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    session = SgRequests()
-    output_list = []
-    url = "https://revelatorcoffee.com/pages/locations"
-    source = session.get(url).text    
-    response = etree.HTML(source)
-    store_list = response.xpath('//a[contains(@href, "https://revelatorcoffee.com/pages")]/@href')
-    for store_link in store_list:
-        store = etree.HTML(session.get(store_link).text)
-        st_list = store.xpath('.//div[@class="rte grid__item"]//table//tr')
-        for st in st_list:
-            output = []
-            detail = st.xpath('.//td')[1].xpath('.//p')
-            output.append(base_url) # url
-            output.append(validate(detail[0].xpath('.//text()')).split(':')[-1]) #location name
-            address = validate(detail[1].xpath('.//text()'))
-            address = parse_address(address)
-            output.append(address['street']) #address
-            output.append(address['city']) #city
-            output.append(address['state']) #state
-            output.append(address['zipcode']) #zipcode
-            output.append('US') #country code
-            output.append("<MISSING>") #store_number
-            output.append('<MISSING>') #phone
-            output.append("Revelator Coffee") #location type
-            geo_loc = validate(st.xpath('.//a/@href'))
-            lat = ''
-            lng = ''
-            if geo_loc != '':
-                geo_loc = geo_loc.split('/@')
-                if len(geo_loc) > 1:
-                    geo_loc = geo_loc[1].split(',17')[0].split(',')
-                    lat = geo_loc[0]
-                    lng = geo_loc[1]                
-            output.append(get_value(lat)) #latitude
-            output.append(get_value(lng)) #longitude
-            output.append(validate(detail[2].xpath('.//text()'))) #opening hours
-            output_list.append(output)            
 
-    return output_list
+def fetch_data():
+    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://revelatorcoffee.com/pages/locations'
+    r = session.get(url, headers=headers, verify=False)  
+    soup =BeautifulSoup(r.text, "html.parser")   
+    linklist = soup.find('div',{'class':'grid'}).findAll('a')
+    print(len(linklist))  
+    p = 0
+    for link in linklist:
+        
+        link = link['href']
+        #print(link)
+        r = session.get(link, headers=headers, verify=False)
+        soup =BeautifulSoup(r.text, "html.parser")
+        try:
+            content = soup.find('div',{'class':'rte grid__item'}).find('table').findAll('tr')            
+            for dt in content:
+                try:
+                    lat,longt = dt.find('a')['href'].split('@',1)[1].split('data',1)[0].split(',',1)
+                    longt = longt.split(',',1)[0]
+                except:
+                    lat = '<MISSING>'
+                    longt = '<MISSING>'
+                    
+                det = re.sub(pattern,' ',dt.text).splitlines()               
+                title = det[0]
+                address = det[1]
+                hours = det[2]
+                if hours.find('location is closed') > -1:
+                    hours = 'Temporarily Closed'
+                address = usaddress.parse(address)
+                i = 0
+                street = ""
+                city = ""
+                state = ""
+                pcode = ""
+                while i < len(address):
+                    temp = address[i]
+                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                        street = street + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        pcode = pcode + " " + temp[0]
+                    i += 1
+
+                street = street.lstrip().replace(',','')
+                city = city.lstrip().replace(',','')
+                state = state.lstrip().replace(',','')
+                pcode = pcode.lstrip().replace(',','')
+                phone = '<MISSING>'
+                data.append([
+                        'https://revelatorcoffee.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+                #print(p,data[p])
+                p += 1
+                
+            
+            
+            
+        except:
+            try:
+                content = soup.find('div',{'class':'Footer-business-info'}).text.lstrip().splitlines()                
+                title  = content[0]
+                street = content[1]
+                city, state,pcode = content[2].split(', ',2)               
+                phone = content[4]
+                #print(phone)
+                hours = soup.findAll('h1')[1].text.replace('WINE','').replace('PICKUP & DELIVERY','').lstrip().replace('ay','ay ').replace('-','- ')
+                try:
+                    lat = str(soup).split('"mapLat":',1)[1].split(',',1)[0]
+                    longt = str(soup).split('"mapLng":',1)[1].split(',',1)[0]
+                except:
+                    lat = '<MISSING>'
+                    longt = '<MISSING>'
+                data.append([
+                        'https://revelatorcoffee.com/',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode.replace(',',''),
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+                #print(p,data[p])
+                p += 1
+                    
+                    
+            except:
+                continue
+     
+        
+                  
+        
+    return data
+
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

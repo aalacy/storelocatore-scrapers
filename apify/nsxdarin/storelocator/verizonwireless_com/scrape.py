@@ -4,6 +4,8 @@ from sgzip import *
 from typing import *
 import json
 from concurrent.futures import *
+from sglogging import sglog
+import time
 
 MISSING = '<MISSING>'
 website = 'verizonwireless.com'
@@ -11,6 +13,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 SEARCH_RADIUS_MILES = 2
 paralellism = 15
 session = SgRequests().requests_retry_session()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,9 +37,10 @@ def parse_store_locations(iter_lines: Iterator):
                 return json.loads(json_str)
             except json.decoder.JSONDecodeError:
                 if json_str:
-                    print(f"Cannot parse string to json (most likely due to 'no results' javascript) : {json_str}")
+                    log.info(f"Cannot parse string to json (most likely due to 'no results' javascript) : {json_str}")
                 return []
 
+    log.debug("Found no store locations in resultset")
     return []
 
 def get(record: Dict[str, str], key: str):
@@ -52,6 +56,7 @@ def get(record: Dict[str, str], key: str):
             v_strip = value.strip()
             return v_strip if v_strip else MISSING
         else:
+            log.error(f"Unknown record type: {key} in {record}")
             raise ValueError(f"Unknown record type: {key} in {record}")
 
     except KeyError:
@@ -97,9 +102,16 @@ def fetch_data():
 
                 yield res
 
+                len_ids = len(ids)
+                if len_ids % 100 == 0:
+                    log.debug(f"Counted {len_ids} so far...")
+
 def scrape():
+    start = time.clock_gettime(0)
     data = fetch_data()
     write_output(data)
+    end = time.clock_gettime(0)
+    log.info(f"Scrape took {end-start} seconds.")
 
 if __name__ == "__main__":
     scrape()

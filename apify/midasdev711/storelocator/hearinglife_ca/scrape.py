@@ -13,7 +13,7 @@ def validate(items):
         if item is '<MISSING>':
             continue
         if type(item) is str:
-            item = item.encode('ascii','ignore').encode('utf-8').strip()
+            item = item.encode('ascii','ignore').strip()
         rets.append(item)
     return rets
 
@@ -49,7 +49,7 @@ def fetch_data():
         store_hours = ""
         if len(hours) > 0:
             for x in hours:
-                store_hours += (x.get('Day') or u' ') + u' ' + (x.get('OpeningHours') or u' ') + u','
+                store_hours += (x.get('Day') or ' ') + ' ' + (x.get('OpeningHours') or ' ') + ','
         output.append(base_url)
         output.append(store.get('Title'))
         output.append(store.get('Address'))

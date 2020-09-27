@@ -1,4 +1,4 @@
-from simple_scraper_pipeline import *
+from simple_scraper_pipeline import SimpleScraperPipeline
 from simple_utils import *
 import urllib.parse
 import html.parser
@@ -88,18 +88,18 @@ def scrape():
     )
 
     record_mapping = {
-        "page_url": [["exturl"]],
-        "location_name": [["location"]],
-        "street_address": [["address"]],
-        "city": [["address"]],
-        "state": [["address"]],
-        "zip": [["address"]],
-        "store_number": [["storeid"]],
-        "phone": [["telephone"]],
-        "latitude": [["latitude"]],
-        "longitude": [["longitude"]],
-        "country_code": [["country"]],
-        "hours_of_operation": [["operatinghours"]]
+        "page_url": ["exturl"],
+        "location_name": ["location"],
+        "street_address": ["address"],
+        "city": ["address"],
+        "state": ["address"],
+        "zip": ["address"],
+        "store_number": ["storeid"],
+        "phone": ["telephone"],
+        "latitude": ["latitude"],
+        "longitude": ["longitude"],
+        "country_code": ["country"],
+        "hours_of_operation": ["operatinghours"]
     }
 
     constant_fields = {
@@ -127,11 +127,15 @@ def scrape():
 
     record_identity_fields = ["latitude", "longitude"]
 
-    define_and_run( data_fetcher= fetch_data,
-                    record_mapping=record_mapping,
-                    constant_fields=constant_fields,
-                    field_transform=field_transformers,
-                    record_identity_fields=record_identity_fields,
-                    fail_on_outlier=False,)
+    pipeline = SimpleScraperPipeline(scraper_name="sushishop.com",
+                                     data_fetcher= fetch_data,
+                                     record_mapping=record_mapping,
+                                     constant_fields=constant_fields,
+                                     field_transform=field_transformers,
+                                     record_identity_fields=record_identity_fields,
+                                     fail_on_outlier=False)
 
-scrape()
+    pipeline.run()
+
+if __name__ == "__main__":
+    scrape()

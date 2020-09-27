@@ -69,7 +69,7 @@ class OriginalPancakeHouse(base.Base):
                     names_addresses = re.findall(r'<b>(.+)</b>.+\n +(.+)<br />\n +(.+),', state_page.text)
                     states_zips = re.findall(r'[A-Za-z]+ [0-9]{5}', state_page.text)
                     phones = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', state_page.text)
-                    data = zip(names_addresses, states_zips, phones)
+                    data = list(zip(names_addresses, states_zips, phones))
                     for row in data:
                         yield row
 

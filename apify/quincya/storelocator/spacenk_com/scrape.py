@@ -2,23 +2,12 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.keys import Keys
-
-def get_driver():
-	options = Options() 
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 def write_output(data):
@@ -35,11 +24,13 @@ def fetch_data():
 	
 	base_link = "https://www.spacenk.com/us/en_US/stores.html#!"
 
-	driver = get_driver()
+	driver = SgSelenium().chrome()
 	time.sleep(2)
 
 	driver.get(base_link)
 	time.sleep(randint(1,2))
+
+	actions = ActionChains(driver)
 
 	try:
 		element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
@@ -54,12 +45,15 @@ def fetch_data():
 	prev_total = 0
 	count = 0
 	while total_poi != prev_total and count < 10:
-		driver.find_elements_by_class_name("ubsf_locations-list-item")[-1].send_keys(Keys.END)
+		element = driver.find_elements_by_class_name("ubsf_locations-list-item")[-1]
+		actions.move_to_element(element).perform()
 		time.sleep(4)
 		prev_total = total_poi
 		base = BeautifulSoup(driver.page_source,"lxml")
 		total_poi = len(base.find_all(class_="ubsf_locations-list-item"))
 		count += 1
+
+	base = BeautifulSoup(driver.page_source,"lxml")
 
 	data = []
 	final_links = []
@@ -71,12 +65,13 @@ def fetch_data():
 			continue
 		state = final_item.find(class_="ubsf_locations-list-item-zip-city").text
 		state = state[state.rfind(",")+1:-6].strip()
-		final_link = final_item['href']
+		final_link = final_item.a['href']
 		final_links.append([final_link,state])
 
 	for final in final_links:
 		final_link = final[0]
 
+		print(final_link)
 		driver.get(final_link)
 		time.sleep(randint(1,2))
 
@@ -93,10 +88,9 @@ def fetch_data():
 		try:
 			hours_of_operation = item.find(class_="ubsf_details-opening-hours").text.replace("pm","pm ").replace("closed","").strip()
 		except:
+			# Duplicates have no hours so skip
 			continue
-
-		
-		print(final_link)
+				
 		locator_domain = "spacenk.com"
 		location_name = item.h1.text
 		# print(location_name)

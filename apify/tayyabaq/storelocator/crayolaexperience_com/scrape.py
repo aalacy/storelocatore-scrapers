@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -37,7 +37,7 @@ def fetch_data():
     # Fetch stores 
     stores = driver.find_elements_by_link_text("Contact Us")
     loc = [stores[i].get_attribute("href") for i in range(0,len(stores))]
-    for i in range(0,len(loc)/2):
+    for i in range(0,len(loc)//2):
         driver.get(loc[i])
         time.sleep(3)
         location_name.append(driver.find_element_by_class_name("section-heading").text)
