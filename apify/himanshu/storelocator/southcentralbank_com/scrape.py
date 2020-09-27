@@ -50,7 +50,7 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+    page_url = "https://www.southcentralbank.com/locations/"
 
 
 
@@ -60,6 +60,7 @@ def fetch_data():
     for row in soup.find_all('div',class_='panel-group'):
 
         location_name = row.h4.text.strip()
+        print(location_name)
         coords = row.find('div',class_='marker')
         latitude= coords['data-lat']
         longitude  = coords['data-lng']
@@ -133,7 +134,7 @@ def fetch_data():
                         hours_of_operation = "<MISSING>"
 
 
-        if len(list_address) == 7 or len(list_address) == 8  or (len(list_address) == 9 and re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[2])) !=[]) or len(list_address) ==10 or len(list_address)== 11 or len(list_address) == 12:
+        if len(list_address) == 7 or len(list_address) == 8 or len(list_address) == 13 or len(list_address) == 14 or len(list_address) == 16 or (len(list_address) == 9 and re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[2])) !=[]) or len(list_address) ==10 or len(list_address)== 11 or len(list_address) == 12:
 
             street_address = list_address[0]
             city = list_address[1].split(',')[0]
@@ -144,7 +145,7 @@ def fetch_data():
 
 
 
-        if len(list_address) == 9 and re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[2])) ==[] or len(list_address) >12:
+        elif len(list_address) == 9 and re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[2])) ==[] or len(list_address) >12:
 
             def divide_chunks(l, n):
 
@@ -164,6 +165,25 @@ def fetch_data():
                 phone = "<MISSING>"
                 hours_of_operation = "<MISSING>"
 
+        if "phone" in location_name.lower():
+            location_name = list_address[0]
+            street_address = list_address[1]
+            city = list_address[2].split(',')[0]
+            state = list_address[2].split(',')[1].split()[0]
+            zipp = list_address[2].split(',')[1].split()[-1]
+            phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[3]))[0]
+            hours_of_operation = " ".join(list_address[4:])
+
+        if "2908 Ring Road" in city:
+            street_address = "2908 Ring Road"
+            city = "Elizabethtown"
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Drive")]
+
+        if "Drive" in hours_of_operation:
+            hours_of_operation = hours_of_operation[:hours_of_operation.find("Drive")]
+        hours_of_operation = hours_of_operation.replace("Lobby Hours","").strip()
+        if "appointment" in hours_of_operation.lower():
+            hours_of_operation = "<MISSING>"
 
         store = []
         store.append(locator_domain if locator_domain else '<MISSING>')
