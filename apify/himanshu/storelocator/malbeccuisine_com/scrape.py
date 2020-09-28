@@ -17,10 +17,8 @@ def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    base_url = "http://malbeccuisine.com"
     r = session.get("http://malbeccuisine.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
     for location in soup.find_all("script",{'type':"application/json"})[-3]:
         json_data = json.loads(location)
         j =  json_data['preloadQueries']
@@ -30,22 +28,26 @@ def fetch_data():
             except:
                 continue
             for g in h:
-                store = []
-                store.append("http://malbeccuisine.com")
-                store.append(g['name'])
-                store.append(g['streetAddress'])
-                store.append(g['city'])
-                store.append(g['state'])
-                store.append(g['postalCode'])
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(g['phone'])
-                store.append("malbec argentinean cuisine")
-                store.append(g['lat'])
-                store.append(g['lng'])
-                store.append(str(g['schemaHours']).replace("'","").replace("[","").replace("]","").replace("'",""))
-                store.append("https://www.malbeccuisine.com/")
-                yield store
+                d = (g['socialHandles'])
+                for f in d:
+                    url = (f['url'])
+                    phone = "("+g['phone'][0:3]+") "+g['phone'][3:6]+"-"+g['phone'][6:10]
+                    store = []
+                    store.append("http://malbeccuisine.com")
+                    store.append(g['name'])
+                    store.append(g['streetAddress'])
+                    store.append(g['city'])
+                    store.append(g['state'])
+                    store.append(g['postalCode'])
+                    store.append("US")
+                    store.append("<MISSING>")
+                    store.append(phone)
+                    store.append("malbec argentinean cuisine")
+                    store.append(g['lat'])
+                    store.append(g['lng'])
+                    store.append(str(g['schemaHours']).replace("'","").replace("[","").replace("]","").replace("'",""))
+                    store.append(url)
+                    yield store
 def scrape():
     data = fetch_data()
     write_output(data)
