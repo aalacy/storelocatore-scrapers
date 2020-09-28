@@ -35,7 +35,7 @@ def fetch_data():
         state = ''
         zc = ''
         phone = ''
-        store = loc.rsplit('/',1)[1]
+        store = '<MISSING>'
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
