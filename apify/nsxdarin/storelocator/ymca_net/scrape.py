@@ -1,9 +1,5 @@
 import csv
-from sgrequests import SgRequests
-
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+import urllib
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +14,7 @@ def fetch_data():
         print(str(x))
         try:
             url = 'https://www.ymca.net/y-profile/?id=' + str(x)
-            r = session.get(url, headers=headers)
+            x = urllib.request.urlopen(url)
             name = ''
             add = ''
             city = ''
@@ -33,19 +29,18 @@ def fetch_data():
             hours = ''
             lat = '<MISSING>'
             lng = '<MISSING>'
-            lines = r.iter_lines()
-            for line in lines:
+            for line in x:
                 line = str(line.decode('utf-8'))
                 if '<h1>' in line and name == '':
                     name = line.split('<h1>')[1].split('</h1>')[0]
                 if "Visit this Y's website now" in line:
-                    next(lines)
-                    next(lines)
-                    next(lines)
-                    g = next(lines)
+                    next(x)
+                    next(x)
+                    next(x)
+                    g = next(x)
                     g = str(g.decode('utf-8'))
                     add = g.split('<')[0].strip().replace('\t','')
-                    g = next(lines)
+                    g = next(x)
                     g = str(g.decode('utf-8'))
                     if g.count('<br />') == 2:
                         add = add + ' ' + g.split('<br />')[0].strip().replace('\t','')
@@ -75,7 +70,7 @@ def fetch_data():
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
-
+        
 def scrape():
     data = fetch_data()
     write_output(data)
