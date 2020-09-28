@@ -1,5 +1,5 @@
 import csv
-import urllib
+import urllib.request
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,27 +29,28 @@ def fetch_data():
             hours = ''
             lat = '<MISSING>'
             lng = '<MISSING>'
+            AFound = False
             for line in x:
                 line = str(line.decode('utf-8'))
                 if '<h1>' in line and name == '':
                     name = line.split('<h1>')[1].split('</h1>')[0]
-                if "Visit this Y's website now" in line:
-                    next(x)
-                    next(x)
-                    next(x)
-                    g = next(x)
-                    g = str(g.decode('utf-8'))
-                    add = g.split('<')[0].strip().replace('\t','')
-                    g = next(x)
-                    g = str(g.decode('utf-8'))
-                    if g.count('<br />') == 2:
-                        add = add + ' ' + g.split('<br />')[0].strip().replace('\t','')
-                        csz = g.split('<br />')[1].strip().replace('\t','')
-                    else:
-                        csz = g.split('<br />')[0].strip().replace('\t','')
-                    city = csz.split(',')[0]
-                    state = csz.split(',')[1].strip().split(' ')[0]
-                    zc = csz.rsplit(' ',1)[1]
+                if "Set as default Y" in line:
+                    while AFound is False:
+                        g = next(x)
+                        g = str(g.decode('utf-8'))
+                        if '<br />' in g:
+                            AFound = True
+                            add = g.split('<')[0].strip().replace('\t','')
+                            g = next(x)
+                            g = str(g.decode('utf-8'))
+                            if g.count('<br />') == 2:
+                                add = add + ' ' + g.split('<br />')[0].strip().replace('\t','')
+                                csz = g.split('<br />')[1].strip().replace('\t','')
+                            else:
+                                csz = g.split('<br />')[0].strip().replace('\t','')
+                            city = csz.split(',')[0]
+                            state = csz.split(',')[1].strip().split(' ')[0]
+                            zc = csz.rsplit(' ',1)[1]
                 if 'Phone:' in line:
                     phone = line.split('Phone:')[1].split('<')[0].strip()
                 if 'data-latitude="' in line:
