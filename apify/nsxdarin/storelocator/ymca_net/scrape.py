@@ -28,7 +28,7 @@ def fetch_data():
             website = 'ymca.net'
             typ = '<MISSING>'
             country = 'US'
-            loc = '<MISSING>'
+            loc = url
             store = str(x)
             hours = ''
             lat = '<MISSING>'
