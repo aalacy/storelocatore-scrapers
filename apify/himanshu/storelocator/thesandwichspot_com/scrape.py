@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
 import re
 import json
-import requests
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
