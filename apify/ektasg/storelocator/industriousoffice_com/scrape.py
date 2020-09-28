@@ -23,61 +23,92 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    data = []    
+    data = []
+    titlelist = []
+    titlelist.append('none')
     url = 'https://www.industriousoffice.com/locations'
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
-    state_list = soup.findAll('a', {'class': 'btn-location'})
-   # print("states = ",len(state_list))
+    state_list = soup.find('section',{'class':'section-all-locations-v2 my-lg'}).findAll('li', {'class': 'market'})
+    #print("states = ",len(state_list))
     p = 0
     cleanr = re.compile(r'<[^>]+>')
-    for states in state_list:        
-        states = states['href']
+    for states in state_list:
+        #print(states.find('a').text)
+        '''if states.find('a').text.lower().find('coming soon') > -1 :
+            continu
+            e
+        states = states.find('a')['href']
+        if states.find('techspace') > -1:
+            continue'''
+        ##print(states.find('a').text)
+        statenow = states.find('a').text
+        states = states.find('a')['href']
         #print(states)
         r = session.get(states, headers=headers, verify=False)
-        ccode = 'US'
-        soup = BeautifulSoup(r.text, "html.parser")       
-        city_list = soup.findAll('div', {'class': 'location-marker-til'})
-        linklist = []
-        for cities in city_list:
-            cities = cities.findAll('div')[1]
-            cities = cities.find('a',{'class':'gtm-view-details'})           
-            link = cities['href']
-            linklist.append(link)       
-        if len(linklist) == 0:
-            linklist.append(states)
-        
-        for link in linklist:
-            #print(p,link)
-            r = session.get(link, headers=headers, verify=False)            
-            soup = BeautifulSoup(r.text, "html.parser")            
-            if soup.text.lower().find('coming soon') == -1 and soup.text.lower().find('opening ') == -1 :
-                maindiv = soup.find('address')
-                coord = maindiv.find('a')['href']
+       
+        try:
+            r = r.text.split('var marketLocations = ',1)[1].split('];',1)[0]
+            loclist = json.loads(r+']')
+            #print(len(loclist))
+            for loc in loclist:
+                city = loc['city']
+                state = loc['abbr']
+                pcode = loc['zip']
+                phone = loc['phone']
+                street = loc['address']
+                title = loc['locationTitle']
+                lat = loc['latitude']
+                longt = loc['longitude']
+                status = loc["text_status"]
+                if status.find('Coming') > -1:
+                    continue                
+                ccode = 'US'        
+                link = loc['permalink'].replace('\\','')
+                if state == 'Wisconsin':
+                    state = 'WI'
                 try:
-                    phone = soup.find('a',{'class':'phone'}).text
+                    if len(state) < 2:
+                        state = loc['state']
                 except:
-                    phone = '<MISSING>'
-                maindiv = re.sub(cleanr,' ',str(maindiv)).strip().splitlines()
-                title = maindiv[0].lstrip()
-                street = maindiv[1].lstrip()
-                city,state = maindiv[2].lstrip().split(', ',1)
-                state,pcode = state.lstrip().split(' ',1)
-                try:
-                    lat,longt = coord.split('@')[1].split(',',1)
-                    longt = longt.split(',',1)[0]
-                except:
-                    try:
-                        lat,longt = str(soup).split('"latitude":',1)[1].split(',',1)
-                        longt = longt.split(':',1)[1].split('}',1)[0]
-                    except Exception as e:
-                        print(e)
-                        lat = '<MISSING>'
-                        longt = '<MISSING>'
-                if len(state) > 2 and len(pcode) > 6:
-                    pcode = pcode.split(',')[1]
-                    state,pcode= pcode.lstrip().split(' ')
+                    state = loc['state']
+                if phone != '' and title not in titlelist :
+                    titlelist.append(title)
+                    data.append([
+                            'https://www.industriousoffice.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            '<MISSING>',
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            '<MISSING>'
+                                    ])
+                    #print(p,data[p])
+                    p += 1
                     
+        except:
+            r = r.text.split('<script type="application/ld+json">',1)[1].split('</script>',1)[0]
+            r = json.loads(r)
+            link = states
+            title = r['name']
+            phone = r['telephone']
+            street = r['address']['streetAddress']
+            city = r['address']['addressLocality']
+            state = r['address']['addressRegion']
+            pcode = r['address']['postalCode']
+            lat = r['geo']['latitude']
+            longt = r['geo']['longitude']
+            if state == 'Wisconsin':
+                    state = 'WI'
+            if phone != '' and title not in titlelist :
+                titlelist.append(title)
                 data.append([
                             'https://www.industriousoffice.com/',
                             link,                   
@@ -93,11 +124,10 @@ def fetch_data():
                             lat,
                             longt,
                             '<MISSING>'
-                        ])
+                                    ])
                 #print(p,data[p])
                 p += 1
-            
-    print(p)  
+                    
     return data
 
 
