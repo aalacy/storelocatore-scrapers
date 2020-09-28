@@ -4,14 +4,10 @@ from bs4 import BeautifulSoup as BS
 import re
 import json
 import requests
-
-
 session = SgRequests()
-
 def write_output(data):
-    with open('tsws.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
