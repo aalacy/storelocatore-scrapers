@@ -34,6 +34,7 @@ def fetch_data():
                         lurl = line.split('<loc>')[1].split('<')[0]
                         if lurl not in locs:
                             locs.append(lurl)
+        print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
         url = loc
         add = ''
