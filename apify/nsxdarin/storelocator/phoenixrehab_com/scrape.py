@@ -23,7 +23,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     if r.encoding is None: r.encoding = 'utf-8'
     for line in r.iter_lines(decode_unicode=True):
-        if '<li class=""><a href="https://www.phoenixrehab.com/' in line:
+        if '<li class="light-16"><a href="' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if '/ohio' not in lurl:
                 locs.append(lurl)
@@ -51,7 +51,7 @@ def fetch_data():
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
             if 'itemprop="telephone" content="' in line2:
-                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0]
+                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0].encode('utf-8')
             if '<div class="map--id">Store #' in line2:
                 store = line2.split('<div class="map--id">Store #')[1].split('<')[0]
             if 'map_marker.png' in line2:
