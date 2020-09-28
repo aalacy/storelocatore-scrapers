@@ -180,6 +180,9 @@ def fetch_data():
 				if state_list:
 					state = state_list[-1].strip()
 
+				if street_address == "112 East 5th Avenue":
+					state = "WI"
+
 				if phone_list:
 					phone = phone_list[0]
 				map_it_index = full_address.index("Map It")
@@ -190,7 +193,8 @@ def fetch_data():
 				if "Hours" in full_address:
 					hours_of_operation = " ".join(full_address[full_address.index("Hours"):]).replace("Hours Business Office Hours","").replace('weekends and holidays Call 906 - 337 - 6500 and ask to contact Home Health "on - call." 24-hour emergency services are available','').replace("Medical Esthetician Consultations & Services By Appointment","").replace("Hours","").replace("Open for calls","").replace("(staffed)","").replace("Store","").replace("Visiting","").replace("(ET)","").replace("(support person, siblings anytime) Critical Care Unit Visitation Daily, anytime Family, significant others only","").replace("Family Birthplace Visitation","").replace("Visiting  Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling","").replace("After-hours,","").replace("General","").replace("Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling ","").replace("By Appointment","").replace("EST","").replace("Evenings By appointment","").strip()
 				# print("full_address == ",full_address)
-
+				if hours_of_operation == "24/7":
+					hours_of_operation = "24hrs Daily"
 				if "Visit website for hours" in full_address:
 					hours_of_operation="<MISSING>"
 				if "Open by appointment" == hours_of_operation.strip():
