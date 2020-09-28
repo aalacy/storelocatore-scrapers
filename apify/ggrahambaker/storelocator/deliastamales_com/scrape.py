@@ -27,17 +27,18 @@ def fetch_data():
     pattern = re.compile(r'\s\s+')
     cleanr = re.compile(r'<[^>]+>')
     url = 'https://deliastamales.com/locations/'
-    r = session.get(url, headers=headers, verify=False)   
-    loclist = r.text.split('"markers":',1)[1].split(',"original_id"',1)[0]
-    loclist = json.loads(loclist)
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text,'html.parser')
+    loclist = soup.findAll('div',{'class':'w2gm-listing-text-content-wrap'})
+    
     for loc in loclist:
-        #print(loc)
-        store = loc['id']
-        title = loc['title']
-        phone = '(' + loc['description'].split('(',1)[1].split('<',1)[0].replace('\xa0','')
-        address= loc['address']
-        longt = loc['coord_y']
-        lat = loc['coord_x']
+        content = re.sub(pattern,'',loc.text)
+        #print(content)
+        title = content.split('Address:')[0]
+        address= content.split('Address:')[1].split('Phone:')[0].replace('USA','')
+        phone = content.split('Phone:')[1].split('«')[0]
+        lat,longt = loc.find('a')['href'].split('Location/')[1].split(',')
+        
         address = usaddress.parse(address)
         i = 0
         street = ""
@@ -69,7 +70,7 @@ def fetch_data():
                         state,
                         pcode,
                         'US',
-                        store,
+                        '<MISSING>',
                         phone,
                         '<MISSING>',
                         lat,
