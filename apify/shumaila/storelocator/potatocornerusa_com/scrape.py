@@ -113,7 +113,9 @@ def fetch_data():
                     if len(pcode) < 2:
                         pcode = '<MISSING>'
                     lat = lat[0:5]
-                    longt = longt[0:7]                    
+                    longt = longt[0:7]
+                    if len(street) < 3:
+                        street = title
                     data.append([
                         'https://www.potatocornerusa.com/',
                         link,                   
