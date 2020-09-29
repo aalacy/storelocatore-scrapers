@@ -3,10 +3,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+import html5lib
 from sgrequests import SgRequests
 session = SgRequests() 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -50,18 +51,20 @@ def fetch_data():
     address = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://www.nissan.co.uk"
-    # for i in range(1,40):
     location_url = "https://www.nissan.co.uk/dealer-locator.html"
     r = request_wrapper(location_url,"get",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
+    soup = BeautifulSoup(r.text,"html5lib")
     data = (soup.find("script",{"type":"text/javascript"}).text.split(',"dealers":')[1].split("};")[0])
     json_data = json.loads(data)
     for i in json_data:
         page5 = ((i['id']).replace("gb_nissan_05","").replace("51894","1894").replace("1780","1932").replace("1700","1931").replace("1004","51004"))
         link = "https://www.nissan.co.uk/dealer-homepage."+str(page5)+".html"
         r = request_wrapper(link,"get",headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
-        data1 = (soup.find("script",{"type":"application/ld+json"}).text)
+        soup = BeautifulSoup(r.text,"html5lib")
+        try:
+            data1 = (soup.find("script",{"type":"application/ld+json"}).text)
+        except:
+            continue
         json_data = json.loads(data1)
         location_name = json_data['name']
         street_address = json_data['address']['streetAddress']
@@ -77,14 +80,14 @@ def fetch_data():
         store = []
         store.append(base_url if base_url else "<MISSING>")
         store.append(location_name if location_name else "<MISSING>") 
-        store.append(street_address if street_address else "<MISSING>")
+        store.append(street_address.strip().replace("         ","") if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
         store.append(zipp if zipp else "<MISSING>")
         store.append("UK")
         store.append(store_number if store_number else"<MISSING>") 
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append("Nissan - Dealer | Nissan UK")
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
@@ -93,7 +96,6 @@ def fetch_data():
             continue
         address.append(store[2])
         yield store 
-
 def scrape():
     data = fetch_data()
     write_output(data)
