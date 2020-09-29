@@ -1,13 +1,15 @@
 import csv
 import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,54 +23,66 @@ def addy_ext(addy):
     return city, state, zip_code
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     locator_domain = 'https://www.iflyworld.com/'
-    ext = 'find-a-tunnel/'
+    ext = 'find-a-location/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    main = driver.find_element_by_css_selector('div.wrap.usa')
-    a_tags = main.find_elements_by_css_selector('a.loc')
+    req = session.get(locator_domain + ext, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
 
-    link_list = [a_tag.get_attribute('href') for a_tag in a_tags]
+    main = base.find(class_="wrap usa")
+    a_tags = main.find_all(class_="loc")
+
+    link_list = [locator_domain[:-1] + a_tag['href'] for a_tag in a_tags]
 
     all_store_data = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(30)
-        main = driver.find_element_by_css_selector('div.info.col')
+        if link == "https://www.iflyworld.com":
+            continue
+        print(link)
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
 
-        content = main.text.split('\n')
+        main = base.find(class_='info col')
 
-        location_name = content[0]
-        phone_number = content[-1]
-        info = 'INFO'
-        hours = 'HOURS'
-        info_idx = content.index(info)
-        hours_idx = content.index(hours)
+        location_name = base.h2.text.strip()
+        if "coming soon" in location_name.lower():
+            continue
+        phone_number = main.find(class_="tel").text.strip()
 
-        hours = ''
-        for h in content[hours_idx + 1: info_idx]:
-            hours += h + ' '
+        hours = main.find(class_="sub-info hours").text.replace("HOURS","").replace("PM","PM ").replace("–","-").strip()
+        hours = (re.sub(' +', ' ', hours)).strip()
+        
+        street_address = str(main.find(class_="sub-info contact").a).split('>')[1][:-4].strip()
+        city, state, zip_code = addy_ext(str(main.find(class_="sub-info contact").a).split('>')[2][:-4].strip())
 
-        hours = hours.strip()
-
-        addy = content[info_idx + 1: -2]
-        street_address = addy[0]
-        city, state, zip_code = addy_ext(addy[1])
-
-        location_name = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
+        location_type = ",".join(list(base.find(class_="programs col").ul.stripped_strings))
+        if not location_type:
+            location_type = '<MISSING>'
 
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        map_link = main.find(class_="sub-info contact").a["href"]
+        req = session.get(map_link, headers = HEADERS)
+        maps = BeautifulSoup(req.text,"lxml")
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        try:
+            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
+            lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
+            longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+        except:
+            lat = "<MISSING>"
+            longit = "<MISSING>"
+
+        store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():
