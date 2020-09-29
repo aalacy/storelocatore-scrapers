@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -21,7 +21,8 @@ def fetch_data():
     }
     adressessess=[]
     base_url= "https://www.petros.com/locations/"
-    r = requests.get(base_url,headers=headers)
+    session = SgRequests()
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     # k = soup.find("div",{"class":"one_third"})
     # soup1= BeautifulSoup(,"lxml")
