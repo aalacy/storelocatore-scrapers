@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,27 +28,46 @@ def fetch_data():
     for location in soup.find("select",{'id':"restaurant-select"}).find_all("option"):
         if "loc_link" not in location.attrs:
             continue
-        location_request = session.get(location["loc_link"],headers=headers)
+        page_url = location["loc_link"]
+        location_request = session.get(page_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
-        current_location = location_soup.find("div",{'class':'marker'})
-        location_details = list(current_location.stripped_strings)
-        if len(location_details) == 4:
-            location_details[0] = " ".join(location_details[0:2])
-            del location_details[1]
-        hours = " ".join(list(location_soup.find("div",{'id':'location-hours'}).stripped_strings)[1:]).strip()
+        current_location = location_soup.find(class_='address')
+        street_address = current_location.find('span', attrs={'itemprop': "streetAddress"}).text.strip()
+        city = current_location.find('span', attrs={'itemprop': "addressLocality"}).text.replace("  "," ").strip()
+        if city[-1:] == ",":
+            city = city[:-1]
+        state = current_location.find('span', attrs={'itemprop': "addressRegion"}).text.strip()
+        if state[-1:] == ",":
+            state = state[:-1]
+        zip_code = current_location.find('span', attrs={'itemprop': "postalCode"}).text.strip()
+        phone = current_location.find('span', attrs={'itemprop': "telephone"}).text.strip()
+        hours = " ".join(list(location_soup.find("div",{'id':'location-hours'}).stripped_strings)[1:]).replace("–","-").replace("..","").strip()
+
+        map_link = location_soup.find_all(class_="row single-location")[1].find_all("a")[1]["href"]
+        try:
+            latitude = map_link.split("=")[-1].split(",")[0]
+            longitude = map_link.split("=")[-1].split(",")[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        if not latitude:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"            
+
         store = []
         store.append("https://rotolos.com")
-        store.append(location_soup.find("h1").text)
-        store.append(location_details[0])
-        store.append(location_details[1].split(",")[0])
-        store.append(location_details[1].split(",")[1].split(" ")[-2])
-        store.append(location_details[1].split(",")[1].split(" ")[-1])
+        store.append(page_url)
+        store.append(location_soup.find("h1").text.replace("–","-"))
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zip_code)
         store.append("US")
         store.append("<MISSING>")
-        store.append(location_details[-1])
-        store.append("stoney river")
-        store.append(current_location["data-lat"])
-        store.append(current_location["data-lng"])
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
         store.append(hours if hours != "" else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
