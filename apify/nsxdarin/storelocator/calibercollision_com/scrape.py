@@ -55,6 +55,9 @@ def fetch_data():
                 else:
                     g = next(lines)
                     g = str(g.decode('utf-8'))
+                    if 'm' not in g:
+                        g = next(lines)
+                        g = str(g.decode('utf-8'))
                     hours = g.strip().replace('\t','').replace('\r','').replace('\n','')
                     g = next(lines)
                     g = str(g.decode('utf-8'))
