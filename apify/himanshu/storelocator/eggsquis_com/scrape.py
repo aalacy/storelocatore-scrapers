@@ -49,7 +49,7 @@ def fetch_data():
             street_address = "<MISSING>"
         city = r_data['contact']['city'].strip()
         if (city == ''):
-            city = "<MISSING>"
+            city = location_name.replace("Montréal","").strip()
         phone = r_data['contact']['phone']
         if (phone == ''):
             phone = "<MISSING>"
