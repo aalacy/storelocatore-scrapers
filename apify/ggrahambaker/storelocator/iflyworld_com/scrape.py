@@ -39,45 +39,71 @@ def fetch_data():
     a_tags = main.find_all(class_="loc")
 
     link_list = [locator_domain[:-1] + a_tag['href'] for a_tag in a_tags]
+    link_list.append("https://calgary.iflyworld.com/what-is-ifly/help-and-faqs")
 
     all_store_data = []
     for link in link_list:
         if link == "https://www.iflyworld.com":
             continue
+
         print(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 
-        main = base.find(class_='info col')
+        if "calgary" in link:
+            
+            location_name = "iFLY Calgary"
 
-        location_name = base.h2.text.strip()
-        if "coming soon" in location_name.lower():
-            continue
-        phone_number = main.find(class_="tel").text.strip()
+            cards = base.find_all(class_="card-body")
+            for card in cards:
+                if "Calgary, AB" in card.text:
+                    break
 
-        hours = main.find(class_="sub-info hours").text.replace("HOURS","").replace("PM","PM ").replace("–","-").strip()
-        hours = (re.sub(' +', ' ', hours)).strip()
-        
-        street_address = str(main.find(class_="sub-info contact").a).split('>')[1][:-4].strip()
-        city, state, zip_code = addy_ext(str(main.find(class_="sub-info contact").a).split('>')[2][:-4].strip())
+            phone_number = re.findall("[[(\d)]{3}-[\d]{3}-[\d]{4}", str(card))[0]
 
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = ",".join(list(base.find(class_="programs col").ul.stripped_strings))
-        if not location_type:
+            raw_address = card.text.split("\r\n\t")[2].strip().split(",")
+            street_address = raw_address[0].strip()
+            city = raw_address[1].strip()
+            state = raw_address[2].strip()
+            zip_code = '<MISSING>'
+            hours = '<MISSING>'
+            country_code = 'CA'
+            store_number = '<MISSING>'
             location_type = '<MISSING>'
-
-        map_link = main.find(class_="sub-info contact").a["href"]
-        req = session.get(map_link, headers = HEADERS)
-        maps = BeautifulSoup(req.text,"lxml")
-
-        try:
-            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-            lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-            longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-        except:
             lat = "<MISSING>"
             longit = "<MISSING>"
+
+        else:
+            main = base.find(class_='info col')
+
+            location_name = base.h2.text.strip()
+            if "coming soon" in location_name.lower():
+                continue
+            phone_number = main.find(class_="tel").text.strip()
+
+            hours = main.find(class_="sub-info hours").text.replace("HOURS","").replace("PM","PM ").replace("–","-").strip()
+            hours = (re.sub(' +', ' ', hours)).strip()
+            
+            street_address = str(main.find(class_="sub-info contact").a).split('>')[1][:-4].strip()
+            city, state, zip_code = addy_ext(str(main.find(class_="sub-info contact").a).split('>')[2][:-4].strip())
+
+            country_code = 'US'
+            store_number = '<MISSING>'
+            location_type = ",".join(list(base.find(class_="programs col").ul.stripped_strings))
+            if not location_type:
+                location_type = '<MISSING>'
+
+            map_link = main.find(class_="sub-info contact").a["href"]
+            req = session.get(map_link, headers = HEADERS)
+            maps = BeautifulSoup(req.text,"lxml")
+
+            try:
+                raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
+                lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
+                longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+            except:
+                lat = "<MISSING>"
+                longit = "<MISSING>"
 
         store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
