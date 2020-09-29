@@ -7,13 +7,14 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+    locinfo = []
     url = 'https://www.phoenixrehab.com/locations/'
     locs = []
     website = 'phoenixrehab.com'
@@ -51,7 +52,7 @@ def fetch_data():
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
             if 'itemprop="telephone" content="' in line2:
-                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0].encode('utf-8')
+                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0]
             if '<div class="map--id">Store #' in line2:
                 store = line2.split('<div class="map--id">Store #')[1].split('<')[0]
             if 'map_marker.png' in line2:
@@ -73,7 +74,11 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            info = add + '|' + city
+            if info not in locinfo:
+                locinfo.append(info)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
     url = 'https://www.phoenixrehab.com/ohio/'
     r = session.get(url, headers=headers)
     if r.encoding is None: r.encoding = 'utf-8'
@@ -119,7 +124,55 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            info = add + '|' + city
+            if info not in locinfo:
+                locinfo.append(info)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+    url = 'https://www.phoenixrehab.com/colorado-clinics/'
+    r = session.get(url, headers=headers)
+    if r.encoding is None: r.encoding = 'utf-8'
+    lines = r.iter_lines(decode_unicode=True)
+    name = ''
+    hours = '<MISSING>'
+    print('Pulling CO Locations...')
+    for line in lines:
+        if '<h3 class="clinic-title">' in line:
+            if name != '':
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            name = line.split('<h3 class="clinic-title">')[1].split('<')[0]
+            loc = '<MISSING>'
+            hours = '<MISSING>'
+        if '<p class="clinic-address">' in line:
+            g = next(lines)
+            h = next(lines)
+            add = g.split('<')[0].strip().replace('\t','')
+            csz = h.strip().replace('\t','').replace('\r','').replace('\n','')
+            if '<' in csz:
+                csz = csz.split('<')[0]
+            csz = csz.replace(' ',' ')
+            city = csz.split(',')[0]
+            state = 'CO'
+        if '<a href="tel:+1-' in line:
+            phone = line.split('<a href="tel:+1-')[1].split('"')[0]
+            lat = '<MISSING>'
+            lng = '<MISSING>'
+        if '<a class="website-link" href="' in line:
+            loc = line.split('<a class="website-link" href="')[1].split('"')[0]
+            r2 = session.get(loc, headers=headers)
+            if r2.encoding is None: r2.encoding = 'utf-8'
+            hours = ''
+            for line2 in r2.iter_lines(decode_unicode=True):
+                if 'HOURS: </strong>' in line2:
+                    hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
+        if '</main><!-- #main -->' in line:
+            if lat == '':
+                lat = '<MISSING>'
+                lng = '<MISSING>'
+            info = add + '|' + city
+            if info not in locinfo:
+                locinfo.append(info)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
