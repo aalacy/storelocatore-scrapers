@@ -31,7 +31,7 @@ def fetch_data():
         # print(link)
         if "http" not in link['href']:
             
-            page_url = "http://www.facelogicspa.com" + (link['href'])
+            page_url = "http://www.facelogicspa.com" + (link['href'].replace("about","contact-us"))
             r1 = session.get(page_url, headers = HEADERS)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.title.text.strip()
@@ -45,7 +45,7 @@ def fetch_data():
             phone = soup1.select(".mt20.mb20")[0].find("p").next_sibling.strip().replace("P:",'').replace("-FACE ","").strip()
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            hours = "<MISSING>"
+            hours = soup1.find(class_="grid_5 omega").p.text.replace("\r\n\t"," ").strip()
         else:
         
             if "facelogicclovis" in link['href']:
@@ -124,7 +124,7 @@ def fetch_data():
                 state = data[-1].split(",")[1].split(" ")[1]
                 zipp = data[-1].split(",")[1].split(" ")[2]
                 phone = data[0]
-                hours = " ".join(list(soup2.find_all("div",{"class":"textwidget"})[-2].find("ul").stripped_strings))
+                hours = (" ".join(list(soup2.find_all("div",{"class":"textwidget"})[-2].find("ul").stripped_strings))).replace("  "," ")
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
             elif "facelogickisco" in link['href']:
