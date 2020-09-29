@@ -107,10 +107,10 @@ def fetch_data():
                     log.debug(f"Counted {len_ids} so far...")
 
 def scrape():
-    start = time.clock_gettime(0)
+    start = time.time()
     data = fetch_data()
     write_output(data)
-    end = time.clock_gettime(0)
+    end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
 
 if __name__ == "__main__":
