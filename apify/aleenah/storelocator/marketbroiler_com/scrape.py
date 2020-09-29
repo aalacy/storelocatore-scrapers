@@ -105,9 +105,10 @@ def fetch_data():
                 lat = lat.split('!3m')[0]
             except:
                 pass
-        
+            if hours.find('Mon') == -1:
+                hours = "Open Daily " + hours
             data.append([
-                        'www-marketbroiler-com',
+                        'https://www.marketbroiler.com/',
                         link,                   
                         title,
                         street.replace('\u200b','').replace('\xa0 ',''),

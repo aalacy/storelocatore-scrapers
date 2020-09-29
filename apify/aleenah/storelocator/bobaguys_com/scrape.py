@@ -1,41 +1,20 @@
 from bs4 import BeautifulSoup
 import csv
 import string
-import re, time
+import re, time, usaddress
 
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -45,120 +24,98 @@ def fetch_data():
     # Your scraper here
     p = 0
     all = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.bobaguys.com/"
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.bobaguys.com/'
     r = session.get(url, headers=headers, verify=False)
-
-    soup = BeautifulSoup(r.text, "html.parser")
-    # print(soup.find('li', {'class': 'folder'}))
-    urls = soup.find("li", {"class": "folder"}).find_all("a")
+   
+    soup = BeautifulSoup(r.text, 'html.parser')
+    #print(soup.find('li', {'class': 'folder'}))
+    urls = soup.find('li', {'class': 'folder'}).find_all('a')
     del urls[0]
 
     for url in urls:
-        url = "https://www.bobaguys.com" + url["href"]
+        url = "https://www.bobaguys.com"+url['href']
         res = session.get(url)
-
-        soup = BeautifulSoup(res.text, "html.parser")
-        divs = soup.find_all("div", {"class": "col sqs-col-4 span-4"})
-        if len(divs) == 0:
-            divs = soup.find_all("div", {"class": "col sqs-col-6 span-6"})
-        # print(url)
+        #print(url)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        divs = soup.find_all('div', {'class': 'col sqs-col-4 span-4'})
+        if len(divs)==0:
+            divs = soup.find_all('div', {'class': 'col sqs-col-6 span-6'})
+        #print(url)
         for div in divs:
-            container = div.find(
-                "div", {"class": "sqs-block html-block sqs-block-html"}
-            )
-            if not container:
+            try:
+                ps=div.find('div',{'class':'sqs-block html-block sqs-block-html'}).find_all('p')
+            except:
                 continue
-
-            ps = container.find_all("p")
-
-            # print(len(ps))
-            # print(ps[0])
-            if len(ps) == 2:
-                # print(ps[1])
+            #print(len(ps))
+            #print(ps[0])
+            content = re.sub(cleanr,'\n',str(div))
+            content = re.sub(pattern,'\n',content).lstrip()
+            title = content.split('\n',1)[0]
+            try:
+                address = content.split('\n',1)[1].split('Mon')[0]
+                hours = 'Mon'+content.split('Mon')[1]
+            except:
                 try:
-                    loc, street, city, state, zip = re.findall(
-                        r"<strong>(.*)</strong><br/>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5})</p>",
-                        str(ps[0]),
-                    )[0]
+                    address = content.split('\n',1)[1].split('Wed')[0]
+                    hours = 'Wed'+content.split('Wed')[1]
                 except:
-                    try:
-                        loc, street, city, state, zip = re.findall(
-                            r"<strong>(.*)</strong><br/>(.*)<br/>(.*) ([A-Z]{2}) ([\d]{5})</p>",
-                            str(ps[0]),
-                        )[0]
-                    except:
-                        # print('no')
-                        content = re.sub(cleanr, "\n", str(ps[0]))
-                        content = (
-                            re.sub(pattern, "\n", content.lstrip())
-                            .lstrip()
-                            .splitlines()
-                        )
+                    address = content.split('\n',1)[1].split('Temp')[0]
+                    hours = 'Temp'+content.split('Temp')[1]
 
-                        # print(content)
-                        # loc, street, city, zip=re.findall(r'<strong>(.*)</strong><br/>(.*)<br/>(.*) ([\d]{5})</p>', str(ps[0]))
-                        loc = content[0]
-                        street = content[1]
-                        zip = content[2].split(" ")[-1]
-                        city = content[2].replace(zip, "").lstrip()
-                        try:
-                            city, state = city.split(", ")
-                        except:
-                            state = "<MISSING>"
-                if "Temporarily Closed" in str(ps[1]):
-                    tim = "<MISSING>"
-                    type = "Temporarily Closed"
-                else:
-                    tim = ps[1].text.replace("mS", "m S").replace("dS", "d S")
-                    type = "Open"
-            else:
-                try:
-                    loc, street, city, state, zip = re.findall(
-                        r"<strong>(.*)</strong><br/>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5}).*<strong>",
-                        str(ps[0]),
-                    )[0]
-                except:
-                    loc, street, city, state, zip = re.findall(
-                        r"<strong>(.*)<br/></strong>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5}).*<strong>",
-                        str(ps[0]),
-                    )[0]
-                if "Temporarily Closed" in str(ps[0]):
-                    tim = "<MISSING>"
-                    type = "Temporarily Closed"
-                else:
-                    type = "Open"
-                    tim = ps[0].find_all("strong")[1].text
-                    if tim.strip() == "":
-                        tim = " ".join(
-                            re.findall(r".*<strong>(.*)</strong>(.*)</p>", str(ps[0]))[
-                                0
-                            ]
-                        )
-            if loc.find("Greenwich") > -1:
-                tim = tim + " 12PM - 6PM"
-            all.append(
-                [
-                    "https://www.bobaguys.com",
-                    url,
-                    loc,
-                    street,
-                    city,
-                    state,
-                    zip,
-                    "US",
-                    "<MISSING>",  # store #
-                    "<MISSING>",  # phone
-                    "<MISSING>",  # type
-                    "<MISSING>",  # lat
-                    "<MISSING>",  # long
-                    tim.replace("Fri", " Fri"),  # timing
-                ]
-            )
-            # print(p,all[p])
+            address = address.replace('\n',' ')
+           # print(address)
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+            hours = hours.replace('\n',' ')
+            if len(state) < 2:
+                state = 'CA'
+            try:
+                hours = hours.split('Dir')[0]
+            except:
+                pass
+            all.append([
+                "https://www.bobaguys.com",
+                url,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",  # store #
+                "<MISSING>",  # phone
+                "<MISSING>",  # type
+                "<MISSING>",  # lat
+                "<MISSING>",  # long
+                hours  # timing
+                ])
+            #print(p,all[p])
             p += 1
+            
 
+   
     return all
 
 
@@ -167,6 +124,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
     print(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
 
 scrape()

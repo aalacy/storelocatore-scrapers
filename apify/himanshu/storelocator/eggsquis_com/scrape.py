@@ -49,13 +49,13 @@ def fetch_data():
             street_address = "<MISSING>"
         city = r_data['contact']['city'].strip()
         if (city == ''):
-            city = "<MISSING>"
+            city = location_name.replace("Montréal","").strip()
         phone = r_data['contact']['phone']
         if (phone == ''):
             phone = "<MISSING>"
         state = r_data['contact']['province'].strip()
         if (state == ''):
-            state = "<MISSING>"
+            state = "Québec"
         store_zip = r_data['contact']['zip']
         if (store_zip == ''):
             store_zip = "<MISSING>"

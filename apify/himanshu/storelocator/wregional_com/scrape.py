@@ -7,13 +7,9 @@ session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline= "") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
 		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-		# Body
 		for row in data:
 			writer.writerow(row)
-
 def fetch_data():
 	adressess = []
 	locator_domain = "https://www.wregional.com"
@@ -21,19 +17,15 @@ def fetch_data():
 	headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
 	}
-
 	rr= session.get("https://www.wregional.com/main/dialysis-centers",headers=headers)
 	soup0 = BeautifulSoup(rr.text,"lxml")
 	full = str(soup0.find("div",{"class":"clinics"})).split("</h3>")[-1].split("</strong>")
 	names=[]
 	names = soup0.find_all("strong")
-
 	names.insert(0,'')
-
 	for index,f in enumerate(full):
 		soups = BeautifulSoup(f,"lxml")
 		full1 = list(soups.stripped_strings)
-	
 		if len(full1) != 1:
 			address1 = full1[:-1][0]
 			location_name=(names[index].text.strip())
@@ -53,10 +45,7 @@ def fetch_data():
 			store = [x.replace("–","-") if type(x) == str else x for x in store]
 			store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 			yield store	
-			
-			
 	urls=["https://www.wregional.com/main/sleep-disorders",'https://www.wregional.com/main/springdale-center-for-health','https://www.wregional.com/main/medical-plaza']
-
 	for index,u in enumerate(urls):
 		u1= session.get(u,headers=headers)
 		soupp = BeautifulSoup(u1.text,"lxml")
@@ -98,7 +87,6 @@ def fetch_data():
 		store = [x.replace("–","-") if type(x) == str else x for x in store]
 		store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 		yield store	
-
 	r= session.get("https://www.wregional.com/main/find-a-facility-or-clinic",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
 	for ul in soup.find("div",class_="template2-row-1").find_all("ul"):
@@ -116,8 +104,6 @@ def fetch_data():
 			Hours=''
 			try:
 				full_address = list(soup1.find("div",class_="clinics").find("p").stripped_strings)
-				
-				
 				if "(" in full_address[1]:
 					del full_address[1]
 				if len(full_address) >=14:
@@ -126,7 +112,6 @@ def fetch_data():
 						add_list = add.split("|")
 						add_list = [i for i in add_list if i]
 						if "Now Offering Televisits" not in add_list[0]:
-							# print(add_list)
 							if "(" in add_list[1]:
 								del add_list[1]
 							try:
@@ -136,19 +121,15 @@ def fetch_data():
 								except:
 									Hours="<MISSING>"
 								address01 =add_list[0]
-								# print(address01)
 								city =add_list[1].split(",")[0]
 								state =add_list[1].split(",")[1].strip().split( )[0]
 								zipp =add_list[1].split(",")[1].strip().split( )[1]
 								phone_tag = add_list[2].replace("Telephone:",'')
-								phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+								phone_list = re.findall(re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"), str(phone_tag))
 								if phone_list:
 									phone= phone_list[0]
-									
 								else:
 									phone = "<MISSING>"
-
-									
 								storeNumber='<MISSING>'
 								country_code="US"
 								latitude="<MISSING>"
@@ -159,24 +140,19 @@ def fetch_data():
 								store = [x.replace("–","-") if type(x) == str else x for x in store]
 								store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 								yield store
-								# print(store)
 							except:
-								
-								# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vk~~~~~~~~~~~")
 								try:
 									Hours = " ".join(list(soup1.find(lambda tag: (tag.name == "h3" ) and "Hours" == tag.text.strip()).nextSibling.next_sibling.stripped_strings)).split("Other clinic")[0].replace("Hours at",'').replace("\n",' ').replace("Fayetteville:",'').replace("Springdale",'').split("The clinic is")[-1].replace("The Fayetteville clinic is",'').replace("other clinic locations vary. For more information, please call 479-571-4338.",'').replace("The Fayetteville clinic at the Pat Walker Center for Seniors is",'').replace("Our clinic on the Lincoln Square is",'').replace("The  clinic is",'').replace("open","").replace("Sick call is available Monday ","-").replace(" The school-based clinic located on the Lincoln Middle School Campus is  ",",").replace(" The  Center for Health clinic is  from ",",").replace("The Women and Infants Center clinic is  ","").replace("Total Spine is  ","").replace("  other clinic locations vary. For more information, please call 479-463-8740 .","").replace("Sick call is available ","")
 								except:
 									Hours="<MISSING>"
 								address01 =add_list[1]
-								# print(address01)
 								city =add_list[2].split(",")[0]
 								state =add_list[2].split(",")[1].strip().split( )[0]
 								zipp =add_list[2].split(",")[1].strip().split( )[1]
-								phone_tag = add_list[3].replace("Telephone:",'')
-								phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+								phone_tag = add_list[4].replace("Telephone:",'')
+								phone_list = re.findall(re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"), str(phone_tag))
 								if phone_list:
 									phone= phone_list[0]
-									
 								else:
 									phone = "<MISSING>"
 								storeNumber='<MISSING>'
@@ -189,32 +165,23 @@ def fetch_data():
 								store = [x.replace("–","-") if type(x) == str else x for x in store]
 								store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 								yield store
-								# print(store)
-	
-							
 				else:
 					try:
 						data=int(full_address[0].strip()[0])
-						# print(data)
-						# print(full_address[0].strip()[0])
 						try:
 							Hours = " ".join(list(soup1.find(lambda tag: (tag.name == "h3" ) and "Hours" in tag.text.strip()).next_sibling.next_sibling.stripped_strings)).split("Other clinic")[0].replace("Hours at",'').replace("\n",' ').replace("Fayetteville:",'').replace("Springdale",'').split("The clinic is")[-1].replace("The Fayetteville clinic is",'').replace("other clinic locations vary. For more information, please call 479-571-4338.",'').replace("The Fayetteville clinic at the Pat Walker Center for Seniors is",'').replace("Our clinic on the Lincoln Square is",'').replace("The  clinic is",'').replace("open","").replace(" The school-based clinic located on the Lincoln Middle School Campus is  ",",").replace(" The  Center for Health clinic is  from ",",").replace("The Women and Infants Center clinic is  ","").replace("Total Spine is  ","").replace("  other clinic locations vary. For more information, please call 479-463-8740 .","").replace("Sick call is available ","")
 						except:
 							Hours="<MISSING>"
-						# print(len(full_address),"try ==== ", str(full_address))
 						address01 =full_address[0]
 						city =full_address[1].split(",")[0]
 						state =full_address[1].split(",")[1].strip().split( )[0]
 						zipp =full_address[1].split(",")[1].strip().split( )[1]
-						phone_tag = full_address[2].replace("Telephone:",'')
-						phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+						phone_tag = full_address[3].replace("Telephone:",'')
+						phone_list = re.findall(re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"), str(phone_tag))
 						if phone_list:
 							phone= phone_list[0]
-							
 						else:
 							phone = "<MISSING>"
-
-							
 						storeNumber='<MISSING>'
 						country_code="US"
 						latitude="<MISSING>"
@@ -225,24 +192,19 @@ def fetch_data():
 						store = [x.replace("–","-") if type(x) == str else x for x in store]
 						store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 						yield store
-						# print(store)
 					except:
-						
-						# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vk~~~~~~~~~~~")
 						try:
 							Hours = " ".join(list(soup1.find(lambda tag: (tag.name == "h3" ) and "Hours" == tag.text.strip()).nextSibling.next_sibling.stripped_strings)).split("Other clinic")[0].replace("Hours at",'').replace("\n",' ').replace("Fayetteville:",'').replace("Springdale",'').split("The clinic is")[-1].replace("The Fayetteville clinic is",'').replace("other clinic locations vary. For more information, please call 479-571-4338.",'').replace("The Fayetteville clinic at the Pat Walker Center for Seniors is",'').replace("Our clinic on the Lincoln Square is",'').replace("The  clinic is",'').replace("open","").replace(" The school-based clinic located on the Lincoln Middle School Campus is  ",",").replace(" The  Center for Health clinic is  from ",",").replace("The Women and Infants Center clinic is  ","").replace("Total Spine is  ","").replace("  other clinic locations vary. For more information, please call 479-463-8740 .","").replace("Sick call is available ","")
 						except:
 							Hours="<MISSING>"
-						# print(len((full_address)),"except ==== ", str(full_address))
 						address01 =full_address[1]
 						city =full_address[2].split(",")[0]
 						state =full_address[2].split(",")[1].strip().split( )[0]
 						zipp =full_address[2].split(",")[1].strip().split( )[1]
-						phone_tag = full_address[3].replace("Telephone:",'')
-						phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+						phone_tag = full_address[4].replace("Telephone:",'')
+						phone_list = re.findall(re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"), str(phone_tag))
 						if phone_list:
 							phone= phone_list[0]
-							
 						else:
 							phone = "<MISSING>"
 						storeNumber='<MISSING>'
@@ -255,13 +217,10 @@ def fetch_data():
 						store = [x.replace("–","-") if type(x) == str else x for x in store]
 						store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
 						yield store
-						# print(store)
-	
 			except:
 				pass
 	prime_urls = ["https://www.wregional.com/main/primary-care-fayetteville","https://www.wregional.com/main/primary-care-harrison","https://www.wregional.com/main/primary-care-springdale"]
 	for link in prime_urls:
-
 		prime_r = session.get(link,headers=headers)
 		prime_soup = BeautifulSoup(prime_r.text,"lxml")
 		col = prime_soup.find("div",{"class":"col-1"}).find_all("h2")
@@ -269,13 +228,9 @@ def fetch_data():
 			page_url = i.find("a")['href']
 			if "https://www.wregional.com/senior-health/senior-health-clinic" in page_url:
 				continue
-			# print(page_url)
 			page_r = session.get(page_url,headers=headers)
 			page_soup = BeautifulSoup(page_r.text,"lxml")
 			col2 = list(page_soup.find("div",{"class":"col-2"}).stripped_strings)
-			# print(col2)
-			# print(len(col2))
-			
 			if len(col2)==9:
 				location_name = col2[0]
 				street_address = col2[2]
@@ -299,18 +254,13 @@ def fetch_data():
 				
 			except:
 				hours_of_operation = "Monday - Friday 8:00 a.m. - 4:30 p.m."
-			# print(hours_of_operation)
-			# print()
 			location_type = "Primary Care Clinics"
 			try:
 				map_url = page_soup.find("div",{"class":"col-2"}).find_all("a",{"target":"_blank"})[1]['href']
-				# print(map_url)
 				coords = session.get(map_url).url
 			except:
 				map_url = page_soup.find("div",{"class":"col-2"}).find_all("a",{"target":"_blank"})[0]['href']
-				# print(map_url)
 				coords = session.get(map_url).url
-
 			if "/@" in coords:
 				lat = coords.split("/@")[1].split(",")[0]
 				lng = coords.split("/@")[1].split(",")[1]
@@ -325,7 +275,6 @@ def fetch_data():
 				except:
 					lat = str(map_soup).split("/@")[1].split(",")[0]
 					lng = str(map_soup).split("/@")[1].split(",")[1]
-
 			store = []
 			store.append(base_url)
 			store.append(location_name)
@@ -347,14 +296,11 @@ def fetch_data():
 				continue
 			adressess.append(store[2])
 			yield store
-
 	health_r = session.get("https://www.wregional.com/senior-health/senior-health-clinic",headers=headers)
 	health_soup = BeautifulSoup(health_r.text,"lxml")
 	col2 = list(health_soup.find("div",{"class":"col-2"}).stripped_strings)
-
 	data1 = col2[:8]
 	data2 = col2[8:]
-
 	now_list = [data1,data2]
 	for data_list in now_list:
 		location_name = data_list[0]
@@ -368,12 +314,9 @@ def fetch_data():
 		if city == "Fayetteville":
 			hours_of_operation = "Monday - Thursday, 8:00 a.m. - 4:30 p.m. and Friday 8:00 a.m. - 2:00 p.m."
 			map_url = "https://goo.gl/maps/o8M1FBZcgx72"
-
 		if city == "Springdale":
 			hours_of_operation = "Monday - Thursday, 8:00 a.m. - 4:30 p.m."
 			map_url = "https://goo.gl/maps/BXQVnv7GDM42"
-
-		
 		coords = session.get(map_url).url
 		if "/@" in coords:
 			lat = coords.split("/@")[1].split(",")[0]
@@ -411,7 +354,6 @@ def fetch_data():
 			continue
 		adressess.append(store[2])
 		yield store
-	
 	urgent = [
 		"https://www.urgentteam.com/locations/washington-regional-urgent-care-bentonville-ar/",
 		"https://www.urgentteam.com/locations/washington-regional-urgent-care-fayetteville-ar/",
@@ -431,10 +373,8 @@ def fetch_data():
 		hours_of_operation = " ".join(list(urgent_soup.find("ul",{"class":"m-location-hours__list"}).stripped_strings))
 		location_type = "Urgent Care"
 		store_number = "<MISSING>"
-		
 		lat = "<MISSING>"
 		lng = "<MISSING>"
-
 		store = []
 		store.append(base_url)
 		store.append(location_name)
@@ -456,9 +396,7 @@ def fetch_data():
 			continue
 		adressess.append(store[2])
 		yield store
-		
 def scrape():
-	# fetch_data()
 	data = fetch_data()
 	write_output(data)
 scrape()

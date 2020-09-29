@@ -97,7 +97,7 @@ class SimpleScraperPipeline:
         csv_header.extend(sorted_keys(self.__constant_fields))
         csv_header.sort()
 
-        start_sec = time.clock_gettime(0)
+        start_sec = time.time()
         counter = 0
 
         with open('data.csv', mode='w') as output_file:
@@ -126,7 +126,7 @@ class SimpleScraperPipeline:
 
                 writer.writerow(row)
 
-        end_sec = time.clock_gettime(0)
+        end_sec = time.time()
 
         self.__log.debug(f"Scrape stats: [took {str(end_sec - start_sec).split('.')[0]} seconds] [{counter} records]")
 

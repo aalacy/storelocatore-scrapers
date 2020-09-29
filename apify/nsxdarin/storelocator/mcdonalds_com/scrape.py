@@ -31,10 +31,10 @@ def fetch_data():
     country = 'US'
     website = 'mcdonalds.com'
     typ = 'Restaurant'
-    page_url = 'https://www.mcdonalds.com/ca/en-ca/restaurant-locator.html'
 
     for item in array['features']:
         store = item['properties']['identifierValue']
+        page_url = f'https://www.mcdonalds.com/us/en-us/location/{store}.html'
         add = item['properties']['addressLine1']
         add = add.strip()
         city = item['properties']['addressLine3']

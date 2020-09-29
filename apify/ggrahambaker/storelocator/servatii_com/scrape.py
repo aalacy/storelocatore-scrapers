@@ -29,6 +29,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")   
 
     titlelist = soup.findAll('h2')
+    titlelist.append(soup.find('h1'))    
     divlist = soup.findAll('div')
    # print("states = ",len(state_list))
     p = 0

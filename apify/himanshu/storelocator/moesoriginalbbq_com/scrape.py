@@ -169,6 +169,29 @@ def fetch_data():
                     continue
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 return_main_object.append(store)
+
+    # Get location that's not in api
+    location_url = "https://www.moesoriginalbbq.com/durham"
+    r_location = session.get(location_url, headers=headers)
+    soup_location = BeautifulSoup(r_location.text, "lxml")
+
+    location_name = soup_location.find(id="durham-info-page").h1.text.strip()
+    store_number = "<MISSING>"
+    latitude = "36.0106483"
+    longitude = "-78.9248594"
+    phone = soup_location.find(id="durham-info-page").find(class_="col sqs-col-12 span-12").find_all("p")[1].text.replace("Phone:","").strip()
+    full_address = soup_location.find(id="durham-info-page").find(class_="col sqs-col-12 span-12").p.text.replace("Address:","").strip().split(".")
+    street_address = full_address[0].strip()
+    city = full_address[1].split()[0]
+    state = full_address[1].split()[1]
+    zipp = full_address[1].split()[2]
+    hours_of_operation = soup_location.find(id="durham-info-page").find(class_="col sqs-col-12 span-12").find_all("strong")[1].text.strip()
+    page_url = location_url
+    
+    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+    return_main_object.append(store)
+
     return return_main_object
 
 def scrape():

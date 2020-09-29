@@ -1,17 +1,20 @@
-# Import libraries
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re
+import re, time
+import json
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,114 +23,65 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    url = 'https://papemachinery.com/locations'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('a', {'class': 'location-name'})
-    cleanr = re.compile('<.*?>')
-    phoner = re.compile('(.*?)')
-    for repo in repo_list:
-        print(repo['href'])
-        link = repo['href']
-        page = requests.get(link)
-        det = BeautifulSoup(page.text, "html.parser")
-        detail = str(det)
-        start = detail.find("@context")
-        start = detail.find("name", start)
-        start = detail.find(':', start)+3
-        end = detail.find(',', start)
-        title = detail[start:end-1]
-        print(title)
-        start = detail.find("streetAddress", end)
-        start = detail.find(':', start) + 3
-        end = detail.find(',', start)
-        street = detail[start:end - 1]
-        print(street)
-        start = detail.find("addressLocality", end)
-        start = detail.find(':', start) + 3
-        end = detail.find(',', start)
-        city = detail[start:end - 1]
-        print(city)
-        start = detail.find("addressRegion", end)
-        start = detail.find(':', start) + 3
-        end = detail.find(',', start)
-        state = detail[start:end - 1]
-        if state == "Washington":
-            state = "WA"
-        print(state)
-        start = detail.find("postalCode", end)
-        start = detail.find(':', start) + 3
-        end = detail.find(',', start)
-        pcode = detail[start:end - 1]
-        print(pcode)
-        start = detail.find("addressCountry", end)
-        start = detail.find(':', start) + 3
-        end = detail.find('}', start)
-        ccode = detail[start:end - 3]
-        ccode = re.sub("\r", "", ccode)
-        ccode = re.sub("\n", "", ccode)
-        ccode = re.sub('"', "", ccode)
-        print(ccode)
-        start = detail.find("latitude", end)
-        start = detail.find(':', start) + 2
-        end = detail.find(',', start)
-        lat = detail[start:end - 1]
-        print(lat)
-        start = detail.find("longitude", end)
-        start = detail.find(':', start) + 2
-        end = detail.find('}', start)
-        longt = detail[start:end - 3]
-        longt = re.sub("\r", "", longt)
-        longt = re.sub("\n", "", longt)
-        longt = re.sub('"', "", longt)
-        print(longt)
-        start = detail.find("telephone", end)
-        start = detail.find(':', start) + 3
-        end = detail.find('}', start)
-        phone = detail[start:end - 3]
-        phone = re.sub("\r", "", phone)
-        phone = re.sub("\n", "", phone)
-        phone = re.sub('"', "", phone)
-        print(phone)
-        try:
-            hourd = det.find('table',{'class': 'simple'})
-            tbody =hourd.find('tbody')
-            trows = tbody.findAll('tr')
-            hours = ""
-            for detrows in trows:
-                tempt = ""
-                tds = detrows.findAll('td')
-                for tdetail in tds:
-                    tempt = tempt + " " + tdetail.text
-
-                hours = hours + " " + tempt
-
-            hours = hours.lstrip()
-        except:
-            hours = "<MISSING>"
-        print(hours)
-        data.append([
-            url,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            ccode,
-            "<MISSING>",
-            phone,
-            "<MISSING>",
-            lat,
-            longt,
-            hours
-        ])
-
+    cleanr = re.compile(r'<[^>]+>')    
+    url = 'https://agriculture.papemachinery.com/api/locations'
+    p = 0
+    loclist = session.get(url, headers=headers, verify=False).json()['Locations']
+   
+    for loc in loclist:
+        #print(loc['categories'][0])
+        category = loc["operatingCompanyName"]
+        if category.find('Agriculture & Turf') > -1 or category.find('Construction & Forestry') > -1:
+            ltype = category.replace('Papé Machinery ','')
+            title = loc["title" ]
+            street = loc["addressLine1"]
+            try:
+                street = street + ' '+loc["addressLine2"]
+            except:
+                pass
+            city = loc['city']
+            state = loc['state']
+            pcode = loc['zipcode']
+            store = loc['id']
+            lat = loc['latitude']
+            longt = loc['longitude']
+            phone = loc["phoneNumber"]
+            link = loc['fullUrl']
+            r = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text,'html.parser')
+            print(link)
+            hours = soup.find('table',{'class':'simple'}).text.strip().replace('\n',' ').split('Hours')[1].lstrip()
+            #print(hours)
+            data.append([
+                'https://papemachinery.com/',
+                link,                   
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                'US',
+                store,
+                phone,
+                ltype,
+                lat,
+                longt,
+                hours
+            ])
+            print(p,data[p])
+            p += 1
+            #input()
+            
+        
+       
     return data
 
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
+

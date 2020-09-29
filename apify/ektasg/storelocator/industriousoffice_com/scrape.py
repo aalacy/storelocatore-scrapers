@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
@@ -29,23 +28,28 @@ def fetch_data():
     url = 'https://www.industriousoffice.com/locations'
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
-    state_list = soup.findAll('li', {'class': 'market'})
+    state_list = soup.find('section',{'class':'section-all-locations-v2 my-lg'}).findAll('li', {'class': 'market'})
     #print("states = ",len(state_list))
     p = 0
     cleanr = re.compile(r'<[^>]+>')
     for states in state_list:
         #print(states.find('a').text)
-        if states.find('a').text.lower().find('coming soon') > -1 :
-            continue
+        '''if states.find('a').text.lower().find('coming soon') > -1 :
+            continu
+            e
         states = states.find('a')['href']
         if states.find('techspace') > -1:
-            continue
+            continue'''
+        ##print(states.find('a').text)
+        statenow = states.find('a').text
+        states = states.find('a')['href']
+        #print(states)
         r = session.get(states, headers=headers, verify=False)
-        if r.text.find('Coming Soon') > -1:
-            continue
+       
         try:
             r = r.text.split('var marketLocations = ',1)[1].split('];',1)[0]
             loclist = json.loads(r+']')
+            #print(len(loclist))
             for loc in loclist:
                 city = loc['city']
                 state = loc['abbr']
@@ -54,12 +58,20 @@ def fetch_data():
                 street = loc['address']
                 title = loc['locationTitle']
                 lat = loc['latitude']
-                longt = loc['longitude']            
+                longt = loc['longitude']
+                status = loc["text_status"]
+                if status.find('Coming') > -1:
+                    continue                
                 ccode = 'US'        
                 link = loc['permalink'].replace('\\','')
                 if state == 'Wisconsin':
                     state = 'WI'
-                if phone != '' and title.lower().find('techspace') == -1 and title not in titlelist :
+                try:
+                    if len(state) < 2:
+                        state = loc['state']
+                except:
+                    state = loc['state']
+                if phone != '' and title not in titlelist :
                     titlelist.append(title)
                     data.append([
                             'https://www.industriousoffice.com/',
@@ -94,7 +106,7 @@ def fetch_data():
             longt = r['geo']['longitude']
             if state == 'Wisconsin':
                     state = 'WI'
-            if phone != '' and title.lower().find('techspace') and title not in titlelist :
+            if phone != '' and title not in titlelist :
                 titlelist.append(title)
                 data.append([
                             'https://www.industriousoffice.com/',
