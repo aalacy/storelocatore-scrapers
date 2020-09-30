@@ -36,7 +36,10 @@ def fetch_data():
         try:
             url1 = i['data']['website']
         except:
-            url1 = "<MISSING>"
+            if location_name == "Plano":
+                url1 = "https://beardpapas.com/locations/plano/"
+            else:
+                url1 = "<MISSING>"
         # print(location_name)
         if "phone" in i['data']:
             phone = (i['data']['phone'].strip())
