@@ -36,7 +36,7 @@ def fetch_data():
     for i in k:
 
         li = i.find('h3')
-        if li ==None or li.text in "New Alexandria, PA":
+        if li ==None:
             pass
         else:
             tem_var =[]
@@ -60,7 +60,7 @@ def fetch_data():
                     zip = state_tmp[3]
                 if(len(state_tmp)==5):
                     state = state_tmp[1]+' '+ state_tmp[2]+' '+ state_tmp[3]
-                    zip = state_tmp[4]        
+                    zip = state_tmp[4]
               
                 
             elif(len(address1)==1):
@@ -89,6 +89,8 @@ def fetch_data():
                 zip = "0" + zip
                 
             link = i.find('a')['href']
+            if "new-alexandria" in link:
+                link = "https://meadowsfrozencustard.com/columns/new-alexandria/"
             r1 = session.get(link, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             phone1 = soup1.find_all('div', {'class': 'contact-info'})
