@@ -41,8 +41,8 @@ def fetch_data():
             state = state[:-1]
         zip_code = current_location.find('span', attrs={'itemprop': "postalCode"}).text.strip()
         phone = current_location.find('span', attrs={'itemprop': "telephone"}).text.strip()
-        hours = " ".join(list(location_soup.find("div",{'id':'location-hours'}).stripped_strings)[1:]).replace("–","-").replace("..","").strip()
-
+        hours = " ".join(list(location_soup.find("div",{'id':'location-hours'}).stripped_strings)[1:]).replace("Now open!","").replace("–","-").replace("Â","").replace("..","").strip()
+        hours = hours.encode("ascii", "replace").decode().replace("?","")
         map_link = location_soup.find_all(class_="row single-location")[1].find_all("a")[1]["href"]
         try:
             latitude = map_link.split("=")[-1].split(",")[0]
