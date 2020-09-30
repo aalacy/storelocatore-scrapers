@@ -84,7 +84,8 @@ def fetch_data():
             hours = '<MISSING>'
             if state == '':
                 state = 'PR'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if name != '':
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

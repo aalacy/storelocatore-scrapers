@@ -3,29 +3,23 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
     base_url = "https://www.americangirl.com"
-    r = session.get(base_url + "/retail/atlanta")
+    r = session.get(base_url + "/retail/charlotte")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for a in soup.find_all("a",{"class": "select-location"}):
         if a['href'][0] != "/":
             break
-        location_request = session.get(base_url + a['href'])
+        page_url = base_url + a['href']
+        location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         try:
             store_data = json.loads(location_soup.find("div",{"class": "map-module"})["data-coordinate"])[0]
@@ -46,24 +40,20 @@ def fetch_data():
                 store.append(store_data["locationName"].split(",")[-1].split(" ")[-1])
             store.append("US")
             store.append("<MISSING>")
-            if len(location_soup.find_all("b")) < 3:
-                phone = "<MISSING>"
-            else:
-                phone = location_soup.find_all("b")[2].text[:-1]
-                if phone == "Make a reservatio":
-                    phone = location_soup.find_all("b")[3].text[:-1]
+            phone = "877-247-5223"
             store.append(phone)
             store.append("americangirl")
             store.append(store_data["lattitude"])
             store.append(store_data["longitude"])
             store.append(" ".join(hours))
+            store.append(page_url)
+            store = [x.replace("—","-") if type(x) == str else x for x in store] 
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             return_main_object.append(store)
         except Exception as e:
-                pass
+            pass
     return return_main_object
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

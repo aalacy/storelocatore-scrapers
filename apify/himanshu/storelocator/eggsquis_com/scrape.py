@@ -55,7 +55,7 @@ def fetch_data():
             phone = "<MISSING>"
         state = r_data['contact']['province'].strip()
         if (state == ''):
-            state = "<MISSING>"
+            state = "Québec"
         store_zip = r_data['contact']['zip']
         if (store_zip == ''):
             store_zip = "<MISSING>"

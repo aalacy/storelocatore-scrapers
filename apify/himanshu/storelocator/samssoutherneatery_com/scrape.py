@@ -80,103 +80,6 @@ def fetch_data():
             "https://www.samssouthernchickasha.com",
             "https://www.samssouthernmay.com/"
             ]
-    for rm in rm_link:
-        if rm =="https://www.samssouthernpinebluff.com":
-            location_name = "Sam's Southern Eatery Pine Bluff"
-            street_address = "1704 E Harding Ave"
-            city = "Pine Bluff"
-            state = "AR"
-            zipp = "71601"
-            phone = "(870) 536-2222"
-            page_url = "https://samssoutherneatery.com/pine-bluff"
-        if rm =="https://www.samssouthernwhitehall.com":
-            location_name = "Sam's Southern Eatery White Hall"
-            street_address = "7003 Dollarway Rd"
-            city = "White Hall"
-            state = "AR"
-            zipp = "71602"
-            phone = "(870) 395-7433"
-            page_url = "https://samssoutherneatery.com/white-hall"
-        if rm =="https://www.samssouthernnatchitoches.com":
-            location_name = "Sam's Southern Eatery Natchitoches"
-            street_address = "303 South Dr"
-            city = "Natchitoches"
-            state = "LA"
-            zipp = "71457"
-            phone = "(318) 352-6213"
-            page_url = "https://samssoutherneatery.com/natchitoches"
-        if rm =="https://www.samssouthernmarlow.com":
-            location_name = "Sam's Southern Eatery Marlow"
-            street_address = "1011 S Broadway St"
-            city = "Marlow"
-            state = "OK"
-            zipp = "73055"
-            phone = "(580) 721-7070"
-            page_url = "https://samssoutherneatery.com/marlow"
-        if rm =="https://www.samssoutherntahlequah.com":
-            location_name = "Sam's Southern Eatery Tahlequah"
-            street_address = "1721 S Muskogee Ave"
-            city = "Tahlequah"
-            state = "OK"
-            zipp = "74464"
-            phone = "(918) 772-5099"
-            page_url = "https://samssoutherneatery.com/tahlequah"
-        if rm =="https://www.samssouthernbethany.com":
-            location_name = "Sam's Southern Eatery Bethany"
-            street_address = "7000 NW 23rd St7000 NW 23rd St"
-            city = "Bethany"
-            state = "OK"
-            zipp = "73008"
-            phone = "(405) 730-6017"
-            page_url = "https://samssoutherneatery.com/bethany"
-        if rm =="https://www.samssouthernlawton.com":
-            location_name = "Sam's Southern Eatery Lawton"
-            street_address = "801 SW 11th St"
-            city = "Lawton"
-            state = "OK"
-            zipp = "73505"
-            phone = "(580) 713-5455"
-            page_url = "https://samssoutherneatery.com/lawton"
-        if rm =="https://www.samssouthernchickasha.com":
-            location_name = "Sam’s Southern Eatery Chickasha"
-            street_address = "1101 S 4th St"
-            city = "Chickasha"
-            state = "OK"
-            zipp = "73018"
-            phone = "(405) 448-5060"
-            page_url = "https://samssoutherneatery.com/chickashaw"
-        if rm == "https://www.samssouthernmay.com/":
-            location_name = "Sam’s Southern May Ave"
-            street_address = "2801 S May Ave"
-            city = "Oklahoma City"
-            state = "OK"
-            zipp = "73108"
-            phone = '<MISSING>'
-            page_url = "https://samssoutherneatery.com/may-ave-ok"
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
-        hours_of_operation = '<MISSING>'
-        store = []
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append('US')
-        store.append('<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append("Sam's Southern Eatery")
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-        store.append(page_url if page_url else '<MISSING>')
-        store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        yield store  
     r1 = session.get("https://samssoutherneatery.com/locations-list", headers=headers)
     soup1 = BeautifulSoup(r1.text, "lxml")
     for link in soup1.find_all(lambda tag: (tag.name == "a") and "Order Now" in tag.text):
@@ -233,6 +136,7 @@ def fetch_data():
             yield store
     r2 = session.get("https://samssoutherneatery.com/locations-list", headers=headers)
     soup2 = BeautifulSoup(r2.text, "lxml")
+
     for link2 in soup2.find_all("div",{"class":"sqs-block-content"})[2:]:
         try:
             if "http" not in link2.find("a")['href']:
@@ -245,40 +149,40 @@ def fetch_data():
             block = page_soup.find("a",{"class":"sqs-block-button-element--medium sqs-block-button-element"}).text
         except:
             continue
-        if "Coming soon!" in block:
-            addr = list(page_soup.find("div",{"class":"sqs-block-content"}).stripped_strings)
-            location_name = addr[0]
-            street_address = addr[1]
-            city = addr[2].split(",")[0]
-            state = addr[2].split(",")[1].strip().split(" ")[0]
-            try:
-                zipp = addr[2].split(",")[1].strip().split(" ")[1].replace("7129","71291").replace("7680","76801")
-            except:
-                zipp = "<MISSING>"
-            try:
-                phone = addr[3]
-            except:
-                phone = "<MISSING>"
-            store = []
-            store.append(base_url if base_url else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
-            store.append('US')
-            store.append('<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append("Sam's Southern Eatery")
-            store.append('<MISSING>')
-            store.append('<MISSING>')
-            store.append('<MISSING>')
-            store.append(page_url)
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            yield store
+        # if "Coming soon!" in block:
+        addr = list(page_soup.find("div",{"class":"sqs-block-content"}).stripped_strings)
+        location_name = addr[0]
+        street_address = addr[1]
+        city = addr[2].split(",")[0]
+        state = addr[2].split(",")[1].strip().split(" ")[0]
+        try:
+            zipp = addr[2].split(",")[1].strip().split(" ")[1].replace("7129","71291").replace("7680","76801")
+        except:
+            zipp = "<MISSING>"
+        try:
+            phone = addr[3]
+        except:
+            phone = "<MISSING>"
+        store = []
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append('US')
+        store.append('<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append("Sam's Southern Eatery")
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)

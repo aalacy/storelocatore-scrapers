@@ -49,8 +49,8 @@ def request_wrapper(url,method,headers,data=None):
 def fetch_data():
     address = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://starwoodhotels.com"
-    location_url = "https://pacsys.marriott.com/data/marriott_properties_MD_en-US.json"
+    base_url = "https://st-regis.marriott.com/"
+    location_url = "https://pacsys.marriott.com/data/marriott_properties_XR_en-US.json"
     r = request_wrapper(location_url,"get",headers=headers).json()
     k = (r['regions'])
     for i in k:
@@ -62,7 +62,7 @@ def fetch_data():
                 for i3 in bc :
                     cd = (i3['city_properties'])
                     for i4 in cd :
-                        location_name  = i4['name'].replace("é","e")
+                        location_name  = i4['name']
                         street_address = i4['address']
                         state = i4['state_name']
                         city =  i4['city']
@@ -83,7 +83,7 @@ def fetch_data():
                         store.append(country_code if country_code else "<MISSING>")
                         store.append("<MISSING>") 
                         store.append(phone if phone else "<MISSING>")
-                        store.append("Le Meridien Hotels & Resorts")
+                        store.append("JW Marriott")
                         store.append(latitude if latitude else "<MISSING>")
                         store.append(longitude if longitude else "<MISSING>")
                         store.append("<MISSING>")

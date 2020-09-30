@@ -27,7 +27,7 @@ def fetch_data():
         street_address = jd['st']
         city = jd['ct']
         state = jd['rg']
-        zipp = jd['zp'].replace("01710","01701")
+        zipp = jd['zp']
         country_code = jd['co']
         store_number = jd['ID']
         phone = jd['te']

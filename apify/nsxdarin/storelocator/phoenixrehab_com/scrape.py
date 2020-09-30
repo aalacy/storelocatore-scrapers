@@ -29,6 +29,7 @@ def fetch_data():
             if '/ohio' not in lurl:
                 locs.append(lurl)
     print(('Found %s Locations.' % str(len(locs))))
+    locs.append('https://phoenixphysicaltherapy.com/montgomery/')
     for loc in locs:
         name = ''
         add = ''
@@ -74,60 +75,60 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            info = add + '|' + city
+            info = add + '|' + city + '|' + name + '|' + hours
             if info not in locinfo:
                 locinfo.append(info)
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
-    url = 'https://www.phoenixrehab.com/ohio/'
-    r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    lines = r.iter_lines(decode_unicode=True)
-    name = ''
-    hours = '<MISSING>'
-    print('Pulling OH Locations...')
-    for line in lines:
-        if '<h3 class="clinic-title">' in line:
-            if name != '':
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-            name = line.split('<h3 class="clinic-title">')[1].split('<')[0]
-            loc = '<MISSING>'
-            hours = '<MISSING>'
-        if '<p class="clinic-address">' in line:
-            g = next(lines)
-            h = next(lines)
-            add = g.split('<')[0].strip().replace('\t','')
-            csz = h.strip().replace('\t','').replace('\r','').replace('\n','')
-            if '<' in csz:
-                csz = csz.split('<')[0]
-            csz = csz.replace(' ',' ')
-            city = csz.split(',')[0]
-            if 'Warren' in name:
-                city = 'Cortland'
-                zc = '44410'
-            else:
-                zc = csz.rsplit(' ',1)[1]
-            state = 'OH'
-        if '<a href="tel:+1-' in line:
-            phone = line.split('<a href="tel:+1-')[1].split('"')[0]
-            lat = '<MISSING>'
-            lng = '<MISSING>'
-        if '<a class="website-link" href="' in line:
-            loc = line.split('<a class="website-link" href="')[1].split('"')[0]
-            r2 = session.get(loc, headers=headers)
-            if r2.encoding is None: r2.encoding = 'utf-8'
-            hours = ''
-            for line2 in r2.iter_lines(decode_unicode=True):
-                if 'HOURS: </strong>' in line2:
-                    hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
-        if '</main><!-- #main -->' in line:
-            if lat == '':
-                lat = '<MISSING>'
-                lng = '<MISSING>'
-            info = add + '|' + city
-            if info not in locinfo:
-                locinfo.append(info)
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+##    url = 'https://www.phoenixrehab.com/ohio/'
+##    r = session.get(url, headers=headers)
+##    if r.encoding is None: r.encoding = 'utf-8'
+##    lines = r.iter_lines(decode_unicode=True)
+##    name = ''
+##    hours = '<MISSING>'
+##    print('Pulling OH Locations...')
+##    for line in lines:
+##        if '<h3 class="clinic-title">' in line:
+##            if name != '':
+##                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+##            name = line.split('<h3 class="clinic-title">')[1].split('<')[0]
+##            loc = '<MISSING>'
+##            hours = '<MISSING>'
+##        if '<p class="clinic-address">' in line:
+##            g = next(lines)
+##            h = next(lines)
+##            add = g.split('<')[0].strip().replace('\t','')
+##            csz = h.strip().replace('\t','').replace('\r','').replace('\n','')
+##            if '<' in csz:
+##                csz = csz.split('<')[0]
+##            csz = csz.replace(' ',' ')
+##            city = csz.split(',')[0]
+##            if 'Warren' in name:
+##                city = 'Cortland'
+##                zc = '44410'
+##            else:
+##                zc = csz.rsplit(' ',1)[1]
+##            state = 'OH'
+##        if '<a href="tel:+1-' in line:
+##            phone = line.split('<a href="tel:+1-')[1].split('"')[0]
+##            lat = '<MISSING>'
+##            lng = '<MISSING>'
+##        if '<a class="website-link" href="' in line:
+##            loc = line.split('<a class="website-link" href="')[1].split('"')[0]
+##            r2 = session.get(loc, headers=headers)
+##            if r2.encoding is None: r2.encoding = 'utf-8'
+##            hours = ''
+##            for line2 in r2.iter_lines(decode_unicode=True):
+##                if 'HOURS: </strong>' in line2:
+##                    hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
+##        if '</main><!-- #main -->' in line:
+##            if lat == '':
+##                lat = '<MISSING>'
+##                lng = '<MISSING>'
+##            info = add + '|' + city
+##            if info not in locinfo:
+##                locinfo.append(info)
+##                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     url = 'https://www.phoenixrehab.com/colorado-clinics/'
     r = session.get(url, headers=headers)
@@ -153,6 +154,7 @@ def fetch_data():
             csz = csz.replace(' ',' ')
             city = csz.split(',')[0]
             state = 'CO'
+            zc = csz.rsplit(' ',1)[1].strip()
         if '<a href="tel:+1-' in line:
             phone = line.split('<a href="tel:+1-')[1].split('"')[0]
             lat = '<MISSING>'
@@ -169,7 +171,7 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            info = add + '|' + city
+            info = add + '|' + city + '|' + name + '|' + hours
             if info not in locinfo:
                 locinfo.append(info)
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
