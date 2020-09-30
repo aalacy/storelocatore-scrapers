@@ -62,9 +62,10 @@ def fetch_data():
                         continue
                     locator_domain = base_url
                     location_name = j.find('h2',{'itemprop':'name'}).text
-
-                    street_address =  j.find('span',{'itemprop':'streetAddress'}).text
-                    city =  j.find('span',{'itemprop':'addressLocality'}).text
+                    city = j.find('span',{'itemprop':'addressLocality'}).text
+                    raw_address = j.find('span',{'itemprop':'address'}).text
+                    street_address = raw_address[:raw_address.rfind(city)].replace("\r\n","").replace("\n"," ").replace("New York,","").strip()
+                    street_address = (re.sub(' +', ' ', street_address)).strip()
                     state =  j.find('span',{'itemprop':'addressRegion'}).text.replace('Washington','WA')
 
                     zip =  j.find('span',{'itemprop':'postalCode'}).text
