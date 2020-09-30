@@ -19,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     }
     base_url = "https://rotolos.com"
     r = session.get("https://rotolos.com/locations/",headers=headers)
