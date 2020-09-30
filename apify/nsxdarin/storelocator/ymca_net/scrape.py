@@ -25,7 +25,7 @@ def fetch_data():
             typ = '<MISSING>'
             country = 'US'
             loc = url
-            store = str(x)
+            store = str(x.decode('utf-8'))
             hours = ''
             lat = '<MISSING>'
             lng = '<MISSING>'
