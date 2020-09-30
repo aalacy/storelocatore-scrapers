@@ -12,7 +12,7 @@ def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -21,13 +21,14 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     }
 
-    print("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.hueymagoos.com"
-    r = session.get("https://hueymagoos.com/locations/", headers=headers)
+    page_url = "https://hueymagoos.com/locations/"
+    r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -44,38 +45,54 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "hueymagoos"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
     # print("data ====== "+str(soup))
-    for script in soup.find_all("div", {"class": "wpb_column vc_column_container vc_col-sm-6"}):
+    for script in soup.find_all("div", {"class": "vc_row wpb_row vc_inner vc_row-fluid mkdf-section vc_custom_1502476441129 mkdf-content-aligment-left mkdf-grid-section"}):
 
         script_location = script.find_all("div", {"class": "mkdf-icon-list-item"})
+        location_name = script.h2.text.strip()
+        # print(location_name)
+        
+        try:
+            map_link = script.iframe["src"]
+            lat_pos = map_link.rfind("!3d")
+            latitude = map_link[lat_pos+3:map_link.find("!",lat_pos+5)].strip()
+            lng_pos = map_link.find("!2d")
+            longitude = map_link[lng_pos+3:map_link.find("!",lng_pos+5)].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         if len(script_location) > 2:
             phone = "".join(list(script_location[0].stripped_strings))
             address_list = list(script_location[1].stripped_strings)
             hours_of_operation = "".join(list(script_location[2].stripped_strings)) +","+ "".join(list(script_location[3].stripped_strings))
-
+            
             # print("address_list ==== "+ str(address_list))
+            address_list[0] = address_list[0].replace(".,",".")
             if len(address_list[0].split(',')) > 2:
-                street_address = address_list[0].split(',')[0]
-                city = address_list[0].split(',')[-2]
-                state = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[0]
-                zipp = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[1]
+                street_address = address_list[0].split(',')[0].strip()
+                city = address_list[0].split(',')[-2].strip()
+                state = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[0].strip()
+                zipp = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[1].strip()
             else:
-                street_address = " ".join(address_list[0].split('.')[:-1])
-                city = "".join(address_list[0].split('.')[-1]).split(",")[0]
-                state = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[0]
-                zipp = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[1]
+                street_address = " ".join(address_list[0].split('.')[:-1]).strip()
+                city = "".join(address_list[0].split('.')[-1]).split(",")[0].strip()
+                state = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[0].strip()
+                zipp = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[1].strip()
 
+            street_address = street_address.replace("  "," ")
+            if "1" in city:
+                street_address = (street_address + " " + city[:city.find(location_name.split()[0])]).strip()
+                city = city[city.find(location_name.split()[0]):].strip()
             country_code = "US"
-
-            location_name = city
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+            
+            store = [locator_domain, page_url, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
             # print("data = " + str(store))
@@ -87,20 +104,28 @@ def fetch_data():
             if "Coming Soon" != "".join(list(script_location[0].stripped_strings)):
                 # print("else =================== "+ str(list(script_location[0].stripped_strings)))
                 address_list = list(script_location[0].stripped_strings)
-                hours_of_operation = "".join(list(script_location[1].stripped_strings))
+                try:
+                    hours_of_operation = "".join(list(script_location[1].stripped_strings))
+                except:
+                    continue
+                address_list[0] = address_list[0].replace(".,",".")
                 if len(address_list[0].split(',')) > 2:
-                    street_address = address_list[0].split(',')[0]
-                    city = address_list[0].split(',')[-2]
-                    state = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[0]
-                    zipp = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[1]
+                    street_address = address_list[0].split(',')[0].strip()
+                    city = address_list[0].split(',')[-2].strip()
+                    state = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[0].strip()
+                    zipp = "".join(address_list[0].split('.')[-1]).split(",")[-1].strip().split(' ')[1].strip()
                 else:
-                    street_address = " ".join(address_list[0].split('.')[:-1])
-                    city = "".join(address_list[0].split('.')[-1]).split(",")[0]
-                    state = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[0]
-                    zipp = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[1]
+                    street_address = " ".join(address_list[0].split('.')[:-1]).strip()
+                    city = "".join(address_list[0].split('.')[-1]).split(",")[0].strip()
+                    state = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[0].strip()
+                    zipp = "".join(address_list[0].split('.')[-1]).split(",")[1].strip().split(' ')[1].strip()
 
-                location_name = city
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                street_address = street_address.replace("  "," ")
+                if "1" in city:
+                    street_address = (street_address + " " + city[:city.find(location_name.split()[0])]).strip()
+                    city = city[city.find(location_name.split()[0]):].strip()
+
+                store = [locator_domain, page_url, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
                 # print("data = " + str(store))
