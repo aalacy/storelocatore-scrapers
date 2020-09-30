@@ -68,6 +68,9 @@ def fetch_data():
         if "30092" in zipp:
             city = " ".join(street_address.split(" ")[-2:])
             street_address = " ".join(street_address.split(" ")[:-2])
+
+        street_address = street_address.strip(u'\u200b')
+        
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
         if ca_zip_list:
