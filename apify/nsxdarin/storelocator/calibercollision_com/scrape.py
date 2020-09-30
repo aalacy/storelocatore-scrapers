@@ -44,24 +44,27 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         hours = ''
         print(loc)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode('utf-8'))
-            if '<span class="d-block pt-3 italic newtime">' in line2:
-                g = next(lines)
-                g = str(g.decode('utf-8'))
-                if 'By Appointment Only' in g:
-                    hours = 'By Appointment Only'
-                else:
+        try:
+            lines = r2.iter_lines()
+            for line2 in lines:
+                line2 = str(line2.decode('utf-8'))
+                if '<span class="d-block pt-3 italic newtime">' in line2:
                     g = next(lines)
                     g = str(g.decode('utf-8'))
-                    if 'm' not in g:
+                    if 'By Appointment Only' in g:
+                        hours = 'By Appointment Only'
+                    else:
                         g = next(lines)
                         g = str(g.decode('utf-8'))
-                    hours = g.strip().replace('\t','').replace('\r','').replace('\n','')
-                    g = next(lines)
-                    g = str(g.decode('utf-8'))
-                    hours = hours + '; ' + g.split('>')[1].strip().replace('\t','').replace('\r','').replace('\n','').replace('&amp;','&')
+                        if 'm' not in g:
+                            g = next(lines)
+                            g = str(g.decode('utf-8'))
+                        hours = g.strip().replace('\t','').replace('\r','').replace('\n','')
+                        g = next(lines)
+                        g = str(g.decode('utf-8'))
+                        hours = hours + '; ' + g.split('>')[1].strip().replace('\t','').replace('\r','').replace('\n','').replace('&amp;','&')
+        except:
+            pass
         if hours == '':
             hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
