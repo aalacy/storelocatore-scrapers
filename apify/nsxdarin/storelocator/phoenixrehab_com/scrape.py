@@ -29,6 +29,7 @@ def fetch_data():
             if '/ohio' not in lurl:
                 locs.append(lurl)
     print(('Found %s Locations.' % str(len(locs))))
+    locs.append('https://phoenixphysicaltherapy.com/montgomery/')
     for loc in locs:
         name = ''
         add = ''
@@ -74,7 +75,7 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            info = add + '|' + city
+            info = add + '|' + city + '|' + name + '|' + hours
             if info not in locinfo:
                 locinfo.append(info)
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
@@ -170,7 +171,7 @@ def fetch_data():
             if lat == '':
                 lat = '<MISSING>'
                 lng = '<MISSING>'
-            info = add + '|' + city
+            info = add + '|' + city + '|' + name + '|' + hours
             if info not in locinfo:
                 locinfo.append(info)
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

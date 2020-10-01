@@ -1,7 +1,5 @@
 import csv
-import time
-from sgselenium import SgSelenium
-from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -13,51 +11,47 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-driver = SgSelenium().chrome()
+session=SgRequests()
+
 def fetch_data():
 
     all=[]
-    driver.get("http://greshampetroleum.com/locations")
-    time.sleep(5)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    #print(soup)
-    locs = soup.find_all('div',{'class':'storepoint-name'})
-    addrs=soup.find_all('div',{'class':'storepoint-address'})
-    phones=soup.find_all('a',{'class':'storepoint-sidebar-phone'})
+    res= session.get('https://api.storepoint.co/v1/15f0da50058560/locations?rq')
+    locs=res.json()['results']['locations']
 
+    for loc in locs:
 
-    print(len(locs))
+        addr=loc['streetaddress'].split(',')
+        sz=addr[-1]
+        del addr[-1]
+        sz=sz.strip().split(' ')
+        zip=sz[-1]
+        del sz[-1]
+        state=' '.join(sz)
+        city=loc['name'].split('-')[-1].strip()
+        street=' '.join(addr).replace(city,'')
 
-    for i in range(len(locs)):
-        phone =phones[i].text
-        addr = addrs[i].text
-        addr = addr.split(',')
-        loc=locs[i].text
-
-        sz = addr[-1].strip().split(" ")
-        state = sz[0]
-        zip = sz[1].split("-")[0]
-
-        addr=addr[0]
-        city=loc.split('-')[-1].strip()
-        street=addr.replace('&nbsp;','').replace(city,'').strip()
+        if loc['phone'] =='':
+            phone='<MISSING>'
+        else:
+            phone=loc['phone']
 
 
         all.append([
             "http://greshampetroleum.com",
-            loc,
+            loc['name'],
             street,
             city,
             state,
             zip,
             "US",
-            "<MISSING>",  # store #
+            loc['id'],  # store #
             phone,  # phone
-            "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
+            loc['tags'],  # type
+            loc['loc_lat'],  # lat
+            loc['loc_long'],  # long
             "<MISSING>",  # timing
-            "http://greshampetroleum.com/locations"])
+            "https://api.storepoint.co/v1/15f0da50058560/locations?rq"])
 
     return all
 

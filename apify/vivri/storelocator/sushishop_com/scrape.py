@@ -1,11 +1,11 @@
-from simple_scraper_pipeline import SimpleScraperPipeline
-from simple_utils import *
 import urllib.parse
 import html.parser
 import re
 from functools import partial
-import simple_network_utils
-from bs4 import BeautifulSoup
+
+from sgscrape.simple_utils import *
+from sgscrape.simple_network_utils import *
+from sgscrape.simple_scraper_pipeline import *
 
 comma_regex = re.compile(r',')
 postal_regex_str = r'[A-Z]\d[A-Z] ?\d[A-Z]\d'
@@ -70,69 +70,54 @@ def extract_first_phone(s: str) -> str:
     return s.split(",")[0]
 
 def scrape():
-    """
-    The main entrypoint into the program.
-    """
 
-    fetch_data = lambda: simple_network_utils.fetch_xml(
-        locations_url="https://sushishop.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
+    fetch_data_fn = lambda: fetch_xml(
+        request_url="https://sushishop.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
         query_params={
             "wpml_lang": "en",
             "t": str(ms_since_epoch)
         },
-        headers={},
-        data_params={},
         root_node_name="store",
         location_node_name="item",
         location_parser=xml_to_dict_one_level_deep
     )
 
-    record_mapping = {
-        "page_url": ["exturl"],
-        "location_name": ["location"],
-        "street_address": ["address"],
-        "city": ["address"],
-        "state": ["address"],
-        "zip": ["address"],
-        "store_number": ["storeid"],
-        "phone": ["telephone"],
-        "latitude": ["latitude"],
-        "longitude": ["longitude"],
-        "country_code": ["country"],
-        "hours_of_operation": ["operatinghours"]
-    }
+    one_offs = lambda s: s \
+        .replace("J4W 1 M7", "J4W 1M7") \
+        .replace(",   J5T 2H5", ",QC, J5T 2H5")  # missing province
 
-    constant_fields = {
-        "locator_domain": "https://sushishop.com",
-        "location_type": MISSING, # only one type of location
-    }
-
-    one_offs = lambda s: s\
-        .replace("J4W 1 M7", "J4W 1M7")\
-        .replace(",   J5T 2H5", ",QC, J5T 2H5") # missing province
-
-    normalize_address_text =  partial(apply_in_seq, [massage_html_text, one_offs])
+    normalize_address_text = partial(apply_in_seq, [massage_html_text, one_offs])
 
     extract_country_code_default_canada = partial(extract_country_code_common_n_a_mappings, "CA")
 
-    field_transformers = {
-        "street_address": partial(apply_in_seq, [normalize_address_text, extract_street_address]),
-        "city": partial(apply_in_seq, [normalize_address_text, extract_city]),
-        "state": partial(apply_in_seq, [normalize_address_text, extract_state]),
-        "zip": partial(apply_in_seq, [normalize_address_text, extract_zip_postal]),
-        "country_code": extract_country_code_default_canada,
-        "hours_of_operation": partial(apply_in_seq, [massage_html_text, extract_hours]),
-        "phone": partial(apply_in_seq, [massage_html_text, extract_first_phone]),
-    }
+    street_addr_transform = partial(apply_in_seq, [normalize_address_text, extract_street_address])
+    city_transform = partial(apply_in_seq, [normalize_address_text, extract_city])
+    state_transform = partial(apply_in_seq, [normalize_address_text, extract_state])
+    zip_transform = partial(apply_in_seq, [normalize_address_text, extract_zip_postal])
+    country_code_transform = extract_country_code_default_canada
+    hours_operation_transform = partial(apply_in_seq, [massage_html_text, extract_hours])
+    phone_transform = partial(apply_in_seq, [massage_html_text, extract_first_phone])
 
-    record_identity_fields = ["latitude", "longitude"]
+    field_defs = SimpleScraperPipeline.field_definitions(
+        locator_domain=ConstantField("https://sushishop.com"),
+        page_url=MappingField(mapping=["exturl"], is_required=False),
+        location_name=MappingField(mapping=["location"]),
+        street_address=MappingField(mapping=["address"], value_transform=street_addr_transform),
+        city=MappingField(mapping=["address"], value_transform=city_transform),
+        state=MappingField(mapping=["address"], value_transform=state_transform),
+        zipcode=MappingField(mapping=["address"], value_transform=zip_transform),
+        country_code=MappingField(mapping=["country"], value_transform=country_code_transform),
+        store_number=MappingField(mapping=["storeid"]),
+        phone=MappingField(mapping=["telephone"], value_transform=phone_transform, is_required=False),
+        location_type=MissingField(),
+        latitude=MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=MappingField(mapping=["longitude"], part_of_record_identity=True),
+        hours_of_operation=MappingField(mapping=["operatinghours"], value_transform=hours_operation_transform, is_required=False)
+    )
 
     pipeline = SimpleScraperPipeline(scraper_name="sushishop.com",
-                                     data_fetcher= fetch_data,
-                                     record_mapping=record_mapping,
-                                     constant_fields=constant_fields,
-                                     field_transform=field_transformers,
-                                     record_identity_fields=record_identity_fields,
+                                     data_fetcher= fetch_data_fn,
+                                     field_definitions=field_defs,
                                      fail_on_outlier=False)
 
     pipeline.run()

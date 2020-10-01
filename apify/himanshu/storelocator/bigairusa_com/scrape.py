@@ -26,8 +26,6 @@ def fetch_data():
     return_main_object = []
     addresses = []
 
-
-
     headers = {
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
         "accept": "application/json, text/javascript, */*; q=0.01",
@@ -48,78 +46,68 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-
 
     r= session.get('https://www.bigairusa.com',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
-    for link in soup.find('div',class_='textwidget').findAll('a'):
-        loc_r= session.get(link['href'],headers = headers)
+    for link in soup.find('div',class_='post-content').findAll('li'):
+        try:
+            link = link.a['href']
+            loc_r= session.get(link,headers = headers)
+        except:
+            continue
+        print(link)
         soup_loc= BeautifulSoup(loc_r.text,'lxml')
-        page_url = link['href'].strip()
 
-        info = soup_loc.find('div',class_='fusion-row').find('div',class_ = 'fusion-contact-info')
+        location_name = soup_loc.title.text.replace("Home |","").replace("Home -","").split("|")[0].strip()
 
-        list_info = list(info.stripped_strings)
-        address = list_info[0].split('|')
-        if len(address) >1:
-            location_name = address[0].split('•')[0].capitalize().strip()
-            street_address = address[0].split('•')[-1].strip()
-            city = address[1].split(',')[0].strip()
-            state =address[1].split(',')[-1].strip()
-            zipp = address[2].strip()
-            phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(address[-1]))[0]
+        address = soup_loc.find(class_="address").text
+        street_city = address.split(',')[0].replace(".","").strip()
+        if "|" in street_city:
+            street_address = street_city.split("|")[0].strip()
+            city = street_city.split("|")[-1].strip()
         else:
-            add_tag = address[0].split('•')
-            if len(add_tag) ==4:
-                location_name = add_tag[0].strip()
-                street_address = add_tag[-1].split(',')[0].strip()
-                city = add_tag[-1].split(',')[1].strip()
-                state = add_tag[-1].split(',')[-1].split()[0].strip()
-                zipp = add_tag[-1].split(',')[-1].split()[-1].strip()
-                phone = add_tag[2].strip()
-            elif len(add_tag) ==3:
-                phone =  re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(add_tag))[0]
-                zip = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(add_tag[-1]))
-                if  zip != []:
-                    location_name = add_tag[0].strip()
-                    street_address = add_tag[-1].split(',')[0].strip()
-                    city = add_tag[-1].split(',')[1].strip()
-                    state = add_tag[-1].split(',')[-1].split()[0].strip()
-                    zipp = zip[0].strip()
-                    phone = add_tag[1].strip()
-                else:
+            street_address = " ".join(street_city.split()[:-1]).strip()
+            city = street_city.split()[-1].strip()
 
-                    street_address = add_tag[0].strip()
-                    city = add_tag[1].split(',')[0].strip()
-                    state = add_tag[1].split(',')[-1].strip()
-                    zipp = "<MISSING>"
-                    phone = add_tag[-1].strip()
-                    location_name = city
-            else:
-                add_tag = add_tag[0].split(',')
-                if len(add_tag) ==4:
-                    location_name = add_tag[0].strip()
-                    phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(add_tag[1]))[0]
-                    street_address =  " ".join(add_tag[1].split()[-4:]).strip()
-                    city = add_tag[-2].strip()
-                    state = add_tag[-1].split()[0].strip()
-                    zipp= add_tag[-1].split()[-1].strip()
+        state = address.split(',')[-1][:3].strip()
 
-                else:
-                    street_address = add_tag[0].strip()
-                    city = add_tag[1].strip()
-                    state = add_tag[-1].split()[0].strip()
-                    zipp = add_tag[-1].split()[-1].strip()
-                    location_name = city
-                    if "greenville" in link['href']:
-                        phone = soup_loc.find('footer').find('section',class_ = 'contact_info').find('p',class_ = 'phone').text.replace('Phone:','').strip()
+        try:
+            zipp = re.findall(r'[0-9]{5}', address)[0]
+        except:
+            zipp = "<MISSING>"
+
+        if city == "Carlota":
+            street_address = street_city
+            city = "Laguna Hills"
+            state = "CA"
+            zipp = "<MISSING>"
+
+        try:
+            phone = soup_loc.find(class_="phone").text.replace("Phone:","").strip()
+        except:
+            info = soup_loc.find(class_="fusion-contact-info").text
+            phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(info))[0]
+
+        if "•" in phone:
+            phone = phone.split("•")[-1].strip()
+
+        hour_link = link + "hours/"
+        loc_h = session.get(hour_link,headers = headers)
+        soup_h = BeautifulSoup(loc_h.text,'lxml')
+        hours_of_operation = ""
+        raw_hours = soup_h.find('div',class_='fusion-text').find('ul')
+        try:
+            hours = list(raw_hours.stripped_strings)
+            for hour in hours:
+                if "day" in hour.lower() or "pm" in hour.lower() and "night" not in hour.lower():
+                    hours_of_operation = (hours_of_operation + " " + hour.replace("\xa0","").replace("–","-").replace("SUMMER HOURS","").replace("|","")).strip()
+        except:
+            hours_of_operation = "<MISSING>"
+
+        hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,link]
         store = ["<MISSING>" if x == "" or x == None  else x for x in store]
 
         # print("data = " + str(store))
@@ -127,12 +115,7 @@ def fetch_data():
 
         return_main_object.append(store)
 
-
-
     return return_main_object
-
-
-
 
 def scrape():
     data = fetch_data()

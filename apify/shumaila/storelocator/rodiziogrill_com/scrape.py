@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 import string
-import re, time,json
+import re, time,json,usaddress
 
 from sgrequests import SgRequests
 
@@ -36,22 +36,50 @@ def fetch_data():
         if loc.text.lower().find('soon') == -1:
             link = loc['href']
             #print(link)
-            r = session.get(link, headers=headers, verify=False)
-            det = r.text.split('<script type="application/ld+json">',1)[1].split('</script>',1)[0]
-            det = re.sub(pattern,'',str(det))
-            det = json.loads(det)
-            #print(det)
-            street = det['address']['streetAddress']
-            state = det['address']["addressRegion"]
-            city = det['address']["addressLocality"]
-            pcode =  det['address']["postalCode"]
-            try:
-                phone = det['telephone']
-            except:
-                phone = '<MISSING>'
-            title = det['name']
+            r = session.get(link, headers=headers, verify=False)          
+            
             lat,longt = r.text.split('LatLng(',1)[1].split(')',1)[0].split(',')
             soup = BeautifulSoup(r.text,'html.parser')
+            title = soup.find('title').text.split(' |')[0]
+            try:
+                phone = soup.find('div',{'class':'locationPhone'}).find('a').text
+            except:
+                phone = '<MISSING>'
+            address = soup.find('div',{'class':'Column4'}).findAll('div')[1].text.replace('\n',' ')
+            #print(address)
+            if address.find('Located inside') > -1 or address.find('between') > -1:
+                #print('1')
+                address  = soup.find('div',{'class':'Column4'}).findAll('div')[2].text.replace('\n',' ')
+            try:
+                if len(address.rstrip().split(' ')[-1]) == 5:
+                    pass
+                else:
+                    address= address + ' '+soup.find('div',{'class':'Column4'}).find('p').text
+                    #print('yes')
+            except:
+                pass
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
             hours = soup.find('div',{'class':'Column2'}).text.replace('\n',' ').lstrip().replace('Hours ','')
             #print(hours)
             try:
@@ -81,7 +109,7 @@ def fetch_data():
                         phone,
                         '<MISSING>',
                         lat,
-                        longt,
+                        longt.strip(),
                         hours.replace('\r','').strip().replace('day','day ').replace('  ',' ')
                     ])
             #print(p,data[p])

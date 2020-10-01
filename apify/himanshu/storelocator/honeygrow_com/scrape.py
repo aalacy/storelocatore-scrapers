@@ -34,7 +34,11 @@ def fetch_data():
         soup1= BeautifulSoup(r1.text,"lxml")
         longitude = (soup1.find("div",{"class":"gmaps"})['data-gmaps-lng'])
         latitude = (soup1.find("div",{"class":"gmaps"})['data-gmaps-lat'])
-        hours_of_operation = soup1.find_all("div",{"class":"col-md-6"})[0].text.split('\n')[-2]
+        hours_of_operation = soup1.find_all("div",{"class":"col-md-6"})[0].text.replace("NOW OPEN!","").replace("day","day ").replace("Located in Ellisburg Shopping Center","").split('\n')[-2]
+        hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+        if "CLOSED until further notice" in hours_of_operation:
+            hours_of_operation = "CLOSED until further notice"
+
         store=[]
         store.append(page_url1 if page_url1 else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -42,10 +46,10 @@ def fetch_data():
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')
         store.append(zipp if zipp else '<MISSING>')
-        store.append('United States')
+        store.append('US')
         store.append('<MISSING>')
         store.append(phone if phone else '<MISSING>')
-        store.append('honeygrow')
+        store.append('<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation.replace('CLOSED'," CLOSED").replace('ON JULY 4TH',"").strip()  if hours_of_operation else '<MISSING>')
