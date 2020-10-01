@@ -4,94 +4,69 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
                          "page_url"])
-        # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    return_main_object = []
+    addressess = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-
     base_url = "http://cafebrazil.com"
     r = session.get(base_url +'/locations' , headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    for part in soup.find_all("main", {"id": "genesis-content"}):
-        temp_storeaddresss = list(part.stripped_strings)
-
-        return_val = []
-        main_val =[]
-        i = 1
-        for x in temp_storeaddresss:
-            if(x == '______________________________________________________________________'):
-                main_val.append(return_val)
-                return_val = []
-            elif(i == len(temp_storeaddresss)):
-                main_val.append(return_val)
-            else:
-                return_val.append(x)
-            i += 1
-            new = 0
-        all_loc = part.find_all("a",text=re.compile("Click Here"))
-
-        for inner in  main_val:
-            location_name = inner[0]
-            url = all_loc[new]['href']
-            if('Locations' in inner):
-                inner.remove('Locations')
-            if(new == 4):
-                lat_find = url.split("&sll=")
-                lat = lat_find[1].split(",")[0]
-                find_lag = lat_find[1].split(",")[1]
-                lag = find_lag.split("&")[0]
-            else:
-                lat_find = url.split("@")
-                lat = lat_find[1].split(",")[0]
-                lag = lat_find[1].split(",")[1]
-            street_address = inner[1].split(",")[0]
-            city = inner[1].split(",")[1]
-            state_zip = inner[1].split(",")[2]
-            state = state_zip.split(" ")[1]
-            store_zip = state_zip.split(" ")[2]
-            phone_fax = inner[2].split("|")[0]
-            phone = phone_fax.split(":")[1]
-            hour = inner[3]
-            return_object = []
-            return_object.append(base_url)
-            return_object.append(location_name)
-            return_object.append(street_address)
-            return_object.append(city)
-            return_object.append(state)
-            return_object.append(store_zip)
-            return_object.append("US")
-            return_object.append("<MISSING>")
-            return_object.append(phone)
-            return_object.append("<MISSING>")
-            return_object.append(lat)
-            return_object.append(lag)
-            return_object.append(hour)
-            return_object.append("http://cafebrazil.com/locations/")
-            return_main_object.append(return_object)
-            new += 1
-    return return_main_object
-
+    for i in soup.find_all("div",{"class":"col-sm-6 bb"}):
+        dl = list(i.stripped_strings)
+        location_name = dl[0]
+        street_address = dl[1]
+        city = dl[2].split(",")[0]
+        state = dl[2].split(",")[1].strip().split(" ")[0]
+        zipp = dl[2].split(",")[1].strip().split(" ")[1]
+        phone = dl[3].replace("PH:","").strip()
+        hours_of_operation = dl[5].replace("Hours:","").replace("HOURS:","").strip()
+        map_url = i.find("a")['href']
+        coords = session.get(map_url).url
+        if "/@" in coords:
+            lat = coords.split("/@")[1].split(",")[0]
+            lng = coords.split("/@")[1].split(",")[1]
+        else:
+            map_soup = BeautifulSoup(session.get(map_url).text, "lxml")
+            file_name = open("data.txt","w",encoding="utf-8")
+            file_name.write(str(map_soup))
+            try:
+                map_href = map_soup.find("a",{"href":re.compile("https://maps.google.com/maps?")})['href']
+                lat = str(BeautifulSoup(session.get(map_href).text, "lxml")).split("/@")[1].split(",")[0]
+                lng = str(BeautifulSoup(session.get(map_href).text, "lxml")).split("/@")[1].split(",")[1]
+            except:
+                lat = str(map_soup).split("/@")[1].split(",")[0]
+                lng = str(map_soup).split("/@")[1].split(",")[1]
+        store = []
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append("US")
+        store.append('<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append("Cafe Brazil")
+        store.append(lat if lat else '<MISSING>')
+        store.append(lng if lng else '<MISSING>')
+        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append("https://www.cafebrazil.com/locations/")
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
