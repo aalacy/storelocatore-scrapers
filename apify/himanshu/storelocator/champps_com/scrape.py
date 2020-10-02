@@ -46,16 +46,17 @@ def fetch_data():
             longitude = p['markers'][o]['long']
             link1 = p['markers'][o]['path']
             page_url = "https://champps.com/"+str(link1)
+            # print(page_url)
             r1 = session.get(page_url)
             try:
                 soup1 = BeautifulSoup(r1.text, "lxml")
-                hour = list(soup1.find("h4", text=re.compile(
-                    "HOURS OF OPERATION")).parent.stripped_strings)
-                if len(hour) > 1:
-                    hours_of_operation = " ".join(hour[1:])
-                else:
-                    hours_of_operation = "<MISSING>"
+                hours_of_operation = ""
+                raw_hours = soup1.find_all(style="text-align: center;")[1:]
+                for hour in raw_hours:
+                    hours_of_operation = (hours_of_operation + " " + hour.text.replace("\xa0"," ").replace("\n"," ").replace("–","-").strip()).strip()
             except:
+                hours_of_operation = "<MISSING>"
+            if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
             store = []
             store.append("https://champps.com/")
@@ -63,7 +64,7 @@ def fetch_data():
             store.append(street_address)
             store.append(city)
             store.append(state)
-            store.append(zipp)   
+            store.append(zipp)
             store.append("US")
             store.append(store_number)
             store.append(phone)
