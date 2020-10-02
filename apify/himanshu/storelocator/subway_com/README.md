@@ -8,7 +8,3 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-address with no number,address contains state name,invalid zip,same coods and i checked all data is true for this site
-so for the location id there is a main location id and then sub category id and both of these combined are unique so lets say some of the location have same main id but different category id i tried to combine them but the validator keep throwing error so for now i have put missing for the id
-
