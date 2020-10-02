@@ -41,7 +41,7 @@ def fetch_data():
         
         response = session.get(link + '/ContactUs/', headers = HEADERS)
         soup = BeautifulSoup(response.content, 'html.parser')
-
+        # print(link)
         location_name = soup.find('span', {'id': 'header-location'}).text.strip()
         
         google_link = soup.find('div', {'class': 'google-map'}).find('iframe')['src']
@@ -66,6 +66,9 @@ def fetch_data():
             else:
                 continue
 
+        if "@" in phone_number:
+            phone_number = '<MISSING>'
+            
         days = soup.find_all('div', {'class': 'Footer-Hours'})
         
         hours = ''
@@ -73,6 +76,10 @@ def fetch_data():
             day = ' '.join(d.text.strip().split())
 
             hours += day
+
+        hours = hours.replace("PM","PM ").replace("Closed","Closed ").strip()
+        if not hours:
+            hours = '<MISSING>'
         
         country_code = '<MISSING>'
         store_number = '<MISSING>'
