@@ -88,9 +88,6 @@ def fetch_data():
                         store.append(longitude if longitude else "<MISSING>")
                         store.append("<MISSING>")
                         store.append(page_url if page_url else"<MISSING>")
-                        if store[2] in address :
-                            continue
-                        address.append(store[2])
                         if country_code == 'US' or country_code == 'CA' :
                             yield store 
 def scrape():
