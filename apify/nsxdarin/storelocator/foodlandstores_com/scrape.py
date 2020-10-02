@@ -13,7 +13,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&is_selectable=true&limit=1&token=76b6abe29e6d0f808586dc24b719c6da'
+    url = 'https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&is_selectable=true&limit=100&token=76b6abe29e6d0f808586dc24b719c6da'
     r = session.get(url, headers=headers)
     website = 'foodlandstores.com'
     country = 'US'
