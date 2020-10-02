@@ -4,20 +4,13 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
         for row in data:
             writer.writerow(row)
-
 def request_wrapper(url,method,headers,data=None):
     request_counter = 0
     if method == "get":
@@ -49,7 +42,6 @@ def request_wrapper(url,method,headers,data=None):
                     break
     else:
         return None
-
 def parser(location_soup,url):
     adressess = []
     store_number=(str(location_soup).split('"corporateCode":"')[1].split('",')[0])
@@ -80,7 +72,6 @@ def parser(location_soup,url):
         hours="<MISSING>"
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
-    
     store = []
     store.append("https://bestbuy.com")
     store.append(name)
@@ -96,9 +87,7 @@ def parser(location_soup,url):
     store.append(lng)
     store.append(hours)
     store.append(url)
-    # print(store)
     return store
-
 def fetch_data():
     adressess = []
     headers = {
@@ -107,62 +96,51 @@ def fetch_data():
     base_url = "https://bestbuy.com"
     r = session.get("https://stores.bestbuy.com/index.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # return_main_object = []
     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
         if states["href"].count("/") == 2:
-            #print("https://stores.bestbuy.com/" + states["href"].replace("../",""))
             location_request = session.get("https://stores.bestbuy.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-                continue
-            if location_soup.find("span",text=re.compile("Magnolia")):
-                continue
-            if location_soup.find("span",text=re.compile("Pacific Sales")):
-                continue
+            # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
+            #     continue
+            # if location_soup.find("span",text=re.compile("Magnolia")):
+            #     continue
+            # if location_soup.find("span",text=re.compile("Pacific Sales")):
+            #     continue
             store_data = parser(location_soup,"https://stores.bestbuy.com/" + states["href"])
             yield store_data
         else:
-            state_request = session.get("https://stores.bestbuy.com/" + states["href"])
+            state_request = session.get("https://stores.bestbuy.com/" + states["href"].replace("ak/anchorage.html","ak.html"))
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
                 if city["href"].count("/") == 2:
-                    #print("https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     location_request = session.get("https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
-                    if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-                        continue
-                    if location_soup.find("span",text=re.compile("Magnolia")):
-                        continue
-                    if location_soup.find("span",text=re.compile("Pacific Sales")):
-                        continue
-
+                    # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
+                    #     continue
+                    # if location_soup.find("span",text=re.compile("Magnolia")):
+                    #     continue
+                    # if location_soup.find("span",text=re.compile("Pacific Sales")):
+                    #     continue
                     store_data = parser(location_soup,"https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
-                    #print("https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     city_request = session.get("https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
-                        #print("https://stores.bestbuy.com/" + location["href"].replace("../",""))
                         location_request = session.get("https://stores.bestbuy.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
-                        if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-                            continue
-                        if location_soup.find("span",text=re.compile("Magnolia")):
-                            continue
-                        if location_soup.find("span",text=re.compile("Pacific Sales")):
-                            continue
+                        # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
+                        #     continue
+                        # if location_soup.find("span",text=re.compile("Magnolia")):
+                        #     continue
+                        # if location_soup.find("span",text=re.compile("Pacific Sales")):
+                        #     continue
                         store_data = parser(location_soup,"https://stores.bestbuy.com/" + location["href"].replace("../",""))
                         if store_data[2] in adressess:
                             continue
                         adressess.append(store_data[2])
                         yield store_data
-
-
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
