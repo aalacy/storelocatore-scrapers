@@ -3,11 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -46,15 +44,13 @@ def fetch_data():
     a = soup.find_all('a',{'class', 'et_pb_button'})
     for i in a:
         page_url = (i['href'])
-        # print(page_url)
         try:
             r1 = session.get(page_url, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            b = soup1.find_all('div',{'class','text-block'})
         except:
-            pass
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        b = soup1.find_all('div',{'class','text-block'})
+            continue
         for j in b:
-            # print(j)
             street_address = (list(j.stripped_strings)[1].replace("Fort Collins","218 Smokey Street"))
             location_name2 = (list(j.stripped_strings)[0])
             if "Fly High At Reno" in location_name2 :
@@ -65,12 +61,12 @@ def fetch_data():
                 location_name2 = location_name2 
             elif "Fly High At Farmington" in location_name2 :
                 location_name2 = location_name2 
+            elif "Fly High At Altadena" in location_name2 :
+                location_name2 = location_name2
             else:
                 location_name2 = "Fly High At Fort Collins"
             city = (list(j.stripped_strings)[2].replace("218 Smokey Street –","Fort Collins").split(",")[0])
-            # print(city)
             state = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","CO").split(" ")[0])
-            # print(state)
             zipp = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","80525").split(" ")[-1]) 
             phone = (list(j.stripped_strings)[3].replace("Fort Collins, CO 80525","(970) 305-5300"))
             q = location_name2.replace(" ","-")
@@ -93,8 +89,8 @@ def fetch_data():
             store.append(zipp)
             store.append("US")
             store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
+            store.append(phone.replace("View Hours","<MISSING>"))
+            store.append("Fly High Adventure Parks")
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append(hours_of_operation1)

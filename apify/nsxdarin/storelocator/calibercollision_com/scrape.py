@@ -56,13 +56,18 @@ def fetch_data():
                     else:
                         g = next(lines)
                         g = str(g.decode('utf-8'))
-                        if 'm' not in g:
+                        while 'm' not in g:
                             g = next(lines)
                             g = str(g.decode('utf-8'))
                         hours = g.strip().replace('\t','').replace('\r','').replace('\n','')
                         g = next(lines)
                         g = str(g.decode('utf-8'))
-                        hours = hours + '; ' + g.split('>')[1].strip().replace('\t','').replace('\r','').replace('\n','').replace('&amp;','&')
+                        if 'm' in g:
+                            hours = hours + '; ' + g.split('>')[1].strip().replace('\t','').replace('\r','').replace('\n','').replace('&amp;','&')
+                        hours = hours.replace('<br/>','; ')
+                        hours = hours.replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
+                        hours = hours.replace('\t','')
+                        hours = hours.replace(' ;',';')
         except:
             pass
         if hours == '':

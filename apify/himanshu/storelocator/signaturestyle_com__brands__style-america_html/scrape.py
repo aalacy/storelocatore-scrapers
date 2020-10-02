@@ -52,17 +52,17 @@ def fetch_data():
                 country_code = "CA"
             store_number = page_url.split("-")[-1].replace(".html","").strip()
             phone = soup3.find("a",{"id":"sdp-phone"}).text.strip()
-            location_type = "First Choice Haircutters"
+            location_type = "Style America"
             latitude = soup3.find("meta", {"itemprop":"latitude"})['content']
             longitude = soup3.find("meta", {"itemprop":"longitude"})['content']
             try:
                 hours_of_operation = " ".join(list(soup3.find("div",{"class":"salon-timings"}).stripped_strings))
             except:
                 hours_of_operation = "<MISSING>"
-            if "/first-choice" not in page_url:
+            if "style-america" not in page_url:
                 continue
             store=[]
-            store.append("https://www.signaturestyle.com/brands/first-choice-haircutters.html")
+            store.append("https://www.signaturestyle.com/brands/style-america.html")
             store.append(location_name)
             store.append(street_address)
             store.append(city)
