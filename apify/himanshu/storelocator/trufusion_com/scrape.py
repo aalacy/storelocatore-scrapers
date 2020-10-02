@@ -3,20 +3,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
     base_url = "https://trufusion.com/"
     return_main_object = []
@@ -30,7 +23,9 @@ def fetch_data():
         phone=''
         lat=''
         lng=''
-        r1 = session.get(base_url+atag['href'])
+        page_url = base_url+atag['href'].replace(" ","%20")
+        # print(page_url)
+        r1 = session.get(page_url)
         soup1=BeautifulSoup(r1.text,'lxml')
         if "studioName" in atag['href']:
             name=soup1.find('h2',{"itemprop":"name"}).text.strip()
@@ -48,13 +43,21 @@ def fetch_data():
             if soup1.find('a',{"itemprop":"telephone"})!=None:
                 phone=soup1.find('a',{"itemprop":"telephone"}).text.strip()
         else:
-            main1=soup1.find('div',{"id":'main'}).find_all('div',{"class",'studio-section'})[2].find('div',{"class":"one"})
-            name=main1.find_all('p')[1].text.strip()
-            address=main1.find_all('p')[2].text.strip()
-            madd=main1.find_all('p')[3].text.strip().split(',')
-            city=madd[0].strip()
-            state=madd[1].strip().split(' ')[0].strip()
-            zip=madd[1].strip().split(' ')[1].strip()
+            main1=soup1.find('div',{"id":'main'}).find('div',{"class":"one"})
+            try:
+                name=main1.find_all('p')[1].text.strip()
+                address=main1.find_all('p')[2].text.strip()
+                madd=main1.find_all('p')[3].text.strip().split(',')
+                city=madd[0].strip()
+                state=madd[1].strip().split(' ')[0].strip()
+                zip=madd[1].strip().split(' ')[1].strip()
+            except IndexError:
+                name=main1.find_all('p')[0].text.strip()
+                address=main1.find_all('p')[1].text.strip()
+                madd=main1.find_all('p')[2].text.strip().split(',')
+                city=madd[0].strip()
+                state=madd[1].strip().split(' ')[0].strip()
+                zip=madd[1].strip().split(' ')[1].strip()
         store=[]
         store.append(base_url)
         store.append(name if name else "<MISSING>")
@@ -69,11 +72,12 @@ def fetch_data():
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store)                
     return return_main_object
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

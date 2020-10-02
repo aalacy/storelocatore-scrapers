@@ -3,7 +3,8 @@ from pprint import pprint
 from string import capwords
 
 import base
-import requests, json
+from sgrequests import SgRequests
+import json
 from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
@@ -11,8 +12,10 @@ from lxml import html, etree
 crawled = []
 class Scrape(base.Spider):
     def crawl(self):
+        session = SgRequests()
+        
         base_url = "https://physique57.com/page-sitemap.xml"
-        c = requests.get(base_url, headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"}).content
+        c = session.get(base_url, headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"}).content
         tree = etree.fromstring(c)
         for href in tree.xpath('//x:urlset/x:url/x:loc', namespaces={"x":"http://www.sitemaps.org/schemas/sitemap/0.9"}):
             url = href.text
@@ -23,11 +26,11 @@ class Scrape(base.Spider):
                     loc_data = [s.strip() for s in loc_data if s.strip()]
                     i = base.Item(studio_sel)
                     if len(loc_data) == 4:
-                        i.add_value('street_address', ' '.join(loc_data[:2]))
+                        i.add_value('street_address', ' '.join(loc_data[:2]).replace("(at Exchange Alley)","").replace("(at Spring Street)","").strip())
                         i.add_value('phone', loc_data[-1])
                         ct = loc_data[2]
                     elif len(loc_data) == 3:
-                        i.add_value('street_address', loc_data[0])
+                        i.add_value('street_address', loc_data[0].replace("(at Exchange Alley)","").replace("(at Spring Street)","").strip())
                         i.add_value('phone', loc_data[-1])
                         ct = loc_data[1]
                     else:

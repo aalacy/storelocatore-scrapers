@@ -4,20 +4,16 @@ from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
-# import phonenumbers
 session = SgRequests()
-
 def write_output(data):
 	with open('data.csv', mode='w', newline='') as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
 		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
 						 "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-		# Body
 		for row in data:
 			writer.writerow(row)
 def fetch_data():
+
 	headers = {
 			'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 			'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
@@ -32,17 +28,14 @@ def fetch_data():
 	zip_code = search.next_zip()
 	while zip_code:
 		result_coords = []
-		# print("zip_code === " + str(zip_code))
-		# print("remaining zip =====" + str(search.zipcodes_remaining()))
 		headers = {
 			'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36",
 			'content-type' : 'application/x-www-form-urlencoded'
 		}
-		data = "scController=StoreLocatorUS&scAction=SubmitLocation&Zip="+str(zip_code)+"&All-hidden=&Express-hidden=checked&HD-hidden=&VIOC-hidden=checked&Other-hidden=&All-hidden-retail=&HD-hidden-retail="
+		data = "scController=StoreLocatorUS&scAction=SubmitLocation&Zip="+str(zip_code)+"&All-hidden=&Express-hidden=&HD-hidden=&VIOC-hidden=checked&Other-hidden=&All-hidden-retail=checked&HD-hidden-retail="
 		r = session.post('https://www.valvoline.com/store-locator', headers=headers,data=data)
 		soup = BeautifulSoup(r.text,"lxml")
 		li = soup.find("li",{"data-content":"servicesLocations"})
-		
 		if li.find("div",class_="location"):
 			current_result_len = len(li.find_all("div",class_='location'))
 			for loc in li.find_all("div",class_='location'):
@@ -50,10 +43,10 @@ def fetch_data():
 				longitude= loc["data-longitude"]
 				if "Valvoline Express Care™" in loc["data-name"].strip() :
 					location_type = "Valvoline Express Care™"
-				elif "Valvoline Instant Oil Change™" in loc["data-name"].strip():
-					location_type = "Valvoline Instant Oil Change™"
+				elif "Valvoline Instant Oil Change" in loc["data-name"].strip():
+					location_type = "Valvoline Instant Oil Change"
 				else:
-					continue
+					pass
 				city_state_zipp = loc["data-location"].split(",")
 				city = city_state_zipp[0].strip().capitalize()
 				state = city_state_zipp[1].strip()
@@ -87,15 +80,10 @@ def fetch_data():
 					addresses.append(str(store[2]+" "+store[-5]))
 
 					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-					# print("data = " + str(store))
-					# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 					yield store
 		if current_result_len < MAX_RESULTS:
-			# print("max distance update")
 			search.max_distance_update(MAX_DISTANCE)
 		elif current_result_len == MAX_RESULTS:
-			# print("max count update")
 			search.max_count_update(result_coords)
 		else:
 			raise Exception("expected at most " + str(MAX_RESULTS) + " results")

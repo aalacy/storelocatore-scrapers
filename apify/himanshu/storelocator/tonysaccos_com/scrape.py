@@ -3,111 +3,87 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
+import ast
+import itertools
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    base_url= "https://tonysaccos.com/locations/"
-    r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    phone1=[]
-    st1 =[]
-    city =[]
-    zipcode =[]
-    state=[]
-    hours1=[]
-    latitude =[]
-    longitude =[]
-    data = soup.find_all("div",{"class":"locations_scroll"})
-    a = soup.find_all("a",{"class":"storeinfo button btn qbutton small2 red"})
-    for a1 in a:
-        if "https://tonysaccos.com/pizza-locations/mentor-oh/" in a1['href'] or "https://tonysaccos.com/pizza-locations/granger-in/" in a1['href'] or "https://tonysaccos.com/pizza-locations/estero-fl/" in a1['href'] :
-         
-            base_url= a1['href']
-            r = session.get(base_url)
-            soup1= BeautifulSoup(r.text,"lxml")
-            g=(soup1.find_all("span",{"itemprop":"openingHours"}))
-            for g1 in g:
-                hours1.append(g1.text)
-        else:
-            hours1.append("<INACCESSIBLE>")
-            # r = session.get(a1['href'])
-            # print(a1['href'])
-            # soup1= BeautifulSoup(r.text,"lxml")
-            # print(soup1)
-
-
-    for i in data:
-        names = i.find_all("span",{"itemprop":"name"})
-        phone  = i.find_all("span",{"itemprop":"telephone"})
-        std = i.find_all("span",{"itemprop":"streetAddress"})
-        hours = i.find_all("div",{"class":"hours"})
-        links = i.find_all("div",{"class":"links"})
-        for n in names:
-            store_name.append(n.text)
-      
-        for p in phone:
-            phone1.append(p.text)
-        
-        for st in std:
-            st1.append(st.text.split(',')[0])
-            city.append(st.text.split(',')[1].split( )[0])
-            state.append(st.text.split(',')[1].split( )[1])
-            zipcode.append(st.text.split(',')[1].split( )[2])
-            
-        # for h in hours:
-        #     hours1.append(" ".join(list(h.stripped_strings)))
-            
-         
-        for l in links:
-            latitude.append(l.a['href'].split("/")[5].split(',')[0])
-            longitude.append(l.a['href'].split("/")[5].split(',')[1])
-            
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://tonysaccos.com")
-
-        store.append(store_name[i])
-        store.append(st1[i])
-        store.append(city[i])
-        store.append(state[i])
-        store.append(zipcode[i])
+    addressess = []
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    }
+    base_url = "https://tonysaccos.com"
+    r = session.get(base_url +'/locations/' , headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    frame = soup.find_all("div",{"class":"wpb_column vc_column_container vc_col-sm-6"})[::2]
+    iframe = soup.find_all("iframe")
+    for (i,j) in zip(frame,iframe):
+        dl = list(i.stripped_strings)
+        if len(dl)==10:
+            location_name=dl[1]+" - "+dl[0].lower()
+            street_address = dl[2]
+            addr = dl[3].split(" ")
+            city = addr[0]
+            state = addr[1]
+            zipp = addr[2]
+            phone = dl[5]
+            hours_of_operation = ",".join(dl[7:])
+        elif len(dl)==12:
+            location_name=dl[1]+" - "+dl[0].lower()
+            street_address = ",".join(dl[2:5])
+            addr = dl[5].split(" ")
+            city = addr[0]
+            state = addr[1]
+            zipp = addr[2]
+            phone = dl[7]
+            hours_of_operation = ",".join(dl[9:])
+        elif len(dl)==11:
+            location_name=dl[1]+" - "+dl[0].lower()
+            street_address = dl[2]
+            city = dl[3].split(",")[0]
+            state = dl[3].split(",")[1].strip().split(" ")[0]
+            zipp = dl[3].split(",")[1].strip().split(" ")[1]
+            phone = dl[5]
+            hours_of_operation = ",".join(dl[7:])
+        elif len(dl)==9:
+            location_name=dl[1]+" - "+dl[0].lower()
+            street_address = dl[2]
+            city = dl[3].split(",")[0]
+            state = dl[3].split(",")[1].strip().split(" ")[0]
+            zipp = dl[3].split(",")[1].strip().split(" ")[1]
+            phone = dl[5]
+            hours_of_operation = ",".join(dl[7:])
+        map_url = j['src'].split("!2d")[1].split("!2m3!")[0].split("!3d")
+        lat = map_url[1]
+        lng = map_url[0]
+        store = []
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
         store.append("US")
+        store.append('<MISSING>')
+        store.append(phone if phone else '<MISSING>')
         store.append("<MISSING>")
-        store.append(phone1[i])
-        store.append("tonysaccos")
-        store.append(latitude[i])
-        store.append(longitude[i])
-        store.append(hours1[i])
-        
-        return_main_object.append(store)
-        
-        
-    return return_main_object
-
-
+        store.append(lat if lat else '<MISSING>')
+        store.append(lng if lng else '<MISSING>')
+        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append("https://tonysaccos.com/locations/")
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-
-
