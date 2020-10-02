@@ -1,117 +1,144 @@
-import requests
-import re
-
 from bs4 import BeautifulSoup
 import csv
+import string
+import re, time
 
-def parse_geo(url):
-    lon = re.findall(r' ll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
-    lat = re.findall(r'll=(-?[\d\.]*) ', url)[0]
-    return lat, lon
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    with open('data.csv', mode='w') as file:
-        writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
-        file.close()
 
 def fetch_data():
-    url = "https://www.marketbroiler.com"
-    res = requests.get(url)
-    soup = BeautifulSoup(res.text, "html.parser")
-    info = soup.find_all('div', {'id': 'comp-inhlqtpd'})
-
-    div_ids=["comp-jf4l8jr4","comp-jf4hz517","comp-jf4h8s4l","comp-jf4jac7l1","comp-jf4ho1if1"]
-
-    locations = re.search(r"<span class=\"color_12\">(.*)</span></span></span>", str(info))  # extract locations
-    locs = locations.group(1).split(",")
-
-    del (locs[3])
-    for loc in locs:
-        locs[locs.index(loc)] = loc.lower().replace(" ", "")
-    print(locs)
-
-    pix = ["17", "17", "20", "23", "20"]
-    street = []
-    cities = []
-    states = []
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-
-    for loc in locs:
-        url="https://www.marketbroiler.com/"+loc
-        res = requests.get(url)
-        soup = BeautifulSoup(res.text, "html.parser")
-        spans = soup.find_all('span', {'style':'font-size:'+pix[locs.index(loc)]+"px;"})
-        data=[]
-        for span in spans:
-            t= span.text
-            if"(" in t:
+    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.marketbroiler.com/copy-of-locations'
+    r = session.get(url, headers=headers, verify=False)   
+    soup =BeautifulSoup(r.text, "html.parser")   
+    linklist = soup.findAll('a', {'class': "wixAppsLink"})   
+    #print("states = ",len(linklist))    
+    p = 0
+    for link in linklist:
+        if link['href'].find('location') > -1 or link['href'].find('map') > -1:
                 continue
-            else:
-                data.append(t)
-        street.append(data[0])
-        cities.append(data[1].split(",")[0])
-        sz= data[1].split(",")[1]
-        sz = sz.split(" ")
-        if "" in sz:
-            del sz[sz.index("")]
-        states.append(sz[0])
-        zips.append(sz[1])
-        if len(data) >2:
-            phones.append(data[2])
         else:
-            phones.append("<INACCESSIBLE>")
+            title = link.text
+            link = link['href']            
+            r = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text,'html.parser')
+            #print(soup.text)
+            #input()
+            content = soup.text.split('FRESH FISH MARKET & TAKE-OUT')[1].split('No')[0].lstrip()
+            
+            try:
+                content = content.split('DIRECTION')[0]
+            except:
+                pass
+            #print(content)
+            try:
+                phone = content.split('Phone.')[1].lstrip()
+                address = content.split('Phone')[0]
+                street = address.split(')')[0] +')'
+                city = address.split(')')[1].split(', ')[0]
+                state,pcode = address.split(', ')[1].split(' ',1)
+                
+            except:
+                phone = content.splitlines()[-1]
+                content= content.splitlines()
+                i = 0
+                street  = content[i]
+                i += 1
+                if content[i].find('(') > -1:                    
+                    street  = street + ' '+ content[i]
+                    i += 1
+                
+                city,state = content[i].split(', ')
+                state ,pcode = state.lstrip().split(' ',1)
+               
 
-        clas = soup.find_all('div', {'id':div_ids[locs.index(loc)]})
-        tim=re.findall(r'<p class="font_8">(.*)</p>.*',str(clas))
-        st=""
-        for h in tim:
-            st+=(" "+h)
-        timing.append(st)
-        print (tim)
+            try:
+                phone = phone.split('Hours')[0]
+            except:
+                pass
+            
+            try:
+                hours = soup.text.split('DAILY',1)[1].split("HAPPY")[0]
+            except:
+                hours = 'Mon' + soup.text.split('Mon',1)[1].split("Join")[0]
+            try:
+                hours = hours.split('ALL')[0]
+            except:
+                pass
+            try:
+                hours = hours.split('REO')[0]
+            except:
+                pass
 
-        #geomap = soup.find_element_by_css_selector('div.google-maps-link > a').get_attribute('href')
-        #lat, lon = parse_geo(geomap)
-        #print ("lat ",lat," long ",lon)
-        #break
+            hours = re.sub(pattern,' ',hours) .lstrip().replace('\n',' ')
+            iframe = soup.findAll('iframe',{'name':'htmlComp-iframe'})[1]['data-src']           
+            try:
+                r = session.get(iframe, headers=headers, verify=False)
+                longt,lat = r.text.split('!2d')[1].split('!2m')[0].split('!3d')
+            except:               
+                
+                iframe = soup.findAll('iframe',{'name':'htmlComp-iframe'})[0]['data-src']               
+                try:
+                    r = session.get(iframe, headers=headers, verify=False)
+                    longt,lat = r.text.split('!2d')[1].split('!2m')[0].split('!3d')
+                except:
+                    lat = '<MISSING>'
+                    longt = '<MISSING>'
+            try:
+                lat = lat.split('!3m')[0]
+            except:
+                pass
+            if hours.find('Mon') == -1:
+                hours = "Open Daily " + hours
+            data.append([
+                        'https://www.marketbroiler.com/',
+                        link,                   
+                        title,
+                        street.replace('\u200b','').replace('\xa0 ',''),
+                        city.replace('\u200b',''),
+                        state.replace('\u200b',''),
+                        pcode.replace('\u200b',''),
+                        'US',
+                        '<MISSING>',
+                        phone.replace('\u200b',''),
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours.replace('\u200b','')
+                    ])
+            #print(p,data[p])
+            p += 1
+                
+            
+            
+        
+        
+           
+        
+    return data
 
-    all =[]
-    for i in range (0,len(locs)):
-            row=[]
-            row.append("https://www.marketbroiler.com")
-            row.append(locs[i])
-            row.append(street[i])
-            row.append(cities[i])
-            row.append(states[i])
-            row.append(zips[i])
-            row.append("US")
-            row.append("<MISSING>")                 #as not available on website
-            row.append(phones[i])
-            row.append("<MISSING>")
-            row.append("<INACCESSIBLE>")
-            row.append("<INACCESSIBLE>")
-            row.append(timing[i])
-
-            all.append(row)
-
-    #the final location not accessible by code hence manually scraped
-    row= ["https://www.marketbroiler.com", "mb-grille", "1161 Simi Town Center Way(118 and First Street)", "Simi Valley", "CA", "93065-0512", "US", "<MISSING>","(805) 210-7640", "<MISSING>", "<MISSING>", "<MISSING>", "MONDAY - THURSDAY 4PM - 10PM,FRIDAY  3PM - 10PM,SATURDAY & SUNDAY     12PM-10PM"]
-
-    all.append(row)
-    return all
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

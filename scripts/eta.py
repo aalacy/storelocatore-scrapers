@@ -29,7 +29,7 @@ class ETA:
         """
         Sets off the internal stopwatch
         """
-        self.__stopwatch_sec = time.clock_gettime(0)
+        self.__stopwatch_sec = time.time()
 
     def update_and_get_stats(self, added: int) -> (float, float, float, int, float):
         """
@@ -38,7 +38,7 @@ class ETA:
         :return: A 5-tuple, (records/sec, remaining_sec, elapsed_sec, remaining_records, counted so far)
         """
 
-        now_sec = time.clock_gettime(0)
+        now_sec = time.time()
         step_took_sec = now_sec - self.__stopwatch_sec
         self.__stopwatch_sec = now_sec
         self.__elapsed_sec += step_took_sec

@@ -1,72 +1,129 @@
-from selenium import webdriver
-import pandas as pd
-import re
-from time import sleep
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time,json,usaddress
 
+from sgrequests import SgRequests
 
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-#chrome_path = '/Users/Dell/local/chromedriver'
-#driver = webdriver.Chrome(chrome_path, options=options)
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-def replace(string, substitutions):
-    substrings = sorted(substitutions, key=len, reverse=True)
-    regex = re.compile('|'.join(map(re.escape, substrings)))
-    return regex.sub(lambda match: substitutions[match.group(0)], string)
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
-    driver.get('https://www.rodiziogrill.com/locations.aspx')
-    location_data_urls=[]
-    location_cities=[]
-    for i in driver.find_elements_by_xpath('//div[@class="row"]//ul/li'):
-        location_name=i.text
-        if ('COMING SOON' not in location_name):
-            location_cities.append(location_name)
-            location_data_urls.append(i.find_element_by_css_selector('a').get_attribute('href'))
 
-    for ind,i in enumerate(location_data_urls):
-        driver.get(i)
-        data['location_name'].append('Rodizio Grill'+' - '+location_cities[ind])
-        addre=driver.find_element_by_xpath("//div[contains(@class, 'col-md-3 col-md-offset-0 Column4')]/div[2]").text.split('\n')
-        data['street_address'].append(addre[0])
-        data['city'].append(addre[-1].split(',')[0])
-        data['state'].append(addre[-1].split(',')[1].split()[0])
-        data['zip'].append(addre[-1].split(',')[1].split()[1])
-        try:
-            data['phone'].append(driver.find_element_by_xpath('//div[@class="locationPhone"]/a').text)
-        except:
-            data['phone'].append(driver.find_element_by_xpath('//div[@class="locationPhone"]').text.split('.')[-1])
-        data['locator_domain'].append('https://www.rodiziogrill.com')
-        data['page_url'].append(i)
-        data['country_code'].append('US')
-        stri=driver.find_element_by_xpath("//div[contains(@class, 'col-md-3 col-md-offset-0 Column2')]").text
-        #print(stri)
-        stri = stri.replace("\n"," ")
-        rep={'HOURS':'','BREAKFAST HOURS':'','*Dinner Pricing All Day on Easter, Mother\'s Day and Father\'s Day.\nReservations Recommended':'','**Holiday hours may vary':'','Private Group Events of 40 or more may be booked during lunch hours Monday through Wednesday in advance. Please call for details.':'','*Join us Saturday & Sunday for our special extended brunch menu!':'','CLOSED SUNDAY':''}
-        data['hours_of_operation'].append(replace(stri,rep))
-        data['location_type'].append('<MISSING>')
-        data['store_number'].append('<MISSING>')
-        source = str(driver.page_source.encode("utf-8"))
-        geo=re.sub('[A-Za-z)(]','',re.findall(r"LatLng\(-?[\d\.]+,\s-?[\d\.]+\)", source)[0])
-        data['longitude'].append(geo.split(',')[1])
-        data['latitude'].append(geo.split(',')[0])
+def fetch_data():    
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.rodiziogrill.com/locations.aspx'
+    r = session.get(url, headers=headers, verify=False)
+    
+    soup =BeautifulSoup(r.text, "html.parser")
+   
+    loclist = soup.find('div',{'class':'locationsList'}).findAll('a')
+   # print("states = ",len(state_list))
+    p = 0
+    for loc in loclist:
+        if loc.text.lower().find('soon') == -1:
+            link = loc['href']
+            #print(link)
+            r = session.get(link, headers=headers, verify=False)          
+            
+            lat,longt = r.text.split('LatLng(',1)[1].split(')',1)[0].split(',')
+            soup = BeautifulSoup(r.text,'html.parser')
+            title = soup.find('title').text.split(' |')[0]
+            try:
+                phone = soup.find('div',{'class':'locationPhone'}).find('a').text
+            except:
+                phone = '<MISSING>'
+            address = soup.find('div',{'class':'Column4'}).findAll('div')[1].text.replace('\n',' ')
+            #print(address)
+            if address.find('Located inside') > -1 or address.find('between') > -1:
+                #print('1')
+                address  = soup.find('div',{'class':'Column4'}).findAll('div')[2].text.replace('\n',' ')
+            try:
+                if len(address.rstrip().split(' ')[-1]) == 5:
+                    pass
+                else:
+                    address= address + ' '+soup.find('div',{'class':'Column4'}).find('p').text
+                    #print('yes')
+            except:
+                pass
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
 
-    driver.close()
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+            hours = soup.find('div',{'class':'Column2'}).text.replace('\n',' ').lstrip().replace('Hours ','')
+            #print(hours)
+            try:
+                hours = hours.split('*',1)[0]
+            except:
+                pass
+            try:
+                hours = hours.split('!',1)[1]
+            except:
+                pass
+            try:
+                hours = hours.split('Special',1)[0]
+            except:
+                pass
+            if state.strip() == 'Wisconsin':
+                state = 'WI'
+            data.append([
+                        'https://www.rodiziogrill.com/',
+                        link,                   
+                        title,
+                        street.replace('\u200e',''),
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt.strip(),
+                        hours.replace('\r','').strip().replace('day','day ').replace('  ',' ')
+                    ])
+            #print(p,data[p])
+            p += 1
+
+            #input()
+       
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 scrape()

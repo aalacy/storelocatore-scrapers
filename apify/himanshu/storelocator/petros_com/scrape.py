@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -21,7 +21,8 @@ def fetch_data():
     }
     adressessess=[]
     base_url= "https://www.petros.com/locations/"
-    r = requests.get(base_url,headers=headers)
+    session = SgRequests()
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     # k = soup.find("div",{"class":"one_third"})
     # soup1= BeautifulSoup(,"lxml")
@@ -159,6 +160,36 @@ def fetch_data():
             tem_var.append("Open 24 Hours" if "Open 24 Hours" in hours else hours.replace("–","-") if hours else "<MISSING>")
             tem_var.append(base_url)
             new_array.append(tem_var)
+    p = soup.find("div",{"class":"entry"}).find_all("h3")
+    for p1 in p:
+        if "Johnson City" in p1.text:
+            tem_var =[]
+            full =list(p1.stripped_strings)
+            name = full[0]
+            street_address = full[1]
+            # replace("Phone number coming soon","<MISSING>")
+            phone = list(p1.stripped_strings)[-1]
+            city = full[2].split(',')[0]
+            state = full[2].split(',')[1].split( )[0]
+            zipcode = full[2].split(',')[1].split( )[1]
+            hours = "<MISSING>"
+            phone = full[-1]
+            tem_var.append("https://www.petros.com/")
+            tem_var.append(name)
+            tem_var.append(street_address)
+            tem_var.append(city)
+            tem_var.append(state.strip())
+            tem_var.append(zipcode.strip())
+            tem_var.append("US")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append(hours)
+            tem_var.append(base_url)
+            new_array.append(tem_var)
+            break
     for q in range(len(new_array)):
         if new_array[q][2] in adressessess :
             continue

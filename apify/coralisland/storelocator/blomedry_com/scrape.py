@@ -1,17 +1,12 @@
 import csv
 import re
 import pdb
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from lxml import etree
 import json
 import time
 from random import randint
-
-from sgselenium import SgSelenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 base_url = 'https://blomedry.com'
 
@@ -54,9 +49,6 @@ def replace_last(source_string, replace_what, replace_with):
 
 def fetch_data():
 
-    driver = SgSelenium().chrome()
-    time.sleep(randint(2,4))
-
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     headers = {'User-Agent' : user_agent}
 
@@ -76,6 +68,8 @@ def fetch_data():
 
         title = store.xpath(".//h2/a/text()")[0]
         address = store.xpath(".//p/text()")
+        if not address[-1].strip():
+            address.pop(-1)
         try:
             street_address = get_value(address[-3]).replace(","," ").strip() + " " + get_value(address[-2]).replace(","," ").strip()
         except:
@@ -91,14 +85,10 @@ def fetch_data():
         except:
             continue
 
-        driver.get(detail_url)
-        time.sleep(randint(2,4))
-
         try:
-            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-                (By.CLASS_NAME, "schedule__body")))
-            time.sleep(randint(1,2))
-            hours = driver.find_element_by_class_name("schedule__body").find_element_by_tag_name("ul").text.replace("\n"," ")
+            req = session.get(detail_url, headers = headers)
+            base = BeautifulSoup(req.text,"lxml")
+            hours = base.find(class_="schedule__body").ul.text.replace("\n"," ").strip()
         except:
             hours = "<INACCESSIBLE>"
 
@@ -118,7 +108,7 @@ def fetch_data():
         output.append(longitude) #longitude
         output.append(hours) #opening hours
         output_list.append(output)
-    driver.close()
+        
     return output_list
 
 def scrape():

@@ -30,8 +30,11 @@ def fetch_data():
         location_details = list(location.stripped_strings)[:-3]
         store = []
         store.append("http://ninjasushiusa.com")
-        store.append(location_details[0])
-        store.append(location_details[1])
+        if "Center (" in location_details[0]:
+            location_details.pop(1)
+            location_details.pop(1)
+        store.append(location_details[0].replace("(","").strip())
+        store.append(location_details[1].replace(",","").strip())
         store.append(location_details[2].split(",")[0])
         store.append(location_details[2].split(",")[1].split(" ")[-2])
         store.append(location_details[2].split(",")[1].split(" ")[-1])
@@ -46,7 +49,7 @@ def fetch_data():
         else:
             store.append("<MISSING>")
             store.append("<MISSING>")
-        store.append(" ".join(location_details[4:]))
+        store.append(" ".join(location_details[4:]).replace("Hours:","").strip())
         store.append("http://ninjasushiusa.com/locations")
         store = [x.replace("–","-") for x in store]
         return_main_object.append(store)

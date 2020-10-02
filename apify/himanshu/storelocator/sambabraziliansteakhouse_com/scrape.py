@@ -3,11 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
+import html5lib
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -18,17 +15,12 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://sambabraziliansteakhouse.com"
-
     return_main_object = []
-
-    # it will used in store data.
     locator_domain = base_url
     location_name = ""
     street_address = "<MISSING>"
@@ -41,16 +33,12 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = base_url
     r = session.get("https://sambabraziliansteakhouse.com/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    script = soup.find_all('script', {'type': 'application/json'})[-1]
+    soup = BeautifulSoup(r.text, "html5lib")
+    script = soup.find_all('script', {'type': 'application/json'})[1]
     json_script = json.loads(script.text)
-    # print(json_script['preloadQueries'])
-    # c1 = []
-    # c2 = []
     for location in json_script['preloadQueries']:
         data = location['data']['restaurant']['homePage']['sections']
         for loc_list in data:
@@ -73,19 +61,9 @@ def fetch_data():
                     page_url = base_url
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-                    # print("data = " + str(store))
-                    # print(
-                    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
                     return_main_object.append(store)
-
                 return return_main_object
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

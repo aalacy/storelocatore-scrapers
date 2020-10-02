@@ -8,7 +8,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
@@ -34,6 +34,7 @@ def fetch_data():
                         lurl = line.split('<loc>')[1].split('<')[0]
                         if lurl not in locs:
                             locs.append(lurl)
+        print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
         url = loc
         add = ''

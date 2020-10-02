@@ -1,7 +1,9 @@
 import csv
 import os
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import json
+import re
 
 session = SgRequests()
 
@@ -17,46 +19,44 @@ def write_output(data):
 
 def fetch_data():
     locator_domain = 'https://www.instyprints.com/'
-    ext = 'locations.json'
+    ext = 'instyprints/frontend/locationsMap.js'
 
     to_scrape = locator_domain + ext
     page = session.get(to_scrape)
     assert page.status_code == 200
 
-    store_data = json.loads(page.content)['serviceAreas']['serviceArea']
+    content = page.text.split("var franchiseeLocations =")[1].split("var youAreHereLat")[0].strip()
+    store_data = json.loads(content[:-1])
 
     all_store_data = []
     for store in store_data:
-        hours = ''
-        for day, o_c in store['_hours'].items():
-
-            hours += day + ' '
-            open_time = o_c['o']
-            close_time = o_c['c']
-            if open_time == 'Closed':
-                hours += open_time + ' '
-                continue
-
-            hours += open_time + ' - ' + close_time + ' '
-
-        location_name = store['_name']
-        street_address = store['_address'].replace('<br/>', ' ')
-        city = store['_city']
-        state = store['_state']
-        zip_code = store['_zip']
-        phone_number = store['_phone']
-        page_url = store['_url']
-        lat = store['_lat']
-        longit = store['_lng']
-
+        location_name = store['LocationName']
+        street_address = (store['Line1'] + " " + store['Line2']).strip()
+        city = store['City']
+        state = store['State']
+        zip_code = store['Postal']
+        phone_number = store['PhoneWithCountryCode']
+        lat = store['Latitude']
+        longit = store['Longitude']
         country_code = 'US'
         location_type = '<MISSING>'
-        store_number = '<MISSING>'
+        store_number = store['LocationNumber']
 
+        page_url = store['MicroSiteUrl']
+
+        page = session.get(page_url)
+        base = BeautifulSoup(page.text,"lxml")
+        hours = base.find(class_="oprationalHours").text.replace("Hours of Operation","").replace("Days Hours","").replace("Add custom operation hours","Closed")
+        hours = (re.sub(' +', ' ', hours)).strip()
+        if not hours:
+            hours = '<MISSING>'
+
+        if "eden-prairie-mn" in page_url:
+            phone_number = "612-254-6416"
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
-        print(store_data)
-        print()
+        # print(store_data)
+        # print()
         all_store_data.append(store_data)
     return all_store_data
 

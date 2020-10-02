@@ -33,22 +33,35 @@ def fetch_data():
     for i in json_data:
         store_number = (i['storeid'])
         location_name = (i['name'])
+        try:
+            url1 = i['data']['website']
+        except:
+            if location_name == "Plano":
+                url1 = "https://beardpapas.com/locations/plano/"
+            else:
+                url1 = "<MISSING>"
+        # print(location_name)
         if "phone" in i['data']:
             phone = (i['data']['phone'].strip())
         else:
-            phone = "<MISSING>"
-        state = (i['data']['address'].replace("\n","").replace("\r","").split(",")[-1].split(" ")[1])
-        zipp =" ".join(i['data']['address'].replace("\n","").replace("\r","").split(",")[-1].split(" ")[2:])
+            try:
+                r1 = session.get(url1, headers=headers)
+                soup1 = BeautifulSoup(r1.text, "lxml")
+                phone = re.findall("[[(\d)]{3}-[\d]{3}-[\d]{4}", str(soup1))[0]
+            except:
+                phone = "<MISSING>"
+        i['data']['address'] = i['data']['address'].replace("Ave Chicago IL","Ave\r Chicago, IL")
+        state = (i['data']['address'].replace("\n","").replace("\r","").split(",")[-1].split(" ")[1]).strip()
+        zipp =" ".join(i['data']['address'].replace("\n","").replace("\r","").split(",")[-1].split(" ")[2:]).strip()
         try:
-            city = (i['data']['address'].replace("\n","").split(",")[0].split("\r")[1])
+            city = (i['data']['address'].replace("\n","").split(",")[0].split("\r")[1]).strip()
         except:
-            city = (i['data']['address'].replace("\n","").split(",")[0:2][1].split("\r")[-1].replace(" NE B107 Atlanta","Atlanta"))
-        street_address = (i['data']['address'].replace("\n","").split(",")[0].split("\r")[0])
+            city = (i['data']['address'].replace("\n","").split(",")[0:2][1].split("\r")[-1].replace(" NE B107 Atlanta","Atlanta")).strip()
+        street_address = (i['data']['address'].replace("\n","").split(",")[0].split("\r")[0]).strip()
         
         latitude = i['data']['map_lat']
         longitude =i['data']['map_lng']
         p = "https://beardpapas.com/locations/"+str(location_name)+"/"
-        url1 = (p.lower().replace(" ","-"))
         m = i['data']
         hours_of_operation = "Monday" +" - "+ m['hours_Monday'] +" "+"Tuesday" +" - "+ m['hours_Tuesday']+" "+"Wednesday" +" - "+ m['hours_Wednesday']+" "+"Thursday" +" - "+ m['hours_Thursday']+" "+"Friday" +" - "+ m['hours_Friday']+" "+"Saturday" +" - "+ m['hours_Saturday']+" "+"Sunday" +" - "+ m['hours_Sunday']
         # print(hours_of_operation)
@@ -58,6 +71,9 @@ def fetch_data():
         if "30092" in zipp:
             city = " ".join(street_address.split(" ")[-2:])
             street_address = " ".join(street_address.split(" ")[:-2])
+
+        street_address = street_address.strip(u'\u200b')
+        
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
         if ca_zip_list:

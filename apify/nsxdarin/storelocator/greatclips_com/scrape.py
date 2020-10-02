@@ -21,7 +21,7 @@ def fetch_data():
         if 'hreflang="en" href="https://salons.greatclips.com/us/' in line or 'hreflang="en" href="https://salons.greatclips.com/ca/' in line:
             lurl = line.split('hreflang="en" href="')[1].split('"')[0]
             if lurl.count('/') == 6:
-                locs.append(lurl)
+                locs.append(lurl.replace('&#39;',"'"))
     for loc in locs:
         website = 'greatclips.com'
         typ = 'Salon'
@@ -35,7 +35,7 @@ def fetch_data():
         state = ''
         zc = ''
         phone = ''
-        store = loc.rsplit('/',1)[1]
+        store = '<MISSING>'
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:

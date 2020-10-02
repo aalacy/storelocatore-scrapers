@@ -5,6 +5,10 @@ import time
 from random import randint
 import re
 from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -44,6 +48,8 @@ def fetch_data():
 
 	for item in items:
 		location_name = item.h6.text
+		if "coming" in location_name.lower():
+			continue
 		try:
 			raw_address = item.a.span.text.replace("Las Vegas ","Las Vegas, ").replace(location_name,"|").split("|")
 		except:
@@ -106,25 +112,62 @@ def fetch_data():
 
 		link = item.find_all('a', attrs={'data-type': "external"})[1]["href"].replace("s/order","")
 		driver.get(link)
-		time.sleep(randint(2,4))
-		base = BeautifulSoup(driver.page_source,"lxml")
+		time.sleep(randint(1,2))
 		hours_of_operation = "<MISSING>"
 
 		if "yelp" in link:
-			hours = base.find(class_="lemon--tbody__373c0__2T6Pl").text.replace("pm","pm ").replace("PM","PM ").replace("Closed","Closed ").strip()
-			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+			try:
+				hours = base.find(class_="lemon--tbody__373c0__2T6Pl").text.replace("pm","pm ").replace("PM","PM ").replace("Closed","Closed ").strip()
+				hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+			except:
+				pass
 		else:
-			raw_hours = base.find_all(class_="font--step-0 text-component w-text--rendered")
-			for raw_hour in raw_hours:
+			try:
+				element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+					(By.CSS_SELECTOR, ".w-cell.user-content.row")))
+				time.sleep(randint(8,10))
 				try:
-					if "day " in raw_hour.text.lower() or "am" in raw_hour.text.lower() or " pm" in raw_hour.text.lower():
-						hours = raw_hour.text.replace("pm","pm ").replace("PM","PM ").replace("Closed","Closed ").strip()
-						hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-						break
+					raw_hours = driver.find_element_by_xpath("//div[(@data-block-purpose='location-hours@^1.0.0')]").find_elements_by_tag_name("p")
 				except:
-					continue
+					raw_hours = ""
+				if not raw_hours:
+					time.sleep(randint(20,30))
+					raw_hours = driver.find_element_by_xpath("//div[(@data-block-purpose='location-hours@^1.0.0')]").find_elements_by_tag_name("p")
+				for raw_hour in raw_hours:
+					raw_hour = raw_hour.text.strip()
+					try:
+						if "day " in raw_hour.lower() or "am" in raw_hour.lower() or " pm" in raw_hour.lower():
+							hours = raw_hour.replace("\n"," ").strip()
+							hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+							break
+					except:
+						continue
+			except:
+				hours_of_operation = "<MISSING>"
+
+			if hours_of_operation == "<MISSING>":
+				base = BeautifulSoup(driver.page_source,"lxml")
+
+				fin_script = ""
+				all_scripts = base.find_all('script')
+				for script in all_scripts:
+					if "latitude" in str(script):
+						fin_script = script.text.replace('\n', '').strip()
+						break
+
+				if fin_script:
+					try:
+						hours_pos = fin_script.find("location-hours@")
+						raw_hours = fin_script[hours_pos:fin_script.find("]}}",hours_pos)]
+						hours = re.findall(r'insert.+}',raw_hours)[0][8:-2].replace("\\n"," ")
+						hours_of_operation = (re.sub(' +', ' ', hours)).strip()
+					except:
+						pass
+		hours_of_operation = hours_of_operation.replace('"','').replace("*Kitchen closes 30 minutes early","").strip()
 		if hours_of_operation == "11:00AM-10:00PM":
 			hours_of_operation = "Mon-Sun 11:00AM-10:00PM"
+		if not hours_of_operation:
+			hours_of_operation = "<MISSING>"
 		if "ubereats" in link or "postmates" in link or "zdkaty." in link:
 			link = base_link
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])

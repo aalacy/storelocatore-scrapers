@@ -14,7 +14,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -32,30 +32,30 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
 
     json_data = soup.text.split("var g = ")[1]
-    json_data = json_data.split("/* ]]> */")[0]
+    json_data = json_data.split("var actions")[0]
     json_data = json_data.replace(';', ' ')
     data = json.loads(str(json_data))
 
     res_data =data['restaurants']
     for r_data in res_data:
-        location_name = r_data['name'].encode('ascii', 'ignore').decode('ascii').strip()
+        location_name = r_data['name'].strip()
         if(location_name == ''):
             location_name = "<MISSING>"
         store_id = r_data['id']
         if (store_id == ''):
             store_id = "<MISSING>"
-        street_address = r_data['contact']['adress'].encode('ascii', 'ignore').decode('ascii').strip()
+        street_address = r_data['contact']['adress'].strip()
         if (street_address == ''):
             street_address = "<MISSING>"
-        city = r_data['contact']['city'].encode('ascii', 'ignore').decode('ascii').strip()
+        city = r_data['contact']['city'].strip()
         if (city == ''):
-            city = "<MISSING>"
+            city = location_name.replace("Montréal","").strip()
         phone = r_data['contact']['phone']
         if (phone == ''):
             phone = "<MISSING>"
-        state = r_data['contact']['province'].encode('ascii', 'ignore').decode('ascii').strip()
+        state = r_data['contact']['province'].strip()
         if (state == ''):
-            state = "<MISSING>"
+            state = "Québec"
         store_zip = r_data['contact']['zip']
         if (store_zip == ''):
             store_zip = "<MISSING>"
@@ -70,6 +70,7 @@ def fetch_data():
             hour = "<MISSING>"
         return_object = []
         return_object.append(base_url)
+        return_object.append("<MISSING>")
         return_object.append(location_name)
         return_object.append(street_address)
         return_object.append(city)
@@ -78,7 +79,7 @@ def fetch_data():
         return_object.append("CA")
         return_object.append(store_id)
         return_object.append(phone)
-        return_object.append("Eggsquis")
+        return_object.append("<MISSING>")
         return_object.append(lat)
         return_object.append(lag)
         return_object.append(hour)

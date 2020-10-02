@@ -1,18 +1,26 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 import re
 import time
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -21,6 +29,7 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
+
 
 def fetch_data():
     locator_domain = 'https://www.511tactical.com/'
@@ -46,11 +55,11 @@ def fetch_data():
         href = a_tag.get_attribute('href')
 
         if re.search('^\d{5}?$', href[-5:]):
-            
+
             location_name = a_tag.text
 
             address = store.find_element_by_css_selector('address').text.split('\n')
-      
+
             if len(address) == 2:
                 info = store.find_element_by_css_selector('p').text.split('\n')
                 street_address = address[0]
@@ -66,9 +75,13 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-
+        #print(link[0])
         driver.get(link[0])
-        driver.implicitly_wait(10)
+        try:
+            WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.location-details')))
+        except:
+            continue
+        #driver.implicitly_wait(10)
 
         content = driver.find_element_by_css_selector('div.location-details').text.split('\n')
         geo_idx = content.index('GEO')
@@ -101,8 +114,10 @@ def fetch_data():
     driver.quit()
     return all_store_data
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

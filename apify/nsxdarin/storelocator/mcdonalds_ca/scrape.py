@@ -32,6 +32,11 @@ def fetch_data():
         store = item['properties']['identifiers']['storeIdentifier'][0]['identifierValue']
         add = item['properties']['addressLine1']
         add = add.strip().replace('"',"'")
+
+        # Special case for head office
+        if 'This is not a restaurant' in add:
+            continue
+
         city = item['properties']['addressLine3']
         state = MISSING
         country = 'CA'

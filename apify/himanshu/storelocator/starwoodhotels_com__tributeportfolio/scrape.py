@@ -1,64 +1,99 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import datetime
-
-
-session = SgRequests()
-
+import time
+from sgrequests import SgRequests
+session = SgRequests() 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
-
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = session.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = session.post(url,headers=headers,data=data)
+               else:
+                   r = session.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.starwoodhotels.com"
-    r = session.get("https://tribute-portfolio.marriott.com/hotel-locations/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    today = datetime.datetime.now().date()
-    scripts = soup.find_all("script")
-    return_main_object = []
-    for script in scripts:
-        if "window.MARRIOTT_GEO_DATA" in script.text:
-            json_data = json.loads(script.text.split("window.MARRIOTT_GEO_DATA = ")[1].split("}};")[0] + "}}")
-            location_list = json_data["properties"]
-            for key in location_list:
-                current_store = location_list[key]
-                if current_store["country"] not in ("US","CA"):
-                    continue
-                store_open_date = datetime.datetime.strptime(current_store["openingDate"], "%Y-%m-%d").date()
-                if store_open_date > today:
-                    continue
-                store = []
-                store.append("https://tribute-portfolio.marriott.com")
-                store.append(current_store["name"])
-                store.append(current_store["address"])
-                store.append(json_data["cities"][current_store["city"]]["name"] if current_store["city"] != None and current_store["city"] != "" else "<MISSING>")
-                store.append(current_store["state"] if current_store["state"] != None and current_store["state"] != "" else "<MISSING>")
-                store.append(current_store["zipcode"])
-                store.append(current_store["country"])  
-                store.append("<MISSING>")
-                store.append(current_store["phone"])
-                store.append("<MISSING>")
-                store.append(current_store["latitude"])
-                store.append(current_store["longitude"])
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                yield store
-
+    address = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
+    base_url = "http://starwoodhotels.com/tributeportfolio"
+    location_url = "https://pacsys.marriott.com/data/marriott_properties_TX_en-US.json"
+    r = request_wrapper(location_url,"get",headers=headers).json()
+    k = (r['regions'])
+    for i in k:
+        canada = (i['region_countries'])
+        for i1 in canada :
+            ab = (i1['country_states'])
+            for i2 in ab :
+                bc = (i2['state_cities'])
+                for i3 in bc :
+                    cd = (i3['city_properties'])
+                    for i4 in cd :
+                        location_name  = i4['name']
+                        street_address = i4['address']
+                        state = i4['state_name']
+                        city =  i4['city']
+                        zipp = i4['postal_code']
+                        country_code = i4['country_code']
+                        phone =  i4['phone']
+                        latitude = i4['latitude']
+                        longitude =i4['longitude']
+                        link_data = i4['marsha_code']
+                        page_url = "https://www.marriott.com/hotels/travel/"+str(link_data)
+                        store = []
+                        store.append(base_url if base_url else "<MISSING>")
+                        store.append(location_name if location_name else "<MISSING>") 
+                        store.append(street_address.replace("é","e") if street_address else "<MISSING>")
+                        store.append(city if city else "<MISSING>")
+                        store.append(state if state else "<MISSING>")
+                        store.append(zipp if zipp else "<MISSING>")
+                        store.append(country_code if country_code else "<MISSING>")
+                        store.append("<MISSING>") 
+                        store.append(phone if phone else "<MISSING>")
+                        store.append("Tribute Portfolio Hotels & Resorts")
+                        store.append(latitude if latitude else "<MISSING>")
+                        store.append(longitude if longitude else "<MISSING>")
+                        store.append("<MISSING>")
+                        store.append(page_url if page_url else"<MISSING>")
+                        if store[2] in address :
+                            continue
+                        address.append(store[2])
+                        if country_code == 'US' or country_code == 'CA' :
+                            yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

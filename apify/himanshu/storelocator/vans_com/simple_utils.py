@@ -165,9 +165,9 @@ def t (op: lambda: object, threshold: float = 0.5):
     :return whatever `op` returns.
     """
     src = getsource(op).strip().replace("\n", " ")[0:77] + "..."
-    t1 = time.clock_gettime(0)
+    t1 = time.time()
     ret = op()
-    t2 = time.clock_gettime(0)
+    t2 = time.time()
     took = t2-t1
     if took > threshold:
         print (f"Took: {took} [{src}]")

@@ -16,148 +16,124 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.thebodyshop.com/en-ca/store-finder/search?country=CA'
-    r = session.get(url, headers=headers)
-    for item in json.loads(r.content)['stores']:
-        typ = item['storeType']
+    for x in range(0, 15):
+        print('Page %s...' % str(x))
         website = 'thebodyshop.com'
-        store = item['uniqueId']
-        if 'number' in item and item['number']:
-            phone = item['number']
-        else:
-            phone = '<MISSING>'
-        add = item['address']
-        if item['address2']:
-            add = add + ' ' + item['address2']
-        city = item['zip']
-        state = item['city'].strip().split(' ')[0]
-        zc = item['zip']
-        if item['state']:
-            state = item['state']
-        city = item['city']
-        country = item['country']['isocode']
-        lurl = '<MISSING>'
-        lat = item['latlong'][0]
-        lng = item['latlong'][1]
-        name = item['name']
-        try:
-            hours = 'Mon: ' + item['open']['mo'][0] + '-' + item['open']['mo'][1]
-        except:
-            hours = 'Mon: Closed'
-        try:
-            hours = hours + '; Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
-        except:
-            hours = hours + '; Tue: Closed'
-        try:
-            hours = hours + '; Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
-        except:
-            hours = hours + '; Wed: Closed'
-        try:
-            hours = hours + '; Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
-        except:
-            hours = hours + '; Thu: Closed'
-        try:
-            hours = hours + '; Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
-        except:
-            hours = hours + '; Fri: Closed'
-        try:
-            hours = hours + '; Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
-        except:
-            hours = hours + '; Sat: Closed'
-        try:
-            hours = hours + '; Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
-        except:
-            hours = hours + '; Sun: Closed'
-        state = state.replace(',','').strip()
-        if hours == 'Mon: Closed;Tue: Closed;Wed: Closed;Thu: Closed;Fri: Closed;Sat: Closed;Sun: Closed':
-            hours = '<MISSING>'
-        if city == 'Barrie' or city == 'Toronto':
-            state = 'Ontario'
-        if city == 'Saskatoon':
-            state = 'Saskatchewan'
-        if hours == '':
-            hours = '<MISSING>'
-        if 'Mon: Closed;' in hours or 'Mon:Closed' in hours:
-            hours = '<MISSING>'
-        if '/' in phone:
-            phone = phone.split('/')[0].strip()
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        country = 'CA'
+        state = '<MISSING>'
+        typ = '<MISSING>'
+        url = 'https://api.thebodyshop.com/rest/v2/thebodyshop-ca/stores?fields=FULL&latitude=&longitude=&query=&lang=en_CA&curr=CAD&currentPage=' + str(x)
+        r = session.get(url, headers=headers)
+        lines = r.iter_lines()
+        for line in lines:
+            line = str(line.decode('utf-8'))
+            if '"name" : "' in line and 'United' not in line:
+                store = line.split('"name" : "')[1].split('"')[0]
+            if '"displayName" : "' in line:
+                name = line.split('"displayName" : "')[1].split('"')[0]
+            if '"line1" : "' in line:
+                hours = ''
+                lat = ''
+                lng = ''
+                city = ''
+                zc = ''
+                phone = ''
+                add = line.split('"line1" : "')[1].split('"')[0]
+            if '"phone" : "' in line:
+                phone = line.split('"phone" : "')[1].split('"')[0]
+            if '"postalCode" : "' in line:
+                zc = line.split('"postalCode" : "')[1].split('"')[0]
+            if '"town" : "' in line:
+                city = line.split('"town" : "')[1].split('"')[0]
+            if '"latitude" : ' in line and 'source' not in line:
+                lat = line.split('"latitude" : ')[1].split(',')[0]
+            if '"longitude" : ' in line and 'source' not in line:
+                lng = line.split('"longitude" : ')[1].strip().replace('\r','').replace('\n','')
+            if '"closingTime" : ' in line:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                ct = g.split('"formattedHour" : "')[1].split('"')[0]
+            if '"openingTime" : ' in line:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                ot = g.split('"formattedHour" : "')[1].split('"')[0]
+            if '"weekDay" : "' in line:
+                hrs = line.split('"weekDay" : "')[1].split('"')[0] + ': ' + ot + '-' + ct
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if '"canonicalUrl" : "' in line:
+                lurl = line.split('"canonicalUrl" : "')[1].split('"')[0]
+            if '"storeImages" :' in line:
+                if hours == '':
+                    hours = '<MISSING>'
+                if lat == '0.0':
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                if phone == '':
+                    phone = '<MISSING>'
+                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
-    url = 'https://www.thebodyshop.com/en-us/store-finder/search?country=US'
-    r = session.get(url, headers=headers)
-    for item in json.loads(r.content)['stores']:
-        typ = item['storeType']
+    for x in range(0, 15):
+        print('Page %s...' % str(x))
         website = 'thebodyshop.com'
-        store = item['uniqueId']
-        if 'number' in item and item['number']:
-            phone = item['number']
-        else:
-            phone = '<MISSING>'
-        add = item['address']
-        if item['address2']:
-            add = add + ' ' + item['address2']
-        city = item['zip']
-        state = item['city'].strip().split(' ')[0]
-        try:
-            zc = item['city'].strip().split(' ')[1]
-            if 'a' in zc.lower() or 'e' in zc.lower() or 'i' in zc.lower() or 'o' in zc.lower() or 'u' in zc.lower():
-                zc = item['zip']
-                city = item['city']
-                state = item['state']
-            else:
-                zc = zc
-        except:
-            zc = item['zip']
-            city = item['city']
-            state = item['state']
-        if city == 'Fort Lauderdale':
-            state = 'FL'
-        country = item['country']['isocode']
-        lurl = '<MISSING>'
-        lat = item['latlong'][0]
-        lng = item['latlong'][1]
-        name = item['name']
-        try:
-            hours = 'Mon: ' + item['open']['mo'][0] + '-' + item['open']['mo'][1]
-        except:
-            hours = 'Mon: Closed'
-        try:
-            hours = hours + '; Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
-        except:
-            hours = hours + '; Tue: Closed'
-        try:
-            hours = hours + '; Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
-        except:
-            hours = hours + '; Wed: Closed'
-        try:
-            hours = hours + '; Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
-        except:
-            hours = hours + '; Thu: Closed'
-        try:
-            hours = hours + '; Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
-        except:
-            hours = hours + '; Fri: Closed'
-        try:
-            hours = hours + '; Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
-        except:
-            hours = hours + '; Sat: Closed'
-        try:
-            hours = hours + '; Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
-        except:
-            hours = hours + '; Sun: Closed'
-        try:
-            state = state.replace(',','').strip()
-        except:
-            state = '<MISSING>'
-        if hours == 'Mon: Closed;Tue: Closed;Wed: Closed;Thu: Closed;Fri: Closed;Sat: Closed;Sun: Closed':
-            hours = '<MISSING>'
-        if hours == '':
-            hours = '<MISSING>'
-        if 'Mon: Closed;' in hours or 'Mon:Closed' in hours:
-            hours = '<MISSING>'
-        if '/' in phone:
-            phone = phone.split('/')[0].strip()
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        country = 'US'
+        state = '<MISSING>'
+        typ = '<MISSING>'
+        url = 'https://api.thebodyshop.com/rest/v2/thebodyshop-us/stores?fields=FULL&latitude=&longitude=&query=&lang=en_US&curr=USD&currentPage=' + str(x)
+        r = session.get(url, headers=headers)
+        lines = r.iter_lines()
+        for line in lines:
+            line = str(line.decode('utf-8'))
+            if '"name" : "' in line and 'United' not in line:
+                store = line.split('"name" : "')[1].split('"')[0]
+            if '"displayName" : "' in line:
+                name = line.split('"displayName" : "')[1].split('"')[0]
+            if '"line1" : "' in line:
+                hours = ''
+                lat = ''
+                lng = ''
+                city = ''
+                zc = ''
+                phone = ''
+                add = line.split('"line1" : "')[1].split('"')[0]
+            if '"phone" : "' in line:
+                phone = line.split('"phone" : "')[1].split('"')[0]
+            if '"postalCode" : "' in line:
+                zc = line.split('"postalCode" : "')[1].split('"')[0]
+            if '"town" : "' in line:
+                city = line.split('"town" : "')[1].split('"')[0]
+            if '"latitude" : ' in line and 'source' not in line:
+                lat = line.split('"latitude" : ')[1].split(',')[0]
+            if '"longitude" : ' in line and 'source' not in line:
+                lng = line.split('"longitude" : ')[1].strip().replace('\r','').replace('\n','')
+            if '"closingTime" : ' in line:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                ct = g.split('"formattedHour" : "')[1].split('"')[0]
+            if '"openingTime" : ' in line:
+                g = next(lines)
+                g = str(g.decode('utf-8'))
+                ot = g.split('"formattedHour" : "')[1].split('"')[0]
+            if '"weekDay" : "' in line:
+                hrs = line.split('"weekDay" : "')[1].split('"')[0] + ': ' + ot + '-' + ct
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if '"canonicalUrl" : "' in line:
+                lurl = line.split('"canonicalUrl" : "')[1].split('"')[0]
+            if '"storeImages" :' in line:
+                if hours == '':
+                    hours = '<MISSING>'
+                if lat == '0.0':
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                if phone == '':
+                    phone = '<MISSING>'
+                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
 def scrape():
     data = fetch_data()
     write_output(data)

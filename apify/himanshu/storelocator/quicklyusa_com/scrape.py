@@ -8,7 +8,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('quickly.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -97,7 +97,7 @@ def fetch_data():
 
     r = session.get("http://quicklyusa.com/otqulo.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    for location in soup.find_all("table")[2].find_all("a")[:-1]:
+    for location in soup.find_all("table")[2].find_all("a"):
         if location.text == "":
             continue
         page_url = base_url + "/" + location["href"]

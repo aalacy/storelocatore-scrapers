@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,20 +22,26 @@ def fetch_data():
     r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for location in soup.find_all("div",{"class":"hover_box"}):
-        link = location.find("a")['href']
+    for location in soup.find_all('a', {'class': re.compile(r'et_pb_button et_pb_button.+')}):
+        link = location['href']
+        # print(link)
         location_request = session.get(link)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("h4") == None:
             continue
-        name = location_soup.find("h4").text
+        name = location_soup.title.text.replace("is the premier extreme recreation park!","").strip()
         if location_soup.find('div',{"class":'textwidget'}) == None:
             continue
         location_address = list(location_soup.find('div',{"class":'textwidget'}).stripped_strings)
-        geo_location = location_soup.find("iframe",{"src":re.compile("/maps/")})['src']
+        phone = location_soup.find(class_="phone").text.strip()
+        try:
+            geo_location = location_soup.find("iframe",{"data-src":re.compile("/maps/")})['data-src']
+        except:
+            geo_location = location_soup.find("iframe",{"src":re.compile("/maps/")})['src']
         hours = list(location_soup.find_all('div',{"class":"textwidget"})[-1].stripped_strings)
         store = []
         store.append("https://elevatetrampolinepark.com")
+        store.append(link)
         store.append(name)
         store.append(location_address[0])
         store.append(location_address[1].split(",")[0])
@@ -43,11 +49,8 @@ def fetch_data():
         store.append(location_address[1].split(" ")[-1])
         store.append("US")
         store.append("<MISSING>")
-        if "[" in location_address[-1] and "]" in location_address[-1]:
-            store.append(location_address[-2])
-        else:
-            store.append(location_address[-1])
-        store.append("elevate trampoline park")
+        store.append(phone)
+        store.append("<MISSING>")
         store.append(geo_location.split("!3d")[1].split("!")[0])
         store.append(geo_location.split("!2d")[1].split("!")[0])
         store.append(" ".join(hours).replace("–",'-'))

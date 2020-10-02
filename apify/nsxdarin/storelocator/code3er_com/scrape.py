@@ -43,6 +43,12 @@ def fetch_data():
                     lat = line2.split('"latitude":"')[1].split('"')[0]
                     lng = line2.split('"longitude":"')[1].split('"')[0]
                     name = line2.split('"name":"')[1].split('"')[0]
+            if 'carrollton.urgentandercare.com' in loc:
+                lat = '33.0266096'
+                lng = '-96.8840568'
+            if 'denton' in loc:
+                lat = '33.1762313'
+                lng = '-97.1143493'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

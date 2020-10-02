@@ -20,8 +20,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
+def fetch_data():   
     data = []
     cleanr = re.compile(r'<[^>]+>')    
     url = 'https://www.potatocornerusa.com/store-locator'
@@ -41,14 +40,16 @@ def fetch_data():
             
             r = session.get(slink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
-            linklist = soup.findAll('a',{'class':'ca1link'})
-            for link in linklist:            
-                link = link['href']                    
-                #print(link)
-                page = session.get(link, headers=headers, verify=False)
-                time.sleep(5)
-                soup1 = BeautifulSoup(page.text,'html.parser')
-                #print(soup1)
+            linklist = soup.findAll('h6')           
+            for link in linklist:                
+                try:
+                    link = link.find('a')['href']
+                except:
+                    continue                
+                if link == 'https://www.potatocornerusa.com':
+                    continue                
+                page = session.get(link, headers=headers, verify=False)                
+                soup1 = BeautifulSoup(page.text,'html.parser')               
                 try:
                     title = soup1.find('title').text.split('|')[0]
                 except:
@@ -64,22 +65,20 @@ def fetch_data():
                             soup1 = BeautifulSoup(page.text,'html.parser')
                             title = soup1.find('title').text.split('|')[0]
                             pass
-                    
-                
+               
                 if title.find('Coming Soon') == -1 and title not in titlelist:
                     titlelist.append(title)
-                    ##print(title)
-                    #input()
                     phone = 'N/A'
                     divlist = soup1.findAll('div')
                     for div in divlist:
                         if div.text.find('Address') > -1 and div.text.find('Phone') > -1:
                             dtext = re.sub(cleanr,'',str(div))
                             #print(dtext)
-                            address = dtext.split('Address:',1)[1].split('Phone Number')[0]
-                            phone = dtext.split('Phone Number:',1)[1].split('#mask')[0]                           
+                            address = dtext.split('Address:',1)[1].split('Phone')[0].replace('\n',' ')
+                            phone = dtext.split('Phone',1)[1].split(':',1)[1].split('#mask')[0]                           
                             
                             break
+                  
                     datalink = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&SingleLine='+title.replace(' ','%20')+'&outfields=placeName,place_addr,phone,url,location'
                     pagedata = session.get(datalink, headers=headers, verify=False).json()["candidates"][0]
                     coord = pagedata['location']
@@ -88,30 +87,43 @@ def fetch_data():
                     if phone == 'N/A':
                         phone = '<MISSING>'
                     else:
-                        phone = phone.replace("\u200e",'').replace("\xa0",'')
-                    pcode = "<MISSING>"
-                    
-                    try:
-                         street,city,state = address.split(', ')
-                    except:
-                        pass
-                    
-                    try:
-                        state,pcode = state.lstrip().split(' ')
-                    except:
-                        #input()
-                        continue
-                                    
+                        phone = phone.replace("\u200e",'').replace("\xa0",'')                                     
+                    address = usaddress.parse(address.replace('Address: ',''))
+                    i = 0
+                    street = ""
+                    city = ""
+                    state = ""
+                    pcode = ""
+                    while i < len(address):
+                        temp = address[i]
+                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                            street = street + " " + temp[0]
+                        if temp[1].find("PlaceName") != -1:
+                            city = city + " " + temp[0]
+                        if temp[1].find("StateName") != -1:
+                            state = state + " " + temp[0]
+                        if temp[1].find("ZipCode") != -1:
+                            pcode = pcode + " " + temp[0]
+                        i += 1
+
+                    street = street.lstrip().replace(',','')
+                    city = city.lstrip().replace(',','')
+                    state = state.lstrip().replace(',','')
+                    pcode = pcode.lstrip().replace(',','')
+                    if len(pcode) < 2:
+                        pcode = '<MISSING>'
                     lat = lat[0:5]
                     longt = longt[0:7]
+                    if len(street) < 3:
+                        street = title
                     data.append([
                         'https://www.potatocornerusa.com/',
                         link,                   
                         title,
-                        street,
-                        city,
-                        state,
-                        pcode,
+                        street.replace('\\xa','').replace('Address:','').lstrip(),
+                        city.replace('\\xa',''),
+                        state.replace('\\xa',''),
+                        pcode.replace('\\xa',''),
                         'US',
                         '<MISSING>',
                         phone,
@@ -120,14 +132,9 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-                    #print(p,data[p])
-                    #print(datalink)
+                    #print(p,data[p])                    
                     p += 1
-                    #input()
-                                
-                             
-                    
-                        
+                   
      
     return data
 
