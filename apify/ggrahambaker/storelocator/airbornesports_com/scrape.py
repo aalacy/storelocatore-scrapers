@@ -1,44 +1,72 @@
 import csv
 import os
+from sgrequests import SgRequests
 from sgselenium import SgSelenium
-from selenium.common.exceptions import NoSuchElementException
+from bs4 import BeautifulSoup
 import usaddress
+import re
+import time
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
     locator_domain = 'https://airbornesports.com/'
     ext = 'hours-and-pricing/'
 
+    session = SgRequests()
     driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
 
-    section = driver.find_element_by_css_selector('section#content')
-    buttons = section.find_elements_by_css_selector('a.fusion-button.button-flat.fusion-button-round')
+    req = session.get(locator_domain+ext, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+    buttons = base.find_all(class_="fusion-button")[1:]
     link_list = []
     for button in buttons:
-        href = button.get_attribute('href')
+        href = button['href']
+        if "airbornesports.com" in href and "hours" not in href:
+            href = href + "hours-and-pricing/"
         if href not in link_list:
             link_list.append(href)
 
-    carry_on_list = []
+    all_store_data = []
+    found_poi = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+        if "hours" not in link:
+            continue
+        # print(link) 
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
 
-        hours = driver.find_element_by_css_selector('div.reading-box-additional').text.replace('\n', ' ')
+        hours = base.find(class_="reading-box-additional").text.replace('\r\n',"").replace('\n', ' ').replace('PM','PM ').replace('DAY','DAY ').replace('DAY S','DAYS')\
+        .replace('\xa0','').replace('Night',' ').replace("Open Jump(all ages)","").replace("Open Jump(all ages)9 PM - 11 PM Teen Flight","").replace("Open Jump (all ages)","")\
+        .replace("Special HoursNo special hours","").replace("9 PM  - 11 PM  Teen Flight","").replace("College   Coming Soon","")
 
-        try:
-            href = driver.find_element_by_xpath("//a[contains(@href, 'google')]").get_attribute('href')
+        hours = (re.sub(' +', ' ', hours)).strip()
 
+        icons = base.find_all(class_="fusion-social-network-icon")
+        for i in icons:
+            if "tel" in i["href"]:
+                phone_number = i["href"].replace('tel:', '')
+                break
+
+        href = ""
+        for i in icons:
+            if "google" in i["href"] or "yelp" in i["href"]:
+                href = i["href"]
+                break
+
+        if "google" in href:
             start_idx = href.find('/@')
             end_idx = href.find('z/data')
 
@@ -47,57 +75,92 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
 
-        except NoSuchElementException:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
+            # Get address from gmaps
+            driver.get(href)
+            time.sleep(10)
+            raw_address = driver.find_element_by_xpath("//button[(@data-item-id='address')]").text.split(",")
+            street_address = raw_address[0]
+            city = raw_address[1].strip()
+            state = raw_address[2].split()[0]
+            zip_code = raw_address[2].split()[1]
+        elif "yelp" in href:
+            req = session.get(href, headers = HEADERS)
+            base = BeautifulSoup(req.text,"lxml")
+            raw_address = list(base.find(class_="lemon--address__373c0__2sPac").stripped_strings)
+            street_address = " ".join(raw_address[:-2])
+            city = raw_address[-1].split(",")[0].strip()
+            state = raw_address[-1].split(",")[1].split()[0]
+            zip_code = raw_address[-1].split(",")[1].split()[1]
+            if "8800 N Tarrant" in street_address:
+                lat = '32.902634'
+                longit = '-97.197044'
+            else:
+                lat = '<MISSING>'
+                longit = '<MISSING>'
 
-        phone_number = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href').replace(
-            'tel:+1', '')
-
-        span = driver.find_element_by_xpath("//span[contains(text(),'WAIVER')]")
-        href_waiv = span.find_element_by_xpath('..').get_attribute('href')
-
-        carry_on_list.append([href_waiv, hours, lat, longit, phone_number])
-
-    all_store_data = []
-    for store in carry_on_list:
-        driver.get(store[0])
-        driver.implicitly_wait(15)
-
-        foot = driver.find_element_by_css_selector('footer#page_footer')
-        location_name = foot.find_element_by_css_selector('p.business-name').text
-
-        addy = driver.find_element_by_css_selector('p.business-address.nobreak').text
-
-        parsed_add = usaddress.tag(addy)[0]
-
-        street_address = ''
-
-        if 'AddressNumber' in parsed_add:
-            street_address += parsed_add['AddressNumber'] + ' '
-        if 'StreetNamePreDirectional' in parsed_add:
-            street_address += parsed_add['StreetNamePreDirectional'] + ' '
-        if 'StreetName' in parsed_add:
-            street_address += parsed_add['StreetName'] + ' '
-        if 'StreetNamePostType' in parsed_add:
-            street_address += parsed_add['StreetNamePostType'] + ' '
-        if 'OccupancyType' in parsed_add:
-            street_address += parsed_add['OccupancyType'] + ' '
-        if 'OccupancyIdentifier' in parsed_add:
-            street_address += parsed_add['OccupancyIdentifier'] + ' '
-        city = parsed_add['PlaceName']
-        state = parsed_add['StateName']
-        zip_code = parsed_add['ZipCode']
-
-        hours = store[1]
-        lat = store[2]
-        longit = store[3]
-        phone_number = store[4]
-        country_code = 'US'
+        location_name = driver.title.replace("- Google Maps","").strip() + " " + city
         store_number = '<MISSING>'
         location_type = '<MISSING>'
+        country_code = 'US'
+
+        if street_address not in found_poi:            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                          store_number, phone_number, location_type, lat, longit, hours, link]
+
+            all_store_data.append(store_data)
+            found_poi.append(street_address)
+
+    for link in link_list:
+        if "hours" in link:
+            continue
+        # print(link)
+        if "southjordan" in link:
+            ad_link = link + "/contact-us"
+            hrs_link = link + "/hourspricing"
+            location_name = "Airborne South Jordan"
+        elif "lewisville" in link:
+            ad_link = link + "contact"
+            hrs_link = link + "pricing"
+            location_name = "Airborne Lewisville"
+        else:
+            raise
+
+        req = session.get(ad_link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+
+        raw_address = list(base.find(class_="sqs-block-content").stripped_strings)[1:]
+        street_address = raw_address[0]
+        city = raw_address[1].split(",")[0].strip()
+        state = raw_address[1].split(",")[1].strip()
+        zip_code = raw_address[1].split(",")[2].strip()
+        country_code = 'US'
+
+        try:
+            phone = re.findall("[[(\d)]{3}-[\d]{3}-[\d]{4}", str(base.find(class_="sqs-block-content")))[0]
+        except:
+            phone = "<MISSING>"
+
+        store_number = '<MISSING>'
+        location_type = '<MISSING>'
+
+        js = base.find(class_="sqs-block map-block sqs-block-map sized vsize-12")['data-block-json']
+        store = json.loads(js)
+
+        lat = store['location']['mapLat']
+        longit = store['location']['mapLng']
+
+        req = session.get(hrs_link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+
+        raw_hours = base.find(class_="sqs-layout sqs-grid-12 columns-12").find_all(class_="row sqs-row")[1]
+        if "day" not in str(raw_hours).lower():
+            raw_hours = base.find(class_="sqs-layout sqs-grid-12 columns-12").find(class_="row sqs-row")
+
+        hours = raw_hours.text.replace('PM','PM ').replace('day','day ').replace('DAY','DAY ').replace('Hours','').strip()
+        hours = (re.sub(' +', ' ', hours)).strip()
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, link]
 
         all_store_data.append(store_data)
 
