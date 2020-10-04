@@ -35,7 +35,7 @@ def fetch_data():
     for loc in loclist:
         if loc.text.lower().find('soon') == -1:
             link = loc['href']
-            print(link)
+            #print(link)
             r = session.get(link, headers=headers, verify=False)          
             
             lat,longt = r.text.split('LatLng(',1)[1].split(')',1)[0].split(',')
