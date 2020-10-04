@@ -35,7 +35,7 @@ def fetch_data():
     for loc in loclist:
         if loc.text.lower().find('soon') == -1:
             link = loc['href']
-            #print(link)
+            print(link)
             r = session.get(link, headers=headers, verify=False)          
             
             lat,longt = r.text.split('LatLng(',1)[1].split(')',1)[0].split(',')
@@ -44,7 +44,10 @@ def fetch_data():
             try:
                 phone = soup.find('div',{'class':'locationPhone'}).find('a').text
             except:
-                phone = '<MISSING>'
+                try:
+                    phone = str(soup).split('"telephone": "',1)[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
             address = soup.find('div',{'class':'Column4'}).findAll('div')[1].text.replace('\n',' ')
             #print(address)
             if address.find('Located inside') > -1 or address.find('between') > -1:
