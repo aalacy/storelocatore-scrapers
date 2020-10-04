@@ -1,10 +1,12 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re
-import usaddress
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -18,37 +20,21 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
+    
     data = []
-    p = 1
+    p = 0
     url = 'https://www.streetcorner.com/consumer/'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-
-    soup = str(soup)
+    page = session.get(url, headers=headers, verify=False)    
     cleanr = re.compile('<.*?>')
-    pattern = re.compile(r'\s\s+')
-    flag = True
-    start = 0
-    start1 = 0
-    while flag:
-        start = soup.find("www.streetcorner.com/store/", start)
-        start1 = soup.find("var myLatLng", start1)
-        if start != -1 and start1 != -1:
-            start1 = soup.find(":", start1) + 2
-            end1 = soup.find(",", start1)
-            lat = soup[start1:end1]
-            start1 = soup.find(":", end1) + 2
-            end1 = soup.find("}", start1)
-            longt = soup[start1:end1]
-            start1 = end1
-
-            start = soup.find("store/", start)
-            start = soup.find("/", start)+1
-            end= soup.find('"', start)
-            link = "http://www.streetcorner.com/store/" + soup[start:end]
+    pattern = re.compile(r'\s\s+')    
+    loclist = page.text.split('<a href="https://www.streetcorner.com/store/')
+    for loc in loclist:
+        if loc.find('!DOCTYPE html>') == -1:
+            link = 'https://www.streetcorner.com/store/'+loc.split('"',1)[0]
             print(link)
-            page = requests.get(link)
+            page = session.get(link, headers=headers, verify=False)
+            coord = str(page.text).split('center: {lat:')[2]
+            lat,longt = coord.split('}',1)[0].split(', lng: ')
             soup1 = BeautifulSoup(page.text, "html.parser")
             title = soup1.find('span',{'itemprop':'name'}).text
             try:
@@ -72,8 +58,14 @@ def fetch_data():
             except:
                 phone = "<MISSING>"
             try:
-                hours = soup1.find('span', {'itemprop': 'openingHours'}).text
+                hours = soup1.find('span', {'itemprop': 'openingHours'})
+                hours = re.sub(cleanr,'\n',str(hours)).replace('\n', ' ').lstrip()
+                if hours == 'None':
+                    hours = "<MISSING>"
+                    
+              
             except:
+                
                hours = "<MISSING>"
             if len(phone) < 3:
                 phone = "<MISSING>"
@@ -85,9 +77,7 @@ def fetch_data():
                 if len(pcode) == 4:
                     pcode = '0' + pcode
 
-            hours = hours.encode('ascii', 'ignore').decode('ascii')
-            #print(hours)
-            p += 1
+            #hours = hours.encode('ascii', 'ignore').decode('ascii')
             if title.find("Coming Soon") == -1:
                 data.append([
                        'https://www.streetcorner.com/',
@@ -105,17 +95,9 @@ def fetch_data():
                        longt,
                        hours
                    ])
-
-
-
-
-
-
-
-        else:
-            flag = False
-
-
+                print(p,data[p])
+                p += 1
+    
     return data
 
 
