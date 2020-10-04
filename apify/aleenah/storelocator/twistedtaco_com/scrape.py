@@ -1,179 +1,156 @@
-import csv
-from sgselenium import SgSelenium
-import re
 from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
 
-driver = SgSelenium().chrome()
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def parse_geo(url):
-    lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
-    lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
-    return lat, lon
 
 def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    countries=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ulinks=[]
-    rlinks=[]
-    #urls=["https://www.topman.com/store-locator?country=Canada","https://www.topman.com/store-locator?country=United+States"]
-    driver.get("https://www.twistedtaco.com/locations#")
-    #lis=driver.find_elements_by_css_selector("li ")
-
-    ast=driver.find_element_by_id("1833213139").find_elements_by_tag_name("a")
-    for a in ast:
-        if a.text=='FULL SERVICE RESTAURANTS':
-            continue
-        if a.text=="Fayetteville":
-            rlinks.append('https://www.twistedtaco.com/fayetteville-georgia')
-            locs.append(a.text)
-            continue
-        elif a.text=='Suwanee':
-            rlinks.append(a.get_attribute("href"))
-            locs.append(a.text)
-            break
-        rlinks.append(a.get_attribute("href"))
-        locs.append(a.text)
-
-    ast = driver.find_element_by_id("1682398545").find_elements_by_tag_name("a")
-    for a in ast:
-        if a.text=="UNIVERSITY LOCATIONS":
-            continue
-        if"auburn"in a.get_attribute("href"):#coming soon
-            continue
-        ulinks.append(a.get_attribute("href"))
-        locs.append(a.text)
-
-    ast = driver.find_element_by_id("1253176376").find_elements_by_tag_name("a")
-    for a in ast:
-        ulinks.append(a.get_attribute("href"))
-        locs.append(a.text)
-
-    for link in rlinks:
-        driver.get(link)
-
+    p = 0
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.twistedtaco.com/locations'
+    r = session.get(url, headers=headers, verify=False)    
+    soup =BeautifulSoup(r.text, "html.parser")
+    linklist= []
+    hourlist = ['mon','tue','wed','thurs','sat','fri','sun','week','close','open','day','am','pm']
+    divlist = soup.find('div',{'id':'1405153762'}).findAll('font')
+    for div in divlist:
         try:
-            div=driver.find_element_by_id("1315575225")
+            title = div.find('a').text
+            link = div.find('a')['href']
+            flag = 0
+            if link in linklist or link.find('coming-soon') > -1 or link.find('service') > -1 :
+                flag = 1
+            else:
+                linklist.append(link) 
+                link = 'https://www.twistedtaco.com'+ link                
+                #print(link)
+                r = session.get(link, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text,'html.parser')
+                det = soup.findAll('div',{'class':'dmNewParagraph'})
+                title = soup.find('title').text
+                try:
+                    title = title.split(' |')[0].lstrip()
+                except:
+                    pass
+                for dt in det:
+                                       
+                        
+                    try:
+                        if dt.text.find('Hours') > -1:
+                            content = re.sub(cleanr,'\n',str(dt))
+                            content = re.sub(pattern,'\n',content).split('\n')
+                            #print(content)
+                            
+                            ind = 0
+                            phone = '<MISSING>'
+                            hours = ''
+                            street = ''
+                            flag = 0
+                            for i in range(0,len(content)):
+                                
+                                for t in hourlist:                                   
+                                    if t in content[i].lower():
+                                        flag = 1
+                                        #print(content[i])
+                                        break
+                                    
+                                if  flag == 1:
+                                    hours = hours + content[i] + ' '
+                                    flag = 0
+                                elif content[i].find(',') > -1:
+                                    check = content[i].split(' ')[-1] 
+                                    if (len(check.strip()) == 5  or len(check.strip()) == 4) and check.isdigit() :
+                                        city,state  = content[i].split(', ')
+                                        state,pcode = state.lstrip().split(' ')
+                                        if len(pcode) == 4:
+                                            pcode = '0' + pcode
+                                    elif len(check.strip()) == 2 and not check.isdigit():
+                                        city,state  = content[i].split(', ')
+                                        pcode = '<MISSING>'
+                                        
+                                    else:
+                                        street = street + content[i] + ' '
+                                elif content[i].find('(') > -1 and content[i].find('-') > -1:
+                                    phone = content[i]
+                                elif content[i].lower().find('hour') > -1 or content[i].find('*') > -1:
+                                    pass
+                                else:
+                                    street = street + content[i] + ' '
+                                    
+                                
+                           
+                           
+                                
+                            
+                            if street.find('PH: ') > -1:
+                                phone,street = street.split('PH: ')[1].split(' ',1)
+                                try:
+                                    hours,state = hours.split(', ')
+                                    state,pcode = state.lstrip().split(' ',1)
+                                    city = hours.split(' ')[-1]
+                                    hours = hours.replace(city,'')
+                                except:
+                                    pass
+                            if phone.find('*') > -1:
+                                phone = '<MISSING>'
+
+                            if hours == '' and city.strip() == 'Fargo':
+                                hours = 'Summer hours: Monday - Friday: 10:30 am to 2:30 pm School year hours: Monday – Friday: 10:30 am to 9 pm'
+                                
+                            data.append([
+                                'https://www.twistedtaco.com/locations',
+                                link,                   
+                                title,
+                                street.strip().replace('Location:',''),
+                                city.strip(),
+                                state.strip(),
+                                pcode.strip(),
+                                'US',
+                                "<MISSING>",
+                                phone.strip().replace('– Fax',''),
+                                '<MISSING>',
+                                '<MISSING>',
+                                '<MISSING>',
+                                hours.replace('pm','pm ').strip()
+                            ])
+                            #print(p,data[p])
+                            p += 1
+                            #input()
+                            
+                              
+                           
+                    except Exception as e:
+                        print(e)
+                        pass
+
         except:
-            div = driver.find_element_by_id("1876037087")
-        data=div.text.split("\n\n")
-        timing.append(data[0].replace("\n",""))
-        data=data[1].split("\n")
-        street.append(data[0])
-        phones.append(data[2])
-        s=re.findall(r'( [A-Za-z]{2})', data[1])[-1]
-        z= re.findall(r'( [0-9]{5})', data[1])[0].strip()
-        c = data[1].replace(z,"").replace(s,"").strip().strip(",")
+            pass
+        
+    return data
 
-        cities.append(c)
-        states.append(s)
-        zips.append(z)
-
-    for link in ulinks:
-        driver.get(link)
-
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        a = soup.text
-        #print(a)
-        b = re.findall(r'(Monday.*)\*Hours are subject to change',a, re.DOTALL)[0]
-
-        w=b.split(",")
-        e = re.findall(r'( [0-9]{5})', w[-1])
-        if e != []:
-            b = b.replace(e[0], "")
-            zips.append(e[0].strip(" ").strip(","))
-        else:
-            zips.append("<MISSING>")
-
-        e = re.findall(r'( [A-Za-z]{2})', w[-1])
-        if e != []:
-            b = b.replace(e[0], "")
-            states.append(e[0].strip(" ").strip(","))
-        else:
-            states.append("<MISSING>")
-
-        b=b.rstrip('0123456789')
-        c=b.strip(" ").split(" ")[-1]
-        c= re.findall(r'([A-Z][a-z]+)',c)[-1]
-        b=b.replace(c,"")
-        cities.append(c.strip(","))
-
-        mo = b.split(" ")
-        mo=reversed(mo)
-        g=""
-        for w in mo:
-            if "pm" in w:
-                g=w.replace(re.findall(r"(.*pm)",w)[0],"")
-                break
-            elif "PM" in w:
-
-                g = w.replace(re.findall(r"(.*PM)",w)[0], "")
-                break
-            elif "Closed" in w:
-
-                g = w.replace(re.findall(r"(.*Closed)",w)[0], "")
-                break
-            elif "Midnight" in w:
-
-                g = w.replace(re.findall(r"(.*Midnight)",w)[0], "")
-                break
-
-        t= re.findall('(Monday.*)'+g,b,re.DOTALL)[0]
-        st=b.replace(t,"")
-
-        if st!="":
-            street.append(st)
-        else:
-            t=re.findall('(Monday.*pm)'+g,b,re.DOTALL)[0]
-            st=b.replace(t,"")
-            street.append(st)
-        timing.append(t.replace("\n", ""))
-        phones.append("<MISSING>")
-
-    all = []
-    for i in range(0, len(locs)):
-        row=[]
-        row.append("https://www.twistedtaco.com")
-
-        row.append(locs[i])
-        if street[i] != "":
-            row.append(street[i])
-        else:
-            row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
-        row.append(timing[i])
-
-        all.append(row)
-    return(all)
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
