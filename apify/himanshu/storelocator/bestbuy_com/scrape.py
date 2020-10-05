@@ -102,8 +102,8 @@ def fetch_data():
             location_soup = BeautifulSoup(location_request.text,"lxml")
             # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
             #     continue
-            # if location_soup.find("span",text=re.compile("Magnolia")):
-            #     continue
+            if location_soup.find("span",text=re.compile("Magnolia")):
+                continue
             # if location_soup.find("span",text=re.compile("Pacific Sales")):
             #     continue
             store_data = parser(location_soup,"https://stores.bestbuy.com/" + states["href"])
@@ -117,8 +117,8 @@ def fetch_data():
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
                     #     continue
-                    # if location_soup.find("span",text=re.compile("Magnolia")):
-                    #     continue
+                    if location_soup.find("span",text=re.compile("Magnolia")):
+                        continue
                     # if location_soup.find("span",text=re.compile("Pacific Sales")):
                     #     continue
                     store_data = parser(location_soup,"https://stores.bestbuy.com/" + city["href"].replace("../",""))
@@ -131,8 +131,8 @@ def fetch_data():
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
                         #     continue
-                        # if location_soup.find("span",text=re.compile("Magnolia")):
-                        #     continue
+                        if location_soup.find("span",text=re.compile("Magnolia")):
+                            continue
                         # if location_soup.find("span",text=re.compile("Pacific Sales")):
                         #     continue
                         store_data = parser(location_soup,"https://stores.bestbuy.com/" + location["href"].replace("../",""))
