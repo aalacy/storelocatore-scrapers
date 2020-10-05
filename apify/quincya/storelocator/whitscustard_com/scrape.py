@@ -44,7 +44,7 @@ def fetch_data():
 	locator_domain = "whitscustard.com"
 
 	for link in final_links:
-		print(link)
+		# print(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
