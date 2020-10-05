@@ -37,7 +37,7 @@ def fetch_data():
             hours_of_operation = ",".join(dl[7:])
         elif len(dl)==12:
             location_name=dl[1]+" - "+dl[0].lower()
-            street_address = ",".join(dl[2:5])
+            street_address = ",".join(dl[3:5])
             addr = dl[5].split(" ")
             city = addr[0]
             state = addr[1]
@@ -63,6 +63,7 @@ def fetch_data():
         map_url = j['src'].split("!2d")[1].split("!2m3!")[0].split("!3d")
         lat = map_url[1]
         lng = map_url[0]
+
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
