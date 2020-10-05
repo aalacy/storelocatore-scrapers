@@ -2,6 +2,7 @@ import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,14 +47,36 @@ def fetch_data():
         phone = store['phone']
         if not phone:
             phone = "<MISSING>"
-        try:
-            hours_of_operation = store["hours"].replace("day", "day ").replace("PM", "PM ").strip()
-        except:
-            hours_of_operation = "<MISSING>"
         latitude = store['lat']
         longitude = store['lng']
         link = store["url"]
+        # print(link)
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
 
+        try:
+            hours_of_operation = ""
+            hours = base.find(id="intro").find_all("p")[1:]
+            for hour in hours:
+                if "day" in hour.text or "pm" in hour.text.lower() or "-" in hour.text.lower() or "closed" in hour.text.lower():
+                    hours_of_operation = (hours_of_operation + " " + hour.text.replace("\xa0"," ")).strip()
+            if not hours_of_operation:
+                try:
+                    hours_of_operation = store["hours"].replace("day", "day ").replace("PM", "PM ").strip()
+                except:
+                    hours_of_operation = "<MISSING>"
+        except:
+            try:
+                hours_of_operation = store["hours"]
+            except:
+                hours_of_operation = "<MISSING>"
+        try:
+            hours_of_operation = hours_of_operation.replace("day", "day ").replace("PM", "PM ").replace("AM", "AM ").replace("Thurs","Thurs ").replace("Thurs day","Thursday")\
+            .replace("Please note that all delivery charges are non-refundable once driver leaves the store.","").replace("Sat","Sat ").replace("Sat urday","Saturday").strip()
+            hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+        except:
+            hours_of_operation = "<MISSING>"
+            
         # Store data
         data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
     
