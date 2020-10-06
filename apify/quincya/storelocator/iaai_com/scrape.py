@@ -2,9 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import time
-
 from random import randint
+from sgselenium import SgSelenium
+from sglogging import sglog
 
+log = sglog.SgLogSetup().get_logger(logger_name="iaai.com")
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -26,23 +28,23 @@ def fetch_data():
 	session = SgRequests()
 
 	data = []
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
 
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+	driver = SgSelenium().chrome()
+	time.sleep(2)
+
+	driver.get(base_link)
+	time.sleep(randint(8,10))
+
+	base = BeautifulSoup(driver.page_source,"lxml")
 
 	items = base.find_all(class_="table-row table-row-border")
 
 	for item in items:
 		locator_domain = "iaai.com"
 		location_name = item.find(class_='heading-7').text.strip()
-		print(location_name)
+		log.info(location_name)
 
-		raw_address = item.find(class_="data-list__value").text.replace("\n","").split(",")
+		raw_address = item.find(class_="data-list__value").text.replace("\n","").replace("Center, Tenth","Center Tenth").split(",")
 
 		street_address = raw_address[0].strip()
 		city = raw_address[1].strip()
@@ -62,12 +64,7 @@ def fetch_data():
 
 		# Get lat/long
 		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			maps = BeautifulSoup(req.text,"lxml")
-		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+		maps = BeautifulSoup(req.text,"lxml")
 
 		try:
 			latitude = maps.find(id="BranchModel")['data-latitude']
@@ -77,6 +74,7 @@ def fetch_data():
 			longitude = "<MISSING>"
 
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+	driver.close()
 
 	return data
 
