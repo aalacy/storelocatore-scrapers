@@ -28,6 +28,10 @@ def fetch_data():
         state = addr.split(",")[1].strip().split(" ")[0]
         zipp = addr.split(",")[1].strip().split(" ")[1]
         phone = dl[6]
+        if location_name == "Fort Worth Studio":
+            page_url = "https://www.zyn22.com/home-fortworth/"
+        else:
+            page_url = "https://www.zyn22.com/home-dallas/"
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -42,7 +46,7 @@ def fetch_data():
         store.append('<MISSING>')
         store.append('<MISSING>')
         store.append('<MISSING>')
-        store.append("https://www.zyn22.com/contact/")
+        store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         if store[2] in addressess:
             continue
