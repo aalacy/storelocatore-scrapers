@@ -4,6 +4,10 @@ import csv
 import time
 from random import randint
 from sgselenium import SgSelenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="iaai.com")
@@ -33,7 +37,9 @@ def fetch_data():
 	time.sleep(2)
 
 	driver.get(base_link)
-	time.sleep(randint(8,10))
+	element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+		(By.CLASS_NAME, "table-cell")))
+	time.sleep(randint(4,6))
 
 	base = BeautifulSoup(driver.page_source,"lxml")
 
