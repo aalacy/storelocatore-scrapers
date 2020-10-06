@@ -32,6 +32,8 @@ def fetch_data():
     all_store_data = []
     for i, loc in enumerate(locs):
         content = loc.text.split('\n')
+        while ("" in content):
+            content.remove("")
         location_name = content[0]
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
