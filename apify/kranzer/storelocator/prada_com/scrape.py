@@ -1,45 +1,66 @@
-import re
-import time
-from pprint import pprint
-from string import capwords
-
-import base
-import requests, json
-from urllib.parse import urljoin
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from w3lib.html import remove_tags
+import json
+import csv
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 from lxml import html
-crawled = []
-class Scrape(base.Spider):
-    def crawl(self):
-        base_url = "https://www.prada.com/us/en/store-locator.html"
-        url = "https://www.prada.com/us/en/store-locator.glb.getStores.json"
-        js = requests.get(url).json()
-        for _, res in js.items():
-            results = []
-            if isinstance(res, dict):
-                results.append(res)
-            elif isinstance(res, list):
-                results += res
-            for result in results:
-                i = base.Item(result)
-                i.add_value('locator_domain', base_url)
-                i.add_value('page_url', base_url)
-                i.add_value('location_name', result.get('Description', [])[0].get('displayStoreName'))
-                i.add_value('street_address', result.get('addressLine', [])[0])
-                i.add_value('city', result.get('city', ''))
-                i.add_value('state', result.get('stateOrProvinceName', ''))
-                i.add_value('zip', result.get('postalCode', ''), lambda x: x.strip())
-                i.add_value('phone', result.get('telephone1', ''), lambda x: x.strip())
-                i.add_value('country_code', result.get('country', ''))
-                i.add_value('latitude', result.get('latitude', ''))
-                i.add_value('longitude', result.get('longitude', ''))
-                i.add_value('store_number', result.get('uniqueID',''))
-                i.add_value('hours_of_operation', ''.join([f"{k}: {v}" for k, v in result.get('workingSchedule', {}).items()]))
-                yield i
 
+import time
+from random import randint
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+def write_output(data):
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    session = SgRequests()
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"'
+    HEADERS = {'User-Agent' : user_agent}
+
+    base_url = "https://www.prada.com/us/en/store-locator.html"
+    url = "https://www.prada.com/us/en/store-locator.glb.getStores.json"
+
+    test = session.get(base_url, headers = HEADERS)
+    time.sleep(randint(4,8))
+    js = session.get(url, headers = HEADERS)
+    soup = BeautifulSoup(js.text,"lxml")
+    results = json.loads(soup.text)
+
+    data = []
+    for poi in results:
+        if poi == "status":
+            continue
+        try:
+            result = results[poi][0]
+        except:
+            result = results[poi]
+        
+        i = []
+        i.append("prada.com")
+        i.append(base_url)
+        i.append(result.get('Description', [])[0].get('displayStoreName'))
+        i.append(result.get('addressLine', [])[0].replace("Bal Harbour FL 33154","").strip())
+        i.append(result.get('city', ''))
+        i.append(result.get('stateOrProvinceName', ''))
+        i.append(result.get('postalCode', '').strip())
+        i.append(result.get('country', ''))
+        i.append(result.get('uniqueID',''))
+        i.append(result.get('telephone1', '').strip())
+        i.append("<MISSING>")
+        i.append(result.get('latitude', ''))
+        i.append(result.get('longitude', ''))
+        i.append(''.join([k + ": " + v for k, v in result.get('workingSchedule', {}).items()]).strip().replace(" --","Closed"))
+        data.append(i)
+
+    return data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
