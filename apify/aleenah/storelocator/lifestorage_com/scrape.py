@@ -2,14 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sgselenium import SgSelenium
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 import time
+from sglogging import sglog
 
-driver = SgSelenium().chrome()
+log = sglog.SgLogSetup().get_logger(logger_name="lifestorage.com")
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -47,18 +43,16 @@ def fetch_data():
 
     for sl in sls:
         url = "https://www.lifestorage.com"+sl.get('href')
+        log.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         sa = soup.find_all('a', {'class': 'btn store'})
 
         for a in sa:
             url = "https://www.lifestorage.com" + a.get('href')
-            print(url)
-            driver.get(url)
-            element_present = EC.presence_of_element_located((By.TAG_NAME, 'script'))
-            WebDriverWait(driver, 180).until(element_present)
-            
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
+                        
+            req = session.get(url)
+            soup = BeautifulSoup(req.text,"lxml")
             data = "".join(soup.find_all('script', {'type': 'application/ld+json'})[-1].contents)
             if '[,' in data:
                 data = data.replace('[,', '[')
