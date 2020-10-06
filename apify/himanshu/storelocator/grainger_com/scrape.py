@@ -51,7 +51,7 @@ def fetch_data():
     address = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://www.grainger.com/"
-    location_url = ("https://www.grainger.com/rservices/branch/find/100000/1?searchBox=21216&latitude=39.30969839999999&longitude=-76.6701475&miles=&itemNumber=10000&productQty=&_=1601534968603")
+    location_url = ("https://www.grainger.com/rservices/branch/find/100000/1?searchBox=21216&latitude=39.30969839999999&longitude=-76.6701475&miles=100000&itemNumber=10000&productQty=&_=1601534968603")
     r = request_wrapper(location_url,"get",headers=headers)
     json_data1 = json.loads(r.text)
     json_data = (json_data1['payload']['branches'])
