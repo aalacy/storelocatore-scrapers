@@ -1,4 +1,11 @@
-lxml==4.3.4
-requests==2.11.1
-# uncomment if you use selenium
-# selenium==3.141.0
+certifi==2020.6.20
+cffi==1.14.3
+chardet==3.0.4
+cryptography==3.1.1
+idna==2.10
+pycparser==2.20
+pyOpenSSL==19.1.0
+requests==2.24.0
+sgrequests==0.0.15
+six==1.15.0
+urllib3==1.25.10
