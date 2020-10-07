@@ -63,7 +63,7 @@ def fetch_data():
                 '<MISSING>',
                 '<MISSING>'
                 ])
-                print(p,data[p])
+                #print(p,data[p])
                 p += 1
         
             
