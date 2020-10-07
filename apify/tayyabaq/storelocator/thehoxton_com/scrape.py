@@ -1,58 +1,82 @@
-import csv
-import time
-import requests
 from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
+import json
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            if row:
-                writer.writerow(row)
+            writer.writerow(row)
+
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    #Driver
-    url="https://thehoxton.com/contact?hotel=holborn"
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    time.sleep(5)
-    address = soup.findAll("p", {"class": "address"})
-    phones=soup.findAll("span", {"class": "value"})
-    for n in range(0,len(phones)):
-        if '+' in phones[n].get_text():
-            phone.append(phones[n].get_text())
-    for n in range(0,len(address)):
-        a=address[n].get_text()
-        if 'USA' in a:
-            street_address.append(a.split(",")[0])
-            city.append(a.split(",")[1].strip())
-            state.append(a.split(",")[2].split()[0].strip())
-            zipcode.append(a.split(",")[2].split()[1].strip())
-    for n in range(0,len(street_address)): 
-        data.append([
-            'https://thehoxton.com/',
-            'https://thehoxton.com/contact?hotel=holborn',
-            '<MISSING>',
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            '<INACCESSIBLE>',
-            '<INACCESSIBLE>',
-            '<MISSING>'
-        ])
+    # Your scraper here
+    data = []
+    cleanr = re.compile(r'<[^>]+>')    
+    url = 'https://thehoxton.com/'
+    p = 0
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text,'html.parser')
+    linklist = soup.find('nav',{'class':'nav-container__locations-nav'}).findAll('a')
+    for link in linklist:       
+        if link.text.find('coming') == -1:
+            #print(link)
+            title = link.text
+            try:
+                link = link['href']
+            except:
+                continue            
+            r = session.get(link, headers=headers, verify=False)
+            if r.text.find(', USA') == -1:
+                continue
+            else:
+                soup = BeautifulSoup(r.text,'html.parser').text
+                address = soup.split('Find Us',1)[1].split(', USA')[0]
+                street , city, state = address.split(', ')
+                state,pcode = state.lstrip().split(' ',1)
+                phone = r.text.split('please call ',1)[1].split('<',1)[0].replace('.','').replace('+1','')
+                #print(phone)
+                data.append([
+                'https://thehoxton.com/',
+                link,                   
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                'US',
+                '<MISSING>',
+                phone,
+                '<MISSING>',
+                '<MISSING>',
+                '<MISSING>',
+                '<MISSING>'
+                ])
+                print(p,data[p])
+                p += 1
+        
+            
+
+
     return data
 
+
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-   
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 scrape()
+
