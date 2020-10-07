@@ -10,15 +10,15 @@ cache = MemoCache()
 def headers_for_slug(slug: str):
     return cache.memoize(slug, lambda: driver.get_default_headers_for(f'https://locations.renasantbank.com/wp-json/wp/v2/{slug}'))
 
+hour_type = ['Lobby Hours', 'Drive-Up Hours']
+
 def extract_hours(hours_ar: list) -> str:
-    hour_type = ['Lobby Hours', 'Drive-Up Hours']
     result = []
     for idx, hours_inner in enumerate(hours_ar):
         if hours_inner:
-            hours = hours_inner[0]
-            result.append(f'{hour_type[idx]}: {hours["days"]}: {hours["open_time"]}-{hours["closing_time"]}')
+            hours_by_type = [f'{hours["days"]}: {hours["open_time"]} - {hours["closing_time"]}' for hours in hours_inner]
+            result.append(f'{hour_type[idx]}: {", ".join(hours_by_type)}')
     return ', '.join(result)
-
 
 def fetch_from_wp(url_slug: str, page: int) -> List[dict]:
     results = fetch_json(request_url=f'https://locations.renasantbank.com/wp-json/wp/v2/{url_slug}',
