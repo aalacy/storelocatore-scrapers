@@ -1,77 +1,87 @@
 import csv
-import pandas as pd
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-
-DOMAIN = 'https://www.signaturestyle.com'
-MISSING = '<MISSING>'
-
+import json
+session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf-8', newline='') as output_file:
+    with open('data.csv', mode='w', newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-    data_df = pd.read_csv("data.csv")
-    data_df.drop_duplicates(subset ="store_number", keep = False, inplace = True)
-    data_df.drop_duplicates(subset ="street_address", keep = False, inplace = True)
-    data_df.to_csv('data.csv', index=False)
 
 def fetch_data():
-    data=[]
-    url = "https://www.signaturestyle.com/salon-directory.html"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    loc_url = soup.findAll('a', attrs = {'class':'btn btn-primary'})
-    for l in loc_url:
-        try:
-            if 'pr' not in l['href']:
-                loc_url = DOMAIN + l['href']
-                loc_res = requests.get(loc_url)
-                loc_soup = BeautifulSoup(loc_res.content, "html.parser")
-                loc_tag = loc_soup.findAll('td')
-                for loc in loc_tag:
-                    if loc.find('a', href = True) is not None:
-                        page_url = DOMAIN + loc.find('a', href = True)['href']
-                        store_number = re.findall('\d+',page_url)[-1]
-                        page_res = requests.get(page_url)
-                        page_soup = BeautifulSoup(page_res.content, "html.parser")
-                        if page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}) is None:
-                            continue
-                        location_name = page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}).text.strip()
-                        phone = page_soup.find('a', attrs = {'id':'sdp-phone'}).text.strip()
-                        street_address = page_soup.find('span', attrs = {'itemprop':'streetAddress'}).text.strip()
-                        city = page_soup.find('span', attrs = {'itemprop':'addressLocality'}).text.strip()
-                        state = page_soup.find('span', attrs = {'itemprop':'addressRegion'}).text.strip()
-                        zipcode = page_soup.find('span', attrs = {'itemprop':'postalCode'}).text.strip()
-                        if(len(zipcode) <= 4):
-                            zero = 5 - len(zipcode)
-                            for z in str(zero):
-                                zipcode = str(0) + zipcode
-                        if len(zipcode) == 5:
-                            country = 'US'
-                        else:
-                            country = 'CA'
-                        hrs = page_soup.find('div', attrs = {'class':'salon-timings'}).text.strip()
-                        hours_of_operation = re.sub('\n+', ' ', hrs)
-                        if hours_of_operation == '':
-                            hours_of_operation = MISSING
-                        loc_map =  page_soup.find('div', attrs = {'class' : 'salondetailspagelocationcomp'})
-                        loc_tag = loc_map.find('script', attrs = {'type':'text/javascript'}).text.strip()
-                        latlng = re.findall('[-+]?[0-9]*\.?[0-9]+', loc_tag)
-                        lat = latlng[-2].strip()
-                        lon = latlng[-1].strip()
-                        location_type = MISSING
-                        data.append([DOMAIN, page_url, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])
-        except requests.exceptions.RequestException:
-            pass
-    return data
-
+    base_url = "https://www.signaturestyle.com"
+    addressess = []
+    headers = {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+    }
+    r = session.get("https://www.signaturestyle.com/salon-directory.html", headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    links = soup.find_all("a",{"class","btn btn-primary"})
+    for link in links:
+        if "/locations/pr.html" in link['href']:
+            continue
+        r1 = session.get(base_url+link['href'], headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        locations = soup1.find_all("tr")
+        for location in locations:
+            if "https" not in location.find("a")['href']:
+                page_url = base_url+location.find("a")['href']
+            else:
+                page_url = location.find("a")['href']
+            # print(page_url)
+            r3 = session.get(page_url, headers=headers)
+            soup3 = BeautifulSoup(r3.text, "lxml")
+            if soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}):
+                location_name = soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}).text.strip()
+            else:
+                continue
+            street_address = soup3.find("span",{"itemprop":"streetAddress"}).text.strip()
+            city = soup3.find("span",{"itemprop":"addressLocality"}).text.strip()
+            state = soup3.find("span",{"itemprop":"addressRegion"}).text.strip()
+            zipp = soup3.find("span",{"itemprop":"postalCode"}).text.strip()
+            if len(zipp) == 5:
+                country_code = "US"
+            else:
+                country_code = "CA"
+            store_number = page_url.split("-")[-1].replace(".html","").strip()
+            phone = soup3.find("a",{"id":"sdp-phone"}).text.strip()
+            location_type = "Style America"
+            latitude = soup3.find("meta", {"itemprop":"latitude"})['content']
+            longitude = soup3.find("meta", {"itemprop":"longitude"})['content']
+            try:
+                hours_of_operation = " ".join(list(soup3.find("div",{"class":"salon-timings"}).stripped_strings))
+            except:
+                hours_of_operation = "<MISSING>"
+            if "style-america" not in page_url:
+                continue
+            store=[]
+            store.append("https://www.signaturestyle.com/brands/style-america.html")
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append(country_code)
+            store.append(store_number)
+            store.append(phone)
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(page_url)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
