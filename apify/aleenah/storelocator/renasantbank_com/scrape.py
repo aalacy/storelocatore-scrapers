@@ -20,6 +20,9 @@ def extract_hours(hours_ar: list) -> str:
             result.append(f'{hour_type[idx]}: {", ".join(hours_by_type)}')
     return ', '.join(result)
 
+def parse_location_type(location_types: Dict[int, str], loc_types: List[int]) -> str:
+    return ', '.join([location_types[loc_t] for loc_t in loc_types])
+
 def fetch_from_wp(url_slug: str, page: int) -> List[dict]:
     results = fetch_json(request_url=f'https://locations.renasantbank.com/wp-json/wp/v2/{url_slug}',
                          query_params={
@@ -42,6 +45,10 @@ def fetch_cities(page:int) -> List[dict]:
     for item in fetch_from_wp(url_slug='cities', page=page):
         yield item
 
+def fetch_location_types(page: int) -> List[dict]:
+    for item in fetch_from_wp(url_slug='location_types', page=page):
+        yield item
+
 def fetch_records(page: int) -> List[dict]:
     for item in fetch_from_wp(url_slug='locations', page=page):
         yield item
@@ -50,6 +57,7 @@ def scrape():
     # caching the cities and states in id->name dictionaries
     cities = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_cities, max_per_page=100, first_page=1)])
     states = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_states, max_per_page=100, first_page=1)])
+    location_types = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_location_types, max_per_page=100, first_page=1)])
 
     field_definitions = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField("https://renasantbank.com"),
@@ -62,7 +70,7 @@ def scrape():
         country_code=ConstantField('US'),
         store_number=MappingField(mapping=['id'], part_of_record_identity=True),
         phone=MappingField(mapping=['acf','phone_number'], is_required=False),
-        location_type=MissingField(),
+        location_type=MappingField(mapping=['location_types'], raw_value_transform=lambda x: parse_location_type(location_types, x[0])),
         latitude=MappingField(mapping=['acf', 'latitude']),
         longitude=MappingField(mapping=['acf', 'longitude']),
         hours_of_operation=MultiMappingField(mapping=[['acf','lobby_hours'],['acf','drive_up_hours']],
