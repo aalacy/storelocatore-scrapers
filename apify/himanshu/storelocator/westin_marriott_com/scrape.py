@@ -51,7 +51,7 @@ def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://st-regis.marriott.com/"
     location_url = "https://pacsys.marriott.com/data/marriott_properties_WI_en-US.json"
-    r = request_wrapper(location_url,"get",headers=headers).json()
+    r = session.get(location_url,headers=headers).json()
     k = (r['regions'])
     for i in k:
         canada = (i['region_countries'])
