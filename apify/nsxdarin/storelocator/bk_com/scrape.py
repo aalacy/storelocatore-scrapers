@@ -74,7 +74,7 @@ def fetch_data():
                         except:
                             pass
                         if hours == '':
-                            hours = '<MISSING>'
+                            hours = 'Closed'
                         phone = phone.encode("ascii", errors="ignore").decode()
                         if phone == '':
                             phone = '<MISSING>'
