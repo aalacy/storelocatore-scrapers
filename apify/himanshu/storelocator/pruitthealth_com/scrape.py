@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -21,8 +20,13 @@ def fetch_data():
     for data in session.get("https://www.pruitthealth.com/bin/pruitthealthlocator").json():
         location_name = data['Title']
         
-    
-        street_address = data['Street']
+        if not data['Street']:
+            continue
+        
+        if len(data["Address"].split(",")) > 2:
+            street_address = " ".join(data['Address'].split(",")[:-2])
+        else:
+            street_address = data['Street']
         city = data['City']
         state = data['State']
         zipp = data['Zip']
@@ -35,7 +39,7 @@ def fetch_data():
         store = []
         store.append("http://www.pruitthealth.com/")
         store.append(location_name)
-        store.append(street_address)
+        store.append(street_address.replace("2051 Elijah Ludd Rd","2051 Elijah Ludd Rd Suite 1").replace("301 Halton Road","301 Halton Road Suite B"))
         store.append(city)
         store.append(state)
         store.append(zipp)
