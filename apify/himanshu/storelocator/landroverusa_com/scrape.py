@@ -18,7 +18,6 @@ def fetch_data():
     search.initialize(country_codes=['US'])
     zip_code = search.next_zip()
     adressess = []
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "X-Requested-With": "XMLHttpRequest",
@@ -43,6 +42,7 @@ def fetch_data():
                 page_url = "<MISSING>"
             lat = i['data-lat']
             lng = i['data-lng']
+            hoo = "<INACCESSIBLE>" 
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -56,7 +56,7 @@ def fetch_data():
             store.append("Land Rover USA")
             store.append(lat)
             store.append(lng)
-            store.append("<MISSING>")
+            store.append(hoo)
             store.append(page_url)
             if store[2] in adressess:
                 continue
