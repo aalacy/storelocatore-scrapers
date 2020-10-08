@@ -8,7 +8,7 @@ import unicodedata
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -19,8 +19,6 @@ def write_output(data):
 
 
 def fetch_data():
-
-    code = {}
 
     soup = bs(session.get("https://www.marriottvacationclub.com/vacation-resorts/").text, "lxml")
 
@@ -33,12 +31,25 @@ def fetch_data():
 
         location_name = location_soup.find("span", {"itemprop":"name"}).text
         
-        street_address = location_soup.find("span", {"itemprop":"name"}).text
-        city = location_soup.find("span", {"itemprop":"addressLocality"}).text
-        state = location_soup.find("span", {"itemprop":"addressRegion"}).text
-        zipp = location_soup.find("span", {"itemprop":"postalCode"}).text
+        street_address = location_soup.find("span", {"itemprop":"address"}).text
+
+        addr = [element for element in list(location_soup.find("span", {"itemtype":'http://schema.org/PostalAddress'}).stripped_strings) if element not in (',')]
+        
+        if "USA" == addr[-1]:
+            del addr[-1]
+
+        city = addr[-3]
+        state = addr[-2]
+        zipp = addr[-1]
+
+        if len(addr)  == 4:
+            if "Box" in addr[0] or "Floor" in addr[0]:
+                street_address += " " + addr[0]
+                city = addr[1]
+            else:
+                city = " ".join(addr[:-2])
+    
         phone = location_soup.find_all("a", {"class":"telephone-number"})[1].text
-        country_code = location_soup.find("span", {"itemprop":"addressCountry"}).text
         location_type = "Marriott Vacation Club"
         coords = location_soup.find(lambda tag:(tag.name == "script") and "googleMap.attr('src',"  in tag.text).text.split("googleMap.attr('src',")[1].split(");")[0].replace('"',"").strip()
         lat = coords.split("!3d")[1].split("!2m")[0]
@@ -50,9 +61,9 @@ def fetch_data():
         store.append(location_name)
         store.append(street_address)
         store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
+        store.append(state.replace("D.C.","DC"))
+        store.append(zipp.replace("District of Columbia","<MISSING>"))
+        store.append("US")
         store.append("<MISSING>")
         store.append(phone)
         store.append(location_type)
