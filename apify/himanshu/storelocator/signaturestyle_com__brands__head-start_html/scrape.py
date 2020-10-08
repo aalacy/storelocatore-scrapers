@@ -35,7 +35,6 @@ def fetch_data():
                 page_url = base_url+location.find("a")['href']
             else:
                 page_url = location.find("a")['href']
-            # print(page_url)
             r3 = session.get(page_url, headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")
             if soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}):
@@ -59,7 +58,7 @@ def fetch_data():
                 hours_of_operation = " ".join(list(soup3.find("div",{"class":"salon-timings"}).stripped_strings))
             except:
                 hours_of_operation = "<MISSING>"
-            if "Head-Start" not in page_url:
+            if "head-start" not in page_url:
                 continue
             store=[]
             store.append("https://www.signaturestyle.com/brands/head-start.html")
