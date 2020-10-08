@@ -39,7 +39,7 @@ def fetch_data():
                         zc = ''
                         name = ''
                         store = '<MISSING>'
-                        typ = '<MISSING>'
+                        typ = 'Convenience Store'
                         hours = ''
                         add = ''
                         city = ''
