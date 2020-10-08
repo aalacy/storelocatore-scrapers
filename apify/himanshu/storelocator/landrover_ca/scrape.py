@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +24,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    base_url = "https://www.landroverusa.com/"
+    base_url = "https://www.landrover.ca/"
     while zip_code:
         result_coords =[]
         r = session.get("https://www.landrover.ca/en/national-dealer-locator.html?placeName="+ str(zip_code),headers=headers)
@@ -36,12 +37,20 @@ def fetch_data():
             state = addr[2]
             zipp = addr[3]
             phone = i.find("span",{"class":"phoneNumber"}).find("a").text
+            lat = i['data-lat']
+            lng = i['data-lng']
             try:
                 page_url = i.find("div",{"class":"dealerWebsiteDiv"}).find("a")['href']
             except:
                 page_url = "<MISSING>"
-            lat = i['data-lat']
-            lng = i['data-lng']
+            # if page_url != "<MISSING>":
+            #     hour_url = page_url
+            #     hour_r = session.get(hour_url,headers=headers,timeout=100)
+            #     hour_soup = BeautifulSoup(hour_r.text,"lxml")
+            #     try:
+            #         hoo = " ".join(list(hour_soup.find_all("div",{"class":"textwidget"})[1].stripped_strings)).replace("VISIT US","")
+            #     except IndexError:
+            #         hoo = "<MISSING>"
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -55,7 +64,7 @@ def fetch_data():
             store.append("Land Rover CA")
             store.append(lat)
             store.append(lng)
-            store.append("<MISSING>")
+            store.append("<INACCESSIBLE>")
             store.append(page_url)
             if store[2] in adressess:
                 continue
@@ -70,6 +79,7 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 def scrape():
+    fetch_data()
     data = fetch_data()
     write_output(data)
 scrape()
