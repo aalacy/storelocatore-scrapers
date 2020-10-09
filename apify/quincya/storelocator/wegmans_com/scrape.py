@@ -13,6 +13,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="wegmans.com")
+
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -34,12 +38,7 @@ def fetch_data():
 
 	session = SgRequests()
 	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+	base = BeautifulSoup(req.text,"lxml")
 
 	data = []
 
@@ -47,25 +46,22 @@ def fetch_data():
 	locator_domain = "wegmans.com"
 
 	for i, item in enumerate(items):
-		print("Link %s of %s" %(i+1,len(items)))
+		log.info("Link %s of %s" %(i+1,len(items)))
 		link = "https://www.wegmans.com" + item['href']
 		if "comhttps" in link:
 			link = item['href']
 		location_name = item.text.strip()
 
 		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-			print(link)
-		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+		base = BeautifulSoup(req.text,"lxml")
 		
 		store_js = base.find(class_="yoast-schema-graph").text
 		store = json.loads(store_js)
-		raw_data = store['@graph'][1]['description']
-		if "Store Opening" in raw_data:
+		try:
+			raw_data = store['@graph'][1]['description']
+			if "Store Opening" in raw_data:
+				continue
+		except:
 			continue
 			
 		raw_address = raw_data.split("•")[0].strip().split(",")
@@ -96,7 +92,8 @@ def fetch_data():
 		location_type = ""
 		for raw_type in types:
 			location_type = (location_type + ", " + raw_type.text).strip()
-		location_type = location_type[2:]
+		location_type = location_type[2:].strip().replace("\n","")
+		location_type = (re.sub(' +', ' ', location_type)).strip()
 
 		hours_of_operation = base.find(class_="row map-content").find_all(class_="row")[2].text.strip()
 		if "To comply" in hours_of_operation:
