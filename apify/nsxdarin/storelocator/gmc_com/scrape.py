@@ -43,6 +43,10 @@ def fetch_data():
                             country = item.split('"countryIso":"')[1].split('"')[0]
                             phone = item.split('{"phone1":"')[1].split('"')[0]
                             typ = 'Dealer'
+                            try:
+                                purl = item.split('"dealerUrl":"')[1].split('"')[0]
+                            except:
+                                purl = '<MISSING>'
                             website = 'gmc.com'
                             hours = ''
                             if '"generalOpeningHour":[' in item:
@@ -56,10 +60,12 @@ def fetch_data():
                                             hours = hours + '; ' + day.split('"dayOfWeek":[')[1].split(']')[0].replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun') + ': ' + day.split('"')[0] + '-' + day.split('"openTo":"')[1].split('"')[0]
                             else:
                                 hours = '<MISSING>'
+                            if len(zc) == 9:
+                                zc = zc[:5] + '-' + zc[-4:]
                             if store not in ids:
                                 ids.append(store)
                                 print('Pulling Store ID #%s...' % store)
-                                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
 
