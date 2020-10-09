@@ -41,7 +41,7 @@ def fetch_data():
                     name = item.split('"')[0]
                     loc = 'https://zxbrandedfuels.com' + item.split('"url":"\\')[1].split('"')[0].replace('\\','')
                     add = item.split("'locationaddress'>")[1].split('<')[0]
-                    city = item.split('<br\\/>')[1].split('&')[0]
+                    city = item.replace('&apos;',"'").split('<br\\/>')[1].split('&')[0]
                     state = item.split('<br\\/>')[1].split('&#44;')[1].split('<')[0]
                     zc = item.split('&nbsp;')[1].split('<')[0]
                     store = item.split('"itemid":')[1].split(',')[0]
@@ -50,6 +50,11 @@ def fetch_data():
                     lng = item.split('getUIDirection_side(')[1].split(',')[2].split('\\')[0]
                     phone = '<MISSING>'
                     hours = '<MISSING>'
+                    r2 = session.get(loc, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode('utf-8'))
+                        if '<a href="tel:' in line2:
+                            phone = line2.split('<a href="tel:')[1].split('"')[0]
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
