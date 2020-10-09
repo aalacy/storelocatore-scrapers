@@ -42,12 +42,13 @@ def fetch_data():
 		if "mgmresorts.com" not in link:
 			continue
 
-		print(link)
+		# print(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
-		location_name = base.title.text.strip()
-
+		location_name = base.title.text.split("-")[0].strip()
+		if location_name == "New York":
+			location_name = "New York Hotel & Casino"
 		if "hotels" in link:
 			raw_address = base.find(class_="details-text grid-item width-1 m-1-2 l-5-16 xl-3-8").p.text.strip().split(",")
 			street_address = raw_address[0].strip()
