@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -27,9 +28,9 @@ def fetch_data():
             street_address = " ".join(data['Address'].split(",")[:-2])
         else:
             street_address = data['Street']
-        city = data['City']
+        city = data['City'].replace("Beaufort","Okatie")
         state = data['State']
-        zipp = data['Zip']
+        zipp = data['Zip'].replace("29902","29909")
         latitude = data['Latitude']
         longitude = data['Longitude']
         store_number = data['ID']
