@@ -23,128 +23,53 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
+def fetch_data():   
     data = []
-    
+    p  =0 
     url = 'https://www.fredastaire.com/locations/'
     r = session.get(url, headers=headers, verify=False)
-    time.sleep(2)
-    soup = BeautifulSoup(r.text,'html.parser')
-    soup = str(soup.find('div',{'class':'entry-content'}).find('script').text)
-    start = soup.find('"places"')
-    start = soup.find(':',start)
-    end = soup.find('}],"map_tabs"')
-    #print(start ,end)
-    soup = soup[start:end]
-    soup = soup.replace(',"map_tabs"','')
-    start = 0
-    p = 0
-    while True:
-        start = soup.find('{',start)
-        if start == -1:
-            break
-        end = soup.find('}',start)+1
-        strm = soup[start :end]
-               
-        mstart = 0
-        mstart = strm.find('"id"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        store = strm[mstart:mend]
-        store = store.replace('"','')
-        
-        if store == '1':
-            
-            start = soup.find('{',end)
-            if start == -1:
-                break
-            end = soup.find('}',start)+1
-            strm = soup[start :end]
-            mstart = 0
-            mstart = strm.find('"id"')
-            mstart = strm.find(':',mstart)+ 1
-            mend = strm.find(',',mstart)
-            store = strm[mstart:mend]
-            store = store.replace('"','')
-           
-        mstart = strm.find('"title"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        title = strm[mstart:mend]
-        title = title.replace('"','')
-        mstart = strm.find('"address"')
-        mstart = strm.find(':',mstart)+ 2
-        mend = strm.find('"',mstart)
-        address = strm[mstart:mend]
-        #address = address.replace('"','')
-        mstart = strm.find('"lat"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        lat = strm[mstart:mend]
-        lat = lat.replace('"','')
-        mstart = strm.find('"lng"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        longt = strm[mstart:mend]
-        longt = longt.replace('"','')
-        mstart = strm.find('"city"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        city = strm[mstart:mend]
-        city = city.replace('"','')
-        mstart = strm.find('"state"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        state = strm[mstart:mend]
-        state = state.replace('"','')
-        mstart = strm.find('"postal_code"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        pcode = strm[mstart:mend]
-        pcode = pcode.replace('"','')
-        mstart = strm.find('"location-phone-number"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        phone = strm[mstart:mend]
-        phone = phone.replace('"','')
-        mstart = strm.find('"country"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        ccode = strm[mstart:mend]
-        ccode = ccode.replace('"','')
-        mstart = strm.find('"custom-location-link"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
-        link = strm[mstart:mend]
-        link = link.replace('"','')
-        
-        #print(address)
+    loclist = r.text.split('"places":',1)[1].split('],"map_tabs":',1)[0]
+    loclist = loclist +']'
+    loclist = json.loads(loclist)
+    for loc in loclist:
+        #print(loc)
+        store = loc['id']
+        title = loc['title']
+        address = loc['address']
+        lat = loc['location']['lat']
+        longt = loc['location']['lng']        
+        phone = loc['location']['extra_fields']['location-phone-number']
+        link = loc['location']['extra_fields']['custom-location-link']
         address = usaddress.parse(address)
-        #print(address)
-        
         i = 0
-        street = ""        
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("OccupancyType") != -1 or temp[1].find("OccupancyIdentifier") != -1 or temp[1].find("Recipient") != -1 or \
-                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                "USPSBoxID") != -1:
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
                 street = street + " " + temp[0]
-           
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
             i += 1
+
+        city = loc['location']['city']
+        try:
+            state = loc['location']['state']
+        except:
+            continue
+        ccode = loc['location']['country']
+        pcode = loc['location']['postal_code'].replace('','')
+        street = street.lstrip().replace(',','')
+        city = city.lstrip().replace(',','')
+        state = state.lstrip().replace(',','')
+        pcode = pcode.lstrip().replace(',','')
         
-       
-        street = street.lstrip()
-        street = street.replace(',','')
-        start = end + 1
-        #print(street)
-        street = street.replace('\\','')
-        #input()
-        
-        link = link.replace('\\','')
-        if len(pcode) > 5:
-            pcode = pcode[0:len(pcode)-1]
         if state == 'Wisconsin':
             state = 'WI'
         if len(phone) < 3:
@@ -153,8 +78,10 @@ def fetch_data():
             data.append(['https://www.fredastaire.com/',link,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,"<MISSING>"])
             #print(p,data[p])
             p += 1
-            
-   
+        
+
+
+
     return data 
     
     

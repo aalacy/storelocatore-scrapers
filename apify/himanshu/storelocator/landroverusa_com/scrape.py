@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from random import randint
+import time
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -18,7 +20,6 @@ def fetch_data():
     search.initialize(country_codes=['US'])
     zip_code = search.next_zip()
     adressess = []
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "X-Requested-With": "XMLHttpRequest",
@@ -43,6 +44,19 @@ def fetch_data():
                 page_url = "<MISSING>"
             lat = i['data-lat']
             lng = i['data-lng']
+            
+            # if page_url != "<MISSING>":
+            #     hour_url = page_url+"/dealership/directions.htm"
+            #     time.sleep(randint(2, 8))
+            #     hour_r = session.get(hour_url,headers=headers,timeout=100)
+            #     hour_soup = BeautifulSoup(hour_r.text,"lxml")
+            #     try:
+            #         try:
+            #             hoo = " ".join(list(hour_soup.find("div",{"data-widget-name":"hours-default"}).stripped_strings))
+            #         except:
+            #             hoo = " ".join(list(hour_soup.find_all("ul",{"class":"hours"})[1].stripped_strings))
+            #     except:
+            #         hoo = "<MISSING>"
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -56,7 +70,7 @@ def fetch_data():
             store.append("Land Rover USA")
             store.append(lat)
             store.append(lng)
-            store.append("<MISSING>")
+            store.append("<INACCESSIBLE>")
             store.append(page_url)
             if store[2] in adressess:
                 continue

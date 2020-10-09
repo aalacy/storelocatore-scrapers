@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,9 +15,9 @@ def write_output(data):
 
 def addy_ext(addy):
     addy = addy.split(',')
-    city = addy[0]
-    state = addy[1]
-    zip_code = addy[2]
+    city = addy[0].strip()
+    state = addy[1].strip()
+    zip_code = addy[2].strip()
     return city, state, zip_code
 
 def fetch_data():
@@ -34,7 +35,7 @@ def fetch_data():
     link_list = []
     for loc in locs:
         loc_type = loc.find('h5').text
-        print(loc_type)
+        # print(loc_type)
         if 'Talecris Plasma Resources' not in loc_type:
             continue
 
@@ -45,7 +46,7 @@ def fetch_data():
             continue
     all_store_data = []
     for link in link_list:
-        print(link[0])
+        # print(link[0])
         if 'https://www.grifolsplasma.com/en/-/topeka-ks' == link[0]:
             continue
         r = session.get(link[0], headers = HEADERS)
@@ -72,25 +73,30 @@ def fetch_data():
                 break
             if d.find_all('span') == 0:
                 continue
-                
-            day = d.find('span', {'class': 'day-name'}).text
+            
+            try:
+                day = d.find('span', {'class': 'day-name'}).text
+            except:
+                continue
             time = d.find('span', {'class': 'day-time'}).text
             
             hours += day + ' ' + time + ' '
             
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = link[1]
+        location_type = '<MISSING>'
         page_url = link[0]
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        try:
+            geo = re.findall(r'[0-9]{2}\.[0-9]+;e=-[0-9]{2,3}\.[0-9]+', str(soup))[0].replace(";e=",",").split(",")
+            lat = geo[0]
+            longit = geo[1]
+        except:
+            lat = '<MISSING>'
+            longit = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+                    store_number, phone_number, location_type, lat, longit, hours.strip(), page_url]
 
         all_store_data.append(store_data)
-
-        print()
-        print()
 
     return all_store_data
 

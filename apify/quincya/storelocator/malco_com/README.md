@@ -1,0 +1,2 @@
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 1 POI, but website has 36)
+--ignore GeoConsistencyValidator (Confirmed scraped from website)
