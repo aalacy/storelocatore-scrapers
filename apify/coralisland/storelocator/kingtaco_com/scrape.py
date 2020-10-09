@@ -35,7 +35,7 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -57,27 +57,33 @@ def fetch_data():
     for store in store_list:
         address = eliminate_space(store.xpath('.//div[@class="caption"]//text()'))
         geoinfo = validate(store.xpath('.//div[@class="caption"]//a/@href'))
-        latitude = geoinfo.split('!2d')[1].split('!3d')[0]
-        longitude = geoinfo.split('!3d')[1].split('!')[0]
+        try:
+            latitude = geoinfo.split('!3d')[1].split('!')[0]
+            longitude = geoinfo.split('!2d')[1].split('!3d')[0]            
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         if len(address) <= 2:
             phone = "<MISSING>"
         else:
-            phone = address[2]
+            phone = address[2].replace("Phones:","")
+            phone = re.findall("[(\d)]{5} [\d]{3}-[\d]{4}", str(phone))[0]
 
         output = []
         output.append(base_url) # url
+        output.append(base_url)
         output.append(validate(store.xpath(".//h3//text()"))) #location name
         output.append(address[0]) #address
         output.append(address[1].split(', ')[0]) #city
-        output.append(address[1].split(', ')[1][:2]) #state
-        output.append(address[1].split(', ')[1][3:]) #zipcode
+        output.append(address[1].split(', ')[1][:2].upper()) #state
+        output.append(address[1].split(', ')[1][3:].strip()) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
         output.append(phone.replace('Phone: ', '')) #phone
-        output.append("King Taco Restaurant - Mexican Food") #location type
+        output.append("<MISSING>") #location type
         output.append(latitude) #latitude
         output.append(longitude) #longitude
-        output.append(get_value(address[3:])) #opening hours
+        output.append(get_value(address[3:]).encode("ascii", "replace").decode().replace("?","")) #opening hours
         output_list.append(output)
 
     return output_list
