@@ -64,7 +64,7 @@ def fetch_data():
             longt = coord['data-lng']         
             
             data.append([
-                        ':https://rubytuesday.com/',
+                        'https://rubytuesday.com/',
                         link,                   
                         title,
                         street,
