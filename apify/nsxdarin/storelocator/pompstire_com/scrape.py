@@ -52,6 +52,9 @@ def fetch_data():
                 g = h
                 h = next(lines)
                 h = str(h.decode('utf-8'))
+            if ',' not in h:
+                h = next(lines)
+                h = str(h.decode('utf-8'))
             add = g.split('<')[0].strip().replace('\t','')
             city = h.split(',')[0].strip().replace('\t','')
             state = h.split(',')[1].strip().split(' ')[0]
