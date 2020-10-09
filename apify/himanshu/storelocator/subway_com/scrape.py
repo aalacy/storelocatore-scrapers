@@ -114,7 +114,11 @@ def fetch_data():
                     }
                 phone_r = session.post(link_data,data=payload,headers=headers)
                 phone_soup = BeautifulSoup(phone_r.text,"lxml")
-                phone = phone_soup.find("div",{"class":"restaurant-phone"}).text.replace("\n","").replace("\r","").strip()
+                try:
+                    phone = phone_soup.find("div",{"class":"restaurant-phone"}).text.replace("\n","").replace("\r","").strip()
+                except:
+                    phone = "<INACCESSIBLE>"
+
             store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
             store.append(lat)
