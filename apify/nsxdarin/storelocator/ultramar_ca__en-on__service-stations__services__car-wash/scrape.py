@@ -20,7 +20,6 @@ def fetch_data():
     for item in canada:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        print(('Pulling Coordinates %s, %s...' % (lat, lng)))
         url = 'https://www.ultramar.ca/en-on/find-services-stations/?latitude=' + lat + '&longitude=' + lng + '&is_ultralave=on'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
