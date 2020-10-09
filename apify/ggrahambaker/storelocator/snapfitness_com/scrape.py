@@ -2,6 +2,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import time
+import re
 from random import randint
 
 from sgselenium import SgSelenium
@@ -10,6 +11,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="snapfitness.com")
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,13 +40,9 @@ def fetch_data():
         driver.get(url)
         time.sleep(randint(2,4))
 
-        try:
-            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-                (By.CLASS_NAME, "address")))
-            time.sleep(randint(2,4))
-        except:
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+        element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+            (By.CLASS_NAME, "address")))
+        time.sleep(randint(2,4))
         
         locs = driver.find_elements_by_css_selector('.club-overview.Highlight0')
         
@@ -57,12 +58,13 @@ def fetch_data():
 
     all_store_data = []
     total_links = len(link_list)
+    log.info("Processing " + str(total_links) + " links...")
     for i, link in enumerate(link_list):
-        print("Link %s of %s" %(i+1,total_links))
+        # print("Link %s of %s" %(i+1,total_links))
 
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
-        print(link)
+        # print(link)
                 
         main = base.find(class_='location')
         try:
@@ -70,15 +72,18 @@ def fetch_data():
         except:
             location_name = main.h3.text
 
-        conts = main.find_all('li')
         try:
-            phone_number = main.find(class_="link_phonenumber").text.strip()
+            phone_number = base.find(class_="details").find_all("li")[0].text.strip()
+            addy = str(base.find(class_="details").find_all("li")[1].span)
+            if "Snap" in phone_number:
+                phone_number = base.find(class_="details").find_all("li")[1].text.strip()
+                addy = str(base.find(class_="details").find_all("li")[2].span)
             if not phone_number:
                 phone_number = '<MISSING>'
         except:
             phone_number = '<MISSING>'
             
-        addy = str(main.find('span'))
+        
         addy = addy.replace('<span>',"").replace('</span>',"").strip().split('<br/>')
 
         if '/ca/' in link:
@@ -86,7 +91,9 @@ def fetch_data():
         else:
             country_code = 'US'
 
-        street_address = addy[0].strip()
+        street_address = addy[0].strip().replace(" ,",",").replace("&amp;","&")
+        street_address = (re.sub(' +', ' ', street_address)).strip()
+
         zip_code = addy[1][-5:]
         if " " in zip_code:
             zip_code = addy[1][-7:].strip()
