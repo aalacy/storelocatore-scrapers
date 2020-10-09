@@ -5,6 +5,9 @@ import time
 from random import randint
 import re
 import json
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="stamfordhealth.org")
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -42,6 +45,7 @@ def fetch_data():
 
 	locator_domain = "stamfordhealth.org"
 
+	log.info("Getting data ..")
 	for raw_link in all_links:
 		link = "https://www.stamfordhealth.org/locations" + raw_link["href"].split("..")[-1]
 		req = session.get(link, headers = HEADERS)
@@ -51,10 +55,9 @@ def fetch_data():
 		store = json.loads(script)
 
 		final_link = store['url']
-		print(final_link)
-		
-		location_name = store['name']
-		street_address = store['address']['streetAddress']
+				
+		location_name = store['name'].encode("ascii", "replace").decode().replace("?","")
+		street_address = store['address']['streetAddress'].encode("ascii", "replace").decode().replace("?"," ")
 		city = store['address']['addressLocality']
 		try:
 			state = store['address']['addressRegion']
