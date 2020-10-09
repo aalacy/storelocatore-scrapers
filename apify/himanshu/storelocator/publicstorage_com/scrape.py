@@ -18,7 +18,6 @@ def fetch_data():
     addresses = []
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
     }
-
     base_url = "https://www.publicstorage.com"
     r =  session.get("https://www.publicstorage.com/site-map-states",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")    
@@ -49,7 +48,7 @@ def fetch_data():
             longitude = json_data[0]['geo']['longitude']
             country_code = "US"
             if soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"}):
-                hours_of_operation = " ".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[0].stripped_strings)) +" "+ "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[1].stripped_strings))
+                hours_of_operation = " ".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[0].stripped_strings)) +" "+ " ".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[1].stripped_strings))
             else:
                 hours_of_operation = "<MISSING>"
             store = []
