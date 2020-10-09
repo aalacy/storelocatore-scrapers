@@ -42,7 +42,9 @@ def fetch_data():
                         hours = '<MISSING>'
                         phone = '<MISSING>'
                         info = name + '|' + add + '|' + city
-                        if info not in locs:
+                        if state == 'New':
+                            state = 'New York'
+                        if info not in locs and state != 'ON':
                             locs.append(info)
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
