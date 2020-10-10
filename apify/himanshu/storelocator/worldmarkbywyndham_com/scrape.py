@@ -1,12 +1,16 @@
 import csv
-from bs4 import BeautifulSoup
-import re
-import json
-from sgselenium import SgSelenium
-from selenium.webdriver.support.wait import WebDriverWait
 import time
-import unicodedata
-# olivegarden
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
+from selenium import webdriver 
+import selenium.webdriver.chrome.service as service
+import re
+import os 
+current_directoy = os.path.dirname(os.path.realpath(__file__))
+
+# session = SgRequests()
+import requests
+print("start")
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -17,77 +21,163 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
+    # print("hello")s
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
     }
-    driver = SgSelenium().firefox()
-    addresses =[]
-    base_url= "https://www.worldmarkbywyndham.com/resorts/index.html"
-    driver.get(base_url)
-    soup= BeautifulSoup(driver.page_source,"lxml")
-    cities = []
-    for button in driver.find_elements_by_xpath("//select[@name='parent_selection']/option"):
-        state = button.get_attribute("value")
-        # if state == 'British Columbia':
-        #     country_code='CA'
-        # else:
-        #     country_code='US'
-        # print(country_code)
-        # if len(state) != 2:
-        #     continue
-        if state:
-            cities.append(state)
-            # print(cities) 
-            # print(state)
-    for state in cities:
-        # driver.find_element_by_xpath("//select[@name='parent_selection']").click()
-        driver.find_element_by_xpath("//option[@value='" + state + "']").click()
-        # driver.find_elements_by_xpath("//select[@name='parent_selection']").click()
-        time.sleep(2)
-        list_a = []
-        list_a1 = []
-        for a_tag in driver.find_elements_by_xpath("//select[@name='child_selection']/option"):
-            list_a.append(a_tag.text)
-            # list_a.append(a_tag.get_attribute("value"))
-            list_a1.append(a_tag.get_attribute("value"))
-            time.sleep(2)
-        for index,data in enumerate(list_a):
-            pk=(list_a1[index])
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            data_c = (data.replace("WorldMark ","").split("–")[0])
-            # print(state)
-            store = []
-            store.append("https://www.worldmarkbywyndham.com/")
-            store.append(data.replace("Kapa`a","Kapaa") if data else "<MISSING>") 
-            store.append("<MISSING>")
-            store.append(data_c.replace("Kapa`a","Kapaa").replace("Lake of the Ozarks","Ozarks").replace("Surfside Inn","Surfside").split("-")[0].strip() if data_c else "<MISSING>")
-            if state == 'Fiji':
+    soup = bs(requests.get("https://www.worldmarkbywyndham.com/resorts/index.html",headers=headers).text, "lxml")
+
+    child_selection = soup.find(lambda tag:(tag.name == "script") and "let's populate all child values in array" in tag.text).text.split("value:")[1:]
+
+    for value in child_selection:
+
+        page_url = "https://www.worldmarktheclub.com/resorts/" + str(value.split('"')[1].replace(".","").replace("/","")) + "/"
+        print(page_url)
+        options = webdriver.ChromeOptions()
+        user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+        options.add_argument(f'user-agent={user_agent}')
+        options.add_argument("no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1024,600")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument('--headless')
+        options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        capabilities = webdriver.DesiredCapabilities.CHROME.copy()
+        capabilities['acceptInsecureCerts'] = True
+        service_start = service.Service('chromedriver')
+        service_start.start()
+
+        driver = webdriver.Remote(service_start.service_url, options=options, keep_alive=True, desired_capabilities=capabilities)
+        
+        driver.get(page_url)
+       
+        time.sleep(5)
+        soup = bs(driver.page_source, "lxml")
+        RightFeature = len(soup.find_all("td",{"class":"RightFeature"}))
+    
+
+        if RightFeature == 2:
+            data = list(bs(str(soup.find_all("td",{"class":"RightFeature"})[1]).split("Credit Values")[0], "lxml").stripped_strings)
+        else:
+            data = list(bs(str(soup.find_all("td",{"class":"RightFeature"})[2]).split("Credit Values")[0], "lxml").stripped_strings)
+
+        coords = soup.find("a",text = re.compile("Resort Directions"))
+        if coords:
+            coords = coords['href']
+            lat = coords.split("lat=")[1].split("&")[0]
+            lng = coords.split("long=")[1].split("&")[0]
+        else:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        
+        try:
+            location_name = soup.find("div",{"class":"title"}).text.strip()
+        except:
+            location_name = soup.find("span",{"class":"title"}).text.strip()
+
+        if "Mexico" in " ".join(data) or "Fiji" in " ".join(data) or "Australia" in " ".join(data):
                 continue
-            if  state == 'Mexico':
-                continue
-            if state =='British Columbia':
-                country_code='CA'
+
+        for index,value in enumerate(data):
+            
+            if value.replace("-","").lower().strip() == 'email' or '(When ' in value or 'Unit Types' in value or 'PLEASE NOTE' in value:
+                del data[index:]
+                break
+        try:
+            if "WorldMark" in data[0]:
+                del data[0]
+            
+            if not re.findall(r'[0-9]+', data[0]):
+                del data[0]
+            if not re.findall(r'[0-9]+', data[0]):
+                del data[0]
+                
+            if "Fax" in data[-1] or "F:" in data[-1]:
+                del data[-1]
+            if data[-1].replace("-","").replace("Ph","").replace("(","").replace(")","").replace("P:","").replace(" ","").strip().isdigit():
+
+                phone = data[-1].replace("Ph","").replace("P:","").strip()
+                del data[-1]
             else:
-                country_code='US'
-            store.append(state if state else "<MISSING>")
-            store.append("<MISSING>")           
-            store.append(country_code)              
-            store.append("<MISSING>") 
-            store.append("<MISSING>")
-            store.append("RESORT")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("https://www.worldmarkbywyndham.com/resorts/"+pk)
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            yield store
-       # print("~~~~~~~~~~~~")    
-    driver.quit()
+                phone = "<MISSING>"
+            
+            if data[-1] == "Canada":
+                del data[-1]
+            
+
+            street_address = data[0]
+
+            if "\n" in data[0]:
+                street_address = data[0].split("\n")[0]
+                city = data[0].split("\n")[1].split(",")[0]
+                state = data[0].split("\n")[1].split(",")[1].split()[0]
+                zipp = data[0].split("\n")[1].split(",")[1].split()[1]
+
+            else:
+                del data[0]
+                
+                if len(data) == 1:
+
+                    if "," not in data[0]:
+                        city = data[0].split()[0]
+                        state = data[0].split()[1]
+                        zipp = data[0].split()[2]
+                    else:
+                        
+                        city = " ".join(data[0].split(",")[:-1])
+                        
+                        partial_info = data[0].split(",")[-1].split()
+
+                        
+                        if len(partial_info) == 2:
+                            
+                            state = partial_info[0].replace("V8E","<MISSING>")
+                            zipp = partial_info[1].replace("0M8", "V8E 0M8")
+
+                        elif len(partial_info) == 3:
+                            state = partial_info[0]
+                            zipp = " ".join(partial_info[1:])
+                        else:
+                            state = " ".join(partial_info[:-1])
+                            zipp = partial_info[-1]
+                else:
+                    if data[0] == 'Drive':
+                        street_address += " " + data[0]
+                        city = data[1].split(",")[0]
+                        state = data[1].split(",")[1].split()[0]
+                        zipp = data[1].split(",")[1].split()[1]
+                    else:
+                        city = data[0].split(",")[0]
+                        state = data[0].split(",")[1].strip()
+                        zipp = data[-1]
+
+                
+        
+                store = []
+                store.append("https://www.worldmarkbywyndham.com/")
+                store.append(location_name) 
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)           
+                store.append("US" if zipp.replace("-","").strip().isdigit() else "CA")              
+                store.append("<MISSING>") 
+                store.append(phone)
+                store.append("RESORT")
+                store.append(lat)
+                store.append(lng)
+                store.append("<MISSING>")
+                store.append(page_url)
+            
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                yield store
+        except:
+            continue
+
 def scrape():
     data = fetch_data()
     write_output(data)
