@@ -46,8 +46,8 @@ def fetch_data():
 		phone = item.find_all("td")[-1].text.strip()
 		hours_of_operation = item.find_all("td")[-3].text.replace("\n"," ").replace("\t","").replace("Fri","Fri ").replace("Wed","Wed ").replace("pm","pm ").strip()
 		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-		if "call" in hours_of_operation.lower():
-			hours_of_operation = "<MISSING>"
+		if "open 24" in hours_of_operation.lower():
+			hours_of_operation = "Open 24 hours"
 
 		map_link = item.a['href']
 		req = session.get(map_link, headers = HEADERS)
