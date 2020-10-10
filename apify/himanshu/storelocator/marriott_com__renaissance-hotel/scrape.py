@@ -16,6 +16,7 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     address = []
+    adressessess =[]
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://renaissance-hotels.marriott.com"
     location_url = "https://renaissance-hotels.marriott.com/locations-list-view"
@@ -24,9 +25,12 @@ def fetch_data():
     data = json.loads(soup.find(lambda tag: (tag.name == "script") and 'renaissance":{"locations":' in tag.text).text.split('(Drupal.settings,')[1].split(");")[0])['renaissance']['locations']
     for link in data:
         page_url = link['url'] 
-        if "https://renaissance-hotels.marriott.com/new-york-flushing-hotel" in page_url:
-            continue 
+        page_url = "https://www.marriott.com/hotels/travel/"+link['marsha']
         r1 = session.get(page_url, headers=headers)
+        if r1.url in page_url:
+            continue 
+        page_url = r1.url
+   
         soup1 = BeautifulSoup(r1.text, "lxml")
         try:
             location = json.loads(re.sub(r'\s+'," ",soup1.find(lambda tag:(tag.name == "script") and "addressLocality" in tag.text).text))
@@ -42,7 +46,10 @@ def fetch_data():
             zipp = location['@graph'][-1]['address']['postalCode'].strip()
             country_code = location['@graph'][-1]['address']['addressCountry'].replace("United States","US").replace("Canada","CA").replace("USA","US")
             store_number = ""
-            phone = location['@graph'][-1]['telephone']
+            if "telephone" in location['@graph'][-1]:
+                phone = location['@graph'][-1]['telephone']
+            else:
+                phone="<MISSING>"
             location_type = location['@graph'][-1]['@type']
             latitude = location['@graph'][-1]['geo']['latitude']
             longitude = location['@graph'][-1]['geo']['longitude']
@@ -80,9 +87,7 @@ def fetch_data():
                 else:
                     state = state
                     zipp = zipp
-            
-            
-            
+                       
             if country_code not in ['US','CA']:
                 continue
             store_number = link['value']
@@ -108,6 +113,9 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append('<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
+        if str(store[2]+ store[-1]) in adressessess :
+            continue
+        adressessess.append(store[2]+ store[-1])
         yield store
     
 def scrape():
