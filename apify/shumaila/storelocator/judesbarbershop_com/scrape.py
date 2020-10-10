@@ -44,7 +44,7 @@ def fetch_data():
             for link in linklist:
                 try:
                     link = link.find('a')['href']
-                    print(link)
+                    #print(link)
                     r = session.get(link, headers=headers, verify=False)
                 except:
                     link = div
