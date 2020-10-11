@@ -44,7 +44,7 @@ def fetch_data():
 		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
 		latitude = store['lat']
 		longitude = store['lng']
-		link = "https://spee-d-foods.com/store-locator/"
+		link = store["permalink"]
 
 		# Store data
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
