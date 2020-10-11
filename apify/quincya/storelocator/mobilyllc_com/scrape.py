@@ -34,6 +34,9 @@ def fetch_data():
 		location_name = "MobilyLLC - " + store["store"]
 		street_address = store["address"].replace("Address:","").strip()
 		city = store['city']
+		if "NEW HAVEN" in street_address:
+			street_address = street_address.replace("NEW HAVEN","").strip()
+			city = "New Haven"
 		state = store["state"]
 		zip_code = store["zip"]
 		country_code = "US"
