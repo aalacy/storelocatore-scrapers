@@ -36,9 +36,15 @@ def fetch_data():
         if True:
             link =  div.find('a')['href']
             #link = 'https://shulasbarandgrill.com/'
+            
+            if link != 'https://shulasbarandgrill.com/' and link.find('location')== -1:
+                link = link.replace('.com/','.com/location-')
             #print(link)
             
+            
             r = session.get(link, headers=headers, verify=False)
+            if link == 'https://shulasbarandgrill.com/' and flag == 1:
+                continue
             if link == 'https://shulasbarandgrill.com/' and flag == 0:
                 flag = 1
                 soup = BeautifulSoup(r.text,'html.parser')
@@ -75,7 +81,7 @@ def fetch_data():
             try:
                 title = div.find('a').text
                 jslink ='https://knowledgetags.yextpages.net'+ r.text.split('https://knowledgetags.yextpages.net',1)[1].split('"',1)[0]
-                print(jslink)
+                #print(jslink)
                 r = session.get(jslink, headers=headers, verify=False)
                 address = r.text.split('"address":{',1)[1].split('}',1)[0]
                 address = '{' +address + '}'
@@ -88,12 +94,14 @@ def fetch_data():
                     phone = r.text.split('"telephone":"',1)[1].split('"')[0].replace('+1','')
                 except:
                     phone = '<MISSING>'
-            
-                hourlist = r.text.split('"openingHoursSpecification":[',1)[1].split('],',1)[0]
-                hourlist = '['+hourlist+']'
-                hourlist = json.loads(hourlist)
+
                 hours = ''
                 try:
+                    hourlist = r.text.split('"openingHoursSpecification":[',1)[1].split('],',1)[0]
+                    hourlist = '['+hourlist+']'
+                    hourlist = json.loads(hourlist)
+                    
+                
                     for hour in hourlist:
                         starttime = hour['opens']
                         start = (int)(starttime.split(':')[0])
@@ -141,18 +149,82 @@ def fetch_data():
                     
             
             except Exception as e:
-                #print(e)
-                pass
-        
+                soup = BeautifulSoup(r.text,'html.parser')
+                try:
+                    content = soup.find('div',{'class':'shula-block-split-content-body'}).text
+                    content = content.splitlines()
+                    street = content[2]
+                    city,state = content[3].split(', ',1)
+                    state,pcode = state.lstrip().split(' ',1)
+                    phone = content[4].replace('Phone','').replace(':','')
+                    hours = content[5]
+                    if hours.find('temporarily closed') > -1:
+                        hours = 'Temporarily Closed'
+                    else:
+                        if hours.find('Dine') > -1:
+                            hours = content[6]
+                    longt, lat = soup.find('div',{'class':'embed-container'}).find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d')
+                    data.append([
+                            'https://shulas.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            '<MISSING>',
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            hours
+                        ])
+                    #print(p,data[p])
+                    p += 1
+                except:
+                    content = soup.find('div',{'class':'shula-block-split-content-body'}).findAll('p')
+                    for i in range(1,len(content)):
+                        det  = content[i].text.splitlines()
+                        title = det[0]
+                        street = det[1]
+                        try:
+                            city,state = det[2].split(', ')
+                        except:
+                            street = street + ' '+det[2]
+                            city,state = det[3].split(', ')
+                            
+                        state,pcode = state.lstrip().split(' ' ,1)
+                        
+                        data.append([
+                            'https://shulas.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            '<MISSING>',
+                            '<MISSING>',
+                            '<MISSING>',
+                            '<MISSING>',
+                            '<MISSING>',
+                            '<MISSING>'
+                        ])
+                    #print(p,data[p])
+                    p += 1
+                    
+            
            
         
     return data
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+   
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()
