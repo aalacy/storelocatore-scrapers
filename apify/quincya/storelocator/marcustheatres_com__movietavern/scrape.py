@@ -61,7 +61,7 @@ def fetch_data():
         desc = base.find(class_="theatre-info__description").text.lower()
         if "temporarily closed" in desc:
             location_type = "Temporarily Closed"
-        elif:
+        else:
             location_type = "Open"
         hours_of_operation = "<MISSING>"
 
