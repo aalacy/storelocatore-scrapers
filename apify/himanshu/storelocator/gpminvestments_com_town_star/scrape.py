@@ -33,6 +33,7 @@ def fetch_data():
                 zipp = "<MISSING>"
             latitude = json_data[str(i)]['lat']
             longitude = json_data[str(i)]['lng']
+            store_number = json_data[str(i)]['marker_id']
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -41,7 +42,7 @@ def fetch_data():
             store.append(state)
             store.append(zipp)
             store.append("US")
-            store.append("<MISSING>")
+            store.append(store_number)
             store.append("<MISSING>")
             store.append("Town Star")
             store.append(latitude)
