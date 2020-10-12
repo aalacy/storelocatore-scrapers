@@ -42,7 +42,13 @@ def fetch_data():
 		zip_code = city_line[1].split()[1].strip()
 		country_code = "US"
 		store_number = store['ClubID']
-		location_type = "Club Status " + str(store['ClubStatus'])
+		location_type = "Premier Club"
+		if "signature" in location_name.lower():
+			location_type = "Signature Club"
+		elif "presale" in location_name.lower():
+			location_type = "PreSale Club"
+		elif "plus" in location_name.lower():
+			location_type = "Premier Plus Club"
 		latitude = store['Latitude']
 		longitude = store['Longitude']
 
