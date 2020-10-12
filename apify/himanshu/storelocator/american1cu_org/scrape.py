@@ -13,15 +13,15 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     coordinates = {}
-    addressess = []
     base_url= "https://www.american1cu.org"
-    Union_soup = BeautifulSoup(session.get("https://www.american1cu.org/locations?street=&search=&state=&radius=1000&options%5B%5D=branches&options%5B%5D=cuatms&options%5B%5D=atms&options%5B%5D=shared_branches").text.replace('<div class="listbox" />','<div class="listbox" >'),"html5lib")
+    Union_soup = BeautifulSoup(session.get("https://www.american1cu.org/locations#locatormap").text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
     Union_coords = Union_soup.find(lambda tag:(tag.name == "script") and "var point" in tag.text).text
-    for direction in Union_coords.split("var point = new google.maps.LatLng")[1:]:
-        lat = re.findall(r'[-+]?\d*\.\d+',direction.split(");")[0])[0]
-        lng = re.findall(r'[-+]?\d*\.\d+',direction.split(");")[0])[1]
-        location_name = direction.split("<span class='cuname'>")[1].split("</span><p class='locicons'>")[0]
-        coordinates[location_name] = {"lat":lat, "lng":lng}
+    for direction in Union_coords.split("infowindow.setContent")[1:]:
+        cordination = direction.split("onClick='getDir(")[1].split(");' value")[0].split(",")
+        lat = cordination[0].strip()
+        lng = cordination[1].strip()
+        street_address = direction.split("<p>")[1].split("<br />")[0]
+        coordinates[street_address] = {"lat":lat, "lng":lng}
     for info in Union_soup.find_all("div",{"class":"listbox"}):
         addr = list(info.stripped_strings)
         location_name = addr[0]
@@ -43,36 +43,38 @@ def fetch_data():
             phone = "<MISSING>"
             hours = "<MISSING>"
             location_type = "American 1 Credit Union ATMs"
-        href = str(info.find("a")['href'])
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append(location_type)
-        store.append(coordinates[location_name]['lat'])
-        store.append(coordinates[location_name]['lng'])
-        store.append(hours)
-        store.append("https://www.american1cu.org/locations")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        if store[2] in addressess:
+        lat = coordinates[street_address]['lat']
+        lng = coordinates[street_address]['lng']
+        if location_type =="American 1 Credit Union ATMs":
             continue
-        addressess.append(store[2])
-        yield store
+        else:
+            href = str(info.find("a")['href'])
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append(location_type)
+            store.append(lat)
+            store.append(lng)
+            store.append(hours)
+            store.append("https://www.american1cu.org/locations")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
     Other_coordinates = {}
-    Other_soup= BeautifulSoup(session.get("https://www.american1cu.org/locations?search=&state=&options%5B%5D=atms&options%5B%5D=shared_branches").text.replace('<div class="listbox" />','<div class="listbox" >'),"html5lib")
+    Other_soup= BeautifulSoup(session.get("https://www.american1cu.org/locations?street=&search=&state=&radius=99&options%5B%5D=atms&options%5B%5D=shared_branches").text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
     Other_coords = Other_soup.find(lambda tag:(tag.name == "script") and "var point" in tag.text).text
-    for direction in Other_coords.split("var point = new google.maps.LatLng")[1:-1]:
-        lat = re.findall(r'[-+]?\d*\.\d+',direction.split(");")[0])[0]
-        lng = re.findall(r'[-+]?\d*\.\d+',direction.split(");")[0])[1]
-        
-        location_name = direction.split("<span class='cuname'>")[1].split("</span> <span class='listdist'>")[0].strip()
-        Other_coordinates[location_name] = {"lat":lat, "lng":lng}
+    for direction in Other_coords.split("infowindow.setContent")[1:-1]:
+        cordination = direction.split("onClick='getDir(")[1].split(");' value")[0].split(",")
+        lat = cordination[0].strip()
+        lng = cordination[1].strip()
+        street_address = direction.split("<p>")[1].split("<br />")[0].strip()
+        Other_coordinates[street_address] = {"lat":lat, "lng":lng}
     for info in Other_soup.find_all("div",{"class":"listbox"}):
         addr = list(info.stripped_strings)
         location_name = addr[1]
@@ -110,15 +112,51 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(location_type)
-        store.append(Other_coordinates[location_name]['lat'])
-        store.append(Other_coordinates[location_name]['lng'])
+        store.append(Other_coordinates[street_address]['lat'])
+        store.append(Other_coordinates[street_address]['lng'])
         store.append(hours)
         store.append("https://www.american1cu.org/locations?search=&state=&options%5B%5D=atms&options%5B%5D=shared_branches")
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
         yield store
+    atm_soup = BeautifulSoup(session.get("https://www.american1cu.org/locations?street=&search=&state=&radius=99&options%5B%5D=cuatms").text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
+    atm_coords = atm_soup.find(lambda tag:(tag.name == "script") and "var point" in tag.text).text
+    for direction in atm_coords.split("infowindow.setContent")[1:-1]:
+        cordination = direction.split("onClick='getDir(")[1].split(");' value")[0].split(",")
+        lat = cordination[0].strip()
+        lng = cordination[1].strip()
+        street_address = direction.split("<p>")[1].split("<br />")[0]
+        coordinates[street_address] = {"lat":lat, "lng":lng}
+    for info in atm_soup.find_all("div",{"class":"listbox"}):
+        addr = list(info.stripped_strings)
+        if len(addr)==4:
+            location_type = "American 1 Credit Union ATMs"
+            location_name = addr[0]
+            street_address = addr[2]
+            city = addr[3].split(",")[0]
+            state = addr[3].split(",")[1].strip().split(" ")[0]
+            zipp = addr[3].split(",")[1].strip().split(" ")[1]
+            phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            lat = coordinates[street_address]['lat']
+            lng = coordinates[street_address]['lng']
+            location_name = location_name+"(ATM)"
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append(location_type)
+            store.append(lat)
+            store.append(lng)
+            store.append(hours_of_operation)
+            store.append("https://www.american1cu.org/locations")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -31,7 +31,7 @@ def fetch_data():
     addresses = []
     base_url = "http://www.wetzels.com"
 
-    r = session.get("https://www.wetzels.com/locate", headers=headers)
+    r = session.get("https://www.wetzels.com/find-a-location", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     locator_domain = base_url
@@ -48,7 +48,7 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    page_url = "https://www.wetzels.com/locate"
+    page_url = "https://www.wetzels.com/find-a-location"
 
     projectid = soup.find("ul", {"id": "ctl01_ucMenuItems_ulNavMenus"})["projectid"]
     sitepageid = soup.find("div", {"id": "ctl01_modLocationLocator"})["data-sitepagemoduleid"]
@@ -97,7 +97,11 @@ def fetch_data():
                 state = " ".join(location_data["City"].split(",")[1].strip().split(" ")[:-1])
             else:
                 state = location_data["City"].split(",")[1].strip().split(" ")[0]
-
+        if state == "Bahamas":
+            continue
+        state = state.replace("S7H","").replace("CA San","CA").replace("CCA","CA").strip()
+        if street_address == "2500 University Dr. NW":
+            state = "AB"
         # print("zipp ==== " + str(zipp))
         # print("state ==== " + str(state))
         # print("city ==== " + str(city))

@@ -22,7 +22,6 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     adressess = []
-    return_main_object = []
     base_url = "http://sevabeauty.com/"
     get_url = "http://sevabeauty.com/location/"
     r = session.get(get_url, headers=headers)
@@ -33,7 +32,7 @@ def fetch_data():
         locator_domain = base_url
         location = i.text.split("\n")
         location_name = location[0]
-        street_address = location[1]
+        street_address = location[1].split("(")[0].strip()
         temp_ad = location[2].split(" ")
         if len(temp_ad) == 3:
             city = temp_ad[0].replace(",","")

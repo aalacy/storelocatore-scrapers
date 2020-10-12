@@ -44,7 +44,10 @@ def fetch_data():
             try:
                 phone = soup.find('div',{'class':'locationPhone'}).find('a').text
             except:
-                phone = '<MISSING>'
+                try:
+                    phone = str(soup).split('"telephone": "',1)[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
             address = soup.find('div',{'class':'Column4'}).findAll('div')[1].text.replace('\n',' ')
             #print(address)
             if address.find('Located inside') > -1 or address.find('between') > -1:

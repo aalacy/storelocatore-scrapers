@@ -88,7 +88,7 @@ def fetch_data():
         store.append("US")
         store.append(store_data["storeid"])
         store.append(store_data["data"]["phone"] if "phone" in store_data["data"] and store_data["data"]["phone"] != "" and store_data["data"]["phone"] != None else "<MISSING>")
-        store.append(data_8)
+        store.append(data_8.strip())
         store.append(store_data["data"]["map_lat"])
         store.append(store_data["data"]["map_lng"])
         store.append("<MISSING>")

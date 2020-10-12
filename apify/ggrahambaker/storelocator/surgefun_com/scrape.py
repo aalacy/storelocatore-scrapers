@@ -33,8 +33,9 @@ def fetch_data():
 
     link_list = []
     for loc in locs:
-        link = loc.find('a')['href']
-        link_list.append(locator_domain + link)
+        if "coming soon" not in str(loc).lower():
+            link = loc.find('a')['href']
+            link_list.append(locator_domain + link)
         
     all_store_data = []
     for link in link_list:

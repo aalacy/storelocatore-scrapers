@@ -24,11 +24,13 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
         time.sleep(3)
+        lat = '<MISSING>'
+        lng = '<MISSING>'
         lines = r.iter_lines(decode_unicode=True)
         for line in lines:
             website = 'bobcat.com'
-            if 'kw-results-FIELD-NAME' in line:
-                name = line.split('kw-results-FIELD-NAME">')[1].split('<')[0]
+            if '<h4 style="margin: 0; color: black; font-size: 18px">' in line:
+                name = line.split('<h4 style="margin: 0; color: black; font-size: 18px">')[1].split('<')[0]
                 typ = 'Dealer'
             if '<span onclick="KW.bobcat.toggleDetail' in line:
                 store = line.split("toggleDetail('")[1].split("'")[0]
@@ -53,10 +55,6 @@ def fetch_data():
                     add = raw_address.strip().split(',')[0].split(' ')[0]
                 country = 'US'
                 hours = '<MISSING>'
-            if 'poilat: "' in line:
-                lat = line.split('poilat: "')[1].split('"')[0].replace('+','')
-            if 'poilon: "' in line:
-                lng = line.split('poilon: "')[1].split('"')[0].replace('-0','-')
                 if store not in ids:
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

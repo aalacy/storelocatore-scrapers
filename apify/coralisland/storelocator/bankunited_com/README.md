@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber (1 POI missing street address)

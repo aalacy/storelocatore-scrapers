@@ -8,8 +8,3 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-
-some hour is missing ,bcz there is different format for HOO so it'rs very difficult to fetch them.
-
-and some data is dummy but,you can check that this data is not duplicate i have distinguish between them store number, phone, and page url 

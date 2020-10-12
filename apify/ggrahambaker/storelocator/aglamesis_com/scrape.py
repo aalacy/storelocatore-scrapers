@@ -7,7 +7,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -32,6 +32,8 @@ def fetch_data():
     all_store_data = []
     for i, loc in enumerate(locs):
         content = loc.text.split('\n')
+        while ("" in content):
+            content.remove("")
         location_name = content[0]
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
@@ -55,7 +57,7 @@ def fetch_data():
         store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours,"https://www.aglamesis.com/gourmet_chocolatiers/cincinnati_locations_a/255.htm"]
         all_store_data.append(store_data)
 
     driver.quit()

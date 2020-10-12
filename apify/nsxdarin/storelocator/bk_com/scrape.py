@@ -27,7 +27,7 @@ def fetch_data():
                     if '"curbsideHours":' in item:
                         website = 'bk.com'
                         typ = '<MISSING>'
-                        store = item.split('"number":"')[1].split('"')[0]
+                        store = item.split('"')[0]
                         loc = 'https://www.bk.com/store-locator/store/restaurant_' + store
                         country = 'US'
                         lat = item.split('"latitude":')[1].split(',')[0]
@@ -74,7 +74,7 @@ def fetch_data():
                         except:
                             pass
                         if hours == '':
-                            hours = '<MISSING>'
+                            hours = 'Closed'
                         phone = phone.encode("ascii", errors="ignore").decode()
                         if phone == '':
                             phone = '<MISSING>'

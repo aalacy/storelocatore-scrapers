@@ -1,0 +1,4 @@
+lxml==4.3.3
+sgselenium
+sglogging
+sgzip

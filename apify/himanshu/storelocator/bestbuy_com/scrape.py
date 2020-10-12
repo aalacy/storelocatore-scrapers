@@ -100,27 +100,19 @@ def fetch_data():
         if states["href"].count("/") == 2:
             location_request = session.get("https://stores.bestbuy.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-            #     continue
-            # if location_soup.find("span",text=re.compile("Magnolia")):
-            #     continue
-            # if location_soup.find("span",text=re.compile("Pacific Sales")):
-            #     continue
+            if location_soup.find("span",text=re.compile("Magnolia")):
+                continue
             store_data = parser(location_soup,"https://stores.bestbuy.com/" + states["href"])
             yield store_data
         else:
             state_request = session.get("https://stores.bestbuy.com/" + states["href"].replace("ak/anchorage.html","ak.html"))
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
-                if city["href"].count("/") == 2:
+                if city["href"].count("/") == 2 or city["href"].count("/") == 3:
                     location_request = session.get("https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
-                    # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-                    #     continue
-                    # if location_soup.find("span",text=re.compile("Magnolia")):
-                    #     continue
-                    # if location_soup.find("span",text=re.compile("Pacific Sales")):
-                    #     continue
+                    if location_soup.find("span",text=re.compile("Magnolia")):
+                        continue
                     store_data = parser(location_soup,"https://stores.bestbuy.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
@@ -129,12 +121,8 @@ def fetch_data():
                     for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
                         location_request = session.get("https://stores.bestbuy.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
-                        # if location_soup.find("h2",text=re.compile("We're sorry. This store is closed.")):
-                        #     continue
-                        # if location_soup.find("span",text=re.compile("Magnolia")):
-                        #     continue
-                        # if location_soup.find("span",text=re.compile("Pacific Sales")):
-                        #     continue
+                        if location_soup.find("span",text=re.compile("Magnolia")):
+                            continue
                         store_data = parser(location_soup,"https://stores.bestbuy.com/" + location["href"].replace("../",""))
                         if store_data[2] in adressess:
                             continue

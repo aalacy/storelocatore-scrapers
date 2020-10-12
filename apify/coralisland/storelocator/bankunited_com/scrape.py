@@ -1,9 +1,7 @@
 import csv
 import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
-import json
 
 base_url = 'https://www.bankunited.com'
 
@@ -31,14 +29,15 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+    session = SgRequests()
+
     output_list = []
-    url = "https://www.bankunited.com/ajax/BranchLocator/GetLocations"
-    session = requests.Session()
+    url = "https://www.bankunited.com/contact-us/find-a-branch-atm/GetLocations"
     headers = {
         'Accept': '*/*',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -57,18 +56,28 @@ def fetch_data():
     for store in store_list:
         output = []
         output.append(base_url) # url
+        output.append("https://www.bankunited.com/contact-us/find-a-branch-atm")
         output.append(get_value(store.xpath('.//span[@itemprop="name"]//text()'))) #location name
-        output.append(get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))) #address        
+        address = get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
+        output.append(address) #address        
         output.append(get_value(store.xpath('.//span[@itemprop="addressLocality"]//text()'))) #city
-        output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
+        if address == "5295 Town Center Road":
+            output.append("FL") #state
+        else:
+            output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
         output.append(get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
         output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
-        output.append("BankUnited Branch Locator") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(get_value(store.xpath('.//span[@itemprop="openingHours"]//text()'))) #opening hours
+        loc_type = "".join(store.xpath('.//span[@class="blue-text"]//text()')).replace("\r\n","").strip()
+        loc_type = (re.sub(' +', ' ', loc_type)).strip()
+        output.append(loc_type) #location type
+        output.append(get_value(store.xpath('.//div[@class="col-sm-10 col-9 branch-location"]/@data-lat'))) #latitude
+        output.append(get_value(store.xpath('.//div[@class="col-sm-10 col-9 branch-location"]/@data-lng'))) #longitude
+        hours = get_value(store.xpath('.//span[@itemprop="openingHours"]//text()'))
+        if hours[:1] == "0":
+            hours = "Mon-Fri: " + hours
+        output.append(hours) #opening hours
         output_list.append(output)
     return output_list
 

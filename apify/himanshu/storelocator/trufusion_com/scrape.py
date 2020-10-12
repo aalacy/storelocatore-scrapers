@@ -24,7 +24,6 @@ def fetch_data():
         lat=''
         lng=''
         page_url = base_url+atag['href'].replace(" ","%20")
-        # print(page_url)
         r1 = session.get(page_url)
         soup1=BeautifulSoup(r1.text,'lxml')
         if "studioName" in atag['href']:
@@ -58,6 +57,12 @@ def fetch_data():
                 city=madd[0].strip()
                 state=madd[1].strip().split(' ')[0].strip()
                 zip=madd[1].strip().split(' ')[1].strip()
+        if city=="Bellevue":
+            state = "WA"
+        if "WE'RE COMING FOR YOU" in soup1.find('div',{'class':'inner2'}).text:
+            location_type = "coming soon"
+        else:
+            location_type = "<MISSING>"
         store=[]
         store.append(base_url)
         store.append(name if name else "<MISSING>")
@@ -68,7 +73,7 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append("<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("trufusion")
+        store.append(location_type)
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")

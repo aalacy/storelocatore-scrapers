@@ -1,77 +1,89 @@
-import csv
-from sgrequests import SgRequests
-import re
-from bs4 import BeautifulSoup
+from sgscrape.simple_network_utils import *
+from sgscrape.simple_scraper_pipeline import *
+from sgscrape.webdriver import SgChromeDriver
+from sgscrape.simple_cache import MemoCache
+from typing import *
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+driver = SgChromeDriver()
+cache = MemoCache()
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def headers_for_slug(slug: str):
+    return cache.memoize(slug, lambda: driver.get_default_headers_for(f'https://locations.renasantbank.com/wp-json/wp/v2/{slug}'))
 
-session = SgRequests()
-all=[]
-def fetch_data():
-    # Your scraper here
-    headers={
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-'accept-encoding': 'gzip, deflate',
-'accept-language': 'en-US,en;q=0.9',
-'cache-control': 'max-age=0',
-'sec-fetch-dest': 'document',
-'sec-fetch-mode': 'navigate',
-'sec-fetch-site': 'none',
-'sec-fetch-user': '?1',
-'upgrade-insecure-requests': '1',
-'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
-    }
+hour_type = ['Lobby Hours', 'Drive-Up Hours']
 
+def extract_hours(hours_ar: list) -> str:
+    result = []
+    for idx, hours_inner in enumerate(hours_ar):
+        if hours_inner:
+            hours_by_type = [f'{hours["days"]}: {hours["open_time"]} - {hours["closing_time"]}' for hours in hours_inner]
+            result.append(f'{hour_type[idx]}: {", ".join(hours_by_type)}')
+    return ', '.join(result)
 
-    res=session.get("https://locations.renasantbank.com/type/branch/",headers=headers)
-    soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
-    stores = soup.find_all('div', {'class': 'itm-info-wrapper'})
-    phones=re.findall(r'<strong>Phone Number</strong>([^<]+)',str(soup),re.DOTALL)
-    print(len(phones))
-    for store in stores:
-        data=store.find('div', {'class': 'info-title-block'})
-        loc = data.find('h4').text
-        data=str(data.find('p')).replace('</p>','').replace('<p>','').split('<br/>')
-        street=data[0]
-        data=data[1].split(',')
-        city=data[0]
-        data=data[1].strip().split(' ')
-        state=data[0]
-        zip=data[1]
-        data=store.find('div', {'class': 'info-info'})
-        tim = data.text.split('Hours')[1].strip().replace('\n',', ').replace('M','Mon').replace('F','Fri')
-        phone=phones[stores.index(store)].strip()
-        all.append([
-            "https://renasantbank.com/",
-            loc,
-            street.replace('&amp;',''),
-            city,
-            state,
-            zip,
-            'US',
-            "<MISSING>",  # store #
-            phone,  # phone
-            "Branch",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            tim,  # timing
-            "https://locations.renasantbank.com/type/branch/"])
-    return all
+def parse_location_type(location_types: Dict[int, str], loc_types: List[int]) -> str:
+    return ', '.join([location_types[loc_t] for loc_t in loc_types])
+
+def fetch_from_wp(url_slug: str, page: int) -> List[dict]:
+    results = fetch_json(request_url=f'https://locations.renasantbank.com/wp-json/wp/v2/{url_slug}',
+                         query_params={
+                             'per_page': 100,
+                             '_embed': '',
+                             'page': page
+                         },
+                         headers=headers_for_slug(url_slug),
+                         path_to_locations=[])
+
+    for res_arr in results:
+        for res in res_arr:
+            yield res
+
+def fetch_states(page: int) -> List[dict]:
+    for item in fetch_from_wp(url_slug='states', page=page):
+        yield item
+
+def fetch_cities(page:int) -> List[dict]:
+    for item in fetch_from_wp(url_slug='cities', page=page):
+        yield item
+
+def fetch_location_types(page: int) -> List[dict]:
+    for item in fetch_from_wp(url_slug='location_types', page=page):
+        yield item
+
+def fetch_records(page: int) -> List[dict]:
+    for item in fetch_from_wp(url_slug='locations', page=page):
+        yield item
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    # caching the cities and states in id->name dictionaries
+    cities = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_cities, max_per_page=100, first_page=1)])
+    states = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_states, max_per_page=100, first_page=1)])
+    location_types = dict([(c['id'], c['name']) for c in paginated(fetch_results=fetch_location_types, max_per_page=100, first_page=1)])
 
+    field_definitions = SimpleScraperPipeline.field_definitions(
+        locator_domain=ConstantField("https://renasantbank.com"),
+        page_url=MappingField(mapping=['link']),
+        location_name=MappingField(mapping=['title', 'rendered'], value_transform=urllib.parse.unquote),
+        street_address=MappingField(mapping=['acf', 'street_address']),
+        city=MappingField(mapping=['cities'], raw_value_transform=lambda x: cities[x[0][0]]),
+        state=MappingField(mapping=['states'], raw_value_transform=lambda x: states[x[0][0]]),
+        zipcode=MappingField(mapping=['acf', 'zip_code']),
+        country_code=ConstantField('US'),
+        store_number=MappingField(mapping=['id'], part_of_record_identity=True),
+        phone=MappingField(mapping=['acf','phone_number'], is_required=False),
+        location_type=MappingField(mapping=['location_types'], raw_value_transform=lambda x: parse_location_type(location_types, x[0])),
+        latitude=MappingField(mapping=['acf', 'latitude']),
+        longitude=MappingField(mapping=['acf', 'longitude']),
+        hours_of_operation=MultiMappingField(mapping=[['acf','lobby_hours'],['acf','drive_up_hours']],
+                                             raw_value_transform=extract_hours,
+                                             is_required=False)
+    )
 
-scrape()
+    pipeline = SimpleScraperPipeline(scraper_name="renasantbank.com",
+                                     data_fetcher=lambda: paginated(fetch_results=fetch_records, max_per_page=100, first_page=1),
+                                     field_definitions=field_definitions,
+                                     fail_on_outlier=False)
+
+    pipeline.run()
+
+if __name__ == "__main__":
+    scrape()

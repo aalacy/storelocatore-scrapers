@@ -28,7 +28,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser") 
     divlist = soup.find('div',{'class':'locations-list-wrapper'}).findAll('li', {'class': 'locations-list-item'})
-    print("states = ",len(divlist))
+    # print("states = ",len(divlist))
     p = 0
     for div in divlist:
         link = div.find('div', {'class': 'location-links'}).find('a')['href']
@@ -38,14 +38,14 @@ def fetch_data():
         location_id = div['data-office-id']
 
             # Type
-        location_type = data['@type']
+        location_type = "<MISSING>"
 
             # Name
         location_title = data['name']
 
             # Street
         street_address = data['address']['streetAddress']
-        print(street_address)
+        # print(street_address)
 
             # city
         city = data['address']['addressLocality']
@@ -59,6 +59,7 @@ def fetch_data():
             # Phone
         phone = data['telephone']
         phone = data['telephone'][0:3] + '-' + data['telephone'][3:6]+ '-' + data['telephone'][6:len(data['telephone'])]
+        phone = phone.replace("--","-")
         
 
             # Lat
@@ -67,34 +68,40 @@ def fetch_data():
             # Long
         lon = data['geo']['longitude']
 
-            # Hour
-        hours = ''        
-        hourlist = json.loads(str(data['openingHoursSpecification']).replace("'",'"'))
-        for hr in hourlist:
-            day  = (int)(hr["closes"].split(':')[0])
-            if day > 12:
-                day = day -12
-            #print(day)
-            hours = hours + hr["dayOfWeek"] + ' ' + hr["opens"] + ' am - ' + str(day)+ ':' + hr["closes"].split(':')[1] + ' pm '
-            # Country
-        country = data['address']['addressCountry']
-        if len(hours) < 4:
-            hours = 'Monday - Sunday : Closed'
+
+        hours_of_operation = ""
+        raw_hours = data['openingHoursSpecification']
+        for hours in raw_hours:
+            day = hours['dayOfWeek']
+            if len(day[0]) != 1:
+                day = ' '.join(hours['dayOfWeek'])
+            try:
+                opens = hours['opens']
+                closes = hours['closes']
+                if opens != "" and closes != "":
+                    clean_hours = day + " " + opens + "-" + closes
+            except:
+                clean_hours = day + " Closed"
+            hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
         output.append([
                         'https://www.myidealdental.com/',
-                        link,                   
+                        link,
                         location_title,
                         street_address,
                         city,
                         state,
                         zipcode,
-                        country,
+                        "US",
                         location_id ,
                         phone,
                         location_type,
                         lat,
                         lon,
-                        hours
+                        hours_of_operation
                     ])
         #print(p,output[p])
         p += 1
@@ -108,9 +115,7 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

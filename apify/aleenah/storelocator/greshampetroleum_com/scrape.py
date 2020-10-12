@@ -22,14 +22,22 @@ def fetch_data():
     for loc in locs:
 
         addr=loc['streetaddress'].split(',')
+        if len(addr)==3:
+            city=addr[1]
+        else:
+            city = loc['name'].split('-')[-1].strip()
+        print(addr)
+        print(loc['name'])
         sz=addr[-1]
         del addr[-1]
         sz=sz.strip().split(' ')
         zip=sz[-1]
         del sz[-1]
         state=' '.join(sz)
-        city=loc['name'].split('-')[-1].strip()
-        street=' '.join(addr).replace(city,'')
+
+        street=' '.join(addr).replace(city,'').replace('\xa0','')
+        print(street)
+        print(city)
 
         if loc['phone'] =='':
             phone='<MISSING>'

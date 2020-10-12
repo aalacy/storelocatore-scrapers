@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore CentroidValidator (Confirmed scraper worked correctly)
