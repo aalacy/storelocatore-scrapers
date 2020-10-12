@@ -68,7 +68,7 @@ async function scrape({ $, request }) {
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({
-    url: 'http://cinearts.com/full-theatre-list',
+    url: 'https://www.cinemark.com/full-theatre-list',
     userData: {
       pageType: 'locations',
     },
@@ -90,10 +90,4 @@ Apify.main(async () => {
   });
 
   await crawler.run();
-
-  Object.entries(counts).map(([key, value]) => {
-    if (value > 1) {
-      console.log(key);
-    }
-  });
 });
