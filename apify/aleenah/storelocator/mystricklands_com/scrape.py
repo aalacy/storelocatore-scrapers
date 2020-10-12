@@ -1,114 +1,157 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import json
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 import re
 
+MISSING = "<MISSING>"
+session = SgRequests()
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+# options = Options()
+# options.add_argument("--headless")
+# options.add_argument("--no-sandbox")
+# options.add_argument("--disable-dev-shm-usage")
+# # driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
+# driver = webdriver.Chrome("chromedriver", options=options)
+
+
+def get_locations():
+    viewmodel = session.get(
+        "https://siteassets.parastorage.com/singlePage/viewerViewModeJson?&isHttps=true&isUrlMigrated=true&metaSiteId=4fb1a8a3-6d99-4330-b844-2d336bff969a&quickActionsMenuEnabled=false&siteId=023f2d1c-56de-438a-91d6-0b7a4fa6f584&v=3&pageId=5eaf97_92e55dbfa2e20f2249a6b7f6033465df_644&module=viewer-view-mode-json&moduleVersion=1.279.0&viewMode=desktop&dfVersion=1.1027.0"
+    ).json()
+
+    document_data = viewmodel.get("data").get("document_data")
+
+    for key, item in document_data.items():
+        locations_matcher = re.compile("locations", re.IGNORECASE)
+        label = item.get("label", None)
+
+        if label and locations_matcher.match(label):
+            location_menu_items = item.get("items")
+
+    if not location_menu_items:
+        raise Exception("cannot find locations")
+
+    menu_keys = [item.replace("#", "") for item in location_menu_items]
+    link_keys = [
+        document_data.get(item).get("link").replace("#", "") for item in menu_keys
+    ]
+    page_items = [
+        document_data.get(key).get("pageId").replace("#", "") for key in link_keys
+    ]
+
+    page_links = [document_data.get(key).get("pageUriSEO") for key in page_items]
+
+    return [f"https://www.mystricklands.com/{location}" for location in page_links]
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "location_type",
+                "store_number",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "latitude",
+                "longitude",
+                "phone",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
-            writer.writerow(row)
+            if row:
+                writer.writerow(row)
 
 
 def parse_geo(url):
-    lon = re.findall(r'destination=[-?\d\.]*\,([-?\d\.]*)', url)[0]
-    lat = re.findall(r'destination=(-?[\d\.]*)', url)[0]
+    lon = re.findall(r"destination=[-?\d\.]*\,([-?\d\.]*)", url)[0]
+    lat = re.findall(r"destination=(-?[\d\.]*)", url)[0]
     return lat, lon
 
 
 def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    countries=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    types=[]
+    locator_domain = "mystricklands.com"
+    page_urls = get_locations()
 
+    for page_url in page_urls:
+        response = session.get(page_url)
+        bs4 = BeautifulSoup(response.text)
 
+        matched = re.search("(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
 
-    links = ["https://www.mystricklands.com/akron-ellet", "https://www.mystricklands.com/akron-montrose",
-             "https://www.mystricklands.com/streetsboro-1", "https://www.mystricklands.com/cuyahoga-falls-1",
-             "https://www.mystricklands.com/green"]
+        if not matched:
+            yield None
+            continue
 
-    for link in links:
-        driver.get(link)
+        location_name = bs4.select_one("h2 span").text
+        address = matched.group(1)
+        address_city = re.split("\(.*\)|\\n", address)
+        if len(address_city) == 2:
+            street_address, city = address_city
+        else:
+            city = re.search("Stricklands in (.*)", location_name, re.IGNORECASE).group(
+                1
+            )
+            street_address = re.sub(city, "", address_city[0], re.IGNORECASE)
 
-        div = driver.find_element_by_xpath('//div[@class="pc1inlineContent"]')
-        locs.append(div.find_element_by_tag_name("h2").text)
-        #div = div.find_element_by_class_name("txtNew")
-        tex = div.text
-        for i in ["Click Here for Flavors of the Day","Follow us on Facebook!","Click Here for our Menu","We are open year-round! ","Click Here For Flavors of the Day","Open Year Round with Indoor Seating!","Follow us on Facebook!","OPEN 7 DAYS A WEEK!","Voted #1 Beacon's Best and Fox 8 Hot List !","Our Stricklands Gift Cards make the perfect gift for any occasion!","Flavor of the Day"]:
-            if i in tex:
-                tex=tex.replace(i,"").strip()
-        timing.append(re.findall(r'(Hours.*pm|Hours.*PM|Open [dD]aily.*pm|Open [dD]aily.*PM)',tex,re.DOTALL)[0].replace("\n"," ").replace('Hours:  Open','').replace('Hours: OPEN','').replace('Hours Open','').strip())
-        #tex.replace(tim,"")
-        try:
-            phones.append(re.findall(r'Phone:*([0-9\-\(\) ]+).*',tex,re.DOTALL)[0].strip())
-        except:
-            phones.append('<MISSING>')
+        state = matched.group(2).upper()
+        zipcode = matched.group(3)
+        country_code = "US"
 
-        tex=tex.split("\n")
+        phone_match = re.search(
+            "Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
+        )
+        phone = (
+            f"{phone_match.group(1)}{phone_match.group(2)}{phone_match.group(3)}"
+            if phone_match
+            else MISSING
+        )
 
-        for te in tex:
-            z= re.findall(r'([0-9]{5})',te)
-            if z !=[]:
-                zips.append(z[0])
-                t=te.split(",")
-                c=t[0].strip().split(" ")
-                if len(c) >2:
-                    cities.append(c[-1])
-                    s=t[0].replace(c[-1],"").strip()
-                    if "(" in s:
-                        s=tex[tex.index(te)-1].strip()+s
-                    street.append(s.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)',''))
-                else:
-                    cities.append(t[0])
-                    s=tex[tex.index(te)-1].strip()
-                    if "(" in s:
-                        s=tex[tex.index(te)-2].strip()+s
-                    street.append(s.replace('Liberty Court Plaza','').replace('(Montrose Acme Plaza)',''))
-                states.append(t[1].strip().split(" ")[0])
-        
+        hours_title = bs4.select_one("p:contains(Hours)") or bs4.select_one(
+            "p:contains(Open)"
+        )
 
+        weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
 
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.mystricklands.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
-        row.append(timing[i])  # timing
-        row.append(links[i])  # page url
+        weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
+        weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
 
-        all.append(row)
-    return (all)
+        hours_of_operation = f"{weekday_hours},{weekend_hours}"
+
+        location_type = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        store_number = MISSING
+
+        yield [
+            locator_domain,
+            page_url,
+            location_name,
+            location_type,
+            store_number,
+            street_address,
+            city,
+            state,
+            zipcode,
+            country_code,
+            latitude,
+            longitude,
+            phone,
+            hours_of_operation,
+        ]
 
 
 def scrape():
