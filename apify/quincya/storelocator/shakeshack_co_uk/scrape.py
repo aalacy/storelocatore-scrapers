@@ -24,13 +24,7 @@ def fetch_data():
 
 	session = SgRequests()
 	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+	base = BeautifulSoup(req.text,"lxml")
 
 	data = []
 
@@ -40,11 +34,15 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.a.text.strip()
+		# print(location_name)
 		link = item.a["href"]
 
 		city = ""
 		raw_address = item.p.text.split("\n")
-		zip_code = raw_address[3].replace(",","")
+		try:
+			zip_code = raw_address[3].replace(",","")
+		except:
+			zip_code = raw_address[2].replace(",","")
 		if len(zip_code) > 10:
 			zip_code = raw_address[2].replace(",","").strip()
 		if zip_code.count(" ") > 1:
@@ -66,7 +64,7 @@ def fetch_data():
 
 		if street_address[-1:] == ",":
 			street_address = street_address[:-1]
-		street_address = street_address.replace("\n"," ").replace("–","-").strip()
+		street_address = street_address.replace("\n"," ").replace("–","-").encode("ascii", "replace").decode().replace("?","-").strip()
 		state = "<MISSING>"
 		country_code = "GB"
 		store_number = "<MISSING>"
