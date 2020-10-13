@@ -86,17 +86,16 @@ def fetch_data():
                         '<MISSING>',
                         hours
                     ])
-            print(p,data[p])
+            #print(p,data[p])
             p += 1
                 
    
     return data
 
 
-def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+def scrape():   
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    
 
 scrape()
