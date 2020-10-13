@@ -84,7 +84,7 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>',
                         '<MISSING>',
-                        hours
+                        hours.replace('Hours','').lstrip()
                     ])
             #print(p,data[p])
             p += 1
