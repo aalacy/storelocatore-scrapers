@@ -16,29 +16,28 @@ def fetch_data():
     base_url = "https://originalmels.com"
     page_url = "https://originalmels.com/locations/"
     soup = bs(session.get(page_url).text, "lxml")
-
     cords = {}
-    data = json.loads(soup.find(lambda tag: (tag.name == "script") and '"lat":' in tag.text).text.split("var wpgmaps_localize_marker_data =")[1].split("var wpgmaps_localize_global_settings ")[0].replace("[]}};","[]}}"))
-    for index,value in data.items():
-        
-        phone_soup = bs(value['desc'],"lxml")
+    jd = json.loads(str(soup).split("var wpgmaps_localize_marker_data = ")[1].split(";")[0])
+    for i in range(2,23):
+        phone_soup = bs(jd[str(i)]['desc'],"lxml")
         
         key = phone_soup.find_all("p")[0].text.replace("(","").replace(")","").replace("-","").replace(" ","")
         if "Hours:" in key:
             key = "7074254452"
 
-        cords[key.replace("7754514811","7753376357")] = {"lat":value['lat'], "lng":value['lng']}
+        cords[key.replace("7754514811","7753376357")] = {"lat":jd[str(i)]['lat'], "lng":jd[str(i)]['lng']}
     cords['9257541841'] =   {"lat":"<MISSING>", "lng":"<MISSING>"}
     
-    for div in soup.find_all("div",{"class":re.compile("fusion-layout-column fusion_builder_column fusion_builder_column_1_3")}):
-        location_name = div.find("h3").text
-        
-        addr = list(div.find_all("div",{"class":"fusion-text"})[1].stripped_strings)
+    for div in soup.find_all("div",{"class":"fusion-column-wrapper fusion-flex-column-wrapper-legacy"})[2:]:
+        try:
+            location_name = div.find("h3").text.replace("\n","")
+        except AttributeError:
+            continue
+        addr = list(div.find("p",{"style":"text-align: center;"}).stripped_strings)
         street_address = addr[0]
         city = addr[1].split(",")[0]
         state = addr[1].split(",")[-1].split()[0]
         zipp = addr[1].split(",")[-1].split()[-1]
-        
         phone = addr[2].split("T:")[-1].strip()
         if addr[2].split("T:")[-1].strip() == '':
             phone = "(925) 691-9900"
@@ -78,13 +77,11 @@ def fetch_data():
         store.append(lng)
         store.append(hours)
         store.append(page_url)     
-    
         store = [str(x).replace("\xa0"," ").replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        
         yield store
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
+
