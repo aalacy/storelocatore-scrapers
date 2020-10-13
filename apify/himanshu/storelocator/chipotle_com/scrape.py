@@ -5,11 +5,7 @@ import re
 import json
 import time
 from datetime import datetime
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -37,6 +33,8 @@ def fetch_data():
     data = r.json()["data"]
     for i in range(len(data)):
         store_data = data[i]
+        if store_data['restaurantLocationType']=="LAB":
+            continue
         store = []
         store.append("https://chipotle.com")
         store.append(store_data['restaurantName'])
@@ -76,17 +74,9 @@ def fetch_data():
             continue
         addresses.append(store[2])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-        # print(page_url)
-        # print("data = " + str(store))
-        # print(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
+
