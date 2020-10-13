@@ -57,10 +57,11 @@ def fetch_data():
 
     session = SgRequests()
     output_list = []
-    countries = ["US","CA"]
+    countries = ["CA","US"]
     for country in countries:
         url = "https://blomedry.com/locations/?country=" + country
         request = session.get(url, headers=headers)
+        time.sleep(randint(2,4))
         response = etree.HTML(request.text)
         store_list = response.xpath('//li[contains(@class, "article-location")]')
         log.info(url)
