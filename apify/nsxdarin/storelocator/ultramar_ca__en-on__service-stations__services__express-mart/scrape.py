@@ -44,7 +44,6 @@ def fetch_data():
                         city = ''
                         r2 = session.get(loc, headers=headers)
                         lines = r2.iter_lines()
-                        print(loc)
                         for line2 in lines:
                             line2 = str(line2.decode('utf-8'))
                             if '<h1 class="station__title"' in line2:
