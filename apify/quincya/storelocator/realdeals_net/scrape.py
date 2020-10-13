@@ -85,7 +85,7 @@ def fetch_data():
 		if longitude == "240.594345":
 			longitude = "-119.405655"
 
-		street_address = raw_data[0].replace("Cedar Falls, IA","").strip()
+		street_address = raw_data[0].replace("Cedar Falls, IA","").replace("Kearney","").strip()
 		city = location_name.split(",")[0].strip()
 		state = location_name.split(",")[1].strip()
 		location_name = "Real Deals on Home Decor - " + location_name
