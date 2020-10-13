@@ -12,7 +12,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -38,7 +38,7 @@ def fetch_data():
                 tel_line = next(lines)
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
-                phone = tel_line.split('tel:')[1].split('"')[0]
+                phone = tel_line.split('tel:1')[1].split('"')[0]
                 try:
                     tagged = usaddress.tag(raw_address)[0]
                     city = tagged.get('PlaceName', '<MISSING>')
@@ -57,7 +57,8 @@ def fetch_data():
                 hours = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    purl = '<MISSING>'
+                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
