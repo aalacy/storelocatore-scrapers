@@ -57,10 +57,15 @@ def fetch_data():
 			store["WednesdayClose"] + " Thursday " + store["ThursdayOpen"] + "-" + store["ThursdayClose"] + " Friday " + store["FridayOpen"] + "-" + store["FridayClose"]).strip()
 			
 			try:
-				 weekend = " Saturday " + store["SaturdayOpen"] + "-" + store["SaturdayClose"] + " Sunday " + store["SundayOpen"] + "-" + store["SundayClose"]
-				 hours_of_operation = hours_of_operation + weekend
+				sat = " Saturday " + store["SaturdayOpen"] + "-" + store["SaturdayClose"]
 			except:
-				pass
+				sat = " Saturday Closed"
+			try:
+				sun = " Sunday " + store["SundayOpen"] + "-" + store["SundayClose"]
+			except:
+				sun = " Sunday Closed"
+
+			hours_of_operation = hours_of_operation + sat + sun
 
 			latitude = store['Latitude']
 			longitude = store['Longitude']
