@@ -1,10 +1,12 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 import re
 import json
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="realdeals.net")
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,12 +27,7 @@ def fetch_data():
 
 	session = SgRequests()
 	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+	base = BeautifulSoup(req.text,"lxml")
 
 	text = base.find(class_="fusion-column-wrapper").text
 	all_links = re.findall(r'http://realdeals.net/[a-z]+', text)
@@ -38,8 +35,7 @@ def fetch_data():
 
 	data = []
 	for i, link in enumerate(all_links):
-		print("Link %s of %s" %(i+1,len(all_links)))
-		print(link)
+		log.info(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
@@ -73,20 +69,23 @@ def fetch_data():
 				latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
 				longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
 			except:
-				raw_data = base.find_all(class_="fusion-text")[4].p.text.replace("\xa0","").split("\n")
-				location_name = base.h1.text.strip()
-				phone = base.find_all(class_="fusion-text")[5].p.a.text.replace("\n", " ").strip()
-				hours_of_operation = base.find_all(class_="fusion-text")[3].text.replace("\n", " ").strip()
-				script = base.text
-				lat_pos = script.find('latitude') + 11
-				latitude = script[lat_pos:script.find(',',lat_pos)-1]
-				long_pos = script.find('longitude') + 12
-				longitude = script[long_pos:script.find(',',long_pos)-3]
+				try:
+					raw_data = base.find_all(class_="fusion-text")[4].p.text.replace("\xa0","").split("\n")
+					location_name = base.h1.text.strip()
+					phone = base.find_all(class_="fusion-text")[5].p.a.text.replace("\n", " ").strip()
+					hours_of_operation = base.find_all(class_="fusion-text")[3].text.replace("\n", " ").strip()
+					script = base.text
+					lat_pos = script.find('latitude') + 11
+					latitude = script[lat_pos:script.find(',',lat_pos)-1]
+					long_pos = script.find('longitude') + 12
+					longitude = script[long_pos:script.find(',',long_pos)-3]
+				except:
+					continue
 
 		if longitude == "240.594345":
 			longitude = "-119.405655"
 
-		street_address = raw_data[0].strip()
+		street_address = raw_data[0].replace("Cedar Falls, IA","").strip()
 		city = location_name.split(",")[0].strip()
 		state = location_name.split(",")[1].strip()
 		location_name = "Real Deals on Home Decor - " + location_name
@@ -109,6 +108,7 @@ def fetch_data():
 			zip_code = "T5H 2T2"
 		location_type = "<MISSING>"
 		store_number = "<MISSING>"
+		hours_of_operation = hours_of_operation.replace("SHOP ONLINE!","").replace("!","").replace("HOURS:","").strip()
 
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
