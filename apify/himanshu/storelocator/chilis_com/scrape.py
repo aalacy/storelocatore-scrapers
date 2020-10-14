@@ -4,24 +4,19 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
 session = SgRequests()
-
 def fetch_data():
     addressess = []
-
     headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -30,11 +25,8 @@ def fetch_data():
     state_soup = BeautifulSoup(state_r.text, "lxml")
     for link in state_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
-        # print(city_link)
-        
         city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
-
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
             store_r = session.get(store_link, headers=headers)
@@ -53,7 +45,7 @@ def fetch_data():
             longitude = data['geo']['longitude']
             hours_of_operation = store_soup.find("table").text.strip()
             page_url = data['url'] 
-            
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -78,12 +70,9 @@ def fetch_data():
     ca_soup = BeautifulSoup(ca_r.text, "lxml")
     for link in ca_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
-        # print(city_link)
-
         city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
-
-        jd = json.loads(str(city_soup).split("locationsList:")[1].split("};</script>")[0])
+        jd = json.loads(str(city_soup).split("locationsList:")[1].split("};window.Chilis.Strings")[0])
         for value in jd:
 
             location_name = value['name'].replace("&amp;","")
@@ -99,7 +88,6 @@ def fetch_data():
             longitude = value['longitude']
             hours_of_operation = "<MISSING>"
             page_url = city_link
-            
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -132,4 +120,5 @@ scrape()
 
         
     
+
 
