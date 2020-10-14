@@ -25,10 +25,6 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
 }
 
-re_get_json = re.compile(
-    'Utilities\.SDL\.Add\("ServicePropertyDetails", (.+?)\);')
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -37,12 +33,6 @@ def write_output(data):
                          "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
-
-
-def get_json_data(html):
-    match = re.search(re_get_json, html)
-    json_text = match.group(1)
-    return json.loads(json_text)
 
 
 def get_sitemap(attempts=1):
@@ -71,10 +61,6 @@ def fetch_data():
     attempts = {}
     while q:
         loc = q.popleft()
-        if '-CA/' in loc:
-            country = 'CA'
-        else:
-            country = 'US'
         name = ''
         add = ''
         city = ''
@@ -91,7 +77,7 @@ def fetch_data():
         try:
             session = SgRequests()
             # print(loc)
-            r2 = session.get(loc, headers=headers)
+            r2 = session.get(f"https://www.redroof.com/api/GetPropertyDetail?PropertyId={store}", headers=headers)
         except (ConnectionError, Exception) as ex:
             print('Failed to connect to ' + loc)
             print("Exception: ", ex)
@@ -103,7 +89,7 @@ def fetch_data():
                 print('attempts: ' + str(attempts[loc]))
             continue
 
-        data = get_json_data(r2.text)
+        data = r2.json().get('SDLKeyValuePairs').get('ServicePropertyDetails')
 
         name = data["Description"]
         add = data["Street1"] + (", " + data["Street2"]
@@ -115,6 +101,7 @@ def fetch_data():
         typ = data["PropertyType"]
         lat = data["Latitude"]
         lng = data["Longitude"]
+        country = data['Country']
 
         location = [website, loc, name, add, city, state,
                     zc, country, store, phone, typ, lat, lng, hours]
