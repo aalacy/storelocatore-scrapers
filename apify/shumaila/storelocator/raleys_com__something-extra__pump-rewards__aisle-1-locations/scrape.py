@@ -81,7 +81,7 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
                 
             
