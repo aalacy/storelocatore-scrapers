@@ -45,7 +45,7 @@ def fetch_data():
     r = session.get(base_url1, headers=headers)
     soup1 = BeautifulSoup(r.text, "lxml")
 
-    stores1 = soup1.find(id="comp-jspg5178").text.replace("\n"," ").replace("\xa0"," ")
+    stores1 = soup1.find(id="comp-jsqnmpe2").text.replace("\n"," ").replace("\xa0"," ")
     stores1 = stores1[stores1.find("Hours")+5:].strip()
     stores2 = soup1.find(id="comp-jspgftft").text.replace("\n"," ").replace("\xa0"," ")
     stores2 = stores2[stores2.find("Hours")+5:].strip()
