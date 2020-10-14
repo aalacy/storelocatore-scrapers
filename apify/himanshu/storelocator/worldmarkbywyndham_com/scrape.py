@@ -8,8 +8,8 @@ import re
 import os 
 current_directoy = os.path.dirname(os.path.realpath(__file__))
 
-# session = SgRequests()
-import requests
+session = SgRequests()
+
 print("start")
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -28,7 +28,7 @@ def fetch_data():
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
     }
-    soup = bs(requests.get("https://www.worldmarkbywyndham.com/resorts/index.html",headers=headers).text, "lxml")
+    soup = bs(session.get("https://www.worldmarkbywyndham.com/resorts/index.html",headers=headers).text, "lxml")
 
     child_selection = soup.find(lambda tag:(tag.name == "script") and "let's populate all child values in array" in tag.text).text.split("value:")[1:]
 
