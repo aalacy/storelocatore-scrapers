@@ -69,7 +69,7 @@ def fetch_data():
             hours = hours.strip()
         else:
             try:
-                if "temporarily closed" in base.find(class_="hours_block"):
+                if "temporarily closed" in base.find(class_="hours_block").text.lower():
                     hours = "Temporarily Closed"
                 else:
                     hours = '<MISSING>'
