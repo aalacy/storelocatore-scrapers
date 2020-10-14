@@ -80,14 +80,28 @@ def fetch_data():
         tim1 = ""
         tim2 = ""
         try:
-            tim1 = div.find('div', {'class': 'HoursToday-dineIn'}).text
+            tim1 = div.find('div', {'class': 'HoursToday-dineIn'}).text.split('Open Now')[0]
+            if 'closed today' in tim1.lower():
+                tim1='CLOSED'
+            elif 'open 24 hours' in tim1.lower():
+                tim1='Open 24 hours'
+            elif 'PM'in tim1.lower():
+                tim1=tim1.split('PM')[0]+'PM'
         except:
             k = 1
 
         try:
-            tim2 = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",")
+            tim2 = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",").split('Open Now')[0]
+            if 'closed today' in tim2.lower():
+                tim2='CLOSED'
+            elif 'open 24 hours' in tim2.lower():
+                tim2='Open 24 hours'
+            elif 'PM'in tim2.lower():
+                tim2=tim2.split('PM')[0]+'PM'
         except:
             h = 1
+        print(tim1)
+        print(tim2)
 
         if k == 1 and h == 1:
             types.append("driveThru")
@@ -146,31 +160,19 @@ def fetch_data():
                 page_url.append(url)
 
             else:
-                types.append("dineIn")
+                types.append("dineIn, driveThru")
                 locs.append(l)
                 street.append(st)
                 cities.append(c)
                 states.append(s)
                 zips.append(z)
                 phones.append(p)
-                timing.append("MON-SUN: " + tim1.strip())
+                timing.append("MON-SUN: " + tim1.strip() +" Drive Thru: MON-SUN: " + tim2.strip() )
                 lat.append(la)
                 long.append(lo)
                 ids.append(id)
                 page_url.append(url)
 
-                types.append("driveThru")
-                locs.append(l)
-                street.append(st)
-                cities.append(c)
-                states.append(s)
-                zips.append(z)
-                phones.append(p)
-                timing.append("MON-SUN: " + tim2.strip())
-                lat.append(la)
-                long.append(lo)
-                ids.append(id)
-                page_url.append(url)
 
     all = []
     for i in range(0, len(locs)):
