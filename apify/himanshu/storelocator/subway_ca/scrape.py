@@ -1,158 +1,185 @@
+import json
+import time
 import csv
-from sgrequests import SgRequests
+# import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-import time
-import unicodedata
-
+from sgrequests import SgRequests
 
 session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open(r'data.csv', mode='w',newline='') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def get_locations(url, headers):
-    # Without the Apify proxy this subway.com API returns "402 Payment Required" after awhile.
-    #   The Apify proxy rotates the IP automatically about every 100 requests,
-    #   and that seems to get around the 402 responses, but let's go ahead and reset
-    #   the session after any error status. This will force a new IP, and should also help
-    #   get around other issues such as network timeouts, etc.
-    global session
-    try:
-        r = session.get(url, headers=headers)
-        r.raise_for_status()
-        # print('status: ', r.status_code)
-        # if r.status_code == 402:
-        #     print('402 text: ', r.text)
-        return r
-    except Exception as ex:
-        # print(ex)
-        # print('resetting session')
-        session = SgRequests()
-        r = session.get(url, headers=headers)
-        r.raise_for_status()
-        return r
+
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes=['CA'])
-    MAX_RESULTS = 50
-    coord = search.next_coord()
-    while coord:
-        result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        x = coord[0]
-        y = coord[1]
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        time.sleep(1)
-        url = "https://locator-svc.subway.com/v3/GetLocations.ashx?q=%7B%22InputText%22%3A%22%22%2C%22GeoCode%22%3A%7B%22Latitude%22%3A" + str(x) + "%2C%22Longitude%22%3A" + str(
-            y) + "%2C%22CountryCode%22%3A%22CA%22%7D%2C%22DetectedLocation%22%3A%7B%22Latitude%22%3A0%2C%22Longitude%22%3A0%2C%22Accuracy%22%3A0%7D%2C%22Paging%22%3A%7B%22StartIndex%22%3A1%2C%22PageSize%22%3A50%7D%2C%22ConsumerParameters%22%3A%7B%22metric%22%3Afalse%2C%22culture%22%3A%22en-US%22%2C%22country%22%3A%22US%22%2C%22size%22%3A%22D%22%2C%22template%22%3A%22%22%2C%22rtl%22%3Afalse%2C%22clientId%22%3A%2217%22%2C%22key%22%3A%22SUBWAY_PROD%22%7D%2C%22Filters%22%3A%5B%5D%2C%22LocationType%22%3A1%2C%22behavior%22%3A%22%22%2C%22FavoriteStores%22%3Anull%2C%22RecentStores%22%3Anull%7D"
+    base_url= "https://restaurants.subway.com/canada"
+    r = session.get(base_url)
+    soup= BeautifulSoup(r.text,"lxml")
+    store_detail=[]
+
+    k = soup.find_all("a",{"class":"Directory-listLink","href":re.compile("canada/")})
+    for i in k:
         
-        # print(url)
-        # print("-----------------------------------------------")
-        r = get_locations(url, headers)
-        json_data = json.loads(r.text[1:-1])
-        location_list = json_data["ResultData"]
-        html = json_data["ResultHtml"][2:]
-        for store_data in location_list:
-            lat = store_data["Geo"]["Latitude"]
-            lng = store_data["Geo"]["Longitude"]
-            address = store_data["Address"]
-            result_coords.append((lat, lng))
-            if address["CountryCode"] not in ("CA"):
-                continue
-            store = []
-            page_url = ("https://order.subway.com/en-CA/restaurant/" +str(store_data['LocationId']['StoreNumber']))
-            store.append("https://www.subway.ca")
-            store.append("<MISSING>")
-            street_address = address["Address1"]
-            if address["Address2"]:
-                street_address = street_address + " " + address["Address2"]
-            if address["Address3"]:
-                street_address = street_address + " " + address["Address3"]
-            # r1 = get_locations(page_url,headers)
-            # soup1 = BeautifulSoup(r1.text,'lxml')
-
-            # print(street_address)
-            store.append(street_address)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(address["City"] if address["City"] else "<MISSING>")
-            store.append(address["StateProvCode"]
-                         if address["StateProvCode"] else "<MISSING>")
-            store.append(address["PostalCode"]
-                         if address["PostalCode"] else "<MISSING>")
-            store.append(address["CountryCode"])
-            if store[-1] == "CA":
-                store[-2] = store[-2].replace(" ", "")
-                store[-2] = store[-2][:3] + " " + store[-2][3:]
-            store.append(store_data['LocationId']['StoreNumber'])
-            hours=''
-            location_soup = BeautifulSoup(html[0], "lxml")
-            if location_soup.find("div", {'class': "locationOpen"}) == False:
-                continue
+        link = i['data-count'].split("(")[-1]
+        if link != "1)":
+            city_link = "https://restaurants.subway.com/"+i['href']
             try:
-                hours = " ".join(list(location_soup.find(
-                    "div", {'class': 'locationHours'}).stripped_strings))
+                r1 = session.get(city_link)
             except:
-                hours = "<MISSING>"
+                # print("city_link:--------- eorr",city_link)
+                pass
+            soup1= BeautifulSoup(r1.text,"lxml")
+            citylink= soup1.find_all("a",{"class":"Directory-listLink","href":re.compile("../canada/")})
             
-            if "https://order.subway.com/en-CA/restaurant/70638" in page_url:
-                hours="Sunday 10:00 AM - 9:00 PM Monday 9:00 AM - 10:00 PM Tuesday 9:00 AM - 10:00 PM Wednesday 9:00 AM - 10:00 PM Thursday 9:00 AM - 10:00 PM Friday 9:00 AM - 10:00 PM Saturday 9:00 AM - 10:00 PM"
+            for c in citylink:
+                link1 = c['data-count'].split("(")[-1]
+                if link1 != "1)":
+                    sublink = "https://restaurants.subway.com"+c['href'].replace("..","").replace("///",'')
+                    try:
+                        r2 = session.get(sublink)
+                    except:
+                        # print("sublink:----------error ",sublink)
+                        pass
+                    soup2= BeautifulSoup(r2.text,"lxml")
+                    store_link = soup2.find_all("a",{"class":"Teaser-title","data-ya-track":"visitpage"})
+                    for st in store_link:
+                        try:
+                            r3 = session.get("https://restaurants.subway.com/"+st['href'].replace("..","").replace("///",''))
+                            page_url = "https://restaurants.subway.com/"+st['href'].replace("..","").replace("///",'')
+                        except:
+                            pass
+                            # print("page_url:------------- ",page_url)
+                       
+                        soup3= BeautifulSoup(r3.text,"lxml")
+                        streetAddress = soup3.find("meta",{"itemprop":"streetAddress"})['content']
+                        state = soup3.find("abbr",{"class":"c-address-state"}).text
+                        zip1 = soup3.find("span",{"class":"c-address-postal-code"}).text
+                        city = soup3.find("span",{"class":"c-address-city"}).text
+                        name = " ".join(list(soup3.find("h1",{"class":"Heading--lead Hero-heading"}).stripped_strings))
+                        try:
+                            phone = soup3.find("div",{"itemprop":"telephone"}).text
+                        except:
+                            phone="<MISSING>"
+                        hours = " ".join(list(soup3.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+                        latitude = soup3.find("meta",{"itemprop":"latitude"})['content']
+                        longitude = soup3.find("meta",{"itemprop":"longitude"})['content']
+                        tem_var =[]
+                        tem_var.append("http://subway.ca")
+                        tem_var.append(name)
+                        tem_var.append(streetAddress)
+                        tem_var.append(city)
+                        tem_var.append(state)
+                        tem_var.append(zip1)
+                        tem_var.append("CA")
+                        tem_var.append("<MISSING>")
+                        tem_var.append(phone)
+                        tem_var.append("<MISSING>")
+                        tem_var.append(latitude)
+                        tem_var.append(longitude)
+                        tem_var.append(hours)
+                        tem_var.append(page_url.replace("///",'/'))
+                        # yield tem_var
+                        store_detail.append(tem_var)
+                        # print("========================================",tem_var)
 
-            if "https://order.subway.com/en-CA/restaurant/70638" in page_url:
-                hours="Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed"
-            try:
-                phone = location_soup.find(
-                    "div", {"class": "locatorPhone"}).text.strip()
-            except:
-                phone='<MISSING>'
-            del html[0]
-            store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            store.append(hours if hours else "<MISSING>")
-            if hours.count("- - -") > 5:
-                continue
-            store.append("https://order.subway.com/en-CA/restaurant/" +
-                         str(store_data['LocationId']['StoreNumber']))
-            
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize(
-                        'NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–", "-") if type(x) ==
-                     str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode(
-                'ascii').strip() if type(x) == str else x for x in store]
-            yield store
-        if len(location_list) == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
+                else:
+                    try:
+                        one_link="https://restaurants.subway.com"+c['href'].replace("..",'').replace("///",'/')
+                        page_url = one_link.replace("///",'/')
+                    except:
+                        pass
+                  
+                    r4 = session.get(one_link)
+                    soup4= BeautifulSoup(r4.text,"lxml")
+                    streetAddress = soup4.find("meta",{"itemprop":"streetAddress"})['content']
+                    state = soup4.find("abbr",{"class":"c-address-state"}).text
+                    zip1 = soup4.find("span",{"class":"c-address-postal-code"}).text
+                    city = soup4.find("span",{"class":"c-address-city"}).text
+                    name = " ".join(list(soup4.find("h1",{"class":"Heading--lead Hero-heading"}).stripped_strings))
+                    try:
+                        phone = soup4.find("div",{"itemprop":"telephone"}).text
+                    except:
+                        phone="<MISSING>"
+                    hours = " ".join(list(soup4.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+                    latitude = soup4.find("meta",{"itemprop":"latitude"})['content']
+                    longitude = soup4.find("meta",{"itemprop":"longitude"})['content']
+                    
+                    tem_var =[]
+                    tem_var.append("http://subway.ca")
+                    tem_var.append(name)
+                    tem_var.append(streetAddress)
+                    tem_var.append(city)
+                    tem_var.append(state)
+                    tem_var.append(zip1)
+                    tem_var.append("CA")
+                    tem_var.append("<MISSING>")
+                    tem_var.append(phone)
+                    tem_var.append("<MISSING>")
+                    tem_var.append(latitude)
+                    tem_var.append(longitude)
+                    tem_var.append(hours)
+                    tem_var.append(page_url.replace("///",'/'))
+                    # yield tem_var
+                    store_detail.append(tem_var)
+                    # print("========================================",tem_var)
         else:
-            raise Exception("expected at most " +
-                            str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
+            one_link1 = "https://restaurants.subway.com/"+c['href']
+            page_url = one_link1
+            r5 = session.get(one_link1)
+            soup5= BeautifulSoup(r5.text,"lxml")
+            streetAddress = soup5.find("meta",{"itemprop":"streetAddress"})['content']
+            state = soup5.find("abbr",{"class":"c-address-state"}).text
+            zip1 = soup5.find("span",{"class":"c-address-postal-code"}).text
+            city = soup5.find("span",{"class":"c-address-city"}).text
+            name = " ".join(list(soup5.find("h1",{"class":"Heading--lead Hero-heading"}).stripped_strings))
+            try:
+                phone = soup5.find("div",{"itemprop":"telephone"}).text
+            except:
+                phone="<MISSING>"
+            hours = " ".join(list(soup5.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+            latitude = soup5.find("meta",{"itemprop":"latitude"})['content']
+            longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
+            
+            tem_var =[]
+            tem_var.append("http://subway.ca")
+            tem_var.append(name)
+            tem_var.append(streetAddress)
+            tem_var.append(city)
+            tem_var.append(state)
+            tem_var.append(zip1)
+            tem_var.append("CA")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("<MISSING>")
+            tem_var.append(latitude)
+            tem_var.append(longitude)
+            tem_var.append(hours)
+            tem_var.append(page_url.replace("///",'/'))
+            # yield tem_var
+            store_detail.append(tem_var)
+            # print("========================================",tem_var)
+    dub=[]
+    for i in range(len(store_detail)):
+        if str(store_detail[i][2]+store_detail[i][-1]) in dub:
+            continue
+        dub.append(store_detail[i][2]+store_detail[i][-1])
+        yield store_detail[i]
+
+
 
 
 def scrape():
@@ -161,3 +188,5 @@ def scrape():
 
 
 scrape()
+
+

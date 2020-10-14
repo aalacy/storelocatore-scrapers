@@ -73,8 +73,9 @@ def fetch_data():
             city = content["address"]["addressLocality"]
             lat  = content["areaServed"]["geoMidpoint"]['latitude']
             longt = content["areaServed"]["geoMidpoint"]['longitude']
-            phone = content["telephone"]
-            if phone[0] == 1:
+            phone = content["telephone"].replace('+','').replace('+1','')
+            #print(phone)
+            if phone[0] == '1':
                 phone = phone[1:4]+'-'+phone[4:7]+'-'+phone[7:11]
             else:   
                 phone = phone[0:3]+'-'+phone[3:6]+'-'+phone[6:10]

@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
@@ -9,7 +9,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,52 +23,63 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.thepodhotel.com"
-    r = session.get("https://www.thepodhotel.com/locations.html",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all("a",text=re.compile("LEARN MORE")):
-        location_request = session.get(location["href"],headers=headers)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        details_url = location_soup.find("a",text=re.compile("Location", flags=re.IGNORECASE))["href"]
-        details_request = session.get(base_url + details_url,headers=headers)
-        details_soup = BeautifulSoup(details_request.text,"lxml")
-        location_details = list(details_soup.find("h2",{'class':"wsite-content-title"}).parent.stripped_strings)[:-3]
-        if len(location_details[2].split(",")) > 1:
-            if len(location_details[3].split(" ")[-1]) != 5:
-                del location_details[2]
-        if len(location_details[3].split(",")) != 2:
-            if len(location_details[3].split(" ")) != 3:
-                location_details[2] = " ".join(location_details[2:4])
-                del location_details[3]
-        for i in range(len(location_details)):
-            if "Phone" in location_details[i]:
-                phone = location_details[i+1]
-        store = []
-        store.append("https://www.thepodhotel.com")
-        store.append(" ".join(location_details[:2]))
-        store.append(location_details[2])
-        if len(location_details[3].split(",")) == 2:
-            store.append(location_details[3].split(",")[0])
-            store.append(location_details[3].split(",")[-1].split(" ")[-2])
-            store.append(location_details[3].split(",")[-1].split(" ")[-1].replace("\u200b",""))
+
+    soup = bs(session.get("https://www.thepodhotel.com/locations.html",headers=headers).text,"lxml")
+    results = json.loads(soup.find(lambda tag:(tag.name == "script") and "var locations =" in tag.text).text.split("var locations =")[1].split("var snazzystyle")[0].replace("];","]").replace("'",'"'))
+    
+    for result in results:
+
+        location_name = result[0]
+        lat = result[1]
+        lng = result[2]
+
+        street_address = result[3].split(",")[0]
+        if "," in result[4]:
+            city = result[4].split(",")[1].strip()
+            state = result[4].split(",")[-1].split()[0]
+            zipp = result[4].split(",")[-1].split()[1]
         else:
-            store.append(location_details[3].split(" ")[0])
-            store.append(location_details[3].split(" ")[1])
-            store.append(location_details[3].split(" ")[2])
+            city = result[4].split()[0]
+            state = result[4].split()[1]
+            zipp = result[4].split()[2]
+
+        
+        page_url = "https://www.thepodhotel.com/"+str(location_name.replace("POD BK","pod-brooklyn").replace(" ","-").lower())+"/"
+        
+        if "pod-brooklyn" in page_url:
+
+            contact_url = page_url + "contact.html"
+        else:
+            contact_url = page_url + "contact-us.html"
+
+        contact_soup = bs(session.get(contact_url).text, "lxml")
+        try:
+            phone = contact_soup.find("a",{"href":re.compile("tel:")})['href'].split("tel:")[1].strip()
+        except:
+            phone = "<MISSING>"
+    
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
         store.append("<MISSING>")
-        geo_location = details_soup.find("iframe")["src"]
-        store.append(geo_location.split("&lat=")[1].split("&")[0])
-        store.append(geo_location.split("&long=")[1].split("&")[0])
+        store.append(lat)
+        store.append(lng)
         store.append("<MISSING>")
-        store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append(page_url)
+        
+        yield store
+       
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
 scrape()
+

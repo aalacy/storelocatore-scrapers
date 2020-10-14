@@ -17,7 +17,6 @@ def write_output(data):
 def fetch_data():
     locs = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
         website = 'vpracingfuels.com'
         country = 'US'
         typ = 'Gas Station'

@@ -43,7 +43,7 @@ def fetch_data():
             line2 = str(line2.decode('utf-8'))
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split('&')[0].strip()
-            if '<div class="elementor-text-editor elementor-clearfix"><p>' in line2 and 'At Plaza' not in line2 and 'We invite' not in line2 and 'Welcome to the' not in line2:
+            if '<div class="elementor-text-editor elementor-clearfix"><p' in line2 and 'At Plaza' not in line2 and 'We invite' not in line2 and 'Welcome to the' not in line2:
                 if '2835 Lehigh St' in line2:
                     add = '2835 Lehigh St'
                     city = 'Allentown'
@@ -62,17 +62,26 @@ def fetch_data():
                     state = 'Pennsylvania'
                     zc = '19087'
                     phone = '484-580-6369'
+                elif '6623 W Broad St' in line2:
+                    add = '6623 W Broad St'
+                    city = 'Richmond'
+                    state = 'Virginia'
+                    zc = '23230'
+                    phone = '804-888-9984'
                 else:
-                    add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p>')[1].split(',')[0]
+                    add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p')[1].split(',')[0]
                     city = line2.split('</p><p>')[1].split(',')[0]
                     state = line2.split('</p><p>')[1].split(',')[1].strip()
                     zc = line2.split('</p><p>')[1].split(',')[2].strip()
                     phone = line2.split('</p><p>')[2].split('<')[0]
             if '<div class="elementor-text-editor elementor-clearfix"><p class="p1">' in line2:
                 add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p class="p1">')[1].split('<')[0]
-                city = line2.split('15px;">')[1].split(',')[0]
-                state = line2.split('15px;">')[2].split(',')[0]
-                zc = line2.split('15px;">')[3].split('<')[0]
+                if '15px;">' not in line2:
+                    g = next(lines)
+                    g = str(g.decode('utf-8'))
+                city = g.split('15px;">')[1].split(',')[0]
+                state = g.split('15px;">')[2].split(',')[0]
+                zc = g.split('15px;">')[3].split('<')[0]
             if '<span >' in line2 and '<span ><' not in line2 and '</span>' in line2:
                 g = next(lines)
                 g = str(g.decode('utf-8'))

@@ -28,6 +28,8 @@ def fetch_data():
         else:
             street_address = data['Street']
         city = data['City'].replace("Beaufort","Okatie")
+
+        street_address = street_address.replace(city, "").strip()
         state = data['State']
         zipp = data['Zip'].replace("29902","29909")
         latitude = data['Latitude']
@@ -39,7 +41,7 @@ def fetch_data():
         store = []
         store.append("http://www.pruitthealth.com/")
         store.append(location_name)
-        store.append(street_address.replace("2051 Elijah Ludd Rd","2051 Elijah Ludd Rd Suite 1").replace("301 Halton Road","301 Halton Road Suite B"))
+        store.append(re.sub(r'\s+'," ",street_address.replace("2051 Elijah Ludd Rd","2051 Elijah Ludd Rd Suite 1").replace("301 Halton Road","301 Halton Road Suite B")))
         store.append(city)
         store.append(state)
         store.append(zipp)
@@ -61,3 +63,4 @@ def scrape():
     write_output(data)
 
 scrape()
+
