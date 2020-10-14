@@ -61,6 +61,7 @@ def fetch_data():
     attempts = {}
     while q:
         loc = q.popleft()
+        page_url = f"https://www.redroof.com/api/GetPropertyDetail?PropertyId={store}"
         name = ''
         add = ''
         city = ''
@@ -77,7 +78,7 @@ def fetch_data():
         try:
             session = SgRequests()
             # print(loc)
-            r2 = session.get(f"https://www.redroof.com/api/GetPropertyDetail?PropertyId={store}", headers=headers)
+            r2 = session.get(page_url, headers=headers)
         except (ConnectionError, Exception) as ex:
             print('Failed to connect to ' + loc)
             print("Exception: ", ex)
@@ -103,7 +104,7 @@ def fetch_data():
         lng = data["Longitude"]
         country = data['Country']
 
-        location = [website, loc, name, add, city, state,
+        location = [website, page_url, name, add, city, state,
                     zc, country, store, phone, typ, lat, lng, hours]
         location = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in location]
