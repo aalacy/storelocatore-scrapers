@@ -5,7 +5,7 @@ import re
 import json
 import unicodedata
 session = SgRequests()
-import requests
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline= '') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -20,7 +20,7 @@ def fetch_data():
     }
     addressess = []
     locator_domain = "https://unikwax.com"
-    r = requests.get("https://unikwax.com/studio-locations/?address%5B0%5D&tax%5Bregion%5D%5B0%5D&post%5B0%5D=location&distance=300&form=1&per_page=50&units=imperial&lat&lng", headers=headers)
+    r = session.get("https://unikwax.com/studio-locations/?address%5B0%5D&tax%5Bregion%5D%5B0%5D&post%5B0%5D=location&distance=300&form=1&per_page=50&units=imperial&lat&lng", headers=headers)
     soup = bs(r.text,'lxml')
     for dt in json.loads(str(soup).split("var gmwMapObjects = ")[1].split("}}};")[0]+"}}}")['1']['locations']:
         adr = bs(dt['info_window_content'],"lxml")
@@ -34,9 +34,9 @@ def fetch_data():
         longitude = dt['lng']
         hours_of_operation=''
         phone=''
-        phone = bs(requests.get(page_url, headers=headers).text,"lxml").find("a",{"class":"number"}).text.strip()
+        phone = bs(session.get(page_url, headers=headers).text,"lxml").find("a",{"class":"number"}).text.strip()
         try:
-            hours_of_operation = " ".join(list(bs(requests.get(page_url, headers=headers).text,"lxml").find("h5",text="Studio Hours").parent.stripped_strings)).replace("Studio Hours ",'')
+            hours_of_operation = " ".join(list(bs(session.get(page_url, headers=headers).text,"lxml").find("h5",text="Studio Hours").parent.stripped_strings)).replace("Studio Hours ",'')
         except:
             hours_of_operation ='<MISSING>'
         store = []
