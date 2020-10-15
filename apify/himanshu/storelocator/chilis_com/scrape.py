@@ -30,7 +30,7 @@ def fetch_data():
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
             store_r = session.get(store_link, headers=headers)
-            store_soup = BeautifulSoup(store_r.text, "html5lib")
+            store_soup = BeautifulSoup(store_r.text, "lxml")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
             location_name = data['name'].replace("&#39;","'").replace("&amp;","")
             street_address = data['address']['streetAddress'].replace("&#39;","'").replace("A&amp;B","A&B").replace("&amp;","")
@@ -74,7 +74,6 @@ def fetch_data():
         city_soup = BeautifulSoup(city_r.text, "lxml")
         jd = json.loads(str(city_soup).split("locationsList:")[1].split("};window.Chilis.Strings")[0])
         for value in jd:
-
             location_name = value['name'].replace("&amp;","")
             street_address = value['address'].replace("&amp;","")
             city = value['city'].replace("&amp;","")
