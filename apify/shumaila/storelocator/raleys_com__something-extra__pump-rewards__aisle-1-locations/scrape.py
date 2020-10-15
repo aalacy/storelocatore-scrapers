@@ -30,7 +30,7 @@ def fetch_data():
     
     soup =BeautifulSoup(r.text, "html.parser")
     divlist = soup.find('div',{'class':'entry-content'}).findAll('div', {'class': "col-sm-4"})
-    print(len(divlist))    
+    #print(len(divlist))    
     p = 0
     for div in divlist:
         try:
