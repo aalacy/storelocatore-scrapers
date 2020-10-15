@@ -59,26 +59,28 @@ def fetch_data():
         k2=(list(k1[6].stripped_strings))
   
         if "View Our Weekly Ad!" in k2:
-            st = k2[1]
-            name = k2[0]
-            city = k2[2].split(',')[0]
-            state = k2[2].split(',')[1].split( )[0]
-            zip1 = k2[2].split(',')[1].split( )[1]
             phone  = k2[5]
-            store_name.append(name.replace("\xe2\x80\x99","").replace("\x80",""))
-            links.append(link)
-            tem_var.append(st.replace("Box 68","68"))
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            tem_var.append(latitude)
-            tem_var.append(longitude)
-            tem_var.append("<MISSING>")
-            store_detail.append(tem_var)
+        else:
+            phone = k2[-1]
+        st = k2[1]
+        name = k2[0]
+        city = k2[2].split(',')[0]
+        state = k2[2].split(',')[1].split( )[0]
+        zip1 = k2[2].split(',')[1].split( )[1]
+        store_name.append(name.replace("\xe2\x80\x99","").replace("\x80","").encode("ascii", "replace").decode().replace("?","-"))
+        links.append(link)
+        tem_var.append(st.replace("Box 68","68"))
+        tem_var.append(city)
+        tem_var.append(state)
+        tem_var.append(zip1)
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        tem_var.append(phone)
+        tem_var.append("<MISSING>")
+        tem_var.append(latitude)
+        tem_var.append(longitude)
+        tem_var.append("<MISSING>")
+        store_detail.append(tem_var)
 
 
    

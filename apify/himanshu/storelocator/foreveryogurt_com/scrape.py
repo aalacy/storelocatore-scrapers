@@ -27,10 +27,10 @@ def fetch_data():
             state = addr[2].split(",")[1].strip().split(" ")[0]
             zipp = addr[2].split(",")[1].strip().split(" ")[1]
             phone = addr[4]
-            hours_of_operation = " ".join(addr[6:9])
+            hours_of_operation = addr[2]
         elif len(addr)==12:
             location_name = addr[0]
-            street_address = ", ".join(addr[1:3])
+            street_address = addr[2]
             city = addr[3].split(",")[0]
             state = addr[3].split(",")[1].strip().split(" ")[0]
             zipp = addr[3].split(",")[1].strip().split(" ")[1]
@@ -89,3 +89,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

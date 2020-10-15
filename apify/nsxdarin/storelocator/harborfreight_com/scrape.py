@@ -15,13 +15,13 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    states = []
+    states = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
+              'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI',
+              'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV',
+              'NY', 'OH', 'OK', 'OR', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UM',
+              'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
+    
     url = 'https://shop.harborfreight.com/storelocator/location/map'
-    r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if 'class="state" href="#' in line:
-            states.append(line.split('class="state" href="#')[1].split('"')[0])
     for state in states:
         url2 = 'https://shop.harborfreight.com/storelocator/location/state?lat=&lng=&state=' + state + '&radius=3000&justState=true&stateValue=' + state
         print(('Pulling State %s...' % state))
@@ -38,7 +38,13 @@ def fetch_data():
                         name = item.split('title="')[1].split('"')[0]
                         add = item.split('address="')[1].split('"')[0]
                         city = item.split('city="')[1].split('"')[0]
-                        hours = item.split('notes="Store hours: &lt;div&gt;')[1].split('"')[0].replace('&lt;/div&gt;&lt;div&gt;',';').replace('&lt;/div&gt;','').replace('  ',' ').replace('  ',' ')
+                        hours = ''
+                        try:
+                            hours = 'M-F: ' + item.split('store_hours_mf="')[1].split('"')[0]
+                            hours = hours + '; Sat: ' + item.split('store_hours_sat="')[1].split('"')[0]
+                            hours = hours + '; Sun: ' + item.split('store_hours_sun="')[1].split('"')[0]
+                        except:
+                            pass
                         country = 'US'
                         state = item.split('state="')[1].split('"')[0]
                         zc = item.split('zip="')[1].split('"')[0]
@@ -50,7 +56,8 @@ def fetch_data():
                             phone = '<MISSING>'
                         if hours == '':
                             hours = '<MISSING>'
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        if 'CLOSED' not in name:
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

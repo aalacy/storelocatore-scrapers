@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-import sgzip
+
 
 
 session = SgRequests()
@@ -35,7 +35,7 @@ def fetch_data():
 
         street_address = result[3].split(",")[0]
         if "," in result[4]:
-            city = result[4].split(",")[1].strip()
+            city = result[4].split(",")[0].strip()
             state = result[4].split(",")[-1].split()[0]
             zipp = result[4].split(",")[-1].split()[1]
         else:
