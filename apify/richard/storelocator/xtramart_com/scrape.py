@@ -1,5 +1,4 @@
 import requests
-import sgzip
 
 from Scraper import Scrape
 
@@ -51,17 +50,18 @@ class Scraper(Scrape):
         }
 
 
-        for coords in sgzip.coords_for_radius(50):
+        for page_num in range(1,15):
+            # print("Page: " + str(page_num))
             data = {
-                'latitude': str(coords[0]),
-                'longitude': str(coords[1]),
+                'latitude': '42.3600825',
+                'longitude': '-71.05888010000001',
                 'iso2': 'US',
                 'cats': '',
-                'fuel_csrf_token': '97c97019c1368fbf68bd13cc3bd9531e'
+                'fuel_csrf_token': '97c97019c1368fbf68bd13cc3bd9531e',
+                'page': page_num
             }
             data = requests.post('http://xtramart.com/StoreLocator/index.php/api/search/', headers=headers, cookies=cookies, data=data, verify=False).json()['stores']
             stores.extend(data)
-            print(f"Got {len(data)} locations for coords {coords[0]}, {coords[1]}")
 
 
         for store in stores:
@@ -73,7 +73,7 @@ class Scraper(Scrape):
                 page_url = '<MISSING>'
 
                 # Type
-                location_type = 'Convenience Store'
+                location_type = '<MISSING>'
 
                 # Name
                 location_title = store['name']
@@ -100,7 +100,7 @@ class Scraper(Scrape):
                 lon = store['longitude']
 
                 # Hour
-                hour = 'Open all day'
+                hour = '<MISSING>'
 
                 # Country
                 country = store['country']
