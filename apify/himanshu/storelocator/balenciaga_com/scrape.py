@@ -82,7 +82,7 @@ def fetch_data():
             store = []
             store.append("https://www.balenciaga.com/")
             store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address.replace("Avenue Floor") if street_address else '<MISSING>')
+            store.append(street_address.replace("AvenueFloor","Avenue Floor") if street_address else '<MISSING>')
             store.append(city if city else '<MISSING>')
             store.append(state if state else '<MISSING>')
             store.append(zipp if zipp else '<MISSING>')
