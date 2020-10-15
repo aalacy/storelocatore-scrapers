@@ -32,7 +32,8 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
                          "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
-            writer.writerow(row)
+            if row:
+                writer.writerow(row)
 
 
 def get_sitemap(attempts=1):
@@ -102,6 +103,10 @@ def fetch_data():
         lat = data["Latitude"]
         lng = data["Longitude"]
         country = data['Country']
+
+        if country != 'US' and country != 'CA':
+            yield None
+            continue
 
         location = [website, page_url, name, add, city, state,
                     zc, country, store, phone, typ, lat, lng, hours]
