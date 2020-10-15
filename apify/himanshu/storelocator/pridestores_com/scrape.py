@@ -4,10 +4,11 @@ import requests
 import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('pridestores_com.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
@@ -29,22 +30,22 @@ def fetch_data():
 
     APICall = session.post(url, data=payload, headers=API_headers, params=querystring).json()
     
-    headers = {
-            'accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36",
-        }
-    location_soup = bs(session.get("https://www.pridestores.com/agw", headers=headers).text, "lxml")
+    # headers = {
+    #         'accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    #         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36",
+    #     }
+    # location_soup = bs(session.get("https://www.pridestores.com/agw", headers=headers).text, "html5lib")
     
-    json_data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and "serviceTopology" in tag.text).text.split("publicModel =")[1].split("var googleAnalytics =")[0].replace("};","}"))
+    # json_data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and "serviceTopology" in tag.text).text.split("publicModel =")[1].split("var googleAnalytics =")[0].replace("};","}"))
     
-    dics={}
-    info = json.loads(json_data['htmlEmbeds'][0]['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))
-    for gmap in range(len(info['hasMap'])):
+    # dics={}
+    # info = json.loads(json_data['htmlEmbeds'][0]['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))
+    # for gmap in range(len(info['hasMap'])):
         
-        lat = info['hasMap'][gmap].split("/@")[1].split(',')[0]
-        log = info['hasMap'][gmap].split("/@")[1].split(',')[1]
-        zipp = info['address'][gmap]['postalCode']
-        dics[info['hasMap'][gmap].split("place/")[-1].split(',')[0].replace("+",' ').lower()] = {"lat":lat,"lng":log, "zipp":zipp}
+    #     lat = info['hasMap'][gmap].split("/@")[1].split(',')[0]
+    #     log = info['hasMap'][gmap].split("/@")[1].split(',')[1]
+    #     zipp = info['address'][gmap]['postalCode']
+    #     dics[info['hasMap'][gmap].split("place/")[-1].split(',')[0].replace("+",' ').lower()] = {"lat":lat,"lng":log, "zipp":zipp}
     
     for api in APICall['result']['items']:
 
@@ -68,30 +69,33 @@ def fetch_data():
         location_name = location_soup.find_all("h2",{"class":"font_2"})[0].text
         
         if location_soup.find("div",{"class":"_1Z_nJ"}):
-            if "/ss" in page_url:
+            if "/ss" in page_url or "/agw" in page_url:
+
                 addr = list(location_soup.find_all("div",{"class":"_1Z_nJ"})[0].stripped_strings)
             else:
+                
                 addr = list(location_soup.find_all("div",{"class":"_1Z_nJ"})[1].stripped_strings)
         else:
-            if "agw" in page_url:
+            if "bel" in page_url:
+                
                 addr = list(location_soup.find_all("div",{"class":"txtNew","data-packed":"true"})[0].stripped_strings)
             else:
                 addr = list(location_soup.find_all("div",{"class":"txtNew","data-packed":"true"})[1].stripped_strings)
-       
+        print(addr)
         city = addr[0].split(",")[1].strip().replace("MA","Springfield")
         if len(addr[0].split(",")) == 3:
             state = addr[0].split(",")[-1].strip()
         else:
             state = "MA"
         
-        if street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') in dics:
-            latitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lat']
-            longitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lng']
-            zipp = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['zipp']
-        else:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            zipp = "<MISSING>"
+        # if street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') in dics:
+        #     latitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lat']
+        #     longitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lng']
+        #     zipp = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['zipp']
+        # else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        zipp = "<MISSING>"
 
      
         store = []
