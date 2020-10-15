@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 
 from Scraper import Scrape
 
@@ -12,6 +12,9 @@ class Scraper(Scrape):
         self.seen = []
 
     def fetch_data(self):
+
+        session = SgRequests()
+        
         # store data
         locations_ids = []
         locations_titles = []
@@ -60,7 +63,7 @@ class Scraper(Scrape):
                 'fuel_csrf_token': '97c97019c1368fbf68bd13cc3bd9531e',
                 'page': page_num
             }
-            data = requests.post('http://xtramart.com/StoreLocator/index.php/api/search/', headers=headers, cookies=cookies, data=data, verify=False).json()['stores']
+            data = session.post('http://xtramart.com/StoreLocator/index.php/api/search/', headers=headers, cookies=cookies, data=data, verify=False).json()['stores']
             stores.extend(data)
 
 
