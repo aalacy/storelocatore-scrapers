@@ -26,7 +26,8 @@ def fetch_data():
         street_address = data["address1"] 
 
         if data['address2']:
-           street_address = " " + data['address2']
+          street_address += " " + data['address2'] 
+           
 
         location_name = data["name"]
         city = data['city']
