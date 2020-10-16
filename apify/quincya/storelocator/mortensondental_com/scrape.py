@@ -1,10 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
-import re
-import json
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -18,19 +14,16 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "https://mortensondentalpartners.com/wp-content/plugins/mdp-locations/data/mdpLocations_mortensondental.json"
+	base_link = "https://mortensondental.com/wp-content/plugins/mdp-locations/data/mdpLocations_mortensondental.json"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
 
 	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-
-	base = BeautifulSoup(req.text,"lxml")
+	stores = session.get(base_link, headers = HEADERS).json()
 
 	data = []
-	stores = json.loads(base.text.strip())
+	
 	locator_domain = "mortensondental.com"
 
 	for store in stores:
