@@ -8,7 +8,9 @@ from requests.packages.urllib3.util.retry import Retry
 from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections
+from sglogging import sglog
 
+log = sglog.SgLogSetup().get_logger(logger_name="redroof.com")
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
@@ -38,7 +40,7 @@ def write_output(data):
 
 def get_sitemap(attempts=1):
     if attempts > 10:
-        print("Couldn't get sitemap after 10 attempts")
+        log.error("Couldn't get sitemap after 10 attempts")
         raise SystemExit
     try:
         session = SgRequests()
@@ -46,7 +48,7 @@ def get_sitemap(attempts=1):
         r = session.get(url, headers=headers)
         return r
     except (ConnectionError, Exception) as ex:
-        print("Exception getting sitemap", ex)
+        log.error(f"Exception getting sitemap: {str(ex)}")
         return get_sitemap(attempts=attempts+1)
 
 
@@ -57,7 +59,7 @@ def fetch_data():
         if 'https://www.redroof.com/property/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    # print('Found %s Locations.' % str(len(locs)))
+
     q = collections.deque(locs)
     attempts = {}
     while q:
@@ -80,14 +82,14 @@ def fetch_data():
             page_url = f"https://www.redroof.com/api/GetPropertyDetail?PropertyId={store}"
             r2 = session.get(page_url, headers=headers)
         except (ConnectionError, Exception) as ex:
-            print('Failed to connect to ' + loc)
-            print("Exception: ", ex)
+            log.info('Failed to connect to ' + loc)
+            log.info(f"Exception: {str(ex)}")
             if attempts.get(loc, 0) >= 3:
-                print('giving up on ' + loc)
+                log.error('giving up on ' + loc)
             else:
                 q.append(loc)
                 attempts[loc] = attempts.get(loc, 0) + 1
-                print('attempts: ' + str(attempts[loc]))
+                log.info('attempts: ' + str(attempts[loc]))
             continue
 
         data = r2.json().get('SDLKeyValuePairs').get('ServicePropertyDetails')
@@ -112,8 +114,7 @@ def fetch_data():
                     zc, country, store, phone, typ, lat, lng, hours]
         location = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in location]
-        # print(location)
-        # print('---------')
+     
         yield location
 
 
