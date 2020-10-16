@@ -100,13 +100,22 @@ async function getLocations(page) {
   const locationUrls = generateLocationUrls(links);
   const locations = await fetchLocations(page, locationUrls);
 
-  const pois = locations.map((location) => getLocation(location)).filter((poi) => poi);
+  const failedUrls = [];
+  const pois = locations.map((location) => getLocation(location, failedUrls)).filter((poi) => poi);
+
+  console.log('-'.repeat(50));
+  console.log(`complete conversion to ${pois.length} pois.`);
+  console.log(`with ${failedUrls.length} failed url(s).`);
+  failedUrls
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .map((url) => console.log(url));
+  console.log('-'.repeat(50));
+
   return pois;
 }
 
-function getLocation({ value }) {
+function getLocation({ value }, failedUrls) {
   const { url, data } = value;
-  const errors = [];
   try {
     const { storeNumber, storeName, telephone, storeOpen, storeClose, addresses } = data;
 
@@ -131,7 +140,7 @@ function getLocation({ value }) {
 
     return poi;
   } catch (ex) {
-    console.log(url);
+    failedUrls.push(url);
     return null;
   }
 }
