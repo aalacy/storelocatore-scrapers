@@ -24,7 +24,6 @@ def fetch_data():
     url = 'https://shop.harborfreight.com/storelocator/location/map'
     for state in states:
         url2 = 'https://shop.harborfreight.com/storelocator/location/state?lat=&lng=&state=' + state + '&radius=3000&justState=true&stateValue=' + state
-        print(('Pulling State %s...' % state))
         r2 = session.get(url2, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
