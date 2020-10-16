@@ -1,0 +1,1 @@
+--ignore LatLngDuplicationValidator (Confirmed scraper worked correctly)
