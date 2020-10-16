@@ -33,7 +33,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        
        
         payload = "{\"variables\":{\"input\":{\"lat\":"+str(coord[0])+",\"long\":"+str(coord[1])+",\"radius\":50,\"locTypes\":[\"cafe\",\"branch\"],\"servicesFilter\":[]}},\"query\":\"\\n query geoSearch($input: GeoSearchInput!){\\n geoSearch(input: $input){\\n locType\\n locationName\\n locationId\\n address {\\n addressLine1\\n stateCode\\n postalCode\\n city\\n }\\n services\\n distance\\n latitude\\n longitude\\n slug\\n seoType\\n ... on Atm {\\n open24Hours\\n }\\n\\t ... on Branch {\\n phoneNumber\\n timezone\\n lobbyHours {\\n day\\n open\\n close\\n }\\n driveUpHours {\\n day\\n open\\n close\\n }\\n temporaryMessage\\n\\t }\\n\\t ... on Cafe {\\n phoneNumber\\n photo\\n timezone\\n hours {\\n day\\n open\\n close\\n }\\n temporaryMessage\\n }\\n }\\n }\"}"
        
