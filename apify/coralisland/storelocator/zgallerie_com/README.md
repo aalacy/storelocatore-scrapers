@@ -1,2 +1,2 @@
---ignore StateLevelCountValidator --ignore CountValidator validation expected 68 POI, but the website has 35 POI
+--ignore StateLevelCountValidator --ignore CountValidator validation expected 68 POI, but the website has 31 POI
 --ignore StreetAddressHasNumber (Confirmed on website )
