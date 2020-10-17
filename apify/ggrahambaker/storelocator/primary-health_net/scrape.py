@@ -16,7 +16,7 @@ def write_output(data):
 def parse_addy(addy):
     arr = addy.split(',')
     if len(arr) == 4:
-        arr = [arr[0], arr[2], arr[3]]
+        arr = [" ".join(arr[:2]).replace("  "," "), arr[2], arr[3]]
     street_address = arr[0].strip()
     city = arr[1].strip()
     state_zip = arr[2].strip().split(' ')
