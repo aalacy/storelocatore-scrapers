@@ -51,7 +51,7 @@ def fetch_data():
         location_name = main.h1.text.encode("ascii", "replace").decode().replace("?","'").strip()
         
         hours = base.find('span', attrs={'itemprop': "openingHours"}).text.encode("ascii", "replace").decode().replace("?","-").replace('\n', ' ')\
-        .replace('pm', 'pm ').replace('PM', 'PM ').replace('Closed', 'Closed ').split('Dental')[0].strip()
+        .replace('.', '').replace('pm', 'pm ').replace('PM', 'PM ').replace('Closed', 'Closed ').split('Dental')[0].split("***")[0].strip()
         if hours == '':
             hours = '<MISSING>'
         if "temporarily closed" in hours:
