@@ -38,6 +38,7 @@ def fetch_data():
 		location_name = base.h1.text.strip()
 
 		street_address = location_name[location_name.find("-")+1:location_name.rfind("(")].strip()
+
 		city = location_name.split("-")[0].strip()
 		state = base.find('meta', attrs={'name': 'description'})['content'].split(",")[-1].split()[0].strip()
 		zip_code = base.find('meta', attrs={'name': 'description'})['content'].split(",")[-1].split()[1].strip()
@@ -60,6 +61,8 @@ def fetch_data():
 			latitude = "47.6318474"
 			longitude = "-122.1458327"
 
+		location_name = location_name.split("(")[0].strip()
+		
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	return data
