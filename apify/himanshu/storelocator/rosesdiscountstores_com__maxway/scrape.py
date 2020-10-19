@@ -1,6 +1,5 @@
 # coding=UTF-8
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
@@ -24,7 +23,7 @@ def fetch_data():
     }
     base_url = "https://www.rosesdiscountstores.com/"
     link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?countryCode=US&name=Maxway&query=Maxway&radius=50000"
-    json_data = requests.get(link, headers=headers).json()['locations']
+    json_data = session.get(link, headers=headers).json()['locations']
     for data in json_data:
         location_name = data['name']
         street_address = data['address1'].replace("W 3rd St","249-G W Third Street").replace("VA-57","275 Riverside Drive").replace("1133 US-51","139 Gateway Drive")
