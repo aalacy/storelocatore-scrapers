@@ -37,7 +37,6 @@ def fetch_data():
     driver.switch_to.frame(iframe)
     json_stores = get_json_data(driver.page_source)
 
-    print(len(json_stores))
     for store in json_stores:
         loc=store['name']
         if 'coming soon' in loc.lower():
