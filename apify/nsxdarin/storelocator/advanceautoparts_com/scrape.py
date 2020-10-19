@@ -52,7 +52,7 @@ def fetch_data():
                             locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                                 
     for city in cities:
-        #print('Pulling City %s...' % city)
+        print('Pulling City %s...' % city)
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -63,7 +63,7 @@ def fetch_data():
                         locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for loc in locs:
         loc = loc.replace('&#39;','%27').replace('.com//','.com/')
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         LFound = True
         tries = 0
         while LFound:
@@ -92,14 +92,14 @@ def fetch_data():
                         name = line.split('"Nap-heading Heading Heading--h1">')[1].split('<')[0].strip().replace('<span>','').replace('  ',' ')
                     if '"store_id":"' in line:
                         store = line.split('"store_id":"')[1].split('"')[0]
-                    if '"line1":"' in line:
+                    if '"line1":"' in line and add == '':
                         add = line.split('"line1":"')[1].split('"')[0]
                         city = line.split(':{"city":"')[1].split('"')[0]
                         state = line.split(',"region":"')[1].split('"')[0]
                         zc = line.split('"postalCode":"')[1].split('"')[0]
                         country = line.split('"countryCode":"')[1].split('"')[0]
                         if '"line2":null' not in line:
-                            add = add + ' ' + add.split('"line2":"')[1].split('"')[0]
+                            add = add + ' ' + line.split('"line2":"')[1].split('"')[0]
                     if ',"mainPhone":{"' in line:
                         phone = line.split(',"mainPhone":{"')[1].split('"display":"')[1].split('"')[0]
                     if '<meta itemprop="latitude" content="' in line:
