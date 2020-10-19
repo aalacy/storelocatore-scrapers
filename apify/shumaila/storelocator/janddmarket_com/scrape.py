@@ -59,7 +59,7 @@ def fetch_data():
                         link,                   
                         title,
                         street,
-                        city,
+                        city.replace(',',''),
                         state,
                         pcode,
                         'US',
