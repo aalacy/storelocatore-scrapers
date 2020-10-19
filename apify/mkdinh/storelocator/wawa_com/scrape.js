@@ -151,7 +151,7 @@ Apify.main(async () => {
     url: 'https://www.wawa.com/site-map',
   });
 
-  const proxyPassword = process.env.PROXY_PASSWORD;
+  const proxyPassword = process.env.APIFY_PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
@@ -161,6 +161,7 @@ Apify.main(async () => {
   const launchPuppeteerOptions = {
     useChrome: true,
     stealth: true,
+    headless: true,
   };
 
   const crawler = new Apify.PuppeteerCrawler({
@@ -171,12 +172,12 @@ Apify.main(async () => {
     maxRequestRetries: 1,
     proxyConfiguration,
     launchPuppeteerOptions,
-    handlePageTimeoutSecs: 5 * 60,
+    handlePageTimeoutSecs: 10 * 60,
     prepareRequestFunction({ request }) {
       request.headers = DEFAULT_HEADERS;
       return request;
     },
-    async handlePageFunction({ request, response, page }) {
+    async handlePageFunction({ page }) {
       const locations = await getLocations(page);
       await Apify.pushData(locations);
     },
