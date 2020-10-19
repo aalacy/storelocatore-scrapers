@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -27,22 +25,17 @@ def fetch_data():
     }
     base_url= "https://www.rodeomexicangrill.com/"
     r = session.get(base_url,headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
-  
-
-    store_detail=[]
+    soup= BeautifulSoup(r.text,"html5lib")
     return_main_object=[]
     lat = []
     lng =[]
     loc=(soup.find_all("div",{"class":"col-md-4 col-xs-12"}))
     k=soup.find("script",{"type":"application/json","class":"js-react-on-rails-component"})
-    for i in json.loads(k.text)['preloadQueries']:
-        for data in i["data"]['restaurant']["locations"]:
-            if data['lat']:
-                lat.append(data['lat'])
-                lng.append(data['lng'])
-
-
+    jd = json.loads(k.text)['preloadQueries'][0]['data']['restaurant']['locations']
+    for data in jd:
+        if data['lat']:
+            lat.append(data['lat'])
+            lng.append(data['lng'])
     for index,i in enumerate(loc):
         tem_var=[]
         name = list(i.stripped_strings)[0]
@@ -53,8 +46,6 @@ def fetch_data():
         zip1=list(i.stripped_strings)[4].split(',')[1].split( )[1]
         phone =list(i.stripped_strings)[6]
         hours = " ".join(list(i.stripped_strings)[7:])
-        # print(hours)
-
         tem_var.append("https://www.rodeomexicangrill.com")
         tem_var.append(name)
         tem_var.append(st)
@@ -64,23 +55,18 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         tem_var.append(phone)
-        tem_var.append("<MISSING>")
+        tem_var.append("Restaurant")
         tem_var.append(lat[index])
         tem_var.append(lng[index])
         tem_var.append(hours)
         tem_var.append("<MISSING>")
-
         return_main_object.append(tem_var)
-
     return return_main_object
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
+
 
 
 

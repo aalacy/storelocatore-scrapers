@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
 import datetime
@@ -29,6 +30,10 @@ def fetch_data():
         if "message" in data:
             break
         for i in range(len(data)):
+            page_url = "http://find.cashamerica.us/#/storesdetails/"+str(data[i]['storeNumber'])+"/"+data[i]['brand']+"/"+str(data[i]['distance'])+'/'+ data[i]['hours']['displayText']  +'/'+data[i]['hours']['storeStatus']
+            # soup = bs(requests.get(page_url).text,'lxml')
+            # print(soup.find("table",{'class':"table-striped"}))
+            # data[i]['hours']['openTime']+' '+data[i]['hours']['closeTime']
             store_data = data[i]
             store = []
             store.append("https://www.firstcash.com/first-cash-pawn")
@@ -55,14 +60,17 @@ def fetch_data():
             store.append(store_data["brand"].replace("0","").replace("1","").replace("2","").replace("3","").replace("4","").replace("5","").replace("6","").replace("7","").replace("8","").replace("9","").strip() if store_data["brand"] else "<MISSING>")
             store.append(store_data['latitude'] if store_data['latitude'] else "<MISSING>")
             store.append(store_data['longitude'] if store_data['longitude'] else "<MISSING>")
-            hours_request = requests.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
-            hours_details = hours_request.json()["weeklyHours"]
-            hours = ""
-            for k in range(len(hours_details)):
-                if hours_details[k]["openTime"] != "Closed":
-                    hours = hours + " " +hours_details[k]["weekDay"] + " " + hours_details[k]["openTime"] + " " + hours_details[k]["closeTime"] + " "
+            try:
+                hours_request = requests.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
+                hours_details = hours_request.json()["weeklyHours"]
+                hours = ""
+                for k in range(len(hours_details)):
+                    if hours_details[k]["openTime"] != "Closed":
+                        hours = hours + " " +hours_details[k]["weekDay"] + " " + hours_details[k]["openTime"] + " " + hours_details[k]["closeTime"] + " "
+            except:
+                hours=''
             store.append(hours.strip() if hours != "" else "<MISSING>")
-            store.append("<INACCESSIBLE>")
+            store.append(page_url)
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))

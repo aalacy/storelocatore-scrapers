@@ -1,1 +1,1 @@
-sgselenium
+sgrequests

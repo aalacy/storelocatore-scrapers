@@ -1,172 +1,47 @@
-import json
+import csv
+from sgrequests import SgRequests
 
-from Scraper import Scrape
-from sgselenium import SgSelenium
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
 
-URL = "http://foodlandgrocery.com/"
+def fetch_data():
+    locs = []
+    urls = ['https://foodlandgrocery.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxSizOTAbxlHSUiksSi0qUrAwNdJRyUvPSSzIg7NzEgvjMFKARhkq1AK3dG0g','https://foodlandgrocery.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxSizOTAbxlHSUiksSi0qUrAx0lHJS89JLMpSsDIHs3MSC+MwUoAmGSrUAlS0bFw']
+    for url in urls:
+        r = session.get(url, headers=headers)
+        website = 'foodlandgrocery.com'
+        typ = '<MISSING>'
+        country = 'US'
+        loc = '<MISSING>'
+        store = '<MISSING>'
+        hours = '<MISSING>'
+        phone = '<MISSING>'
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            if '{"id":"' in line:
+                items = line.split('{"id":"')
+                for item in items:
+                    if '"map_id":"' in item:
+                        name = item.split('"title":"')[1].split('"')[0]
+                        addinfo = item.split('"address":"')[1].split('"')[0]
+                        lat = item.split('"lat":"')[1].split('"')[0]
+                        lng = item.split('"lng":"')[1].split('"')[0]
+                        add = addinfo.split(',')[0]
+                        city = addinfo.split(',')[1].strip()
+                        state = addinfo.split(',')[2].strip().split(' ')[0]
+                        zc = addinfo.rsplit(' ',1)[1]
+                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
-        self.blocked = ["56ca1d0ae4b0fee2d9c4395b"]
-
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-
-        driver = SgSelenium().chrome()
-
-        # Fetch store urls from location menu
-        location_url = "http://foodlandgrocery.com/Decatur_Foodland/locations"
-        driver.get(location_url)
-
-        stores = json.loads(driver.find_element_by_css_selector("pre").text)
-
-        for store in stores:
-            if store["_id"] in self.blocked:
-                pass
-            else:
-                # Store ID
-                location_id = store["_id"] if store["_id"] != "" else "<MISSING>"
-
-                # Name
-                location_title = (
-                    store["name"] if store["name"].strip() != "" else "<MISSING>"
-                )
-
-                # Street Address
-                street_address = (
-                    store["address"].split("</br>")[0]
-                    if store["address"].split("</br>")[0] != ""
-                    else "<MISSING>"
-                )
-
-                # City
-                city = (
-                    store["address"].split("</br>")[1].split(",")[0]
-                    if store["address"].split("</br>")[1].split(",")[0] != ""
-                    else "<MISSING>"
-                )
-
-                # State
-                state = (
-                    store["address"]
-                    .split("</br>")[1]
-                    .split(",")[1]
-                    .strip()
-                    .split(" ")[0]
-                    if store["address"]
-                    .split("</br>")[1]
-                    .split(",")[1]
-                    .strip()
-                    .split(" ")[0]
-                    != ""
-                    else "<MISSING>"
-                )
-
-                # Zip
-                zip_code = (
-                    store["address"]
-                    .split("</br>")[1]
-                    .split(",")[1]
-                    .strip()
-                    .split(" ")[1]
-                    if store["address"]
-                    .split("</br>")[1]
-                    .split(",")[1]
-                    .strip()
-                    .split(" ")[1]
-                    != ""
-                    else "<MISSING>"
-                )
-
-                # Hours
-                hour = str(store["hours"])[1:-1] if store["hours"] else "<MISSING>"
-
-                # Lat
-                lat = (
-                    store["latitudelongitude"]["latitude"]
-                    if store["latitudelongitude"]["latitude"] != ""
-                    else "<MISSING>"
-                )
-
-                # Lon
-                lon = (
-                    store["latitudelongitude"]["longitude"]
-                    if store["latitudelongitude"]["longitude"] != ""
-                    else "<MISSING>"
-                )
-
-                # Phone
-                phone = store["phone"] if store["phone"] != "" else "<MISSING>"
-
-                # Store data
-                locations_ids.append(location_id)
-                locations_titles.append(location_title)
-                street_addresses.append(street_address)
-                states.append(state)
-                zip_codes.append(zip_code)
-                hours.append(hour)
-                latitude_list.append(lat)
-                longitude_list.append(lon)
-                phone_numbers.append(phone)
-                cities.append(city)
-
-        for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-        ) in zip(
-            locations_titles,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-        ):
-            self.data.append(
-                [
-                    self.url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    "US",
-                    location_id,
-                    phone_number,
-                    "<MISSING>",
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
-
-        driver.quit()
-
-
-scrape = Scraper(URL)
-scrape.scrape()
+scrape()

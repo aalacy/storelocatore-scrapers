@@ -1,10 +1,12 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
+from datetime import datetime
 
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,45 +19,51 @@ def write_output(data):
             writer.writerow(row)
  
 def fetch_data():
-        return_main_object = []
-        addresses = []
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-            'Connection': 'keep-alive',
-            }
-        base_url = "https://www.regency-pacific.com"
-        r1 = session.get("https://g5-geo-service.herokuapp.com/clients/g5-c-ifyj3t6d-regency-pacific-management-client/location_search.json?search=21216&radius=100&lat=39.31&lon=-76.66", headers= headers).json()
-        for i in r1["locations"]:
-            store_number = (i['id'])
-            location_name = i['name']
-            street_address = i['street_address_1']
-            city = i['city']
-            state = i['state']
-            zipp = i['postal_code']
-            latitude= i['latitude']
-            longitude= i['longitude']
-            page_url= i['home_page_url']
-            phone= i['phone_number']
+       
+     
+
+        soup = bs(session.get("https://www.regency-pacific.com/our-communities").text, "lxml")
+
+        for link in soup.find("div",{"class":"directory-table full"}).find_all("a",{"class":"u-url"}):
+
+            page_url = link['href']
+            location_soup = bs(session.get(page_url).text, "lxml")
+
+            json_data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and "PostalAddress" in tag.text).text)
+        
+            location_name = json_data['name']
+            street_address = json_data['address']['streetAddress']
+            city = json_data['address']['addressLocality']
+            state = json_data['address']['addressRegion']
+            zipp = json_data['address']['postalCode']
+            latitude = json_data['geo']['latitude']
+            longitude = json_data['geo']['longitude']
+            phone = json_data['telephone']
+
+            hours = ""
+            for day in json_data['openingHoursSpecification']:
+
+                hours += " " + day['dayOfWeek'][0] +" "+ datetime.strptime(day['opens'], "%H:%M").strftime("%I:%M %p") + " - " + datetime.strptime(day['closes'], "%H:%M").strftime("%I:%M %p") + " "
+           
             store = []
-            store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
+            store.append("https://www.regency-pacific.com")
+            store.append(location_name) 
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
             store.append("US")
-            store.append(store_number)
-            store.append(phone if phone else "<MISSING>" )
             store.append("<MISSING>")
-            store.append( latitude if latitude else "<MISSING>")
-            store.append( longitude if longitude else "<MISSING>")
+            store.append(phone)
             store.append("<MISSING>")
+            store.append( latitude )
+            store.append( longitude)
+            store.append(hours)
             store.append(page_url)
-            if store[2] in addresses :
-                continue
-            addresses.append(store[2])
             yield store
+
 def scrape():
  data = fetch_data()
  write_output(data)
 scrape()
+

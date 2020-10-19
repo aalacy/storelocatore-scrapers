@@ -1,8 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -23,13 +21,7 @@ def fetch_data():
 
 	session = SgRequests()
 	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
-	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+	base = BeautifulSoup(req.text,"lxml")
 
 	pages = base.find(class_="select-0").find_all("option")[1:]
 	
@@ -38,20 +30,16 @@ def fetch_data():
 		locator_domain = "gqtmovies.com"
 
 		link = "https://www.gqtmovies.com" + page['value'] + "/theater-info"
+		# print(link)
 		req = session.get(link, headers = HEADERS)
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			print(link)
-		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+		item = BeautifulSoup(req.text,"lxml")
 
 		location_name = page.text.strip()
-		raw_address = item.find(class_="cinAdress").text.split("\n\t")
-		street_address = raw_address[0].replace(location_name,"").strip()
-		city = raw_address[-3].replace(",","").strip()
-		state = raw_address[-2].replace(",","").strip()
-		zip_code = raw_address[-1].replace(",","").strip()
+		raw_address = item.find(class_="cinAdress").text.split("|")[1].strip().replace("\n","").split(",")
+		street_address = raw_address[0].strip()
+		city = raw_address[1].strip()
+		state = raw_address[2].strip().split()[0].strip()
+		zip_code = raw_address[2].strip().split()[1].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"

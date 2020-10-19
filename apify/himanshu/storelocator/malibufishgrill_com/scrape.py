@@ -27,7 +27,7 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    k = (soup.find_all("div",{"class":"col sqs-col-4 span-4"}))
+    k = soup.find(id="locations-1-page").find_all(class_="col sqs-col-6 span-6")
     # links = soup.find_all("div",{"class":re.compile("sqs-block-button-container--left")})
     # for link in links[:3]:
     #     r1 = session.get(link.find("a")['href'])
@@ -36,10 +36,12 @@ def fetch_data():
     for i in k:
         tem_var =[]
         v=(list(i.stripped_strings))
+        lat = "<MISSING>"
+        lng = "<MISSING>"
         if len(i.a['href'].split("/@"))==2:
             lat = i.a['href'].split("/@")[-1].split(',')[0]
             lng = i.a['href'].split("/@")[-1].split(',')[1]
-        else:
+        elif "EL SEGUNDO" in str(i).upper():
             lat = "33.911745"
             lng= "-118.39452"
         tem_var.append("https://www.malibueatery.com")

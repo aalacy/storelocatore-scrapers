@@ -11,7 +11,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -22,7 +22,6 @@ def fetch_data():
             x = coord[0]
             y = coord[1]
             url = 'https://www.gmc.com/OCRestServices/dealer/latlong/v1/GMC/' + x + '/' + y + '/?distance=500&filterByType=services&maxResults=50'
-            print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
@@ -64,7 +63,6 @@ def fetch_data():
                                 zc = zc[:5] + '-' + zc[-4:]
                             if store not in ids:
                                 ids.append(store)
-                                print('Pulling Store ID #%s...' % store)
                                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass

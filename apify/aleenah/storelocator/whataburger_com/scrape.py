@@ -5,10 +5,10 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from sglogging import sglog
 
 driver = SgSelenium().chrome()
-
+log = sglog.SgLogSetup().get_logger(logger_name='whataburger.com')
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -48,7 +48,8 @@ def fetch_data():
         tex = re.findall(r'"text/data">{"locs":(.*)}]}</script>', str(soup), re.DOTALL)[0]
 
         urls += re.findall(r'"url":"([^"]*)"', tex, re.DOTALL)
-
+    num=len(urls)
+    log.info(f"Number of locations: {num}")
     for url in urls:
         k = 0
         h = 0
@@ -56,7 +57,7 @@ def fetch_data():
             url = url.replace("\\u0026", "&")
         if "locations.whataburger.com" not in url:
             url = "https://locations.whataburger.com/" + url
-        print(url)
+        log.info(url)
 
         driver.get(url)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.c-bread-crumbs-name')))
@@ -64,15 +65,12 @@ def fetch_data():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         div = soup.find('div', {'class': 'NAP-main'})
         l = soup.find_all('span', {'class': 'c-bread-crumbs-name'})[3].text
-        print(l)
         st = div.find('span', {'class': 'c-address-street-1'}).text
         c = div.find('span', {'class': 'c-address-city'}).text
         s = div.find('abbr', {'class': 'c-address-state'}).text
         z = div.find('span', {'class': 'c-address-postal-code'}).text
         p = div.find('span', {'id': 'telephone'}).text
 
-        tex = soup.find_all('script', {'type': 'text/data'})[1].text.split('"nearbyLocs"')[0]
-        print(soup.find_all('script', {'type': 'text/data'})[1].text)
 
         id = re.findall(r'.*"id":([0-9\-\(\) ]+)', str(soup))[0]
         la = re.findall(r'.*"latitude":(-?[\d\.]*)', str(soup))[0]
@@ -80,12 +78,24 @@ def fetch_data():
         tim1 = ""
         tim2 = ""
         try:
-            tim1 = div.find('div', {'class': 'HoursToday-dineIn'}).text
+            tim1 = div.find('div', {'class': 'HoursToday-dineIn'}).text.split('Open Now')[0]
+            if 'closed today' in tim1.lower():
+                tim1='CLOSED'
+            elif 'open 24 hours' in tim1.lower():
+                tim1='Open 24 hours'
+            elif 'PM'in tim1.lower():
+                tim1=tim1.split('PM')[0]+'PM'
         except:
             k = 1
 
         try:
-            tim2 = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",")
+            tim2 = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",").split('Open Now')[0]
+            if 'closed today' in tim2.lower():
+                tim2='CLOSED'
+            elif 'open 24 hours' in tim2.lower():
+                tim2='Open 24 hours'
+            elif 'PM'in tim2.lower():
+                tim2=tim2.split('PM')[0]+'PM'
         except:
             h = 1
 
@@ -146,31 +156,19 @@ def fetch_data():
                 page_url.append(url)
 
             else:
-                types.append("dineIn")
+                types.append("dineIn, driveThru")
                 locs.append(l)
                 street.append(st)
                 cities.append(c)
                 states.append(s)
                 zips.append(z)
                 phones.append(p)
-                timing.append("MON-SUN: " + tim1.strip())
+                timing.append("MON-SUN: " + tim1.strip() +" Drive Thru: MON-SUN: " + tim2.strip() )
                 lat.append(la)
                 long.append(lo)
                 ids.append(id)
                 page_url.append(url)
 
-                types.append("driveThru")
-                locs.append(l)
-                street.append(st)
-                cities.append(c)
-                states.append(s)
-                zips.append(z)
-                phones.append(p)
-                timing.append("MON-SUN: " + tim2.strip())
-                lat.append(la)
-                long.append(lo)
-                ids.append(id)
-                page_url.append(url)
 
     all = []
     for i in range(0, len(locs)):

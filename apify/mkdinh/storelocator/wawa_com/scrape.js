@@ -1,8 +1,19 @@
 const Apify = require('apify');
-const zipcodes = require('zipcodes');
-const { log } = Apify.utils;
 
 const MISSING = '<MISSING>';
+
+const DEFAULT_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Accept-Encoding': 'gzip, deflate, br',
+  DNT: 1,
+  Connection: 'keep-alive',
+  'Upgrade-Insecure-Requests': 1,
+  Pragma: 'no-cache',
+  'Cache-Control': 'no-cache',
+};
+
 function getOrDefault(value) {
   return value || MISSING;
 }
@@ -19,146 +30,158 @@ function formatHoursOfOperation(start, end) {
   return end ? `${start}-${end}` : start;
 }
 
-function getLocationUrls(stateAbbrs) {
-  const { lookupByState } = zipcodes;
-  const urls = stateAbbrs
-    .map((state) => {
-      try {
-        const zips = lookupByState(state);
-        if (!zips || !zips.length) return;
-        const randomZipCodes = pickRandom(zips, Math.ceil(zips.length / 3));
+async function getSiteMapLinks(page) {
+  return await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('.CMSSiteMapLink')).map((el) =>
+      el.getAttribute('href')
+    );
+  });
+}
 
-        return randomZipCodes.map((zipcode) => {
-          const { latitude, longitude, country } = zipcode;
-          const url = `https://www.wawa.com/Handlers/LocationByLatLong.ashx?limit=500&lat=${latitude}&long=${longitude}`;
-
-          return {
-            url,
-            userData: {
-              country_code: country,
-            },
-          };
-        });
-      } catch (err) {
-        log.error(err);
-      }
+function generateLocationUrls(links) {
+  const locationIds = links
+    .map((link) => {
+      const matched = link.match(/\/stores\/(\d+)\/.*/);
+      return matched ? matched[1] : null;
     })
-    .filter((url) => url);
+    .filter((id) => id);
 
-  return urls.reduce((total, locations) => {
-    total.push(...locations);
-    return total;
-  }, []);
+  return locationIds.map(
+    (id) => `https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber=${parseInt(id)}`
+  );
 }
 
-function pickRandom(array, sampleSize) {
-  const population = [...array];
-  const sample = [];
-  for (let i = 0; i < sampleSize; i++) {
-    const index = Math.floor(Math.random() * population.length);
-    const [item] = population.splice(index, 1);
-    sample.push(item);
-  }
-  return sample;
-}
+async function fetchLocations(
+  page,
+  locationUrls,
+  locations = [],
+  maxAttempts = 10,
+  currentAttempts = 0
+) {
+  console.log('-'.repeat(50));
+  console.log(`attempt #${currentAttempts} to fetch: ${locationUrls.length} locations`);
+  console.log('-'.repeat(50));
 
-async function scrapeStates({ requestQueue, $ }) {
-  const states = $('#drpState option')
-    .map(function () {
-      return $(this).attr('value');
-    })
-    .toArray()
-    .filter((el) => el !== 'All');
-
-  const locationsUrls = getLocationUrls(states);
-  log.info(`zipcode count: ${locationsUrls.length} \n`);
-  const promises = locationsUrls.map((url) => requestQueue.addRequest(url));
-  return Promise.all(promises);
-}
-
-async function scrapeLocations({ request, body, locationMap }) {
-  if (!body) return;
-
-  const serializedData = body.toLocaleString();
-  try {
-    data = JSON.parse(serializedData);
-
-    const pois = data.locations.map((location) => {
-      // validate that there is no duplicate
-      if (locationMap[location.locationID]) {
-        return;
-      }
-
-      const { storeNumber, storeName, telephone, storeOpen, storeClose, addresses } = location;
-      const [friendly, physical] = addresses;
-
-      const poi = {
-        locator_domain: 'wawa.com',
-        page_url: request.url,
-        location_name: getOrDefault(storeName),
-        store_number: getOrDefault(storeNumber),
-        street_address: getOrDefault(friendly.address),
-        city: getOrDefault(friendly.city),
-        state: getOrDefault(friendly.state),
-        zip: getOrDefault(friendly.zip),
-        country_code: request.userData.country_code,
-        latitude: physical.loc[0],
-        longitude: physical.loc[1],
-        phone: getOrDefault(formatPhone(telephone)),
-        hours_of_operation: getOrDefault(formatHoursOfOperation(storeOpen, storeClose)),
-        location_type: MISSING,
-      };
-
-      locationMap[location.locationID] = true;
-      return poi;
+  const results = await page.evaluate((urls) => {
+    return new Promise((resolve) => {
+      const promises = urls.map(
+        (url) =>
+          new Promise((resolve, reject) => {
+            fetch(url)
+              .then((response) => response.json())
+              .then((data) => resolve({ url, data }))
+              .catch(() => reject(url));
+          })
+      );
+      return Promise.allSettled(promises).then(resolve);
     });
+  }, locationUrls);
 
-    const nullRemoved = pois.filter((poi) => poi);
-    await Apify.pushData(nullRemoved);
-  } catch (error) {
-    request.pushErrorMessage(JSON.stringify({ error, data: serializedData }));
+  const data = results.filter((res) => res.status === 'fulfilled');
+  const failedUrls = results.filter((res) => res.status === 'rejected').map((el) => el.reason);
+
+  locations.push(...data);
+
+  if (failedUrls.length && currentAttempts <= maxAttempts) {
+    currentAttempts++;
+    return fetchLocations(page, failedUrls, locations, maxAttempts, currentAttempts);
+  } else {
+    console.log('-'.repeat(50));
+    console.log(`complete scrape with ${locations.length} locations`);
+    console.log(`with ${failedUrls.length} failed url(s).`);
+    failedUrls.map((url) => console.log(url));
+
+    return locations;
+  }
+}
+
+async function getLocations(page) {
+  const links = await getSiteMapLinks(page);
+  const locationUrls = generateLocationUrls(links);
+  const locations = await fetchLocations(page, locationUrls);
+
+  const failedUrls = [];
+  const pois = locations.map((location) => getLocation(location, failedUrls)).filter((poi) => poi);
+
+  console.log('-'.repeat(50));
+  console.log(`complete conversion to ${pois.length} pois.`);
+  console.log(`with ${failedUrls.length} failed url(s).`);
+  failedUrls
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .map((url) => console.log(url));
+  console.log('-'.repeat(50));
+
+  return pois;
+}
+
+function getLocation({ value }, failedUrls) {
+  const { url, data } = value;
+  try {
+    const { storeNumber, storeName, telephone, storeOpen, storeClose, addresses } = data;
+
+    const [friendly, physical] = addresses;
+
+    const poi = {
+      locator_domain: 'wawa.com',
+      page_url: url,
+      location_name: getOrDefault(storeName),
+      store_number: getOrDefault(storeNumber),
+      street_address: getOrDefault(friendly.address),
+      city: getOrDefault(friendly.city),
+      state: getOrDefault(friendly.state),
+      zip: getOrDefault(friendly.zip),
+      country_code: 'US',
+      latitude: physical.loc[0],
+      longitude: physical.loc[1],
+      phone: getOrDefault(formatPhone(telephone)),
+      hours_of_operation: getOrDefault(formatHoursOfOperation(storeOpen, storeClose)),
+      location_type: MISSING,
+    };
+
+    return poi;
+  } catch (ex) {
+    failedUrls.push(url);
+    return null;
   }
 }
 
 Apify.main(async () => {
-  const locationMap = {};
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({
-    url: 'https://www.wawa.com/fresh-food/wawa-delivery',
-    userData: {
-      pageType: 'states',
-    },
+    url: 'https://www.wawa.com/site-map',
   });
 
-  const proxyPassword = process.env.PROXY_PASSWORD;
+  const proxyPassword = process.env.APIFY_PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
     password: proxyPassword,
   });
 
-  const crawler = new Apify.CheerioCrawler({
+  const launchPuppeteerOptions = {
+    useChrome: true,
+    stealth: true,
+    headless: true,
+  };
+
+  const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    useSessionPool: true,
-    persistCookiesPerSession: true,
-    additionalMimeTypes: ['text/json'],
-    // launchPuppeteerOptions,
-    // puppeteerPoolOptions,
+    useSessionPool: false,
+    persistCookiesPerSession: false,
+    maxRequestsPerCrawl: 1,
+    maxRequestRetries: 1,
     proxyConfiguration,
-    maxConcurrency: 1000,
-    maxRequestsPerCrawl: 10000,
-    async handlePageFunction({ request, $, body }) {
-      switch (request.userData.pageType) {
-        case 'states':
-          await scrapeStates({ $, requestQueue });
-          break;
-        default:
-          await scrapeLocations({ body, request, locationMap });
-      }
+    launchPuppeteerOptions,
+    handlePageTimeoutSecs: 10 * 60,
+    prepareRequestFunction({ request }) {
+      request.headers = DEFAULT_HEADERS;
+      return request;
+    },
+    async handlePageFunction({ page }) {
+      const locations = await getLocations(page);
+      await Apify.pushData(locations);
     },
   });
 
   await crawler.run();
-  log.info('\n------------------------------');
-  log.info(`final location count: ${Object.keys(locationMap).length}`);
 });

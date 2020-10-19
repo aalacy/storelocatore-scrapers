@@ -8,7 +8,9 @@ from requests.packages.urllib3.util.retry import Retry
 from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections
+from sglogging import sglog
 
+log = sglog.SgLogSetup().get_logger(logger_name="redroof.com")
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
@@ -25,10 +27,6 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
 }
 
-re_get_json = re.compile(
-    'Utilities\.SDL\.Add\("ServicePropertyDetails", (.+?)\);')
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -36,18 +34,13 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
                          "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
-            writer.writerow(row)
-
-
-def get_json_data(html):
-    match = re.search(re_get_json, html)
-    json_text = match.group(1)
-    return json.loads(json_text)
+            if row:
+                writer.writerow(row)
 
 
 def get_sitemap(attempts=1):
     if attempts > 10:
-        print("Couldn't get sitemap after 10 attempts")
+        log.error("Couldn't get sitemap after 10 attempts")
         raise SystemExit
     try:
         session = SgRequests()
@@ -55,7 +48,7 @@ def get_sitemap(attempts=1):
         r = session.get(url, headers=headers)
         return r
     except (ConnectionError, Exception) as ex:
-        print("Exception getting sitemap", ex)
+        log.error(f"Exception getting sitemap: {str(ex)}")
         return get_sitemap(attempts=attempts+1)
 
 
@@ -66,15 +59,11 @@ def fetch_data():
         if 'https://www.redroof.com/property/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    # print('Found %s Locations.' % str(len(locs)))
+
     q = collections.deque(locs)
     attempts = {}
     while q:
         loc = q.popleft()
-        if '-CA/' in loc:
-            country = 'CA'
-        else:
-            country = 'US'
         name = ''
         add = ''
         city = ''
@@ -90,20 +79,20 @@ def fetch_data():
         r2 = None
         try:
             session = SgRequests()
-            # print(loc)
-            r2 = session.get(loc, headers=headers)
+            page_url = f"https://www.redroof.com/api/GetPropertyDetail?PropertyId={store}"
+            r2 = session.get(page_url, headers=headers)
         except (ConnectionError, Exception) as ex:
-            print('Failed to connect to ' + loc)
-            print("Exception: ", ex)
+            log.info('Failed to connect to ' + loc)
+            log.info(f"Exception: {str(ex)}")
             if attempts.get(loc, 0) >= 3:
-                print('giving up on ' + loc)
+                log.error('giving up on ' + loc)
             else:
                 q.append(loc)
                 attempts[loc] = attempts.get(loc, 0) + 1
-                print('attempts: ' + str(attempts[loc]))
+                log.info('attempts: ' + str(attempts[loc]))
             continue
 
-        data = get_json_data(r2.text)
+        data = r2.json().get('SDLKeyValuePairs').get('ServicePropertyDetails')
 
         name = data["Description"]
         add = data["Street1"] + (", " + data["Street2"]
@@ -115,13 +104,17 @@ def fetch_data():
         typ = data["PropertyType"]
         lat = data["Latitude"]
         lng = data["Longitude"]
+        country = data['Country']
 
-        location = [website, loc, name, add, city, state,
+        if country != 'US' and country != 'CA':
+            yield None
+            continue
+
+        location = [website, page_url, name, add, city, state,
                     zc, country, store, phone, typ, lat, lng, hours]
         location = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in location]
-        # print(location)
-        # print('---------')
+     
         yield location
 
 

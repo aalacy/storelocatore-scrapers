@@ -1,6 +1,6 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import json
 
 def write_output(data):
@@ -8,50 +8,48 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.johnnyrockets.com/'
-    ext = 'locations/'
+    locator_domain = 'https://www.johnnyrockets.com'
+    ext = '/locations/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    element = driver.find_element_by_css_selector('button#show_all_locs')
-    driver.execute_script("arguments[0].click();", element)
+    session = SgRequests()
+    req = session.get(locator_domain + ext, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
 
-    usa = driver.find_element_by_css_selector('div#cg_usa')
-
-    hrefs = usa.find_elements_by_xpath("//a[contains(@href, '/locations/')]")
+    hrefs = base.find(id="cg_usa").find_all(class_="all-location-link")
 
     link_list = []
     for href in hrefs:
-        link = href.get_attribute('href')
-        if 'emporium-fortitude-valley-brisbane-australia' in link:
-            break
+        link = locator_domain + href['href']
+        link_list.append(link)
 
-        if len(link) > 45:
-            link_list.append(link)
-
-    canada = driver.find_element_by_css_selector('div#cg_canada')
-
-    canada_as = canada.find_elements_by_css_selector('a.all-location-link')
+    canada_as = base.find(id="cg_canada").find_all(class_="all-location-link")
     for a in canada_as:
-        link_list.append(a.get_attribute('href'))
+        link_list.append(locator_domain + a['href'])
+
+    ships = base.find(id="cg_ship").find_all(class_="all-location-link")
+    for ship in ships:
+        link_list.append(locator_domain + ship['href'])
 
     all_store_data = []
 
     for i, link in enumerate(link_list):
-        driver.get(link)
-        driver.implicitly_wait(10)
+        # print(link)
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
 
-        location_name = driver.find_element_by_css_selector('div.data__title').text
+        location_name = base.h1.text.strip()
 
-        loc_j = driver.find_elements_by_xpath('//script[@type="application/ld+json"]')
-        loc_json = json.loads(loc_j[1].get_attribute('innerHTML'))
+        loc_j = base.find_all('script', attrs={'type': "application/ld+json"})[1]
+        loc_json = json.loads(loc_j.text)
 
         addy = loc_json['address']
         street_address = addy['streetAddress']
@@ -70,16 +68,26 @@ def fetch_data():
 
             hours = hours.strip()
         else:
-            hours = '<MISSING>'
+            try:
+                if "temporarily closed" in base.find(class_="hours_block").text.lower():
+                    hours = "Temporarily Closed"
+                else:
+                    hours = '<MISSING>'
+            except:
+                hours = '<MISSING>'
 
         if 'telephone' in loc_json:
             phone_number = loc_json['telephone']
+            if "," in phone_number:
+                phone_number = phone_number[:phone_number.find(",")].strip()
+            if "x" in phone_number:
+                phone_number = phone_number[:phone_number.find("x")].strip()
         else:
             phone_number = '<MISSING>'
 
-        geo = driver.find_element_by_css_selector('div.list__item.loc_item')
-        lat = geo.get_attribute('data-lat')
-        longit = geo.get_attribute('data-lon')
+        geo = base.find(class_='list__item loc_item')
+        lat = geo['data-lat']
+        longit = geo['data-lon']
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -89,11 +97,10 @@ def fetch_data():
         else:
             country_code = 'US'
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+        store_data = [locator_domain, link, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():

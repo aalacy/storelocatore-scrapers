@@ -41,7 +41,10 @@ def fetch_data():
         city = city if city else '<MISSING>'
         state = '<MISSING>'
         zc = item['properties']['postcode']
-        phone = item['properties']['telephone']
+        try:
+            phone = item['properties']['telephone']
+        except:
+            phone = '<MISSING>'
         name = "McDonald's # " + store
         lat = item['geometry']['coordinates'][0]
         lng = item['geometry']['coordinates'][1]

@@ -11,7 +11,7 @@ import time
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('lequipeur_com.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -24,13 +24,13 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
+  
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
-    MAX_RESULTS = 10
+    search.initialize(country_codes=['CA'])
+    MAX_RESULTS = 100
     MAX_DISTANCE = 50
-    current_results_len = 0  # need to update with no of count.
+    current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
 
 
@@ -40,7 +40,7 @@ def fetch_data():
         # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    # it will used in store data.
+    
     locator_domain = "https://www.lequipeur.com/"
     location_name = ""
     street_address = "<MISSING>"
@@ -53,35 +53,34 @@ def fetch_data():
     location_type = "lequipeur"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
     while zip_code:
         result_coords = []
-        try:
-            r= session.get('https://www.lequipeur.com/services-rest/marks/stores?code=&productIds=&locale=en&location=+'+str(zip_code),headers = headers)
-            json_data = r.json()
-        except:
-            continue
 
-        first_key = list(json_data.keys())[0]
-        if first_key == 'results':
-            # print(json_data['results'])
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            for z in json_data['results']:
+        url = "https://api.lequipeur.com/hy/v1/lequipeur/storelocators/near"
+
+        querystring = {"location":str(zip_code),"pageSize":"20"}
+        json_data = session.get(url, headers=headers, params=querystring).json()
+
+        try:
+            current_results_len = len(json_data['storeLocatorPageData']['results'])
+            for z in json_data['storeLocatorPageData']['results']:
                 store_number = z['name']
-                location_name = z['title']
-                street_address = z['address']['formattedAddress']
+                location_name = z['displayName']
+                street_address = z['address']['line1']
+                if z['address']['line2']:
+                    street_address += " " + z['address']['line2']
                 city = z['address']['town']
                 state = z['address']['province']
                 zipp = z['address']['postalCode']
                 phone = z['address']['phone']
-                latitude = z['latitude']
-                longitude = z['longitude']
-                page_url = z['storeLink']
-                hours_of_operation = z['workingTime']
-                country_code = z['address']['countryIsoCode']
+                latitude = z['geoPoint']['latitude']
+                longitude = z['geoPoint']['longitude']
+                page_url = "https://www.lequipeur.com/en/stores/" + z['urlLocalized'][0]['value'].split("/")[-1]
+                hours_of_operation = z['workingHours']
+                country_code = z['address']['country']['isocode']
 
                 result_coords.append((latitude, longitude))
                 if street_address in addresses:
@@ -102,14 +101,13 @@ def fetch_data():
                 store.append(location_type if location_type else '<MISSING>')
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
-
-                store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                store.append(re.sub(r'\s+'," ",hours_of_operation) if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                # print("data===="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                # yield store
 
-                return_main_object.append(store)
+                yield store
+        except:
+            pass
+
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -118,11 +116,8 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-
         zip_code = search.next_zip()
-    return return_main_object
-
-
+   
 
 
 def scrape():
@@ -131,3 +126,4 @@ def scrape():
 
 
 scrape()
+

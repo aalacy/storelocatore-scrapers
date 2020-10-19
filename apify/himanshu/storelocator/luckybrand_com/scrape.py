@@ -42,6 +42,7 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
+        # print(lat,lng)
         session = SgRequests()
         json_data = session.get("https://liveapi.yext.com/v2/accounts/me/entities/geosearch?api_key=0700165de62eb1a445df7d02b02c7831&v=20181017&location="+str(lat)+",%20"+str(lng)+"&limit=50&radius=500&entityTypes=location,healthcareProfessional,restaurant,healthcareFacility,atm&fields=name,hours,address,websiteUrl&resolvePlaceholders=true&searchIds=").json()['response']['entities']
         current_result_len = len(json_data)
@@ -60,8 +61,11 @@ def fetch_data():
             state = data['address']['region']
             zipp = data['address']['postalCode']
             store_number = data['meta']['id']
-            location_type = data['meta']['schemaTypes'][0]
-            hours = get_hours(data['hours'])
+            location_type = '<MISSING>'
+            try:
+                hours = get_hours(data['hours'])
+            except:
+                hours = '<MISSING>'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
             phone = '<MISSING>'
@@ -75,6 +79,8 @@ def fetch_data():
                 longitude = info['geo']['longitude']
                 result_coords.append((latitude,longitude))
                 phone = info['telephone']
+                if hours == '<MISSING>' or not hours:
+                    hours = " ".join(list(soup.find(class_="hours-body").stripped_strings))
 
             store = []
             store.append(base_url)            

@@ -71,7 +71,6 @@ def fetch_data():
         if 'lon="' in line:
             lng = line.split('lon="')[1].split('"')[0]
             lat = line.split('lat="')[1].split('"')[0]
-            loc = '<MISSING>'
             if 'tel:' in phone:
                 phone = phone.split('tel:')[1].split("'")[0]
             if phone not in tels:

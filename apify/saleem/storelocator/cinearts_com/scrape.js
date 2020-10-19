@@ -4,8 +4,9 @@ async function enqueueLocationLinks({ $, requestQueue }) {
   return Apify.utils.enqueueLinks({
     $,
     requestQueue,
-    baseUrl: 'https://cinearts.com/theatres/',
+    baseUrl: 'https://cinemark.com/',
     selector: '.theatres-by-state a',
+    pseudoUrls: [new Apify.PseudoUrl(/cine?arts/)],
   });
 }
 
@@ -21,9 +22,16 @@ function scrapeLatLng($) {
 }
 
 async function scrape({ $, request }) {
-  const scripts = $("script[type='application/ld+json']");
+  const scripts = $('script[type="application/ld+json"]');
+  const status = $('.theatre-status-label').text();
+
+  if (status.match(/closed/i)) {
+    return null;
+  }
+
   const targetScript = scripts.length > 1 ? scripts[1] : scripts[0];
   try {
+    const data = JSON.parse(targetScript.children[0].data);
     const {
       name: location_name,
       address: [
@@ -37,11 +45,10 @@ async function scrape({ $, request }) {
       ],
       email,
       telephone: phone,
-      '@type': location_type,
-    } = JSON.parse(targetScript.children[0].data);
+    } = data;
 
     const { latitude, longitude } = scrapeLatLng($);
-
+    const location_type = 'CinéArts';
     const store_number = parseInt(email.split('@')[0]);
 
     return {
@@ -74,8 +81,14 @@ Apify.main(async () => {
     },
   });
 
+  const proxyConfiguration = await Apify.createProxyConfiguration({
+    groups: ['BUYPROXIES94952'],
+    countryCode: 'US',
+  });
+
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
+    proxyConfiguration,
     ignoreSslErrors: true,
     async handlePageFunction({ request, $ }) {
       switch (request.userData.pageType) {

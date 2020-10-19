@@ -1,6 +1,7 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +16,7 @@ def write_output(data):
 def parse_addy(addy):
     arr = addy.split(',')
     if len(arr) == 4:
-        arr = [arr[0], arr[2], arr[3]]
+        arr = [" ".join(arr[:2]).replace("  "," "), arr[2], arr[3]]
     street_address = arr[0].strip()
     city = arr[1].strip()
     state_zip = arr[2].strip().split(' ')
@@ -25,43 +26,63 @@ def parse_addy(addy):
     return street_address, city, state, zip_code
 
 def fetch_data():
+
     locator_domain = 'https://primary-health.net/' 
     ext = 'Locations.aspx'
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    hrefs = driver.find_elements_by_xpath('//a[contains(@href,"LocationDetail.aspx?id=")]')
-    links = [h.get_attribute('href') for h in hrefs]
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
+    req = session.get(locator_domain + ext, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+
+    hrefs = base.find_all('a', {'href': re.compile(r'LocationDetail\.aspx\?id=.+')})
+    links = [locator_domain + h['href'] for h in hrefs]
 
     all_store_data = []
     for link in links:
-        driver.get(link)
-        driver.implicitly_wait(5)
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
         
-        main = driver.find_element_by_css_selector('div.page-title')
+        main = base.find(class_='page-title')
         
-        location_name = main.find_element_by_css_selector('h1').text
-       
-        hours = driver.find_element_by_xpath('//*[@itemprop="openingHours"]').text.replace('\n', ' ').split('PATIENTS')[0].strip()
+        location_name = main.h1.text.encode("ascii", "replace").decode().replace("?","'").strip()
+        
+        hours = base.find('span', attrs={'itemprop': "openingHours"}).text.encode("ascii", "replace").decode().replace("?","-").replace('\n', ' ')\
+        .replace('.', '').replace('pm', 'pm ').replace('PM', 'PM ').replace('Closed', 'Closed ').split('Dental')[0].split("***")[0].strip()
         if hours == '':
             hours = '<MISSING>'
+        if "temporarily closed" in hours:
+            hours = "Temporarily Closed"
+        if "Visit Site" in hours:
+            hours = '<MISSING>'
         
-        phone_number = driver.find_element_by_css_selector('span#PageTitle_SiteList2_PhoneLabel_0').text
-            
-        addy = driver.find_element_by_css_selector('span#PageTitle_SiteList2_AddressLabel_0').text
+        phone_number = main.find(id='PageTitle_SiteList2_PhoneLabel_0').text.strip()
+        
+        addy = main.find(id='PageTitle_SiteList2_AddressLabel_0').text.replace("Blvd. Yea","Blvd, Yea").replace("  "," ").strip()
         street_address, city, state, zip_code = parse_addy(addy)
 
         country_code = 'US'
-        store_number = '<MISSING>'
+        store_number = link.split("=")[-1]
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+
+        geo = base.find('meta', attrs={'name': "keywords"})['content'].split(",")
+        lat = geo[1].replace("lat","").strip()
+        longit = geo[0].replace("long","").strip()
+
+        if "-" in lat:
+            lat = geo[0].replace("lat","").strip()
+            longit = geo[1].replace("long","").strip()
+
         page_url = link
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-        
-    driver.quit()
+
     return all_store_data
 
 def scrape():

@@ -1,0 +1,1 @@
+--ignore LatLngDuplicationValidator (2 Locations with same address on website)

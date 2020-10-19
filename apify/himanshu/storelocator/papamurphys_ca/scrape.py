@@ -29,45 +29,42 @@ def fetch_data():
     }
 
     base_url = "http://papamurphys.ca/"
-    location_url = "https://order.papamurphys.com/locations"   
+    location_url = "https://papa-murphys-order-online-locations.securebrygid.com/zgrid/themes/13097/portal/index.jsp"   
     r = session.get(location_url, headers=headers)   
     soup = BeautifulSoup(r.text, "lxml")
-    for href in soup.find("ul",{"id":"ParticipatingStates"}).find_all("a"):
-        r1 = session.get("https://order.papamurphys.com"+href['href'], headers=headers)   
+    for dt in soup.find_all("div",{"class":"restaurant"}):
+        city = list(dt.stripped_strings)[2].split(",")[0]
+        location_name  = list(dt.stripped_strings)[0]
+
+        state = list(dt.stripped_strings)[2].split(",")[1].strip().split()[0]
+        zipp = " ".join(list(dt.stripped_strings)[2].split(",")[1].strip().split()[1:])
+        street_address = list(dt.stripped_strings)[1]
+        phone = list(dt.stripped_strings)[3]
+        hours_of_operation = (" ".join(list(dt.stripped_strings)[5:]).replace("(587) 619-1172 Get Directions ","").split("Order")[0].replace("*",''))
+        page_url = dt.find("a",{"class":"button portalbtn"})['href']
+        r1 = session.get(page_url, headers=headers)   
         soup1 = BeautifulSoup(r1.text, "lxml")
-        for h1 in soup1.find("ul",{"id":"ParticipatingRestaurants"}).find_all("a"):
-            page_url = h1['href']
-            r2 = session.get(page_url, headers=headers)   
-            soup2 = BeautifulSoup(r2.text, "lxml")
-            street_address = soup2.find("span",{"class":"street-address"}).text.strip()
-            city = soup2.find("span",{"class":"locality"}).text.strip()
-            location_name = soup2.find("div",{"class":"fn org"}).find("h1").text.strip()
-            state = soup2.find("span",{"class":"region"}).text.strip()
-            zipp = soup2.find("span",{"class":"postal-code"}).text.strip()
-            lat = soup2.find("span",{"class":"geo"}).find("span",{"class":"latitude"}).find("span",{"class":"value-title"})['title']
-            longs = soup2.find("span",{"class":"geo"}).find("span",{"class":"longitude"}).find("span",{"class":"value-title"})['title']
-            phone = soup2.find("span",{"class":re.compile("tel")}).text.strip()
-            hours_of_operation = ''
-            for q in soup2.find_all("dl",{"class":"available-hours"}):
-                hours_of_operation = hours_of_operation + ' '+ " ".join(list(q.stripped_strings))
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)   
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(longs)
-            store.append(hours_of_operation)
-            store.append(page_url)
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            # print(store)
-            yield store
+        log = soup1.find("iframe")['src'].split("!2d")[1].split("!3d")[0]
+        lat = soup1.find("iframe")['src'].split("!2d")[1].split("!3d")[1].split("!")[0]
+    
+        store = []
+        store.append("http://papamurphys.ca/")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)   
+        store.append("CA")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(lat)
+        store.append(log)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        # print(store)
+        yield store
             
 
 

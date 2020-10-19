@@ -1,0 +1,2 @@
+--ignore CentroidValidator --ignore StreetAddressHasNumber (Data scraped correctly)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 861 POI, but website has 699 POI)

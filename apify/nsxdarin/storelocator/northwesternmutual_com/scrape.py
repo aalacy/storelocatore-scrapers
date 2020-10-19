@@ -30,6 +30,7 @@ def fetch_data():
         city = ''
         phone = ''
         state = ''
+        country = 'US'
         zc = ''
         lat = ''
         lng = ''
@@ -43,11 +44,10 @@ def fetch_data():
                 for line2 in r2.iter_lines(decode_unicode=True):
                     if '<h1>' in line2:
                         name = line2.split('<h1>')[1].split('<')[0].strip()
-                    if 'profile--address>' in line2:
-                        add = line2.split('profile--address>')[1].split('<')[0].strip()
-                        csz = line2.split('profile--address>')[1].split('<br>')[1].split('<')[0].strip()
+                    if 'class="profile--address">' in line2:
+                        add = line2.split('class="profile--address">')[1].split('<')[0].strip()
+                        csz = line2.split('class="profile--address">')[1].split('<br>')[1].split('<')[0].strip()
                         city = csz.split(',')[0]
-                        country = 'US'
                         state = csz.split(',')[1].strip().split(' ')[0]
                         zc = csz.rsplit(' ',1)[1]
                         try:

@@ -11,7 +11,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 MAX_RESULTS = 20
-MAX_DISTANCE = 5.0
+MAX_DISTANCE = 1.0
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:

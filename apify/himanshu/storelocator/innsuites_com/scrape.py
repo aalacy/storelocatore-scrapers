@@ -13,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,8 +26,9 @@ def fetch_data():
     r = session.get(base_url ,headers = header)
     soup = BeautifulSoup(r.text,"html.parser")
     
-    for val in  soup.find('ul',{'class':'hotel-url'}).find_all('a'):
-            r = session.get(val['href'] ,headers = header)
+    for val in soup.find('ul',{'class':'wrap'}).ul.find_all('a'):
+            link = val['href']
+            r = session.get(link ,headers = header)
             soup = BeautifulSoup(r.text,"html.parser")
             locator_domain = base_url
             vk = soup.find('section',{'id':'description'})
@@ -76,16 +77,19 @@ def fetch_data():
                         
 
 
-                
+            if "Route 66" in street_address:
+                city = "Flagstaff"
+                state = "Arizona"
             store_number = '<MISSING>'
-            country_code = 'USA'
-            location_type = 'innsuites'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+            country_code = 'US'
+            location_type = '<MISSING>'
+            latitude = soup.find(class_="hotel_latlong")["value"].split(",")[0]
+            longitude = soup.find(class_="hotel_latlong")["value"].split(",")[1]
             hours_of_operation = '<MISSING>'
 
             store=[]
             store.append(locator_domain if locator_domain else '<MISSING>')
+            store.append(link)
             store.append(location_name if location_name else '<MISSING>')
             store.append(street_address if street_address else '<MISSING>')
             store.append(city if city else '<MISSING>')
