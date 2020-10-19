@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.bestwestern.com/etc/seo/bestwestern/hotels.xml'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, timeout=30)
     if r.encoding is None: r.encoding = 'utf-8'
     for line in r.iter_lines(decode_unicode=True):
         if '<loc>https://www.bestwestern.com/en_US/book/' in line and 'https://www.bestwestern.com/en_US/book/hotels-in-' not in line:
@@ -30,7 +30,7 @@ def fetch_data():
     for loc in locs:
         PageFound = True
         time.sleep(2)
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'bestwestern.com'
         typ = '<MISSING>'
         hours = '<MISSING>'
