@@ -45,10 +45,10 @@ def fetch_data():
         state,pcode = state.lstrip().split(' ')
         phone = content[4]
         hours = ' '.join(content[6:])
-        lat,longt = soup.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d',1)
+        longt,lat = soup.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d',1)
         
         data.append([
-                        'https://nofrillssupermarkets.com/',
+                        ':https://nofrillssupermarkets.com/',
                         link,                   
                         title,
                         street,
