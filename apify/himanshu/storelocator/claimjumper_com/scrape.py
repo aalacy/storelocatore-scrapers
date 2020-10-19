@@ -2,7 +2,6 @@
 from bs4 import BeautifulSoup
 import re
 import csv
-# import requests
 from sgrequests import SgRequests
 session = SgRequests()
 
@@ -35,8 +34,12 @@ def fetch_data():
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         page_url = "https://www.claimjumper.com"+loc.find("a",class_="locationLink")["href"].strip()
+        
         r1 = session.get(page_url,headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
+        longitude=''
+        latitude=''
+        hours_of_operation=''
         try:
             location_id = soup1.find("div",{"id":"map"}).find("div",class_="mfcard mf_map_card")["location_id"].strip()
             card_id = soup1.find("div",{"id":"map"}).find("div",class_="mfcard mf_map_card")["card_id"]
@@ -58,10 +61,14 @@ def fetch_data():
                 hours_of_operation = " ".join(list(soup1.find("h5",class_="hoursHeader").parent.stripped_strings)).replace("hours","").strip()
             except:
                 hours_of_operation= "<MISSING>"
-            latitude = soup1.find("span",{"id":"jsLat"}).text.strip()
-            longitude = soup1.find("span",{"id":"jsLong"}).text.strip()
-            # if "-93.234120" in longitude:
-            #     hours_of_operation = hours_of_operation
+            try:
+                latitude = soup1.find("span",{"id":"jsLat"}).text.strip()
+                longitude = soup1.find("span",{"id":"jsLong"}).text.strip()
+            except:
+                latitude = "<MISSING>"
+                longitude= "<MISSING>"
+     
+
         
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
@@ -69,7 +76,6 @@ def fetch_data():
 
         store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
-        # print(store)
         
 def scrape():
     data = fetch_data()
