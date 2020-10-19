@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Scraped correctly)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 166 POI, but website has 116 POI)

@@ -15,30 +15,40 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    return_main_object = []
     address = []
-    coords = sgzip.coords_for_radius(200)
-    for coord in coords:
-        r = session.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_us-Site/en_US/Address-SearchStoreAddress?&deliveryPoint=STORE&radius=100000&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false")
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    result_coords = []
+    data_len = 0
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 100
+    coords = search.next_coord()
+    while coords:
+        try:
+            r = session.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_us-Site/en_US/Address-SearchStoreAddress?longitude="+str(coords[1])+"&latitude="+str(coords[0])+"&deliveryPoint=STORE&radius=7000&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false")
+        except:
+            continue
         data = r.json()
         mp = data['shippingAddresses']
         for i in data['shippingAddresses']:
             if i["countryCode"] not in ["US","CA"]:
                 continue
             if 'address' in i:
-                street_address = i['address']
+                street_address = i['address'].replace("Orlando Florida Mall,","")
             else:
                 street_address = "<MISSING>"
             if 'name' in i:
                 loacation_name = i['name']
             else:
                 loacation_name = "<MISSING>"
+            if "Desigual" not in loacation_name:
+                continue
             if 'city' in i:
                 city = i['city']
             else:
                 city = "<MISSING>"
             if 'region' in i:
-                state = i['region']
+                state = i['regionSapId']
             else:
                 state = "<MISSING>"
             if 'postalCode' in i:
@@ -57,6 +67,7 @@ def fetch_data():
                 longitude = i['longitude']
             else:
                 longitude = "<MISSING>"
+            result_coords.append((latitude, longitude))
             if 'storeId' in i:
                 store_number = i['storeId']
             else:
@@ -72,27 +83,37 @@ def fetch_data():
                 for hour in store_hours:
                     hours = hours + " " + days[hour["dayNumber"]] + " " + hour["value"]
                 store.append(hours)
-            store = []
-            store.append("https://www.desigual.com/")
-            store.append(loacation_name if loacation_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else"<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours if hours else "<MISSING>")
-            store.append("<MISSING>")
-            if store[2] in address :
-                continue
-            address.append(store[2])
-            yield store 
+            if "Desigual" in loacation_name:
+                store = []
+                store.append("https://www.desigual.com/")
+                store.append(loacation_name if loacation_name else "<MISSING>") 
+                store.append(street_address if street_address else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code if country_code else "<MISSING>")
+                store.append(store_number if store_number else"<MISSING>") 
+                store.append(phone if phone else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(latitude if latitude else "<MISSING>")
+                store.append(longitude if longitude else "<MISSING>")
+                store.append(hours if hours else "<MISSING>")
+                store.append("<MISSING>")
+                if store[2] in address :
+                    continue
+                address.append(store[2])
+                yield store
+        
+        if data_len < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif data_len == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coords = search.next_coord()
 def scrape():
     data = fetch_data()
     write_output(data)
 
 scrape()
+

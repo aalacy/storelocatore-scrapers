@@ -80,7 +80,7 @@ def fetch_data():
                 addr = list(location_soup.find_all("div",{"class":"txtNew","data-packed":"true"})[0].stripped_strings)
             else:
                 addr = list(location_soup.find_all("div",{"class":"txtNew","data-packed":"true"})[1].stripped_strings)
-        print(addr)
+        
         city = addr[0].split(",")[1].strip().replace("MA","Springfield")
         if len(addr[0].split(",")) == 3:
             state = addr[0].split(",")[-1].strip()
