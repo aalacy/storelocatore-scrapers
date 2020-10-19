@@ -151,7 +151,7 @@ Apify.main(async () => {
     url: 'https://www.wawa.com/site-map',
   });
 
-  const proxyPassword = process.env.APIFY_PROXY_PASSWORD;
+  const proxyPassword = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
     countryCode: 'US',
