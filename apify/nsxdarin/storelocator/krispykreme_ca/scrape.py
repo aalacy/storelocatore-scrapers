@@ -19,43 +19,50 @@ def fetch_data():
     website = 'krispykreme.ca'
     typ = '<MISSING>'
     country = 'CA'
-    for line in r.iter_lines():
+    lines = r.iter_lines()
+    loc = '<MISSING>'
+    names = []
+    store = '<MISSING>'
+    for line in lines:
         line = str(line.decode('utf-8'))
-        if 'data-rocket-lazyload="fitvidscompatible"' in line:
-            items = line.split('data-rocket-lazyload="fitvidscompatible"')
-            for item in items:
-                if 'class="location__address">' in item:
-                    name = item.split('"location__title h2 text-uppercase">')[1].split('<')[0].strip()
-                    if '<span class="location__subtitle text-light h5"' in name:
-                        name = name + ' ' + name.split('<span class="location__subtitle text-light h5"')[1].split('>')[1].split('<')[0].strip()
-                    addinfo = item.split('"location__address">')[1].split('iv>')[0].replace('<br /></d','').replace('</d','')
-                    if addinfo.count('<br />') == 3:
-                        add = addinfo.split('<br />')[0].strip() + ' ' + addinfo.split('<br />')[1].strip()
-                        city = addinfo.split('<br />')[2].strip().rsplit(' ',1)[0]
-                        state = addinfo.split('<br />')[2].strip().rsplit(' ',1)[1]
-                        zc = addinfo.split('<br />')[3].strip()
-                    else:
-                        add = addinfo.split('<br />')[0].strip()
-                        city = addinfo.split('<br />')[1].strip().rsplit(' ',1)[0]
-                        state = addinfo.split('<br />')[1].strip().rsplit(' ',1)[1]
-                        zc = addinfo.split('<br />')[2].strip()
-                    try:
-                        phone = item.split('<strong>Tel:</strong>')[1].split('<')[0].strip()
-                    except:
-                        phone = '<MISSING>'
-                    typ = '<MISSING>'
-                    store = '<MISSING>'
-                    loc = '<MISSING>'
-                    try:
-                        lng = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!2d')[1].split('!')[0]
-                        lat = item.split('data-lazy-src="https://www.google.com/maps/')[1].split('!3d')[1].split('!')[0]
-                    except:
-                        lat = '<MISSING>'
-                        lng = '<MISSING>'
-                    hours = item.split('<div class="location__hours"><div class="font-weight-bold w-100">')[1].split('<br>')[0].replace('</div>','').replace('<div>','').strip()
-                    hours = hours.replace('y9','y 9')
-                    if 'Soon' not in hours:
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if '!2d' in line:
+            lng = line.split('!2d')[1].split('!')[0]
+            lat = line.split('!3d')[1].split('!')[0]
+        if '<div class="location__title h2 text-uppercase">' in line:
+            g = next(lines)
+            g = str(g.decode('utf-8'))
+            name = g.strip().replace('\r','').replace('\t','').replace('\n','')
+        if '<div class="location__address">' in line:
+            g = next(lines)
+            h = next(lines)
+            i = next(lines)
+            j = next(lines)
+            g = str(g.decode('utf-8'))
+            h = str(h.decode('utf-8'))
+            i = str(i.decode('utf-8'))
+            j = str(j.decode('utf-8'))
+            if '</div>' in j:
+                add = g.split('<')[0]
+                city = h.split('<')[0].rsplit(' ',1)[0].replace(',','').strip().replace('\r','').replace('\t','').replace('\n','')
+                state = h.split('<')[0].rsplit(' ',1)[1]
+                zc = i.strip().replace('\r','').replace('\t','').replace('\n','').replace('<br />','')
+            else:
+                add = g.split('<')[0] + ' ' + h.split('<')[0]
+                city = i.split('<')[0].rsplit(' ',1)[0].replace(',','').strip().replace('\r','').replace('\t','').replace('\n','')
+                state = i.split('<')[0].rsplit(' ',1)[1]
+                zc = j.strip().replace('\r','').replace('\t','').replace('\n','').replace('<br />','')
+        if '<strong>Tel:</strong>' in line:
+            phone = line.split('<strong>Tel:</strong>')[1].replace(',','').strip().replace('\r','').replace('\t','').replace('\n','')
+        if '<div class="location__hours">' in line:
+            g = next(lines)
+            h = next(lines)
+            g = str(g.decode('utf-8'))
+            h = str(h.decode('utf-8'))
+            if 'Delivery Via' not in g:
+                hours = g.split('">')[1].split('<')[0] + ': ' + h.split('<div>')[1].split('<')[0]
+            if add not in names:
+                names.append(add)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
