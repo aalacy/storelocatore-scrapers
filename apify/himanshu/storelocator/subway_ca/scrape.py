@@ -18,16 +18,13 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    dub = []
     base_url= "https://restaurants.subway.com/canada"
     r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     k = soup.find_all("a",{"class":"Directory-listLink","href":re.compile("canada/")})
     for i in k[:-1]:
         state_url = "https://restaurants.subway.com/"+i['href']
-        if state_url =="https://restaurants.subway.com/canada/nt/yellowknife":
-            state_url = "https://restaurants.subway.com/canada/nt"
-        if state_url == "https://restaurants.subway.com/canada/yt/whitehorse":
-            state_url = "https://restaurants.subway.com/canada/yt"
         r1 = session.get(state_url)
         soup1 = BeautifulSoup(r1.text,'lxml')
         city_data = soup1.find_all("a",{"class":"Directory-listLink"})
@@ -54,25 +51,6 @@ def fetch_data():
                 latitude = jd['profile']['yextDisplayCoordinate']['lat']
                 longitude = jd['profile']['yextDisplayCoordinate']['long']
                 hours_of_operation = " ".join(list(soup2.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","")
-
-                store=[]
-                store.append("https://www.subway.com/en-ca/")
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("CA")
-                store.append(store_number)
-                store.append(phone if phone else "<MISSING>")
-                store.append(location_type)
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
-                store.append(page_url)
-                store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
                 city_r = session.get(city_link)
@@ -100,27 +78,32 @@ def fetch_data():
                     longitude = jd['profile']['yextDisplayCoordinate']['long']
                     hours_of_operation = " ".join(list(soup2.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","")
 
-                    store=[]
-                    store.append("https://www.subway.com/en-ca/")
-                    store.append(location_name if location_name else "<MISSING>")
-                    store.append(street_address if street_address else "<MISSING>")
-                    store.append(city if city else "<MISSING>")
-                    store.append(state if state else "<MISSING>")
-                    store.append(zipp if zipp else "<MISSING>")
-                    store.append("CA")
-                    store.append(store_number)
-                    store.append(phone if phone else "<MISSING>")
-                    store.append(location_type)
-                    store.append(latitude if latitude else "<MISSING>")
-                    store.append(longitude if longitude else "<MISSING>")
-                    store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
-                    store.append(page_url)
-                    store = [x.replace("–","-") if type(x) == str else x for x in store]
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                    yield store
+            store=[]
+            store.append("https://www.subway.com/en-ca/")
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append("CA")
+            store.append(store_number)
+            store.append(phone if phone else "<MISSING>")
+            store.append(location_type)
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
+            store.append(page_url)
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            if str(store[2]+store[-1]) in dub:
+                continue
+            dub.append(str(store[2]+store[-1]))
+            yield store
 
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
+
 
