@@ -73,6 +73,48 @@ def fetch_data():
 
 		data.append([locator_domain, link, location_name.upper(), street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
+		# Other locations
+
+		locs = base.find(class_="cmp-locations").ul.find_all("li")
+		if len(locs) > 1:
+			other_locs = locs[1:]
+			for loc in other_locs:
+				location_name = "New York Life"
+				loc_list = loc.text[:loc.text.rfind("Office")].replace("\r","").replace("Fax:","").replace(" \n ","").replace("|","").strip().split("\n")
+				street_address = " ".join(loc_list[:-1])
+				street_address = (re.sub(' +', ' ', street_address)).strip()
+				if street_address[-1:] == ",":
+					street_address = street_address[:-1]
+				if street_address[:1] == ",":
+					street_address = street_address[1:].strip()
+				digit = re.search("\d", street_address).start(0)
+				if digit != 0:
+					location_name = location_name + " - " + street_address[:digit].strip()
+					street_address = street_address[digit:]
+					if location_name[-1:] == ",":
+						location_name = location_name[:-1].strip()
+
+				city_line = loc_list[-1].strip().split(",")
+				city = city_line[0].strip()
+				state = city_line[-1].strip().split()[0].strip()
+				try:
+					zip_code = city_line[-1].strip().split()[1].strip()
+				except:
+					zip_code = "<MISSING>"
+				country_code = "US"
+				store_number = "<MISSING>"
+
+				try:
+					phone = re.findall("[(\d)]{3}-[\d]{3}-[\d]{4}", str(loc.text))[0]
+				except:
+					phone = "<MISSING>"
+
+				location_type = "<MISSING>"
+				latitude = "<MISSING>"
+				longitude = "<MISSING>"
+				hours_of_operation = "<MISSING>"
+
+				data.append([locator_domain, link, location_name.upper(), street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
 def scrape():
