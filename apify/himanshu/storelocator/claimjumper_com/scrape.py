@@ -70,7 +70,7 @@ def fetch_data():
      
 
         
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+        store = [locator_domain, location_name, street_address.replace("Opry Mills Mall, ",''), city, state, zipp, country_code,
         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         
 
