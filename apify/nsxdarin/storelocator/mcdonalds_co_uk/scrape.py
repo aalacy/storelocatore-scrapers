@@ -45,7 +45,7 @@ def fetch_data():
             phone = item['properties']['telephone']
         except:
             phone = '<MISSING>'
-        name = "McDonald's # " + store
+        name = item['properties']['name']
         lat = item['geometry']['coordinates'][0]
         lng = item['geometry']['coordinates'][1]
         try:
