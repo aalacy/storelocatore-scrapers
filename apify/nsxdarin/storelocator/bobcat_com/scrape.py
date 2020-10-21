@@ -116,6 +116,16 @@ def fetch_data():
                     add = add.replace('"',"'")
                     purl = '<MISSING>'
                     name = name.replace('"',"'")
+                    if '12 Street West & Joanne' in add:
+                        city = 'Brooks'
+                        add = '12 Street West & Joanne Trucking Rd'
+                        state = 'AB'
+                        zc = 'T1R 1C8'
+                    if '7913 - 100 Avenue' in add:
+                        add = '7913 - 100 Avenue'
+                        city = 'Peace River'
+                        state = 'AB'
+                        zc = 'T8S 1M5'
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
