@@ -32,7 +32,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         #print('%s-%s...' % (llat, llng))
         url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
         r = session.get(url, headers=headers)
@@ -73,8 +73,8 @@ def fetch_data():
                             if store not in sids:
                                 sids.append(store)
                                 #print(store)
-                                if '"hasSprintStack":true' in item and '"storeDefinition":"(TPR)Third Party Retail"' in item and '"hasTmobileStack":false' in item:
-                                    typ = 'Sprint Store'
+                                if '"hasSprintStack":true' in item and '"deviceRepair":true' in item:
+                                    typ = 'T-MOBILE STORE (SPRINT REPAIR CENTER)'
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
