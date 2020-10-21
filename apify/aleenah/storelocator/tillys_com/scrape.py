@@ -1,98 +1,83 @@
 import csv
-from sgselenium import SgSelenium
-import re
-from bs4 import BeautifulSoup
 
-driver = SgSelenium().chrome()
+from sgselenium import SgChrome
+from bs4 import BeautifulSoup
+from sgscrape import simple_utils as sg_utils
+from sglogging import SgLogSetup
+
+DOMAIN = 'https://www.tillys.com'
+logger = SgLogSetup().get_logger('tillys.com')
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(sg_utils.sorted_keys(sg_utils.sg_record()))
         # Body
+        counter = 0
         for row in data:
-            writer.writerow(row)
+            counter += 1
+            writer.writerow(sg_utils.sort_values_dict(row))
 
-def parse_geo(url):
-    lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
-    lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
-    return lat, lon
+        logger.debug(f'Wrote {counter} records to file.')
+
+def parse_lat_long(google_maps_link: str) -> (str, str):
+    arr = google_maps_link.split('/')[-1].split(',')
+    return arr[0], arr[1]
 
 def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    countries=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
+    with SgChrome() as driver:
+        driver.set_page_load_timeout(120)
+        driver.rewrite_rules = [
+            (r'^((?!tillys.com/store-list).)*$', r'about:blank') # disregard all requests that aren't this page
+        ]
+        driver.get("https://www.tillys.com/store-list")
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        locations = soup.find_all('div', {'class': 'sl__stores-list_item'})
+        for loc in locations:
+            try:
+                links = loc.find_all('a')
+                about_link = [l for l in links if l.get('class') and 'sl__stores-list_name-link' in l['class']][0]
+                location_name = about_link['title']
 
-    driver.get("https://www.tillys.com/stores")
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    script = soup.find('script', {'type': 'application/json'})
-    datas = script.text.split("},{")
-    for tex in datas:
-        l=re.findall(r'.*"name":"([^"]*)"', tex)[0]
-        if "Coming Soon!" in l:
-            continue
-        locs.append(l)
-        street.append(re.findall(r'.*"address1":"([^"]*)"', tex)[0])
-        cities.append(re.findall(r'.*"city":"([^"]*)"', tex)[0])
-        lat.append(re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0].strip())
-        long.append(re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0].strip())
-        try:
-            phones.append(re.findall(r'.*"phone":"([^"]*)"', tex)[0].strip())
-        except:
-            phones.append("<MISSING>")
-        zips.append(re.findall(r'.*"postalCode":"([^"]*)"', tex)[0].strip())
-        states.append(re.findall(r'.*"stateCode":"([^"]*)"', tex)[0].strip())
-        ids.append(re.findall(r'.*"id":"([^"]*)"', tex)[0])
-        timing.append("<MISSING>")
+                if 'Coming Soon!' in location_name:
+                    continue # not an operating store yet; missing several fields
 
-    driver.get("https://www.tillys.com/store-list")
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    divs= soup.find_all('div',{'class':'col-6 col-sm-3 sl__stores-list_item'})
+                directions_link = [l for l in links if l.get('aria-label') and 'Driving directions to store' in l['aria-label']][0]
+                telephone_links =  [l for l in links if 'tel:' in l['href']]
+                telephone = telephone_links[0].text if telephone_links else sg_utils.MISSING
 
-    i=1
-    for div in divs:
-        span = div.find('span', {'itemprop': 'branchCode'})
-        time = div.find('time', class_="visually-hidden")
-        try:
+                lat, long = parse_lat_long(directions_link['href'])
 
-            timing[ids.index(span.text)]=time.text.replace("\n"," ").strip().strip(">")
-        except:
-            k=0
+                locality = [x for x in loc.find('div', {'itemprop': 'addressLocality'}).text.replace('\n', ',').split(',') if x]
 
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.tillys.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])#timing
-        row.append("https://www.tillys.com/stores")#page url
+                hours_raw = [i for i in loc.find('time').text.split('\n') if i]
+                hours = ', '.join([f'{day}: {time}' for day, time in zip(hours_raw[:7],hours_raw[7:])])
 
-        all.append(row)
-    return all
+                rec = sg_utils.sg_record(
+                    page_url=f"{DOMAIN}{about_link['href']}",
+                    locator_domain=DOMAIN,
+                    latitude=lat,
+                    longitude=long,
+                    store_number= loc.find('span', {'itemprop':'branchCode'}).text,
+                    location_name=location_name,
+                    street_address=loc.find('div', {'itemprop':'streetAddress'}).text.replace('\n',' ').strip(),
+                    state=locality[-2],
+                    country_code='us', # only US locations at the moment of writing
+                    city=", ".join(locality[:-2]),
+                    zip_postal=locality[-1],
+                    phone=sg_utils.or_missing(lambda: telephone),
+                    hours_of_operation=sg_utils.or_missing(lambda: hours))
+                yield rec
+
+            except BaseException as e:
+                logger.error(loc, exc_info=e)
+                raise e
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+if __name__ == '__main__':
+    scrape()
