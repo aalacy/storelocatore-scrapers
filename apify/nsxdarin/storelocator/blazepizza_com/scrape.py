@@ -1,9 +1,11 @@
 import csv
-import re
 from sgrequests import SgRequests
+import json
+from sgzip import sgzip
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'locale': 'en_US'
            }
 
 def write_output(data):
@@ -14,49 +16,51 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://www.blazepizza.com/locations'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        if 'mapData =' in line:
-            items = line.split('{"id":"')
-            for item in items:
-                if '"coming_soon":false' in item:
-                    website = 'blazepizza.com'
-                    typ = 'Restaurant'
-                    hours = item.split('"hours":"')[1].split('","')[0]
-                    cleanr = re.compile('<.*?>')
-                    hours = re.sub(cleanr, '', hours)
-                    name = item.split('"title":"')[1].split('"')[0]
-                    city = item.split(',"city":"')[1].split('"')[0]
-                    add = item.split(',"address":"')[1].split('"')[0]
-                    state = item.split('"state":"')[1].split('"')[0]
-                    country = item.split('"country":"')[1].split('"')[0]
-                    zc = item.split('"zip":"')[1].split('"')[0]
-                    store = item.split('"')[0]
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    lat = item.split('"lat":"')[1].split('"')[0]
-                    lng = item.split('"lon":"')[1].split('"')[0]
-                    loc = 'https://hq.blazepizza.com/locations/' + item.split('"slug":"')[1].split('"')[0]
-                    if hours == '':
-                        hours = '<MISSING>'
-                    if phone == '':
-                        phone = '<MISSING>'
-                    if zc == '':
-                        zc = '<MISSING>'
-                    if country == 'Canada':
-                        country = 'CA'
-                    hours = hours.replace('\u2013','-').replace('&ndash;','-').replace('\\r','').replace('\\n','').replace('\\t','')
-                    hours = hours.replace('\u00a0',' ').replace('am','am ').replace('pm','pm ').replace('  ',' ').strip()
-                    hours = hours.replace('&nbsp;',' ').strip().replace('  ',' ')
-                    if 'day' not in hours.lower():
-                        hours = 'Daily: ' + hours
-                    hours = hours.replace(' &am p; ',' & ')
-                    hours = hours.replace('&am p;','&').replace(' -','-').replace('- ','-')
-                    hours = hours.replace('\\u2013','-').replace('\\u00a0','').strip()
-                    hours = hours.replace('day','day: ').replace('::',':').replace('  ',' ')
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    ids = []
+    for coord in sgzip.coords_for_radius(50):
+        try:
+            x = coord[0]
+            y = coord[1]
+            url = 'https://nomnom-prod-api.blazepizza.com/restaurants/near?lat=' + str(x) + '&long=' + str(y) + '&radius=500&limit=20&nomnom=calendars&nomnom_calendars_from=20201020&nomnom_calendars_to=20201028&nomnom_exclude_extref=999'
+            #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+            r = session.get(url, headers=headers)
+            for line in r.iter_lines():
+                line = str(line.decode('utf-8'))
+                if '"id":' in line:
+                    items = line.split('"id":')
+                    for item in items:
+                        if '"isavailable":' in item:
+                            hours = ''
+                            store = item.split(',')[0]
+                            lat = item.split('"latitude":')[1].split(',')[0]
+                            lng = item.split('"longitude":')[1].split(',')[0]
+                            loc = item.split('"mobileurl":"')[1].split('"')[0]
+                            name = item.split(',"name":"')[1].split('"')[0]
+                            state = item.split('"state":"')[1].split('"')[0]
+                            add = item.split(',"streetaddress":"')[1].split('"')[0]
+                            phone = item.split('"telephone":"')[1].split('"')[0]
+                            zc = item.split('"zip":"')[1].split('"')[0]
+                            city = item.split('"city":"')[1].split('"')[0]
+                            typ = '<MISSING>'
+                            website = 'blazepizza.com'
+                            country = item.split(',"country":"')[1].split('"')[0]
+                            days = item.split('"label":null,"ranges":[')[1].split(']')[0].split('"end":"')
+                            for day in days:
+                                if '"start":"' in day:
+                                    hrs = day.split('"weekday":"')[1].split('"')[0] + ': ' + day.split('"start":"')[1].split('"')[0].rsplit(' ',1)[1] + '-' + day.split('"')[0].rsplit(' ',1)[1]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                            if phone ==  '':
+                                phone = '<MISSING>'
+                            if hours ==  '':
+                                hours = '<MISSING>'
+                            if store not in ids:
+                                ids.append(store)
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        except:
+            pass
 
 def scrape():
     data = fetch_data()
