@@ -1,6 +1,5 @@
 import re
 import csv
-import time
 from sgzip import coords_for_radius
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
@@ -148,6 +147,4 @@ def scrape():
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     scrape()
-    print(f"{time.time() - start_time} seconds")
