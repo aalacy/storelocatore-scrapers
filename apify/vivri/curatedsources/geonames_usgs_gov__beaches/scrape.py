@@ -5,8 +5,10 @@ from os import listdir
 from bs4 import BeautifulSoup
 from concurrent.futures import *
 from sgscrape import simple_network_utils
-from sgscrape import simple_utils
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('geonames.usgs.gov_beaches')
 
 MISSING = "<MISSING>"
 FEATURE_URL_PREFIX = 'https://geonames.usgs.gov/apex/f?p=138:3:::NO:3:P3_FID,P3_TITLE:'
@@ -34,11 +36,12 @@ def read_national_file(filename: str) -> list:
             if row[2] == 'Beach':
                 yield row[0].strip()
 
-def or_missing(try_get: lambda: str) -> str:
+def or_else(try_get: lambda: str, otherwise: str = MISSING) -> str:
     try:
-        return try_get()
+        value = try_get().strip()
+        return value if value else otherwise
     except:
-        return MISSING
+        return otherwise
 
 def get_sibling_value(xml_result, name_of_value: str) -> str:
     left = xml_result.find_all(name="td", attrs={"class": "L"}, text=name_of_value)[0]
@@ -50,13 +53,11 @@ def page_url(feature_id: str) -> str:
 def fetch_data(feature_id: str):
     pageurl = page_url(feature_id)
     try:
-        raw_data = simple_network_utils.fetch_data(
-            request_url=pageurl
-        )
+        raw_data = simple_network_utils.fetch_data(request_url=pageurl)
         return feature_id, pageurl, raw_data
 
     except Exception as e:
-        print(f"Error while fetching from {page_url} - {e}")
+        logger.error(f"Error while fetching from {page_url}", exc_info=e)
         return None
 
 def parse_record_data(feature_id: str, pageurl: str, raw_response) -> list:
@@ -70,9 +71,9 @@ def parse_record_data(feature_id: str, pageurl: str, raw_response) -> list:
 
     location_name = get_sibling_value(xml_result, "Name:")
 
-    street_address = or_missing(lambda: get_sibling_value(xml_result, "Address:"))
-    city = or_missing(lambda: get_sibling_value(xml_result, "City:"))
-    zipcode = or_missing(lambda: get_sibling_value(xml_result, "ZIP:"))
+    street_address = or_else(lambda: or_else(lambda: get_sibling_value(xml_result, "Address:"), location_name))
+    city = or_else(lambda: get_sibling_value(xml_result, "City:"))
+    zipcode = or_else(lambda: get_sibling_value(xml_result, "ZIP:"))
 
     state = xml_result.find("td", attrs={"headers": "STATE_NAME"}).text.strip()
     latitude = xml_result.find("td", attrs={"headers": "LAT"}).text.strip()
