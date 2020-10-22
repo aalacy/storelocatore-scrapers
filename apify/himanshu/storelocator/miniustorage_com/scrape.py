@@ -1,12 +1,9 @@
-from selenium.webdriver.support.wait import WebDriverWait
 import csv
-from sgselenium import SgSelenium
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-
-
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,36 +15,27 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 def fetch_data():
-    address = []
-    driver = SgSelenium().firefox()
-    driver.get('https://www.miniustorage.com/all-locations/')
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     }
-    soup = bs(driver.page_source, "lxml")
+
     base_url = "https://www.miniustorage.com/"
-    data = soup.find("div",class_="pagePlayer").find_all("div",{"class":"locByStateFacility"})
-    for q in data:
-        page_url = q.find("a",class_=re.compile("up_info_"))['href']
-        # print(page_url)
-        soup1 = bs(requests.get(page_url,headers=headers).text,'lxml')
-        lat=''
-        log=''
-        try:
-            lat = soup1.find("a",{"href":re.compile("https://www.google.com/maps")})['href'].split("@")[1].split(",")[0]
-            log= soup1.find("a",{"href":re.compile("https://www.google.com/maps")})['href'].split("@")[1].split(",")[1]
-        except:
-            lat='<MISSING>'
-            log='<MISSING>'
-        street_address = soup1.find("span",class_="loc_add1").text.strip().replace(",",'')
-        city = soup1.find("span",{"itemprop":"addressLocality"}).text.strip().replace(",",'')
-        state = soup1.find("span",{"itemprop":"addressRegion"}).text.strip()
-        zipp = soup1.find("span",{"itemprop":"postalCode"}).text.strip()
-        phone = soup1.find("div",{"itemprop":"telephone"}).find("a").text.strip()
-        location_name = soup1.find("div",class_="locName").text.strip()
-        hours_of_operation = " ".join(list(soup1.find("div",{"itemprop":"openingHours"}).stripped_strings))
-        # print(phone)
+    r = session.get("https://www.miniustorage.com/locations/",headers=headers)
+    soup = bs(r.text,'html5lib')
+    jd = json.loads(soup.find_all("script",{"type":"application/ld+json"})[1].text)['location']
+    for val in jd:
+        location_name = val['name'].replace("&#8211;","-")
+        street_address = val['address']['streetAddress']
+        city = val['address']['addressLocality']
+        state = val['address']['addressRegion']
+        zipp = val['address']['postalCode']
+        phone = val['telephone']
+        location_type = val['@type']
+        latitude = val['geo']['latitude']
+        longitude = val['geo']['longitude']
+        page_url = "https://www.miniustorage.com/location/USA/"+state+"/"+city.replace(" ","-")+"/"+city.lower().replace(" ","-")+"/"
+
         store = []
         store.append(base_url if base_url else "<MISSING>")
         store.append(location_name if location_name else "<MISSING>") 
@@ -58,18 +46,14 @@ def fetch_data():
         store.append( "US")
         store.append("<MISSING>") 
         store.append(phone if phone else "<MISSING>")
-        store.append( "<MISSING>")
-        store.append(lat if lat else "<MISSING>")
-        store.append(log if log else "<MISSING>")
-        store.append(hours_of_operation.replace('Office Hours: ','') if hours_of_operation else "<MISSING>")
+        store.append(location_type)
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append("<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
-        # print("~~~~~~~~~~~~~~~~~ ",store)
-        # if store[2] in addressesss :
-        #     continue
-        # addressesss.append(store[2])
         yield store
-
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

@@ -34,7 +34,7 @@ def fetch_data():
             if i["countryCode"] not in ["US","CA"]:
                 continue
             if 'address' in i:
-                street_address = i['address'].replace("Orlando Florida Mall,","")
+                street_address = i['address'].replace("Orlando Florida Mall,","").replace("McArthurGlen Designer Outlet,","").replace("Miromar Outlets,","").replace("Shopping Center Dolphin Mall,","").replace("Miracle Mile Shops,","").strip()
             else:
                 street_address = "<MISSING>"
             if 'name' in i:
@@ -69,11 +69,12 @@ def fetch_data():
                 longitude = "<MISSING>"
             result_coords.append((latitude, longitude))
             if 'storeId' in i:
-                store_number = i['storeId']
+                store_number = i['storeId'].replace("R","")
             else:
                 store_number = "<MISSING>"
             if 'phone' in i:
-                phone = i['phone']
+                temp_phone = i['phone'].replace("+1","").replace(" ","").strip()
+                phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
             else:
                 phone = "<MISSING>"
             hours = ""

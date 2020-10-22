@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from datetime import datetime
-
 
 session = SgRequests()
 
@@ -47,7 +45,7 @@ def fetch_data():
         state = location['data-province'].upper()
         zipp = location['data-postal-code'].upper()
         location_name = location.find("span",{"class":"name"}).text
-        street_address = location.find("span",{"class":"location_address1"}).text
+        street_address = location.find("span",{"class":"location_address_address_1"}).text
         page_url = location.find("a")['href']
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")

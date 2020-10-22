@@ -1,101 +1,83 @@
-# Import libraries
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re, time
+import re, time,json
 
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
+    p =0
     data = []
-    p = 0
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
     url = 'https://www.romeospizza.com/locations/'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.find('div', {'id': 'eID-'})
-    repo_list = repo_list.findAll('a')    
+    r = session.get(url, headers=headers, verify=False)
     
-    for repo in repo_list:       
-        link = repo['href']
-        if repo.text.find('More Info') > -1:
-           
-            if len(link) > 3:
-                try:
-                    page = requests.get(link)
-                except:
-                    pass
-                soup = BeautifulSoup(page.text, "html.parser")
-                #title = soup.find('div',{'class':'Location-Name'}).text
-                #street = soup.find('div',{'class':'Address-line Address-streetOne'})
-                address = soup.findAll('div',{'class':'Address-line'})
-                #print(len(address))
-                if len(address) == 2:
-                    street = address[0].text
-                    state = address[1].text
-                elif len(address) == 3:
-                    street = address[0].text + " " + address[1].text
-                    state = address[2].text
-                try:
-                    phone = soup.find('span',{'class':'phone-text'}).text
-                except:
-                    phone = "<MISSING>"
-                    
-                detail = soup.findAll('tr',{'class':'hours-row'})
-                hours = ""
-                for det in detail:
-                    hours = hours + " "+ det.text
-
-                map = soup.find('a',{'class':'btn btn-primary directions-cta btn-lg lp-param lp-param-routableCoordinate lp-param-getDirectionsText'})
-                map = map['href']
-                start = map.find("q=")
-                start = start + 2
-                end = map.find(",", start)
-                lat = map[start:end]
-                longt = map[end+1:len(map)]
-                start = state.find(",")
-                city = state[0:start]
-                start = start + 2
-                end = start + 3
-                temp = state[start:end]
-                pcode = state[end:len(state)]
-                state = temp
-                hours = hours.replace('day','day ')
-                title = city
-                data.append([
-                            'https://www.romeospizza.com/',
-                            link,
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            'US',
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours
-                        ])
-                #print(p,data[p])
-                #print(time.strftime("%H:%M:%S", time.localtime(time.time())))
-                p += 1
+    soup =BeautifulSoup(r.text, "html.parser")
+    linklist = soup.select('a:contains("More Info")')
+    
+    for link in linklist:
+        link = link['href']
+        r = session.get(link, headers=headers, verify=False)
+        loc = r.text.split('<script type="application/ld+json">',1)[1].split('</script>',1)[0]
+        loc = json.loads(loc)        
+        phone = loc['telephone']
+        phone = phone.replace('+1','')
+        phone = phone[0:3]+'-'+phone[3:6]+'-'+phone[6:10]
+        city = loc['address']['addressLocality']
+        title = city
+        street = loc['address']['streetAddress']
+        state = loc['address']['addressRegion']
+        pcode = loc['address']['postalCode']
+        lat = loc['geo']['latitude']
+        longt = loc['geo']['longitude']
+        hourlist = json.loads(str(loc['openingHoursSpecification']).replace("'",'"'))
+        hours =''
+        for hr in hourlist:
+            end = (int)(hr['closes'].split(':')[0])
+            if end > 12:
+                end = end -12
+            hours = hours + hr['dayOfWeek'] + ' '+hr['opens'] + ' AM - ' +str(end) +':'+hr['closes'].split(':')[1] +' PM '
+            
+        
+        data.append([
+                        'https://romeospizza.com',
+                        link,                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+        #print(p,data[p])
+        p += 1
                 
-       
+        
+        
+  
+           
         
     return data
 
@@ -103,6 +85,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
+   
 
 scrape()

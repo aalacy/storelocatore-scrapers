@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+
 
 session = SgRequests()
 
@@ -23,7 +23,7 @@ def fetch_data():
     }
     base_url = "https://www.balenciaga.com"
     
-    r = requests.get("https://www.balenciaga.com/experience/us/?yoox_storelocator_action=true&action=yoox_storelocator_get_all_stores",headers=headers)
+    r = session.get("https://www.balenciaga.com/experience/us/?yoox_storelocator_action=true&action=yoox_storelocator_get_all_stores",headers=headers)
     data = r.json()
     return_main_object = []
     for store_data in data:

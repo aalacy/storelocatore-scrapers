@@ -8,6 +8,7 @@ import csv
 import re
 import json
 import unicodedata
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline="") as output_file:
@@ -34,23 +35,28 @@ def fetch_data():
     }
     while zip_code:
         result_coords =[]
-        
         addressess = []
         headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
         }
         base_url = "https://www.careeronestop.org/"
         location_url = "https://www.careeronestop.org/Localhelp/AmericanJobCenters/find-american-job-centers.aspx?&location="+str(zip_code)+"&radius=100&pagesize=500"
-        r = session.get(location_url,headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
-        table = soup.find("table",{"class":"cos-table cos-table-mobile"}).find("tbody").find_all("tr")
+        try:
+            r = session.get(location_url,headers=headers)
+            soup = BeautifulSoup(r.text,"lxml")
+            table = soup.find("table",{"class":"cos-table cos-table-mobile"}).find("tbody").find_all("tr")
+        except:
+            pass
         for tr in table:
             location_name = tr.find("a",{"class":"notranslate"}).text
             page_url = tr.find("a",{"class":"notranslate"})['href']
-            data_link = ("https://www.careeronestop.org/"+page_url)
-            r1 = session.get(data_link,headers=headers)
-            soup = BeautifulSoup(r1.text,"lxml")
-            addr = (soup.find_all("script",{"type":"text/javascript"})[11])
+            try:
+                data_link = ("https://www.careeronestop.org/"+page_url)
+                r1 = session.get(data_link,headers=headers)
+                soup = BeautifulSoup(r1.text,"lxml")
+                addr = soup.find_all("script",{"type":"text/javascript"})[11]
+            except:
+                continue
             data_main = (str(addr).split("locinfo = ")[1].split("var mapapi =")[0].replace(";",""))
             json_data = json.loads(data_main)
             street_address1 = json_data['ADDRESS1']
@@ -61,9 +67,9 @@ def fetch_data():
             longitude = json_data['LON']
             location_name = soup.find("div",{"id":"detailsheading"}).text
             try:
-                phone = soup.find("a",{"class":"notranslate"}).text
+                phone = soup.find("a",{"class":"notranslate"}).text.lstrip("1-")
             except:
-                phone = "mp"
+                phone = soup.find_all("span",{"class":"notranslate"})[3].text.lstrip("1-").replace("=","-")[:12]
             st_data = soup.find_all("span",{"class":"notranslate"})[2].text.split(",")[0].replace(city,"").replace(street_address1,"")
             street_address = street_address1 +" "+ st_data
             try:
@@ -79,7 +85,10 @@ def fetch_data():
                         if "Hours" in hs: 
                             data_hs = hs
             except:
-                data_hs = "mp"   
+                data_hs = "<MISSING>" 
+
+            if phone =="711":
+                phone = "740-652-7856"
             store = []
             store.append("https://www.careeronestop.org/")
             store.append(location_name)
@@ -103,6 +112,7 @@ def fetch_data():
             if store[2] in address :
                 continue
             address.append(store[2])
+            #print(store)
             yield store
         if len(json_data) < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
@@ -115,3 +125,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

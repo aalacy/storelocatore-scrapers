@@ -38,6 +38,10 @@ def fetch_data():
                         city = addinfo.split(',')[1].strip()
                         state = addinfo.split(',')[2].strip().split(' ')[0]
                         zc = addinfo.rsplit(' ',1)[1]
+                        if '1652 Beltline' in add:
+                            zc = '35601'
+                        if '1161 U' in add:
+                            zc = '35645'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
