@@ -99,7 +99,7 @@ def fetch_data():
                 yield store
         
         else:
-            print(store_data)
+            pass
 
 
 def scrape():
