@@ -9,8 +9,20 @@ function convertBlank(x) {
   }
 }
 
-function parseHours(jsonHours) {
-	return '';
+function parseHours(json) {
+	if (json && json.message && !json.operating) {
+		return json.message;
+	} else if (json && 'operating' in json && json.operating) {
+		hours = []
+		for (const day of json.operating) {
+			const dayName = day.key;
+			const range = day.detail;
+			hours.push(`${dayName}: ${range}`);
+		}
+		return hours.join(', ');
+	} else {
+		return '<MISSING>';
+	}
 }
 
 async function scrape() {
@@ -33,7 +45,7 @@ async function scrape() {
 		for (let store of data.results) {
 			stores.push({
 				locator_domain: '7-eleven.com',
-				page_url: store.seo_web_url,
+				page_url: convertBlank(store.seo_web_url),
 				location_name: convertBlank(store.name),
 				street_address: convertBlank(store.address),
 				city: convertBlank(store.city),
