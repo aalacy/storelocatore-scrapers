@@ -27,7 +27,6 @@ def fetch_data():
                     lurl = 'https://7elevenhawaii.com/' + item.split('"')[0]
                     locs.append(lurl)
     for loc in locs:
-        print(loc)
         name = ''
         add = ''
         city = ''
