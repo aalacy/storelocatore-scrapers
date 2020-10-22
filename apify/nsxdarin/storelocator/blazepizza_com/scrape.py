@@ -17,6 +17,21 @@ def write_output(data):
 
 def fetch_data():
     ids = []
+    website = 'blazepizza.com'
+    name = 'Blaze Pizza Tamuning'
+    typ = '<MISSING>'
+    country = 'US'
+    state = 'GU'
+    add = '331 North Marine Drive'
+    city = 'Tamuning'
+    zc = '96913'
+    hours = 'Sun-Fri: 24 Hours; Sat: 8:00 AM - Midnight'
+    phone = '<MISSING>'
+    loc = 'https://www.blazepizza.com/locations/GU/Tamuning'
+    lat = '13.5158039'
+    lng = '144.8333093'
+    store = '<MISSING>'
+    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for coord in sgzip.coords_for_radius(50):
         try:
             x = coord[0]
@@ -26,21 +41,32 @@ def fetch_data():
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
-                if '"id":' in line:
-                    items = line.split('"id":')
+                if '"brand":"' in line:
+                    items = line.split('"brand":"')
                     for item in items:
-                        if '"isavailable":' in item:
+                        if '"city":"' in item:
                             hours = ''
-                            store = item.split(',')[0]
+                            name = ''
+                            state = ''
+                            loc = ''
+                            zc = ''
+                            city = ''
+                            add = ''
+                            phone = ''
+                            lat = ''
+                            lng = ''
+                            country = ''
+                            store = item.split('"id":')[1].split(',')[0]
                             lat = item.split('"latitude":')[1].split(',')[0]
                             lng = item.split('"longitude":')[1].split(',')[0]
-                            loc = item.split('"mobileurl":"')[1].split('"')[0]
                             name = item.split(',"name":"')[1].split('"')[0]
                             state = item.split('"state":"')[1].split('"')[0]
                             add = item.split(',"streetaddress":"')[1].split('"')[0]
                             phone = item.split('"telephone":"')[1].split('"')[0]
                             zc = item.split('"zip":"')[1].split('"')[0]
                             city = item.split('"city":"')[1].split('"')[0]
+                            loc = 'https://www.blazepizza.com/locations/' + state + '/' + city
+                            loc = loc.replace(' ','-').replace('.','')
                             typ = '<MISSING>'
                             website = 'blazepizza.com'
                             country = item.split(',"country":"')[1].split('"')[0]

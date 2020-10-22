@@ -17,59 +17,58 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    canada = ['AB','BC','MB','NB','NL','NS','ON','PE','SK','QC']
     for x in range(1, 5):
         #print(('Pulling Sitemap %s...' % str(x)))
-        smurl = 'http://locations.westernunion.com/sitemap-' + str(x) + '.xml.gz'
+        smurl = 'https://stores.cosmoprofbeauty.com/sitemap/sitemap' + str(x) + '.xml.gz'
         with open('branches.xml.gz','wb') as f:
             f.write(urllib.request.urlopen(smurl).read())
             f.close()
             with gzip.open('branches.xml.gz', 'rt') as f:
                 for line in f:
-                    if '<loc>http://locations.westernunion.com/ca/' in line:
+                    if '<loc>https://stores.cosmoprofbeauty.com/' in line and '.html' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
         #print((str(len(locs)) + ' Locations Found...'))
     for loc in locs:
-        website = 'westernunion.ca'
+        website = 'cosmoprofbeauty.com'
         typ = '<MISSING>'
-        store = '<MISSING>'
-        hours = '<MISSING>'
-        city = ''
         add = ''
+        store = ''
+        name = ''
+        city = ''
         state = ''
         zc = ''
-        if '/us/' in loc:
-            country = 'US'
-        if '/ca/' in loc:
-            country = 'CA'
-        name = ''
+        country = 'US'
         phone = ''
+        hours = ''
         lat = ''
         lng = ''
         r = session.get(loc, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
         lines = r.iter_lines(decode_unicode=True)
-        AFound = False
         for line in lines:
-            if '<h1 class="wu_LocationCard' in line:
-                name = line.split('<h1 class="wu_LocationCard')[1].split('">')[1].split('<')[0]
-                if 'Western Union Agent Location' in name:
-                    name = name.replace(name[:32], '')
-                    name = name.strip()
-            if '"streetAddress":"' in line and AFound is False:
-                AFound = True
-                add = line.split('"streetAddress":"')[1].split('"')[0]
-                state = line.split('"state":"')[1].split('"')[0]
-                city = line.split('"city":"')[1].split('"')[0]
-                zc = line.split('"postal":"')[1].split('"')[0]
-                lat = line.split('"latitude":')[1].split(',')[0]
-                lng = line.split('"longitude":')[1].split(',')[0]
-                if phone == '':
-                    phone = line.split('","phone":"')[1].split('"')[0]
-                if store == '<MISSING>':
-                    store = line.split('"id":"')[1].split('"')[0]
-            if '"desktopHours":{"desktopHours":{' in line:
-                hours = line.split('"desktopHours":{"desktopHours":{')[1].split('}}')[0]
-                hours = hours.replace('","','; ').replace('"','')
+            if '<div class="map-list-item-wrap" data-fid="' in line:
+                store = line.split('<div class="map-list-item-wrap" data-fid="')[1].split('"')[0]
+                name = 'CosmoProf #' + store
+            if '"address_1\\": \\"' in line:
+                add = line.split('"address_1\\": \\"')[1].split('\\')[0] + ' ' + line.split('"address_2\\": \\"')[1].split('\\')[0]
+                add = add.strip()
+                city = line.split('"city\\": \\"')[1].split('\\')[0]
+                state = line.split('"region\\": \\"')[1].split('\\')[0]
+                zc = line.split('"post_code\\": \\"')[1].split('\\')[0]
+                lat = line.split('"lat\\": \\"')[1].split('\\')[0]
+                lng = line.split('"lng\\": \\"')[1].split('\\')[0]
+                loc = line.split('"url\\": \\"')[1].split('\\')[0]
+            if '"telephone": "' in line:
+                phone = line.split('"telephone": "')[1].split('"')[0]
+            if '"openingHours": "' in line:
+                hours = line.split('"openingHours": "')[1].split('"')[0]
+        if state in canada:
+            country = 'CA'
+        if phone == '':
+            phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
