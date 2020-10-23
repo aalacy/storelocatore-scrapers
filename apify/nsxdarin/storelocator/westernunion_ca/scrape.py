@@ -70,6 +70,10 @@ def fetch_data():
             if '"desktopHours":{"desktopHours":{' in line:
                 hours = line.split('"desktopHours":{"desktopHours":{')[1].split('}}')[0]
                 hours = hours.replace('","','; ').replace('"','')
+        if hours == '':
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
