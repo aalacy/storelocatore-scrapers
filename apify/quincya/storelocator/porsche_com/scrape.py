@@ -76,6 +76,11 @@ def fetch_data():
 				phone = item.find("phone").text
 				link = "<MISSING>"
 
+			if "porschegrapevine" in link:
+				phone = "877-890-7917"
+			if "porscheburlingame" in link:
+				phone = "866-939-7982"
+
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
