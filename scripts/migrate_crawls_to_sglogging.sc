@@ -3,12 +3,24 @@ import $ivy.`com.github.pathikrit::better-files:3.9.1`
 import better.files._
 import File._
 import java.io.{File => JFile}
+import scala.util.Try
 
 def all_authors(sgBasePath: os.Path): Stream[os.Path] = 
     ls(sgBasePath / 'apify).filter(_.isDir).toStream
 
+def maybePath (path: => os.Path): Option[os.Path] =
+    Try { 
+        ls(path)
+        path
+    } toOption
+
 def all_scrapers_from_author(authorBasePath: os.Path): Stream[os.Path] = {
-    val all_dirs = ls(authorBasePath / 'storelocator) ++ ls(authorBasePath / 'storelocator)
+    val all_dirs = 
+        List(maybePath(authorBasePath / 'storelocator), maybePath(authorBasePath / 'curatedsources))
+            .foldLeft(List.empty[os.Path]) { (accum, next) =>
+                accum ++ (next map { path => ls(path) } getOrElse Nil)
+            }
+
     all_dirs.filter { dir =>
         if (dir.isDir) {
             val non_private = !dir.segments.toList.last.startsWith(".")
@@ -31,6 +43,9 @@ def insert_sglogging_in_reqs(reqs_file: os.Path): Unit = {
     val reqfile = File(reqs_file.toString)
     reqfile appendLine "sglogging"
 }
+
+def has_print_statements(python_file_path: os.Path): Boolean =
+    File(python_file_path.toString).contentAsString.indexOf("print") != -1
 
 def replace_prints(python_file_path: os.Path): Unit = {
     val python_file = File(python_file_path.toString)
@@ -61,11 +76,12 @@ def insert_import(python_file: os.Path): Unit =
 
 def process_scraper(scraper_dir: os.Path) {
     requirements_txt_in_dir(scraper_dir) map insert_sglogging_in_reqs
-    all_python_scripts_in_dir(scraper_dir) map { python_script =>
+    all_python_scripts_in_dir(scraper_dir) filter has_print_statements map { python_script =>
+        println(s"WORKING ON SCRIPT: ${python_script}")
         insert_import(python_script)
-        replace_prints(python_script)
         mk_logger(python_script, scraper_dir.segments.toList.last)
-    }
+        replace_prints(python_script)
+    }   
 }
 
 lazy val sg_dir = pwd / up
@@ -86,5 +102,7 @@ lazy val full_program = scrapers_without_sglogging.zipWithIndex map { case (dir,
 lazy val test_dir = sg_dir / 'apify / 'himanshu / 'storelocator / 'lotsa_com
 
 full_program.toList
+
+// println(all_scrapers.size, all_scrapers.toSet.size)
 
 //process_scraper(test_dir) // TESTING
