@@ -13,7 +13,7 @@ import java.io.{File => JFile}
 import scala.util.Try
 
 def all_authors(sgBasePath: os.Path): Stream[os.Path] = 
-    ls(sgBasePath / 'apify).filter(_.isDir).toStream
+    ls(sgBasePath / 'apify).toStream.filter(_.isDir)
 
 def maybePath (path: => os.Path): Option[os.Path] =
     Try { 
@@ -28,17 +28,17 @@ def all_scrapers_from_author(authorBasePath: os.Path): Stream[os.Path] = {
                 accum ++ (next map { path => ls(path) } getOrElse Nil)
             }
 
-    all_dirs.filter { dir =>
+    all_dirs.toStream.filter { dir =>
         if (dir.isDir) {
             val non_private = !dir.segments.toList.last.startsWith(".")
             val has_dockerfile = ls(dir).exists(_.segments.toList.last == "Dockerfile")
             non_private && has_dockerfile
         } else false
-    }.toStream
+    }
 }
 
 def all_python_scripts_in_dir(dir: os.Path): Stream[os.Path] =
-    ls(dir).filter(_.toString.endsWith(".py")).toStream
+    ls(dir).toStream.filter(_.toString.endsWith(".py"))
 
 def requirements_txt_in_dir(dir: os.Path): Option[os.Path] =
     ls(dir).filter(_.toString.contains("requirements.txt")).headOption
