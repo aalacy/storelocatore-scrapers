@@ -7,6 +7,11 @@ import usaddress
 import re
 import time
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('airbornesports_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +49,7 @@ def fetch_data():
     for link in link_list:
         if "hours" not in link:
             continue
-        # print(link) 
+        # logger.info(link) 
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 
@@ -113,7 +118,7 @@ def fetch_data():
     for link in link_list:
         if "hours" in link:
             continue
-        # print(link)
+        # logger.info(link)
         if "southjordan" in link:
             ad_link = link + "/contact-us"
             hrs_link = link + "/hourspricing"

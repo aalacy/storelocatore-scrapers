@@ -1,6 +1,11 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('malco_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,7 +42,7 @@ def fetch_data():
 		base = BeautifulSoup(req.text,"lxml")
 
 		location_name = base.h5.text.strip()
-		# print(link)
+		# logger.info(link)
 		
 		raw_data = list(base.find(class_="w3-half").stripped_strings)
 		

@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('newlook_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,8 +34,8 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        print(i)
-        print(link)
+        logger.info(i)
+        logger.info(link)
         cont = driver.find_element_by_css_selector('div.card-info').text.split('\n')
 
         location_name = cont[0]
@@ -60,9 +65,9 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(store_data)
-        print()
+        logger.info()
+        logger.info(store_data)
+        logger.info()
         all_store_data.append(store_data)
 
     driver.quit()

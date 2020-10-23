@@ -5,6 +5,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('labambaburritos_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,11 +40,11 @@ def fetch_data():
     coords = soup.findAll('iframe')
     m = 0
     p = 0
-    print(len(titlelist))
+    logger.info(len(titlelist))
     for i in range(0,len(titlelist)):
         try:
             title = titlelist[i].text
-            #print(title)
+            #logger.info(title)
             detail = detaillist[m]
             detail = detail.findAll('span')
             street = detail[0].text
@@ -76,7 +81,7 @@ def fetch_data():
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
     
    
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
 
         except:
@@ -87,9 +92,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

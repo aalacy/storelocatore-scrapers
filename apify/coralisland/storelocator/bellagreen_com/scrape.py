@@ -8,6 +8,11 @@ import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bellagreen_com')
+
+
 
 options = Options() 
 options.add_argument('--headless')
@@ -78,10 +83,10 @@ def fetch_data():
     for store in store_list:
         output = []
         output.append(base_url) # url
-        #print(get_value(store.xpath('.//h4[@class="location-name"]//text()')))
+        #logger.info(get_value(store.xpath('.//h4[@class="location-name"]//text()')))
         output.append(get_value(store.xpath('.//h4[@class="location-name"]//text()'))) #location name
         detail = eliminate_space(store.xpath('.//p[@class="location-contact small"]//a//text()'))  
-        #print(detail)      
+        #logger.info(detail)      
         if len(detail) < 2:
             detail=eliminate_space(store.xpath('.//p[@class="location-contact small"]//text()'))
         address = parse_address(detail[0])

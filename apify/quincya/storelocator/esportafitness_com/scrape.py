@@ -14,6 +14,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('esportafitness_com')
+
+
 
 
 def get_driver():
@@ -47,10 +52,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	states = base.find(id="ctl00_MainContent_FindAClub1_cboSelState").find_all("option")[1:]
 
@@ -61,7 +66,7 @@ def fetch_data():
 	for raw_state in states:
 		state = raw_state['value']
 		main_link = "https://www.esportafitness.com/Pages/findclubresultszip.aspx?state=" + state
-		print(main_link)
+		logger.info(main_link)
 
 		driver.get(main_link)
 		time.sleep(randint(2,4))
@@ -71,8 +76,8 @@ def fetch_data():
 				(By.CSS_SELECTOR, ".TextDataColumn")))
 			time.sleep(randint(2,4))
 		except:
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		count = 0
 		while True and count < 5:
@@ -91,20 +96,20 @@ def fetch_data():
 	data = []
 	total_links = len(final_links)
 	for i, final_link in enumerate(final_links):
-		print("Link %s of %s" %(i+1,total_links))
-		print(final_link)
+		logger.info("Link %s of %s" %(i+1,total_links))
+		logger.info(final_link)
 		final_req = session.get(final_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "esportafitness.com"
 
 		location_name = item.h1.text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 
 		try:
 			street_address = item.find(id="ctl00_MainContent_lblClubAddress").text

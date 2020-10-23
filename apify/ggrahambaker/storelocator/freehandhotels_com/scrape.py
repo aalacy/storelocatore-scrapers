@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('freehandhotels_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +45,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        #print(link)
+        #logger.info(link)
         driver.get(link)
         driver.implicitly_wait(10)
         loc_div = driver.find_element_by_css_selector('div.location.active-menu.limitFix')

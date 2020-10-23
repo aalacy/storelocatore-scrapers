@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('staystudio6_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,7 +32,7 @@ def fetch_data():
                 if 'lastCreatedOrUpdated":"' not in item:
                     locs.append(item.split('"')[0])
     for loc in locs:
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         website = 'staystudio6.com'
         purl = 'https://www.motel6.com/en/motels.' + loc + '.html?ncr=true'
         typ = ''

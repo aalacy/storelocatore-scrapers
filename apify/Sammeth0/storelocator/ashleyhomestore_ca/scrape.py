@@ -5,6 +5,11 @@ import time
 import re
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ashleyhomestore_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -55,7 +60,7 @@ def fetch_data():
 	for i, l in enumerate(locations):
 		try:
 			loc = l.find_element_by_xpath('./a/span[1]').text.split(' (')[0]
-			print(loc)
+			logger.info(loc)
 			locs.append(loc)
 		except:
 			locs.append(l.find_element_by_xpath('./a/span[1]').text)

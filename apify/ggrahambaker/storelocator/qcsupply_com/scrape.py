@@ -9,6 +9,11 @@ import re
 import time
 from bs4 import BeautifulSoup
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('qcsupply_com')
+
+
 
 
 def write_output(data):
@@ -41,21 +46,21 @@ def fetch_data():
 
     spans = driver.find_elements_by_name('leftLocation')
 
-    print("Getting all POI links ..")
+    logger.info("Getting all POI links ..")
     for span in spans:
         raw_link = span.find_element_by_class_name("location_link").find_element_by_tag_name("span").get_attribute("onclick")
         link = "https://www.qcsupply.com/" + raw_link.split("='/")[-1].replace("'","")
         store_number = span.get_attribute('data-amid')
         all_links.append([link, store_number])
-    print("Done!")
+    logger.info("Done!")
 
     total_links = len(all_links)
     for i, raw_link in enumerate(all_links):
-        print("Link %s of %s" %(i+1,total_links))
+        logger.info("Link %s of %s" %(i+1,total_links))
         link = raw_link[0]
         store_number = raw_link[1]
 
-        print(link)
+        logger.info(link)
         driver.get(link)
         time.sleep(randint(2,4))
 
@@ -67,14 +72,14 @@ def fetch_data():
             latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
             longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
         except:
-            print('Timeout...')
+            logger.info('Timeout...')
             latitude = '<INACCESSIBLE>'
             longitude = '<INACCESSIBLE>'
 
         item = BeautifulSoup(driver.page_source,"lxml")
 
         location_name = "QC Supply " + item.find("h2").text.strip()
-        print(location_name)
+        logger.info(location_name)
 
         street_address = item.find(class_="address-line").text.strip()
         city_line = item.find_all(class_="address-line")[1].text.replace(u'\xa0', u'').strip()

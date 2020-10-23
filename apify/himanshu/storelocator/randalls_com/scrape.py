@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('randalls_com')
+
+
 
 
 session = SgRequests()
@@ -47,7 +52,7 @@ def parser(location_soup,page_url):
         phone = "<MISSING>"
     else:
         phone = location_soup.find("div",{'itemprop':"telephone"}).text
-        # print(phone)
+        # logger.info(phone)
     ho1= location_soup.find("table",{"class":"c-hours-details"}).text
     # c-hours-details 
     ho = (ho1.replace('PM',"PM ").replace("Day of the WeekHours","Store Hours ").replace("y","y ").strip())
@@ -81,7 +86,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"Directory-listLink"}):
-        # print("https://local.randalls.com/"+states["href"])
+        # logger.info("https://local.randalls.com/"+states["href"])
         
         if states["href"].count("/") == 2:
             
@@ -96,7 +101,7 @@ def fetch_data():
             state_request = requests.get("https://local.randalls.com/" + states["href"],headers=headers)
             
             state_soup = BeautifulSoup(state_request.text,"lxml")
-            # print(state_soup)
+            # logger.info(state_soup)
             for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
                 if city["href"].count("/") == 2:
                     
@@ -107,7 +112,7 @@ def fetch_data():
                 else:
                     
                     city_request = requests.get("https://local.randalls.com/" + city["href"].replace("../",""),headers=headers)
-                    # print(city_request)
+                    # logger.info(city_request)
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     
                     for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):

@@ -3,4 +3,4 @@ beautifulsoup4==4.8.0
 sgrequests==0.0.6
 pyzipcode3==2.2
 sgzip
-requests==2.22.0
+requests==2.22.0sglogging

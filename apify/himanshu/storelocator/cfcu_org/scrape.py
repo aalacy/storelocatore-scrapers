@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cfcu_org')
+
+
 
 
 
@@ -87,7 +92,7 @@ def fetch_data():
             tem_var.append(longitute)
             tem_var.append(hours)
             tem_var.append(base_url)
-            # print(tem_var)
+            # logger.info(tem_var)
                     
             yield tem_var    
             i+=1

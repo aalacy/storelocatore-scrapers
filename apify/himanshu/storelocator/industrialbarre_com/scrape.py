@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('industrialbarre_com')
+
+
 
 
 session = SgRequests()
@@ -14,7 +19,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -50,7 +55,7 @@ def fetch_data():
 
     r = session.get('https://industrialbarre.com/studios',headers = headers)
     soup= BeautifulSoup(r.text,'lxml')
-    # print(soup.prettify())
+    # logger.info(soup.prettify())
     ph = []
     for phone_tag in soup.find_all('div',class_='col sqs-col-6 span-6')[0:2]:
         list_phone = list(phone_tag.stripped_strings)
@@ -71,8 +76,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" or x == None else x for x in store]
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
     return return_main_object

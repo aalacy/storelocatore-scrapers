@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('goodyear_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,14 +35,14 @@ def fetch_data():
     all_city = []
     for i in soup.find("ul",{"id":"hiddenRegions"}).find_all('li'):
         link=base_url+i.find('a')['href']
-        # print(i.find('a').text,"city===============================","https://www.goodyear.com"+i.find('a')['href'])
+        # logger.info(i.find('a').text,"city===============================","https://www.goodyear.com"+i.find('a')['href'])
         try:
             r1 = requests.get(link,headers=headers)
             soup1= BeautifulSoup(r1.text,"lxml")
         except:
             pass
         for city in soup1.find("div",{'class':"list-group row"}).find_all("li"):
-            # print(city.text,'--------store-----------------------',"https://www.goodyear.com"+city.find("a")['href'])
+            # logger.info(city.text,'--------store-----------------------',"https://www.goodyear.com"+city.find("a")['href'])
           
             try:
                 r2 = requests.get("https://www.goodyear.com"+city.find("a")['href'],headers=headers)
@@ -46,10 +51,10 @@ def fetch_data():
             soup2= BeautifulSoup(r2.text,"lxml")
             # all_city13 = soup2.find_all('a',{"class":"gy-link store-name-link link-chevron"})
             for store1 in soup2.find_all('a',{"class":"gy-link store-name-link link-chevron"}):
-                # print(store1)
+                # logger.info(store1)
                 tem_var =[]
                 try:
-                    # print("--------------store----------------","https://www.goodyear.com"+store1['href'])
+                    # logger.info("--------------store----------------","https://www.goodyear.com"+store1['href'])
                     r3 = requests.get("https://www.goodyear.com"+store1['href'],headers=headers)
                 except:
                     pass
@@ -92,7 +97,7 @@ def fetch_data():
                 if tem_var[2] in addressess:
                     continue
                 addressess.append(tem_var[2])
-                # print("===================================================",tem_var)
+                # logger.info("===================================================",tem_var)
                 yield tem_var
     
 

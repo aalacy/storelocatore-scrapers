@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sofiscrepes_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    logger.info("soup ===  first")
 
     base_url = "https://www.sofiscrepes.com"
     r = session.get("http://sofiscrepes.com/locations/", headers=headers)
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -53,7 +58,7 @@ def fetch_data():
     list_hours = []
     for script_hours in soup.find_all("div", {"class": "answer"}):
         list_hours.append(" ".join(list(script_hours.stripped_strings)))
-    # print("script_hours ===== "+str(list_hours))
+    # logger.info("script_hours ===== "+str(list_hours))
 
     for script_bloc in soup.find_all("div", {"class": re.compile("addressblock")}):
         for script in script_bloc.find_all("div", {"class": re.compile("address")}):
@@ -62,7 +67,7 @@ def fetch_data():
             if 'Fells Point' in address_list:
                 address_list.remove('Fells Point')
 
-            # print("address_list ===== "+str(address_list))
+            # logger.info("address_list ===== "+str(address_list))
             street_address = address_list[0]
 
             try:
@@ -85,8 +90,8 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

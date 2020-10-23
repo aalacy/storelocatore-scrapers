@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pennzoil_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,7 +28,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        print("remaining zipcodes: " + str(search.zipcodes_remaining())) 
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining())) 
         website = 'pennzoil.ca'
         url = 'https://locator.pennzoil.com/api/v1/pennzoil/oil_change_locations/nearest_to?limit=50&lat=' + str(llat) + '&lng=' + str(llng) + '&format=json'
         r = session.get(url, headers=headers)
@@ -54,7 +59,7 @@ def fetch_data():
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
-            print("zero results")
+            logger.info("zero results")
         coord = search.next_coord()
 def scrape():
     data = fetch_data()

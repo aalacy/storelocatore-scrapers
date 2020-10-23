@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('savoypizza_com')
+
+
 
 
 session = SgRequests()
@@ -27,7 +32,7 @@ def fetch_data():
     return_main_object = []
     for location in soup.find("nav",{"class":"locationsNav"}).find_all("a"):
         page_url = location["href"]
-        # print(page_url)
+        # logger.info(page_url)
         location_request = session.get(page_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find("div",{'class':"main"}).find("h1").text

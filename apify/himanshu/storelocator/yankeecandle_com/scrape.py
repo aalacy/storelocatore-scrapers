@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('yankeecandle_com')
+
+
 
 
 session = SgRequests()
@@ -107,7 +112,7 @@ def fetch_data():
         for j1 in k1:
             dictionary = {'1':"Authorized Retailer",'2':"Yankee Candle",'3':"Outlet",'5':"Woodwick"}
             location_type = dictionary[str(h1['type'])]
-            # print(location_type)
+            # logger.info(location_type)
             location_name = (j1['label'])
             street_address = (j1['address']+" "+j1['address2'])
             city = (j1['city'])

@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 import json
 import datetime
 from sgzip import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('starbucks_com')
+
+
 
 weekday = datetime.datetime.today().weekday()
 
@@ -29,7 +34,7 @@ def fetch_data():
         y = coord[1]
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.starbucks.com/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -112,7 +117,7 @@ def fetch_data():
                 coords.append(newcoord)
     while len(coords) > 0:
         PageFound = True
-        #print('%s Remaining...' % str(len(coords)))
+        #logger.info('%s Remaining...' % str(len(coords)))
         x = coords[0].split(',')[0]
         y = coords[0].split(',')[1]
         coords.pop(0)
@@ -121,7 +126,7 @@ def fetch_data():
         while PageFound:
             try:
                 PageFound = False
-                #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+                #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
                 url = 'https://www.starbucks.com/bff/locations?lat=' + str(x) + '&lng=' + str(y)
                 r = session.get(url, headers=headers, timeout=5)
                 array = json.loads(r.content)

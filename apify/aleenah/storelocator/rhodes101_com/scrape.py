@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rhodes101_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
     }
     res=session.get("https://www.rhodes101.com/locations/",headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
+    #logger.info(soup)
     stores = soup.find('div', {'class': 'et_pb_row et_pb_row_1 location-row et_pb_gutters2'}).find_all('div', {'class': 'et_pb_text_inner'})
 
     for store in stores:

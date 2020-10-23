@@ -4,6 +4,11 @@ import re
 import json
 import time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sheraton_marriott_com')
+
+
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -53,7 +58,7 @@ def fetch_data():
     location_url = "https://sheraton.marriott.com/"
     r = request_wrapper(location_url,"get",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # print(soup)
+    # logger.info(soup)
     data = soup.find_all("script",{"type":"text/javascript"})[5]
     mp = (data.text.split("MARRIOTT_GEO_DATA = ")[1].replace(':"WI"}};',':"WI"}}'))
     json_data = json.loads(mp)

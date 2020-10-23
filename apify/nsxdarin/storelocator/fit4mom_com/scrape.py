@@ -4,6 +4,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fit4mom_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -23,7 +28,7 @@ def fetch_data():
     locs = []
     alllocs = []
     for code in sgzip.for_radius(100):
-        print(('Pulling Zip Code %s...' % code))
+        logger.info(('Pulling Zip Code %s...' % code))
         ZFound = True
         url = 'https://fit4mom.com/__/frontdesk/locations?zip=' + code + '&_=1565982065744'
         while ZFound:
@@ -69,7 +74,7 @@ def fetch_data():
                                                     phone = '<MISSING>'
                                                     name = '<MISSING>'
                                                     rawadd = '<MISSING>'
-                                                    print(('Pulling Location %s...' % locurl))
+                                                    logger.info(('Pulling Location %s...' % locurl))
                                                     for line2 in lines:
                                                         if '<h2 class="contentTitle" itemprop="name">' in line2:
                                                             name = line2.decode('utf-8','ignore').split('<h2 class="contentTitle" itemprop="name">')[1].split('<')[0].replace('"',"'")

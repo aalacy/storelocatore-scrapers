@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fresh_com')
+
+
 
 
 session = SgRequests()
@@ -29,7 +34,7 @@ def fetch_data():
 
     addresses = []
     base_url = "https://www.fresh.com"
-    # print(base_url)
+    # logger.info(base_url)
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -75,8 +80,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

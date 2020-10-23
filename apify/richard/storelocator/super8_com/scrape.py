@@ -7,6 +7,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('super8_com')
+
+
 
 
 URL = "super8.com"
@@ -73,7 +78,7 @@ class Scraper(Scrape):
 
         for store in stores:
             if store not in self.skip and 'china' not in store and 'germany' not in store and 'saudi-arabia' not in store:
-                print(f"Now scraping: {store}")
+                logger.info(f"Now scraping: {store}")
                 try:
                     driver.get(store)
 

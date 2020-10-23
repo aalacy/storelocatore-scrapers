@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('getregionalcash_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find_all(class_="c-directory-list-content-item-link")
@@ -41,14 +46,14 @@ def fetch_data():
 
 	final_links = []
 	for next_link in main_links:
-		print("Processing: " + next_link)
+		logger.info("Processing: " + next_link)
 		req = session.get(next_link, headers = HEADERS)
 		# time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 		
 		next_items = base.find_all(class_="c-directory-list-content-item")
 		for next_item in next_items:
@@ -62,8 +67,8 @@ def fetch_data():
 				try:
 					next_base = BeautifulSoup(next_req.text,"lxml")
 				except (BaseException):
-					print('[!] Error Occured. ')
-					print('[?] Check whether system is Online.')
+					logger.info('[!] Error Occured. ')
+					logger.info('[?] Check whether system is Online.')
 
 				other_links = next_base.find_all('a', attrs={'data-ya-track': 'visitsite'})
 				for other_link in other_links:
@@ -77,8 +82,8 @@ def fetch_data():
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "getregionalcash.com"
 
@@ -89,7 +94,7 @@ def fetch_data():
 			location_name_geo = city
 
 		location_name = item.find(class_="LocationName-brand").text.strip() + " " + location_name_geo
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
 		try:

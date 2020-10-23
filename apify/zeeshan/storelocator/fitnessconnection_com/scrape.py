@@ -5,6 +5,11 @@ import time
 from random import randint
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fitnessconnection_com')
+
+
 
 
 def write_output(data):
@@ -30,8 +35,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     main_links = []
     main_items = base.find_all(class_="club column small-12 medium-4")
@@ -48,21 +53,21 @@ def fetch_data():
 
     total_links = len(main_links)
     for i, raw_link in enumerate(main_links):
-        print("Link %s of %s" %(i+1,total_links))
+        logger.info("Link %s of %s" %(i+1,total_links))
 
         link = raw_link[0]
         raw_address = raw_link[1]
 
         req = session.get(link, headers = HEADERS)
         item = BeautifulSoup(req.text,"lxml")
-        print(link)
+        logger.info(link)
 
         locator_domain = "fitnessconnection.com"
 
         location_name = item.find("h3").text.replace("-","- ").replace("– NOW OPEN","").replace("– Now Open!","").strip()
         if "coming soon" in location_name.lower():
             continue
-        # print(location_name)
+        # logger.info(location_name)
 
         street_address = raw_address[:raw_address.find("<")].strip()
         if ", Austin" in street_address:
@@ -91,7 +96,7 @@ def fetch_data():
         
         raw_gps = item.find(class_="address-wrapper").a['href']
         try:
-            # print("Opening gmaps..")
+            # logger.info("Opening gmaps..")
             driver.get(raw_gps)
             time.sleep(randint(6,8))
 
@@ -100,7 +105,7 @@ def fetch_data():
             latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
             longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
         except:
-            print('Map not found..skipping')
+            logger.info('Map not found..skipping')
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 

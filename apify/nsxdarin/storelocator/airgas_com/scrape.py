@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import time
 import gzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('airgas_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -24,7 +29,7 @@ def fetch_data():
         if '<loc>' in line:
             sitemaps.append(line.split('>')[1].split('<')[0])
     for sm in sitemaps:
-        print('Pulling Sitemap %s...' % sm)
+        logger.info('Pulling Sitemap %s...' % sm)
         smurl = sm
         with open('branches.xml.gz','wb') as f:
             r = session.get(smurl, headers=headers)
@@ -38,12 +43,12 @@ def fetch_data():
                         if '.html' in lurl:
                             if lurl not in locs:
                                 locs.append(lurl)
-        print(str(len(locs)) + ' Locations Found...')
+        logger.info(str(len(locs)) + ' Locations Found...')
     for loc in locs:
         website = 'airgas.com'
         country = 'US'
         hours = ''
-        print(loc)
+        logger.info(loc)
         store = loc.rsplit('.',1)[0].rsplit('-',1)[1]
         typ = '<MISSING>'
         r2 = session.get(loc, headers=headers)

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fredsmeds_com')
+
+
 
 
 
@@ -42,8 +47,8 @@ def fetch_data():
         try:
             result_coords = []
 
-            # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-            # print("zip_code === " + zip_code)
+            # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            # logger.info("zip_code === " + zip_code)
             # zip_code = "39114"
             location_url = "http://www.fredsmeds.com/locate/?find-a-store=" + zip_code
             r_locations = session.get(location_url, headers=headers)
@@ -52,7 +57,7 @@ def fetch_data():
             location_list = soup_locations.find_all("div", {"class": "store-info"})
             current_results_len = len(location_list)  # it always need to set total len of record.
 
-            # print("current_results_len === " + str(current_results_len))
+            # logger.info("current_results_len === " + str(current_results_len))
 
             locator_domain = base_url
             location_name = ""
@@ -105,7 +110,7 @@ def fetch_data():
                     if phone_list:
                         phone = phone_list[0].replace(")", "").replace("(", "")
 
-                # print("address_list === "+ str(address_list))
+                # logger.info("address_list === "+ str(address_list))
                 street_address = address_list[zip_index - 1]#.split(",")[0]
                 city = address_list[zip_index].split(",")[0]
 
@@ -127,8 +132,8 @@ def fetch_data():
                         latitude = split_lat_lng[1]
                         longitude = split_lat_lng[2]
 
-                # print("geo == " + str(split_lat_lng))
-                # print("street_address == " + str(hours_of_operation))
+                # logger.info("geo == " + str(split_lat_lng))
+                # logger.info("street_address == " + str(hours_of_operation))
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -140,15 +145,15 @@ def fetch_data():
                 addresses.append(store[2] + store[-3])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
             if current_results_len < MAX_RESULTS:
-                # print("max distance update")
+                # logger.info("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif current_results_len == MAX_RESULTS:
-                # print("max count update")
+                # logger.info("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")

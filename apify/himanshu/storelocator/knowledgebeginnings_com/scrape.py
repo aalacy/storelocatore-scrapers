@@ -6,6 +6,11 @@ import json
 from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('knowledgebeginnings_com')
+
+
 
 
 def write_output(data):
@@ -50,10 +55,10 @@ def fetch_data():
             "//input[@name='ctl00$ContentPlaceHolder1$buttonSubmit']").click()
         # exit()
         try:
-            # print("----------------------", state)
+            # logger.info("----------------------", state)
             element = WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//li[@style='color:red; display:block']"))
-            # print("----------------------", state)
+            # logger.info("----------------------", state)
             continue
         except:
             pass
@@ -95,13 +100,13 @@ def fetch_data():
                 if store[-1] in addresses:
                     continue
                 addresses.append(store[-1])
-                # print(store)
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info(store)
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 yield store
 
         except:
             pass
-            # print(state)
+            # logger.info(state)
 
         driver.find_element_by_xpath("//li[@class='landing']").click()
 

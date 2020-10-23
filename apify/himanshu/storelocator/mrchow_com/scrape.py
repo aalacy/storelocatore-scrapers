@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mrchow_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
 
     base_url = "https://mrchow.com"
     r = session.get("https://mrchow.com/", headers=headers)
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -55,11 +60,11 @@ def fetch_data():
             # list_link = list(script_link.stripped_strings)
             if 'contact' in script_contact_link['href']:
                 location_url = base_url + script_contact_link['href']
-                # print("link ==== " + str(location_url))
+                # logger.info("link ==== " + str(location_url))
                 r_location = session.get(location_url, headers=headers)
                 soup_location = BeautifulSoup(r_location.text, "lxml")
                 list_address = list(soup_location.find('div', {'id': 'restaurantContact'}).stripped_strings)
-                # print("data ==== " + str(list_address))
+                # logger.info("data ==== " + str(list_address))
                 tel_index = [i for i, s in enumerate(list_address) if 'Tel:' in s]
                 fax_index = [i for i, s in enumerate(list_address) if 'Fax:' in s]
 
@@ -96,17 +101,17 @@ def fetch_data():
                 if not zipp.isdigit():
                     continue
 
-                # print('full_address ==== ' + str(full_address))
-                # print('street_address ==== ' + str(street_address))
-                # print('city ==== ' + str(city))
-                # print('zipp ==== ' + str(zipp))
-                # print('state ==== ' + str(state))
+                # logger.info('full_address ==== ' + str(full_address))
+                # logger.info('street_address ==== ' + str(street_address))
+                # logger.info('city ==== ' + str(city))
+                # logger.info('zipp ==== ' + str(zipp))
+                # logger.info('state ==== ' + str(state))
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
 

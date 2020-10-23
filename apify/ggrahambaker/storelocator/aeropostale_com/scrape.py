@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import sgzip 
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('aeropostale_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -73,10 +78,10 @@ def fetch_data():
             all_store_data.append(store_data)
         
         if len(res_json) < MAX_RESULTS:
-            print("max distance update")
+            logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(res_json) == MAX_RESULTS:
-            print("max count update")
+            logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

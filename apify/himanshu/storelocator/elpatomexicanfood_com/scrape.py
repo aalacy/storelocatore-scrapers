@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('elpatomexicanfood_com')
+
+
 
 
 session = SgRequests()
@@ -27,7 +32,7 @@ def fetch_data():
     return_main_object = []
     hours = " ".join(list(soup.find("div",{"class":"et_pb_row et_pb_row_5"}).find("div",{"class":'et_pb_text_inner'}).stripped_strings))
     for link in soup.find_all("a",text=re.compile("View Location")):
-        print(link["href"])
+        logger.info(link["href"])
         location_request = session.get(link["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find_all("div",{"class":re.compile("et_pb_module et_pb_text")})[0:2][0].text.strip()

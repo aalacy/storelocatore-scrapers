@@ -6,6 +6,11 @@ import unicodedata
 import sgzip
 import datetime
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('suburbanhotels_com')
+
+
 
 
 session = SgRequests()
@@ -68,7 +73,7 @@ def fetch_data():
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else "<MISSING>")
         yield store
-        # print("===========",store)
+        # logger.info("===========",store)
     
 def scrape():
     data = fetch_data()

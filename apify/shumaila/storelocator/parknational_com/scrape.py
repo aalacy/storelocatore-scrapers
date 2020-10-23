@@ -3,6 +3,11 @@ import csv
 import json
 import re, time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('parknational_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     url = 'https://parknationalbank.com/about/locations/'
     flag = True
     while flag:
-        print(url)
+        logger.info(url)
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         r = r.text.split('var markers =',1)[1].split('}]')[0]
@@ -58,7 +63,7 @@ def fetch_data():
 
             else:
                 address = address.replace(phone,'')
-            print(address)
+            logger.info(address)
             try:
                 street,city,state = address.split(', ')
             except:
@@ -106,7 +111,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-            print(p,data[p])
+            logger.info(p,data[p])
             p += 1
             #input()
 

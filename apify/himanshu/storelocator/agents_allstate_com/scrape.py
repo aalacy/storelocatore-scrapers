@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('agents_allstate_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
     base_url= "https://agents.allstate.com/"
     r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-    # print(soup)
+    # logger.info(soup)
     store_name=[]
     store_detail=[]
     return_main_object=[]
@@ -33,7 +38,7 @@ def fetch_data():
     k= soup.find_all("a",{"class":"Directory-listLink","data-ya-track":"directorylink","data-allstate-web-analytics":"Directory-listLink"})
     k=soup.find_all("a",{"class":re.compile("Directory-listLink")}) 
     # k= div.find_all("ul",{"class":"Directory-letterList"})
-    #print(len(k))
+    #logger.info(len(k))
     for i in k:
         try:
 
@@ -44,7 +49,7 @@ def fetch_data():
         link_state=soup1.find_all("a",{"class":re.compile("Directory-listLink")}) 
         for link in link_state:
             
-            #print("city========================","https://agents.allstate.com"+link['href'].replace("..",""))
+            #logger.info("city========================","https://agents.allstate.com"+link['href'].replace("..",""))
 
             r2 = session.get("https://agents.allstate.com"+link['href'].replace("..",""))
             soup2= BeautifulSoup(r2.text,"lxml")
@@ -57,7 +62,7 @@ def fetch_data():
             name = soup2.find_all("span",{"class":"Teaser-name"})
             a = soup2.find_all("a",{"class":"Teaser-link l-row Link"})
             if a != []:
-                # print(a)
+                # logger.info(a)
                 for loc in range(len(st)):
                     tem_var =[]
                     store_link = "https://agents.allstate.com/"+a[loc]['href'].replace("../../","")
@@ -88,7 +93,7 @@ def fetch_data():
                     tem_var.append(lng)
                     tem_var.append(hours_of_operation)
                     tem_var.append("https://agents.allstate.com/"+a[loc]['href'].replace("../../",""))
-                    #print(tem_var)
+                    #logger.info(tem_var)
                     if tem_var[2] in address123:
                         continue
                     address123.append(tem_var[2])
@@ -97,7 +102,7 @@ def fetch_data():
             else:
                 name1 = soup2
                 tem_var =[]
-                    # print(st[loc])
+                    # logger.info(st[loc])
                 name = soup2.find("div",{"class":"Hero-type"})
                 st = soup2.find("span",{"class":"c-address-street-1"}).text.strip()
                 try:
@@ -124,7 +129,7 @@ def fetch_data():
                 tem_var.append(lng)
                 tem_var.append(hours_of_operation)
                 tem_var.append("https://agents.allstate.com"+link['href'].replace("..",""))
-                #print(tem_var)
+                #logger.info(tem_var)
                 yield tem_var
     
 

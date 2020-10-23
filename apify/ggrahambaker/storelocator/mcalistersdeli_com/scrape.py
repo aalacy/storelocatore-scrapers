@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mcalistersdeli_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -90,10 +95,10 @@ def fetch_data():
         if 'humble/9477-fm-1960-bp-100-101000' in data[0]:
             continue
         driver.implicitly_wait(10)
-        print('----------')
-        print(data[0])
-        print(str(i) + '/' + str(len(link_list)))
-        print()
+        logger.info('----------')
+        logger.info(data[0])
+        logger.info(str(i) + '/' + str(len(link_list)))
+        logger.info()
 
         addy_a = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com/?daddr')]")
         map_href = addy_a.get_attribute('href')

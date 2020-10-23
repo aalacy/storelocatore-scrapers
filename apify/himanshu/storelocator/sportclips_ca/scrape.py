@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sportclips_ca')
+
+
 
 
 
@@ -86,8 +91,8 @@ def fetch_data():
         if str(store[7]) not in addresses:
             addresses.append(str(store[7]))
             store = [x if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print(
+            # logger.info("data = " + str(store))
+            # logger.info(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 

@@ -10,6 +10,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lendnation_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +41,7 @@ def fetch_data():
 
     url_list = []
     for link in state_links:
-        print(link)
+        logger.info(link)
         driver.get(link)
 
         time.sleep(randint(2,4))
@@ -65,14 +70,14 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
+        logger.info(link)
         req = session.get(link, headers = HEADERS)
         time.sleep(randint(1,2))
         try:
             base = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         location_name = base.h1.text.strip()
         

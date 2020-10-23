@@ -7,6 +7,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('llbean_com')
+
+
 
 
 def write_output(data):
@@ -31,11 +36,11 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     maindiv = soup.find('div', {'id':'storeLocatorZone'})
     link_list = maindiv.findAll('a')
-    print(len(link_list))
+    logger.info(len(link_list))
     for alink in link_list:
         if alink.text.find(":") == -1 or alink.find("Freeport") == -1:
             link = "https://www.llbean.com" + alink['href']
-            print(link)
+            logger.info(link)
             page1 = requests.get(link)
             soup1 = BeautifulSoup(page1.text, "html.parser")
             title = soup1.find('h1').text
@@ -63,17 +68,17 @@ def fetch_data():
             if len(hours) < 3:
                 hours = "<MISSING>"
 
-            #print(title)
-            #print(store)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(phone)
-            #print(lat)
-            #print(longt)
-            #print(hours)
-            print(p)
+            #logger.info(title)
+            #logger.info(store)
+            #logger.info(street)
+            #logger.info(city)
+            #logger.info(state)
+            #logger.info(pcode)
+            #logger.info(phone)
+            #logger.info(lat)
+            #logger.info(longt)
+            #logger.info(hours)
+            logger.info(p)
             p += 1
             data.append([
                 'https://www.llbean.com',

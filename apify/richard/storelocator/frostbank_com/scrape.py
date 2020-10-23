@@ -3,6 +3,11 @@ import json
 import sgzip
 
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('frostbank_com')
+
+
 
 URL = "https://www.frostbank.com"
 
@@ -63,9 +68,9 @@ class Scraper(Scrape):
                 try:
                     data = json.loads(response.text)['locations']
                     stores.extend(json.loads(response.text)['locations'])
-                    print(f'{len(data)} locations scraped for zipcode {zip_search}')
+                    logger.info(f'{len(data)} locations scraped for zipcode {zip_search}')
                 except:
-                    print(f'0 location scraped for zipcode {zip_search}')
+                    logger.info(f'0 location scraped for zipcode {zip_search}')
                     pass
 
         for store in stores:

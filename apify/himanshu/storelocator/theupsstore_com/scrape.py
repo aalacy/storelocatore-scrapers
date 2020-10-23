@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('theupsstore_com')
+
+
 
 
 session = SgRequests()
@@ -67,18 +72,18 @@ def fetch_data():
     zip = search.next_zip()
     while zip:
         result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling zip %s...' % (str(zip)))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling zip %s...' % (str(zip)))
         data = "ctl01%24SearchBy=rbLocation&ctl01%24tbSearchText=" + str(zip) + "&ctl01%24tbSearchTextByStore=" + str(zip) + "&ctl01%24hdLatLon=&hdEmailThankYouRedirect=&__EVENTTARGET=ctl01%24btnSearch&__ASYNCPOST=true"
-        # print(data)
+        # logger.info(data)
         r = request_wrapper("https://www.theupsstore.com/tools/find-a-store","post",headers=headers,data=data)
         if r == None:
-            print("failed to load " + str(data))
+            logger.info("failed to load " + str(data))
             zip = search.next_zip()
             continue
         soup = BeautifulSoup(r.text,"lxml")
         data = json.loads(soup.find("input",{"id":"MapPointData"})["value"])
-        # print("stop")
+        # logger.info("stop")
         for store_data in data:
             lat = store_data["Latitude"]
             lng = store_data["Longitude"]
@@ -104,13 +109,13 @@ def fetch_data():
             store.append(store_data["StoreURL"])
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            # print(store)
+            # logger.info(store)
             yield store
         if len(data) < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

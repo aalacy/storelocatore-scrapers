@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from requests_toolbelt.utils import dump
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smartandfinal_com')
+
+
 
 
 def write_output(data):
@@ -20,7 +25,7 @@ def write_output(data):
 
 def debug(response):
     data = dump.dump_all(response)
-    print(data.decode('utf-8'))
+    logger.info(data.decode('utf-8'))
 
 
 def setCookie(session, domain, name, value):
@@ -97,10 +102,10 @@ def fetch_data():
             store = [str(x).encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
-            # print("-----------------------------------",store)
+            # logger.info("-----------------------------------",store)
 
 
 def scrape():

@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import time
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('espressoroyale_com')
+
+
 
 
 def write_output(data):
@@ -27,8 +32,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	locations = base.findAll('div', attrs={'class': 'img-with-aniamtion-wrap center'})
 
@@ -44,22 +49,22 @@ def fetch_data():
 		try:
 			loc_base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 		
 		location_names = loc_base.findAll('h3')
 		locator_domain = "espressoroyalecoffee.com"
 
 		for loc in location_names:
 			link = loc.a['href']
-			print ('Getting link: ' + link)
+			logger.info('Getting link: ' + link)
 			req = requests.get(link, headers=headers)
 
 			try:
 				new_base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				print ('[!] Error Occured. ')
-				print ('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 			
 			location_name = new_base.find('h2').text
 			section = new_base.find('div', attrs={'class': 'wpb_row vc_row-fluid vc_row inner_row standard_section'})
@@ -87,7 +92,7 @@ def fetch_data():
 				longitude = "<MISSING>"
 
 			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation,link])
-			print ('Got page details')
+			logger.info('Got page details')
 	return data
 
 def scrape():

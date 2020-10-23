@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('firstlightfcu_org')
+
+
 
 
 session = SgRequests()
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -38,16 +43,16 @@ def fetch_data():
    
     
     r = session.get(get_url, headers=headers)
-    # print(r)
+    # logger.info(r)
     soup = BeautifulSoup(r.text,'lxml')
-    # print(soup)         
+    # logger.info(soup)         
   
     main =soup.find_all('span', {'class': 'name'})
     for i in main:
         store = []
         link = tmp_url+i.a['href']
         r1 = session.get(link, headers=headers)
-         # print(r)
+         # logger.info(r)
         soup1 = BeautifulSoup(r1.text,'lxml')
         location_name =soup1.find('div', {'class': 'h2'}).text
         address =soup1.find('span', {'class': 'address'}).text

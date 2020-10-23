@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sesameplace_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     linklist = soup.select('a:contains("Visit")')
     for link in linklist:
-        print(link['href'])
+        logger.info(link['href'])
         title = link.text.split('in ',1)[1]
         link = link['href']
         r = session.get(link, headers=headers, verify=False)
@@ -68,7 +73,7 @@ def fetch_data():
                         longt,
                         '<INACCESSIBLE>'
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
             

@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('urgentteam_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -57,7 +62,7 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation.replace("N/A",'<MISSING>') if hours_of_operation else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            # print("~~~~~~~~~~~~~~~~~ ",store)
+            # logger.info("~~~~~~~~~~~~~~~~~ ",store)
             # if store[2] in addressesss :
             #     continue
             # addressesss.append(store[2])

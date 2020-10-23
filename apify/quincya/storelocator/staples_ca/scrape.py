@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('staples_ca')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	all_scripts = base.find_all('script')
 	for script in all_scripts:
@@ -48,15 +53,15 @@ def fetch_data():
 
 	data = []
 	for i, link in enumerate(links):
-		print("Link %s of %s" %(i+1,len(links)))
+		logger.info("Link %s of %s" %(i+1,len(links)))
 		req = session.get(link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			print(link)
+			logger.info(link)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		all_scripts = item.find_all('script', attrs={'type': "application/ld+json"})
 		for script in all_scripts:

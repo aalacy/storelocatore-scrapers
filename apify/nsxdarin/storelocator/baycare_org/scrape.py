@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('baycare_org')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -15,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
     for x in range(0, 15):
-        print(('Page %s...' % str(x)))
+        logger.info(('Page %s...' % str(x)))
         url = 'https://baycare.org/api/search/locations?&page=' + str(x) + '&pageSize=50&returnWildcardResults=true&searchDistance=500&FacilityType=Behavioral%20Health&FacilityType=Corporate&FacilityType=Community%20Blood%20Center&FacilityType=Diabetes%20Education&FacilityType=Emergency%20Center&FacilityType=Extended%20Care&FacilityType=Fitness%20Center&FacilityType=Health%20Centers&FacilityType=HealthHub&FacilityType=HomeCare&FacilityType=Hospital&FacilityType=Imaging&FacilityType=Lab%20Services&FacilityType=Medical%20Arts%20Building&FacilityType=Outpatient%20Facility&FacilityType=Outpatient%20Rehabilitation&FacilityType=Physician%20Specialty%20Group&FacilityType=Primary%20Care&FacilityType=Wound%20Care&FacilityType=Wellness%20Station&FacilityType=Walk-in%20Clinic&FacilityType=Urgent%20Care&FacilityType=Surgery%20Center&FacilityType=Specialty%20Center&FacilityType=Sleep%20Center'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

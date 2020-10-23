@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sugarfishsushi_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,7 +34,7 @@ def fetch_data():
         d = (i.find_all("p"))
         for j in d:
             link = (j.find("a")['href'])
-            # print(link)
+            # logger.info(link)
             r1 = session.get(link,headers = headers)
             soup1 = BeautifulSoup(r1.text,'lxml')
             a1 = soup1.find_all("h1",{"class","none entry-title section-title"})[1]
@@ -47,7 +52,7 @@ def fetch_data():
             else:
                 hours_of_operation = (soup1.find("div",{"class","opening-hours"}).find_all("div",{"class","opening-block"})[-1].text.replace("\n","").replace("New York","").replace("Thu","Thu ").replace("SUNNoon"," SUN Noon").replace("Fri"," Fri").replace("Sat","Sat "))
             phone = soup1.find("h3",{"class","photocard-subtitle none"}).text.replace("\n","").strip().lstrip().rstrip()
-            # print(phone)
+            # logger.info(phone)
             #  < class="photocard-subtitle none">
             store = []
             store.append("https://sugarfishsushi.com/")

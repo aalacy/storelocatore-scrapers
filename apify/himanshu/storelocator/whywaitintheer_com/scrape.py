@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('whywaitintheer_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -30,7 +35,7 @@ def fetch_data():
         state_soup = BeautifulSoup(state_r.text, "lxml")
         for url in state_soup.find_all("a",{"class":"class_blue"}):
             page_url = url['href']
-            # print(page_url)
+            # logger.info(page_url)
             location_r = session.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
             location_name = location_soup.find("div",{"id":"subpagecontent"}).find("h1").text
@@ -38,7 +43,7 @@ def fetch_data():
           
             state = link.text.replace("Maryland","MD").replace("Delaware","DE")
             try:
-                # print(location_soup.find("option")['value'])
+                # logger.info(location_soup.find("option")['value'])
                 addr = location_soup.find("option")['value'].split(",")
                 if (len(addr)) == 2:
                     street_address = addr[0]
@@ -64,10 +69,10 @@ def fetch_data():
                 
             except:
                 continue
-            # print("final---",street_address)
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-            # print(page_url)
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # logger.info("final---",street_address)
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # logger.info(page_url)
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             contact = list(location_soup.find("div",{"id":"directions"}).stripped_strings)
             if "var end" in contact[0]:
                 del contact[0]
@@ -109,8 +114,8 @@ def fetch_data():
             store.append("<MISSING>" )
             store.append(hours_of_operation.strip())
             store.append(page_url)
-            # print("data==="+str(store[-2]))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # logger.info("data==="+str(store[-2]))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
             yield store
         

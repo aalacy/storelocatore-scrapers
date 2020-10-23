@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('westernbeef_com')
+
+
 
 session = SgRequests()
 
@@ -92,8 +97,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours_of_operation)
         store.append(page_url)
-        # print("data====="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # logger.info("data====="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
 

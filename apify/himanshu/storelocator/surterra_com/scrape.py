@@ -7,6 +7,11 @@ from sgrequests import SgRequests
 import platform
 from sgselenium import SgSelenium
 from tenacity import retry, stop_after_attempt
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('surterra_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -82,7 +87,7 @@ def fetch_data():
         try:
             hours = get_hours(page_url) 
         except:
-            print("failed to retrieve hours for {}".format(page_url))
+            logger.info("failed to retrieve hours for {}".format(page_url))
 
         store = []
         store.append(base_url)

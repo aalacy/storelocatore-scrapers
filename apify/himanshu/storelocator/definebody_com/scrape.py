@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('definebody_com')
+
+
  
 
 
@@ -52,12 +57,12 @@ def fetch_data():
         hours_of_operation = ""
         page_url = script["href"]
         # page_url = "http://dubai.definebody.com"
-        # print("script === " + str(script["href"]))
+        # logger.info("script === " + str(script["href"]))
         r_location = session.get(page_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         full_address = list(soup_location.find("div", {"id": "contact"}).stripped_strings)
-        # print("street_address === " + str(full_address))
+        # logger.info("street_address === " + str(full_address))
 
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address))
@@ -86,7 +91,7 @@ def fetch_data():
             city = full_address[address_index[0]].replace(zipp,"").replace(state,"").replace(",","").strip().split(" ")[-1]
             street_address = full_address[address_index[0]].replace(zipp,"").replace(state,"").replace(city,"").replace(",","").strip()
             location_name = full_address[address_index[0]-1].replace("DEFINE:","").strip()
-            # print(str(address_index)+" == address_index === "+ str(len(street_address)))
+            # logger.info(str(address_index)+" == address_index === "+ str(len(street_address)))
 
             if street_address == "":
                 street_address = full_address[address_index[0]-1]
@@ -105,8 +110,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

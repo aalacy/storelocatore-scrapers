@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kittles_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,22 +32,22 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print("Got today page")
+        logger.info("Got today page")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     try:
         store_list = base.find(id="staticpagenav").find_all("li")
     except:
         req = session.get(base_link, headers = HEADERS)
-        print("Retrying page load ..")
+        logger.info("Retrying page load ..")
         time.sleep(randint(2,4))
         try:
             base = BeautifulSoup(req.text,"lxml")            
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
             
         store_list = base.find(id="staticpagenav").find_all("li")
 
@@ -53,10 +58,10 @@ def fetch_data():
         time.sleep(randint(1,2))
         try:
             store_base = BeautifulSoup(req.text,"lxml")
-            print(link)
+            logger.info(link)
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         location_name = store_base.find("h2").text.strip()
         script = store_base.find_all('script', attrs={'type': "application/ld+json"})[1].text.replace('- -', '-')

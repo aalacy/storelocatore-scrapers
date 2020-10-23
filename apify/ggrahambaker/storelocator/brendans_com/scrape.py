@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('brendans_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,9 +33,9 @@ def fetch_data():
     all_store_data = []
     for link in link_list:
 
-        print(link)
-        print()
-        print()
+        logger.info(link)
+        logger.info()
+        logger.info()
         driver.implicitly_wait(10)
         driver.get(link)
         map_element = driver.find_element_by_css_selector('div.sqs-block.map-block.sqs-block-map')

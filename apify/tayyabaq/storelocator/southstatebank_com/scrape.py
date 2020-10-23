@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from lxml import etree
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('southstatebank_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +50,7 @@ def fetch_data():
         else:
             page_urls.append(link)
     for page_url in page_urls:
-        print(page_url)
+        logger.info(page_url)
         response = etree.HTML(session.get(page_url).text)
         name = response.xpath('//div[@class="Nap-geomodifier"]/text()')[0].strip()
         street = response.xpath('//span[@class="c-address-street-1"]/text()')[0].strip()

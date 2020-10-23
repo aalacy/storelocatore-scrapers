@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('golfgalaxy_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find(class_="contentlist").find_all('li')
@@ -40,28 +45,28 @@ def fetch_data():
 
 	final_links = []
 	for main_link in main_links:
-		print()
-		print("Processing State: " + main_link)
+		logger.info()
+		logger.info("Processing State: " + main_link)
 		req = session.get(main_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		next_items = base.find(class_="contentlist").find_all('li')
 		for next_item in next_items:
 			next_link = next_item.a['href']
-			print("Processing City: " + next_link)
+			logger.info("Processing City: " + next_link)
 
 			next_req = session.get(next_link, headers = HEADERS)
 			time.sleep(randint(1,2))
 			try:
 				next_base = BeautifulSoup(next_req.text,"lxml")
 			except (BaseException):
-				print('[!] Error Occured. ')
-				print('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 
 			final_items = next_base.find_all('span', attrs={'itemprop': 'streetAddress'})
 			for final_item in final_items:
@@ -75,13 +80,13 @@ def fetch_data():
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "golfgalaxy.com"
 
 		location_name = item.find("h1").text.strip().title()
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = item.find('span', attrs={'itemprop': 'containedIn'}).text.strip()
 		try:

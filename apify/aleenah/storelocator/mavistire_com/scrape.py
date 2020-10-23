@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mavistire_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,13 +29,13 @@ def fetch_data():
     res=session.get("https://www.mavistire.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     urls = soup.find_all('tr', {'style': 'background-color: #f3f3f3'})
-    print(len(urls))
+    logger.info(len(urls))
     unique=set([])
     for url in urls:
         ua=url.find('a').get('href')
 
         url="https://www.mavistire.com/locations/"+ua
-        print(url)
+        logger.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
@@ -41,7 +46,7 @@ def fetch_data():
             except:
                 continue #closed
         jsonValue = '{%s}' % (data.partition('{')[2].rpartition('}')[0],)
-        #print("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")
+        #logger.info("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")
 
 
         js_list = json.loads("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")

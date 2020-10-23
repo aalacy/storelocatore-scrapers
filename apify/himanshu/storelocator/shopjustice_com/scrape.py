@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopjustice_com')
+
+
 
 session = SgRequests()
 def write_output(data):
@@ -63,8 +68,8 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            # print("data ==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+            # logger.info("data ==="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
             yield store
         else:
             city_link = "https://stores.shopjustice.com/"+state_link['href']
@@ -107,8 +112,8 @@ def fetch_data():
                     store.append(longitude)
                     store.append(hours)
                     store.append(page_url)
-                    # print("data ==="+str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                    # logger.info("data ==="+str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
                     yield store
                 else:
                     store_link = "https://stores.shopjustice.com/"+location['href']
@@ -150,8 +155,8 @@ def fetch_data():
                         store.append(longitude)
                         store.append(hours)
                         store.append(page_url)
-                        # print("data ==="+str(store))
-                        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                        # logger.info("data ==="+str(store))
+                        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
                         yield store
 
 

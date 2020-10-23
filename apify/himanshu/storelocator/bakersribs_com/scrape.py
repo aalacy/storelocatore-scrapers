@@ -6,6 +6,11 @@ import json
 from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bakersribs_com')
+
+
 
 session = SgRequests()
 
@@ -28,12 +33,12 @@ def fetch_data():
     driver = SgSelenium().firefox()
     driver.get("http://bakersribs.com/#locations")
     soup = BeautifulSoup(driver.page_source, "lxml")
-    print(driver.page_source)
+    logger.info(driver.page_source)
     return_main_object = []
     locations = soup.find_all("div",{'class':"et_pb_blurb_container"})
-    print(locations)
+    logger.info(locations)
     for location in locations:
-        print(location)
+        logger.info(location)
         len1 = list(location.stripped_strings)
         if len(len1)!= 1:
             city = location.find("h4").text.replace("Caddo Mills","Greenville") 
@@ -52,7 +57,7 @@ def fetch_data():
             for q in range(len(hours)):
                 if "HOURS" ==hours[q]:
                     hours1 = hours[q+1:]
-            # print(hours)
+            # logger.info(hours)
             store = []
             store.append("http://bakersribs.com")
             store.append(name)

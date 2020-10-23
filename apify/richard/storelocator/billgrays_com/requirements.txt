@@ -2,4 +2,4 @@ selenium==3.141.0
 uszipcode
 asyncio
 aiohttp
-sgzip
+sgzipsglogging

@@ -1,3 +1,10 @@
+/**
+  * This is a Scala Ammonite script: https://ammonite.io/
+  * Run using `amm migrate_crawls_to_sglogging.sc` 
+  * From the `scripts` directory to get the rel paths right.
+  * 
+  */
+
 import ammonite.ops._
 import $ivy.`com.github.pathikrit::better-files:3.9.1`
 import better.files._
@@ -52,7 +59,9 @@ def replace_prints(python_file_path: os.Path): Unit = {
 
     val old_string = python_file.contentAsString
 
-    python_file.overwrite(old_string.replaceAll("print\\(", "logger.info(").replaceAll("print \\(", "logger.info("))
+    python_file.overwrite(
+        old_string.replaceAll("print\\(", "logger.info(")
+                  .replaceAll("print \\(", "logger.info("))
 }
 
 def insert_this_after(file_path: os.Path, insert: String, after_last: String): Unit = {
@@ -75,13 +84,17 @@ def insert_import(python_file: os.Path): Unit =
     insert_this_after(python_file, "\nfrom sglogging import SgLogSetup\n", "import")
 
 def process_scraper(scraper_dir: os.Path) {
-    requirements_txt_in_dir(scraper_dir) map insert_sglogging_in_reqs
-    all_python_scripts_in_dir(scraper_dir) filter has_print_statements map { python_script =>
-        println(s"WORKING ON SCRIPT: ${python_script}")
-        insert_import(python_script)
-        mk_logger(python_script, scraper_dir.segments.toList.last)
-        replace_prints(python_script)
-    }   
+    val has_prints = all_python_scripts_in_dir(scraper_dir) filter has_print_statements
+    if (has_prints.nonEmpty) {
+        requirements_txt_in_dir(scraper_dir) map insert_sglogging_in_reqs
+        has_prints map { python_script =>
+            insert_import(python_script)
+            mk_logger(python_script, scraper_dir.segments.toList.last)
+            replace_prints(python_script)
+        } 
+    } else {
+        println(s"Skipping scraper dir ${scraper_dir}")
+    }
 }
 
 lazy val sg_dir = pwd / up
@@ -101,6 +114,7 @@ lazy val full_program = scrapers_without_sglogging.zipWithIndex map { case (dir,
 
 lazy val test_dir = sg_dir / 'apify / 'himanshu / 'storelocator / 'lotsa_com
 
+// Executes the program
 full_program.toList
 
 // println(all_scrapers.size, all_scrapers.toSet.size)

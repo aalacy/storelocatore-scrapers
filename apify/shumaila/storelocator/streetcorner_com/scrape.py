@@ -3,6 +3,11 @@ import csv
 import string
 import re
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('streetcorner_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
     for loc in loclist:
         if loc.find('!DOCTYPE html>') == -1:
             link = 'https://www.streetcorner.com/store/'+loc.split('"',1)[0]
-            print(link)
+            logger.info(link)
             page = session.get(link, headers=headers, verify=False)
             coord = str(page.text).split('center: {lat:')[2]
             lat,longt = coord.split('}',1)[0].split(', lng: ')
@@ -95,7 +100,7 @@ def fetch_data():
                        longt,
                        hours
                    ])
-                print(p,data[p])
+                logger.info(p,data[p])
                 p += 1
     
     return data

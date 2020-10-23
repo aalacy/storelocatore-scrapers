@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('champps_com')
+
+
 
 session = SgRequests()
 
@@ -35,7 +40,7 @@ def fetch_data():
     for index,o in enumerate(p['markers']):
         if index > 0:
             location_name = p['markers'][o]['name']
-            # print(location_name)
+            # logger.info(location_name)
             street_address = p['markers'][o]['address']+" "+p['markers'][o]['address2']
             city = p['markers'][o]['city']
             state = p['markers'][o]['state']
@@ -46,7 +51,7 @@ def fetch_data():
             longitude = p['markers'][o]['long']
             link1 = p['markers'][o]['path']
             page_url = "https://champps.com/"+str(link1)
-            # print(page_url)
+            # logger.info(page_url)
             r1 = session.get(page_url)
             try:
                 soup1 = BeautifulSoup(r1.text, "lxml")

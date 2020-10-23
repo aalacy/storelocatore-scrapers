@@ -5,6 +5,11 @@ import re
 import json
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('elpolloinka_com')
+
+
 
 
 
@@ -76,8 +81,8 @@ def fetch_data():
                              store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                 store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
 
-                # print("data = " + str(store))
-                # print(
+                # logger.info("data = " + str(store))
+                # logger.info(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
@@ -113,8 +118,8 @@ def fetch_data():
 
 
 
-            # print("data = " + str(store))
-            # print(
+            # logger.info("data = " + str(store))
+            # logger.info(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)

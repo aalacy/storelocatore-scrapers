@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bullchicks_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -24,8 +29,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 
 	items = base.findAll('li', attrs={'class': 'col-md-12 location_panel'})

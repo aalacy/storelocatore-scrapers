@@ -5,6 +5,11 @@ import time
 from random import randint
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('junzi_kitchen')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,10 +33,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -41,7 +46,7 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.div.strong.text
-		print(location_name)
+		logger.info(location_name)
 		
 		raw_address = json.loads(item.find_all("div")[-2]["data-block-json"])['location']
 		street_address = raw_address['addressLine1']

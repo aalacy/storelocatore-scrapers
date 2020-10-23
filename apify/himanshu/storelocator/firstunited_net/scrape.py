@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('firstunited_net')
+
+
 
 
 
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -74,7 +79,7 @@ def fetch_data():
             loc="Branch"
         else:
             loc="Branch & ATM"
-        # print(location_name)    
+        # logger.info(location_name)    
         tem_var.append('https://www.firstunited.net/')
         tem_var.append(location_name)
         tem_var.append(address+' '+Address)

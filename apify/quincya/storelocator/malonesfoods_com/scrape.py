@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('malonesfoods_com')
+
+
 
 
 def write_output(data):
@@ -28,8 +33,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        print ('[!] Error Occured. ')
-        print ('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     items = base.find_all(class_="wsite-multicol-table")[-1].find_all(class_="paragraph")
 
@@ -40,7 +45,7 @@ def fetch_data():
         
         raw_data = item.text.replace("Main Office","").replace("\xa0 \xa0","\xa0").split("\xa0")
         location_name = raw_data[0].strip()
-        print(location_name)
+        logger.info(location_name)
         if "#" in location_name:
             store_number = location_name[location_name.find("#")+1:].strip()
             location_type = "Store"

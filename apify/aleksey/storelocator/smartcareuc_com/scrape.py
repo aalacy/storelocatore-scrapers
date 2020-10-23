@@ -6,6 +6,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smartcareuc_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,16 +49,16 @@ def fetch_data():
         alert = driver.switch_to.alert
         alert.accept()
     except TimeoutException:
-        print('No alert')
+        logger.info('No alert')
     
     stores = driver.find_elements_by_class_name('hospital-list-item')
-    #print(len(stores))
+    #logger.info(len(stores))
     i = 0
     
     for store in stores:
         store_number = parse_id(store.get_attribute('id'))
         store_info = driver.execute_script("return hsp_info[id_index["+store_number+"]]")
-        #print(i,store_info['title'])
+        #logger.info(i,store_info['title'])
         lat, lon = store_info['coords']
         street_address = store_info['address_1']
         state = store_info['state']
@@ -84,7 +89,7 @@ def fetch_data():
     # Fetch data for each store url
     i = 0    
     for store_url in store_urls:
-        #print(store_url)
+        #logger.info(store_url)
         data[i][1] = store_url
         driver.get(store_url)
         try:
@@ -98,7 +103,7 @@ def fetch_data():
         except:
             data[i][13] = "<MISSING>"
 
-        #print(i,data[i])
+        #logger.info(i,data[i])
         i += 1
     driver.quit()
     
@@ -107,7 +112,7 @@ def fetch_data():
 def scrape():
     # fetch_data()
     data = fetch_data()
-    #print(data)
+    #logger.info(data)
     write_output(data)
 
 scrape()

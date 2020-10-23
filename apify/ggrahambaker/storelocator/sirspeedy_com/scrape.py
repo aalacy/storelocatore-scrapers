@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 from selenium.common.exceptions import NoSuchElementException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sirspeedy_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        print(i, link)
+        logger.info(i, link)
         try:
             addy = driver.find_element_by_css_selector('p.location_address').text.replace('\n', ' ').replace('-', ' ')
 

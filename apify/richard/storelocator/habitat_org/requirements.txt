@@ -1,4 +1,4 @@
 selenium==3.141.0
 requests
 sgzip
-bs4
+bs4sglogging

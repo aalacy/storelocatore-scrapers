@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopfamilyfare_com')
+
+
 
 
 
@@ -48,7 +53,7 @@ def fetch_data():
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
                 r = session.get(j.find('p', {'class': 'details'}).find('a')['href'])
                 soup = BeautifulSoup(r.text, "lxml")
-                # print(j.find('p', {'class': 'details'}).find('a')['href'])
+                # logger.info(j.find('p', {'class': 'details'}).find('a')['href'])
                 jk = soup.find('table', {'class': 'hours'}).find("tbody").find_all('tr',recursive=False)
                 vk = []
                 for x in jk:
@@ -69,7 +74,7 @@ def fetch_data():
                     vk.append(jk  + ck  + mk  + pk)
 
                 hours = ' '.join(vk)
-                # print(hours)
+                # logger.info(hours)
 
                 lat = soup.find('div', {'id': 'map-canvas'})['data-latitude']
                 long1 = soup.find('div', {'id': 'map-canvas'})['data-longitude']
@@ -92,21 +97,21 @@ def fetch_data():
                 tem_var.append(long1)
                 tem_var.append(hours)
                 tem_var.append(j.find('p', {'class': 'details'}).find('a')['href'])
-                # print("===============================")
+                # logger.info("===============================")
                 if tem_var[2] in addressess:
                     continue
                 addressess.append(tem_var[2])
                 yield tem_var
     #             store_detail.append(tem_var)
 
-    # print("==========",store_detail)
-    # print("=====================================",store_name)
+    # logger.info("==========",store_detail)
+    # logger.info("=====================================",store_name)
     # for i in range(len(store_name)):
     #     store = list()
     #     store.append("https://www.shopfamilyfare.com")
     #     store.append(store_name[i])
     #     store.extend(store_detail[i])
-    #     print("data===",str(store))
+    #     logger.info("data===",str(store))
     #     yield store
 def scrape():
     data = fetch_data()

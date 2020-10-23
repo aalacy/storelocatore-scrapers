@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('communitymarkets_com')
+
+
 
 
 
@@ -51,10 +56,10 @@ def fetch_data():
     json_data = r_json.json()
     # soup = BeautifulSoup(r.text, "lxml")
 
-    # print("json_data === "+ str(json_data))
+    # logger.info("json_data === "+ str(json_data))
     for location in json_data["items"]:
 
-        # print("location === " + str(location))
+        # logger.info("location === " + str(location))
         street_address = location["address_1"]
         location_name = location["name"]
         city = location["city"]
@@ -76,8 +81,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

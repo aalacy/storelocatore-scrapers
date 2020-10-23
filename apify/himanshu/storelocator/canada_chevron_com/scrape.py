@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('canada_chevron_com')
+
+
 
 
 session = SgRequests()
@@ -61,7 +66,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
         tem_var.append("https://canada.chevron.com/contact")
-        print(tem_var)
+        logger.info(tem_var)
         return_main_object.append(tem_var)
 
 

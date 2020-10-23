@@ -11,6 +11,11 @@ from bs4 import BeautifulSoup as bs
 import json
 from datetime import datetime
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('homelessshelterdirectory_org')
+
+
 
 
 show_logs = False
@@ -27,8 +32,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
-    print("")
+    logger.info(" ".join(map(str, args)), **kwargs)
+    logger.info("")
 
 
 def get_session(reset=False):
@@ -237,7 +242,7 @@ def fetch_data():
 
     r = get(base_url)
     if not r: 
-        print(f'could not get initial locator page. giving up')
+        logger.info(f'could not get initial locator page. giving up')
         raise SystemExit
 
     soup = bs(r.content, "lxml")

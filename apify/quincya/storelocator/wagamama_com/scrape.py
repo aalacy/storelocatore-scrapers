@@ -5,6 +5,11 @@ import time
 from random import randint
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wagamama_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,10 +33,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print("Got today page")
+        logger.info("Got today page")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     data = []
 
@@ -39,7 +44,7 @@ def fetch_data():
     items = base.find_all(class_="restaurant-hub__results-item") 
     for item in items:
         location_name = item.h2.text.title()
-        print(location_name)
+        logger.info(location_name)
 
         zip_code = item.find(class_="restaurant-hub__postcode").text.strip()
         country_code = "GB"

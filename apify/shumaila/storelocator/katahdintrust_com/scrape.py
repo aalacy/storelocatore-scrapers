@@ -4,6 +4,11 @@ import csv
 import string
 import re
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('katahdintrust_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +27,7 @@ def fetch_data():
     url = 'https://www.katahdintrust.com/Locations-Hours'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    # print(soup)
+    # logger.info(soup)
     title_list = soup.findAll('table', {'class': 'Subsection-Table'})
     repo_list = soup.findAll('table', {'class': 'Table-Location'})
     p = 1
@@ -110,16 +115,16 @@ def fetch_data():
         start = phone.find("|")
         if start != -1:
             phone = phone[start+2:len(phone)]
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(ltype)
-        print(phone)
-        print(hours)
-        print(p)
-        print(".................")
+        logger.info(title)
+        logger.info(street)
+        logger.info(city)
+        logger.info(state)
+        logger.info(pcode)
+        logger.info(ltype)
+        logger.info(phone)
+        logger.info(hours)
+        logger.info(p)
+        logger.info(".................")
         data.append([
             url,
             title,

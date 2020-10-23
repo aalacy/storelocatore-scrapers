@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('guessbymarciano_guess_ca')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -42,7 +47,7 @@ def fetch_data():
             for url in store_soup.find_all("a",{"title":re.compile("#")}):
                 
                 page_url = url['href']
-                #print(page_url)
+                #logger.info(page_url)
                 if session.get(page_url).status_code != 200:
                     continue
                 location_soup = bs(session.get(page_url).content, "lxml")

@@ -5,6 +5,11 @@ import re
 import io
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sylvanlearning_com')
+
+
 
 session = SgRequests()
 
@@ -54,7 +59,7 @@ def fetch_data():
                 if y in vb:
                     country_code = vb[y][0]
 
-                print(base_url+y['href'])
+                logger.info(base_url+y['href'])
                 r = session.get(base_url+y['href'])
                 soup = BeautifulSoup(r.text,"lxml")
                 for j in soup.find_all('div',{'class':'locationResults'}):
@@ -106,7 +111,7 @@ def fetch_data():
                     store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                     store.append(page_url if page_url else '<MISSING>')
 
-                    # print("data===",str(store))
+                    # logger.info("data===",str(store))
                     yield store
             except:
                 continue

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bostonmarket_com')
+
+
 
 session = SgRequests()
 def write_output(data):
@@ -32,7 +37,7 @@ def fetch_data():
         s_link = state_link['href']
         if state_link['data-count'] == "(1)":
             page_url = "https://www.bostonmarket.com/location/"+s_link
-            print(page_url)
+            logger.info(page_url)
             location_r = requests.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
 
@@ -75,8 +80,8 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            # print("data ==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+            # logger.info("data ==="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
             yield store
         else:
             city_link = "https://www.bostonmarket.com/location/"+state_link['href']
@@ -87,7 +92,7 @@ def fetch_data():
                 if location['data-count'] == "(1)":
                     
                     page_url = "https://www.bostonmarket.com/location/"+location['href']
-                    # print(page_url)
+                    # logger.info(page_url)
                     location_r = requests.get(page_url)
                     location_soup = BeautifulSoup(location_r.text, "lxml")
                     location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
@@ -124,8 +129,8 @@ def fetch_data():
                     store.append(longitude)
                     store.append(hours)
                     store.append(page_url)
-                    # print("data ==="+str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                    # logger.info("data ==="+str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
                     yield store
 
                     
@@ -139,7 +144,7 @@ def fetch_data():
                         location_r = requests.get(page_url)
                         location_soup = BeautifulSoup(location_r.text, "lxml")
         
-                        # print(page_url)
+                        # logger.info(page_url)
                         location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
                         if "Ramstein, Miesenbach" in location_name:
                             continue
@@ -176,8 +181,8 @@ def fetch_data():
                         store.append(longitude)
                         store.append(hours)
                         store.append(page_url)
-                        # print("data ==="+str(store))
-                        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                        # logger.info("data ==="+str(store))
+                        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
                         yield store
 
 

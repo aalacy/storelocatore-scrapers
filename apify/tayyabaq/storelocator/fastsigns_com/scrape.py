@@ -3,6 +3,11 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fastsigns_com')
+
+
 
 
 def write_output(data):
@@ -51,16 +56,16 @@ def fetch_data():
     stores_text = [stores[n].text for n in range(0, len(stores))]
     country = driver.find_elements_by_xpath('//tbody/tr/td[5]')
     address_type = driver.find_elements_by_xpath('//tbody/tr/td[2]')
-    #print(address_type)
+    #logger.info(address_type)
     f_countries=[]
     for n in range(0, len(stores_href)):
         if (('COMING SOON' not in address_type[n].text) and ('COMING SOON!' not in address_type[n].text)) and (
                 ('US' in country[n].text) or ('CA' in country[n].text)):
             links.append(stores_href[n])
 
-            # print(location_name)
+            # logger.info(location_name)
 
-            # print(state)
+            # logger.info(state)
 
             countries.append(country[n].text)
     for n in range(0, len(links)):
@@ -72,7 +77,7 @@ def fetch_data():
                 time.sleep(5)
             except:
                 continue
-            #print(links[n])
+            #logger.info(links[n])
             
             addr = driver.find_element_by_class_name('address').text.replace(",,", ",").split("\n")[0].strip()
             loca=driver.find_element_by_class_name('location-x').text.lower()
@@ -106,10 +111,10 @@ def fetch_data():
                 zipcode.append(z)
                 pages_url.append(links[n])
                 street_address.append(addr.replace(c, "").replace(",",""))
-                #print(addr)
-                #print(c)
+                #logger.info(addr)
+                #logger.info(c)
                 #rint(street_address)
-                #print(z)
+                #logger.info(z)
                 f_countries.append(countries[n])
                 ids.append(str(links[n]).split('/')[-1].split('-')[0])
                 #rint(ids)

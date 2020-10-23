@@ -5,6 +5,11 @@ import re
 import json
 import time
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('safeway_com__pharmacy')
+
+
 
 def write_output(data):
     with open('data.csv',newline='', mode='w') as output_file:
@@ -45,11 +50,11 @@ def fetch_data():
         city_data = soup4.find_all("a",{"class":"Directory-listLink"})
         for i in city_data:
             location_link = i['href'].replace("../safeway/","https://local.pharmacy.safeway.com/")
-            # print(location_link)
+            # logger.info(location_link)
         
             if "(1)" in i['data-count']:
                 page_urls = location_link
-                # print(page_urls)
+                # logger.info(page_urls)
                 page_url_list.append(page_urls)
             else:
         
@@ -58,11 +63,11 @@ def fetch_data():
                 data_link = soup6.find_all("a",{"class":"Teaser-titleLink"})
                 for j in data_link:
                     page_urls = j['href'].replace("../","https://local.pharmacy.safeway.com/")
-                    # print(page_urls)
+                    # logger.info(page_urls)
                     page_url_list.append(page_urls)
-    # print(page_url_list)
+    # logger.info(page_url_list)
     for page_url in page_url_list:
-        # print(page_url)
+        # logger.info(page_url)
         r5 = requests.get(page_url, headers=headers)
         soup5 = BeautifulSoup(r5.text, "lxml")
         try:
@@ -96,11 +101,11 @@ def fetch_data():
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
-            # print("data =="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data =="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         except:
-            # print(page_url)
+            # logger.info(page_url)
             continue
 
             
@@ -148,8 +153,8 @@ def fetch_data():
                     # # if store[2] in addresses:
                     # #     continue
                     # # addresses.append(store[2])
-                    # # print("data =="+str(store))
-                    # # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # # logger.info("data =="+str(store))
+                    # # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     # yield store
 
     # url = "https://local.safeway.com/"+content[1]['href']
@@ -171,7 +176,7 @@ def fetch_data():
     #     latitude = soup2.find("meta",{"itemprop":"latitude"})['content']
     #     longitude = soup2.find("meta",{"itemprop":"longitude"})['content']
     #     page_url = location_link
-    #     print(page_url)
+    #     logger.info(page_url)
     #     location_type = "Pharmacy"
     #     country_code = "US"
 
@@ -190,8 +195,8 @@ def fetch_data():
     #     store.append(longitude)
     #     store.append(hours)
     #     store.append(page_url)
-    #     # print("data =="+str(store))
-    #     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    #     # logger.info("data =="+str(store))
+    #     # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     #     yield store
         
        

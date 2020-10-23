@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jugojuice_com')
+
+
 
 
 
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -69,7 +74,7 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append(hour)
         tem_var.append("<MISSING>")
-        #print(tem_var)
+        #logger.info(tem_var)
         tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
         if 'Dubai' in city:
             continue

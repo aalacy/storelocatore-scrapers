@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dreamhotels_com')
+
+
 
 
 session = SgRequests()
@@ -31,7 +36,7 @@ def fetch_data():
         if data.get('href') == "" or data.get('href') is None or "destinations-en" in data.get('href') or "http://www.dreamhotelgroup.com/" == data.get('href'):
             pass
         else:
-            print(data.get('href'))
+            logger.info(data.get('href'))
             detail_url = session.get(data.get('href'), headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             address = detail_soup.select('.footer-directions-text')[0].get_text().strip().replace('\n', ',').split(',')

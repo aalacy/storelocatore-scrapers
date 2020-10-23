@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('donatos_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -69,7 +74,7 @@ def fetch_data():
         tim=tim.find_all('dd')[2].text.replace("\n"," ").strip()
         if tim=="":
             tim="<MISSING>"
-        print (tim)
+        logger.info(tim)
         timing.append(tim)
 
     all = []

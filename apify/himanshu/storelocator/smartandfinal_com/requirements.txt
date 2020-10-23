@@ -1,2 +1,2 @@
 sgrequests
-requests_toolbelt
+requests_toolbeltsglogging

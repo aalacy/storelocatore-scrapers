@@ -4,6 +4,11 @@ import re
 import ast
 import json
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('citybbq_com')
+
+
 
 
 
@@ -70,7 +75,7 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url)
-            # print("data ====="+str(store))
+            # logger.info("data ====="+str(store))
             yield store
 
 def scrape():

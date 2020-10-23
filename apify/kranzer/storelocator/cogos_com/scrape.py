@@ -6,6 +6,11 @@ import ast
 import requests, json
 from urllib.parse import urljoin
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cogos_com')
+
+
 class Scrape(base.Spider):
 
     def crawl(self):
@@ -23,7 +28,7 @@ class Scrape(base.Spider):
         for result in [s.strip() for s in body.split('|')]:
             if result.strip():
                 res_ = result.replace('&#8217;','\'').split('+')
-                # print(res_)
+                # logger.info(res_)
                 i = base.Item(result)
                 i.add_value('locator_domain', base_url)
                 i.add_value('page_url', base_url)

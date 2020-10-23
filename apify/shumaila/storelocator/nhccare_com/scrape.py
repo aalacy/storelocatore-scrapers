@@ -6,6 +6,11 @@ import re, time
 import usaddress
 from sgrequests import SgRequests
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('nhccare_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,10 +38,10 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     state_list = soup.findAll('a', {'class': 'avia-button'})
-    print("states = ",len(state_list))
+    logger.info("states = ",len(state_list))
     p = 0
     for state in state_list:
-        #print(state.text)    
+        #logger.info(state.text)    
         state = state['href']
         divlist = []
         linklist = []
@@ -96,7 +101,7 @@ def fetch_data():
                     state = state.lstrip()
                     city = city.replace(',','')
                     link = div.find('a',{'class':'avia-button'})['href']
-                    #print(link)
+                    #logger.info(link)
                     r1 = session.get(link, headers=headers, verify=False)
                     soup1 = BeautifulSoup(r1.text, "html.parser")
                     coordlist = soup1.findAll('a')
@@ -128,7 +133,7 @@ def fetch_data():
                            lat = soup1[start:end]
                    
                     data.append(['https://nhccare.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,"<MISSING>"])
-                    #print(p,data[p])
+                    #logger.info(p,data[p])
                     p += 1
                     #input()
                         
@@ -138,9 +143,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

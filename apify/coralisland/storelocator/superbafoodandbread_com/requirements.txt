@@ -4,3 +4,4 @@ selenium==3.141.0
 usaddress==0.5.10
 sgrequests
 unidecode
+sglogging

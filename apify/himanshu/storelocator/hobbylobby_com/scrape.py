@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hobbylobby_com')
+
+
 
 
 
@@ -41,9 +46,9 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        print("zip-code::::::::::"+str(search.current_zip))
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        logger.info("zip-code::::::::::"+str(search.current_zip))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url ="https://www.hobbylobby.com/store-finder?latitude="+str(lat)+"&longitude="+str(lng)+"&q="+str(search.current_zip)
         try:
@@ -102,10 +107,10 @@ def fetch_data():
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -8,6 +8,11 @@ import csv
 import re
 import json
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('careeronestop_org')
+
+
 
 session = SgRequests()
 def write_output(data):
@@ -112,7 +117,7 @@ def fetch_data():
             if store[2] in address :
                 continue
             address.append(store[2])
-            #print(store)
+            #logger.info(store)
             yield store
         if len(json_data) < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)

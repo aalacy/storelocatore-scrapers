@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('russellcellular_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
 	while coords:
 		
 		result_coords = []
-		print(coords)
+		logger.info(coords)
 
 		lat = coords[0]
 		lng = coords[1]
@@ -59,7 +64,7 @@ def fetch_data():
 				street_address = street_address[:street_address.find("{")].strip()
 			if street_address in found_poi:
 				continue
-			print(street_address)
+			logger.info(street_address)
 			found_poi.append(street_address)
 			city_line = raw_address[-1].strip().split(",")
 			city = city_line[0].strip()
@@ -81,7 +86,7 @@ def fetch_data():
 				
 			data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
-		print("max count update..")
+		logger.info("max count update..")
 		search.max_count_update(result_coords)
 		coords = search.next_coord()
 

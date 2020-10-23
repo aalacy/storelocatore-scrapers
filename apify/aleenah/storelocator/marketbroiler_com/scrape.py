@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('marketbroiler_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)   
     soup =BeautifulSoup(r.text, "html.parser")   
     linklist = soup.findAll('a', {'class': "wixAppsLink"})   
-    #print("states = ",len(linklist))    
+    #logger.info("states = ",len(linklist))    
     p = 0
     for link in linklist:
         if link['href'].find('location') > -1 or link['href'].find('map') > -1:
@@ -39,7 +44,7 @@ def fetch_data():
             link = link['href']            
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
-            #print(soup.text)
+            #logger.info(soup.text)
             #input()
             content = soup.text.split('FRESH FISH MARKET & TAKE-OUT')[1].split('No')[0].lstrip()
             
@@ -47,7 +52,7 @@ def fetch_data():
                 content = content.split('DIRECTION')[0]
             except:
                 pass
-            #print(content)
+            #logger.info(content)
             try:
                 phone = content.split('Phone.')[1].lstrip()
                 address = content.split('Phone')[0]
@@ -123,7 +128,7 @@ def fetch_data():
                         longt,
                         hours.replace('\u200b','')
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                 
             
@@ -136,9 +141,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

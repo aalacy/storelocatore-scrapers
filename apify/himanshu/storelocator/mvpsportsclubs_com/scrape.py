@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mvpsportsclubs_com')
+
+
 
 
 
@@ -39,7 +44,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # print("phone ==== " + getDecodedPhoneNo(_phone))
+    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
@@ -67,7 +72,7 @@ def fetch_data():
             hours = " ".join(list(hours1[-1].stripped_strings)[1:])
             
         else:
-            # print(loc['permalink'])
+            # logger.info(loc['permalink'])
             hours = "<INACCESSIBLE>"
         
         
@@ -90,7 +95,7 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append(hours)
         tem_var.append(loc['permalink'])
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
         
 

@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wingstogo_com')
+
+
 
 
 options = Options()
@@ -37,7 +42,7 @@ def fetch_data():
     time.sleep(5)
     stores = driver.find_elements_by_css_selector('div.view-more > a')
     name = [stores[i].get_attribute('href') for i in range(0, len(stores))]
-    #print(name)
+    #logger.info(name)
     for i in range(len(name)):
             driver.get(name[i])
             page_url = name[i]
@@ -75,7 +80,7 @@ def fetch_data():
                 hours_of_op
             ])
             count = count + 1
-            print(count)
+            logger.info(count)
 
     time.sleep(3)
     driver.quit()

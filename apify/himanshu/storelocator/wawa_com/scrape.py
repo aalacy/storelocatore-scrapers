@@ -7,6 +7,11 @@ import json
 import ssl
 import urllib3
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wawa_com')
+
+
 
 session = SgRequests()
 
@@ -29,7 +34,7 @@ def fetch_data():
     sess = requests.session()
     base_response = sess.get(base_url)
     response = sess.get("https://www.wawa.com/site-map")
-    print(sess.cookies.get_dict())
+    logger.info(sess.cookies.get_dict())
     cookies_json = sess.cookies.get_dict()
     cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")
     # headers = {

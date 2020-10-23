@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import sgzip 
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('regalnails_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,10 +34,10 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) + '&filter=10&autoload=1'
         r = session.get(url, headers=HEADERS)
         

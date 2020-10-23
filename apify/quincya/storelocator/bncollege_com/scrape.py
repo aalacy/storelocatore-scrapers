@@ -10,6 +10,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bncollege_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,8 +39,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	driver = SgSelenium().chrome()
 	time.sleep(2)
@@ -54,14 +59,14 @@ def fetch_data():
 			continue
 		else:
 			poi_found.append(link)
-		print("Link %s of %s" %(i+1,len(items)))
-		print(link)
+		logger.info("Link %s of %s" %(i+1,len(items)))
+		logger.info(link)
 		
 		try:
 			req = session.get(link, headers = HEADERS)
 			base = BeautifulSoup(req.text,"lxml")
 		except:
-			print("No results found..skipping")
+			logger.info("No results found..skipping")
 			continue
 
 		try:
@@ -70,7 +75,7 @@ def fetch_data():
 			try:
 				final_link = (req.url.split(".com/")[0] + ".com/" + base.find_all(class_="primaryBtn")[-1]['href']).replace(".com//",".com/")
 			except:
-				print("No results found..skipping")
+				logger.info("No results found..skipping")
 				continue
 
 		if final_link in poi_found:
@@ -88,7 +93,7 @@ def fetch_data():
 				(By.CLASS_NAME, "storeInfo")))
 			time.sleep(randint(1,2))
 		except:
-			print("Timeout..no results found")
+			logger.info("Timeout..no results found")
 			continue
 
 		final_link = driver.current_url

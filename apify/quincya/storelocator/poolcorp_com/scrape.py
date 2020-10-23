@@ -12,6 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('poolcorp_com')
+
+
 
 
 def get_driver():
@@ -47,7 +52,7 @@ def fetch_data():
 	for zip_code in zips:
 		link = base_link+zip_code
 		driver.get(link)
-		print(zip_code)
+		logger.info(zip_code)
 		time.sleep(randint(2,4))
 
 		try:
@@ -65,7 +70,7 @@ def fetch_data():
 			if name not in found_poi:
 				if "colombia" in name.lower() or "puerto rico"  in name.lower():
 					continue
-				print(name)
+				logger.info(name)
 				all_links.append([name,item,link])
 				found_poi.append(name)
 
@@ -76,7 +81,7 @@ def fetch_data():
 		link = base_link+can_zip
 		driver.get(link)
 		time.sleep(randint(2,4))
-		print(can_zip)
+		logger.info(can_zip)
 
 		try:
 			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
@@ -93,14 +98,14 @@ def fetch_data():
 			if name not in found_poi:
 				if "colombia" in name.lower() or "puerto rico"  in name.lower():
 					continue
-				print(name)
+				logger.info(name)
 				all_links.append([name,item,link])
 				found_poi.append(name)
 
 	data = []
 	total_links = len(all_links)
 	for i, raw_link in enumerate(all_links):
-		print("Link %s of %s" %(i+1,total_links))
+		logger.info("Link %s of %s" %(i+1,total_links))
 		location_name = raw_link[0]
 		item = raw_link[1]
 		link = raw_link[2]

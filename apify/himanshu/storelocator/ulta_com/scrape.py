@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ulta_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +34,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for store_data in data:
         store = []
-        # print(store_data)
+        # logger.info(store_data)
         # exit()
         location_name = store_data['mallName']
         street_address = store_data['address']
@@ -92,8 +97,8 @@ def fetch_data():
         return_object.append(hour)
         return_object.append(page_url)
         yield return_object
-        # print("--" + str(str(return_object)))
-        # print("~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("--" + str(str(return_object)))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~")
 
 
 def scrape():

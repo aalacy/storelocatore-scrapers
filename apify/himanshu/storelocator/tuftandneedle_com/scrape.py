@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tuftandneedle_com')
+
+
 
 
 session = SgRequests()
@@ -47,7 +52,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #print("zip_code === "+zip_code)
+        #logger.info("zip_code === "+zip_code)
         data = '{"operationName":"GetStores","variables":{"geoSearchParams":{"zipcode":"'+str(zip_code)+'","radius":"500"}},"query":"query GetStores($geoSearchParams: GeoSearchParams!) { getStores(geoSearchParams: $geoSearchParams) {   results {     retailStores {       name       uuid       hours       lat       lng       serviceArea       prettyName       comingSoon       address {         line1         line2         city         state         zip         __typename       }       storeType       ... on StoreWithSearchLocation {         distance         __typename       }       capabilities {         type         availableInventory         __typename       }       __typename     }     partnershipStores {       name       uuid       hours       lat       lng       prettyName       serviceArea       phoneNumber       address {         line1         line2         city         state         zip         __typename       }       storeType       ... on StoreWithSearchLocation {         distance         __typename       }       capabilities {         type         availableInventory         __typename       }       __typename     }     searchLocation {       lat       lng       __typename     }     __typename   }   __typename } } " }'
         location_url = "https://api.tuftandneedle.com/api/graphql"
         try:
@@ -76,11 +81,11 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
         page_url = "<MISSING>"
-        # print()
+        # logger.info()
         # if json_data['data']['getStores']["results"]['retailStores']
         
-        # print("===============================",current_results_len)
-        # print(json_data['data'])
+        # logger.info("===============================",current_results_len)
+        # logger.info(json_data['data'])
         if json_data['data'] != None:
             current_results_len = len(json_data['data']['getStores']["results"]['retailStores']+json_data['data']['getStores']["results"]['partnershipStores'])
             
@@ -117,8 +122,8 @@ def fetch_data():
                 addresses1.append(store1[2])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
 
-                # print("data = partnershipStores " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = partnershipStores " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store1
 
@@ -146,16 +151,16 @@ def fetch_data():
                 addresses.append(store[2])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = retailStores" + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = retailStores" + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('balduccis_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
 
     base_url = "https://www.balduccis.com"
     r = session.get("https://www.balduccis.com/locations", headers=headers)
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -60,7 +65,7 @@ def fetch_data():
             continue
 
         location_url_list.append(location_url)
-        # print("location_url === " + str(location_url))
+        # logger.info("location_url === " + str(location_url))
 
         r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -77,7 +82,7 @@ def fetch_data():
 
 
         full_address_url = soup_location.find('div',{'class':'field field--name-field-full-address field--type-string field--label-hidden field__item'}).find('iframe')['src']
-        # print("hourse === "+str(full_address_url))
+        # logger.info("hourse === "+str(full_address_url))
 
         geo_request = session.get(full_address_url,headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
@@ -87,7 +92,7 @@ def fetch_data():
                 lat = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][0]
                 lng = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][1]
 
-        # print("geo_data ===== "+ geo_data)
+        # logger.info("geo_data ===== "+ geo_data)
         street_address = ",".join(geo_data.split(',')[:-3])
         city = geo_data.split(',')[-3]
         location_name = city
@@ -99,13 +104,13 @@ def fetch_data():
 
         if hours_of_operation is None or len(hours_of_operation) == 0:
             hours_of_operation = "<MISSING>"
-        # print("street_address ==== "+ street_address)
+        # logger.info("street_address ==== "+ street_address)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

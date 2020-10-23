@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pga_com')
+
+
 
 
 def write_output(data):
@@ -38,7 +43,7 @@ def fetch_data():
         all_city =soup1.find("ul",{"class":re.compile("jss182 jss183")}).find_all("a")
         
         for city in all_city:
-            # print("city====================== ","https://www.pga.com"+city['href'])
+            # logger.info("city====================== ","https://www.pga.com"+city['href'])
             try:
                 r2 = requests.get("https://www.pga.com"+city['href'])
             except:
@@ -58,10 +63,10 @@ def fetch_data():
                 if len(new_words) == 5:
                     name = new_words[0]
                     state_list = re.findall(r'([A-Z]{2})', str(new_words[-2].strip().lstrip()))
-                    # print('--------------------------------------',state_list,new_words[-2].strip().lstrip())
+                    # logger.info('--------------------------------------',state_list,new_words[-2].strip().lstrip())
                     if state_list:
                         state = state_list[-1]
-                        # print('-----------------------------------------',state)      
+                        # logger.info('-----------------------------------------',state)      
 
                     if len(new_words[1:-2])==2:
                         st = new_words[1:-2][0]
@@ -87,9 +92,9 @@ def fetch_data():
 
                     page_url ="https://www.pga.com"+store1['href']
                 # else:
-                #     print("https://www.pga.com"+store1['href'])
-                #     print("===================== len ", len(new_words))
-                    # print(new_words)
+                #     logger.info("https://www.pga.com"+store1['href'])
+                #     logger.info("===================== len ", len(new_words))
+                    # logger.info(new_words)
 
                 try:
                     r3 = requests.get("https://www.pga.com"+store1['href'])
@@ -120,11 +125,11 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append("<MISSING>")
                 tem_var.append(page_url)
-                # print("========================",tem_var)
+                # logger.info("========================",tem_var)
                 if tem_var[2] in addressess:
                     continue
                 addressess.append(tem_var[2])
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 yield tem_var
                 
 

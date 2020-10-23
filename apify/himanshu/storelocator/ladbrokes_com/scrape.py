@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ladbrokes_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -31,7 +36,7 @@ def fetch_data():
         
         for index,anchor in enumerate(r):
             if index >=1:
-                # print(anchor['a'])
+                # logger.info(anchor['a'])
                 soup = BeautifulSoup(anchor['a'],'lxml')
                 state = soup.find("span",{"class":"storecity"}).text.lower()
                 zipp = soup.find("span",{"class":"storepostalcode"}).text
@@ -41,7 +46,7 @@ def fetch_data():
                 zipp  = adr.find("span",class_="storepostalcode").text.strip()
                 state = anchor['c']
                 street_address =(adr.text.strip().replace(city,"").replace(zipp,''))
-                # print(state)
+                # logger.info(state)
                 # city = anchor['ad'].split(",")[1].strip().lower()
                 location_name = anchor['n']
                 store_number = location_name.split()[-1].strip()
@@ -49,7 +54,7 @@ def fetch_data():
                 #     street_address = city
                 #     city = state
 
-                # print(store_number)
+                # logger.info(store_number)
                 # if anchor["w"]:
                 #     page_url =  anchor["w"]
                 # else:
@@ -79,8 +84,8 @@ def fetch_data():
                 if store[2] in addressesess:
                     continue
                 addressesess.append(store[2])
-                # print("data == "+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info("data == "+str(store))
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 yield store
 
 def scrape():

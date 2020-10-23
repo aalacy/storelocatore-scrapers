@@ -1,5 +1,10 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('beltone_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,14 +28,14 @@ def fetch_data():
         if 'linktrack="State index page' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
-        print('Pulling State %s...' % state)
+        logger.info('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
             if 'linktrack="City index page - ' in line2:
                 cities.append(line2.split('href="')[1].split('"')[0])
     for city in cities:
-        print('Pulling City %s...' % city)
+        logger.info('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -38,9 +43,9 @@ def fetch_data():
                 lurl = line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
-    print('Found %s Locations...' % str(len(locs)))
+    logger.info('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        logger.info('Pulling Location %s...' % loc)
         website = 'beltone.com'
         typ = '<MISSING>'
         hours = ''

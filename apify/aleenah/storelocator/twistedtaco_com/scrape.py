@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('twistedtaco_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -41,7 +46,7 @@ def fetch_data():
             else:
                 linklist.append(link) 
                 link = 'https://www.twistedtaco.com'+ link                
-                #print(link)
+                #logger.info(link)
                 r = session.get(link, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text,'html.parser')
                 det = soup.findAll('div',{'class':'dmNewParagraph'})
@@ -57,7 +62,7 @@ def fetch_data():
                         if dt.text.find('Hours') > -1:
                             content = re.sub(cleanr,'\n',str(dt))
                             content = re.sub(pattern,'\n',content).split('\n')
-                            #print(content)
+                            #logger.info(content)
                             
                             ind = 0
                             phone = '<MISSING>'
@@ -69,7 +74,7 @@ def fetch_data():
                                 for t in hourlist:                                   
                                     if t in content[i].lower():
                                         flag = 1
-                                        #print(content[i])
+                                        #logger.info(content[i])
                                         break
                                     
                                 if  flag == 1:
@@ -131,14 +136,14 @@ def fetch_data():
                                 '<MISSING>',
                                 hours.replace('pm','pm ').strip()
                             ])
-                            #print(p,data[p])
+                            #logger.info(p,data[p])
                             p += 1
                             #input()
                             
                               
                            
                     except Exception as e:
-                        print(e)
+                        logger.info(e)
                         pass
 
         except:
@@ -148,9 +153,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -7,6 +7,11 @@ import re
 import json
 import sgzip
 import http.client
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chevronwithtechron_ca')
+
+
 
 session = SgRequests()
 
@@ -46,8 +51,8 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat="+str(lat)+"&lng="+str(lng)
     
@@ -68,7 +73,7 @@ def fetch_data():
             latitude = i['lat']
             longitude = i['lng']
             page_url = "https://www.chevronwithtechron.com/station/"+str(street_address.replace(' ','-').replace('.','').replace("/",""))+"-"+str(city.replace(' ','-'))+"-"+str(state)+"-"+str(zipp)+"-id"+str(store_number)
-            #print(page_url)
+            #logger.info(page_url)
             
             r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
@@ -97,16 +102,16 @@ def fetch_data():
                 continue     
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print("data==="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #logger.info("data==="+str(store))
+            #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('officedepot_com')
+
+
 
 
 session = SgRequests()
@@ -38,7 +43,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("zip_code === "+zip_code)
+        # logger.info("zip_code === "+zip_code)
 
         r = session.get('https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline></geoloc></geolocs><searchradius>'+str(MAX_DISTANCE)+'</searchradius>', headers=headers)
         
@@ -88,10 +93,10 @@ def fetch_data():
             yield store
             
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

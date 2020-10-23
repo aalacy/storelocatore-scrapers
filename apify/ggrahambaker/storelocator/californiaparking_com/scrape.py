@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('californiaparking_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,8 +35,8 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(locator_domain + link)
-        print()
+        logger.info(locator_domain + link)
+        logger.info()
         r = session.get(locator_domain + link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h2').text.split(',')[0]

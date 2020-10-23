@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup, Tag
 from sgrequests import SgRequests
 
 from simple_utils import *
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vans_com')
+
+
 
 
 MISSING = '<MISSING>'
@@ -76,7 +81,7 @@ def fetch_data():
         data_len = len(soup.find_all('poi'))
         location = soup.find_all('poi')
 
-        print(f"Locations found for {search.current_zip}: {len(location)}")
+        logger.info(f"Locations found for {search.current_zip}: {len(location)}")
 
         for loc in location:
             country = loc.find('country').text.strip()
@@ -113,7 +118,7 @@ def fetch_data():
                 # disregard duplicates (within a reasonable radius)
                 identity = f"{lat[0:8]}:{lng[0:8]}"
                 if identity in encountered_identities:
-                    print (f"Encountered duplicate: [{identity}]; skipping.")
+                    logger.info(f"Encountered duplicate: [{identity}]; skipping.")
                     continue
                 else:
                     encountered_identities.add(identity)

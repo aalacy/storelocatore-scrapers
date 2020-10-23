@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rogers_com')
+
+
 
 
 
@@ -61,7 +66,7 @@ def fetch_data():
 
     while coord:
         result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         # try:
@@ -72,7 +77,7 @@ def fetch_data():
         "limit" : "75",
         "channelID":"ROGERS"
         }
-        # print("data ===" + data)
+        # logger.info("data ===" + data)
         try:
             r= session.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
         except:
@@ -80,17 +85,17 @@ def fetch_data():
         json_data = r.json()
         # except:
         #     continue
-        # print(json_data['features'])
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info(json_data['features'])
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         features_len = len(json_data['features'])
-        # print(features_len)
+        # logger.info(features_len)
         if json_data['features'] != []:
             for z in json_data['features']:
                 location_name = z['properties']['LocationName'] + "-" +z['properties']['City']
                 
                 street_address = z['properties']['Address2'] +" " +z['properties']['Intersection']+ " "+z['properties']['AddressOrIntersection']
                 page_url = "https://www.rogers.com/business/contact-us/store-locator?store="+z['properties']['SCID']
-                # print(page_url)
+                # logger.info(page_url)
                 city = z['properties']['City']
 
                 state = z['properties']['StateOrProvince']
@@ -102,7 +107,7 @@ def fetch_data():
                 if us_zip_list:
                     zipp = us_zip_list[0]
                     country_code = "US"
-                # print(zipp)
+                # logger.info(zipp)
 
 
                 phone = z['properties']['Business_Phone']
@@ -139,19 +144,19 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
 
-                # print(location_name+" | "+street_address + " | " + city + " | " +state +" | "+ zipp + " | "+phone+"  | "+hours_of_operation + " | "+ latitude+" | "+ longitude +" | "+store_number)
+                # logger.info(location_name+" | "+street_address + " | " + city + " | " +state +" | "+ zipp + " | "+phone+"  | "+hours_of_operation + " | "+ latitude+" | "+ longitude +" | "+store_number)
 
 
-                # print("data===="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info("data===="+str(store))
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                 # return_main_object.append(store)
                 yield store
         if features_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         if features_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         # else:
         #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")

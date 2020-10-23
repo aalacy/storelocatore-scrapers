@@ -3,6 +3,11 @@ import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sunriseseniorliving_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +28,7 @@ def fetch_data():
     soup = BeautifulSoup(res.text, 'html.parser')
     stores = soup.find_all('a', {'class': 'btn-primary--small-reverse'})
     stores+= soup.find_all('a', {'data-track-event': 'US Community Results Page Quebec Community Page Button'})
-    print(len(stores))
+    logger.info(len(stores))
 
     for store in stores:
         url="https://www.sunriseseniorliving.com"+store.get('href')
@@ -37,7 +42,7 @@ def fetch_data():
         elif url =="https://www.sunriseseniorliving.com/communities/sunrise-of-fontainebleau.aspx":
             url="https://www.sunrisequebec.ca/english/our-quebec-communities/fontainebleau/overview.aspx"
         res = session.get(url)
-        print(url)
+        logger.info(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
             jso = soup.find('script', {'type': 'application/ld+json'}).text
@@ -84,7 +89,7 @@ def fetch_data():
         if len(phone) <5:
             phone=soup.find('div', {'class': 'inquiry-phone'}).find('strong').text
 
-        print(tim)
+        logger.info(tim)
         if len(zip)== 5:
             country="US"
         else:

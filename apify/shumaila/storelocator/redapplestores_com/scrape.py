@@ -8,6 +8,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('redapplestores_com')
+
+
 
 
 def write_output(data):
@@ -48,31 +53,31 @@ def fetch_data():
     province_box = driver.find_element_by_id("province-selector")
     poption = province_box.find_elements_by_tag_name('option')
     for n in range(1,len(poption)):
-        # print(poption[n].get_attribute('value'))
+        # logger.info(poption[n].get_attribute('value'))
         province = poption[n].get_attribute('value')
         prov.append(province)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     for i in range(0, len(prov)):
         s1 = Select(driver.find_element_by_id("province-selector"))
         s1.select_by_value(prov[i])
-        print(prov[i])
-        print("checking.....")
+        logger.info(prov[i])
+        logger.info("checking.....")
         city_box = driver.find_element_by_id("city-selector")
         time.sleep(5)
         coption = city_box.find_elements_by_tag_name('option')
         for j in range(1,len(coption)):
             city = coption[j].get_attribute("value")
             link = "http://www.redapplestores.com" + city
-            print(link)
+            logger.info(link)
             links.append(link)
 
     driver.quit()
 
     p = 1
-    print(len(links))
+    logger.info(len(links))
     for n in range(0, len(links)):
         link = links[n]
-        print(link)
+        logger.info(link)
         driver1 = get_driver()
         driver1.get(link)
 
@@ -171,19 +176,19 @@ def fetch_data():
 
             pcode = pcode.replace("-"," ")
 
-            print(store)
-            print(title)
-            print(street)
-            print(city)
-            print(state)
-            print(pcode)
-            print(ccode)
-            print(phone)
-            print(hours)
-            print(lat)
-            print(longt)
-            print(p)
-            print("......................................")
+            logger.info(store)
+            logger.info(title)
+            logger.info(street)
+            logger.info(city)
+            logger.info(state)
+            logger.info(pcode)
+            logger.info(ccode)
+            logger.info(phone)
+            logger.info(hours)
+            logger.info(lat)
+            logger.info(longt)
+            logger.info(p)
+            logger.info("......................................")
             data.append([
                 "http://www.redapplestores.com/locations.htm",
                 title,

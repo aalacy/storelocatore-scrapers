@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ugg_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -22,7 +27,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(200):
         x = coord[0]
         y = coord[1]
-        print(('Pulling Zip Lat-Lng %s-%s...' % (x, y)))
+        logger.info(('Pulling Zip Lat-Lng %s-%s...' % (x, y)))
         payload = {"request":{"appkey":"E76CAAF4-9877-11E1-9438-A503DEB2B31E","formdata":{"geoip":"false","dataview":"store_default","limit":5000,
                                                                                           "reviews":{"bd":1},"order":"rank::numeric, _DISTANCE",
                                                                                           "geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":x,"longitude":y,"state":"","province":"",

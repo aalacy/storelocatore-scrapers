@@ -2,3 +2,4 @@ lxml==4.3.4
 selenium==3.141.0
 sgrequests
 sgselenium
+sglogging

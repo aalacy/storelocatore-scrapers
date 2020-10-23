@@ -8,6 +8,11 @@ import re
 import json
 from datetime import datetime
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bmw_co_uk')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -30,7 +35,7 @@ def fetch_data():
     base_url = "https://www.bmw.co.uk/"
 
     while coord:
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         
         result_coords = []
         json_data = session.get("https://discover.bmw.co.uk/proxy/api/dealers?q="+str(coord[0])+","+str(coord[1])+"&type=new").json()
@@ -95,10 +100,10 @@ def fetch_data():
             addresses.append(store[2])
             yield store
         if len(json_data) < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(json_data) == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

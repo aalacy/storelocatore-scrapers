@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('salonlofts_com')
+
+
 
 
 
@@ -31,7 +36,7 @@ def fetch_data():
    
     for idx, val in enumerate(v):
         if idx > 0:
-            # print(+val['value'])
+            # logger.info(+val['value'])
             r = session.get("https://salonlofts.com"+val['value'],headers = header)
             soup = BeautifulSoup(r.text,"lxml")
             vk = soup.find('ul',{'class':'stores'}).find_all('div',{'class':'store'})

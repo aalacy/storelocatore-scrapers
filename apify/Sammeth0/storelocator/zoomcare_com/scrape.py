@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 from lxml import html
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zoomcare_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf-8') as output_file:
@@ -44,7 +49,7 @@ def fetch_data():
         links = re.findall(r'/clinic/.*?"', soup)
         for link in links:
             page_locator = locator_domain + link[:-1]
-            print(page_locator)
+            logger.info(page_locator)
             r_locator=session.get(page_locator)
             soup_locator=BeautifulSoup(r_locator.text,'lxml')
             if "Goodbye" in soup_locator.h1.text:

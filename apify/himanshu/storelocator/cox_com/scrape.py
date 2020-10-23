@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cox_com')
+
+
 
 
 
@@ -35,7 +40,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -53,12 +58,12 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    # print('json data = ' + str(json_data))
+    # logger.info('json data = ' + str(json_data))
 
     day_list = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
 
     for address_list in json_data['locations']:
-        # print("address_list ==== " + str(address_list['hours']))
+        # logger.info("address_list ==== " + str(address_list['hours']))
         if "hours" in address_list:
             
             hour_list = address_list['hours'].split(',')
@@ -70,7 +75,7 @@ def fetch_data():
 
                 if hours_of_operation == "":
                     for i in range(int(day))[1:]:
-                        # print("day === "+ str(i))
+                        # logger.info("day === "+ str(i))
                         hours_of_operation += str(day_list[i-1]) +" - Closed, "
 
                 morning = ":".join(hour_item.split(':')[1:3])
@@ -80,7 +85,7 @@ def fetch_data():
                 else:
                     hours_of_operation = "<MISSING>"
 
-        # print("hour_item ==== "+ str(hours_of_operation) )
+        # logger.info("hour_item ==== "+ str(hours_of_operation) )
         city = address_list['city']
         country_code = address_list['countryCode']
         state = address_list['state']
@@ -107,8 +112,8 @@ def fetch_data():
             addresses.append(store[2] + store[-3])
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

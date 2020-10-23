@@ -4,6 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import re, time
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('talbots_com')
+
+
 
 
 def write_output(data):
@@ -72,16 +77,16 @@ def fetch_data():
                     cty = key
         
         street=street.strip().split('\n')
-        #print(street)
+        #logger.info(street)
         if len(street ) == 1:
             street=re.findall(r'[0-9].+',street[0])[0].strip()
-           # print(street[0])
+           # logger.info(street[0])
             
         elif len(street)==2:
             if len(street[1].strip().split(" "))==1 or re.findall(r'(\d.*)',street[0])!=[] or "suite" in street[1].lower().strip().split(" ")[0]or "suite" in street[0].lower().strip().split(" ")[0]:
                  if re.findall(r'(\d.*)',street[0])!=[]:
                    street[0]=re.findall(r'(\d.*)',street[0])[0]
-                # print(street[0])
+                # logger.info(street[0])
                  street=" ".join(street)
 
                  
@@ -97,7 +102,7 @@ def fetch_data():
                 del street[0]
                 street=" ".join(street)
         
-      #  print (street)
+      #  logger.info(street)
         num = soup.find("div", class_="number").text
         num = num.replace("Store #", "")
         num = num.replace("\t", "")

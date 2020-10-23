@@ -13,6 +13,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dennys_ca')
+
+
 
 def get_driver():
 	options = Options() 
@@ -68,16 +73,16 @@ def fetch_data():
 	time.sleep(3)
 
 	for i, p in enumerate(pages):
-		print("Link %s of %s" %(i+1,len(pages)))
-		print(p)
+		logger.info("Link %s of %s" %(i+1,len(pages)))
+		logger.info(p)
 
 		req = session.get(p, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locs.append(base.find('h1').text.strip())
 		streets.append(base.find(class_='trailer--half address').find_all('dd')[-1].div.text)
@@ -100,8 +105,8 @@ def fetch_data():
 			time.sleep(randint(1,2))
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

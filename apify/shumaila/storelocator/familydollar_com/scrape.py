@@ -5,6 +5,11 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('familydollar_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,15 +47,15 @@ def fetch_data():
 
     p = 0
     for i in range(0,len(states)):
-        print(states[i])          
+        logger.info(states[i])          
         url = 'https://locations.familydollar.com/ajax?&xml_request=%3Crequest%3E%20%3Cappkey%3ED2F68B64-7E11-11E7-B734-190193322438%3C/appkey%3E%20%3Cgeoip%3E1%3C/geoip%3E%20%3Cformdata%20id=%22getlist%22%3E%20%3Cobjectname%3ELocator::Store%3C/objectname%3E%20%3Cwhere%3E%20%3Ccity%3E%3Ceq%3E%3C/eq%3E%3C/city%3E%20%3Cstate%3E%3Ceq%3E'+states[i]+'%3C/eq%3E%3C/state%3E%20%3C/where%3E%20%3C/formdata%3E%20%3C/request'
       
         page = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(page.text,"html.parser")
-        #print(soup)
+        #logger.info(soup)
         
         repo_list = soup.findAll('poi')
-        print(len(repo_list))
+        logger.info(len(repo_list))
       
         for repo in repo_list:
 
@@ -125,7 +130,7 @@ def fetch_data():
 
             
             data.append(['https://www.familydollar.com/',"<MISSING>",title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
-            #print(p,data[p])           
+            #logger.info(p,data[p])           
             p += 1
             
             

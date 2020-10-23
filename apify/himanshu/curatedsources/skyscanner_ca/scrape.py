@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import json
 session = SgRequests()
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('skyscanner_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -185,8 +190,8 @@ def fetch_data():
         store.append(IATA_code)
         store.append(ICAO_code)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
+        # logger.info("data ==="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
         yield store
 
 

@@ -6,6 +6,11 @@ from random import randint
 import re
 
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('navarro_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,8 +38,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -44,7 +49,7 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.span.text
-		print(location_name)
+		logger.info(location_name)
 
 		raw_address = str(item.a).split("span>")[-1].replace("</a>","").split(",")
 		if len(raw_address) < 4:

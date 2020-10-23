@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vermeer_com')
+
+
 
 session = SgRequests()
 
@@ -14,7 +19,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -64,9 +69,9 @@ def fetch_data():
                 url = "https://www.vermeer.com/NA/en/N/dealer_locator"
 
                 querystring = {"SelectedIndustry":""+str(val)+"","LookupType":"ZipCode","Country":"US","ZipCode":""+str(zip_code)+""}
-                # print(querystring)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
-                # print(val,zip_code)
+                # logger.info(querystring)
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                # logger.info(val,zip_code)
 
                 payload = ""
                 headers = {
@@ -104,8 +109,8 @@ def fetch_data():
                             location_type = "Industrial"
                         list_col = list(col.stripped_strings)
                         location_name = list_col[0].strip()
-                        # print(location_type+" | "+street_address+ " | " +location_name)
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # logger.info(location_type+" | "+street_address+ " | " +location_name)
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         street_address = list_col[1].strip()
                         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_col[4]))
                         if phone_list!=[]:
@@ -122,13 +127,13 @@ def fetch_data():
 
                         else:
                             pass
-                            # print(csz)
-                            # print(len(csz))
-                            # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                            # logger.info(csz)
+                            # logger.info(len(csz))
+                            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~`')
                 else:
                     continue
-                    # print('https://www.vermeer.com/NA/en/N/dealer_locator?SelectedIndustry=IND&LookupType=ZipCode&Country=&ZipCode='+str(zip_code))
-                    # print('***********************************************')
+                    # logger.info('https://www.vermeer.com/NA/en/N/dealer_locator?SelectedIndustry=IND&LookupType=ZipCode&Country=&ZipCode='+str(zip_code))
+                    # logger.info('***********************************************')
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = [x if x else "<MISSING>" for x in store]
@@ -137,14 +142,14 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 return_main_object.append(store)
         except:
             continue
 
 
-   # print('------------------------ CA locations -----------------------------------')
+   # logger.info('------------------------ CA locations -----------------------------------')
 
     #######   CA Locations   ############
     url = "https://www.vermeer.com/NA/en/N/dealer_locator"
@@ -166,12 +171,12 @@ def fetch_data():
 
         for select in ca_soup.find('select',{'id':'SelectedIndustry'}).find_all('option')[1:]:
             val = select['value']
-            # print(loc_type)
+            # logger.info(loc_type)
             if  "" != state_loc['value']:
                 state = state_loc['value']
                 ca_querystring = {"SelectedIndustry":""+str(val)+"","LookupType":"State","Country":"CA","State":""+str(state)+""}
-                # print(ca_querystring)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                # logger.info(ca_querystring)
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
 
                 ca_payload = ""
                 headers = {
@@ -187,8 +192,8 @@ def fetch_data():
                 address= ca_soup.find('div',{'class':'dealerContainer'})
                 if address != None:
                     geo_list = ca_soup.find(lambda tag: (tag.name == 'script') and "function initMap" in tag.text).text.split('var data = [')[1].split('];')[0].strip().split('},')
-                    # print(geo_list)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info(geo_list)
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
                     geo =[]
                     for element in geo_list:
                         if element != '':
@@ -203,7 +208,7 @@ def fetch_data():
                         lng= json_data['GeoLong']
                         c1.append(lat)
                         c2.append(lng)
-                    # print(c1,c2)
+                    # logger.info(c1,c2)
                     for col in address.find_all('div',class_='col-lg-8'):
                         country_code = "CA"
                         if "FOR" == str(val):
@@ -213,8 +218,8 @@ def fetch_data():
                         list_col = list(col.stripped_strings)
                         location_name = list_col[0].strip()
                         street_address = list_col[1].strip()
-                        # print(location_type+" | "+street_address+ " | " +location_name)
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # logger.info(location_type+" | "+street_address+ " | " +location_name)
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_col[4]))
                         if phone_list!=[]:
                             phone = phone_list[0].strip()
@@ -223,22 +228,22 @@ def fetch_data():
                         latitude = c1.pop(0)
                         longitude = c2.pop(0)
                         csz = list_col[2].strip().split(',')
-                        # print(csz)
+                        # logger.info(csz)
                         if len(csz) == 2:
                             city = csz[0].strip()
                             state = " ".join(csz[-1].split(' ')[:-2]).strip()
                             zipp =  " ".join(csz[-1].split(' ')[-2:]).strip()
                             if  "50219" in zipp:
-                                # print(ca_querystring)
+                                # logger.info(ca_querystring)
                                 continue
-                            # print(city+" | "+state+" | "+zipp)
-                            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                            # logger.info(city+" | "+state+" | "+zipp)
+                            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
 
                         else:
                             pass
-                            # print(csz)
-                            # print(len(csz))
-                            # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                            # logger.info(csz)
+                            # logger.info(len(csz))
+                            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~`')
                 else:
                     continue
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -249,8 +254,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 return_main_object.append(store)
 
     return return_main_object

@@ -3,6 +3,11 @@ import os
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('iflyworld_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,7 +51,7 @@ def fetch_data():
         if link == "https://www.iflyworld.com":
             continue
 
-        print(link)
+        logger.info(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 

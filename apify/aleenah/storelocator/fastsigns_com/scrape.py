@@ -4,6 +4,11 @@ import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fastsigns_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -34,7 +39,7 @@ def fetch_data():
             url=tds[0].find('a').get('href')
             if "https://www.fastsigns.com/" not in url:
                 url="https://www.fastsigns.com/"+url
-            print(url)
+            logger.info(url)
             res= session.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
             if "coming soon" in soup.find('div',{'class':'location-x'}).text.lower():
@@ -88,17 +93,17 @@ def fetch_data():
             addr = addr.split("\n")
             city=addr[-1]
             del addr[-1]
-            print(zip)
+            logger.info(zip)
             street=" ".join(addr)
-            print(street)
-            #print(soup.find('div',{'class':'address'}).find('a').get('href'))
+            logger.info(street)
+            #logger.info(soup.find('div',{'class':'address'}).find('a').get('href'))
             ll=soup.find('div',{'class':'address'}).find('a').get('href').strip().strip('/').split('/')[-1].split(',')
-            #print(ll)
+            #logger.info(ll)
             lat=ll[0]
             long=ll[1]
-            #print(ll)
+            #logger.info(ll)
             tim=soup.find('ul',{'class':'location-info'}).find_all('li')[-2].text.replace(' | ','').replace('\n',' ').strip()
-            #print()
+            #logger.info()
 
             all.append([
                 "https://www.fastsigns.com",

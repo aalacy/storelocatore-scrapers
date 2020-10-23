@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import sgzip
 import os
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sprint_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,11 +44,11 @@ def fetch_data():
     locations = []
     zipcode = search.next_zip()
     while zipcode:
-        print(zipcode)
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info(zipcode)
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(zipcode)
         stores = session.get(url, headers=HEADERS).json()['Hits']
-        print(len(stores))
+        logger.info(len(stores))
         result_coords = []
         for store in stores:
             data = store['Retailer']
@@ -71,10 +76,10 @@ def fetch_data():
                 record = [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, operating_info]
                 locations.append(record)
         if len(stores) < MAX_RESULTS:
-            print("max distance update")
+            logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(stores) == MAX_RESULTS:
-            print("max count update")
+            logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + MAX_RESULTS + " results")

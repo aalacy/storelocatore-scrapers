@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rossstores_com')
+
+
 
 
 
@@ -56,7 +61,7 @@ def fetch_data():
 
     zip_code = search.next_zip()
     while zip_code:
-        # print("zips === " + str(zip_code))
+        # logger.info("zips === " + str(zip_code))
         r = session.get('https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>'+str(MAX_RESULTS)+'</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><country>US</country></geoloc></geolocs><searchradius>'+str(MAX_DISTANCE)+'</searchradius></formdata></request>',
             headers=headers)
         
@@ -97,14 +102,14 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append('<MISSING>')
-            # print("===", str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("===", str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

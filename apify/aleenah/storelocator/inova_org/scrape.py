@@ -2,6 +2,11 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('inova_org')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -43,7 +48,7 @@ def fetch_data():
 
     divs= divss.find_elements_by_class_name("item")
 
-    print(len(divs))
+    logger.info(len(divs))
     i=0
     for div in divs:
         
@@ -52,13 +57,13 @@ def fetch_data():
             but = div.find_element_by_tag_name("button")
             but.click()
 
-        print(locs[i])
+        logger.info(locs[i])
 
         try:
             addr=(div.find_element_by_class_name("address").text)
         except:
             addr=""
-            print(i)
+            logger.info(i)
         i += 1
         if addr != "":
             addr=addr.split("\n")
@@ -73,7 +78,7 @@ def fetch_data():
                 s+=a
             street.append(s)
         else:
-            print(i)
+            logger.info(i)
             cities.append("<INACCESSIBLE>")
             states.append("<INACCESSIBLE>")
             zips.append("<INACCESSIBLE>")
@@ -160,7 +165,7 @@ def fetch_data():
     list=re.findall(r'"allResults":(.*)',script.text)[0]
     idss=list.split('"indexExtra"')
     del idss[-1]
-    print(len(idss))
+    logger.info(len(idss))
 
     for tex in idss:
 

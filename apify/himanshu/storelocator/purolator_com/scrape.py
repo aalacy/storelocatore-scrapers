@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('purolator_com')
+
+
 
 
 
@@ -52,7 +57,7 @@ def fetch_data():
         for i in hour1:
 
             time = time + ' '+ i['day'] + ' '+i['open'] +' '+i['close']
-        print(time)
+        logger.info(time)
         tem_var.append(base_url)
         tem_var.append(location_name)
         tem_var.append(address)

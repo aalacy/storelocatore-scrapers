@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('larsensrestaurants_com')
+
+
 
 
 
@@ -38,7 +43,7 @@ def fetch_data():
             hours = hours.split("Happy Hour Daily*")[0]
         hours_list.append(hours)
         l_name.append(h.parent.h4.text.strip())
-        # print("l_name ==== ",h.parent.h4.text.strip())
+        # logger.info("l_name ==== ",h.parent.h4.text.strip())
         
 
 
@@ -57,7 +62,7 @@ def fetch_data():
         # return_main_object = []
         l_name.append(i['name'].strip())
         location_name=i['name'].strip()
-        # print(location_name)
+        # logger.info(location_name)
         address =i['streetAddress']
         city= i['city']
         state=i['state']
@@ -78,7 +83,7 @@ def fetch_data():
                 
  
         hour = " ".join(h_list)
-        # print(hour)
+        # logger.info(hour)
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -96,7 +101,7 @@ def fetch_data():
         store.append(page_url)  
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]      
         yield store
-        # print("store == ",str(store))
+        # logger.info("store == ",str(store))
 
 def scrape():
     data = fetch_data()

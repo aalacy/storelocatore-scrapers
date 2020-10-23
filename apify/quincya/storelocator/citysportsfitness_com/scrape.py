@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('citysportsfitness_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -53,7 +58,7 @@ def fetch_data():
 		longitude = store['Longitude']
 
 		link = "https://www.citysportsfitness.com/pages/" + store['ClubHomeURL']
-		# print(link)
+		# logger.info(link)
 
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")

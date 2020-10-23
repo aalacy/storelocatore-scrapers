@@ -9,6 +9,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zerodegreescompany_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,10 +40,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.find(id="rda7cinlineContent-gridContainer").find_all('div', {'class': re.compile(r'style-.+inlineContent')})
 	locator_domain = "zerodegreescompany.com"
@@ -57,7 +62,7 @@ def fetch_data():
 		street_address = raw_address[0].strip()
 		if street_address in found_poi:
 			continue
-		print(location_name)
+		logger.info(location_name)
 		found_poi.append(street_address)
 		city = location_name.split(",")[0].strip()
 		state = location_name.split(",")[1].strip()

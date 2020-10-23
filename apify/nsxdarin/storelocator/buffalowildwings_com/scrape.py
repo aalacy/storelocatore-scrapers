@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('buffalowildwings_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -23,7 +28,7 @@ def fetch_data():
     for coord in canada:
         x = coord.split(',')[0]
         y = coord.split(',')[1]
-        print(('Pulling Canadian Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Canadian Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://api.buffalowildwings.com/BWWService.svc/GetRestaurntDetailsByltdLng?fLatitude=' + x + '&fLongitude=' + y + '&radius=500&iVendorID=50'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -70,7 +75,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://api.buffalowildwings.com/BWWService.svc/GetRestaurntDetailsByltdLng?fLatitude=' + x + '&fLongitude=' + y + '&radius=500&iVendorID=50'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)

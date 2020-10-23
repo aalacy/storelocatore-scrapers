@@ -5,6 +5,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('johnnysmarkets_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -70,7 +75,7 @@ def fetch_data():
             for m in range(0,len(dt)):
                 s=s+dt[m].text+" "
                 s=s+dd[m].text+" "
-            print(s)
+            logger.info(s)
             hours_of_operation.append(s)
     geomap = driver.find_elements_by_xpath("//a[contains(@href,'https://maps.google.com/')]")
     for n in range(0,len(geomap)):

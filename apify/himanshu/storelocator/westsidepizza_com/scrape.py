@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('westsidepizza_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +37,7 @@ def fetch_data():
         soup = BeautifulSoup(r.content, 'html.parser')
         if  soup.find("div",{'class':"field-address"}).text.strip()=="Coming Soon!":
             continue
-            # print(soup.find("div",{'class':"field-address"}).text.strip())
+            # logger.info(soup.find("div",{'class':"field-address"}).text.strip())
         strongs = soup.find_all('strong')
         hours = ''
         for s in strongs:
@@ -48,12 +53,12 @@ def fetch_data():
         zip_code = soup.find('div', {'class': 'field-zip-code'}).text
 
         location_name = soup.find('h1', {'class': 'title'}).text.strip()
-        # print(page_url)
+        # logger.info(page_url)
         try:
             phone_number = soup.find('div', {'class': 'field-phone'}).text
         except:
-            # print(loc)
-            print(page_url)
+            # logger.info(loc)
+            logger.info(page_url)
             phone_number = '<MISSING>'
 
         store_number = '<MISSING>'

@@ -1,6 +1,11 @@
 import csv
 from sgselenium import SgSelenium
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('uniprix_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -33,9 +38,9 @@ def fetch_data():
                 lurl = lines[linenum].split('href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
-    print('Found %s Locations.' % str(len(locs)))
+    logger.info('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        # print('Pulling Location %s...' % loc)
+        # logger.info('Pulling Location %s...' % loc)
         r = session.get(loc, headers=headers)
         website = 'www.uniprix.com'
         typ = '<INACCESSIBLE>'

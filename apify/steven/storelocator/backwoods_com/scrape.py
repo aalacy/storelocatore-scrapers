@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('backwoods_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print("Got today page")
+        logger.info("Got today page")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     locs = base.find(class_="footer-block-content").find_all(class_="col-6 col-md-4 col-lg-2")[-2].find_all("li")
 
@@ -46,11 +51,11 @@ def fetch_data():
         try:
             item = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         location_name = item.find("h1").text.strip()
-        print(location_name)
+        logger.info(location_name)
 
         locator_domain = "backwoods.com"
         

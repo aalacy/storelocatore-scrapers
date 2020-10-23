@@ -6,11 +6,16 @@ from selenium import webdriver
 import selenium.webdriver.chrome.service as service
 import re
 import os 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('worldmarkbywyndham_com')
+
+
 current_directoy = os.path.dirname(os.path.realpath(__file__))
 
 session = SgRequests()
 
-print("start")
+logger.info("start")
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -23,7 +28,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    # print("hello")s
+    # logger.info("hello")s
     headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
@@ -35,7 +40,7 @@ def fetch_data():
     for value in child_selection:
 
         page_url = "https://www.worldmarktheclub.com/resorts/" + str(value.split('"')[1].replace(".","").replace("/","")) + "/"
-        print(page_url)
+        logger.info(page_url)
         options = webdriver.ChromeOptions()
         user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
         options.add_argument(f'user-agent={user_agent}')

@@ -4,6 +4,11 @@ import time
 from random import randint
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hibbett_com')
+
+
 
 
 def write_output(data):
@@ -27,10 +32,10 @@ def fetch_data():
     time.sleep(randint(2,4))
     base = BeautifulSoup(req.text,"lxml")
     if "page has been denied" in str(base):
-        print("BLOCKED BY WEBSITE")
+        logger.info("BLOCKED BY WEBSITE")
     else:
         stores = json.loads(base.text.strip())["stores"].items()
-        print("Stores found!!")
+        logger.info("Stores found!!")
 
     data = []
     locator_domain = "hibbett.com"

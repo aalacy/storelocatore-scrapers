@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('esso_ca')
+
+
 
 session = SgRequests()
 
@@ -29,8 +34,8 @@ def fetch_data():
 
     while coords:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print(coords[0],coords[1])
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info(coords[0],coords[1])
         base_url = "https://www.esso.ca/en-CA/api/locator/Locations?Latitude1="+str(coords[0])+"&Latitude2="+str(coords[0]+1)+"&Longitude1="+str(coords[1])+"&Longitude2="+str(coords[1]+1)+"&DataSource=RetailGasStations&Country=CA"
         # base_url = "https://www.esso.ca/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=16.698659791445607&Latitude2=36.22597707315531&Longitude1=-76.07080544996313&Longitude2=-119.57666482496313"
         r = session.get(base_url).json()
@@ -79,12 +84,12 @@ def fetch_data():
             addresses.append(str(store[2])+str(store[-1]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-            #print(store)
+            #logger.info(store)
         if current_result_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_result_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

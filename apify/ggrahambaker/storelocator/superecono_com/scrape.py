@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 from postal.parser import parse_address
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('superecono_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +31,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
+        logger.info(link)
 
         driver.get(link)
         driver.implicitly_wait(10)

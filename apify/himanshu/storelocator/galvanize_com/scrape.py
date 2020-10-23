@@ -5,6 +5,11 @@ import re
 import json
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('galvanize_com')
+
+
 
 
 
@@ -61,7 +66,7 @@ def fetch_data():
         if  "/campuses/remote" in i['href'] or "/campuses/san-jose" in i['href']:
             continue
         r_loc = session.get(locator_domain + i['href'],headers = headers)
-        # print(locator_domain + i['href'])
+        # logger.info(locator_domain + i['href'])
         soup = BeautifulSoup(r_loc.text,'lxml')
         loc = soup.find('textarea',{'id':'state'}).text
         script_text = loc.split(',"location":')[-1].split('}')[0]+"}"
@@ -82,8 +87,8 @@ def fetch_data():
                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
 
-        # print("data = " + str(store))
-        # print(
+        # logger.info("data = " + str(store))
+        # logger.info(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

@@ -4,6 +4,11 @@ import json
 import time
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mfaoil_com')
+
+
 
 
 def write_output(data):
@@ -35,7 +40,7 @@ def fetch_data():
         link = store['url']
         if '/store/' in link:
             link = "https://www.mfaoil.com" + link
-        print(link)
+        logger.info(link)
         street_address = store["address"].strip()
         city = store['city']
         state = store["state"]

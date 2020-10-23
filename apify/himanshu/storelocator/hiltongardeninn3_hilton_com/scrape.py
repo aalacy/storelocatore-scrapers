@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hiltongardeninn3_hilton_com')
+
+
 seesion = SgRequests()
 
 def write_output(data):
@@ -61,7 +66,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            # print(store)
+            # logger.info(store)
             yield store
 
     

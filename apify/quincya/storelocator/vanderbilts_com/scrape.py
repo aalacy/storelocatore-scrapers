@@ -6,6 +6,11 @@ from random import randint
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vanderbilts_com')
+
+
 
 def get_driver():
     options = Options() 
@@ -43,15 +48,15 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(driver.page_source,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 	items = base.find(id="wpsl-stores").find_all("li")
 	for item in items:
 		locator_domain = "vanderbilts.com"
 		location_name = item.strong.text
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = item.find(class_="wpsl-street").text
 		city_line = item.p.find_all("span")[1].text.split(",")
@@ -69,8 +74,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

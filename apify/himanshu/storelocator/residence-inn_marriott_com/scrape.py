@@ -6,6 +6,11 @@ from sgrequests import SgRequests
 session = SgRequests()
 from bs4 import BeautifulSoup
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('residence-inn_marriott_com')
+
+
 base_url = 'https://residence-inn.marriott.com/'
 
 
@@ -48,7 +53,7 @@ def fetch_data():
                             longitude = (g['longitude'])
                             key = (g['marsha_code'])
                             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-                            # print(page_url)
+                            # logger.info(page_url)
                             output = []
                             output.append(base_url if base_url else "<MISSING>" ) # url
                             output.append(location_name if location_name else "<MISSING>") #location name
@@ -74,10 +79,10 @@ def fetch_data():
                             output = [x.encode('ascii', 'ignore').decode('ascii') if type(x) == str else x for x in output]      
                             yield output
     for i1 in data_8:
-        # print(i1)
+        # logger.info(i1)
         for j1 in i1['region_countries']:
             for k1 in j1['country_states']:
-                # print(k1)
+                # logger.info(k1)
                 for h1 in k1['state_cities']:
                     for g1 in (h1['city_properties']):
                         if "CA" in (g1['country_code']):
@@ -92,7 +97,7 @@ def fetch_data():
                             longitude = (g1['longitude'])
                             key = (g1['marsha_code'])
                             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-                            # print(page_url)
+                            # logger.info(page_url)
                             output = []
                             output.append(base_url if base_url else "<MISSING>" ) # url
                             output.append(location_name if location_name else "<MISSING>") #location name

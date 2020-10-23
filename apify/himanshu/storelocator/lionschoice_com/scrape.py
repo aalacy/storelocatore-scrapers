@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lionschoice_com')
+
+
 
 
 
@@ -49,7 +54,7 @@ def fetch_data():
             hour='<MISSING>'
         if 'Only Open for events' in hour:
             hour = '<MISSING>'
-        # print(location_name)
+        # logger.info(location_name)
         store = []     
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')

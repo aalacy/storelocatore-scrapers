@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chc1_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +42,7 @@ def fetch_data():
         
     all_store_data = []
     for link in link_list:
-        print(link)
+        logger.info(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         info = soup.find('div', {'class': 'col-sm-5'})

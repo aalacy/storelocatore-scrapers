@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options 
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maid-rite_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -112,7 +117,7 @@ def fetch_data():
                  hours_of_operation
                ])
         count+=1
-        print(count)
+        logger.info(count)
 
     time.sleep(5)
     driver.quit()

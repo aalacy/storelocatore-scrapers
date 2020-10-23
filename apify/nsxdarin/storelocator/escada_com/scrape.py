@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('escada_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Winows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -21,7 +26,7 @@ def fetch_data():
         for y in range(-170, -60, 10):
             xlat = str(x)
             ylng = str(y)
-            print(xlat + ',' + ylng)
+            logger.info(xlat + ',' + ylng)
             url = 'https://stockist.co/api/v1/u6074/locations/search?tag=u6074&latitude=' + xlat + '&longitude=' + ylng + '&distance=10000'
             r = session.get(url, headers=headers)
             for line in r.iter_lines():

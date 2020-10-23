@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ralphlauren_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +34,7 @@ def fetch_data():
     for url in url_list:
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        # print(res.content)
+        # logger.info(res.content)
         """sls = soup.find_all('div', {'class': 'store-listing-storediv'})
 
         for s in sls:
@@ -37,7 +42,7 @@ def fetch_data():
 
         data = soup.find_all('script', {'type': 'application/ld+json'})[3].text
         locs = re.findall(r'"legalName":"([^"]*)"', data)
-        print("locs ", len(locs))
+        logger.info("locs ", len(locs))
         timing = re.findall(r'"openingHours":"([^"]+)"', data)
         streets = re.findall(r'"streetAddress":"([^"]+)"', data)
         countries = re.findall(r'"addressCountry":"([^"]+)"', data)
@@ -46,11 +51,11 @@ def fetch_data():
             states = re.findall(r'"Location":"([^"]+)"', data)
         cities = re.findall(r'"areaServed":"([^"]+)"', data)
         phones = re.findall(r'"telephone":"([^"]+)"', data)
-        print("street ", len(streets))
+        logger.info("street ", len(streets))
 
         urls = soup.find_all('span', {'class': 'store-listing-name'})
         data = soup.find('div', {'class': 'storeJSON hide'}).get('data-storejson')
-        # print(data)
+        # logger.info(data)
         if data != "null":
             js = json.loads("".join(data))
             for j in js:
@@ -61,7 +66,7 @@ def fetch_data():
                 lon = j["longitude"]
                 # zip = j["postalCode"]
                 phone = phones[js.index(j)]
-                # print(urls[js.index(j)].find('a').get('href'))
+                # logger.info(urls[js.index(j)].find('a').get('href'))
                 id = re.findall(r'StoreID=([\d]+)_', urls[js.index(j)].find('a').get('href'))[0]
                 loc = locs[js.index(j)]
                 if loc.strip() == "":
@@ -88,7 +93,7 @@ def fetch_data():
                     tim.strip(),  # timing
                     url])
         else:
-            print("null")
+            logger.info("null")
             for i in range(len(locs)):
                 tim = timing[i].replace("\n", " ").replace("<br/>", "").replace("<br>", "").replace("\\n", " ").replace("<br/", "").replace("<BR>", "")
                 sz = streets[i].replace("\n", " ").split(",")

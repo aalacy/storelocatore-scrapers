@@ -5,6 +5,11 @@ import re
 import json
 from datetime import datetime
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('benjerry_co_uk')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -29,7 +34,7 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.benjerry.co.uk/home/scoop-shops/main/scoopshopcontent/genericContent/brand-redesign-header-grid/columnOne/scoop-shop--header.where2GetItActionNew.do"
 
         payload = 'addressline='+str(zip_code)+'&icons=SHOP%2Cdefault%2CCINEMA'
@@ -39,7 +44,7 @@ def fetch_data():
         }
 
         json_data = session.post(url, headers=headers, data =  payload).json()
-        # print(json_data)
+        # logger.info(json_data)
         if "collection" in json_data['response']:
             
             if type(json_data['response']['collection']['poi']) == list:
@@ -212,12 +217,12 @@ def fetch_data():
                 
         else:
             pass
-        # print(current_result_length)
+        # logger.info(current_result_length)
         if current_result_length < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_result_length == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

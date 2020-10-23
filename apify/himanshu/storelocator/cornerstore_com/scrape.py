@@ -8,6 +8,11 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cornerstore_com')
+
+
 
 
 session = SgRequests()
@@ -67,8 +72,8 @@ def store_handler(store_data,key):
         return
     if store_data["op_status"] != "Open":
         return
-    #print("https://www.circlek.com" + store_data["url"])
-    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
+    #logger.info("https://www.circlek.com" + store_data["url"])
+    #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
     # exit()
     location_request = session.get("https://www.circlek.com" + store_data["url"],headers=headers)
     location_soup = BeautifulSoup(location_request.text,"lxml")
@@ -136,16 +141,16 @@ def store_handler(store_data,key):
     return_main_object.append(store)
 
 def fetch_data():
-    #print("start")
+    #logger.info("start")
     r = session.get("https://www.circlek.com/stores_new.php?lat=40.73&lng=-73.5&distance=10000000.00&services=&region=global",headers=headers)
     data = r.json()["stores"]
-    #print("start1")
+    #logger.info("start1")
     executor = ThreadPoolExecutor(max_workers=10)
     fs = [ executor.submit(store_handler, data[key],key) for key in data]
     wait(fs)
     executor.shutdown(wait=False)
     for store in return_main_object:
-        #print("~~~~~~~~~~~~~~~~~ ",store)
+        #logger.info("~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
 def scrape():

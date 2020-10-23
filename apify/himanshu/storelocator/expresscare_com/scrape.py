@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('expresscare_com')
+
+
 
 
 
@@ -29,7 +34,7 @@ def fetch_data():
 	r= session.get("http://locations.expresscare.com/",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
 	for state_url in soup.find_all("div",class_="itemlist"):
-		# print(state_url.find("a").text)
+		# logger.info(state_url.find("a").text)
 		r1 = session.get(state_url.find("a")["href"],headers=headers)
 		soup1 = BeautifulSoup(r1.text,"lxml")
 		for city_url in soup1.find_all("div",class_="itemlist"):
@@ -60,8 +65,8 @@ def fetch_data():
 			if store[-1] in addresses:
 				continue
 			addresses.append(store[-1])
-			# print("data = " + str(store))
-			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			# logger.info("data = " + str(store))
+			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 			yield store
 
 def scrape():

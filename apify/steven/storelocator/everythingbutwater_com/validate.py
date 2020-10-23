@@ -15,6 +15,11 @@ import zipcodes
 import re
 
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('everythingbutwater_com')
+
+
 
 
 
@@ -34,7 +39,7 @@ def fail(message):
 
     if debug:
 
-        print(message)
+        logger.info(message)
 
     else:
 
@@ -328,7 +333,7 @@ def check_latitude_and_longitude(row):
 
 def check_schema(data):
 
-    print("validating output schama")
+    logger.info("validating output schama")
 
     required_columns = ["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"]
 
@@ -346,13 +351,13 @@ def check_schema(data):
 
                 fail("row {} does not contain required column {}".format(row, column))
 
-    if not debug: print("output schema looks good")
+    if not debug: logger.info("output schema looks good")
 
 
 
 def check_duplication(data):
 
-    print("checking for duplicate rows in the data")
+    logger.info("checking for duplicate rows in the data")
 
     keys = {}
 
@@ -364,13 +369,13 @@ def check_duplication(data):
 
             fail("found duplicate key {} in the data".format(key))
 
-    if not debug: print("no duplicates found")
+    if not debug: logger.info("no duplicates found")
 
 
 
 def check_values(data):
 
-    print("checking for data quality issues")
+    logger.info("checking for data quality issues")
 
     for row in data:
 
@@ -392,7 +397,7 @@ def check_values(data):
 
             check_canada_phone(row)
 
-    if not debug: print("no data quality issues found")
+    if not debug: logger.info("no data quality issues found")
 
 
 

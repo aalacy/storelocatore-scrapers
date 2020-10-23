@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('grifolsplasma_com___hash_biomat')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +49,7 @@ def fetch_data():
             continue
     all_store_data = []
     for link in link_list:
-        print(link[0])
+        logger.info(link[0])
         if 'https://www.grifolsplasma.com/en/-/topeka-ks' == link[0]:
             continue
         r = session.get(link[0], headers = HEADERS)
@@ -67,7 +72,7 @@ def fetch_data():
         days = soup.find_all('p', {'class': 'hours'})
         
         for i, d in enumerate(days):
-            print(d)
+            logger.info(d)
             if i == 7:
                 break
             if len(d.find_all('span')) < 2:

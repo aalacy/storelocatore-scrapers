@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('iceland_co_uk')
+
+
 
 
 session = SgRequests()
@@ -35,7 +40,7 @@ def fetch_data():
             r2 = session.get(href['href'])
             page_url = href['href']
             store_number= page_url.split('StoreID=')[1].split('&StoreName')[0]
-            # print(page_url)
+            # logger.info(page_url)
             soup1 = BeautifulSoup(r2.text,"lxml")
             try:
                 streetAddress1  = soup1.find("div",{"class":"address1"}).text.strip()
@@ -88,7 +93,7 @@ def fetch_data():
             tem_var.append(longitude)
             tem_var.append(hours)
             tem_var.append(page_url)
-            # print(tem_var)
+            # logger.info(tem_var)
             yield tem_var
 
     

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kohls_com')
+
+
 session = SgRequests()
 
 
@@ -21,15 +26,15 @@ def write_output(data):
 def get(url, headers, attempts=1): 
     global session
     if attempts == 10: 
-        print(f'could not get {url} after {attempts} tries... giving up')
+        logger.info(f'could not get {url} after {attempts} tries... giving up')
         raise SystemExit
     try: 
-        # print(url)
+        # logger.info(url)
         r = session.get(url, headers=headers)
         return r
     except Exception as ex: 
-        print(f'>>> exception getting {url} : {ex}')
-        print(f'>>> reset session and try again')
+        logger.info(f'>>> exception getting {url} : {ex}')
+        logger.info(f'>>> reset session and try again')
         session = SgRequests()
         return get(url, headers, attempts+1)
 

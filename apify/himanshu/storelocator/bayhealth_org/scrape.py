@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bayhealth_org')
+
+
 
 
 
@@ -37,7 +42,7 @@ def fetch_data():
 	load_data = json.loads(json_data)
 	for val in load_data['Results']:
 		page_url = base_url+val['Path'].replace(" ","%20")
-		# print(page_url)
+		# logger.info(page_url)
 		r = session.get(page_url,headers=headers)
 		soup = BeautifulSoup(r.text,'lxml')
 		location_name = soup.find("h1",{"class":"location-details-heading"}).text.strip()

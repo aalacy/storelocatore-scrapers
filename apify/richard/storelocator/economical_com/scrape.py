@@ -3,6 +3,11 @@ import json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('economical_com')
+
+
 
 
 URL = "https://www.economical.com"
@@ -43,7 +48,7 @@ class Scraper(Scrape):
 
         for postal in self.postal_codes:
             for page in range(1, 11):
-                print(f"Now combing page {page} for {postal.upper()}")
+                logger.info(f"Now combing page {page} for {postal.upper()}")
                 location_url = f"https://www.economical.com/ecocom/broker/search/{postal}/100/{page}"
                 driver.get(location_url)
                 if (
@@ -61,7 +66,7 @@ class Scraper(Scrape):
                     )
                 else:
                     break
-            print(f"The length of brokers is now: {len(stores)}")
+            logger.info(f"The length of brokers is now: {len(stores)}")
 
         for store in stores:
             if store["brokeragenme"] not in self.seen:
