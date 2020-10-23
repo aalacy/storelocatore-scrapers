@@ -2,6 +2,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="porsche.com")
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -31,7 +35,7 @@ def fetch_data():
 		items = base.find("listoflocations").find_all("location")
 
 		locator_domain = "porsche.com"
-
+		log.info("Getting POIs..Could take up to an hour ..")
 		for item in items:
 			location_name = item.find("name").text.encode("ascii", "replace").decode().replace("?","e")
 			street_address = item.find("street").text.replace("Côte","Cote")
@@ -42,16 +46,35 @@ def fetch_data():
 				zip_code = "0" + zip_code
 			store_number = item.find("id").text
 			location_type = "<MISSING>"
-			phone = item.find("phone").text
-			hours_of_operation = "<MISSING>"
 			latitude = item.find("coordinates").find("lat").text
 			longitude = item.find("coordinates").find("lng").text.replace("E+07","")
-			link = item.find("url1").text
+			#phone = item.find("phone").text
+			hours_of_operation = "<INACCESSIBLE>"
 
 			if "canada" in base_link:
 				country_code = "CA"
 			else:
 				country_code = "US"
+
+			link = item.find("url1").text
+			# print(link)
+
+			try:
+				req = session.get(link, headers = HEADERS)
+				base = BeautifulSoup(req.text,"lxml")
+				try:
+					phone = re.findall("[[(\d)]{3}\.[\d]{3}\.[\d]{4}", str(base))[0]
+				except:
+					try:
+						phone = re.findall("[[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[-1]
+					except:
+						try:
+							phone = re.findall("\([\d]{3}\) [\d]{3}-[\d]{4}", str(base))[0]
+						except:
+							phone = "<MISSING>"
+			except:
+				phone = item.find("phone").text
+				link = "<MISSING>"
 
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data

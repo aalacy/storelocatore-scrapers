@@ -1,0 +1,2 @@
+--ignore LatLngDuplicationValidator (Confirmed scraper worked correctly)
+--ignore CountValidator --ignore StateLevelCountValidator (Filtered out independentRetailer)
