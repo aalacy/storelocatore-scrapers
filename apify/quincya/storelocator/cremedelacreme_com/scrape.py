@@ -27,7 +27,7 @@ def fetch_data():
 	locator_domain = "cremedelacreme.com"
 
 	for store in stores:
-		location_name = store['store'].encode("ascii", "replace").decode().replace("?","e")
+		location_name = store['store'].encode("ascii", "replace").decode().replace("?","e").split(",")[0].replace("IL","").split("&#")[0].strip()
 		if "OPENING SOON" in location_name.upper():
 			continue
 		street_address = (store['address'] + " " + store['address2']).strip()

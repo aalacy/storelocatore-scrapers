@@ -29,7 +29,7 @@ def fetch_data():
     print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
         PageFound = True
-        time.sleep(2)
+        time.sleep(1)
         print('Pulling Location %s...' % loc)
         website = 'bestwestern.com'
         typ = '<MISSING>'

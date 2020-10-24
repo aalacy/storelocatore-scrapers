@@ -4,6 +4,9 @@ import csv
 import time
 import sgzip
 import json
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="cfsc.com")
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,14 +29,15 @@ def fetch_data():
 	data = []
 
 	zips = sgzip.for_radius(50)
+	log.info("Checking " + str(len(zips)) + " zipcodes. Can take up to an hour ..")
 	for i, zip_code in enumerate(zips):
-		print("Zip %s of %s" %(i+1,len(zips)))
+		# print("Zip %s of %s" %(i+1,len(zips)))
 		link = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=100&location=%s&limit=50&api_key=7620f61553e8f9aac3c03e159d2d8072&v=20181201&resolvePlaceholders=true&entityTypes=location" %zip_code
 		
 		req = session.get(link, headers = HEADERS)
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			print(zip_code)
+			# print(zip_code)
 		except (BaseException):
 			print('[!] Error Occured. ')
 			print('[?] Check whether system is Online.')
@@ -50,7 +54,7 @@ def fetch_data():
 				continue
 
 			location_name = store["name"]
-			print(location_name)
+			# print(location_name)
 
 			street_address = store["address"]["line1"]
 			city = store["address"]["city"]
@@ -63,15 +67,19 @@ def fetch_data():
 			except:
 				location_type = "<MISSING>"
 			phone = store["mainPhone"]
-			raw_hours = store["hours"]
-			hours_of_operation = ""
-			for raw_hour in raw_hours:
-				try:
-					end = raw_hours[raw_hour]["openIntervals"][0]["end"]
-					start = raw_hours[raw_hour]["openIntervals"][0]["start"]
-					hours_of_operation = (hours_of_operation + " " + raw_hour + " " + start + "-" + end).strip()
-				except:
-					hours_of_operation = (hours_of_operation + " " + raw_hour + " Closed").strip()
+			try:
+				raw_hours = store["hours"]
+				hours_of_operation = ""
+				for raw_hour in raw_hours:
+					try:
+						end = raw_hours[raw_hour]["openIntervals"][0]["end"]
+						start = raw_hours[raw_hour]["openIntervals"][0]["start"]
+						hours_of_operation = (hours_of_operation + " " + raw_hour + " " + start + "-" + end).strip()
+					except:
+						hours_of_operation = (hours_of_operation + " " + raw_hour + " Closed").strip()
+			except:
+				hours_of_operation = "<MISSING>"
+
 			try:
 				geo = store["geocodedCoordinate"]
 			except:

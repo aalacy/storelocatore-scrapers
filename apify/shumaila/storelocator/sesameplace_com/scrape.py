@@ -31,10 +31,12 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     linklist = soup.select('a:contains("Visit")')
     for link in linklist:
-        print(link['href'])
+        #print(link['href'])
         title = link.text.split('in ',1)[1]
         link = link['href']
         r = session.get(link, headers=headers, verify=False)
+        if r.text.find('coming soon') > -1:
+            continue
         address = r.text.split('All Rights Reserved. ',1)[1].split('<',1)[0]
         street,city,state = address.split(', ')
         state,pcode = state.lstrip().split(' ',1)
@@ -47,11 +49,13 @@ def fetch_data():
         except:
             lat = '<MISSING>'
         try:
-            longt = r.text.split('"ParkCenterpointLongitude":',1)[1].split(',',1)[0]
+            longt = str((float)(r.text.split('"ParkCenterpointLongitude":',1)[1].split(',',1)[0])).replace('.','')     
+            longt = longt[0:3]+'.'+longt[3:len(longt)]
             
-        except:
+        except Exception as e:
+            
             longt = '<MISSING>'
-        
+    
         data.append([
                         'https://sesameplace.com/',
                         link,                   
