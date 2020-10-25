@@ -41,7 +41,7 @@ def fetch_data():
             url = tds[0].find('a').get('href')
             if "https://www.fastsigns.com/" not in url:
                 url = "https://www.fastsigns.com/" + url
-            print(url)
+            #print(url)
             log.info(url)
             try:
                 res = session.get(url)
