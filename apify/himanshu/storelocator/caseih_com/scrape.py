@@ -4,6 +4,11 @@ import re
 import json
 import sgzip
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('caseih_com')
+
+
 
 
 def write_output(data):
@@ -29,7 +34,7 @@ def fetch_data():
     base_url = "https://www.caseih.com/"
     while coord:
         result_coords =[]
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         response={}
         if len(str(search.current_zip))==5:
             contry="US"
@@ -92,7 +97,7 @@ def fetch_data():
                     else:
                         sunday = "Sunday: Close "
                     page_url = 'https://www.caseih.com/northamerica/en-us/pages/dealer-landing-page.aspx?idDealer='+str(store_number)
-                    # print(page_url)
+                    # logger.info(page_url)
                     # response1 = bs(requests.get(page_url).text,'lxml')
                     # hours_of_operation=''
                     # try:
@@ -137,7 +142,7 @@ def fetch_data():
                     else:
                         sat = " Saturday: Close "
                     hours = mon + tue + wed + thue + fri + sat +sunday
-                    # print(data['DealerShipAttributes']['mondayAMStart'])
+                    # logger.info(data['DealerShipAttributes']['mondayAMStart'])
                     result_coords.append((lat,lng))
                     store = []
                     store.append(base_url)
@@ -158,15 +163,15 @@ def fetch_data():
                     if street_address_n.strip() in adressess:
                         continue
                     adressess.append(street_address_n.strip())
-                    # print(store)
+                    # logger.info(store)
                     yield store
         except:
             pass
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

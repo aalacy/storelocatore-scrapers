@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fhcn_org')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +42,7 @@ def fetch_data():
     soup = BeautifulSoup(r.content, 'html.parser')
     p = 0
     locs = soup.find_all('div', {'class': 'location_detail'})
-    print(len(locs))
+    logger.info(len(locs))
     all_store_data = []
 
     for loc in locs:
@@ -106,7 +111,7 @@ def fetch_data():
             phone_number = phone_number.replace(' (KIDS)','')
         store_data = [locator_domain, location_name.replace("\xa0",' '), street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-        #print(p,store_data)
+        #logger.info(p,store_data)
         p += 1
         all_store_data.append(store_data)
 

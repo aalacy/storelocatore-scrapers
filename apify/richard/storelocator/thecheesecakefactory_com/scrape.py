@@ -3,6 +3,11 @@ import sgzip
 
 from xml.etree import cElementTree as ET
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thecheesecakefactory_com')
+
+
 
 
 URL = "https://www.thecheesecakefactory.com"
@@ -60,7 +65,7 @@ class Scraper(Scrape):
             except:
                 data = []
             stores.extend(data)
-            print(f'{len(data)} locations scraped for {zip_code}')
+            logger.info(f'{len(data)} locations scraped for {zip_code}')
 
         for store in stores:
             if isinstance(store, dict) and store['uid'] not in self.seen:

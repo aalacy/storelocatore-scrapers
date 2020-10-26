@@ -5,6 +5,11 @@ import re
 import json
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sleepcountry_ca')
+
+
 
 
 
@@ -57,9 +62,9 @@ def fetch_data():
     r= session.get('https://www.sleepcountry.ca/find-a-store',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     script = soup.find_all('script',{'type':'text/javascript'})[-2]
-    # print(script)
+    # logger.info(script)
     script_text = script.text.split('var stores = ')[-1].split(';')[0]
-    # print(script_text)
+    # logger.info(script_text)
     json_data = json.loads(script_text)
     for x in json_data['items']:
         location_name = x['name']
@@ -82,8 +87,8 @@ def fetch_data():
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

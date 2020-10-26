@@ -11,6 +11,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('copart_com')
+
+
 
 
 def write_output(data):
@@ -41,8 +46,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(driver.page_source,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.find_all('a', attrs={'data-uname': "USALocationLinks"})
 	
@@ -54,8 +59,8 @@ def fetch_data():
 	data = []
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		print("Link %s of %s" %(i+1,total_links))
-		print(link)
+		logger.info("Link %s of %s" %(i+1,total_links))
+		logger.info(link)
 		
 		driver.get(link)
 		time.sleep(randint(2,4))
@@ -65,7 +70,7 @@ def fetch_data():
 				(By.CLASS_NAME, "loc-detail-infofix")))
 			time.sleep(randint(1,2))
 		except:
-			print("Timeout..no results found")
+			logger.info("Timeout..no results found")
 			continue
 
 		item = BeautifulSoup(driver.page_source,"lxml")
@@ -73,7 +78,7 @@ def fetch_data():
 		locator_domain = "copart.com"
 		
 		location_name = item.find('title', attrs={'ng-bind-html': "title"}).text.replace("100% Online Car Auctions -","").strip()
-		# print(location_name)
+		# logger.info(location_name)
 
 		raw_address = item.find(class_='location-yard-address').p.text[3:].replace(",\n\t",",").replace("\n\t",",").replace("\t","").strip().split(",")
 
@@ -108,8 +113,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 		
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

@@ -2,3 +2,4 @@ lxml
 html5lib
 sgrequests
 beautifulsoup4
+sglogging

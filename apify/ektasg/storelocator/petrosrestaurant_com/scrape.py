@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options 
 import re
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petrosrestaurant_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -48,7 +53,7 @@ def fetch_data():
         store_opening_hours=driver.find_element_by_xpath("//div[@class='text-box']/div[@class='field field--name-field-text field--type-text-long field--label-hidden field--item']").get_attribute("textContent")
         hour = store_opening_hours.replace('\n', ' ')
         location_name=driver.find_element_by_xpath('//h1[@class="page-header"]').get_attribute("textContent")
-        print("location_name:     " , location_name)
+        logger.info("location_name:     " , location_name)
         address=driver.find_element_by_xpath("//div[@class='container']//p").get_attribute("textContent")
         tagged = usaddress.tag(address)[0]
         try:

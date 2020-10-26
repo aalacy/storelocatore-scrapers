@@ -1,6 +1,11 @@
 
 import base
 from urllib.parse import urljoin
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gerbercollision_com')
+
+
 
 class Scrape(base.Spider):
 
@@ -31,7 +36,7 @@ class Scrape(base.Spider):
                 i.add_xpath('zip', '//div[@class="address"]//span[@itemprop="postalCode"]/text()', base.get_first)
                 i.add_value('country_code', base.get_country_by_code(i.as_dict().get('state')))
                 i.add_xpath('phone', '//div[@class="phones"]//span[@itemprop="telephone"]/text()', base.get_first)
-                # print(loc_url.xpath('./div/@data-lat'))
+                # logger.info(loc_url.xpath('./div/@data-lat'))
                 i.add_value('latitude', loc_url.xpath('./div/@data-lat'), lambda x: [s for s in x if s], base.get_first)
                 i.add_value('longitude', loc_url.xpath('./div/@data-lng'), lambda x: [s for s in x if s], base.get_first)
                 i.add_value('hours_of_operation', ';'.join(

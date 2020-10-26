@@ -5,6 +5,11 @@ import re, time
 import json
 from sgrequests import SgRequests
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maisonbirks_com')
+
+
 
 
 session = SgRequests()
@@ -52,9 +57,9 @@ def fetch_data():
     r = r.text.split(':',1)[1].split(',"is_last_page')[0]
     r = json.loads(r)
     
-    #print(len(r))
+    #logger.info(len(r))
     for store in r:
-        #print(store)
+        #logger.info(store)
         if store['additional_attributes']['type']['label'] == 'Store' and (store['country_id'] == 'US' or store['country_id'] == 'CA'):            
             ltype = '<MISSING>' #store['additional_attributes']['type']['label']
             storeid = '<MISSING>'
@@ -65,7 +70,7 @@ def fetch_data():
             state = store['region']
             state = province[state]
             street = store['address'][0]
-            print(street)
+            logger.info(street)
             street = street.split(city)[0].replace(',','')
             link = store['additional_attributes']['url_key']
             lat= store['latitude']
@@ -87,7 +92,7 @@ def fetch_data():
                 hours = '<MISSING>'
                 
             data.append(['https://www.maisonbirks.com/',link,title,street,city,state,pcode,ccode,storeid,phone,ltype,lat,longt,hours])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
         
        
@@ -95,9 +100,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

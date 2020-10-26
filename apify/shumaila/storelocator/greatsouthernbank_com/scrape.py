@@ -5,6 +5,11 @@ import re, time
 import json
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('greatsouthernbank_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +35,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     r = r.text.split('"branches":')[1].split(']}')[0]+']'
     locations =json.loads(r)
-    #print(len(locations))
+    #logger.info(len(locations))
     for loc in locations:
         title = loc['name']
         store = loc['id']
@@ -45,7 +50,7 @@ def fetch_data():
         detail = BeautifulSoup(detail,'html.parser')
         try:
             link = detail.find('a')['href']
-            #print(link)
+            #logger.info(link)
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             hourd =soup.find('table',{'class':'hours'})
@@ -84,7 +89,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
         
         
@@ -92,9 +97,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

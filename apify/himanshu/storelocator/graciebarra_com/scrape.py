@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('graciebarra_com')
+
+
 
 
 
@@ -32,7 +37,7 @@ def fetch_data():
     }
     r = session.get("https://us-east-1-renderer-read.knack.com/v1/scenes/scene_1/views/view_1/records?format=both&page=1&rows_per_page=10000&filters=%7B%22rules%22%3A%5B%7B%22field%22%3A%22field_3%22%2C%22operator%22%3A%22near%22%2C%22value%22%3A%2211756+Spring+Club+Drive%2C+San+Antonio%2C+TX%2C+USA%22%2C%22units%22%3A%22miles%22%2C%22range%22%3A%22100000%22%7D%5D%2C%22match%22%3A%22and%22%7D", headers=headers)
     data = r.json()["records"]
-    # print(data)
+    # logger.info(data)
     for store_data in data:
         if store_data["field_3_raw"]["country"].lower() not in ("united states", "canada"):
             continue
@@ -81,17 +86,17 @@ def fetch_data():
         store.append(store_data["field_3_raw"]["latitude"])
         store.append(store_data["field_3_raw"]["longitude"])
         page_url = store_data["field_5_raw"]["url"]
-        # print(page_url)
+        # logger.info(page_url)
         # if "" == page_url:
         #     page_url = "<MISSING>"
-        # print(page_url)
+        # logger.info(page_url)
         store.append("<MISSING>")
 
         store.append("<MISSING>")
         store = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in store]
-        # print("data == " + str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("data == " + str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
 
 

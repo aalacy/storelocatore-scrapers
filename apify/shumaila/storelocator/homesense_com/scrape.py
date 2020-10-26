@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('homesense_com')
+
+
 
 
 
@@ -25,9 +30,9 @@ def fetch_data():
     url = 'https://us.homesense.com/all-stores'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    #print(soup)
+    #logger.info(soup)
     repo_list = soup.findAll('div',{'class':'col-md-3 col-xs-3 locator-txt store-padding'})
-    #print(len(repo_list))
+    #logger.info(len(repo_list))
 
     soup = str(soup)
     cleanr = re.compile('<.*?>')
@@ -88,7 +93,7 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
 
 

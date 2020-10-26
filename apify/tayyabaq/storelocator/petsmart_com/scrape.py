@@ -12,6 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petsmart_com')
+
+
 
 
 def get_driver():
@@ -56,7 +61,7 @@ def fetch_data():
     stores = store.find_all("a")
     for i in stores:
         newurl=i['href']
-        print(newurl)
+        logger.info(newurl)
 
         driver.get(newurl)
         time.sleep(randint(2,4))
@@ -70,8 +75,8 @@ def fetch_data():
         for j in store:
 
             ul=u+j['href']
-            print()
-            print(ul)
+            logger.info()
+            logger.info(ul)
 
             driver.get(ul)
             time.sleep(randint(2,4))
@@ -93,7 +98,7 @@ def fetch_data():
                continue
             ph=div.find('p',class_='store-page-details-phone').text.strip()
             addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
-            #print(addr)
+            #logger.info(addr)
             if len(addr) ==2:
                 street=addr[0]
                 addr=addr[1].strip().split(',')

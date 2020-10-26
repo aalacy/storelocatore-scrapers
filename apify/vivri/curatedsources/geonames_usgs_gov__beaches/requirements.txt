@@ -4,3 +4,4 @@ simplejson==3.17.2
 bs4==0.0.1
 requests_toolbelt==0.9.1
 sgscrape==0.0.4
+sglogging

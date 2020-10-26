@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sys
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ezmart_com')
+
+
 
 
 session = SgRequests()
@@ -26,7 +31,7 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    # print(soup)
+    # logger.info(soup)
     # exit()
     k= soup.find_all("script",{"type":"text/javascript"})
     
@@ -41,7 +46,7 @@ def fetch_data():
                 tem_var = []
                 state_list = re.findall(r'([A-Z]{2})', str(response_json['7'][i]['address'].replace("US","")))
                 raw_address  = response_json['7'][i]['address']
-                # print( response_json['7'][i]['address'])
+                # logger.info( response_json['7'][i]['address'])
                 lat = st = response_json['7'][i]['lat']
                 lng = st = response_json['7'][i]['lng']
              
@@ -70,7 +75,7 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(raw_address)
                 tem_var.append("https://gpminvestments.com/store-locator/")
-                # print(tem_var)
+                # logger.info(tem_var)
                 return_main_object.append(tem_var)
             
 

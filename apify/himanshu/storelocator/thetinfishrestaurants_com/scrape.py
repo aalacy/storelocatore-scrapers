@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thetinfishrestaurants_com')
+
+
 
 
 
@@ -66,7 +71,7 @@ def fetch_data():
         tem_var.append(lng.replace("\t","").replace("\n","").replace("\r",""))
         tem_var.append(hours.replace("\r","").replace(" &amp;",""))
         tem_var.append("<MISSING>")
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
 
     return return_main_object

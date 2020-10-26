@@ -4,6 +4,11 @@ import string
 import re, time, json
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bordergrill_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -46,7 +51,7 @@ def fetch_data():
             link = 'https://www.bordergrill.com' + div.find('a',{'class':'btn-brand'})['href']
             if phone.find('Direction') > -1:
                 phone = '<MISSING>'
-            #print(link)
+            #logger.info(link)
             try:
                 hours = det.split('Hours')[1].split('\n',1)[1].split('View',1)[0]
                 hours = hours.replace('\n', ' ')
@@ -59,7 +64,7 @@ def fetch_data():
             if hours == '<MISSING>':
                 r = session.get(link, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text,'html.parser')
-                #print('1')
+                #logger.info('1')
                 try:
                     hours = soup.text.split('Sun-Mon',1)[1].split('\n',1)[0].replace('pm','pm ').replace('Closed','Closed ')
                     hours = 'Sun-Mon'+hours
@@ -94,7 +99,7 @@ def fetch_data():
                             longt,
                             hours.replace('•','')
                         ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                     
                 

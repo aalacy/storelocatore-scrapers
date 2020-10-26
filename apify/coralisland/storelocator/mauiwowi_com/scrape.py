@@ -4,6 +4,11 @@ import pdb
 import requests
 from lxml import etree
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mauiwowi_com')
+
+
 
 base_url = 'http://www.mauiwowi.com'
 
@@ -43,7 +48,7 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="divLocationListItem clearfix"]//a/@href')
     for link in store_list:
-        print(link)
+        logger.info(link)
         link = base_url + '/' + link        
         store = etree.HTML(session.get(link).text)
         output = []

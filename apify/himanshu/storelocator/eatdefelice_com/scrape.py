@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('eatdefelice_com')
+
+
 
 
 
@@ -63,7 +68,7 @@ def fetch_data():
                     continue
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~",store)
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~",store)
 
 def scrape():
     data = fetch_data()

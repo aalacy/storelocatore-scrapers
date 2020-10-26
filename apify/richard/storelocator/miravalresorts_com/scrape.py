@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('miravalresorts_com')
+
+
 
 
 URL = "https://miravalresorts.com"
@@ -51,7 +56,7 @@ class Scraper(Scrape):
         for store in stores:
             store = store.strip()
             if store not in self.block and store not in self.exceptions and store not in self.seen:
-                print(f"Now scraping {store}")
+                logger.info(f"Now scraping {store}")
                 driver.get(store)
 
                 loc_info = driver.find_element_by_css_selector('div.footer--column > p').get_attribute('innerHTML').split('<br>')
@@ -117,7 +122,7 @@ class Scraper(Scrape):
                 location_types.append(location_type)
 
             elif store in self.exceptions.keys() and store not in self.seen:
-                print(f"Now scraping {store}")
+                logger.info(f"Now scraping {store}")
 
                 # Store ID
                 location_id = '<MISSING>'

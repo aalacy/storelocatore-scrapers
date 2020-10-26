@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('providence_org')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -21,7 +26,7 @@ def fetch_data():
     walocs = []
     Found = False
     for x in range(1, 10):
-        print(('Pulling MT Page %s...' % str(x)))
+        logger.info(('Pulling MT Page %s...' % str(x)))
         url = 'https://montana.providence.org/locations-directory/list-view?page=' + str(x)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -71,9 +76,9 @@ def fetch_data():
                 else:
                     newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print(('%s MT Locations Found' % str(len(mtlocs))))
+        logger.info(('%s MT Locations Found' % str(len(mtlocs))))
     for x in range(1, 50):
-        print(('Pulling OR Page %s...' % str(x)))
+        logger.info(('Pulling OR Page %s...' % str(x)))
         PFound = True
         while PFound:
             try:
@@ -136,11 +141,11 @@ def fetch_data():
                             else:
                                 newadd = add
                             yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                print(('%s OR Locations Found' % str(len(orlocs))))
+                logger.info(('%s OR Locations Found' % str(len(orlocs))))
             except:
                 PFound = True
     for x in range(1, 15):
-        print(('Pulling WA Page %s...' % str(x)))
+        logger.info(('Pulling WA Page %s...' % str(x)))
         url = 'https://washington.providence.org/locations-directory/search-results?page=' + str(x)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -202,9 +207,9 @@ def fetch_data():
                 else:
                     newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print(('%s WA Locations Found' % str(len(mtlocs))))
+        logger.info(('%s WA Locations Found' % str(len(mtlocs))))
     for x in range(1, 10):
-        print(('Pulling AK Page %s...' % str(x)))
+        logger.info(('Pulling AK Page %s...' % str(x)))
         url = 'https://alaska.providence.org/locations/list-view?page=' + str(x) + '&within=5000'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -213,9 +218,9 @@ def fetch_data():
                 lurl = 'https://alaska.providence.org' + line.split('href="')[1].split('"')[0]
                 if lurl not in aklocs:
                     aklocs.append(lurl)
-        print(('%s AK Locations Found' % str(len(aklocs))))
+        logger.info(('%s AK Locations Found' % str(len(aklocs))))
     for loc in aklocs:
-        #print('Pulling AK Location %s...' % loc)
+        #logger.info('Pulling AK Location %s...' % loc)
         website = 'providence.org'
         typ = '<MISSING>'
         hours = ''
@@ -333,7 +338,7 @@ def fetch_data():
                 newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
-        print(('Pulling SCA Page %s...' % str(x)))
+        logger.info(('Pulling SCA Page %s...' % str(x)))
         url = 'https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page=' + str(x) + '&radius=5000&term=#'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -344,9 +349,9 @@ def fetch_data():
                     lurl = 'https://www.providence.org' + stub
                     if lurl not in scalocs and lurl.count('http') == 1:
                         scalocs.append(lurl)
-        print(('%s SCA Locations Found' % str(len(scalocs))))
+        logger.info(('%s SCA Locations Found' % str(len(scalocs))))
     for loc in scalocs:
-        print(('Pulling SCA Location %s...' % loc))
+        logger.info(('Pulling SCA Location %s...' % loc))
         website = 'providence.org'
         typ = '<MISSING>'
         hours = ''

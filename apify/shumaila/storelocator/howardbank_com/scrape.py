@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('howardbank_com')
+
+
 
 
 def write_output(data):
@@ -32,18 +37,18 @@ def fetch_data():
     finallinks = []
     comlink = ""
     for link in repo_list:
-        print(link.text)
+        logger.info(link.text)
         if link.text.find("Commercial") == -1:
             if link['href'].find(".com") > -1:
                 link = link['href']
             else:
                 link = "https://www.howardbank.com" + link['href']
-            #print(link)
+            #logger.info(link)
             finallinks.append(link)
         else:
             comlink =  "https://www.howardbank.com" + link['href']
 
-    print(comlink)
+    logger.info(comlink)
     page = requests.get(comlink, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     detail = soup.find('div', {'class': 'field-item even'})
@@ -51,7 +56,7 @@ def fetch_data():
     for bank in detp:
         det = str(bank)
         det = det.replace("\n", "")
-        print(det)
+        logger.info(det)
         start = det.find(">") + 1
         end = det.find("<", start)
         title = det[start:end]
@@ -84,16 +89,16 @@ def fetch_data():
         hours = "<MISSING>"
         if len(phone) < 2:
             phone = "<MISSING>"
-        #print(title)
-        #print(ltype)
-        #print(street)
-        #print(city)
-        #print(state)
-        #print(pcode)
-        #print(phone)
-        #print(hours)
-        #print(p)
-        #print("..................................")
+        #logger.info(title)
+        #logger.info(ltype)
+        #logger.info(street)
+        #logger.info(city)
+        #logger.info(state)
+        #logger.info(pcode)
+        #logger.info(phone)
+        #logger.info(hours)
+        #logger.info(p)
+        #logger.info("..................................")
         data.append([
             url,
             title,
@@ -113,7 +118,7 @@ def fetch_data():
 
 
     for link in finallinks:
-        print(link)
+        logger.info(link)
         page = requests.get(link,verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("h1").text
@@ -135,7 +140,7 @@ def fetch_data():
 
         start = state.find(",")
         flag = 0
-        # print(start)
+        # logger.info(start)
         if start == -1:
             start = state.find(" ", 1)
 
@@ -178,16 +183,16 @@ def fetch_data():
         city = city.lstrip()
         phone = phone.lstrip()
         title = title.lstrip()
-        print(title)
-        print(ltype)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(hours)
-        print(p)
-        print("..................................")
+        logger.info(title)
+        logger.info(ltype)
+        logger.info(street)
+        logger.info(city)
+        logger.info(state)
+        logger.info(pcode)
+        logger.info(phone)
+        logger.info(hours)
+        logger.info(p)
+        logger.info("..................................")
         if title.find("Closing") == -1:
             data.append([
                 url,

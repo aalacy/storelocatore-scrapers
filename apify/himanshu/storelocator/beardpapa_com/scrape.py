@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('beardpapa_com')
+
+
 
 
 session = SgRequests()
@@ -26,7 +31,7 @@ def fetch_data():
     }
     url1 = "https://cdn.storelocatorwidgets.com/json/b9fb8be18d69e8520c3d2df1717b3b58?callback=slw&_=1581327875153"
     r1 = session.get(url1, headers=headers)
-    # print(r)
+    # logger.info(r)
     soup1 = BeautifulSoup(r1.text, "lxml")
     k = (soup1.text.split('"stores":')[1].split(',"display_order_set":false,"filters":""})')[0])
     json_data = json.loads(k)
@@ -40,7 +45,7 @@ def fetch_data():
                 url1 = "https://beardpapas.com/locations/plano/"
             else:
                 url1 = "<MISSING>"
-        # print(location_name)
+        # logger.info(location_name)
         if "phone" in i['data']:
             phone = (i['data']['phone'].strip())
         else:
@@ -64,7 +69,7 @@ def fetch_data():
         p = "https://beardpapas.com/locations/"+str(location_name)+"/"
         m = i['data']
         hours_of_operation = "Monday" +" - "+ m['hours_Monday'] +" "+"Tuesday" +" - "+ m['hours_Tuesday']+" "+"Wednesday" +" - "+ m['hours_Wednesday']+" "+"Thursday" +" - "+ m['hours_Thursday']+" "+"Friday" +" - "+ m['hours_Friday']+" "+"Saturday" +" - "+ m['hours_Saturday']+" "+"Sunday" +" - "+ m['hours_Sunday']
-        # print(hours_of_operation)
+        # logger.info(hours_of_operation)
         if zipp in ["90247","77036","V6X 2E3","97005"]:
             city = street_address.split(" ")[-1]
             street_address = " ".join(street_address.split(" ")[:-1])

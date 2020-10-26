@@ -2,6 +2,11 @@ import requests
 import sgzip
 
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kay_com')
+
+
 
 URL = "https://www.kay.com/"
 
@@ -62,7 +67,7 @@ class Scraper(Scrape):
                 data.extend(res['data'])
                 if len(data) == res['total']:
                     stores.extend(data)
-                    print(f"{res['total']} stores scraped for zipcode {zip_search}")
+                    logger.info(f"{res['total']} stores scraped for zipcode {zip_search}")
                     break
 
         for store in stores:

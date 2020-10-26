@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('verabradley_com')
+
+
 
 
 session = SgRequests()
@@ -25,7 +30,7 @@ def fetch_data():
     while i>0:
         r = session.get(base_url+'/us/selfservice/FindStore?zip=&address=&city=&state=&curpage='+str(i))
         soup=BeautifulSoup(r.text,'lxml')
-        print(i)
+        logger.info(i)
         if soup.find('div',{'class':"storefinder-results"})==None:
             i=0
         else:

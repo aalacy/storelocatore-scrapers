@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('allbirds_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -57,7 +62,7 @@ def fetch_data():
             if '</p>' in h:
                 hours = hours + '; ' + h.split('<')[0]
         if 'paragraph">(' in line and CFound:
-            print(name)
+            logger.info(name)
             phone = line.split('paragraph">')[1].split('<')[0]
             if name == 'Austin':
                 add = '1011 S Congress Ave, Bldg 1, Ste. 120'

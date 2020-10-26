@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('singaspizzas_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +32,7 @@ def fetch_data():
 
         if len(content) > 1:
             location_name = content[0]
-            print(location_name)
+            logger.info(location_name)
             street_address = content[1]
             if "," not in content[2]:
                 city = content[2]

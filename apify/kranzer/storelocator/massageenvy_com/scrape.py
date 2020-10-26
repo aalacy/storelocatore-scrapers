@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('massageenvy_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        print("Got today page")
+        logger.info("Got today page")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     main_links = []
     final_links = []
@@ -45,14 +50,14 @@ def fetch_data():
             main_links.append(main_link)
     
     for main_link in main_links:
-        print(main_link)
+        logger.info(main_link)
         req = session.get(main_link, headers = HEADERS)
         time.sleep(randint(1,2))
         try:
             base = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         next_items = base.find_all(class_="Directory-listLink")
         if next_items:
@@ -68,8 +73,8 @@ def fetch_data():
                     try:
                         next_base = BeautifulSoup(next_req.text,"lxml")
                     except (BaseException):
-                        print('[!] Error Occured. ')
-                        print('[?] Check whether system is Online.')
+                        logger.info('[!] Error Occured. ')
+                        logger.info('[?] Check whether system is Online.')
 
                     final_items = next_base.find_all(class_="Teaser-titleLink")
                     for final_item in final_items:
@@ -85,21 +90,21 @@ def fetch_data():
     data = []
     total_links = len(final_links)
     for i, final_link in enumerate(final_links):
-        print("Link %s of %s" %(i+1,total_links))
+        logger.info("Link %s of %s" %(i+1,total_links))
         final_req = session.get(final_link, headers = HEADERS)
         time.sleep(randint(1,2))
         try:
             item = BeautifulSoup(final_req.text,"lxml")
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         locator_domain = "massageenvy.com"
 
         location_name = item.find(id="location-name").text.strip()
         if "COMING SOON" in location_name.upper():
             continue
-        print(location_name)
+        logger.info(location_name)
 
         street_address = item.find(class_='c-address-street-1').text.strip()
         try:

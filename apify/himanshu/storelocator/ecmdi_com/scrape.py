@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ecmdi_com')
+
+
 
 
 session = SgRequests()
@@ -25,7 +30,7 @@ def fetch_data():
         }
     base_url = "https://www.ecmdi.com"
     r = session.get("https://www.ecmdi.com/storelocator/index/storeSearch/?lat=40.7226698&lng=-73.51818329999998&radius=12000",headers=headers)
-    #print(r.text)
+    #logger.info(r.text)
     data = r.json()["stores"]
     return_main_object = []
     for i in range(len(data)):

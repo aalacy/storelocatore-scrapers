@@ -1,3 +1,4 @@
 sgzip
 requests
 selenium
+sglogging

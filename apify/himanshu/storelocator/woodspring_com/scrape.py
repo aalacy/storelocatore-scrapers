@@ -5,6 +5,11 @@ import re
 import unicodedata
 import phonenumbers
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('woodspring_com')
+
+
 
 
 session = SgRequests()
@@ -30,10 +35,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         }
@@ -42,7 +47,7 @@ def fetch_data():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
             continue
-       # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150")
+       # logger.info("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150")
         data = r.json()["searchResults"]
         for store_data in data:
             result_coords.append((store_data["geographicLocation"]["latitude"], store_data["geographicLocation"]["longitude"]))
@@ -87,13 +92,13 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            #print(store)
+            #logger.info(store)
             yield store
         if len(data) < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

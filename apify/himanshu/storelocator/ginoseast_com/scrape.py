@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ginoseast_com')
+
+
 
 
 session = SgRequests()
@@ -27,7 +32,7 @@ def fetch_data():
         for link in data.find_all("a"):            
             page_url = "https://www.ginoseast.com"+link['href']
             r1 = session.get(page_url,headers=headers)
-            # print(page_url)
+            # logger.info(page_url)
             soup1 = BeautifulSoup(r1.text,"lxml")
             name = soup1.h1.text.strip()
             full = list(soup1.find_all("div",{"class":"col sqs-col-6 span-6"})[1].find("div",{"class":"row sqs-row"}).stripped_strings)
@@ -59,7 +64,7 @@ def fetch_data():
             store.append(hours.replace('Delivery & Curbside Pick-Up available ','').replace(' Delivery available after 5pm',''))
             store.append(page_url)
             yield store
-            #print(store)
+            #logger.info(store)
             
 
 
@@ -67,7 +72,7 @@ def fetch_data():
 
     # exit()
     # main_link = "https:" + soup.find_all("iframe")[-1]["src"]
-    # print(main_link)
+    # logger.info(main_link)
     # exit()
     # api_key = main_link.split("api_key=")[1].split("&")[0]
     # main_request  = session.get("https://app.mapply.net/front-end//get_surrounding_stores.php?api_key=" + api_key + "&latitude=40.627687485975684&longitude=-85.975110686635&max_distance=0&limit=10000&calc_distance=0",headers=headers)

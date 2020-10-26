@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('signaturestyle_com__brands__saturdays_html')
+
+
 
 
 
@@ -53,7 +58,7 @@ def fetch_data():
  
     for zip_code in zips:
         # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
-        # print("zips === " + str(zip_code))
+        # logger.info("zips === " + str(zip_code))
         try:
             r = session.get(
                 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/'+zip_code[0]+'/'+zip_code[1]+'/0.8/0.8/true',
@@ -102,7 +107,7 @@ def fetch_data():
                 tem_var.append(latitude if latitude else "<MISSING>" )
                 tem_var.append(longitude if longitude else  "<MISSING>")
                 tem_var.append(time if time else "<MISSING>")
-                print(tem_var)
+                logger.info(tem_var)
                 if tem_var[3] in addresses:
                     continue
                 addresses.append(tem_var[3])

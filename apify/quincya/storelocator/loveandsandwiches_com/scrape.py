@@ -4,6 +4,11 @@ import time
 from random import randint
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('loveandsandwiches_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -36,7 +41,7 @@ def fetch_data():
 		raw_data = item.text.split("\n")
 
 		location_name = item.find(class_="storeFriendlyName").text
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = item.find(class_="storeAddress1").text
 		city = item.find(class_="storeAddress2").text.split(",")[0].strip()

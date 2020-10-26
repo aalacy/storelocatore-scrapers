@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mfaoil_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
     for statenow in states:
-        #print(statenow)
+        #logger.info(statenow)
         gurl = 'https://maps.googleapis.com/maps/api/geocode/json?address='+statenow+'&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS'
         r = session.get(gurl, headers=headers, verify=False).json()
         if r['status'] == 'REQUEST_DENIED':
@@ -42,7 +47,7 @@ def fetch_data():
             lngnow = coord['lng']
             url = 'https://www.mfaoil.com/store-locator-data/?brands=mfa-oil&searchfilters=&lat='+str(latnow)+'&lng='+str(lngnow)+'&maxdist=100'
             page = session.get(url, headers=headers, verify=False).json()
-            #print(len(page))
+            #logger.info(len(page))
             if len(page) == 0:
                 pass
             else:
@@ -82,7 +87,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                    #print(p,data[p])
+                    #logger.info(p,data[p])
                     p += 1
                         
                       
@@ -95,9 +100,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('nutritionzoneusa_com')
+
+
 
 
 
@@ -28,7 +33,7 @@ def fetch_data():
     r= session.get("https://cdn.shopify.com/s/files/1/0254/4114/0816/t/3/assets/sca.storelocator_scripttag.js?75&shop=nutritionzoneshop.myshopify.com")
     script = json.loads(r.text.split('"locationsRaw":"')[1].split('"};')[0].replace("\\",""))
     for i in script:
-        # print(i)
+        # logger.info(i)
         store_number = i["id"]
         location_name = i["name"]
         if "address2" in script:
@@ -40,7 +45,7 @@ def fetch_data():
         try:
             zipp = i["postal"]
         except:
-            #print(i)
+            #logger.info(i)
             zipp = "<MISSING>"
         latitude = i["lat"]
         longitude = i["lng"]
@@ -52,8 +57,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = [str(x).encode('ascii','ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-        #print("data = " + str(store))
-        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        #logger.info("data = " + str(store))
+        #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
   
@@ -65,7 +70,7 @@ def fetch_data():
     # store_name=[]
     # k  = main_soup.find_all("div",{"class":"col sqs-col-6 span-6"})
     # for i in k:
-    #     # print(i.find_all('p'))
+    #     # logger.info(i.find_all('p'))
     #     for j in i.find_all('h3'):
     #         if list(j.stripped_strings)  != []:
     #             if list(j.stripped_strings)[0] == ".":
@@ -79,7 +84,7 @@ def fetch_data():
     #                 pass
     #             else:
     #                 state = list(j.stripped_strings)[0].split(',')[-1].split( )[0]
-    #                 # print(list(j.stripped_strings)[0])
+    #                 # logger.info(list(j.stripped_strings)[0])
     #                 zip1 = list(j.stripped_strings)[0].split(',')[-1].split( )[1]
     #                 city = list(j.stripped_strings)[0].split(',')[-2]
     #                 st = (" ".join(list(j.stripped_strings)[0].split(',')[:2]).replace("Charlotte","").replace("Raleigh","").replace("Santee","").replace("Sylmar","").replace("Lubbock",""))
@@ -96,9 +101,9 @@ def fetch_data():
     #                 tem_var.append("<MISSING>")
     #                 tem_var.append("<MISSING>")
     #                 tem_var.append("<MISSING>")
-    #                 print(tem_var)
+    #                 logger.info(tem_var)
     #                 store_detail.append(tem_var)
-    #                 # print(tem_var)
+    #                 # logger.info(tem_var)
     #                 # return_main_object.append(tem_var) 
 
 

@@ -1,6 +1,11 @@
 # -*- coding: cp1252 -*-
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('7elevenhawaii_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,7 +33,7 @@ def fetch_data():
                     lurl = 'https://7elevenhawaii.com/' + item.split('"')[0]
                     locs.append(lurl)
     for loc in locs:
-        print(loc)
+        logger.info(loc)
         name = ''
         add = ''
         city = ''

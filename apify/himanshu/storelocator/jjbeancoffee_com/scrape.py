@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jjbeancoffee_com')
+
+
 
 
 session = SgRequests()
@@ -29,12 +34,12 @@ def fetch_data():
 
 
     for i in soup.find_all("header",{"class":"entry-header"})[1:]:
-        # print(i.prettify())
-        # print("========================")
+        # logger.info(i.prettify())
+        # logger.info("========================")
         location_name = i.find("h2",{"class":"entry-title"}).text
         data1 = i.find("p").find("em")
         raw_add = data1.find("a").text.split(",")
-       # print(raw_add)
+       # logger.info(raw_add)
         street_address = raw_add[0]
         city = raw_add[-1]
         state = "BC"
@@ -42,7 +47,7 @@ def fetch_data():
         country_code = "CA"
         store_number = i.find("a")["name"].replace("location-","")
         raw_data = data1.text.split(":")
-        #print(raw_data)
+        #logger.info(raw_data)
         phone = raw_data[2].replace("Hours","").replace(" ext. 4Hours","").replace(" ext. 4","").strip()
         location_type = "<MISSING>"
 

@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('midwestpetro_com')
+
+
 
 
 options = Options()
@@ -76,7 +81,7 @@ def fetch_data():
                   hours_of_op
                 ])
             count+=1
-            print(count)
+            logger.info(count)
 
     time.sleep(3)
     driver.quit()

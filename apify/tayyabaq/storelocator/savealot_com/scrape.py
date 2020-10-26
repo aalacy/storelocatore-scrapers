@@ -4,6 +4,11 @@ import re
 import requests
 import pandas as pd
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('savealot_com')
+
+
 
 url = "https://savealot.com/grocery-stores/"
 base = 'https://savealot.com'
@@ -76,14 +81,14 @@ def fetch_data():
                                 except Exception as e:
                                     store_num = "<MISSING>"
 
-                                print(store_num)
+                                logger.info(store_num)
                                 store_numbrs.append(store_num)
 
                                 try:
                                     city = city_loc.split('/')[-2]
                                 except Exception as e:
                                     city = "<MISSING>"
-                                print(city)
+                                logger.info(city)
                                 cities.append(city)
 
                                 data = res.text
@@ -104,7 +109,7 @@ def fetch_data():
                                 except Exception as e:
                                     street = "<MISSING>"
 
-                                #                                 print(street)
+                                #                                 logger.info(street)
                                 street_address.append(street)
 
                                 try:
@@ -113,7 +118,7 @@ def fetch_data():
 
                                 except Exception as e:
                                     state = "<MISSING>"
-                                print(state)
+                                logger.info(state)
                                 states.append(state)
 
                                 try:
@@ -123,7 +128,7 @@ def fetch_data():
 
                                 except Exception as e:
                                     zip_code = "<MISSING>"
-                                #                                 print(zip_code)
+                                #                                 logger.info(zip_code)
                                 zip_codes.append(zip_code)
 
                                 try:
@@ -132,7 +137,7 @@ def fetch_data():
 
                                 except Exception as e:
                                     phone = "<MISSING>"
-                                    #                                 print(phone)
+                                    #                                 logger.info(phone)
                                 phones.append(phone)
 
                                 try:
@@ -154,7 +159,7 @@ def fetch_data():
                                 except Exception as e:
                                     hour = "<MISSING>"
 
-                                print(hour)
+                                logger.info(hour)
                                 hours.append(hour)
 
                                 try:
@@ -185,15 +190,15 @@ def fetch_data():
 
                                 country_code = "US"
                                 country_codes.append(country_code)
-                                #         # print(ccode)
+                                #         # logger.info(ccode)
 
                                 location_type = "<MISSING>"
                                 location_types.append(location_type)
-                                #         # print(location_type)
+                                #         # logger.info(location_type)
 
                                 # store_numbr = "<MISSING>"
                                 # store_numbrs.append(store_numbr)
-                                # #         # print(store_number)
+                                # #         # logger.info(store_number)
 
                                 locator_domain = "https://www.savealot.com"
                                 locator_domains.append(locator_domain)
@@ -207,7 +212,7 @@ def fetch_data():
         return df
 
     except Exception as e:
-        print(str(e))
+        logger.info(str(e))
 
 
 def scrape():

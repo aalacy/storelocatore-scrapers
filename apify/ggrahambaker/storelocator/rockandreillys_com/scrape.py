@@ -3,6 +3,11 @@ import os
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rockandreillys_com')
+
+
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -77,7 +82,7 @@ def usc_parse(link, locator_domain):
     store_data = [locator_domain,link, 'USC', street_address, city, state, zip_code.replace('\t','').replace('\n','').rstrip(), country_code,
                   store_number, phone_number, location_type, lat, longit, hours]
 
-    #print(store_data)
+    #logger.info(store_data)
     return store_data
 
 def sunset_parse(link, locator_domain):
@@ -114,7 +119,7 @@ def sunset_parse(link, locator_domain):
     store_data = [locator_domain,link, location_name, street_address, city, state, zip_code, country_code,
              store_number, phone_number, location_type, lat, longit, hours ]
 
-    #print("SUNSET",store_data)
+    #logger.info("SUNSET",store_data)
     return store_data
 
 def vegas_parse(link, locator_domain):
@@ -127,10 +132,10 @@ def vegas_parse(link, locator_domain):
     detail = soup.findAll('div',{'class':'footer-txt'})
     
 
-    #print(detail)
+    #logger.info(detail)
     address = detail[0]
     address =cleanr.sub(' ', str(address)).replace('\t','').replace('\r','')    
-    #print(detail[1].text)
+    #logger.info(detail[1].text)
     street_address,city,state,zip_code = retaddr(address)  
     phone_number =  detail[1].text.replace('\t','').replace('\r','').replace('\n','')          
 
@@ -147,7 +152,7 @@ def vegas_parse(link, locator_domain):
     store_data = [locator_domain,link, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours]
 
-    #print("LAS VEGAS",store_data)
+    #logger.info("LAS VEGAS",store_data)
     return store_data
 
 def fetch_data():

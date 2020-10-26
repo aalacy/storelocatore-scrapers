@@ -4,6 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('beebehealthcare_org')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -82,8 +87,8 @@ def fetch_data():
                     store.append(longitude )
                     store.append(hours_of_operation.strip().replace('HOURS','').encode('ascii', 'ignore').decode('ascii').strip())
                     store.append(page_url)
-                    #print("data==="+str(store))
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                    #logger.info("data==="+str(store))
+                    #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
                     yield store
                 

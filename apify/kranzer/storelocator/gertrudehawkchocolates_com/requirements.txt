@@ -3,3 +3,4 @@ requests==2.11.1
 lxml
 w3lib
 sgvalidator==0.0.19
+sglogging

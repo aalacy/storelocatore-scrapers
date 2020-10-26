@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('uwmedicine_org')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -75,8 +80,8 @@ def fetch_data():
                     if str(store[2])+str(store[1]) in addresses:
                         continue
                     addresses.append(str(store[2])+str(store[1]))
-                    # print("data===="+str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                    # logger.info("data===="+str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                     yield store
                 except:
                     pass

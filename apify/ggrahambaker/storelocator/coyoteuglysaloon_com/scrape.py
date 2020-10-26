@@ -4,6 +4,11 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('coyoteuglysaloon_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,11 +34,11 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")   
     state_list = soup.find('select', {'name': 'site'})
     state_list = state_list.findAll('option')
-    #print(len(state_list))
+    #logger.info(len(state_list))
     flag = 0 
     for i in range(2,len(state_list)):
         link = state_list[i]
-        #print(link.text)
+        #logger.info(link.text)
         if link.text.find('--') > -1 :
             break
         else:            
@@ -50,7 +55,7 @@ def fetch_data():
             if address[m].find(',') == -1:
                 street = street + ' '  + address[m]
                 m += 1
-            #print(address[m])
+            #logger.info(address[m])
             city,state = address[m].split(', ')
             state =state.lstrip()
             state,pcode = state.split(' ')
@@ -115,7 +120,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                 
         
@@ -123,9 +128,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -5,6 +5,11 @@ import time
 import json
 import re
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('marinerfinance_com')
+
+
 
 
 def write_output(data):
@@ -29,10 +34,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find('table').find_all('a')
@@ -46,10 +51,10 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			print(main_link)
+			logger.info(main_link)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		final_items = base.find_all(class_="post-box__foot")
 		for final_item in final_items:
@@ -59,19 +64,19 @@ def fetch_data():
 	data = []
 	total_links = len(final_links)
 	for i, final_link in enumerate(final_links):
-		print("Link %s of %s" %(i+1,total_links))
+		logger.info("Link %s of %s" %(i+1,total_links))
 		final_req = session.get(final_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "marinerfinance.com"
 
 		location_name = base.h1.text.strip()
-		print(location_name)
+		logger.info(location_name)
 
 		item = base.find(class_="type")
 		script = item.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
@@ -97,8 +102,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

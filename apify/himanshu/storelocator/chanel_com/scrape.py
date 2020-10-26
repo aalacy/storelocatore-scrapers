@@ -6,6 +6,11 @@ import json
 import time
 import sgzip
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chanel_com')
+
+
 
 
 session = SgRequests()
@@ -33,10 +38,10 @@ def fetch_data():
     coords = sgzip.coords_for_radius(50)
     for coord in coords:
         # result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0',
             "X-Requested-With": "XMLHttpRequest",
@@ -81,13 +86,13 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print(store)
+            # logger.info(store)
             yield store
         # if len(data) < MAX_RESULTS:
-        #     # print("max distance update")
+        #     # logger.info("max distance update")
         #     search.max_distance_update(MAX_DISTANCE)
         # elif len(data) == MAX_RESULTS:
-        #     # print("max count update")
+        #     # logger.info("max count update")
         #     search.max_count_update(result_coords)
         # else:
         #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")

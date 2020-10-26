@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('youngsenvironmental_com')
+
+
 
 
 session = SgRequests()
@@ -26,7 +31,7 @@ def fetch_data():
     main=soup.find('div',{"class":"contact-page-form-google-wrapper"}).find_all('div')
     for atag in main:
         madd=list(atag.stripped_strings)
-        print(madd)
+        logger.info(madd)
         name=madd[0].strip()
         address=madd[1].strip()
         ct=madd[2].split(',')

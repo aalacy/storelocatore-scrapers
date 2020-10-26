@@ -4,6 +4,11 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('saharapizza_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,11 +43,11 @@ def fetch_data():
                 title = det[0].text
             if title.find('Bolivia') == -1:
                 address = re.sub(cleanr,' ',str(det[1])).strip()
-                #print(address)
+                #logger.info(address)
                 #input()
                 if len(address) > 5 and address.find('CLOSED') == -1:
                     address = usaddress.parse(address)
-                    #print(address)
+                    #logger.info(address)
                     i = 0
                     street = ""
                     city = ""
@@ -95,8 +100,8 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>'
                     ])
-                #print(city)
-                #print(p,data[p])
+                #logger.info(city)
+                #logger.info(p,data[p])
                 p += 1
                 
 
@@ -105,9 +110,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

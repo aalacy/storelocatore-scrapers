@@ -8,6 +8,11 @@ import asyncio
 import aiohttp
 from urllib.parse import urljoin
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shaws_com')
+
+
 base_url = "https://local.shaws.com/index.html"
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -53,7 +58,7 @@ class Scrape(base.Spider):
             res = await self._fetch_store(session, url)
             if res:
                 results.append(res)
-        print(results)
+        logger.info(results)
         return results
 
     async def _fetch_city(self, session, url):

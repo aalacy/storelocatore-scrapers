@@ -2,6 +2,11 @@ import csv
 import os
 from sgrequests import SgRequests
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chick-fil-a_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,7 +70,7 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
         stores = r['response']['entities']
         result_coords = []
@@ -99,7 +104,7 @@ def fetch_data():
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
-            print("max distance update")
+            logger.info("max distance update")
             search.max_distance_update(20)
         coord = search.next_zip()
 

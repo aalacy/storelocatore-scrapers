@@ -1,5 +1,10 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bananarepublic_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +47,7 @@ def fetch_data():
                 states.append('https://bananarepublic.gap.com/stores/' + stname)
     for state in states:
         cities = []
-        print('Pulling State %s...' % state)
+        logger.info('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -50,14 +55,14 @@ def fetch_data():
                 cities.append('https://bananarepublic.gap.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
             locs = []
-            print('Pulling City %s...' % city)
+            logger.info('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 line3 = str(line3.decode('utf-8'))
                 if 'View Store Details</a>' in line3:
                     locs.append('https://bananarepublic.gap.com' + line3.split('href="')[1].split('"')[0])
             for loc in locs:
-                print('Pulling Location %s...' % loc)
+                logger.info('Pulling Location %s...' % loc)
                 website = 'bananarepublic.com'
                 typ = '<MISSING>'
                 try:

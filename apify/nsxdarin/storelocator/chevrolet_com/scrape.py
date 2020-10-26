@@ -1,6 +1,11 @@
 import csv
 import sgzip
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chevrolet_com')
+
+
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -32,7 +37,7 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        print('%s-%s...' % (llat, llng))
+        logger.info('%s-%s...' % (llat, llng))
         url = 'https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/' + str(llat) + '/' + str(llng) + '/?distance=500&maxResults=50'
         r = session.get(url, headers=headers)
         result_coords = []
@@ -80,15 +85,15 @@ def fetch_data():
                             zc = zc[:5]
                             if store not in sids:
                                 sids.append(store)
-                                #print(store)
+                                #logger.info(store)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
         if len(array) <= MAX_RESULTS:
-                    print("max distance update")
+                    logger.info("max distance update")
                     search.max_distance_update(MAX_DISTANCE)
         ##        elif len(array) == MAX_RESULTS:
-        ##            print("max count update")
+        ##            logger.info("max count update")
         ##            search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

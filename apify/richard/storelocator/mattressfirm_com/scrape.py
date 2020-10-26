@@ -4,6 +4,11 @@ import json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mattressfirm_com')
+
+
 
 URL = "https://www.mattressfirm.com/"
 
@@ -41,7 +46,7 @@ class Scraper(Scrape):
             driver.get(f"https://www.mattressfirm.com/stores/search?q={zip_search}")
             data = [loc.find_element_by_css_selector('a.gaq-link').get_attribute('href') for loc in driver.find_elements_by_css_selector('div.map-list-item-wrap')]
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {zip_search}")
+            logger.info(f"{len(data)} locations scraped for {zip_search}")
 
         for store_url in stores:
             if store_url not in self.seen:

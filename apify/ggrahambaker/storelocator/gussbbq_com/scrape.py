@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gussbbq_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +44,7 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
         c_lat = js['lat']
         c_longit = js['lng']
     else:
-        print('dang!')
+        logger.info('dang!')
 
     address = driver.find_element_by_css_selector('div' + ids[0]).text.split('\n')
     street_address = address[1]

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wellsfargo_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -47,7 +52,7 @@ def fetch_data():
                 city= adr.find('span',class_='locality').text.strip().capitalize()
                 state = adr.find('abbr',class_='region').text.strip()
                 zipp = adr.find('span',class_='postal-code').text.strip()
-                #print(zipp)
+                #logger.info(zipp)
                 country_code = "US"
                 phone_tag = left_data.find('div',class_='tel').text.replace('Phone:','').strip()
                 phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
@@ -64,8 +69,8 @@ def fetch_data():
                     list_hours.remove('Unavailable:')
                 # if "ATMs" ==  list_hours[2] and len(list_hours) > 1:
                 #     list_hours.remove('ATMs')
-                    # print(list_hours)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info(list_hours)
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 if list_hours == []:
                     hours_of_operation = "<MISSING>"
                 elif "Features" in list_hours[0]:
@@ -95,8 +100,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2] + store[-5])
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 # return_main_object.append(store)
                 yield store
             

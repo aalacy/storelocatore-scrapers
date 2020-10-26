@@ -5,6 +5,11 @@ import time
 from random import randint
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fastrip_com')
+
+
 
 
 def write_output(data):
@@ -41,7 +46,7 @@ def fetch_data():
     stores = driver.find_elements_by_class_name('loc-address')
 
     for n in range(0,len(stores)):
-        print("Store " + str(n+1) + " of " + str(len(stores)))
+        logger.info("Store " + str(n+1) + " of " + str(len(stores)))
         try:
             raw_address = stores[n].text.replace("Lake Isabella CA","Lake Isabella, CA")
             state.append(raw_address.split(",")[2].split()[0].split(".")[0].upper())
@@ -79,8 +84,8 @@ def fetch_data():
             try:
                 maps = BeautifulSoup(req.text,"lxml")
             except (BaseException):
-                print('[!] Error Occured. ')
-                print('[?] Check whether system is Online.')
+                logger.info('[!] Error Occured. ')
+                logger.info('[?] Check whether system is Online.')
 
             try:
                 raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

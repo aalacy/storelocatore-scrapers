@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('louisvuitton_com')
+
+
 
 
 
@@ -50,11 +55,11 @@ def fetch_data():
 
     json_str = soup.text.split("allStores=")[1].split("}}]}")[0] + "}}]}"
     json_Data = json.loads(json_str)
-    # print("Soup === " + str(json_Data))
+    # logger.info("Soup === " + str(json_Data))
 
     for location in json_Data["stores"]:
 
-        # print(" location ==== "+ str(location))
+        # logger.info(" location ==== "+ str(location))
 
         latitude = location["latitude"]
         longitude = location["longitude"]
@@ -79,8 +84,8 @@ def fetch_data():
         else:
             continue
 
-        # print("ssssss ===  " + str(location["state"]))
-        # print(str(location["zip"])+" == state ==== " + str(zipp))
+        # logger.info("ssssss ===  " + str(location["state"]))
+        # logger.info(str(location["zip"])+" == state ==== " + str(zipp))
 
         page_url = location["url"]
         r_hours = session.get(page_url, headers=headers)
@@ -89,7 +94,7 @@ def fetch_data():
         hours_of_operation = " ".join(
             list(soup_hours.find("ul", {"class": "storeDetailed-horaires-content"}).stripped_strings)).replace("/", "-")
 
-        # print("hours ==== " + str(hours_of_operation))
+        # logger.info("hours ==== " + str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -99,8 +104,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

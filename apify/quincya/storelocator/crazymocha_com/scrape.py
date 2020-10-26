@@ -7,6 +7,11 @@ import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('crazymocha_com')
+
+
 
 
 def get_driver():
@@ -45,8 +50,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.findAll('p', attrs={'style': 'white-space:pre-wrap;'})[1:]
 
@@ -54,7 +59,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "crazymocha.com"
 		location_name = item.find('strong').text.strip()
-		print (location_name)
+		logger.info(location_name)
 		raw_data = str(item).replace('<p>',"").replace('</p>',"").replace('\n',"").replace('\xa0',"").split('<br/>')
 		street_address = raw_data[1][raw_data[1].rfind(">")+1:raw_data[1].find(",")].strip()
 		if street_address:
@@ -128,7 +133,7 @@ def fetch_data():
 		if not hours_of_operation:
 			hours_of_operation = raw_data[-2].replace("\n"," ").replace("\xa0","").strip()
 			hours_of_operation = re.sub(' +', ' ', hours_of_operation)
-		print(hours_of_operation)
+		logger.info(hours_of_operation)
 		
 		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

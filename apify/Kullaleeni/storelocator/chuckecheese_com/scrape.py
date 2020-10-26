@@ -10,6 +10,11 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chuckecheese_com')
+
+
 
 def get_driver():
     options = Options()
@@ -78,7 +83,7 @@ def fetch_data():
             data_record['longitude'] = longitude
             data_record['hours_of_operation'] = hours_of_open
             data.append(data_record)
-            print(len(data))
+            logger.info(len(data))
             
     return data
     

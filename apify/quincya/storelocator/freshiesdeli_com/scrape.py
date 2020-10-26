@@ -5,6 +5,11 @@ import time
 import re
 
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('freshiesdeli_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -33,24 +38,24 @@ def fetch_data():
 
 	try:
 		base = str(BeautifulSoup(req.text,"lxml"))
-		print("Got main page")
+		logger.info("Got main page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	all_links = re.findall( r"https://www.freshiesdeli.com/storelocations/[a-z]+",base)
 
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		print("Link %s of %s" %(i+1,total_links))
+		logger.info("Link %s of %s" %(i+1,total_links))
 
 		req = session.get(link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "freshiesdeli.com"
 
@@ -63,10 +68,10 @@ def fetch_data():
 				item = BeautifulSoup(req.text,"lxml")
 				location_name = item.find('meta', attrs={'property': "og:title"})['content'].replace("—","-")
 			except (BaseException):
-				print('[!] Error Occured. ')
-				print('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 
-		print(location_name)
+		logger.info(location_name)
 		
 		phone = item.find('meta', attrs={'itemprop': "description"})['content'][-15:].strip()
 		if "(" not in phone:

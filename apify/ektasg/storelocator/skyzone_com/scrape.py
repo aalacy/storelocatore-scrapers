@@ -5,6 +5,11 @@ from selenium.webdriver.chrome.options import Options
 import re
 import json
 import pandas as pd
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('skyzone_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -107,13 +112,13 @@ def fetch_data():
                 hours_of_op
             ])
             count = count + 1
-            print(count)
+            logger.info(count)
 
     for i in range(len(data)):
         try:
             if (data[i][5] in canada_states):
                 data[i][7] = 'CA'
-                print(i)
+                logger.info(i)
         except:
             'TypeError'
 

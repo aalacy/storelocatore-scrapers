@@ -2,6 +2,11 @@ import requests
 import sgzip
 
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dickeys_com')
+
+
 
 
 URL = "https://www.dickeys.com"
@@ -70,9 +75,9 @@ class Scraper(Scrape):
             try:
                 data = requests.post('https://www.dickeys.com/location/find-location-new', headers=headers, cookies=cookies, data=data).json()
                 stores.extend(data)
-                print(f"{len(data)} locations scraped for coordinates: {coords[0]} {coords[1]}")
+                logger.info(f"{len(data)} locations scraped for coordinates: {coords[0]} {coords[1]}")
             except:
-                print(f"0 locations scraped for coordinates: {coords[0]} {coords[1]}")
+                logger.info(f"0 locations scraped for coordinates: {coords[0]} {coords[1]}")
 
 
         for store in stores:

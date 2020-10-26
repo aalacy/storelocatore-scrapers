@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shoedept_com')
+
+
 
 
 
@@ -16,7 +21,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -53,18 +58,18 @@ def fetch_data():
 
     for zip_code in zips:
 
-        # print("zip_code == " + zip_code)
+        # logger.info("zip_code == " + zip_code)
         r = session.get(
             'https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode=' + str(zip_code), headers=headers)
-        # print('https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode='+str(zip_code))
+        # logger.info('https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode='+str(zip_code))
 
-        # print("r===" + r.text)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("r===" + r.text)
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~")
 
         try:
             json_data = r.json()
-            # print(json_data['stores'])
-            # print('~~~~~~~~~~~~~~~~~~')
+            # logger.info(json_data['stores'])
+            # logger.info('~~~~~~~~~~~~~~~~~~')
             if json_data['stores'] != []:
                 for x in json_data['stores']:
                     if x['countryCode'] in ["US", "CA"]:
@@ -81,7 +86,7 @@ def fetch_data():
                         else:
                             street_address = x['address1']
                             location_name = "<MISSING>"
-                        #print(location_name + " | "+street_address)
+                        #logger.info(location_name + " | "+street_address)
                         city = x['city']
 
                         state = x['stateCode']
@@ -97,7 +102,7 @@ def fetch_data():
                             zipp = ca_zip_list[0]
                         else:
                             continue
-                        # print(zipp)
+                        # logger.info(zipp)
                         latitude = x['latitude']
                         longitude = x['longitude']
                         phone = x['phone']
@@ -109,14 +114,14 @@ def fetch_data():
                     store = ["<MISSING>" if x == "" or x ==
                              None else x for x in store]
                     # store = [x if x else "<MISSING>" for x in store]
-                    # print(store[1:3])
+                    # logger.info(store[1:3])
 
                     if store_number in addresses:
                         continue
                     addresses.append(store_number)
 
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info("data = " + str(store))
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     return_main_object.append(store)
 
         except:

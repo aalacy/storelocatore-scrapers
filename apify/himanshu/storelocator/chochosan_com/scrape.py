@@ -12,6 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chochosan_com')
+
+
 
 
 session = SgRequests()
@@ -62,7 +67,7 @@ def fetch_data():
     return_main_object = []
 
     # Get lat/lng
-    # print(base_url1)
+    # logger.info(base_url1)
     driver.get(base_url1)
     element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
         (By.ID, "SITE_HEADER")))
@@ -101,7 +106,7 @@ def fetch_data():
         store_name.append(name)
 
         tem_var.append(st)
-        # print(tem_var[0])
+        # logger.info(tem_var[0])
         tem_var.append(city)
         tem_var.append(state)
         tem_var.append(zipp)

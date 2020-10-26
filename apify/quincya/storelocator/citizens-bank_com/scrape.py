@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('citizens-bank_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -40,7 +45,7 @@ def fetch_data():
 			continue
 
 		location_name = item.h3.text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 		
 		raw_address = item.find(class_="fl-rich-text").find_all("p")[-2].text.split("\n")
 		if "Citizens Bank" in raw_address[0]:

@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lafambank_com')
+
+
 
 base_url = 'https://www.lafambank.com'
 
@@ -89,7 +94,7 @@ def fetch_data():
     stores_json = session.post(url, headers=headers, data=data).json()
     details = etree.HTML(stores_json['branchFlyouts']).xpath('//div[@data-id]')
     stores = etree.HTML(stores_json['branchResults']).xpath('//div[@data-id]')
-    print(len(stores))
+    logger.info(len(stores))
     for (store, detail) in zip(stores, details):
         lat = store.attrib['data-lat']
         lng = store.attrib['data-long']

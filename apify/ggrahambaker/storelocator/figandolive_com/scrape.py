@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('figandolive_com')
+
+
 
 user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 HEADERS = {'User-Agent' : user_agent}
@@ -29,8 +34,8 @@ def fetch_data():
     try:
         item = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        print('[!] Error Occured. ')
-        print('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     lis = item.find(class_="sub-menu").find_all('li')
     link_list = []
@@ -42,13 +47,13 @@ def fetch_data():
     for link in link_list:
 
         req = session.get(link, headers = HEADERS)
-        print(link)
+        logger.info(link)
         time.sleep(randint(1,2))
         try:
             item = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            print('[!] Error Occured. ')
-            print('[?] Check whether system is Online.')
+            logger.info('[!] Error Occured. ')
+            logger.info('[?] Check whether system is Online.')
 
         locator_domain = "figandolive.com"
         raw_name = item.find(class_="hero__content container").text

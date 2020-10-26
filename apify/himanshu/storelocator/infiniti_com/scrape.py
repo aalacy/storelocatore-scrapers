@@ -11,6 +11,11 @@ session = SgRequests()
 
 session = SgRequests()
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('infiniti_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -45,16 +50,16 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print(search.current_zip)
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # logger.info(search.current_zip)
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
     
         json_data = session.get("https://us.nissan-api.net/v2/dealers?size="+str(MAX_RESULTS)+"&lat="+str(lat)+"&long="+str(lng)+"&serviceFilterType=AND&include=openingHours", headers=headers).json()['dealers']
         current_results_len = len(json_data)
         for data in json_data:
             location_name = data['name']    
             street_address = (data['address']['addressLine1'] +" "+ str(data['address']['addressLine2'])).strip()
-            # print(street_address)
+            # logger.info(street_address)
             city = data['address']['city']
             state = data['address']['stateCode']
             zipp = data['address']['postalCode']
@@ -88,14 +93,14 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data =="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data =="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

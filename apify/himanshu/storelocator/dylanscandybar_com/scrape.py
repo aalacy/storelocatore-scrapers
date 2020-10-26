@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dylanscandybar_com')
+
+
 
 
 
@@ -39,12 +44,12 @@ def fetch_data():
         if phone_list:
             phone =  phone_list[-1]
         # hours_of_operation = soup.find(lambda tag: (tag.name == "strong" ) and "Hours:" in tag.text.strip()).nextSibling
-        # print(hours_of_operation)
+        # logger.info(hours_of_operation)
         state = add[-1].strip().split()[0].replace("New",'NY')
         zipp = " ".join(add[-1].strip().split()[1:]).replace(" - Terminal B",'').replace("York ",'')
         city = add[-2].replace("11000 Terminal Access Rd.",'').replace("6301 Silver Dart Dr",'').replace("Space #SR2",'').strip()
         street_address = " ".join(add).replace(state,'').replace(zipp,'').replace(city,'').replace(",",' ').replace("      ",'')
-        # print("~~~~~~~~~~~~~~~~")
+        # logger.info("~~~~~~~~~~~~~~~~")
     
         lat="<MISSING>"
         lng = "<MISSING>"
@@ -80,8 +85,8 @@ def fetch_data():
         #          str else x for x in store]
         store = [x.encode('ascii', 'ignore').decode(
             'ascii').strip() if type(x) == str else x for x in store]
-        # print("data ===" + str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("data ===" + str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
 
 

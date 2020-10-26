@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('backyardburgers_com')
+
+
 
 
 
@@ -42,7 +47,7 @@ def fetch_data():
             phone =(list(phone1.stripped_strings)[0])
             name = list(adr.stripped_strings)[0].split(",")[0]
             store_name.append(name)
-            # print(name)
+            # logger.info(name)
             st = list(adr.stripped_strings)[1]
             city = list(adr.stripped_strings)[2]
             zip1 = list(adr.stripped_strings)[5]
@@ -57,7 +62,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(phone)
             tem_var.append("backyardburgers")
-            print(tem_var)
+            logger.info(tem_var)
             store_detail.append(tem_var)
         else:
             lat = i['href'].split("@")[-1].split(",")[0]
@@ -77,10 +82,10 @@ def fetch_data():
         # tem_var.append("backyardburgers")
        
         
-        # print(tem_var)
+        # logger.info(tem_var)
         
-    # print(store_name)
-    # print(store_detail)
+    # logger.info(store_name)
+    # logger.info(store_detail)
     for i in range(len(store_name)):
        store = list()
        store.append("https://www.backyardburgers.com")
@@ -90,7 +95,7 @@ def fetch_data():
        store.append(lat1[i])
        store.append(lng1[i])
        store.append(hours1[i])
-       print(store)
+       logger.info(store)
        return_main_object.append(store)
 
     return return_main_object

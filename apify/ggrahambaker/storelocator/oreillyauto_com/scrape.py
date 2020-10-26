@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import sgzip 
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('oreillyauto_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,21 +34,21 @@ def fetch_data():
     while coord:
         coords = []
 
-        #print('------------------------')
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info('------------------------')
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
 
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.oreillyauto.com/stores/list?lat=' + str(x) + '&lng=' + str(y)
-        #print(url)
+        #logger.info(url)
         try:
             r = session.get(url, headers=HEADERS)
         except:
-            #print('sleeeeeping \n\n\n\n\n\n\n')
+            #logger.info('sleeeeeping \n\n\n\n\n\n\n')
             time.sleep(15)
             r = session.get(url, headers=HEADERS)
-            #print(':)')
+            #logger.info(':)')
         soup = BeautifulSoup(r.content, 'html.parser')
         coords.append((x, y))
  

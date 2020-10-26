@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('baystatehealth_org')
+
+
 
 session = SgRequests()
 def write_output(data):
@@ -51,7 +56,7 @@ def fetch_data():
 			
 
 	for data in range(1,26):
-		# print(data)
+		# logger.info(data)
 		r = session.get("https://www.baystatehealth.org/locations/search-results?page="+str(data),headers=headers)
 		soup= BeautifulSoup(r.text,"lxml")
 		for loc in soup.find_all("div",class_="listing-item"):
@@ -100,8 +105,8 @@ def fetch_data():
 			addressess123.append(store[-1])
 			store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 			yield store
-			# print("~~~",store)
-			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			# logger.info("~~~",store)
+			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 def scrape():
 	data = fetch_data()
 	write_output(data)

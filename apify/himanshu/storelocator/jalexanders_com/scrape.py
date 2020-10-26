@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jalexanders_com')
+
+
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -40,7 +45,7 @@ def fetch_data():
             else:
                 latitude =link.find("a",{"href":re.compile("https://www.google")})['href'].split("sll=")[1].split(",")[0]
                 lon = link.find("a",{"href":re.compile("https://www.google")})['href'].split("sll=")[1].split(",")[1].split("&")[0]
-            # print()
+            # logger.info()
         street_address = add[4]
         h = ''
         for index,i in enumerate(add):

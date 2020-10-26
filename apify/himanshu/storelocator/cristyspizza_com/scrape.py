@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cristyspizza_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,11 +36,11 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     divlist = soup.select_one('li:contains("Store Locations")').select("a[href*=location]")
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     for div in divlist:
         link = div['href']
-        #print(link)
+        #logger.info(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text,'html.parser')
         content = soup.findAll('div',{'class':'fl-html'})[0].findAll('p')
@@ -68,7 +73,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
             

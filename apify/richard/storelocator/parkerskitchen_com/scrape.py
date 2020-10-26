@@ -3,6 +3,11 @@ import requests
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('parkerskitchen_com')
+
+
 
 URL = "https://parkerskitchen.com/"
 
@@ -80,7 +85,7 @@ class Scraper(Scrape):
             state = store['state']
 
             # Phone
-            print(f"Currently scraping: {page_url}")
+            logger.info(f"Currently scraping: {page_url}")
             driver.get(page_url)
             phone = driver.find_element_by_id('locations-text').find_element_by_css_selector('p').get_attribute('textContent').split('\n')[-1].strip()
 

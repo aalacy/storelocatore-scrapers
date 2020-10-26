@@ -7,6 +7,11 @@ import sgzip
 import calendar
 
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('umpquabank_com')
+
+
 
 
 def write_output(data):
@@ -56,7 +61,7 @@ def fetch_data():
 
     url = "https://www.umpquabank.com/api/v1/locations"
     for zip_code in zips:
-        # print(zip_code)
+        # logger.info(zip_code)
         try:
             payload = "{\"latitude\":"+str(zip_code[0])+",\"longitude\":"+str(zip_code[1])+",\"atm\":false,\"openNow\":false,\"openSaturdays\":false,\"driveUpWindow\":false,\"date\":\"2019-10-30T06:55:41.071Z\"}"
             headers = {
@@ -70,8 +75,8 @@ def fetch_data():
 
         except:
             continue
-        # print(json_data)
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info(json_data)
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         for loc in json_data['locations']:
             store_number = loc['storeNumber']
             if loc['addressLine2'] != None:
@@ -81,7 +86,7 @@ def fetch_data():
             city = loc['city']
             state = loc['state']
             zipp = loc['zip']
-           # print(zipp)
+           # logger.info(zipp)
             phone = loc['phoneNumber']
             latitude = loc['latitude']
             longitude = loc['longitude']
@@ -113,7 +118,7 @@ def fetch_data():
                 continue
             addresses.append(store_number)
 
-           # print("data = " + str(store))
+           # logger.info("data = " + str(store))
           
 
             return_main_object.append(store)

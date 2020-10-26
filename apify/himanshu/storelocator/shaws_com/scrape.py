@@ -65,8 +65,8 @@ def fetch_data():
             continue
         addresses.append(store[-1])
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         yield store
 
@@ -87,6 +87,11 @@ scrape()
 # import aiohttp
 # from urllib.parse import urljoin
 # from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shaws_com')
+
+
 # base_url = "https://local.shaws.com/index.html"
 # flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -132,7 +137,7 @@ scrape()
 #             res = await self._fetch_store(session, url)
 #             if res:
 #                 results.append(res)
-#         print(results)
+#         logger.info(results)
 #         return results
 
 #     async def _fetch_city(self, session, url):
@@ -186,7 +191,7 @@ scrape()
 #         loop = asyncio.get_event_loop()
 #         stores = loop.run_until_complete(self._fetch_all_states(states, loop))
 #         return stores
-#         # print(stores)
+#         # logger.info(stores)
 
 # if __name__ == '__main__':
 #     s = Scrape()

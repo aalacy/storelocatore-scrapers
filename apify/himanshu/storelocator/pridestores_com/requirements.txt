@@ -4,3 +4,4 @@ beautifulsoup4==4.7.1
 sgrequests
 bs4
 html5lib
+sglogging

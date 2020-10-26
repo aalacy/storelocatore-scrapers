@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fayettepartsservice_com')
+
+
 
 
 
@@ -60,16 +65,16 @@ def fetch_data():
             longitude = coords.text.split('.LatLng(')[
                 1].split(');')[0].split(',')[-1].strip()
             location_name = city + "," + state
-            # print(latitude, longitude)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(latitude, longitude)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         except:
             pass
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
         store = ["<MISSING>" if x == "" else x for x in store]
-        # print("data ==" + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data ==" + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('juanmeanburrito_com')
+
+
 
 
 
@@ -30,7 +35,7 @@ def fetch_data():
 
     k= (soup.find_all("div",{"class":"loc_list"}))
     v = soup.find("div",{"id":"et-top-navigation"}).find_all("a")[2:][:-5]
-    # print(v)
+    # logger.info(v)
     for i in v:
         if i['href'].replace("#",""):
             tem_var=[]
@@ -55,7 +60,7 @@ def fetch_data():
             tem_var.append(" ".join(v1[5:]).encode('ascii', 'ignore').decode('ascii').strip())
             tem_var.append(i['href'])
             return_main_object.append(tem_var)
-            # print(tem_var)
+            # logger.info(tem_var)
            
     return return_main_object
 

@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import phonenumbers
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('owensmarket_com')
+
+
 
 
 session = SgRequests()
@@ -40,15 +45,15 @@ def fetch_data():
         except:
             pass
         soup= BeautifulSoup(r.text,"lxml")
-        # print(soup)
+        # logger.info(soup)
         script = soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__" in tag.text).text
         str_json = script.split("JSON.parse('")[1].split("')")[0].replace("\\","\\\\").split('"contentHash":"W/\\')[0].replace('"/"}]}},','"/"}]}}}}}')
-        # print(str_json)
+        # logger.info(str_json)
         s = json.loads(re.sub(r"\s+", " ",str_json))
-        # print(s)
+        # logger.info(s)
         if 'stores' in s['storeSearch']['storeSearchReducer']['searchResults']:
             for i in s['storeSearch']['storeSearchReducer']['searchResults']['stores']:
-                # print(i)
+                # logger.info(i)
                 location_name = (i['vanityName'])
                 store_number = i['storeNumber']
                 latitude = i['latitude']
@@ -57,7 +62,7 @@ def fetch_data():
                 city = (i['address']['city'])
                 zipp = (i['address']['zip'])
                 state = (i['address']['stateCode'])
-                # print(state)
+                # logger.info(state)
                 if i['phoneNumber']:
                     phone = phonenumbers.format_number(phonenumbers.parse(i['phoneNumber'], 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
                 else:
@@ -81,7 +86,7 @@ def fetch_data():
                 store.append( longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append(page_url)
-                # print(str(store))
+                # logger.info(str(store))
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
@@ -93,9 +98,9 @@ def fetch_data():
         soup1= BeautifulSoup(r1.text,"lxml")
         script = soup1.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__" in tag.text).text
         str_json1 = script.split("JSON.parse('")[1].split("')")[0].replace("\\","\\\\").split('"contentHash":"W/\\')[0].replace('"/"}]}},','"/"}]}}}}}')
-        # print(str_json1)
+        # logger.info(str_json1)
         s1 = json.loads(re.sub(r"\s+", " ",str_json1))
-        # print(s1)
+        # logger.info(s1)
         if 'fuel' in s1['storeSearch']['storeSearchReducer']['searchResults']:
             for i in s1['storeSearch']['storeSearchReducer']['searchResults']['fuel']:
                 location_name = (i['vanityName'])
@@ -135,13 +140,13 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # print(str(store))
+                # logger.info(str(store))
                 yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")                                                                        
+            # logger.info("max count update")                                                                        
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

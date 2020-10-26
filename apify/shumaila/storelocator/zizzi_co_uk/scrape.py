@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zizzi_co_uk')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +35,7 @@ def fetch_data():
     
     for loc in loclist:
 
-        #print(loc['address'])
+        #logger.info(loc['address'])
         title = loc['title']
         if title.find('Opening Soon') == -1:
             try:
@@ -71,7 +76,7 @@ def fetch_data():
                 longt,
                 '<MISSING>'
             ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
         
 
@@ -83,10 +88,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

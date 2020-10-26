@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fuzzystacoshop_com')
+
+
 
 
 
@@ -60,7 +65,7 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        #print(lng)
+        #logger.info(lng)
         try:
             r = session.get(
             'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(lat)+'&gmw_lng='+str(lng)+'&gmw_px=pt&action=gmw_post',
@@ -76,10 +81,10 @@ def fetch_data():
             if v3 != None:
                 # page = (soup1.find("a",{"class":"Btn Btn--pink LocationsMap-linksBtn"})['href'])
                 k = v3.text.split("var locations = ")[1].split("jQuery")[0].replace(";","")
-                # print("======================out side of =============",json.loads(k))
+                # logger.info("======================out side of =============",json.loads(k))
                 k1 = json.loads(k)
                 current_results_len = len(k)
-                #print("current_results_len===================== ",current_results_len)
+                #logger.info("current_results_len===================== ",current_results_len)
                 for i in k1:
                     name = i['title']
                     lat = i['lat']
@@ -125,15 +130,15 @@ def fetch_data():
                         pass
                     else:
                         yield tem_var
-                        #print(tem_var)
-                    #print("======================================")
+                        #logger.info(tem_var)
+                    #logger.info("======================================")
 
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

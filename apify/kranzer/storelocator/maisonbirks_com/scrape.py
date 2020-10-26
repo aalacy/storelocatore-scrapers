@@ -5,6 +5,11 @@ import base
 import requests, json
 from urllib.parse import urljoin
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maisonbirks_com')
+
+
 crawled = []
 class Scrape(base.Spider):
 
@@ -23,7 +28,7 @@ class Scrape(base.Spider):
                 i = base.Item(result)
                 href = result.get('rewrite_request_path', '')
                 if href:
-                    print(href)
+                    logger.info(href)
                     i.add_value('locator_domain', urljoin(base_url, href))
                     i.add_value('location_name', result.get('store_name',''))
                     i.add_value('location_type', result.get('store_type',''))
@@ -40,7 +45,7 @@ class Scrape(base.Spider):
                     i.add_value('street_address', addr_hours['address'])
                     i.add_value('country_code', base.get_country_by_code(capwords(addr_hours['state'])))
                     i.add_value('zip', addr_hours.get('zip'))
-                    # print(i)
+                    # logger.info(i)
                     yield i
 
 
@@ -64,14 +69,14 @@ class Scrape(base.Spider):
         data['state'] = city_state.split(',')[1] or ''
         data['hours'] = hours_st or ''
         data['address'] = address[0][:address[0].find(', '+data['city'])] or ''
-        print(address[0])
+        logger.info(address[0])
         regex = r'{}, {},? (.+?),'.format(data['city'].replace('é','[é|e]'), base.get_state_code(capwords(data['state'])))
-        print(regex)
+        logger.info(regex)
         zip_ = re.findall(regex, address[0])
-        print(zip_)
+        logger.info(zip_)
         if zip_:
             data['zip'] = zip_[0]
-        print(data)
+        logger.info(data)
         return data
 
 

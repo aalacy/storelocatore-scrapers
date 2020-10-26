@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('morganshotelgroup_com__delano')
+
+
 
 
 
@@ -56,7 +61,7 @@ def fetch_data():
               city = temp_storeaddresss[2].split(",")[0].strip()
               state =  temp_storeaddresss[2].split(",")[1].split()[0].strip()
               store_zip =  temp_storeaddresss[2].split(",")[1].split()[-1].strip()
-            # print(street_address,city,state,store_zip)
+            # logger.info(street_address,city,state,store_zip)
 
 
             next_sib = store_soup.find("div", {"class": "bd js-mapholder"}).findNext('div',{"class": "js-maplocation-group"})
@@ -90,8 +95,8 @@ def fetch_data():
             return_object.append("<MISSING>")
             return_object.append(page_url)
 
-            #print("data =="+str(return_object))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+            #logger.info("data =="+str(return_object))
+            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
             return_main_object.append(return_object)
 
         #    Domain are not same
@@ -120,8 +125,8 @@ def fetch_data():
            return_object.append("<MISSING>")
            return_object.append("<MISSING>")
            return_object.append(page_url)
-           #print("data =="+str(return_object))
-           #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+           #logger.info("data =="+str(return_object))
+           #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
            return_main_object.append(return_object)
     return return_main_object
 def scrape():

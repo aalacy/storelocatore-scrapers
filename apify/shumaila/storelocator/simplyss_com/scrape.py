@@ -5,6 +5,11 @@ import csv
 import string
 import re
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('simplyss_com')
+
+
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -31,20 +36,20 @@ def fetch_data():
     repo_list = soup.findAll('div',{'class': 'column'})
     cleanr = re.compile('<.*?>')
     phoner = re.compile('(.*?)')
-    print(len(repo_list))
+    logger.info(len(repo_list))
     for repo in repo_list:
         link = repo.find('a')
         link = link['href']
-        #print('state=',link)
+        #logger.info('state=',link)
         page = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         maindiv = soup.find('div',{'id':'state-locations'})
         nextlist = maindiv.findAll('div',{'class':'location-display-new-box'})
-        #print("CITY COUNT =",len(nextlist))
+        #logger.info("CITY COUNT =",len(nextlist))
         for nextlink in nextlist:
             store = nextlink['id'].split('-')[-1]
             link = nextlink.find('a')['href']
-            print('city=',link)
+            logger.info('city=',link)
             page = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(page.text, "html.parser")
             soup = str(soup)
@@ -53,27 +58,27 @@ def fetch_data():
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             title = soup[start:end - 1]
-            #print(title)
+            #logger.info(title)
             start = soup.find("streetAddress")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             street = soup[start:end - 1]
-            #print(street)
+            #logger.info(street)
             start = soup.find("addressLocality")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             city = soup[start:end - 1]
-            #print(city)
+            #logger.info(city)
             start = soup.find("addressRegion")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             state = soup[start:end - 1]
-            #print(state)
+            #logger.info(state)
             start = soup.find("postalCode")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             pcode = soup[start:end - 1]
-            #print(pcode)
+            #logger.info(pcode)
             if len(pcode) < 4:
                 pcode = "<MISSING>"
             start = soup.find("addressCountry")
@@ -83,12 +88,12 @@ def fetch_data():
             ccode = re.sub("\r", "", ccode)
             ccode = re.sub("\n", "", ccode)
             ccode = re.sub('"', "", ccode)
-            #print(ccode)
+            #logger.info(ccode)
             start = soup.find("latitude")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             lat = soup[start:end - 1]
-            #print(lat)
+            #logger.info(lat)
             start = soup.find("longitude")
             start = soup.find(":", start) + 3
             end = soup.find("}", start)
@@ -96,13 +101,13 @@ def fetch_data():
             longt = re.sub("\r", "", longt)
             longt = re.sub("\n", "", longt)
             longt = re.sub('"', "", longt)
-            #print(longt)
+            #logger.info(longt)
             start = soup.find("openingHours")
             start = soup.find(":", start) + 3
             end = soup.find('"', start+1)
             hours = soup[start:end]
             hours = hours.replace(",", "-")
-            #print(hours)
+            #logger.info(hours)
             start = soup.find("telephone")
             start = soup.find(":", start) + 3
             end = soup.find('"', start+1)
@@ -111,8 +116,8 @@ def fetch_data():
             phone = re.sub("\n", "", phone)
             phone = re.sub('"', "", phone)
             phone = phone.replace('+1 ','').lstrip()
-            #print(phone)
-            #print("....................................")
+            #logger.info(phone)
+            #logger.info("....................................")
             ccode = ccode.rstrip()
             longt = longt.rstrip()
             if title.find('Coming Soon') == -1:
@@ -132,10 +137,10 @@ def fetch_data():
                         longt,
                         hours
                 ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
 
-    print(p)
+    logger.info(p)
     return data
 
 

@@ -4,11 +4,16 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import geonamescache
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fasmart_com')
+
+
 
 # gc = geonamescache.GeonamesCache()
 # countries = gc.get_cities()
 # print countries dictionary
-# print(countries)
+# logger.info(countries)
 
 
 
@@ -51,7 +56,7 @@ def fetch_data():
                     if "," in full_address:
                         addr = full_address.split(",")
                         if len(addr) == 2:
-                            # print(full_address)
+                            # logger.info(full_address)
                             street_address = "<INACCESSIBLE>"
                             city = "<INACCESSIBLE>"
                             raw_address = full_address
@@ -101,7 +106,7 @@ def fetch_data():
                     if state_list:
                         state = state_list[-1]
 
-                    # print(full_address)
+                    # logger.info(full_address)
                     if us_zip_list:
                         zipp = us_zip_list[-1]
 
@@ -136,10 +141,10 @@ def fetch_data():
                     store = ["<MISSING>" if x == "" or x == "  " else x for x in store]
 
                     yield store
-                    # print("data == " + str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                            # print(all_data)
-                        # print(state)
+                    # logger.info("data == " + str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            # logger.info(all_data)
+                        # logger.info(state)
 
     
 

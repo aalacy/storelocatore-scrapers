@@ -6,6 +6,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dollarstores_com')
+
+
 
 def get_driver():
     options = Options()
@@ -57,7 +62,7 @@ with open("data.csv",mode="w") as file:
             contact_number = cn[1]
             data=["dollarstores_com",store_name,street_address,city,state,zip_code,"CA",store_number,contact_number.replace("\n",""),"<MISSING>","<MISSING>",
                   "<MISSING>","<MISSING>"]
-            #print(data)
+            #logger.info(data)
             fl_writer.writerow(data)
 
 driver.quit()

@@ -4,6 +4,11 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('stinehome_com')
+
+
 
 options = Options() 
 options.add_argument('--headless')
@@ -131,9 +136,9 @@ def fetch_data():
         store_info = store.find_element_by_css_selector('input.form-check-input').get_attribute('data-store-info')
         store_info_array = store_info.split('":')[1:13]
         
-        print("store_number %s\n" % (store_number))
-        # print("store_info %s\n" % (store_info))
-        print("==============================================\n")
+        logger.info("store_number %s\n" % (store_number))
+        # logger.info("store_info %s\n" % (store_info))
+        logger.info("==============================================\n")
 
         store_info_data={}
         el_key='ID'
@@ -142,17 +147,17 @@ def fetch_data():
         for el in store_info_array:
             if excpt in el:
                 el_val = filter_data(el.split(',","')[0])
-                print(el_key+":"+el_val)
+                logger.info(el_key+":"+el_val)
                 store_info_data[el_key] = el_val
                 el_key = filter_data(el.split(',","')[1])
             else: 
                 el_val = filter_data(el.split(',"')[0])
-                print(el_key+":"+el_val)
+                logger.info(el_key+":"+el_val)
                 store_info_data[el_key] = el_val
                 el_key = filter_data(el.split(',"')[1])
 
         store_info_data['storeHours'] = store_info_data['storeHours'].replace('\\n',',')
-        print("store_info_data %s\n" % (store_info_data))
+        logger.info("store_info_data %s\n" % (store_info_data))
         
 
         data.append([

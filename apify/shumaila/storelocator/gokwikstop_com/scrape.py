@@ -7,6 +7,11 @@ import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gokwikstop_com')
+
+
 
 
 
@@ -44,8 +49,8 @@ def fetch_data():
         store = llist.get_attribute('data-store-id')
         detail = llist.text
         detail = detail.replace("\n","|")
-        print(store)
-        print(detail)
+        logger.info(store)
+        logger.info(detail)
         start = 0
         end = detail.find("|",start)
         title = detail[start:end]
@@ -62,7 +67,7 @@ def fetch_data():
         end = detail.find("|", start)
         pcode = detail[start:end]
 
-        print("......................................")
+        logger.info("......................................")
 
         data.append([
             url,

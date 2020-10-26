@@ -7,6 +7,11 @@ import string
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cubesmart_com')
+
+
 
 
 def write_output(data):
@@ -47,7 +52,7 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     state_list = soup.findAll('div',{'class':'bodySeo'})
-    print(len(state_list))
+    logger.info(len(state_list))
     #driver.quit()
     for li in state_list:
         city = li.find('a')
@@ -60,7 +65,7 @@ def fetch_data():
             link = link.replace("%2F", "/")
             link = link.replace("%3A", ":")
 
-        #print(link)
+        #logger.info(link)
         #driver = get_driver()
         driver.get(link)
         #time.sleep(1)
@@ -111,19 +116,19 @@ def fetch_data():
             end = link.find(".",start)
             store = link[start:end]
 
-            #print(title)
-            #print(store)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(phone)
-            #print(hours)
-            #print(lat)
-            #print(longt)
-            #print(p)
+            #logger.info(title)
+            #logger.info(store)
+            #logger.info(street)
+            #logger.info(city)
+            #logger.info(state)
+            #logger.info(pcode)
+            #logger.info(phone)
+            #logger.info(hours)
+            #logger.info(lat)
+            #logger.info(longt)
+            #logger.info(p)
             flag = True
-            # print(len(data))
+            # logger.info(len(data))
 
 
 

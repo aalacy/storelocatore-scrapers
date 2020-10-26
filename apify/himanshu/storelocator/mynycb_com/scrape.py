@@ -7,6 +7,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 import re
 import unicodedata
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mynycb_com')
+
+
 
 
 def write_output(data):
@@ -30,7 +35,7 @@ def fetch_data():
     for coord in coords:
         x = coord[0]
         y = coord[1]
-        # print("https://www.mynycb.com/Pages/Location-Search-Results.aspx?lat="+ str(x) + "&long=" + str(y) + "&r=200")
+        # logger.info("https://www.mynycb.com/Pages/Location-Search-Results.aspx?lat="+ str(x) + "&long=" + str(y) + "&r=200")
         # url = ''
 
         driver.get("https://www.mynycb.com/Pages/Location-Search-Results.aspx?lat="+ str(x) + "&long=" + str(y) + "&r=200")
@@ -43,7 +48,7 @@ def fetch_data():
             WebDriverWait(driver, 5).until(lambda x: x.find_element_by_xpath("//div[@class='row']"))
         except:
             continue
-        # print(driver.find_element_by_xpath("//div[@class='row']").get_attribute('value'))
+        # logger.info(driver.find_element_by_xpath("//div[@class='row']").get_attribute('value'))
         while True:
             soup = BeautifulSoup(driver.page_source,'lxml')
             geo_script = ""
@@ -97,7 +102,7 @@ def fetch_data():
                 store.append(hours if hours and hours != "ATM Only at this location" else "<MISSING>")
                 store.append("<MISSING>")
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                # print(store)
+                # logger.info(store)
                 yield store
             if soup.find("a",text="Next") == None:
                 break

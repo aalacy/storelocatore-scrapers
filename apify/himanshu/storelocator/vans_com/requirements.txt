@@ -3,3 +3,4 @@ sgrequests
 beautifulsoup4==4.7.1
 sgzip
 dill==0.3.2
+sglogging

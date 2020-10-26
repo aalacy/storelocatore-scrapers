@@ -6,6 +6,11 @@ import json
 import re
 
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('peoples_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,10 +35,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find_all(class_="c-directory-list-content-item-link")
@@ -43,15 +48,15 @@ def fetch_data():
 
 	final_links = []
 	for main_link in main_links:
-		print()
-		print("Processing State: " + main_link)
+		logger.info()
+		logger.info("Processing State: " + main_link)
 		req = session.get(main_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 		
 		next_items = base.find_all(class_="c-directory-list-content-item")
 		for next_item in next_items:
@@ -65,8 +70,8 @@ def fetch_data():
 				try:
 					next_base = BeautifulSoup(next_req.text,"lxml")
 				except (BaseException):
-					print('[!] Error Occured. ')
-					print('[?] Check whether system is Online.')
+					logger.info('[!] Error Occured. ')
+					logger.info('[?] Check whether system is Online.')
 
 				other_links = next_base.find_all(class_="c-location-grid-item-link-wrapper")
 				for other_link in other_links:
@@ -77,18 +82,18 @@ def fetch_data():
 	data = []
 	total_links = len(final_links)
 	for i, final_link in enumerate(final_links):
-		print("Link %s of %s" %(i+1,total_links))
+		logger.info("Link %s of %s" %(i+1,total_links))
 		final_req = session.get(final_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "branches.peoples.com"
 		location_name = item.find(class_="bank-and-branch-h1").text.strip()
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = item.find(class_="c-address-street c-address-street-1").text.replace("\u200b","").strip()
 		try:

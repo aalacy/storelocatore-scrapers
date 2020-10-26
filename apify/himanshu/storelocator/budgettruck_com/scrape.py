@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('budgettruck_com')
+
+
 
 
 session = SgRequests()
@@ -67,7 +72,7 @@ def fetch_data():
                         hoo.append(frame)
                     hours_of_operation = ','.join(hoo)
                     page_url = "https://www.budgettruck.com/locations/" + state.lower() + "/" + city.lower().replace("-"," ") + "/" + str(store_number)
-                    print(page_url)
+                    logger.info(page_url)
                     store = []
                     store.append(locator_domain)
                     store.append(location_name)

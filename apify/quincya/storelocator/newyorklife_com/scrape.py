@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('newyorklife_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -36,7 +41,7 @@ def fetch_data():
 		if link in found_poi:
 			continue
 		found_poi.append(link)
-		# print(link)
+		# logger.info(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 

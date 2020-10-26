@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('demetrios_com')
+
+
 
 
 
@@ -36,7 +41,7 @@ def fetch_data():
     
     for index,i in enumerate(address,start=0):
         tem_var=[]
-        # print(i.text)
+        # logger.info(i.text)
         tem_var.append("https://apps.demetrios.com")
         tem_var.append(name[index].text.encode('ascii', 'ignore').decode('ascii').strip() if name[index].text else "<MISSING>" )
         tem_var.append("<INACCESSIBLE>")
@@ -58,7 +63,7 @@ def fetch_data():
         if tem_var[-1] in address1:
            continue
         address1.append(tem_var[-1])
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
 
 

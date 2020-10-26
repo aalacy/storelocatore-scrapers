@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mattressandmore_com')
+
+
 
 
 URL = "https://mattressandmore.com/"
@@ -44,9 +49,9 @@ class Scraper(Scrape):
 
             #Page Url
             page_url = store.find_element_by_css_selector('a.read-more').get_attribute('href')
-            print(page_url)
-            print()
-            print()
+            logger.info(page_url)
+            logger.info()
+            logger.info()
 
             # Type
             location_type = 'Mattress Retail'

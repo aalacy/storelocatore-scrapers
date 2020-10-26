@@ -4,6 +4,11 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sweetfactorycandy_ca')
+
+
 
 options = Options() 
 options.add_argument('--headless')
@@ -144,7 +149,7 @@ def determine_country_code(state):
         return None
 
 def parse_phone(phoneInfo):
-    print(phoneInfo)
+    logger.info(phoneInfo)
     return phoneInfo.split('\n')[1]
 
 def parse_openInfo(openInfo):

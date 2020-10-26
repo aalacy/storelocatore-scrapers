@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rubytuesday_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,9 +36,9 @@ def fetch_data():
     while True:        
         r = session.get(link)        
         soup =BeautifulSoup(r.text, "html.parser")
-        #print(soup)
+        #logger.info(soup)
         divlist = soup.findAll('div',{'class':'restaurant-location-item'})
-        #print(len(divlist))
+        #logger.info(len(divlist))
         for div in divlist:
             title = div.find('h1').text
             address = div.find('address').text.lstrip().splitlines()
@@ -79,14 +84,14 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
             #input()
         try:
             nextlink = soup.find('ul',{'class':'pages'}).findAll('a')[-1]
             link = nextlink['href']
             count = count + 1
-            #print(count)
+            #logger.info(count)
             #input()
         except:
             break
@@ -97,9 +102,9 @@ def fetch_data():
 
 
 def scrape():
-    #print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    #logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    #print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    #logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

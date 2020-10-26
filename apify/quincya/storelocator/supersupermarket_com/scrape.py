@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('supersupermarket_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.findAll('li')
 	data = []
@@ -45,11 +50,11 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		location_name = base.find('meta', attrs={'property': 'og:title'})['content']
-		#print (location_name)
+		#logger.info(location_name)
 
 		raw_gps = base.find('iframe')['src']
 		start_point = raw_gps.find("2d") + 2
@@ -66,8 +71,8 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		raw_data = str(base)
 		start_point = raw_data.find("Super Supermarket",1000)

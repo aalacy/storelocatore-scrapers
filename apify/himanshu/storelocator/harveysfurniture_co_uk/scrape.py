@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('harveysfurniture_co_uk')
+
+
 
 session = SgRequests()
 
@@ -29,13 +34,13 @@ def fetch_data():
     base_url = "https://www.harveysfurniture.co.uk/"
     r =  session.get("https://www.harveysfurniture.co.uk/stores/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml") 
-    # print(soup)   
+    # logger.info(soup)   
     for link in soup.find_all("a",{"class":"btn-details btn-type1"}):
         page_url = link['href']
         r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("h1",{"class":"title"}).text.strip()
-        # print(location_name)
+        # logger.info(location_name)
         addr = list(soup1.find("div", {"class":"info-main info-main--address"}).find("p",{"class":"address"}).stripped_strings)
         street_address = " ".join(addr[:-1])
         city = location_name.replace("(h)","").strip()
@@ -65,8 +70,8 @@ def fetch_data():
         store.append(hours_of_operation)
         store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # print("data===="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # logger.info("data===="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
 
 

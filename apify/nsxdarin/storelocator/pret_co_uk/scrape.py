@@ -3,6 +3,11 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pret_co_uk')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +25,7 @@ def fetch_data():
     ids = []
     places = ['London','Birmingham','Glasgow','Liverpool','Bristol','Manchester','Sheffield','Leeds','Edinburgh','Leicester','Coventry','Bradford','Cardiff','Belfast','Nottingham','Kingston upon Hull','Newcastle upon Tyne','Stoke on Trent','Southampton','Derby','Portsmouth','Brighton and Hove','Plymouth','Northampton','Reading','Luton','Wolverhampton','Bournemouth','Aberdeen','Bolton','Norwich','Swindon','Swansea','Milton Keynes','Southend on Sea','Middlesbrough','Sunderland','Peterborough','Warrington','Oxford','Huddersfield','Slough','York','Poole','Cambridge','Dundee','Ipswich','Telford','Gloucester','Blackpool','Birkenhead','Watford','Sale','Colchester','Newport','Solihull','High Wycombe','Exeter','Gateshead','Cheltenham','Blackburn','Maidstone','Chelmsford','Basildon','Salford','Basingstoke','Worthing','Eastbourne','Doncaster','Crawley','Rotherham','Rochdale','Stockport','Gillingham','Sutton Coldfield','Woking','Wigan','Lincoln','St Helens','Oldham','Worcester','Wakefield','Hemel Hempstead','Bath','Preston','Rayleigh','Barnsley','Stevenage','Southport','Hastings','Bedford','Darlington','Halifax','Hartlepool','Chesterfield','Grimsby','Nuneaton','Weston super Mare','Chester','St Albans','Harlow','Guildford','Stockton on Tees','Aylesbury','Derry','Bracknell','Dudley','Redditch','Batley','Scunthorpe','Burnley','Eastleigh','Chatham','Mansfield','Bury','Newcastle under Lyme','Paisley','West Bromwich','South Shields','Carlisle','East Kilbride','Burton upon Trent','Tamworth','Gosport','Shrewsbury','Crewe','Ashford','Rugby','Harrogate','Grays','Lowestoft','Atherton','Stafford','Walsall','Bognor Regis','Cannock','Tynemouth','Bamber Bridge','Walton on Thames','Washington','Farnborough','Rochester','Maidenhead','Paignton','Dewsbury','Filton','Newtownabbey','Loughborough','Margate','Craigavon','Stourbridge','Hereford','Widnes','Wrexham','Taunton','Canterbury','Runcorn','Bangor','Ellesmere Port','Scarborough','Wallasey','Royal Tunbridge Wells','Corby','Halesowen','Kettering','Aldershot','Gravesend','Bebington','Littlehampton','Royal Leamington Spa','Kidderminster','Livingston','Macclesfield','Barry','Christchurch','Altrincham','Weymouth','Brentwood','Hamilton','Ewell','Keighley','Beeston (Broxtowe)','Dunfermline','Folkestone','Clacton on Sea','Willenhall','Sittingbourne','Smethwick','Wellingborough','Welwyn Garden City','Bootle','Lancaster','Esher','Durham','Neath','Kingswinford','Bloxwich','Shoreham by Sea','Cumbernauld','Torquay','Carlton (Gedling)','Horsham','Kirkcaldy','Crosby','Kings Lynn','Horndean','Swadlincote','Hinckley','Bridgend','Sutton in Ashfield','Yeovil','Winchester','Banbury','Perth','West Bridgford','Inverness','Cheshunt','Cwmbran','Ashton under Lyne','Havant','Ayr','Kilmarnock','Northwich','Locks Heath','Wokingham','Andover','Salisbury','Lisburn','Barrow in Furness','Wallsend','Tipton','Merthyr Tydfil','Llanelli','Grantham','Boston','Hatfield','Lytham St Annes','Hoddesdon','Bridgwater','Dover','Middleton (Rochdale)','Bexhill','Coatbridge','Jarrow','Fareham','Kirkby','Braintree','Trowbridge','Greenock','Worksop','Ramsgate']
     for place in places:
-        print(('Pulling City %s...' % place))
+        logger.info(('Pulling City %s...' % place))
         url = 'https://www.pret.co.uk/en-gb/find-a-pret/' + place
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

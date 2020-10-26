@@ -2,6 +2,11 @@ import time
 import csv
 import requests
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('murphyusa_com')
+
+
 
 
 def write_output(data):
@@ -110,7 +115,7 @@ def fetch_data():
                       hours_of_op
                     ])
                 count=count+1
-                print(count)
+                logger.info(count)
 
     time.sleep(3)
     return data

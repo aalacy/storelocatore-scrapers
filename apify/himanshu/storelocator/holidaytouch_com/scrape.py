@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('holidaytouch_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -30,7 +35,7 @@ def fetch_data():
     for ul in footer.find_all("ul",class_="footer-top__list"):
         for state_link in ul.find_all("a",class_="footer-top__link"):
             state_link_url = state_link["href"]
-            # print(state_link.text)
+            # logger.info(state_link.text)
             r1 = session.get("https://www.holidaytouch.com"+state_link_url,headers=headers)
             soup1 = BeautifulSoup(r1.text,"lxml")
             script = json.loads(soup1.find("script",text=re.compile("var communities = ")).text.split("var communities = ")[1].split("];")[0]+"]")
@@ -54,8 +59,8 @@ def fetch_data():
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
     

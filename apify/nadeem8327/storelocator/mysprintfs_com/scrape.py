@@ -6,6 +6,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mysprintfs_com')
+
+
 
 hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
            "longitude","hours_of_operation"]

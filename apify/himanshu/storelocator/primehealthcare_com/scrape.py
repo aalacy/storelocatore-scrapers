@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('primehealthcare_com')
+
+
 
 
 
@@ -52,8 +57,8 @@ def fetch_data():
 		store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# logger.info("data = " + str(store))
+		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		yield store
 
 	

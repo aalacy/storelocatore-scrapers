@@ -1,6 +1,11 @@
 import requests
 import sgzip
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tigerrockmartialarts_com')
+
+
 
 
 URL = "https://tigerrockmartialarts.com"
@@ -49,7 +54,7 @@ class Scraper(Scrape):
             ).json()
             data = response["locations"] if "locations" in response.keys() else []
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {zip_search}")
+            logger.info(f"{len(data)} locations scraped for {zip_search}")
 
         for store in stores:
             if store["location_id"] not in self.seen:

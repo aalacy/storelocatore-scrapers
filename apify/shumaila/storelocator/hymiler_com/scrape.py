@@ -5,6 +5,11 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hymiler_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -34,7 +39,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"html.parser")
     mainselect = soup.find('select')
     poption = mainselect.findAll('option')
-    print(len(poption))
+    logger.info(len(poption))
     
     locs = []
     titles = []
@@ -107,7 +112,7 @@ def fetch_data():
             longt,
             hours
         ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
         
     return data

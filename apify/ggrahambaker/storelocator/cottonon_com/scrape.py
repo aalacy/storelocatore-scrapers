@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cottonon_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +34,7 @@ def fetch_data():
     i = 0
     while i < 32:
         driver.implicitly_wait(10)
-        # print(driver.find_element_by_css_selector('button.store-results-load-more').value_of_css_property('display'))
+        # logger.info(driver.find_element_by_css_selector('button.store-results-load-more').value_of_css_property('display'))
         element = driver.find_element_by_css_selector('button.store-results-load-more')
         driver.execute_script("arguments[0].click();", element)
         i += 1
@@ -37,9 +42,9 @@ def fetch_data():
     stores = driver.find_elements_by_css_selector('div.store-details')
     all_store_data = []
     for store in stores:
-        # print(store.get_attribute('data-store'))
+        # logger.info(store.get_attribute('data-store'))
         store_json = json.loads(store.get_attribute('data-store'))
-        # print(store_json['name'])
+        # logger.info(store_json['name'])
         location_name = store_json['name']
         street_address = store_json['address1']
         city = store_json['city']
@@ -60,7 +65,7 @@ def fetch_data():
 
         hour_div = store.find_element_by_css_selector('div.opening-hours')
 
-        # print(hour_div.text.replace('Opening hours:', '').strip().split('\n'))
+        # logger.info(hour_div.text.replace('Opening hours:', '').strip().split('\n'))
         hours = ''
         hour_arr = hour_div.text.replace('Opening hours:', '').strip().split('\n')
         for h in hour_arr:

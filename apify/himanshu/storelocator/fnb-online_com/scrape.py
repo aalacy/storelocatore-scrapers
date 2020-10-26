@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fnb-online_com')
+
+
 
 
 session = SgRequests()
@@ -24,7 +29,7 @@ def fetch_data():
     return_main_object = []
     for i in range(len(data)):
         store = []
-        print(data[i]["id"])
+        logger.info(data[i]["id"])
         url = "https://code.metalocator.com/index.php?option=com_locator&view=location&tmpl=component&task=load&framed=1&format=json&templ[]=map_address_template&sample_data=&lang=&_opt_out=&Itemid=6740&numbe%20r=7&id="+ str(data[i]["id"]) +"&_urlparams="
         location_request = session.get(url)
         store_data = location_request.json()[0]

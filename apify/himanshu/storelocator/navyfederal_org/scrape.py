@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('navyfederal_org')
+
+
 
 
 session = SgRequests()
@@ -34,10 +39,10 @@ def fetch_data():
         while True:
             try:
                 result_coords = []
-                # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+                # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
                 x = coord[0]
                 y = coord[1]
-                # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+                # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
                 r = session.get("https://www.navyfederal.org/branches-atms/location_search.php?lat="+ str(x) + "&lon=" + str(y) + "&dist=25&loc=50",headers=headers)
                 data = r.json()["coordLocation"]["data"]["locations"]
                 for store_data in data:

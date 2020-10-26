@@ -6,6 +6,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('aarons_com')
+
+
 
 
 def write_output(data):
@@ -44,9 +49,9 @@ def fetch_data():
                 for c in citylink:
                     link1 = c.find("a")['data-count'].split("(")[-1]
                     if link1 != "1)":
-                        # print(link1)
+                        # logger.info(link1)
                         sublink = "https://locations.aarons.com"+c.find("a")['href'].replace("..",'')
-                        # print(sublink)
+                        # logger.info(sublink)
                         r2 = requests.get(sublink)
                         soup2= BeautifulSoup(r2.text,"lxml")
                         store_link = soup2.find_all("a",class_="Teaser-titleLink")
@@ -84,7 +89,7 @@ def fetch_data():
                             tem_var.append(hours)
                             tem_var.append(page_url)
                             yield tem_var
-                            # print("========================================",tem_var)
+                            # logger.info("========================================",tem_var)
                     else:
                         one_link="https://locations.aarons.com"+c.find("a")['href'].replace("..",'')
                         page_url = one_link
@@ -120,7 +125,7 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # print("========================================",tem_var)
+                        # logger.info("========================================",tem_var)
             else:
 
                 
@@ -163,7 +168,7 @@ def fetch_data():
                 tem_var.append(hours)
                 tem_var.append(page_url)
                 yield tem_var
-                # print("========================================",tem_var)
+                # logger.info("========================================",tem_var)
          
     
 

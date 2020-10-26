@@ -6,6 +6,11 @@ import re, time
 import usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('alfred_la')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,12 +36,12 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     maindiv = soup.find('div',{'class':'accordion-section'})    
     link_list = maindiv.findAll('a')
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     for link in link_list:
         if link['href'].find('japan') == -1 and link['href'].find('blog') > -1:
             link = 'https://alfred.la' + link['href']
-            #print(link)
+            #logger.info(link)
             r = session.get(link, headers=headers, verify=False)    
             soup =BeautifulSoup(r.text, "html.parser")
             title = soup.find('h3').text
@@ -49,7 +54,7 @@ def fetch_data():
             #detail = soup.find('div',{'class':'detail-box'}).find('li').findAll('a')
             detail = detail.lstrip().replace('\n',' ').replace('Los Angeles',' Los Angeles').replace('Pacific ',' Pacific ')
             
-            #print(detail)
+            #logger.info(detail)
             address = usaddress.parse(detail)
             i = 0
             street = ""
@@ -125,7 +130,7 @@ def fetch_data():
                         longt.replace('\n','').replace('\xa0',''),
                         hours.replace('\n',' ').replace('\xa0','').replace('&amp;','&').lstrip().rstrip()
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                 
 
@@ -137,9 +142,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

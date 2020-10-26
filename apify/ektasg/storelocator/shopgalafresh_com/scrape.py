@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopgalafresh_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -56,18 +61,18 @@ def fetch_data():
         driver.get("https://www.shopgalafresh.com/retailer/information")
         #time.sleep(2)
         #driver.find_element_by_xpath("//button[text()='OK']").click()
-        print('clicked;')
+        logger.info('clicked;')
         time.sleep(3)
    
         soup =  str(BeautifulSoup(driver.page_source,'html.parser'))
         #start = soup.find(':"House number","isChecked":false}],"branches":[')
         start = 0
-        print(start)
+        logger.info(start)
         for m in range(0,4):            
             start = soup.find('branches":[{"id"',start)+1
             temp = soup[start :100]
-            print(m,start,temp)
-        print(start)   
+            logger.info(m,start,temp)
+        logger.info(start)   
         start = soup.find('"id"',start)
         start = soup.find(':',start)+1
         end = soup.find(',',start)
@@ -125,7 +130,7 @@ def fetch_data():
             hours
         ])
 
-        #print(i,data[i])
+        #logger.info(i,data[i])
         if i == length -1:
             break
         if i < length:

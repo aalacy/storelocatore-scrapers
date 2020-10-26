@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopdisney_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,21 +32,21 @@ def fetch_data():
         if ' <a linktrack="State index page' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
-        print(('Pulling State %s...' % state))
+        logger.info(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
             if '<a linktrack="City index page' in line2:
                 cities.append(line2.split('href="')[1].split('"')[0])
     for city in cities:
-        print(('Pulling City %s...' % city))
+        logger.info(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
             if '<a linktrack="Location page' in line2:
                 locs.append(line2.split('href="')[1].split('"')[0])
     for loc in locs:
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         website = 'shopdisney.com'
         typ = ''
         hours = ''

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sanfelipenc_com')
+
+
 
 
 
@@ -36,7 +41,7 @@ def fetch_data():
     for k2 in k1:
         lat.append(json.loads(k2.attrs["data-block-json"])["location"]['mapLat'])
         log.append(json.loads(k2.attrs["data-block-json"])["location"]['mapLng'])
-        # print(json.loads(k2.attrs["data-block-json"])["location"]['mapLng'])
+        # logger.info(json.loads(k2.attrs["data-block-json"])["location"]['mapLng'])
     for i in k:
         
         p =i.find_all('p')

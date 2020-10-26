@@ -5,3 +5,4 @@ sgzip
 sgrequests
 urllib3
 selenium
+sglogging

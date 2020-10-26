@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('buyforlessok_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,13 +44,13 @@ def fetch_data():
     page_url = "https://buyforlessok.com/locations"
     r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # print("soup === "+ str(soup))
+    # logger.info("soup === "+ str(soup))
     for script in soup.find_all("div", {"class": "panel panel-default"}):
         hours_of_operation = script.find("div", {"class": "col-md-6 text-center"}).text.replace('Store Hours:','')
         phone = script.find("i", {"class": "fa fa-phone"}).nextSibling
         location_name = script.find("div", {"class": "panel-heading"}).text
         full_address = script.find("i", {"class": "fa fa-map-marker"}).parent.text
-        # print("location_data === " + str(full_address))
+        # logger.info("location_data === " + str(full_address))
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address))
         state_list = re.findall(r' ([A-Z]{2}) ', full_address)
         if us_zip_list or state_list:
@@ -56,15 +61,15 @@ def fetch_data():
             geo_url = script.find("a")["href"]
             latitude = geo_url.split("/")[-1].split(",")[0]
             longitude = geo_url.split("/")[-1].split(",")[1]
-            # print("latitude === " + latitude)
-            # print("longitude === " + longitude)
+            # logger.info("latitude === " + latitude)
+            # logger.info("longitude === " + longitude)
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             if str(store[1]) + str(store[2]) not in addresses and "coming soon" not in location_name.lower():
                 addresses.append(str(store[1]) + str(store[2]))
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 def scrape():
     data = fetch_data()

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tedbaker_com')
+
+
 
 
 session = SgRequests()
@@ -42,7 +47,7 @@ def fetch_data():
                 continue
         store.append("https://www.tedbaker.com")
         store.append(store_data["displayName"])
-        # print(store)
+        # logger.info(store)
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('justtires_com')
+
+
 
 
 session = SgRequests()
@@ -27,16 +32,16 @@ def fetch_data():
         r = session.get("https://www.justtires.com/en-US/service-center-near-me",headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         for state in soup.find("div",{'class':"browse-by-state-wrapper__list"}).find_all("a"):
-            # print(base_url + state["href"])
+            # logger.info(base_url + state["href"])
             state_request = session.get(base_url + state["href"],headers=headers)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find("div",{'class':"browse-by-state-wrapper__list"}).find_all("a"):
-                # print(base_url + city["href"])
+                # logger.info(base_url + city["href"])
                 city_request = session.get(base_url + city["href"],headers=headers)
                 city_soup = BeautifulSoup(city_request.text,"lxml")
                 for location in city_soup.find_all("li",{"class":'store-results__results__item'}):
                     page_url = base_url + location.find("a")["href"]
-                    #print(page_url)
+                    #logger.info(page_url)
                     if location.find("p",{"class":"my-store__direction"}) == None:
                         continue
                     address = json.loads(location.find("p",{"class":"my-store__direction"})["data-location"])
@@ -61,7 +66,7 @@ def fetch_data():
                     hours = " ".join(list(location_soup.find("div",{"class":"store-page-masthead__store__wrapper"}).find("div",{"class":"right-column"}).stripped_strings))
                     store.append(hours.replace('Closed Now ','') if hours else "<MISSING>")
                     store.append(page_url)
-                    # print(store)
+                    # logger.info(store)
                     yield store
     except:
         pass

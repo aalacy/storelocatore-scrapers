@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('signarama_com')
+
+
 
 
 
@@ -33,7 +38,7 @@ def fetch_data():
         soup1 = bs(driver.page_source,'lxml')
         for d in soup1.find_all("div",{"class":"col-lg-3 p-1 my-3"}):
             phone = list(d.stripped_strings)[-2]
-            # print(phone)
+            # logger.info(phone)
             city = list(d.stripped_strings)[-3].split(',')[0]
             state =list(d.stripped_strings)[-3].split(',')[1].strip().split(" ")[0]
             zipp = list(d.stripped_strings)[-3].split(',')[1].strip().split(" ")[1]
@@ -43,7 +48,7 @@ def fetch_data():
             driver.get(page_url)
             soup3 = bs(driver.page_source,'lxml')
             # soup3 = bs(requests.get(page_url).text,'lxml')
-            # print(soup3)
+            # logger.info(soup3)
             lat=''
             lng =''
             try:
@@ -71,8 +76,8 @@ def fetch_data():
             #          str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
-            # print("data ===" + str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data ===" + str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 

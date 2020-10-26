@@ -7,6 +7,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('davita_com')
+
+
 session = SgRequests()
 
 
@@ -43,9 +48,9 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print(search.current_zip)
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # logger.info(search.current_zip)
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         locator_domain = base_url
         location_name = ""
         street_address = ""
@@ -76,7 +81,7 @@ def fetch_data():
                 phone = data['phone']
                 
                 page_url = "https://www.davita.com/locations/"+str(state.lower())+"/"+str(city.lower())+"/"+str(data['address']['address1'].replace(" ","-").lower())+"--"+str(store_number)
-                # print(page_url)       
+                # logger.info(page_url)       
     
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -88,17 +93,17 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
         else:
             pass
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

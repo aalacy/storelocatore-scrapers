@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('compassus_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -54,7 +59,7 @@ def fetch_data():
             store.append(page_url if page_url else "<MISSING>")     
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip().replace("0.000000","<MISSING>").replace("(248) 865-4148 / 4444",'(248) 865-4148') if x else "<MISSING>" for x in store]
     
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
             yield store
 
      

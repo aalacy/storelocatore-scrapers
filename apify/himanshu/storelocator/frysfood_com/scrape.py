@@ -13,7 +13,7 @@ show_logs = False
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
+    logger.info(" ".join(map(str, args)), **kwargs)
 
 
 def write_output(data):
@@ -32,6 +32,11 @@ def override_retries():
     # monkey patch sgrequests in order to set max retries ...
     # we will control retries in this script in order to reset the session and get a new IP each time
     import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('frysfood_com')
+
+
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()

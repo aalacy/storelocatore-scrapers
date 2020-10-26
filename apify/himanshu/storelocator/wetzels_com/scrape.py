@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wetzels_com')
+
+
 
 
 
@@ -59,7 +64,7 @@ def fetch_data():
     json_data = r_json.json()
 
     for location_data in json_data[1]["rows"]:
-        # print("location_data === "+ str(location_data))
+        # logger.info("location_data === "+ str(location_data))
         location_name = location_data["Name"]
         street_address = ", ".join(list(BeautifulSoup(location_data["Address"],"lxml").stripped_strings))
         phone = location_data["Telephone"]
@@ -102,9 +107,9 @@ def fetch_data():
         state = state.replace("S7H","").replace("CA San","CA").replace("CCA","CA").strip()
         if street_address == "2500 University Dr. NW":
             state = "AB"
-        # print("zipp ==== " + str(zipp))
-        # print("state ==== " + str(state))
-        # print("city ==== " + str(city))
+        # logger.info("zipp ==== " + str(zipp))
+        # logger.info("state ==== " + str(state))
+        # logger.info("city ==== " + str(city))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -114,8 +119,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 
