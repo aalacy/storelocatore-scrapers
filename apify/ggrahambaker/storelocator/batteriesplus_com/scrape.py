@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('batteriesplus_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,8 +30,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     main = base.find(class_='mobile-collapse')
     states = main.find_all('a')
@@ -49,13 +44,13 @@ def fetch_data():
     city_list = []
     for state in state_list:
         req = session.get(state, headers = HEADERS)
-        logger.info(state)
+        print(state)
         time.sleep(randint(1,2))
         try:
             base = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         
         cities = base.find_all(class_="map-list-item is-single")
@@ -73,15 +68,15 @@ def fetch_data():
         else:
             continue
 
-        logger.info("Link %s of %s" %(i+1,total_links))
+        print("Link %s of %s" %(i+1,total_links))
         req = session.get(link, headers = HEADERS)
         time.sleep(randint(1,2))
         try:
             item = BeautifulSoup(req.text,"lxml")
-            logger.info(link)
+            print(link)
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         items = item.find(class_="city-locator").find_all(class_="map-list-item-right")
 

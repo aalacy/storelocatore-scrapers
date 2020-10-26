@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hobees_com')
-
-
 
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -54,7 +49,7 @@ def fetch_data():
             
           
             address_tmp = soup1.find_all('div', {'class': 'avia_textblock'})[1]
-            # logger.info(address_tmp.text)
+            # print(address_tmp.text)
             address = list(address_tmp.stripped_strings)[0]
             city_tmp = list(address_tmp.stripped_strings)[1].split(',')
             city = city_tmp[0]
@@ -87,7 +82,7 @@ def fetch_data():
             tem_var.append(longitude)
             tem_var.append(hour.replace("\n","").replace("Hours of Operation:",""))
             tem_var.append(link)
-            #logger.info(tem_var)
+            #print(tem_var)
             return_main_object.append(tem_var)
                    
  

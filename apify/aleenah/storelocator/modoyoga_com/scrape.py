@@ -3,11 +3,6 @@ import re
 from bs4 import BeautifulSoup
 import requests
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('modoyoga_com')
-
-
 
 driver = SgSelenium().chrome(user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36")
 def write_output(data):
@@ -64,23 +59,23 @@ def fetch_data():
                 count.append("<MISSING>")
 
     '''for check in checks:
-        logger.info(check)
+        print(check)
         res = requests.get(check, headers=headers)
         #soup = BeautifulSoup(res.text, 'html.parser')
         if "canada" in res.text.lower():
-            logger.info('found canada')
+            print('found canada')
         elif "usa" in res.text.lower():
-            logger.info('found usa')'''
+            print('found usa')'''
 
-    logger.info("here",len(urls))
+    print("here",len(urls))
     for url in urls:
         cont=0
         res=requests.get(url,headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
-        logger.info(url)
+        print(url)
 
         driver.get(url)
-        # logger.info(driver.page_source)
+        # print(driver.page_source)
         contacts = driver.find_elements_by_tag_name("section")
 
         for c in contacts:
@@ -91,10 +86,10 @@ def fetch_data():
                 script_src = script.get_attribute('innerHTML')
                 if "canada" in script_src.lower():
                     count[urls.index(url)]="CA"
-                    #logger.info("canada")
+                    #print("canada")
                 elif "usa" in script_src.lower():
                     count[urls.index(url)] = "US"
-                    #logger.info("usa")
+                    #print("usa")
                 else:
                     cont = 1
                     break
@@ -105,7 +100,7 @@ def fetch_data():
                 lat.append(la)
                 long.append(lng)
                 driver.switch_to.default_content()
-                #logger.info(la, lng)
+                #print(la, lng)
         if cont ==1:
             continue
         divs = soup.find_all('div', {'class': 'col-6 offset-1'})
@@ -148,7 +143,7 @@ def fetch_data():
                 if s=="":
                     s = "<MISSING>"
             st= p.split(c)[0].replace(",","").replace("\r\n"," ").replace("\n"," ").strip()
-            #logger.info(st)
+            #print(st)
             if len(c)>2 and st=="":
                 st=c
                 c="<MISSING>"
@@ -169,19 +164,19 @@ def fetch_data():
                     ph="<MISSING>"
 
             tim=re.findall(r"Hours(.*pm|.*PM)",div.text,re.DOTALL)
-            #logger.info(len(tim))
+            #print(len(tim))
             if tim==[]:
                 tim="<MISSING>"
             else:
                 tim=tim[0].replace("\r\n"," ").replace("\n"," ").strip()
-                #logger.info(tim)
+                #print(tim)
 
             timing.append(tim)
             phones.append(ph)
             page_url.append(url)
             countries.append(count[urls.index(url)])
 
-    logger.info(len(locs),len(street))
+    print(len(locs),len(street))
     all = []
     for i in range(0, len(locs)):
         row = []

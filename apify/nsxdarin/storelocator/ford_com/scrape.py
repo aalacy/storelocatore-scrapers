@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 import sgzip
 import json
 from tenacity import retry, stop_after_attempt
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ford_com')
-
-
 
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -30,8 +25,8 @@ def fetch_data():
     search.initialize()
     code = search.next_zip()
     while code:
-        #logger.info('Pulling Zip Code %s...' % code)
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print('Pulling Zip Code %s...' % code)
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         url = 'https://www.ford.com/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode=' + code
         js = fetch_zip_code(url)

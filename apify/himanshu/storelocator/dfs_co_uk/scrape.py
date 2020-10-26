@@ -4,11 +4,6 @@ import re
 import json
 from sgrequests import SgRequests
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dfs_co_uk')
-
-
 
 session = SgRequests()
 
@@ -39,7 +34,7 @@ def fetch_data():
         page_url = link['href']
         try:
             page_url = link['href']
-            # logger.info(page_url)
+            # print(page_url)
             r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("h3",{"class":"legalName"}).text.strip()
@@ -76,8 +71,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # logger.info("data===="+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print("data===="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
 
         except:
@@ -85,7 +80,7 @@ def fetch_data():
             soup2 = BeautifulSoup(r2.text, "lxml")
             for link in soup2.find_all("a",{"class":"btn-xl button primary moreBttonRight"}):
                 page_url = link['href']
-                # logger.info(page_url)
+                # print(page_url)
                 r3 = session.get(page_url)
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 location_name = soup3.find("h3",{"class":"legalName"}).text.strip()
@@ -125,8 +120,8 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info("data===="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data===="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
 
 

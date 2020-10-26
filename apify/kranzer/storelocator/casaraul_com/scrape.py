@@ -5,11 +5,6 @@ import base
 import requests, json
 from urllib.parse import urljoin
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('casaraul_com')
-
-
 crawled = []
 class Scrape(base.Spider):
 
@@ -29,7 +24,7 @@ class Scrape(base.Spider):
             i.add_value('zip', czs_re[0][2])
             i.add_xpath('street_address', './p[2]/text()[1]', base.get_first, lambda x: x.replace('\n', '').strip())
             i.add_value('country_code', 'US')
-            logger.info(i)
+            print(i)
             yield i
 
 

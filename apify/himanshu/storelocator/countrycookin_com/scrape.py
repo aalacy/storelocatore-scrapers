@@ -5,11 +5,6 @@ import re
 import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('countrycookin_com')
-
-
 
 
 
@@ -73,9 +68,9 @@ def fetch_data():
         state = add_list[1].split(',')[1].split()[0]
         zipp = add_list[1].split(',')[1].split()[-1]
         phone = add_list[-1]
-        # logger.info(phone)
+        # print(phone)
         hours= list(loc.stripped_strings)
-        # logger.info(hours)
+        # print(hours)
         h = hours[4:-3]
         p = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(h[0]))
         if p != []:
@@ -93,8 +88,8 @@ def fetch_data():
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" or x == None  else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
 
-        logger.info("data = " + str(store))
-        logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print("data = " + str(store))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

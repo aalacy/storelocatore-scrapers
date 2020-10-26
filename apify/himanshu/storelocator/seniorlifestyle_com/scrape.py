@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('seniorlifestyle_com')
-
-
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -105,15 +100,15 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         location_type = "<MISSING>"
         # location_type = x["cats"]
-        # logger.info(location_type)
+        # print(location_type)
         
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
 

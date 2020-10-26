@@ -2,11 +2,6 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('oreganos_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -39,7 +34,7 @@ def fetch_data():
             driver.get(name[i])
             time.sleep(5)
             page_url = name[i]
-            logger.info("page_url....", page_url)
+            print("page_url....", page_url)
             try:
                 store = driver.execute_script("return wpslMap_0;")
                 json_data = store['locations']
@@ -70,7 +65,7 @@ def fetch_data():
                     hours_of_op
                 ])
                 count+=1
-                logger.info(count)
+                print(count)
             except:
                 pass
 

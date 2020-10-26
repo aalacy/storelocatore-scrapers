@@ -4,11 +4,6 @@ import csv
 from random import randint
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('securitynationalbank_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -32,15 +27,15 @@ def fetch_data():
 	for page_num in range(1,last_page):
 		if page_num < last_page+1:
 			link = "https://parknationalbank.com/about/locations/page/" + str(page_num)
-			logger.info(link)
+			print(link)
 
 			req = session.get(link, headers=headers)
 			time.sleep(randint(2,4))
 			try:
 				base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+				print ('[!] Error Occured. ')
+				print ('[?] Check whether system is Online.')
 
 			if page_num == 1:
 				last_page = int(base.find_all(class_="page-numbers")[-2].text)
@@ -50,7 +45,7 @@ def fetch_data():
 			for item in items:
 				locator_domain = "parknationalbank.com"
 				location_name = item.h4.text.strip()
-				logger.info(location_name)
+				print (location_name)
 
 				raw_address = item.find(class_="branch-address").text.strip().replace("\t ",",").replace("\t","").split(",")
 				if len(raw_address) == 5:
@@ -74,8 +69,8 @@ def fetch_data():
 				try:
 					maps = BeautifulSoup(req.text,"lxml")
 				except (BaseException):
-					logger.info('[!] Error Occured. ')
-					logger.info('[?] Check whether system is Online.')
+					print('[!] Error Occured. ')
+					print('[?] Check whether system is Online.')
 
 				try:
 					raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

@@ -4,11 +4,6 @@ import csv
 import time
 import re
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abcstores_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -35,10 +30,10 @@ def fetch_data():
 	items = base.find(id="storemapper-list").find_all('li')
 
 	for i, item in enumerate(items):
-		logger.info("Link %s of %s" %(i+1,len(items)))
+		print("Link %s of %s" %(i+1,len(items)))
 		locator_domain = "abcstores.com"
 		location_name = item.h4.text.strip()
-		logger.info(location_name)
+		print(location_name)
 
 		map_link = item.find(class_="storemapper_directions").a['href']
 		driver.get(map_link)

@@ -3,11 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rascalhouse_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,9 +48,9 @@ def fetch_data():
         longitude.append(lon)
     
     for i in range(0,len(address)):
-        #logger.info(location_name)
+        #print(location_name)
         a=address[i].get_attribute('innerText').split("\n")
-        #logger.info(a)
+        #print(a)
         street_address.append(a[0])
         city.append(a[1].split(",")[0])
         state.append(a[1].split(",")[1].strip().split()[0])

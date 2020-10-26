@@ -5,11 +5,6 @@ import string
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bluestonelane_com')
-
-
 
 
 def write_output(data):
@@ -52,7 +47,7 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, "html.parser")
    
     link_list = soup.findAll('div', {'class': 'img-wrap'})
-    logger.info(len(link_list))
+    print(len(link_list))
     
 
     for links in link_list:
@@ -64,7 +59,7 @@ def fetch_data():
             pass
         
         time.sleep(5)
-        #logger.info(link)
+        #print(link)
         ccode = 'US'
         soup = BeautifulSoup(driver.page_source, "html.parser")
         title = soup.find('h1').text
@@ -77,7 +72,7 @@ def fetch_data():
                 store = street['data-yext-location-id']
             except:
                 store = "<MISSING>"
-            #logger.info(store)
+            #print(store)
             try:
                 street = street.text
             except:
@@ -118,7 +113,7 @@ def fetch_data():
                 mapdiv = soup.find('div',{'class':'sidebar-map-embed'})
                 coords = mapdiv.find('iframe')
                 coords = str(coords['src'])
-                #logger.info(coords)
+                #print(coords)
                 start = coords.find('!2d')+3
                 end = coords.find('!3d',start)
                 longt = coords[start:end]
@@ -171,7 +166,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 p += 1
                 
         except:

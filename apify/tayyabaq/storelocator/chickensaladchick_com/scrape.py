@@ -5,11 +5,6 @@ import re, time
 import json
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chickensaladchick_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,7 +31,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     det = soup.find('div',{'class':'results-wrapper'})
     divlist = soup.findAll('li', {'class': 'location'})
-    logger.info(len(divlist))
+    print(len(divlist))
   
     for div in divlist:
         
@@ -118,7 +113,7 @@ def fetch_data():
                         longt,
                         hours.rstrip()
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
  
@@ -126,9 +121,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

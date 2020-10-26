@@ -2,11 +2,6 @@ import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bandier_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -63,7 +58,7 @@ def fetch_data():
         zip=addr[1]
         state=addr[0]
 
-        logger.info(addr)
+        print(addr)
         all.append([
             "https://www.bandier.com/locations",
             loc,

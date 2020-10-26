@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('yesway_com')
-
-
 
 
 
@@ -49,7 +44,7 @@ def fetch_data():
                 list(location.find("ul", {'class': "list-unstyled"}).stripped_strings))
             marker = json.loads(location.find("marker")["position"])
             # if "63471" == zipp:
-            #     logger.info(address)
+            #     print(address)
 
         except:
             pass
@@ -73,8 +68,8 @@ def fetch_data():
         store.append(hours)
         store.append("https://yesway.com/locations/")
         return_main_object.append(store)
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     return return_main_object
 

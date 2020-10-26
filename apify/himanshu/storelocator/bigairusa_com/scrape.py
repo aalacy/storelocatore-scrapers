@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bigairusa_com')
-
-
 
 
 
@@ -60,7 +55,7 @@ def fetch_data():
             loc_r= session.get(link,headers = headers)
         except:
             continue
-        logger.info(link)
+        print(link)
         soup_loc= BeautifulSoup(loc_r.text,'lxml')
 
         location_name = soup_loc.title.text.replace("Home |","").replace("Home -","").split("|")[0].strip()
@@ -115,8 +110,8 @@ def fetch_data():
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,link]
         store = ["<MISSING>" if x == "" or x == None  else x for x in store]
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

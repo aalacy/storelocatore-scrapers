@@ -2,11 +2,6 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lakecountyil_gov__facilities')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -29,7 +24,7 @@ def fetch_data():
     for FacilityType in soup.find_all("input",{"name":"FacilityType"}):
         typeids = typeids + str(FacilityType["value"]) + ","
     typeids = typeids[:-1]
-    # logger.info(typeids)
+    # print(typeids)
     data = "featureIDs=&categoryIDs=" + typeids + "&occupants=null&keywords=&pageSize=1000&pageNumber=1&sortBy=3&currentLatitude=null&currentLongitude=null&isReservableOnly=false"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
@@ -74,7 +69,7 @@ def fetch_data():
         store.append(hours.replace("Hours","").replace("Fax: 847.984.5888",'').replace("Parking available on site.","<MISSING>"))
         store.append(base_url + location["href"])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        #logger.info(store)
+        #print(store)
         yield store
     
 

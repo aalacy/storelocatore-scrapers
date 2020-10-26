@@ -1,4 +1,3 @@
 selenium==3.141.0
 requests
 bs4
-sglogging

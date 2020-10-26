@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('docpopcorn_com')
-
-
 
 
 
@@ -31,7 +26,7 @@ def fetch_data():
         'cookie': 'JSESSIONID=9217AF597D0DD6004601D8AB32186F36.10-10-13-93; __cfduid=d685d1a5af8a445be5e72384caf5fc0831566567206; acdc_currency=USD; acdc_vat=false; _ga=GA1.2.927202771.1566567207; _gid=GA1.2.1425395567.1566567207; fs_uid=rs.fullstory.com`MCY2V`6478010954842112:5185394409766912; csrfToken=d76b7905-c91b-4dd9-81ac-359c02179afa; acdc_region=US; ACDC_LOCALE=EN; acdc_disclaimer=true; _gat=1'
     }
 
-    # logger.info("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.docpopcorn.com"
     r = session.get("https://www.docpopcorn.com/location-finder.html?location=59314&pageNumber=1&resultsPerPage=1000",
@@ -40,7 +35,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -62,10 +57,10 @@ def fetch_data():
 
     json_data = r.json()
 
-    # logger.info("data === " + str(len(json_data['locations'])))
+    # print("data === " + str(len(json_data['locations'])))
 
     for address_list in json_data['locations']:
-        # logger.info("address_list === " + str(address_list))
+        # print("address_list === " + str(address_list))
         location_name = address_list['title']
         street_address = address_list['street1']
         if address_list['street2'] is not None:
@@ -81,14 +76,14 @@ def fetch_data():
         if phone is None or len(phone) == 0:
             phone = "<MISSING>"
 
-        # logger.info("phone === "+phone)
+        # print("phone === "+phone)
         
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
         store = ["<MISSING>" if x == "" or x == " " else x for x in store]
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

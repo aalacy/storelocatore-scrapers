@@ -1,3 +1,2 @@
 sgrequests
 requests_toolbelt
-sglogging

@@ -6,16 +6,11 @@ import re
 import json
 import sgzip
 import ssl
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('metropcs_com')
-
-
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
-    #logger.info("Error##################")
+    #print("Error##################")
     # Legacy Python that doesn't verify HTTPS certificates by default
     pass
 else:
@@ -48,7 +43,7 @@ def fetch_data():
 
     response1 =0
     while coord:
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         lat = coord[0]
         lng = coord[1]
@@ -99,7 +94,7 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            # logger.info(loc["address"]["streetAddress"])
+            # print(loc["address"]["streetAddress"])
             try:
                 street_address = loc["location"]["address"]["streetAddress"]
             except:
@@ -152,16 +147,16 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("====", str(store))
+            # print("====", str(store))
             yield store
 
        
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

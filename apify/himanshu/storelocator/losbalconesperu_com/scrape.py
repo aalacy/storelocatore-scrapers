@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('losbalconesperu_com')
-
-
 
 
 
@@ -43,7 +38,7 @@ def fetch_data():
             hours_of_operation = " ".join(list(hours.stripped_strings)).replace("|","").replace("â€“","")
             # 
             address = list(location.find("a").stripped_strings)
-            # logger.info(address)
+            # print(address)
             if len(address) > 1:
                 street_address = address[0].strip()
                 city = address[-1].split(',')[0].strip()
@@ -56,7 +51,7 @@ def fetch_data():
                 city = address[-1].split(',')[0].strip()
                 state = address[-1].split(',')[1].split()[0].strip()
                 zipp = address[-1].split(',')[1].split()[-1].strip()
-            # logger.info(city, state, zipp)
+            # print(city, state, zipp)
             location_name = city
             phone = location.find_all("h2", class_="font_2")[-1].text.strip()
             latitude = "<MISSING>"
@@ -68,14 +63,14 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         except Exception as e:
             pass
-            # logger.info(e)
+            # print(e)
 
         # geo_location = location.find("a")["href"]
         # location_request = session.get(
@@ -107,8 +102,8 @@ def fetch_data():
         # store = [x.replace("–", "-") if type(x) == str else x for x in store]
         # store = [x.encode('ascii', 'ignore').decode(
         #     'ascii').strip() if type(x) == str else x for x in store]
-        # # logger.info("data== "+str(store))
-        # # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # # print("data== "+str(store))
+        # # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         # yield store
 
 

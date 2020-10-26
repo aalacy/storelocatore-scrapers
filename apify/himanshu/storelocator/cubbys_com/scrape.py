@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cubbys_com')
-
-
 
 
 session = SgRequests()
@@ -35,7 +30,7 @@ def fetch_data():
         if url in location_url:
             continue
         location_url.append(url)
-        logger.info(url)
+        print(url)
         location_request = session.get(url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find("div",{"class":'header-content'}).find("h1").text.strip()

@@ -5,11 +5,6 @@ import re
 import json
 from sgselenium import SgSelenium
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('squeezein_com')
-
-
 
 session = SgRequests()
 
@@ -33,7 +28,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # logger.info("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.squeezein.com"
     r = session.get("https://www.squeezein.com/", headers=headers)
@@ -41,7 +36,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -64,7 +59,7 @@ def fetch_data():
         if store_url[0] == "/":
             store_url = base_url + store_url
 
-        logger.info(store_url)
+        print(store_url)
         driver.get(store_url)
         time.sleep(8)
 
@@ -86,7 +81,7 @@ def fetch_data():
                 latitude = '<MISSING>'
                 longitude = '<MISSING>'
 
-        # logger.info(store_url)
+        # print(store_url)
         r_store = session.get(store_url, headers=headers)
         soup_store = BeautifulSoup(r_store.text, "lxml")
 
@@ -110,7 +105,7 @@ def fetch_data():
 
         for store_data in soup_store.find_all("div", {'class': 'page-description'}):
             # street_address = store_data.find('strong').text
-            # logger.info("street_address  == " + str(street_address))
+            # print("street_address  == " + str(street_address))
             single_store_data = list(store_data.stripped_strings)
 
             if 'Order Online' in single_store_data:
@@ -119,7 +114,7 @@ def fetch_data():
             if 'NOW OPEN!' in single_store_data:
                 single_store_data.remove('NOW OPEN!')
 
-            # logger.info(str(len(single_store_data)) + "street_address  == " + str(single_store_data))
+            # print(str(len(single_store_data)) + "street_address  == " + str(single_store_data))
 
             street_address = single_store_data[0]
             if "open for" in street_address.lower():
@@ -145,8 +140,8 @@ def fetch_data():
             store = [locator_domain, store_url, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
     driver.close()

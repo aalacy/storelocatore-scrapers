@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import sgzip
 session = SgRequests()
 import base64
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('onestop_co_uk')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -27,14 +22,14 @@ def fetch_data():
     current_results_len = 0     
     zip_code = search.next_zip()
     while zip_code:
-        #logger.info(zip_code)
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        #print(zip_code)
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         result_coords = []
         zip_bytes = zip_code.encode('ascii')
         base64_bytes = base64.b64encode(zip_bytes)
         base64_zip = base64_bytes.decode('ascii')
-        # logger.info(base64_zip)
+        # print(base64_zip)
         base_url = "https://www.onestop.co.uk/"
         data = {
             "action": "findstockists",
@@ -45,7 +40,7 @@ def fetch_data():
         try:
             json_data = r.json()
         except Exception as e :
-            # logger.info(e)
+            # print(e)
             continue
         # current_results_len = len(json_data)  
         if "results" in json_data["message"]:
@@ -110,7 +105,7 @@ def fetch_data():
                 if (str(store[2])+str(store[-3])+str(store[-1]))  in addressess123:
                     continue
                 addressess123.append(str(store[2])+str(store[-3])+str(store[-1]))
-                # logger.info("data =="+str(store))
+                # print("data =="+str(store))
                 yield store
 
         if current_results_len < MAX_RESULTS:

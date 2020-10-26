@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('julesthincrust_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +20,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     
     ck = soup.find("section",{"class": "section locations"}).find_all('div',{'class':'location-state'})
-    # logger.info(ck)
+    # print(ck)
     for target_list in ck:
     #    locator_domain = base_url
        location_name1 = target_list.find_all('div',{'class':'card'})

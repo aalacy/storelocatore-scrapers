@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bluerhino_com')
-
-
 
 
 def write_output(data):
@@ -73,8 +68,8 @@ def fetch_data():
         store.append('<MISSING>')
 
         return_main_object.append(store)
-        #logger.info('===' + str(store))
-        #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        #print('===' + str(store))
+        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 

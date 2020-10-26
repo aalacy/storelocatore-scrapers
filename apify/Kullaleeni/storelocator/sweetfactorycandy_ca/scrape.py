@@ -8,11 +8,6 @@ Created on Sat Sep 14 21:43:29 2019
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sweetfactorycandy_ca')
-
-
 
 def fetch_data():
     url = "http://sweetfactorycandy.ca/"
@@ -33,7 +28,7 @@ def fetch_data():
     zipcode = address.split(",")[1].strip().replace(state,"").strip().replace(".","")
     
     data_record = {}
-    #logger.info(address)
+    #print(address)
     data_record['locator_domain'] = locator_domain
     data_record['location_name'] = '<MISSING>'
     

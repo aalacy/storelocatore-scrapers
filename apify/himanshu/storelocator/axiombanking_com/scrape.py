@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('axiombanking_com')
-
-
 
 
 session = SgRequests()
@@ -29,7 +24,7 @@ def fetch_data():
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('div',{"class":"view-location-list"}).find_all('div',{"class":'location-list-row'})
     for dt in main:
-        # logger.info(dt)
+        # print(dt)
         hr=list(dt.find('div',{'class':"location-hours-column"}).stripped_strings)
         del hr[0]
         del hr[1]

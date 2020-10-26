@@ -11,11 +11,6 @@ from selenium.common.exceptions import TimeoutException
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hobbytown_com')
-
-
 
 
 def addy_ext(addy):
@@ -49,7 +44,7 @@ def fetch_data():
         (By.ID, "CityState")))
     time.sleep(randint(1,2))
 
-    logger.info("Page loaded!")
+    print("Page loaded!")
     cityinput = driver.find_element_by_id('CityState')
     cityinput.clear()
     time.sleep(2)
@@ -72,11 +67,11 @@ def fetch_data():
         link = h.get_attribute('href')
         link_list.append(link)
 
-    logger.info("Got %s links" %len(link_list))
+    print("Got %s links" %len(link_list))
       
     all_store_data = []
     for link in link_list:
-        logger.info(link)
+        print(link)
         driver.get(link)
         time.sleep(1)
 
@@ -85,7 +80,7 @@ def fetch_data():
                 (By.CSS_SELECTOR, "h1.titlebar")))
             time.sleep(randint(1,2))
         except:
-            logger.info("Page failed to load..retrying")
+            print("Page failed to load..retrying")
             driver.get(link)
             element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "h1.titlebar")))

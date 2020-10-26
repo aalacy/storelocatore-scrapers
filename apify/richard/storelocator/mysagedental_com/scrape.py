@@ -3,11 +3,6 @@ import requests
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mysagedental_com')
-
-
 
 
 URL = "https://mysagedental.com/"
@@ -57,7 +52,7 @@ class Scraper(Scrape):
 
             # Page url
             page_url = store['properties']['locpage']
-            logger.info(f"Now scraping {page_url}")
+            print(f"Now scraping {page_url}")
 
             # Type
             location_type = store['properties']['category']

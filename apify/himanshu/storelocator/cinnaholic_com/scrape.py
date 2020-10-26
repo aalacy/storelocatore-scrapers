@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cinnaholic_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def convert(time):
     d = datetime.strptime(str(time), "%H%M")
     e=d.strftime("%I:%M %p")
     return e
-    # logger.info(e)
+    # print(e)
 
 def getDecodedPhoneNo(encoded_phone_no):
         _dict = {}
@@ -51,7 +46,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
+    # print("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
@@ -61,7 +56,7 @@ def fetch_data():
     locations = session.get(base_url,headers=headers).json()
     
     # soup= BeautifulSoup(r.text,"lxml")
-    # logger.info(len(locations))
+    # print(len(locations))
     for loc in locations:
         tem_var=[]
         name = loc['store_info']['name']
@@ -75,7 +70,7 @@ def fetch_data():
         hours =  loc['store_info']['hours']
         phone = loc['store_info']['phone']
         page_url = loc['store_info']['website']
-        # logger.info(address)
+        # print(address)
         hours_of_operation =''
         if hours:
             time = (hours.strip().split(";"))
@@ -117,7 +112,7 @@ def fetch_data():
             pass
         else:
             return_main_object.append(tem_var)
-        # logger.info(tem_var)
+        # print(tem_var)
     
 
     return return_main_object

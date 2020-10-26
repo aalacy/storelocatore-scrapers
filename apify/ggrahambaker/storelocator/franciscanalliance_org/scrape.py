@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('franciscanalliance_org')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -49,7 +44,7 @@ def fetch_data():
     dup_tracker = set()
 
     for i, loc_type in enumerate(location_types):
-        logger.info(loc_type)
+        print(loc_type)
         time.sleep(2)
         menu = driver.find_element_by_css_selector('div.location-facility-type')
         menu.click()

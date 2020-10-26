@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('anthonys_com')
-
-
 
 
 
@@ -68,7 +63,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
 
     for link in final_links:
-        logger.info(link)
+        print(link)
         r_location = session.get(link, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
@@ -115,8 +110,8 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

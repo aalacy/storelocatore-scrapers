@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import sgzip 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('signaturestyle_com__brands__hairmasters_html')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +30,7 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
 

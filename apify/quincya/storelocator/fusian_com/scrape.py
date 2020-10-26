@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from random import randint
 import time
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fusian_com')
-
-
 
 
 def write_output(data):
@@ -35,8 +30,8 @@ def fetch_data():
     try:
       base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-      logger.info('[!] Error Occured. ')
-      logger.info('[?] Check whether system is Online.')
+      print ('[!] Error Occured. ')
+      print ('[?] Check whether system is Online.')
 
     items = base.find_all(class_="intrinsic")
     locator_domain = "fusian.com"
@@ -50,11 +45,11 @@ def fetch_data():
         try:
           base = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-          logger.info('[!] Error Occured. ')
-          logger.info('[?] Check whether system is Online.')
+          print ('[!] Error Occured. ')
+          print ('[?] Check whether system is Online.')
 
         location_name = base.h1.text[1:-1].title()
-        logger.info(location_name)
+        print(location_name)
 
         all_scripts = base.find_all('script', attrs={'type': "application/ld+json"})
         for script in all_scripts:

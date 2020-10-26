@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hometownbanks_com')
-
-
 
 
 
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -54,7 +49,7 @@ def fetch_data():
     longitude = "<MISSING>"
     hours_of_operation = ""
 
-    # logger.info("data ====== "+str(soup))
+    # print("data ====== "+str(soup))
     for script in soup.find_all("img", {"id": re.compile("MainContent_rptLocations_imgLocation")}):
         parent_script = script.parent
 
@@ -62,7 +57,7 @@ def fetch_data():
         if tag_location is not None:
             list_location = list(tag_location[0].stripped_strings)
 
-            # logger.info("list_location === "+ str(list_location))
+            # print("list_location === "+ str(list_location))
 
             if 'Has ATM' in list_location:
                 list_location.remove('Has ATM')
@@ -100,8 +95,8 @@ def fetch_data():
 
             store = [x if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

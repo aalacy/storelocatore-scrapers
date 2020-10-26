@@ -4,11 +4,6 @@ import json
 import sgzip 
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('petvalu_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -73,7 +68,7 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': MAX_DISTANCE }
@@ -81,9 +76,9 @@ def fetch_data():
         try:
             r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
         except:
-            logger.info('sleeping:)')
+            print('sleeping:)')
             time.sleep(15)
-            logger.info('done')
+            print('done')
             r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
 
         res_json = json.loads(r.content)
@@ -133,7 +128,7 @@ def fetch_data():
     coord = search.next_coord()
   
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
   
@@ -142,9 +137,9 @@ def fetch_data():
             r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
 
         except:
-            logger.info('sleeping:)')
+            print('sleeping:)')
             time.sleep(15)
-            logger.info('done')
+            print('done')
             r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
 
         res_json = json.loads(r.content)

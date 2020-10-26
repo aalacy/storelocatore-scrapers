@@ -7,11 +7,6 @@ from lxml import html
 import base
 import requests, json
 from urllib.parse import urljoin
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('whitscustard_com')
-
-
 
 base_url = "https://www.whitscustard.com/locations"
 
@@ -28,12 +23,12 @@ class Scrape(base.Spider):
             for store in selector['tree'].xpath('//div[@class="summary-title"]/a/@href[not(contains(., "google"))]'):
                 yield from self.process_request_2(store)
         else:
-            logger.info("RETRYING {}...".format(state))
+            print("RETRYING {}...".format(state))
             yield from self.process_request_1(state)
 
     def process_request_2(self, store):
         store_selector = base.selector(urljoin(base_url, store))
-        logger.info(store_selector['url'])
+        print(store_selector['url'])
         if store_selector['request'].status_code == 200:
             hr = lambda x: '; '.join([s.strip() for s in x])
             hrs = hr(store_selector['tree'].xpath(
@@ -55,7 +50,7 @@ class Scrape(base.Spider):
                     i.add_value('city', capwords(st_[:st_.find(' ')]))
                     st_ = st_.replace(st_[:st_.find(' ') + 1], '').strip().replace('  ', ' ')
 
-                logger.info(st_)
+                print(st_)
                 state_zip = st_.split(' ')
                 if len(state_zip) > 1:
                     i.add_value('state', state_zip[0].upper())
@@ -73,7 +68,7 @@ class Scrape(base.Spider):
                         i.add_value('longitude', ll[1])
                 yield i
         else:
-            logger.info("RETRYING {}...".format(store))
+            print("RETRYING {}...".format(store))
             yield from self.process_request_2(store)
 
 if __name__ == '__main__':

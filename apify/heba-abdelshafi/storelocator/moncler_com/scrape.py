@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('moncler_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -46,14 +41,14 @@ def fetch_data():
             soup =BeautifulSoup(r.text, "html.parser")
             maindiv = soup.find('ul',{'class':'Directory-listLinks'})
             citylist = maindiv.findAll('li',{'class':'Directory-listItem'})
-            #logger.info("CITY",len(citylist))            
+            #print("CITY",len(citylist))            
             for city in citylist:
-                #logger.info(city.find('a').text)                
+                #print(city.find('a').text)                
                 clink = 'https://www.moncler.com/us'+city.find('a')['href'].split('../us')[1]
-                #logger.info(clink)
+                #print(clink)
                 count = city.find('a')['data-count'].replace(')','').replace('(','')
                 count = (int)(count)
-                #logger.info("count=",count)
+                #print("count=",count)
                 r1 = session.get(clink, headers=headers, verify=False)  
                 soup =BeautifulSoup(r1.text, "html.parser")
                 branchlink = soup.findAll('a',{'class':'Teaser-titleLink'})
@@ -104,7 +99,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     
                     
@@ -117,9 +112,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

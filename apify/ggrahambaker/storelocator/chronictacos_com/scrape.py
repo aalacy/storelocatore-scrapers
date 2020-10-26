@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chronictacos_com')
-
-
 
 session = SgRequests()
 
@@ -64,7 +59,7 @@ def fetch_data():
                     hours = '<MISSING>'
                     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                   store_number, phone_number, location_type, lat, longit, hours]
-                    logger.info(store_data)
+                    print(store_data)
                     all_store_data.append(store_data)
 
                 elif '300 Skipper' in ps[1].text:
@@ -83,7 +78,7 @@ def fetch_data():
                     hours = '<MISSING>'
                     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                   store_number, phone_number, location_type, lat, longit, hours]
-                    logger.info(store_data)
+                    print(store_data)
                     all_store_data.append(store_data)
 
                 elif '235 Ridge Road' in ps[1].text:
@@ -102,7 +97,7 @@ def fetch_data():
                     hours = '<MISSING>'
                     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                   store_number, phone_number, location_type, lat, longit, hours]
-                    logger.info(store_data)
+                    print(store_data)
                     all_store_data.append(store_data)
 
             p = ps[0]

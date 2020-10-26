@@ -5,11 +5,6 @@ import re
 import json
 import time 
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('wyndhamhotels_com__en-ca__travelodge')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -76,7 +71,7 @@ def fetch_data():
                 else:
                     state = "<MISSING>"
                 phone = h['telephone'].replace("+1-",'')
-                # logger.info(phone)              
+                # print(phone)              
                 store = []
                 store.append("https://www.wyndhamhotels.com/en-ca/travelodge")
                 store.append(location_name if location_name else "<MISSING>") 
@@ -136,7 +131,7 @@ def fetch_data():
                 else:
                     state = "<MISSING>"
                 phone = h1['telephone'].replace("+1-",'')
-                # logger.info(phone)              
+                # print(phone)              
                 store = []
                 store.append("https://www.wyndhamhotels.com/en-ca/travelodge")
                 store.append(location_name if location_name else "<MISSING>") 

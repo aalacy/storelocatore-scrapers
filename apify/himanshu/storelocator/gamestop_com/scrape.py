@@ -7,11 +7,6 @@ import http.client as http_client
 import ssl
 import gzip
 import certifi
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gamestop_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +42,7 @@ def fetch_data():
 
         while coord:
             result_coords = []
-            logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            print("remaining zipcodes: " + str(search.zipcodes_remaining()))
             lat = coord[0]
             lng = coord[1]
             context = ssl.SSLContext(ssl.PROTOCOL_TLS)

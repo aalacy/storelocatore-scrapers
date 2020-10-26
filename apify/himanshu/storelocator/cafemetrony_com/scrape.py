@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cafemetrony_com')
-
-
 
 
 
@@ -46,7 +41,7 @@ def fetch_data():
     
     for index,i in enumerate(k,start=0):
         tem_var =[]
-        # logger.info(list(i.stripped_strings))
+        # print(list(i.stripped_strings))
         st = list(i.stripped_strings)[0].replace("\n",',').split(',')[0]
         #
         city = list(i.stripped_strings)[1].split(',')[0]

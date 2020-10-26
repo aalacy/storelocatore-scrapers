@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('risris_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://www.risris.com"
     r = session.get("http://www.risris.com/contact", headers=headers)
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -66,7 +61,7 @@ def fetch_data():
         # address_list = [x for x in address_list if "Unit" not in x]
 
         if "Location" in address_list:
-            # logger.info("address_list ==== "+str(address_list))
+            # print("address_list ==== "+str(address_list))
 
             location_name = address_list[0]
             street_address = address_list[1]
@@ -101,15 +96,15 @@ def fetch_data():
             else:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            # logger.info("map_location ==== "+map_location)
-            # logger.info("longitude ==== "+longitude)
-            # logger.info("latitude ==== "+latitude)
+            # print("map_location ==== "+map_location)
+            # print("longitude ==== "+longitude)
+            # print("latitude ==== "+latitude)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

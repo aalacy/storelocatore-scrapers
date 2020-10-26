@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chevronwithtechron_com')
-
-
 
 
 session = SgRequests()
@@ -35,10 +30,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         try:
             r = session.get("https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat=" + str(x) + "&lng=" + str(y) + "&oLat=" + str(x) + "&oLng=" + str(y) + "&brand=chevronTexaco&radius=" + str(MAX_DISTANCE),headers=headers)
             data = r.json()["stations"]
@@ -64,13 +59,13 @@ def fetch_data():
                 store.append(lng)
                 store.append(store_data["hours"] if store_data["hours"] else "<MISSING>")
                 store.append("<MISSING>")
-                # logger.info(store)
+                # print(store)
                 yield store
             if len(data) < MAX_RESULTS:
-                # logger.info("max distance update")
+                # print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif len(data) == MAX_RESULTS:
-                # logger.info("max count update")
+                # print("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")

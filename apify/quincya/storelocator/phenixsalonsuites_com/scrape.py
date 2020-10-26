@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('phenixsalonsuites_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,10 +27,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -43,20 +38,20 @@ def fetch_data():
 	locator_domain = "phenixsalonsuites.com"
 
 	for i, item in enumerate(items):
-		logger.info(str(i+1) + " of " + str(len(items)))
+		print(str(i+1) + " of " + str(len(items)))
 		final_link = item.a['href']
 
 		req = session.get(final_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			logger.info(final_link)
+			print(final_link)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		location_name = base.h2.text.strip()
-		# logger.info(location_name)
+		# print(location_name)
 
 		street_address = base.find(class_="location_adress").text.strip()
 		city_line = base.find(class_="location_tot").text.strip().split("\xa0")

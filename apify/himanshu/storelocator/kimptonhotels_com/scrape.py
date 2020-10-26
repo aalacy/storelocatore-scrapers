@@ -5,11 +5,6 @@ import re
 import io
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kimptonhotels_com')
-
-
 
 
 
@@ -49,14 +44,14 @@ def fetch_data():
 
             address = detail_soup.select('.brand-logo .visible-content')[0].get_text().strip().split(',')
             if "United States" in address[-1] or "Canada" in address[-1]:
-                # logger.info(address)
+                # print(address)
 
                 location_name = detail_soup.select('.name')[0].get_text().strip()
                 phone = detail_soup.select('.phone-number')[0].get_text().strip()[8:]
                 street_address = ' '.join(address[:-2]).strip()
-                # logger.info(address[-2].split(" "))
-                # logger.info(len(address[-2].split(" ")))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~`')
+                # print(address[-2].split(" "))
+                # print(len(address[-2].split(" ")))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~`')
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(address[-2].split(" "))))
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(address[-2].split(" "))))
                 if us_zip_list:
@@ -71,11 +66,11 @@ def fetch_data():
                     country_code = "CA"
                     city = "".join(address[-2].split(" ")[0]).strip()
                     state =address[-2].split(" ")[1].strip()
-                    # logger.info(city +" | "+state+" | "+zip)
+                    # print(city +" | "+state+" | "+zip)
 
 
             else:
-                # logger.info(address[-1])
+                # print(address[-1])
                 continue
             store = []
             store.append("https://www.kimptonhotels.com/")
@@ -92,8 +87,8 @@ def fetch_data():
             store.append(longitude)
             store.append("<MISSING>")
             store.append(page_url)
-            #logger.info("data === "+str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data === "+str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
         else:
             pass

@@ -5,11 +5,6 @@ import re
 import json
 from sgrequests import SgRequests
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('morrisons_com')
-
-
 
 session = SgRequests()
 
@@ -35,7 +30,7 @@ def fetch_data():
         location_name = (d['storeName'])
         if "Gibraltar" in location_name:
             continue
-        # logger.info(latitude)
+        # print(latitude)
         m = d['address']['addressLine1']
         p = d['address']['addressLine2']
         street_address = (m + p).replace("      ","")

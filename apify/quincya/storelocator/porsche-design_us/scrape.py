@@ -4,11 +4,6 @@ import csv
 import time
 import re
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('porsche-design_us')
-
-
 
 
 def write_output(data):
@@ -36,7 +31,7 @@ def fetch_data():
 	us_states_codes = ['AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MH', 'MA', 'MI', 'FM', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'VI', 'WA', 'WV', 'WI', 'WY']
 	
 	for state in us_states_codes:
-		logger.info("Searching: " + state)
+		print("Searching: " + state)
 		# Request post
 		payload = {'Country': 'US',
 				'ZipOrLocus': state,
@@ -58,7 +53,7 @@ def fetch_data():
 
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		# logger.info("Link %s of %s" %(i+1,total_links))
+		# print("Link %s of %s" %(i+1,total_links))
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
@@ -69,7 +64,7 @@ def fetch_data():
 		location_name = item.find('h1').text.strip()
 		if "Santa Fe" in location_name:
 			continue
-		logger.info(link)
+		print(link)
 
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"

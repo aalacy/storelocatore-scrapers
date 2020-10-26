@@ -6,11 +6,6 @@ import re, time
 import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('inglotcosmetics_com')
-
-
 
 def get_driver():
     options = Options()
@@ -42,22 +37,22 @@ def fetch_data():
     hreflist = driver.find_element_by_xpath("/html/body/div[2]/div/div/div[2]/div/div[2]/ul")
     hrefs = hreflist.find_elements_by_tag_name('li')
 
-    logger.info(len(hrefs))
+    print(len(hrefs))
     for n in range(0,len(hrefs)):
         try:
             ccode = str(hrefs[n].find_element_by_class_name('loc-country').text)
-            #logger.info(ccode)
+            #print(ccode)
         except:
             ccode = "None"
         if ccode.find("USA") > -1:
             gmap = hrefs[n].get_attribute("data-gmapping")[0:110]
-            #logger.info(gmap)
+            #print(gmap)
             start = 0
             start = gmap.find("id")
             start = gmap.find(":", start) + 2
             end = gmap.find('"', start)
             store = gmap[start:end]
-            #logger.info(start)
+            #print(start)
             start = gmap.find("lat")
             start = gmap.find(":", start) + 2
             end = gmap.find('"', start)
@@ -70,7 +65,7 @@ def fetch_data():
             address = hrefs[n].find_element_by_class_name('loc-addr').text
             address = address.replace("\n", " ")
             address = usaddress.parse(address)
-            logger.info(address)
+            print(address)
             i = 0
             street = ""
             city = ""
@@ -103,15 +98,15 @@ def fetch_data():
             state = state.lstrip()
             pcode = pcode.lstrip()
             pcode = pcode.replace(",", "")
-            logger.info(store)
-            logger.info(title)
-            logger.info(street)
-            logger.info(city)
-            logger.info(state)
-            logger.info(pcode)
-            logger.info(ccode)
-            logger.info(lat)
-            logger.info(longt)
+            print(store)
+            print(title)
+            print(street)
+            print(city)
+            print(state)
+            print(pcode)
+            print(ccode)
+            print(lat)
+            print(longt)
 
             if len(state) < 2 and city.find("Washington") > -1:
                 state = "WA"
@@ -119,7 +114,7 @@ def fetch_data():
             if len(state) < 2:
                 state = "<MISSING>"
 
-            logger.info(".....................")
+            print(".....................")
 
             data.append([
                     url,

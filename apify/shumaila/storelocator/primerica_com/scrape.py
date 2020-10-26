@@ -6,11 +6,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('primerica_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,7 +33,7 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     maidiv = soup.find('main')
     mainsection = maidiv.findAll('section',{'class':'content locList'})
-    #logger.info(len(mainsection))
+    #print(len(mainsection))
     sec = 0
     while sec < 2:
         if sec == 0:
@@ -50,7 +45,7 @@ def fetch_data():
         pattern = re.compile(r'\s\s+')
         for rep in rep_list:            
             link = "http://www.primerica.com/public/" + rep['href']            
-            #logger.info(link)           
+            #print(link)           
             try:
                
                 page1 = session.get(link, headers=headers, verify=False)                    
@@ -58,18 +53,18 @@ def fetch_data():
                 soup1 = BeautifulSoup(page1.text, "html.parser")
                 maindiv = soup1.find('main')
                 xip_list = maindiv.findAll('a')
-                logger.info("len = ",len(xip_list))
+                print("len = ",len(xip_list))
                
                 for xip in xip_list:                    
                     try:
                         pcode = xip.text
-                        #logger.info('http://www.primerica.com'+xip['href'])
+                        #print('http://www.primerica.com'+xip['href'])
                         page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
                         time.sleep(1)
                         soup2 = BeautifulSoup(page2.text, "html.parser")                   
                         mainul = soup2.find('ul',{'class':'agent-list'})
                         li_list = mainul.findAll('li')
-                        #logger.info(len(li_list))
+                        #print(len(li_list))
                         for m in range(0, len(li_list)):
                             try:
                                 address = ''
@@ -79,7 +74,7 @@ def fetch_data():
                                 alink = alink['href']                                
                                 address =''
                                 addrm  = ''
-                                #logger.info(alink)
+                                #print(alink)
                                 page3 = session.get(alink, headers=headers, verify=False)                    
                                 time.sleep(2)
                                 soup3 = BeautifulSoup(page3.text, "html.parser")                            
@@ -88,7 +83,7 @@ def fetch_data():
                                 cleanr = re.compile(r'<[^>]+>')
                                
                                 address = cleanr.sub(' ', str(address))
-                                #logger.info(address)
+                                #print(address)
                                 address = re.sub(pattern,'\n',address).lstrip()
                                 address= address.splitlines()
                               
@@ -117,7 +112,7 @@ def fetch_data():
                                     pcode = address[3]
                                     
                                     
-                                #logger.info(street, city,state,pcode)    
+                                #print(street, city,state,pcode)    
                                     
                                
                                 
@@ -151,14 +146,14 @@ def fetch_data():
                                 pcode = pcode.lstrip().replace(',','').rstrip()
                                 try:
                                     for i in range(0,len(data)):                                        
-                                        #logger.info(i, pcode,data[i][6])
+                                        #print(i, pcode,data[i][6])
                                         if alink == data[i][1] and title == data[i][2]:
-                                            #logger.info("exist")
+                                            #print("exist")
                                             flag = False
                                             break
                                     
                                 except Exception as e:
-                                    logger.info(e)
+                                    print(e)
                                 if pcode.find('-') == -1 and sec == 0 and pcode != '<MISSING>' and len(pcode) > 6 :
                                     pcode = pcode[0:5] + '-' +pcode[5:len(pcode)]
 
@@ -186,25 +181,25 @@ def fetch_data():
                                             "<MISSING>",
                                         ])
                                     
-                                #logger.info(street,city,state,pcode,phone)
-                                    #logger.info(p,data[p])
+                                #print(street,city,state,pcode,phone)
+                                    #print(p,data[p])
                                     p += 1
                                     #input()
                                 #input()
                                 
                             except Exception as e:
-                                logger.info(e)
+                                print(e)
                                 pass
                                
                     except Exception as e:
-                        logger.info(e)
+                        print(e)
                         pass
                         
 
 
                     #break
             except Exception as e:
-                logger.info(e)
+                print(e)
                 pass
 
             #driver1.quit()
@@ -220,10 +215,10 @@ def fetch_data():
 
 def scrape():
 
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
 scrape()

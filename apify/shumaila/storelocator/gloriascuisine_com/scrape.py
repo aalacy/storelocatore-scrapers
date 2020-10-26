@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gloriascuisine_com')
-
-
 
 
 def write_output(data):
@@ -87,18 +82,18 @@ def fetch_data():
         lat = coordlist[n]['data-coords-lat']
         longt = coordlist[n]['data-coords-lng']
 
-        logger.info(title)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
-        logger.info(ccode)
-        logger.info(phone)
-        logger.info(lat)
-        logger.info(longt)
-        logger.info(hours)
-        logger.info(p)
-        logger.info("...............................")
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+        print(ccode)
+        print(phone)
+        print(lat)
+        print(longt)
+        print(hours)
+        print(p)
+        print("...............................")
         p += 1
         data.append([
             'https://gloriascuisine.com/',

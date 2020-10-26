@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from lxml import html
 import csv
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('siteone_com')
-
-
 
 
 def write_output(data):
@@ -38,7 +33,7 @@ def fetch_data():
 	
 	for i in range(808):
 		page_url="https://www.siteone.com/store/"+str(i+1)
-		logger.info(page_url)
+		print(page_url)
 		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
 
 		
@@ -57,7 +52,7 @@ def fetch_data():
 				lat=str(r).split('"latitude":"')[1].split('",')[0]
 				if len(lat)<=4:
 					lats.append(lat+'00')
-					logger.info(lats)
+					print(lats)
 				else:
 					lats.append(lat)
 			except:
@@ -70,7 +65,7 @@ def fetch_data():
 				ids.append(i+1)
 			except:
 				ids.append("<MISSING>")
-			logger.info(len(locs))
+			print(len(locs))
 		try:
 			states.append(soup.find("title").text.split(', ')[1].split(' |')[0])
 		except:
@@ -88,7 +83,7 @@ def fetch_data():
 		except:
 			continue
 		pages.append(page_url)
-		logger.info(pages)
+		print(pages)
 			
 		return_main_object=[]
 	for i in range(len(locs)):

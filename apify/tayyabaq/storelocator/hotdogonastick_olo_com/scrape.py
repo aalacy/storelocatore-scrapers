@@ -3,11 +3,6 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hotdogonastick_olo_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +37,7 @@ def fetch_data():
         divlist = soup.findAll('li',{'class':'vcard'})
         for div in divlist:
             title = div.find('h2').text.replace('\r','').replace('\n','').strip()
-            #logger.info(title)
+            #print(title)
             try:
                 link = div.find('h2').find('a')['href']
             except:
@@ -56,7 +51,7 @@ def fetch_data():
             lat = div.find('span',{'class':'latitude'}).find('span')['title']
             longt = div.find('span',{'class':'longitude'}).find('span')['title']
             data.append(['https://hotdogonastick.olo.com//',link,title,street,city,state,"<MISSING>",'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
             
         

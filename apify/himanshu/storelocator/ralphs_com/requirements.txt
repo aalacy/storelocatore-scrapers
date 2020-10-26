@@ -4,4 +4,3 @@ beautifulsoup4==4.7.1
 sgrequests
 sgzip
 phonenumbers
-sglogging

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lolasmexicancuisine_com')
-
-
 
 
 
@@ -36,7 +31,7 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     
-    # logger.info(soup)
+    # print(soup)
     # k = (soup.find_all("div",{"class":"tabs-content"}))
     k = (soup.find_all("div",{"class":"wpb_text_column wpb_content_element rollover-details"}))
 
@@ -53,7 +48,7 @@ def fetch_data():
             zip1  = list(v.stripped_strings)[2].split(',')[1].split( )[1]
             phone = list(v.stripped_strings)[4:][-1]
             housr = " ".join(list(v.stripped_strings)[4:][:-1])
-            # logger.info(" ".join(list(v.stripped_strings)[4:][:-1]))
+            # print(" ".join(list(v.stripped_strings)[4:][:-1]))
   
             tem_var.append("https://www.lolasmexicancuisine.com")
             tem_var.append(name)

@@ -3,11 +3,6 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('edeka_de')
-
-
 
 MAX_RESULTS = 50
 
@@ -49,7 +44,7 @@ def fetch_data():
     postcode = search.next_zip()
     while postcode:
         result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(postcode)
         response = session.get(url, headers=HEADERS).json()
         stores = response["markets"]
@@ -77,11 +72,11 @@ def fetch_data():
             hours_of_operation = parse_hours(store['businessHours'])
             locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         if len(stores) > 0:
-            logger.info(len(stores))
-            logger.info("max count update")
+            print(len(stores))
+            print("max count update")
             search.max_count_update(result_coords)
         else:
-            logger.info("{} zero results!".format(postcode))
+            print("{} zero results!".format(postcode))
         postcode = search.next_zip()
     return locations
 

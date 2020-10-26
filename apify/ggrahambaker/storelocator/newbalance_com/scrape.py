@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('newbalance_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,12 +27,12 @@ def fetch_data():
 
     all_store_data = []
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://newbalance.locally.com/stores/conversion_data?has_data=true&company_id=41&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=' + str(x) + '&map_center_lng=' + str(y) + '&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10'
-        #logger.info(url)
+        #print(url)
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['markers']

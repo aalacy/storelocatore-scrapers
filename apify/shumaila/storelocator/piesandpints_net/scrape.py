@@ -5,11 +5,6 @@ import re
 
 
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('piesandpints_net')
-
-
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
@@ -43,7 +38,7 @@ def fetch_data():
     for k in range(0,len(locations_urls)):
         url = locations_urls[k]
         driver.get(url)
-        #logger.info(url)
+        #print(url)
         sleep(1)
         data['locator_domain'].append('https://piesandpints.net')
         data['page_url'].append(url)
@@ -57,7 +52,7 @@ def fetch_data():
         loc_data=driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]').text
         geo_data=driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]/a').get_attribute('href')
         storeid = driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]/a').get_attribute('data-bar-id')
-        #logger.info(storeid)
+        #print(storeid)
         data['store_number'].append(storeid)
         data['location_type'].append(loc_data.split('·')[0])
         data['street_address'].append(loc_data.split('·')[1].split(',')[0])
@@ -79,7 +74,7 @@ def fetch_data():
             hours = driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][4]').text
             hours = hours.encode('ascii', 'ignore').decode('ascii')
             hours = hours.replace("\n"," ")
-            #logger.info(hours)
+            #print(hours)
             data['hours_of_operation'].append(hours)
 
         except:

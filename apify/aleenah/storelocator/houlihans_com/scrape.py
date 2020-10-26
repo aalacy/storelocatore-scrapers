@@ -3,11 +3,6 @@ import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('houlihans_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +39,7 @@ def fetch_data():
     driver.get("https://houlihans.com/find-a-location")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     lis = soup.find('div', {'class': 'sf_cols'}).find_all('a')
-    logger.info(len(lis))
+    print(len(lis))
 
     for li in lis:
 
@@ -63,7 +58,7 @@ def fetch_data():
 
     
     for url in urls:
-        logger.info(url)
+        print(url)
         if url=='https://houlihans.comeats-and-drinks/richfield':
             url= 'https://houlihans.com/eats-and-drinks/richfield'
         try:

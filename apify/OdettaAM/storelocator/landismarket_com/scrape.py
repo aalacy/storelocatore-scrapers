@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
 from selenium.common.exceptions import StaleElementReferenceException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('landismarket_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -44,12 +39,12 @@ def fetch_data():
         try:
             location_name = store.find_element_by_css_selector('div.panel-heading > h2').text
         except StaleElementReferenceException as Exception:
-            logger.info('StaleElementReferenceException while trying to location_name, trying to find element again')
+            print('StaleElementReferenceException while trying to location_name, trying to find element again')
             location_name = store.find_element_by_css_selector('div.panel-heading > h2').text
         try:
             raw_address = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > p:nth-child(2)').text
         except StaleElementReferenceException as Exception:
-            logger.info('StaleElementReferenceException while trying to raw_address, trying to find element again')
+            print('StaleElementReferenceException while trying to raw_address, trying to find element again')
             raw_address = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > p:nth-child(2)').text
         tagged = usaddress.tag(raw_address)[0]
         try:
@@ -62,20 +57,20 @@ def fetch_data():
         try:
             phone = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > a').text
         except StaleElementReferenceException as Exception:
-            logger.info('StaleElementReferenceException while trying to phone, trying to find element again')
+            print('StaleElementReferenceException while trying to phone, trying to find element again')
             phone = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > a').text
         #driver.implicitly_wait(20)
         try:
             geomap = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > p:nth-child(3) > a').get_attribute('href')
         except StaleElementReferenceException as Exception:
-            logger.info('StaleElementReferenceException while trying to geomap, trying to find element again')
+            print('StaleElementReferenceException while trying to geomap, trying to find element again')
             geomap = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7 > p:nth-child(3) > a').get_attribute(
                 'href')
         lat, lon = parse_geo(geomap)
         try:
             hours_of_op = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7').text.split('Hours:')[1]
         except StaleElementReferenceException as Exception:
-            logger.info('StaleElementReferenceException while trying to hours of op, trying to find element again')
+            print('StaleElementReferenceException while trying to hours of op, trying to find element again')
             hours_of_op = store.find_element_by_css_selector('div.panel-body > div.col-xs-12.col-sm-6.col-sm-push-6.col-md-7.col-md-push-5 > div > div.col-md-7').text.split('Hours:')[1]
         data.append([
              'https://www.landismarket.com/',

@@ -5,11 +5,6 @@ import re
 import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('reydelpollo_com')
-
-
 
 
 
@@ -92,8 +87,8 @@ def fetch_data():
 
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            # logger.info("data===="+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data===="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             return_main_object.append(store)
 
 

@@ -23,7 +23,7 @@ def fetch_data():
             lurl = 'https://creamistry.com/' + line.split('href="')[1].split('"')[0]
             if 'detail' not in lurl:
                 locs.append(lurl)
-    logger.info(('Found %s Locations.' % str(len(locs))))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -36,7 +36,7 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'creamistry.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
@@ -45,11 +45,6 @@ def fetch_data():
         for line2 in lines:
             if '<h2 class="section-title" style="padding-left:0px !important;">' in line2:
                 name = line2.split('<h2 class="section-title" style="padding-left:0px !important;">')[1].split('<')[0]
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('creamistry_com')
-
-
             if '<h4>Address & Phone</h4>' in line2:
                 g = next(lines)
                 h = next(lines)

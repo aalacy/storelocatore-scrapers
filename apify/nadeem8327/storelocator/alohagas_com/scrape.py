@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('alohagas_com')
-
-
 
 
 html = requests.get("https://www.alohagas.com/oahu.html")
@@ -34,7 +29,7 @@ with open("data.csv",mode="w") as file:
         if row:
             #handle special case
             if "Mahalo Kilani Mart" in row.text:
-                #   logger.info("Yes it is there")
+                #   print("Yes it is there")
                 dta = row.text
                 dta = dta.replace("\t","")
                 dta = dta.split("\n")
@@ -66,7 +61,7 @@ with open("data.csv",mode="w") as file:
             if dta and shouldPrint:
                 x = row.text.split("\n")
 
-                #logger.info(row.text)
+                #print(row.text)
                 location_name=x[0].strip()
                 street_address=x[1].strip()
 
@@ -125,7 +120,7 @@ with open("data.csv",mode="w") as file:
             for x in range(len(adr)):
                 adr[x]=adr[x].strip()
             if "MOUNTAIN" in city and i==0:  #Handle special case
-                #logger.info("Special Case")
+                #print("Special Case")
                 place = "Kona"
                 location_name = adr[0]
                 location_name = location_name.replace(",","'")
@@ -138,7 +133,7 @@ with open("data.csv",mode="w") as file:
                 location_type=location_name +" "+place
                 data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
                 "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
-                #logger.info(data)
+                #print(data)
                 fl_writer.writerow(data)
                 location_name = adr[4]
                 location_name = location_name.replace(",","'")
@@ -151,16 +146,16 @@ with open("data.csv",mode="w") as file:
                 location_type=location_name +" "+place
                 data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
                 "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
-                #logger.info(data)
+                #print(data)
                 fl_writer.writerow(data)
 
                 i=i+1
-                #logger.info("---------------------------------------")
+                #print("---------------------------------------")
             elif "MOUNTAIN" in city and i==1:
                 i=i+1
             else:
                 if len(adr) == 3:
-                   # logger.info("Length is three")
+                   # print("Length is three")
                     location_name = adr[0]
                     location_name = location_name.replace(",","'")
                     street_address = adr[1]
@@ -172,12 +167,12 @@ with open("data.csv",mode="w") as file:
                     location_type=location_name +" "+place
                     data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
                     "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
-                   # logger.info(data)
+                   # print(data)
                     fl_writer.writerow(data)
-                    #logger.info("-------------------------------------------------")
+                    #print("-------------------------------------------------")
                 elif len(adr) == 6:
                     if "(808)" in adr[2]:
-                        #logger.info("length is six and 808 is there ")
+                        #print("length is six and 808 is there ")
                         location_name = adr[0]
                         location_name = location_name.replace(",","'")
                         street_address = adr[1]
@@ -189,7 +184,7 @@ with open("data.csv",mode="w") as file:
                         location_type=location_name +" "+place
                         data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
                         "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
-                        #logger.info(data)
+                        #print(data)
                         fl_writer.writerow(data)
                         location_name = adr[3]
                         location_name = location_name.replace(",","'")
@@ -203,10 +198,10 @@ with open("data.csv",mode="w") as file:
                         data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
                         "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
                         fl_writer.writerow(data)
-                       # logger.info(data)
-                       # logger.info("------------------------------------------------------------------")
+                       # print(data)
+                       # print("------------------------------------------------------------------")
                     else:
-                       # logger.info("size is six phone not there")
+                       # print("size is six phone not there")
                         location_name = adr[0]
                         location_name = location_name.replace(",","'")
                         street_address = adr[1]
@@ -243,7 +238,7 @@ with open("data.csv",mode="w") as file:
             city = city.replace("\n","")
             city = city.strip()
         if dta:
-            #logger.info(place)
+            #print(place)
             ad= row.text.strip().split("\n")
             location_name = ad[0].strip()
             street_address = ad[1].strip()
@@ -252,6 +247,6 @@ with open("data.csv",mode="w") as file:
             data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
             "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
             fl_writer.writerow(data)
-            #logger.info("------------------------------------------")
-                      #  logger.info(data)
-                      #  logger.info("-----------------------------------------------------")
+            #print("------------------------------------------")
+                      #  print(data)
+                      #  print("-----------------------------------------------------")

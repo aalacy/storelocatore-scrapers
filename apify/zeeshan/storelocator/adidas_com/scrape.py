@@ -8,11 +8,6 @@ from zipdata import zipdata
 from lxml import (html, etree,)
 
 from pdb import set_trace as bp
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('adidas_com')
-
-
 
 xpath = base.xpath
 
@@ -73,7 +68,7 @@ class Adidas(base.Base):
                     if store_number in self.seen: continue
                     else: self.seen.add(store_number)
 
-                    logger.info(store_number)
+                    print(store_number)
 
                     yield location
 

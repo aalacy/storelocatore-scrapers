@@ -5,11 +5,6 @@ from lxml import (html, etree,)
 import re
 import json
 from tenacity import *
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bn_com')
-
-
 
 LIST_HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
@@ -89,7 +84,7 @@ def fetch_store_ids():
     store_ids = set()
     zip_code = search.next_zip()
     while zip_code:
-        logger.info('{} zip codes remaining'.format(search.zipcodes_remaining()))
+        print('{} zip codes remaining'.format(search.zipcodes_remaining()))
         new_ids = crawl_zip_code(zip_code)
         store_ids.update(new_ids)
         search.max_distance_update(50.0)
@@ -134,7 +129,7 @@ def fetch_stores(store_ids):
         try:
             store = fetch_store(store_id)
         except:
-            logger.info("store id failed: {}".format(store_id))
+            print("store id failed: {}".format(store_id))
             raise
         yield store
 

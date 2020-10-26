@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jerrysusa_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,10 +21,10 @@ def fetch_data():
     res = session.get("http://jerrysusa.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     divas = soup.find_all('div', {'class': 'g48'})
-    #logger.info(len(divs))
+    #print(len(divs))
     divs=divas[0::2]
     ldivs=divas[1::2]
-    #logger.info(len(divs))
+    #print(len(divs))
     del divs[0]
     del divs[-1]
     del divs[-1]
@@ -38,9 +33,9 @@ def fetch_data():
     del ldivs[-1]
     
     for div in divs:
-        #logger.info(div)
+        #print(div)
         loc=div.find('h4').text
-        logger.info(loc)
+        print(loc)
         ps=div.find_all('p')
         addr=ps[0].text.strip().split("\n")
         if len(addr)==2:
@@ -61,11 +56,11 @@ def fetch_data():
             tim="<MISSING>"
         else:
             u=a[0].get('href').split(":")
-            logger.info(u)
+            print(u)
             if len(u)>2:
                  del u[-1]
             u=":".join(u)                                                        
-            logger.info(u)
+            print(u)
             try:
                 res = session.get(u, timeout=3)
                 soup = BeautifulSoup(res.text, 'html.parser')

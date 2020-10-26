@@ -2,11 +2,6 @@ import csv
 import us
 import re
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('coffeebean_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
@@ -25,21 +20,21 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(0, 101):
-        # logger.info('Pulling Page %s... ' % str(x))
+        # print('Pulling Page %s... ' % str(x))
         url = 'https://www.coffeebean.com/store-locator?field_geo_location_boundary%5Blat_north_east%5D=&field_geo_location_boundary%5Blng_north_east%5D=&field_geo_location_boundary%5Blat_south_west%5D=&field_geo_location_boundary%5Blng_south_west%5D=&field_country_value=&field_street_address_value=&field_city_value=&field_postal_code_value=&page=' + str(x)
         r = session.get(url, headers=headers)
         for line in r.iter_lines(decode_unicode=True):
             if 'View Store</a>' in line:
-                # logger.info(line)
+                # print(line)
                 lurl = line.split('href="')[1].split('"')[0]
                 if any(x in lurl for x in ignore_url_strings): 
                     continue
                 if ('/store/' in lurl or '/node/' in lurl) and lurl not in locs:
                     locs.append(lurl)
-    # logger.info('Found %s Locations...' % str(len(locs)))
+    # print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
         r = session.get(loc, headers=headers)
-        # logger.info('Pulling Location %s ... ' % loc)
+        # print('Pulling Location %s ... ' % loc)
         name = ''
         add = ''
         city = ''
@@ -98,12 +93,12 @@ def fetch_data():
         if zc == '':
             zc = '<MISSING>'
         if country in ['', 'NULL']: 
-          # logger.info('country is empty or null ... looking up state: ', state)
+          # print('country is empty or null ... looking up state: ', state)
           if us.states.lookup(state): 
               country = 'USA'
-              # logger.info('state is USA')
+              # print('state is USA')
         if country != 'USA': 
-            # logger.info('skipping country ', country)
+            # print('skipping country ', country)
             continue
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

@@ -10,11 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('in-n-out_com')
-
-
 
 session = SgRequests()
 
@@ -39,8 +34,8 @@ def fetch_data():
             (By.CLASS_NAME, "icon-search")))
         time.sleep(randint(4,6))
     except:
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     menu_button = driver.find_element_by_id('search-form').find_element_by_tag_name("button")
     driver.execute_script("arguments[0].click();", menu_button)
@@ -53,7 +48,7 @@ def fetch_data():
     store_numbers = []
     page = 1
     while True and page < 200:
-        logger.info('Page: ' + str(page))
+        print('Page: ' + str(page))
         results = driver.find_element_by_id('search-results').find_elements_by_tag_name('li')
         for res in results:
             store_number = res.find_element_by_tag_name('img').get_attribute('data-store')
@@ -71,20 +66,20 @@ def fetch_data():
 
         page += 1
 
-    logger.info('Done loading pages..')
+    print('Done loading pages..')
 
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
     for store_number in store_numbers:
         try:
-            logger.info("Store: " + store_number)
+            print("Store: " + store_number)
             cont = session.get(api_base + store_number).json()
         except:
             continue
 
         store_number = cont['StoreNumber']
         location_name = cont['Name']
-        # logger.info(location_name)
+        # print(location_name)
         street_address = cont['StreetAddress']
 
         city = cont['City']

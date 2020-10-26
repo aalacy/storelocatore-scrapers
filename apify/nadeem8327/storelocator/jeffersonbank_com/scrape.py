@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jeffersonbank_com')
-
-
 
 
 opts=Options()
@@ -39,7 +34,7 @@ with open("data.csv",mode="w") as file:
     fl_writer=csv.writer(file,delimiter=',')
     fl_writer.writerow(hed)
     f = soup.find("div",attrs={"class":"view-content"})
-    #logger.info(f.text)
+    #print(f.text)
     all_rec = f.find_all("div",attrs={"class":"views-row"})
     for x in all_rec:
         location_name= x.find("span",attrs={"class":"field-content"}).text
@@ -64,5 +59,5 @@ driver.quit()
 
 
 
-             #logger.info(data)
+             #print(data)
             #fl_writer.writerow(data)

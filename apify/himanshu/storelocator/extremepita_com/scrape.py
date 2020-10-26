@@ -7,11 +7,6 @@ import json
 # import calendar
 
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('extremepita_com')
-
-
 
 
 
@@ -80,9 +75,9 @@ def fetch_data():
         address = store.find('address')
         list_address = list(address.stripped_strings)
         tag_address= " ".join(list_address).split(',')
-        # logger.info(tag_address)
-        # logger.info(len(tag_address))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(tag_address)
+        # print(len(tag_address))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         if len(tag_address) > 2:
             st_add = " ".join(tag_address[:-1]).split()
             street_address = " ".join(st_add[:-1]).replace('Red','').strip()
@@ -105,7 +100,7 @@ def fetch_data():
 
             if len(tag_address[0].split('  ')) > 2:
                 street_address = " ".join(tag_address[0].split('  ')[:-1]).strip()
-                # logger.info(street_address)
+                # print(street_address)
             else:
                 street_address=tag_address[0].split('  ')[0]
 
@@ -121,7 +116,7 @@ def fetch_data():
             country_code = "CA"
             hours = store.find('exturl').nextSibling
             soup_hours = BeautifulSoup(hours.text,'lxml')
-            # logger.info(soup_hours.prettify())
+            # print(soup_hours.prettify())
             h = []
             for hr in soup_hours.find_all('p'):
                 hour = hr.text.replace('\n' ,'  ')
@@ -138,8 +133,8 @@ def fetch_data():
             #     continue
             # addresses.append(store_number)
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
     #################################################
@@ -199,8 +194,8 @@ def fetch_data():
         #     continue
         # addresses.append(store_number)
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

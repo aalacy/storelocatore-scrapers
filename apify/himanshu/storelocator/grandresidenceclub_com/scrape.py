@@ -7,11 +7,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('grandresidenceclub_com')
-
-
 
 
 def write_output(data):
@@ -44,8 +39,8 @@ def fetch_data():
             lambda x: x.find_element_by_xpath("//div[text()='Destination']"))
         time.sleep(3)
         soup = BeautifulSoup(driver.page_source, "lxml")
-        # logger.info(soup.find('div', {'class': 'js-property-list-container'}).prettify())
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print(soup.find('div', {'class': 'js-property-list-container'}).prettify())
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         for location in soup.find('div', {'class': 'js-property-list-container'}).find_all("div", {"data-brand": str(brand_id)}, recursive=False):
             if location["data-brand"] != brand_id:
                 continue
@@ -63,10 +58,10 @@ def fetch_data():
             lng = json.loads(location["data-property"])["longitude"]
             detail_id = location.find(
                 "span", {"class": "l-property-name"}).parent.parent["href"].split("=")[-1]
-            # logger.info(detail_id)
+            # print(detail_id)
             page_url = "https://www.marriott.com/" + str(detail_id)
-            # logger.info(page_url)
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print(page_url)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             store = []
             store.append("https://grandresidenceclub.com")
             store.append(name if name else "<MISSING>")
@@ -97,8 +92,8 @@ def fetch_data():
                      str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
-            # logger.info("data ==" + str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data ==" + str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
             yield store
         # if len(soup.find('div', {'class': 'js-property-list-container'}).find_all("div", {"data-brand": str(brand_id)})) <= 0:
@@ -132,10 +127,10 @@ def fetch_data():
             lng = json.loads(location["data-property"])["longitude"]
             detail_id = location.find(
                 "span", {"class": "l-property-name"}).parent.parent["href"].split("=")[-1]
-            # logger.info(detail_id)
+            # print(detail_id)
             page_url = "https://www.marriott.com/" + str(detail_id)
-            # logger.info(page_url)
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print(page_url)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             store = []
             store.append("https://grandresidenceclub.com")
             store.append(name if name else "<MISSING>")
@@ -165,8 +160,8 @@ def fetch_data():
                      str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
-            # logger.info("data ==" + str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data ==" + str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         # if len(soup.find('div', {'class': 'js-property-list-container'}).find_all("div", {"data-brand": str(brand_id)})) <= 0:
         #     break

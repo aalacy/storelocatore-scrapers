@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sharpeclothing_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +28,7 @@ def fetch_data():
             clng = line.split('var marker_object = cspm_new_pin_object')[1].split(',')[3].strip()
             coords.append(cid + '|' + clat + '|' + clng)
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'sharpeclothing.com'
         typ = '<MISSING>'
         hours = ''

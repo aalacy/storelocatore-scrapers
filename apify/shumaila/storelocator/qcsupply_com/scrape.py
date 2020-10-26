@@ -4,11 +4,6 @@ import string
 import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('qcsupply_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -54,11 +49,11 @@ def fetch_data():
         hours = ''
         link = 'https://www.qcsupply.com'+loc['website'].split('-',1)[0]+'/'+loc['website'].split('-',1)[1]
         link = link.replace('\\','')
-        #logger.info(link)
+        #print(link)
         for hr in hourlist:
             day = hr
             hr = hourlist[hr]
-            #logger.info(hr)            
+            #print(hr)            
             temp = (int)(hr['to']['hours'])
             if temp > 12:
                 temp = temp-12
@@ -100,7 +95,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         #input()
         
@@ -113,9 +108,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

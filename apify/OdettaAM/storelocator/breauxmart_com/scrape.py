@@ -2,11 +2,6 @@ import time
 import csv
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('breauxmart_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +25,7 @@ def fetch_data():
     url = 'https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=c9de29dbcae8efaea902e85213fd35b3'
     stores = session.get(url, headers=headers, verify=False).json()['items']
    
-    logger.info(len(stores))
+    print(len(stores))
     for i in range(len(stores)):
         location_name = stores[i]['name']
         street_address = stores[i]['address_1']
@@ -58,7 +53,7 @@ def fetch_data():
               longitude,
               hours_of_op.replace('\n',' ')
             ])
-        #logger.info(data[i])
+        #print(data[i])
 
     #time.sleep(3)
     

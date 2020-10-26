@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('judesbarbershop_com')
-
-
 
 
 options = Options()
@@ -56,7 +51,7 @@ def fetch_data():
     hours_of_op_downtown_lansing = driver.find_element_by_css_selector('div.elementor-element.elementor-element-7c83f86c.elementor-widget.elementor-widget-text-editor').text
 
     for j in range(0,len(names)):
-            logger.info("URL..........." , names[j])
+            print("URL..........." , names[j])
             if 'barbershop/' in names[j]:
                 driver2.get(names[j])
                 time.sleep(5)
@@ -97,7 +92,7 @@ def fetch_data():
                       hours_of_op
                     ])
                 count+=1
-                logger.info(count)
+                print(count)
             else:
                 pass
 

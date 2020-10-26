@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('palsweb_com')
-
-
 
 
 
@@ -90,7 +85,7 @@ def fetch_data():
             title = title.replace("\\u2013","-")
             hours = hours.replace("<br \/>"," ")
             hours = hours.replace("<br\/>", " ")
-            logger.info([
+            print([
                     'https://palsweb.com/',
                     'https://palsweb.com/locations',
                     title,
@@ -125,7 +120,7 @@ def fetch_data():
                 ])
 
 
-    logger.info("............................")
+    print("............................")
     return data
 
 def scrape():

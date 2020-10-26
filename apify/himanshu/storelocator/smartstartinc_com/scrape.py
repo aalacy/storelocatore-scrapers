@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('smartstartinc_com')
-
-
 
 
 
@@ -114,7 +109,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         locations_url = "https://webapi.smartstartinc.com/api/Shared/StoreLocations/LookupByZip" \
                         "?companyId=" + str(company_id) + "&countryISOCode=US&zipCode=" + \

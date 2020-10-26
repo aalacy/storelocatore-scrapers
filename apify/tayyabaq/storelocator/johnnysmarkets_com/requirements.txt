@@ -1,4 +1,3 @@
 usaddress
 selenium
 requests
-sglogging

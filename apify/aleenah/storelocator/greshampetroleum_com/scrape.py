@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('greshampetroleum_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,8 +26,8 @@ def fetch_data():
             city=addr[1]
         else:
             city = loc['name'].split('-')[-1].strip()
-        logger.info(addr)
-        logger.info(loc['name'])
+        print(addr)
+        print(loc['name'])
         sz=addr[-1]
         del addr[-1]
         sz=sz.strip().split(' ')
@@ -41,8 +36,8 @@ def fetch_data():
         state=' '.join(sz)
 
         street=' '.join(addr).replace(city,'').replace('\xa0','')
-        logger.info(street)
-        logger.info(city)
+        print(street)
+        print(city)
 
         if loc['phone'] =='':
             phone='<MISSING>'

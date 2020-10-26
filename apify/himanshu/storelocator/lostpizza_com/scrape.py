@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lostpizza_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,19 +27,19 @@ def fetch_data():
     for index,i in enumerate(data,start=0):
         page_url = i.find("a")['href']
         r1 = session.get(page_url)
-        # logger.info(page_url)
+        # print(page_url)
         soup1= BeautifulSoup(r1.text,"lxml")
         log = soup1.find("iframe")["src"].split("2d")[1].split("!3d")[0]
         lat = soup1.find("iframe")["src"].split("2d")[1].split("!3d")[1].split("!2m")[0]
         full_address = list(i.stripped_strings)
-        # logger.info(len(full_address))
-        # logger.info(full_address[2])
+        # print(len(full_address))
+        # print(full_address[2])
         tem_var =[]
         if len(full_address)== 4:
             store_name.append(list(i.h1.stripped_strings)[0])
             street_address = list(i.stripped_strings)[1]
             phone =  list(i.stripped_strings)[2]
-            # logger.info(phone)
+            # print(phone)
             city="<MISSING>"
             state = "<MISSING>"
             zipcode="<MISSING>"

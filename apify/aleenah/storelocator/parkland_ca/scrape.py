@@ -1,11 +1,6 @@
 import csv
 from bs4 import BeautifulSoup
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('parkland_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -51,7 +46,7 @@ def fetch_data():
             addr=tex[2].split(",")
             cities.append(addr[0])
             addr=addr[1].strip().split("  ")
-            logger.info(addr)
+            print(addr)
             states.append(addr[0])
             zips.append(addr[1])
             try:
@@ -59,7 +54,7 @@ def fetch_data():
             except:
                 phones.append("<MISSING>")
 
-            logger.info(tex)
+            print(tex)
     all = []
     for i in range(0, len(locs)):
         row = []

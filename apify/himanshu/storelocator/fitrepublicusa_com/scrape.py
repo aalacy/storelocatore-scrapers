@@ -5,11 +5,6 @@ import re
 import json
 import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fitrepublicusa_com')
-
-
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,7 +27,7 @@ def fetch_data():
     for i in k:
         store=[]
         kp = i.find("a")
-        # logger.info(i.find("strong"))
+        # print(i.find("strong"))
         if kp != None:
             link = kp['href']
             
@@ -50,7 +45,7 @@ def fetch_data():
         else:
             lat = "<MISSING>"
             lng = '<MISSING>'
-    # logger.info(_dict)
+    # print(_dict)
     data = list(soup.find_all("div",{"class":"sqs-block-content"})[3].stripped_strings)
     del data[0]
     for i in range(0,len(data),4):

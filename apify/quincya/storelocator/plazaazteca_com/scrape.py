@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('plazaazteca_com')
-
-
 
 
 def get_driver():
@@ -42,8 +37,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	headings = base.findAll('h3', attrs={'class': 'header-4'})
 	details = base.findAll('div', attrs={'class': 'row location'})
@@ -56,7 +51,7 @@ def fetch_data():
 		if "*" in location_name:
 			location_name = location_name[:location_name.find("*")].strip()
 		location_type = "<MISSING>"	
-		logger.info(location_name)
+		print (location_name)
 
 		raw_data = str(details[index].find('div', attrs={'class': 'col-xs-6 address-info'}).p).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
 		street_address = raw_data[0].replace('Â','').strip()

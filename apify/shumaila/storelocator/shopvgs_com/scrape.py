@@ -4,11 +4,6 @@ import csv
 import string
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shopvgs_com')
-
-
 
 
 def write_output(data):
@@ -30,7 +25,7 @@ def fetch_data():
     url = 'https://www.shopvgs.com/locations'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    #logger.info(soup)
+    #print(soup)
     repo_list = soup.findAll('div',{'class':'store'})
 
     soup = str(soup)
@@ -102,7 +97,7 @@ def fetch_data():
             hdetail = hdetail.find('tbody')
             rows = hdetail.findAll('tr')
             for row in rows:
-                # logger.info(row.text)
+                # print(row.text)
                 td = row.findAll('td')
                 hours = hours + td[0].text + "  " + td[1].text + "|"
 
@@ -123,27 +118,27 @@ def fetch_data():
 
         except:
             ltype = "<MISSING>"
-        #logger.info(link)
+        #print(link)
         start = link.find("locations")
         start = link.find("/",start)+2
         start = link.find("/", start)+1
         store = link[start:len(link)]
-        #logger.info(store)
+        #print(store)
 
 
-        #logger.info(address)
-        #logger.info(link)
-        #logger.info(title)
-        #logger.info(street)
-        #logger.info(city)
-        #logger.info(state)
-        #logger.info(pcode)
-        #logger.info(phone)
-        #logger.info(hours)
-        #logger.info(ltype)
-        #logger.info(lat)
-        #logger.info(longt)
-        #logger.info("....................")
+        #print(address)
+        #print(link)
+        #print(title)
+        #print(street)
+        #print(city)
+        #print(state)
+        #print(pcode)
+        #print(phone)
+        #print(hours)
+        #print(ltype)
+        #print(lat)
+        #print(longt)
+        #print("....................")
         data.append([
             'https://www.shopvgs.com/',
             link,

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gertrudehawkchocolates_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,14 +25,14 @@ def fetch_data():
     res=session.get("https://gertrudehawkchocolates.com/find_a_store")
     soup = BeautifulSoup(res.text, 'html.parser')
     stores=re.findall(r'"items":(.*}])',str(soup))[0].split('{"id"')
-    logger.info(len(stores))
+    print(len(stores))
     del stores[0]
 
     for store in stores:
         id,loc,country,city,zip,street,lat,long =re.findall(':"(.*)","name":"(.*)","country":"(.*)","city":"(.*)","zip":"(.*)","address":"(.*)","status":".*","lat":"(.*)","lng":"(.*)","photo"',store)[0]
         state=re.findall(r'State: (.*) <br>',store)[0]
         phone=re.findall(r'"phone":"(.*)","email',store)[0].split(' ')[0]
-        #logger.info(phone)
+        #print(phone)
         timi=re.findall(r'"schedule_string":"(.*)","rating"',store)[0].replace('\\','')
         if len(zip)==4:
             zip="0"+zip

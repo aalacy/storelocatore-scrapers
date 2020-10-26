@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('f45training_com')
-
-
 
 
 session = SgRequests()
@@ -41,7 +36,7 @@ def fetch_data():
                 store = []
                 store.append("https://f45training.com")
                 store.append(current_store["name"])
-                logger.info(current_store["slug"])
+                print(current_store["slug"])
                 if current_store["location"] == "":
                     continue
                 if current_store["country"] == "United States":
@@ -65,7 +60,7 @@ def fetch_data():
                     phone = "<MISSING>"
                 else:
                     phone = location_soup.find("a",{"href":re.compile('tel:')}).text
-                logger.info(phone)
+                print(phone)
                 store.append(phone.split("/")[0].split(",")[0].replace("(JF45)","") if phone != "" else "<MISSING>")
                 store.append("f45")
                 store.append(current_store["_geoloc"]["lat"])

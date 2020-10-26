@@ -7,11 +7,6 @@ import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sunriserecords_com')
-
-
 
 
 def get_driver():
@@ -44,10 +39,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        logger.info("Got today page")
+        print("Got today page")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     driver = get_driver()
     time.sleep(2)
@@ -65,7 +60,7 @@ def fetch_data():
         for store in stores:
             try:
                 location_name = store.find("td").text.strip()
-                logger.info(location_name)
+                print(location_name)
             except:
                 continue
 

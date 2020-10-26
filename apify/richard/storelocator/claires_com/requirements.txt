@@ -1,4 +1,3 @@
 requests
 sgzip
 uszipcode
-sglogging

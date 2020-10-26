@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('americafirst_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -30,7 +25,7 @@ def fetch_data():
     data_8 = (soup.find_all("div",{"class":"h4"}))
     for i in data_8 :
         location_name = i.text.strip()
-        # logger.info(location_name)
+        # print(location_name)
         data = (i.text.strip().replace(" ","-").lower().replace("'","").replace(".","").replace("park-city,-the-market-at-park-city","the-market-at-park-city").replace("boise-office","boise"))
         link = ("https://www.americafirst.com/content/afcu/en/about/branches/"+str(data)+"-branch/_jcr_content/main/column_container_add/col-1/branch-details-info.nocache.html").replace("park-city,-the-market-at-park-city","the-market-at-park-city").replace("boise-office","boise").replace("marriott-slaterville-12th-st","marriott-slaterville-12th-street")
         soup = bs(session.get(link).text, 'lxml')

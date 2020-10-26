@@ -5,11 +5,6 @@ import re
 # import json
 # import sgzip
 # import calendar
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kosama_com')
-
-
 
 
 
@@ -107,7 +102,7 @@ def fetch_data():
                 else:
                     latitude = c1.pop(-2)
                     longitude = c2.pop(-2)
-                # logger.info(latitude,longitude,page_url)
+                # print(latitude,longitude,page_url)
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
@@ -116,8 +111,8 @@ def fetch_data():
                 #     continue
                 # addresses.append(store_number)
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
         except:

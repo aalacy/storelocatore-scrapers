@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thetamalekitchen_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://www.thetamalekitchen.com"
     r = session.get("https://www.thetamalekitchen.com/locations", headers=headers)
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -57,7 +52,7 @@ def fetch_data():
     for script in soup.find('div', {'class': 'style-jskuum6dinlineContent'}).find_all('div', {'class': 'txtNew'}):
         list_store_data = list(script.stripped_strings)
 
-        logger.info(str(len(list_store_data)) + ' = list_store_data === ' + str(list_store_data))
+        print(str(len(list_store_data)) + ' = list_store_data === ' + str(list_store_data))
         street_address = list_store_data[0].split(',')[0]
 
         hours_of_operation = '<MISSING>'
@@ -96,8 +91,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        logger.info("data = " + str(store))
-        logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print("data = " + str(store))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('elmcroft_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,13 +21,13 @@ def fetch_data():
     while(True):
         res= session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #logger.info(soup)
+        #print(soup)
         stores = soup.find_all('div', {'class': 'col-md-12 results'})
-        logger.info(url)
+        print(url)
         for store in stores:
             adr=store.find('address')
             data = adr.text.replace("Get Directions","").replace("View Community","").strip().replace("\n\n","\n").split("\n")
-            #logger.info(data)
+            #print(data)
             loc=data[0].strip()
             street=data[1].strip()
             city=data[2].replace(",","").strip()
@@ -41,7 +36,7 @@ def fetch_data():
             phone=data[5].strip()
 
             coord=adr.find_all('a')[1].get('href').split('@')[-1].split(",")
-            #logger.info(coord)
+            #print(coord)
             lat=coord[0]
             long=coord[1]
             types=store.find('div', {'class': 'living-options-list'}).find_all('li')
@@ -71,7 +66,7 @@ def fetch_data():
         except:
 
             break
-    logger.info(len(all))
+    print(len(all))
     return all
 
 def scrape():

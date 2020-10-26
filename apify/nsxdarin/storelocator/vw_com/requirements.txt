@@ -1,3 +1,2 @@
 sgzip
 sgrequests
-sglogging

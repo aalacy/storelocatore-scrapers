@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('whbm_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +25,7 @@ def fetch_data():
     for loc in locs:
         stub = loc.rsplit('/',1)[1]
         jsonurl = 'https://whitehouse.brickworksoftware.com/en_US/api/v3/stores/' + stub
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'whbm.com'
         typ = '<MISSING>'
         hours = ''

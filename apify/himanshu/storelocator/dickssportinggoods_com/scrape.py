@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dickssportinggoods_com')
-
-
 
 
 
@@ -34,7 +29,7 @@ def fetch_data():
         pass
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find_all("poi"):
-        # logger.info(location)
+        # print(location)
         name = location.find("name").text.strip()
         address = ""
         city = ""
@@ -79,7 +74,7 @@ def fetch_data():
         page_request = session.get(page_url,headers=headers)
         page_soup = BeautifulSoup(page_request.text,"lxml")
         hour_tmp =page_soup.find("div",{"class":"hours-wrapper"})
-        # logger.info(hour_tmp)
+        # print(hour_tmp)
         # hours = " ".join(list(page_soup.find("div",{"class":"hours-wrapper"}).stripped_strings))
         if hour_tmp !=None:
 

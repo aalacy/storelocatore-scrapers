@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('caasco_com')
-
-
 
 
 session = SgRequests()
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -41,7 +36,7 @@ def fetch_data():
 
     r = session.get(get_url, headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")    
-    # logger.info(soup)
+    # print(soup)
     main =soup.find("input", {'id': 'locations'})['value']
 
     json_obj = json.loads(main)

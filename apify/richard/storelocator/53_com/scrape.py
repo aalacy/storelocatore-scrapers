@@ -5,11 +5,6 @@ import sgzip
 from Scraper import Scrape
 
 # from uszipcode import SearchEngine
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('53_com')
-
-
 # search = SearchEngine(simple_zipcode=True)
 # zip_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
 # zipcode_list = [zipcode.zipcode for zipcode in zip_list]
@@ -46,18 +41,18 @@ class Scraper(Scrape):
                         break
             except:
                 if iteration == 3:
-                    logger.info(f'Last try: Tried getting info {iteration} time(s) for {zipcode}.')
+                    print(f'Last try: Tried getting info {iteration} time(s) for {zipcode}.')
                     break
                 else:
-                    logger.info(f'Tried getting info {iteration} time(s) for {zipcode}.')
+                    print(f'Tried getting info {iteration} time(s) for {zipcode}.')
                     await asyncio.sleep(2)
                 pass
         if data:
             if 'locations' in data.keys():
                 self.stores.extend(data['locations'])
-                logger.info(f"{len(data)} locations scraped for {params[0][1]}")
+                print(f"{len(data)} locations scraped for {params[0][1]}")
             else:
-                logger.info(f"0 locations scraped for {params[0][1]}")
+                print(f"0 locations scraped for {params[0][1]}")
 
 
     async def get_all_locations(self):

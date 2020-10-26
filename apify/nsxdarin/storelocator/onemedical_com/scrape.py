@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('onemedical_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,7 +23,7 @@ def fetch_data():
         if '<a href="/locations/' in line and 'class="link-list' in line:
             code = line.split('/locations/')[1].split('"')[0]
             lurl = 'https://www.onemedical.com/api/locations/?code=' + code
-            logger.info(('Pulling Region %s...' % code))
+            print(('Pulling Region %s...' % code))
             r2 = session.get(lurl, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
             for line2 in r2.iter_lines(decode_unicode=True):
@@ -42,7 +37,7 @@ def fetch_data():
                             ilng = item.split('\\"longitude\\": ')[1].split(',')[0]
                             locs.append('https://www.onemedical.com/locations/' + code + '/' + item.split('"slug\\": \\"')[1].split('\\')[0] + '|' + ilat + '|' + ilng + '|' + iadd)
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc.split('|')[0]))
+        print(('Pulling Location %s...' % loc.split('|')[0]))
         website = 'onemedical.com'
         purl = loc.split('|')[0]
         typ = '<MISSING>'

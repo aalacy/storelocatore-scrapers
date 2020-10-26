@@ -4,11 +4,6 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('storagepro_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -44,23 +39,23 @@ def fetch_data():
     #        continue
     #    state ='https://www.storagepro.com/storage-units/'+ s.split('"',1)[0]+'/'
     #    statelist.append(state)
-    #    #logger.info(state)'''
+    #    #print(state)'''
     divlist = soup.select("a[href*=storage-units]")
     for div in divlist:
         divlink = 'https://www.storagepro.com' + div['href']
         statelist.append(divlink)
         
     
-    #logger.info(len(divlist))
+    #print(len(divlist))
     for div in statelist:
         divlink = div #'https://www.storagepro.com' + div['href']
-        #logger.info(divlink)
+        #print(divlink)
         #continue
         r = session.get(divlink, headers=headers, verify=False)
         time.sleep(2)
         soup = BeautifulSoup(r.text,'html.parser')
         linklist = soup.findAll('a',{'class':'location-link'})
-        #logger.info(len(linklist))
+        #print(len(linklist))
         #input()
         flag = 0
         if len(linklist) == 0:
@@ -77,7 +72,7 @@ def fetch_data():
                 soup = BeautifulSoup(r.text,'html.parser')
                 link = r.url
             
-            logger.info(link)
+            print(link)
             det = soup.find('div',{'class':'facility-card'})
             title = det.find('h2').text
             address = det.find('div',{'class':'facility-address'}).text.replace('\n',' ').strip().replace('Located off','')
@@ -140,7 +135,7 @@ def fetch_data():
                         longt,
                         hours.replace('AM',' AM ').replace('PM',' PM ').replace('Closed','Closed ')
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
                     
     

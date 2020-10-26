@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('etgrill_com')
-
-
 
 
 opts=Options()
@@ -36,7 +31,7 @@ tx = tx[1]
 tx = tx.split(",")
 latitude = tx[0]
 longitude = tx[1]
-#logger.info(latitude,longitude)
+#print(latitude,longitude)
 all_rec = soup.find('section',attrs={"class":"page__content"})
 with open("data.csv",mode="w") as file:
     fl_writer=csv.writer(file,delimiter=',')
@@ -76,7 +71,7 @@ with open("data.csv",mode="w") as file:
     tx = tx.split(",")
     latitude = tx[0]
     longitude = tx[1]
-    #logger.info(latitude,longitude)
+    #print(latitude,longitude)
     all_rec = soup.find('section',attrs={"class":"page__content"})
     pp = all_rec.find_all('div',attrs={"class":"grid__item"})
     dta = pp[0].find_all("p")
@@ -98,6 +93,6 @@ with open("data.csv",mode="w") as file:
     data=["www_etgrill_com","<MISSING>",street_address,city,state,zip_code,
     "US","<MISSING>",contact_number,"<MISSING>",latitude,longitude,timing]
     fl_writer.writerow(data)
-    #logger.info(data)
+    #print(data)
 
 driver.quit()

@@ -3,11 +3,6 @@ import re
 from sgselenium import SgSelenium
 import json
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('highlandparkmarket_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,11 +30,11 @@ def fetch_data():
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
     if '860-674-9536' in str(driver.page_source):
-        logger.info('here')
+        print('here')
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores = soup.find_all('div', {'class': 'row sqs-row'})
     #stores = driver.find_elements_by_class_name('row sqs-row')
-    logger.info(len(stores))
+    print(len(stores))
     del stores[8]
     del stores[7]
     del stores[6]
@@ -50,15 +45,15 @@ def fetch_data():
     for store in stores:
         content = re.sub(r'([a-z])([A-Z])',r'\1 \2',store.text.strip())
         content = re.sub(r'([a-z])(\d)', r'\1 \2',content)
-        logger.info(len(content))
-        logger.info(content)
+        print(len(content))
+        print(content)
         jc=coords[stores.index(store)].get('data-block-json')
         j_coords = json.loads(jc)
         location_name = re.findall(r'([a-zA-Z]+) \d',content.split(',')[0])[0]
         content=content.replace(str(location_name),'')
         lat = j_coords['location']['markerLat']
         longit = j_coords['location']['markerLng']
-        logger.info(lat,longit)
+        print(lat,longit)
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -70,7 +65,7 @@ def fetch_data():
 
 
     driver.quit()
-    logger.info(all_store_data)
+    print(all_store_data)
     return all_store_data
 
 def scrape():

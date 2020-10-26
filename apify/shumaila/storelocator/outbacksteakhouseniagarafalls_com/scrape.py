@@ -4,11 +4,6 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('outbacksteakhouseniagarafalls_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,12 +37,12 @@ def fetch_data():
     page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text,"html.parser")
     repo_list = soup.findAll("div",{'class':'split'})
-    logger.info(len(repo_list))
+    print(len(repo_list))
     for repo in repo_list:
         try:
             coord = repo.find('iframe')
             coord = coord['src']
-            #logger.info(coord)
+            #print(coord)
             start = coord.find('!2d')+3
             end = coord.find('!3d',start)
             lat = coord[start:end]
@@ -68,9 +63,9 @@ def fetch_data():
             street,phone = re.split('•',address,1)
             phone = phone.lstrip()
 
-            #logger.info(street)
+            #print(street)
             street = street.replace(title,"")
-            #logger.info(title)
+            #print(title)
             title = "Outback Steakhouse " + title
             if hours.find('closed') > -1:
                 hours = 'Currently Closed'

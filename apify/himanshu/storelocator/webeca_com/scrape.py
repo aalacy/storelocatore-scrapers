@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('webeca_com')
-
-
 
 
 
@@ -78,7 +73,7 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
 
-                logger.info("data=====",str(store))
+                print("data=====",str(store))
                 # return_main_object.append(store)
                 yield store
 

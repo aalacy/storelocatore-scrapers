@@ -5,11 +5,6 @@ from lxml import etree
 import json
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fasteddiesbilliards_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -85,7 +80,7 @@ def fetch_data():
     response = etree.HTML(source)
     store_list = response.xpath('//div[@id="locations"]//a/@href')
     for store_link in store_list[:-1]:
-        #logger.info(store_link)
+        #print(store_link)
         if store_link.find('round-rock') > -1:
             store_link = 'https://fasteddiesbilliards.com/round-rock-tx'
         store = etree.HTML(session.get(store_link,headers=headers).text)
@@ -119,7 +114,7 @@ def fetch_data():
                 output.append('<INACCESSIBLE>') #longitude
         store_hours = validate(detail[:-2]).replace('18 years old and up, ', '').replace('|', '')
         output.append(get_value(store_hours)) #opening hours
-        #logger.info(output)
+        #print(output)
         output_list.append(output)
     return output_list
 

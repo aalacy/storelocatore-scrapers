@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jysk_ca')
-
-
 
 
 session = SgRequests()
@@ -46,7 +41,7 @@ def fetch_data():
         store.append(hours.strip().lstrip() if hours.strip().lstrip() != "" else "<MISSING>")
         store.append("<MISSING>")
         yield store
-        # logger.info(hours)
+        # print(hours)
 
 
 

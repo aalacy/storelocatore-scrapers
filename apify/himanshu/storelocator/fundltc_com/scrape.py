@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fundltc_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -34,7 +29,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find("table",{"width":"100%"}).find_all("a"):
         page_url = link['href']
-        # logger.info(page_url)
+        # print(page_url)
         store_number = page_url.split("=")[-1]
 
         location_r = session.get(page_url)
@@ -45,7 +40,7 @@ def fetch_data():
         try:
             street_address = addr[0]
         except:
-            # logger.info("No data..skipping")
+            # print("No data..skipping")
             continue
         city = addr[1].split(",")[0]
         state = addr[1].split(",")[1].split(" ")[1]
@@ -67,8 +62,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
-        # logger.info("data==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         yield store
 

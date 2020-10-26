@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mycfe_com')
-
-
 
 
 
@@ -48,7 +43,7 @@ def fetch_data():
         latitude = val['Address']['Latitude']
         longitude = val['Address']['Longitude']
         r = session.get(base_url+'locations-hours/detail/'+val['UrlName'],headers = header)
-        # logger.info(base_url+'locations-hours/detail/'+val['UrlName'])
+        # print(base_url+'locations-hours/detail/'+val['UrlName'])
         # exit()
         soup = BeautifulSoup(r.text,"lxml")
 
@@ -80,7 +75,7 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
 
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        logger.info("====",str(store))
+        print("====",str(store))
 
         return_main_object.append(store)
     return return_main_object

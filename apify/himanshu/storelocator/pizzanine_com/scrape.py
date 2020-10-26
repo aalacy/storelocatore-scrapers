@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzanine_com')
-
-
 
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -55,16 +50,16 @@ def fetch_data():
         "https://api.storepoint.co/v1/15acd219ce19bf/locations?rq", headers=headers)
 
     json_data = r.json()
-    # logger.info(json_data['results']['locations'])
+    # print(json_data['results']['locations'])
     for x in json_data['results']['locations']:
 
         location_name = x['name']
         address = x['streetaddress'].split(',')
-        # logger.info(len(address))
-        # logger.info(address)
+        # print(len(address))
+        # print(address)
         if len(address) == 2:
-            # logger.info(len(address))
-            # logger.info(address)
+            # print(len(address))
+            # print(address)
             street_address = " ".join(
                 x['streetaddress'].split(',')[0].split()[:-1])
             city = "".join(x['streetaddress'].split(',')[0].split()[-1])
@@ -75,43 +70,43 @@ def fetch_data():
             else:
                 state = "".join(state_zipp[0])
                 zipp = "".join(state_zipp[-1])
-            # logger.info(state, zipp)
+            # print(state, zipp)
         elif len(address) == 3:
-            # logger.info(len(address))
-            # logger.info(address)
+            # print(len(address))
+            # print(address)
             street_address = "".join(address[0])
             city = "".join(address[1])
             state_zipp = address[-1].split()
-            # logger.info(state_zipp)
-            # logger.info(len(state_zipp))
+            # print(state_zipp)
+            # print(len(state_zipp))
             if len(state_zipp) == 1:
                 state = "".join(state_zipp)
                 zipp = "<MISSING>"
             else:
                 state = "".join(state_zipp[0])
                 zipp = "".join(state_zipp[-1])
-            # logger.info(state, zipp)
+            # print(state, zipp)
         else:
-            # logger.info(len(address))
-            # logger.info(address)
+            # print(len(address))
+            # print(address)
             street_address = " ".join(address[:-2])
             city = "".join(address[-2])
             state = "".join(address[-1])
             zipp = "<MISSING>"
-            # logger.info(street_address, city, state, zipp)
+            # print(street_address, city, state, zipp)
         if x['phone'] is not None:
             phone = x['phone']
-            # logger.info(phone)
+            # print(phone)
         else:
             phone = "<MISSING>"
         if x['loc_lat'] is not None:
             latitude = x['loc_lat']
-            # logger.info(latitude)
+            # print(latitude)
         else:
             longitude = "<MISSING>"
         if x['loc_long'] is not None:
             longitude = x['loc_long']
-            # logger.info(longitude)
+            # print(longitude)
         else:
             longitude = "<MISSING>"
         hours_of_operation = f'monday: {x["monday"]}' + "   " + f'tuesday: {x["tuesday"]}' + "  " + f'wednesday: {x["wednesday"]}' + "  " + \
@@ -125,8 +120,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        logger.info("data = " + str(store))
-        logger.info(
+        print("data = " + str(store))
+        print(
             '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

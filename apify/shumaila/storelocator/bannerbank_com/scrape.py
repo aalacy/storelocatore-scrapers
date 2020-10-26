@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bannerbank_com')
-
-
 
 
 def write_output(data):
@@ -53,7 +48,7 @@ def fetch_data():
             try:
                 geo= soup.find('span', {'class': 'coordinates'})
                 coord = geo.findAll('meta')
-                logger.info("state = ", s, " cities = ", c, " branch= ", b)
+                print("state = ", s, " cities = ", c, " branch= ", b)
                 extractinfo(url, cities, soup)
                 b += 1
 
@@ -68,8 +63,8 @@ def fetch_data():
                     soup = BeautifulSoup(page.text, "html.parser")
                     geo = soup.find('span', {'class': 'coordinates'})
                     coord = geo.findAll('meta')
-                    logger.info("brancccccccccccccccccccccccch")
-                    logger.info("state = ", s, " cities = ", c, " branch= ", b)
+                    print("brancccccccccccccccccccccccch")
+                    print("state = ", s, " cities = ", c, " branch= ", b)
                     extractinfo(url, blink, soup)
 
                     b += 1
@@ -83,8 +78,8 @@ def fetch_data():
         s += 1
 
     temp = b - 1
-    logger.info("total branches = ", temp)
-    logger.info(endprint);
+    print("total branches = ", temp)
+    print(endprint);
     return data
 
 def extractinfo(url, link, soup):
@@ -129,19 +124,19 @@ def extractinfo(url, link, soup):
         ltype = "Branch | ATM"
 
 
-    logger.info(title)
-    logger.info(store)
-    logger.info(ltype)
-    logger.info(street)
-    logger.info(city)
-    logger.info(state)
-    logger.info(pcode)
-    logger.info(ccode)
-    logger.info(phone)
-    logger.info(lat)
-    logger.info(longt)
-    logger.info(hours)
-    logger.info('..................')
+    print(title)
+    print(store)
+    print(ltype)
+    print(street)
+    print(city)
+    print(state)
+    print(pcode)
+    print(ccode)
+    print(phone)
+    print(lat)
+    print(longt)
+    print(hours)
+    print('..................')
 
 
 

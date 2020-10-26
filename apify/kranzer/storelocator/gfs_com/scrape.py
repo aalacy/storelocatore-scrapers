@@ -3,11 +3,6 @@ import requests
 import json
 from w3lib.html import remove_tags
 import base
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gfs_com')
-
-
 
 class Scrape(base.Spider):
     data = []
@@ -22,7 +17,7 @@ class Scrape(base.Spider):
                 type = "Gordon Restaurant Market"
             elif type == "store":
                 type = "Gordon Food Service Stores"
-                #logger.info("here")
+                #print("here")
             else:
                 continue
             item = base.Item(location)

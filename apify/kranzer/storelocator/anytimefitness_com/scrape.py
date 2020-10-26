@@ -12,11 +12,6 @@ from urllib.parse import urljoin
 import w3lib
 from w3lib.html import remove_tags
 from lxml import etree
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('anytimefitness_com')
-
-
 crawled = set()
 class Scrape(base.Spider):
     async def _fetch_store(self, session, url):

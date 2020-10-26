@@ -3,11 +3,6 @@ import re
 import csv
 import requests
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shopjustice_com')
-
-
 
 
 def write_output(data):
@@ -80,7 +75,7 @@ def fetch_data():
                     add1 = soup1.find("span", class_="c-address-street-2")
                     addr1 = add1.text
                     street = addr + addr1
-                    logger.info(street)
+                    print(street)
 
                 except Exception as e:
                     street = "<MISSING>"
@@ -173,7 +168,7 @@ def fetch_data():
         return data_list
 
     except Exception as e:
-        logger.info(str(e))
+        print(str(e))
 
 def scrape():
     data = fetch_data()

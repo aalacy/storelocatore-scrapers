@@ -5,11 +5,6 @@ import time
 from random import randint
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('souvla_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,8 +29,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -46,7 +41,7 @@ def fetch_data():
 
 		locator_domain = "souvla.com"
 		location_name = store['name']
-		logger.info(location_name)
+		print(location_name)
 
 		street_address = store['address']['streetAddress']
 		city = store['address']['addressLocality']
@@ -71,8 +66,8 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		latitude = base.find(class_="gmaps")['data-gmaps-lat']
 		longitude = base.find(class_="gmaps")['data-gmaps-lng']

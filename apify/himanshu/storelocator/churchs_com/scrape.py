@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('churchs_com')
-
-
 
 
 
@@ -40,19 +35,19 @@ def fetch_data():
             "https://locations.churchs.com/" + states["href"])
         state_soup = BeautifulSoup(state_request.text, "lxml")
         for city in state_soup.find_all("a", {'class': "Directory-listLink"}):
-            #logger.info("https://locations.churchs.com/" + city["href"].replace("../",""))
+            #print("https://locations.churchs.com/" + city["href"].replace("../",""))
             city_request = session.get(
                 "https://locations.churchs.com/" + city["href"].replace("../", ""))
             city_soup = BeautifulSoup(city_request.text, "lxml")
             for location in city_soup.find_all("a", {'class': "Teaser-titleLink"}):
 
-                # logger.info("https://locations.churchs.com/" +
+                # print("https://locations.churchs.com/" +
                 #       location["href"].replace("../", ""))
                 page_url = "https://locations.churchs.com/" + \
                     location["href"].replace("../", "")
                 location_name = location.find(
                     "span", class_="LocationName-brand").text.strip()
-                # logger.info(location_name)
+                # print(location_name)
                 location_request = session.get(
                     "https://locations.churchs.com/" + location["href"].replace("../", ""))
                 location_soup = BeautifulSoup(location_request.text, "lxml")
@@ -80,17 +75,17 @@ def fetch_data():
                     try:
                         hours = " ".join(list(location_soup.find(
                             "table", {'class': "c-hours-details"}).stripped_strings))
-                        # logger.info(hours)
-                        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                        # print(hours)
+                        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     except:
                         hours = "<MISSING>"
-                        # logger.info("url ==" + url)
+                        # print("url ==" + url)
 
                     lat = location_soup.find(
                         "meta", {'itemprop': "latitude"})["content"]
                     lng = location_soup.find(
                         "meta", {'itemprop': "longitude"})["content"]
-                    # logger.info(state, city)
+                    # print(state, city)
                 except:
 
                     street_address = page_url.split("/")[-1]
@@ -102,7 +97,7 @@ def fetch_data():
                     lat = "<MISSING>"
                     lng = "<MISSING>"
 
-                    # logger.info(page_url)
+                    # print(page_url)
                 store = []
                 store.append("https://churchs.com")
                 store.append(location_name)
@@ -121,8 +116,8 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info("data == " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data == " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

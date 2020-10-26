@@ -6,11 +6,6 @@ import phonenumbers
 import us
 import zipcodes
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('maccosmetics_com')
-
-
 
 #### Utilities
 
@@ -20,7 +15,7 @@ def touch(path):
 
 def fail(message):
     if debug:
-        logger.info(message)
+        print(message)
     else:
         raise AssertionError(message)
 
@@ -167,7 +162,7 @@ def check_latitude_and_longitude(row):
         fail("longitude out of range: {}".format(longitude))
 
 def check_schema(data):
-    logger.info("validating output schama")
+    print("validating output schama")
     required_columns = ["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"]
     for row in data:
         for column in row:
@@ -176,19 +171,19 @@ def check_schema(data):
         for column in required_columns:
             if column not in row:
                 fail("row {} does not contain required column {}".format(row, column))
-    if not debug: logger.info("output schema looks good")
+    if not debug: print("output schema looks good")
 
 def check_duplication(data):
-    logger.info("checking for duplicate rows in the data")
+    print("checking for duplicate rows in the data")
     keys = {}
     for row in data:
         key = (row["street_address"], row["city"], row["state"], row["zip"], row["country_code"], row["location_type"])
         if key in keys:
             fail("found duplicate key {} in the data".format(key))
-    if not debug: logger.info("no duplicates found")
+    if not debug: print("no duplicates found")
 
 def check_values(data):
-    logger.info("checking for data quality issues")
+    print("checking for data quality issues")
     for row in data:
         check_latitude_and_longitude(row)
         if is_us(row):
@@ -199,7 +194,7 @@ def check_values(data):
             check_canada_state(row)
             check_canada_zip(row)
             check_canada_phone(row)
-    if not debug: logger.info("no data quality issues found")
+    if not debug: print("no data quality issues found")
 
 #### Entry Point
 

@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('janddmarket_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,7 +31,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     links = []
     linklist = soup.select("a[href*=location]")
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     for link in linklist:
         if link['href'] in links or link['href'].find('#') > -1:
@@ -56,7 +51,7 @@ def fetch_data():
         hours = ''
         for hr in hourlist:
             hours = hours + hr.text.lstrip().replace('\n','') + ' '
-        #logger.info(hours)
+        #print(hours)
         lat,longt = soup.find('a',{'class':'dmMap'})['href'].split('sll=',1)[1].split(',',1)
         
         data.append([
@@ -75,7 +70,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                 
         

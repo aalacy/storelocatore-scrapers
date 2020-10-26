@@ -5,11 +5,6 @@ import requests
 from lxml import etree
 import json
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('labambaburritos_com')
-
-
 
 
 base_url = 'http://labambaburritos.com/location'
@@ -105,7 +100,7 @@ def fetch_data():
         output.append(geo_loc[0]) #longitude
         output.append(get_value(details[5:])) #opening hours
         output_list.append(output)
-        logger.info(output)
+        print(output)
     return output_list
 
 def scrape():

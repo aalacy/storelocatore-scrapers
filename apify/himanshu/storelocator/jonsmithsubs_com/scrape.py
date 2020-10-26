@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jonsmithsubs_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://jonsmithsubs.com"
     r = session.get("https://jonsmithsubs.com/locations/", headers=headers)
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -57,16 +52,16 @@ def fetch_data():
     for script in soup.find_all("div", {'class': re.compile('col-xs-12 col-sm-6 col-md-3 item')}):
         store_url = base_url + script.find('h2').find('a')['href']
 
-        logger.info("store_url == "+store_url)
+        print("store_url == "+store_url)
 
         latitude = script['data-location'].split(',')[0]
         longitude = script['data-location'].split(',')[1]
         location_name = script.find('h2').find('a').text
 
-        # logger.info("latitude = " + latitude)
-        # logger.info("longitude = " + longitude)
-        # logger.info("location_name = " + location_name)
-        # logger.info("url = " + store_url)
+        # print("latitude = " + latitude)
+        # print("longitude = " + longitude)
+        # print("location_name = " + location_name)
+        # print("url = " + store_url)
 
         r_store = session.get(store_url, headers=headers)
         soup_store = BeautifulSoup(r_store.text, "lxml")
@@ -97,8 +92,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        logger.info("data = " + str(store))
-        logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print("data = " + str(store))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

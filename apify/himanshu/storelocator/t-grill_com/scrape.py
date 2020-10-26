@@ -4,11 +4,6 @@ import re
 import json
 import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('t-grill_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -38,7 +33,7 @@ def fetch_data():
     for card in box:
         try:
             page_url = card.find("a",{"data-ux":"ContentCardButton"})['href']
-            # logger.info(page_url)
+            # print(page_url)
             payload_link = page_url.replace("http://","").replace("hrpos.heartland.us","mobilebytes.com")
             id_url = "https://online.hrpos.heartland.us/location"
             payload_id = '{\"domain\":\"'+payload_link+'\",\"action\":\"subdomain_info\"}'

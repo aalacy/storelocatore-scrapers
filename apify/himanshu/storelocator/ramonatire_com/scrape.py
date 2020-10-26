@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ramonatire_com')
-
-
 
 
 
@@ -59,7 +54,7 @@ def fetch_data():
         tem_var.append(i['lng'].encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(i['permalink'])
-        logger.info(tem_var)
+        print(tem_var)
         return_main_object.append(tem_var)
         
 

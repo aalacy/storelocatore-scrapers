@@ -3,6 +3,6 @@ sgrequests
 beautifulsoup4==4.7.1
 usaddress==0.5.10
 jsonnet==0.15.0
+
 # uncomment if you use selenium
 # selenium==3.141.0
-sglogging

@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fitnesstogether_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -65,7 +60,7 @@ def fetch_data():
             req_json = json.loads(text)
             store_id = req_json[0]['account_number']
             loc_name = req_json[0]['name']
-            logger.info(loc_name)
+            print(loc_name)
             street_addr = req_json[0]['address']
             city = req_json[0]['city']
             state = req_json[0]['state']

@@ -5,11 +5,6 @@ import re
 import json
 import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('anixter_com')
-
-
 
 session = SgRequests()
 
@@ -72,7 +67,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            # logger.info("data======="+str(store))
+            # print("data======="+str(store))
             yield store
 
     ### CANADA Locations
@@ -80,9 +75,9 @@ def fetch_data():
     US_states = ["NL","PE","NS","NB","QC","ON","MB","SK","AB","BC","YT","NT","NU"]
     for state in US_states:
         json_data = session.get("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state), headers=headers).json()
-        # logger.info("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state))
-        # logger.info(json_data)
-        # logger.info("======================================================")
+        # print("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state))
+        # print(json_data)
+        # print("======================================================")
         for data in json_data:
             location_name = data['address']['department']
             street_address = (data['address']['line1'] +" "+ str(data['address']['line2'])).replace("None","").strip().capitalize()
@@ -122,7 +117,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            # logger.info("data======="+str(store))
+            # print("data======="+str(store))
             yield store
 
 def scrape():

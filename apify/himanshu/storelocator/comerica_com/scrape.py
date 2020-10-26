@@ -10,11 +10,6 @@ import requests_random_user_agent
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('comerica_com')
-
-
 
 
 show_logs = False
@@ -30,8 +25,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    logger.info(" ".join(map(str, args)), **kwargs)
-    logger.info("")
+    print(" ".join(map(str, args)), **kwargs)
+    print("")
 
 
 def get_time():

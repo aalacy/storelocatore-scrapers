@@ -3,11 +3,6 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lidl_co_uk')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -60,7 +55,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         lat, lng = coord[0], coord[1]
         url = URL_TEMPLATE.format(lat, lng)
         response = str(session.get(url, headers=HEADERS).content, 'utf-8')
@@ -93,7 +88,7 @@ def fetch_data():
             if 'coming soon' not in  hours_of_operation.lower() and 'under construction' not in hours_of_operation.lower():
                 locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         if len(stores) <= MAX_RESULTS:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + MAX_RESULTS + " results")

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('newfoundlandgrocerystores_ca')
-
-
 
 
 
@@ -44,7 +39,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
+    # print("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
@@ -101,7 +96,7 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append(hours if hours else "<MISSING>")
         tem_var.append("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'])
-        # logger.info(tem_var)
+        # print(tem_var)
         return_main_object.append(tem_var)
     
 

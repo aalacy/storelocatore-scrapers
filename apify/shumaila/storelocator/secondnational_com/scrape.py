@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('secondnational_com')
-
-
 
 
 def write_output(data):
@@ -30,7 +25,7 @@ def fetch_data():
     url = 'https://secondnational.com/locations/?place&latitude&longitude&type=location#038;latitude&longitude&type=location'
     flag = True
     while flag:
-        #logger.info(url)
+        #print(url)
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
         divlist = soup.findAll('div',{'class':'location-list-result'})
@@ -106,28 +101,28 @@ def fetch_data():
                     m = end + 1
 
                 ltype = temp
-                # logger.info(ltype)
+                # print(ltype)
             except:
                 ltype = "<MISSING>"
             if len(pcode)<5:
                 pcode = '0' + pcode
 
 
-            #logger.info(url)
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(ltype)
-            #logger.info(address)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(hours)
-            #logger.info(phone)
-            #logger.info(lat)
-            #logger.info(longt)
-            #logger.info(p)
-            #logger.info(".......................")
+            #print(url)
+            #print(title)
+            #print(store)
+            #print(ltype)
+            #print(address)
+            #print(street)
+            #print(city)
+            #print(state)
+            #print(pcode)
+            #print(hours)
+            #print(phone)
+            #print(lat)
+            #print(longt)
+            #print(p)
+            #print(".......................")
             p += 1
             data.append([
                 'https://secondnational.com/',

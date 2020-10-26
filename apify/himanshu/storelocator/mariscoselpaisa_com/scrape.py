@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mariscoselpaisa_com')
-
-
  
 
 
@@ -41,7 +36,7 @@ def fetch_data():
     return_main_object=[]
 
     k= (soup.find('div',{"id":"pagetext"})).find_all('div',{"class":"btxt_item_med"})
-    # logger.info(k)
+    # print(k)
     
     
     for i in k:

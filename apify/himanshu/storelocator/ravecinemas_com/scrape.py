@@ -5,11 +5,6 @@ import json
 import time
 from sgrequests import SgRequests
 import urllib3
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ravecinemas_com')
-
-
 session = SgRequests()
 urllib3.disable_warnings()
 
@@ -31,7 +26,7 @@ def fetch_data():
     r = session.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
-        #logger.info(base_url+location["href"])
+        #print(base_url+location["href"])
         locationtype = location["href"].split("/")[-1].split("-")[0]
         if "cinemark" in locationtype or "century" in locationtype or "tinseltown" in locationtype:
             locationtype = locationtype
@@ -67,7 +62,7 @@ def fetch_data():
         store.append(geo_location.split("&pp=")[1].split(",")[1].split("&")[0] if geo_location.split("&pp=")[1].split(",")[1].split("&")[0] else "<MISSING>")
         store.append("<MISSING>")
         store.append(base_url + location["href"])
-        #logger.info(store)
+        #print(store)
         yield store
 
 def scrape():

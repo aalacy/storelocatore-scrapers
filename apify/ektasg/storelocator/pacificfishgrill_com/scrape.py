@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pacificfishgrill_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -45,7 +40,7 @@ def fetch_data():
     page_url = "https://www.pacificfishgrill.com/"
     for store in stores:
             location_name = store.find_element_by_css_selector('div > p:nth-child(1)').text.splitlines()[0]
-            logger.info("location_name........" , location_name)
+            print("location_name........" , location_name)
             address = store.find_element_by_css_selector('div > p:nth-child(1) > a:nth-child(2)').text
             tagged = usaddress.tag(address)[0]
             state = tagged['StateName']
@@ -86,7 +81,7 @@ def fetch_data():
                   hours_of_op
                 ])
             count+=1
-            logger.info(count)
+            print(count)
 
     time.sleep(3)
     driver.quit()

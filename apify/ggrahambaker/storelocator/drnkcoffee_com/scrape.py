@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('drnkcoffee_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -60,8 +55,8 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-        logger.info(store_data)
-        logger.info()
+        print(store_data)
+        print()
 
     return all_store_data
 

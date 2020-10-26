@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('theupsstore_com')
-
-
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,7 +31,7 @@ def fetch_data():
                 count = lurl.count('/')
                 if count == 5 and lurl not in locs:
                     locs.append(lurl)
-    logger.info(('Found %s Locations...' % (str(len(locs)))))
+    print(('Found %s Locations...' % (str(len(locs)))))
     for loc in locs:
         website = 'theupsstore.com'
         country = ''

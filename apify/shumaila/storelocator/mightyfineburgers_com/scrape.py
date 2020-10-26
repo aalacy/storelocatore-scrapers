@@ -8,11 +8,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mightyfineburgers_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -40,7 +35,7 @@ def fetch_data():
     coordlist = r.text.split('var wpgmaps_localize_marker_data =')[1].split('var wpgmaps_localize_global_settings =')[0] 
     coordlist = '[' + re.sub(r'"[1-9]":','',coordlist).replace('};',']')
     coordlist = coordlist.replace('[ {','[')
-    #logger.info(coordlist)
+    #print(coordlist)
     coordlist = json.loads(coordlist)
     soup = BeautifulSoup(r.text, 'html.parser')  
     loclist = soup.findAll('div',{'class':'accordion-container'})
@@ -50,12 +45,12 @@ def fetch_data():
     for hour in hourd:
         if hour.text.find('am') > -1 and hour.text.find('pm') > -1:
             hourlist.append(hour)
-    #logger.info(hourlist)
+    #print(hourlist)
     for i in range(0,len(loclist)):        
         loc =loclist[i]
         title = titlelist[i].text
         loc  = re.sub(cleanr,' ',str(loc)).splitlines()
-        #logger.info(loc)
+        #print(loc)
         m = 0
         street = loc[m].lstrip()
         m += 1
@@ -79,7 +74,7 @@ def fetch_data():
             
         hours = re.sub(cleanr,' ',str(hourlist[i])).replace('\n','')   
         for coord in coordlist:
-            #logger.info(coord['address'].lstrip().split(' ')[0])
+            #print(coord['address'].lstrip().split(' ')[0])
             if street.find(coord['address'].lstrip().split(' ')[0]) > -1:
                 lat = coord['lat']
                 longt = coord['lng']               
@@ -100,16 +95,16 @@ def fetch_data():
                 longt,
                 hours
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
     return data
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

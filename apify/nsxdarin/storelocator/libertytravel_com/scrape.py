@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('libertytravel_com')
-
-
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +24,7 @@ def fetch_data():
         if '/stores/' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         rs = session.get(loc, headers=headers)
         website = 'libertytravel.com'
         name = '<MISSING>'

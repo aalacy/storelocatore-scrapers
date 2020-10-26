@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('haciendafiesta_com')
-
-
 
 
 
@@ -32,17 +27,17 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    # logger.info(soup.find_all('div',{"class":"location"}))
+    # print(soup.find_all('div',{"class":"location"}))
     k= soup.find_all('div',{"class":"location"})
     for i in k:
         tem_var=[]
-        # logger.info(i.h3.a['href'])
+        # print(i.h3.a['href'])
         r = session.get("https://haciendafiesta.com"+i.h3.a['href'])
         soup1 = BeautifulSoup(r.text,"lxml")
         name = list(soup1.find("div",{"class":"location-summary"}).stripped_strings)[0]
         st = list(soup1.find("div",{"class":"location-summary"}).stripped_strings)[2]
         v = list(soup1.find("div",{"class":"location-summary"}).stripped_strings)
-        # logger.info(list(soup1.find("div",{"class":"location-summary"}).stripped_strings))
+        # print(list(soup1.find("div",{"class":"location-summary"}).stripped_strings))
         # exit()
         # time = (" ".join(list(soup1.find("div",{"class":"location-description"}).stripped_strings)).replace("\xa0",""))
         h1 = soup1.find("table")
@@ -50,7 +45,7 @@ def fetch_data():
             time = (" ".join(list(h1.stripped_strings)).replace("Hours: ",""))
         else:
             time = (" ".join(list(soup1.find("div",{"class":"location-description"}).stripped_strings)).replace("\xa0",""))
-        # logger.info(time)
+        # print(time)
         tem_var.append("https://haciendafiesta.com")
         tem_var.append(name)
         tem_var.append(st)

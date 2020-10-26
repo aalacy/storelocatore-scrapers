@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import xlsxwriter
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('barresoul_com')
-
-
 
 
 base_url = 'https://www.barresoul.com'
@@ -34,7 +29,7 @@ for location in locations:
     barre_store["state"] = address[1].split(" ")[0]
     barre_store["zip_code"] = address[1].split(" ")[1]
 
-    logger.info(barre_store)
+    print(barre_store)
     barre_stores.append(barre_store)
 
     

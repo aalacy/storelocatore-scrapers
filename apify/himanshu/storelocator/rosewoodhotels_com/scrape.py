@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rosewoodhotels_com')
-
-
 
 
 session = SgRequests()
@@ -31,7 +26,7 @@ def fetch_data():
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     for link in soup.find("section",{"id":"us-and-canada"}).find_all("a"):
-        logger.info(link["href"])
+        print(link["href"])
         location_request = session.get(base_url + link["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("p",{"class":"reservation-p"}) == None:

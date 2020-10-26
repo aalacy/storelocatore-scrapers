@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('loscompadreslbc_com')
-
-
 
 
 
@@ -59,7 +54,7 @@ def fetch_data():
                 tem_var.append(lon)
                 tem_var.append(hours)
                 tem_var.append(p1.find_all('a')[0]['href'])
-                # logger.info(tem_var)
+                # print(tem_var)
                 return_main_object.append(tem_var)
         
 

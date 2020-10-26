@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('prezzorestaurants_co_uk')
-
-
 
 session = SgRequests()
 
@@ -51,7 +46,7 @@ def fetch_data():
    
     while zip_code:
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s="+str(zip_code)+"&dist=Dist500"
         headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -68,7 +63,7 @@ def fetch_data():
         current_results_len = len(soup.find_all("a",text=re.compile("Restaurant info")))
         for link in  soup.find_all("a",text=re.compile("Restaurant info")):
             page_url = "https://www.prezzorestaurants.co.uk"+link['href']
-            # logger.info(page_url)
+            # print(page_url)
             
             responsees = session.get(page_url, headers=headers)
             soup1 = bs(responsees.text,'lxml')
@@ -118,14 +113,14 @@ def fetch_data():
                 continue
             addressess.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in  store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

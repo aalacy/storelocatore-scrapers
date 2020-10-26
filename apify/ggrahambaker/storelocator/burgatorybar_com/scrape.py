@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('burgatorybar_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +26,7 @@ def addy_extractor(src):
 def scrape_page(driver, locator_domain, location_name, all_store_data):
     driver.get(locator_domain + location_name)
     div = driver.find_element_by_css_selector('div.sqs-block.html-block.sqs-block-html')
-    # logger.info(div.get_attribute('innerHTML'))
+    # print(div.get_attribute('innerHTML'))
     addy = div.find_elements_by_css_selector('h2')[0].text.split('\n')
     if len(addy) == 1:
         ## see if there are 2 commas in addy
@@ -48,13 +43,13 @@ def scrape_page(driver, locator_domain, location_name, all_store_data):
         street_address = addy[0]
         city, state, zip_code = addy_extractor(addy[1])
 
-    #logger.info(street_address, city, state, zip_code)
+    #print(street_address, city, state, zip_code)
 
     ps = driver.find_elements_by_css_selector('p')
     hours = ps[0].text.replace('\n', ' ').replace('HOURS:', '').strip()
     phone_number = ps[2].text.strip()
-    #logger.info(hours)
-    #logger.info(phone_number)
+    #print(hours)
+    #print(phone_number)
     country_code = 'US'
     store_number = '<MISSING>'
     location_type = '<MISSING>'

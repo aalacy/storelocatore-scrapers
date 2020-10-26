@@ -1,11 +1,6 @@
 from sgrequests import SgRequests
 
 from Scraper import Scrape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('xtramart_com')
-
-
 
 URL = "http://xtramart.com/"
 
@@ -59,7 +54,7 @@ class Scraper(Scrape):
 
 
         for page_num in range(1,15):
-            # logger.info("Page: " + str(page_num))
+            # print("Page: " + str(page_num))
             data = {
                 'latitude': '42.3600825',
                 'longitude': '-71.05888010000001',

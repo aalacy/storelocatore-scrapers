@@ -1,11 +1,6 @@
 import csv
 import sgzip
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('t-mobile_com')
-
-
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -37,8 +32,8 @@ def fetch_data():
     while coord:
         llat = coord[0]
         llng = coord[1]
-        #logger.info("remaining zipcodes: " + str(len(search.zipcodes)))
-        #logger.info('%s-%s...' % (llat, llng))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('%s-%s...' % (llat, llng))
         url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
         r = session.get(url, headers=headers)
         result_coords = []
@@ -77,7 +72,7 @@ def fetch_data():
                                 hours = '<MISSING>'
                             if store not in sids:
                                 sids.append(store)
-                                #logger.info(store)
+                                #print(store)
                                 if '"hasSprintStack":true' in item and '"deviceRepair":true' in item:
                                     typ = 'T-MOBILE STORE (SPRINT REPAIR CENTER)'
                                 if '"type":"National Retail"' in item:
@@ -90,10 +85,10 @@ def fetch_data():
                         except:
                             pass
         if len(array) <= MAX_RESULTS:
-                    logger.info("max distance update")
+                    print("max distance update")
                     search.max_distance_update(MAX_DISTANCE)
         ##        elif len(array) == MAX_RESULTS:
-        ##            logger.info("max count update")
+        ##            print("max count update")
         ##            search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

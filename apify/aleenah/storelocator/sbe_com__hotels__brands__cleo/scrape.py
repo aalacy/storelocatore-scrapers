@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sbe_com__hotels__brands__cleo')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +29,7 @@ def fetch_data():
         url=url.get('href')
         if url=="https://www.sbe.com/restaurants/locations/cleo-baha-mar/" or url == "https://www.sbe.com/restaurants/locations/cleo-kuwait/":
             continue
-     #   logger.info(url)
+     #   print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
@@ -69,7 +64,7 @@ def fetch_data():
             tim,  # timing
             url])
 
-    #logger.info(len(divs))
+    #print(len(divs))
     for i in range(2,4): #south beach & las vegas
 
         divas=divs[i].find_all('div')

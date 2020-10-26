@@ -4,11 +4,6 @@ import re
 import requests
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('honda_com')
-
-
 
 
 
@@ -67,8 +62,8 @@ def fetch_data():
         # if len(list_of_urls)==5:
 
         k={}
-        #logger.info(zip_code)
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print(zip_code)
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
 
@@ -123,7 +118,7 @@ def fetch_data():
                 tem_var.append(longitude)
                 tem_var.append(time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') if time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') else "<MISSING>" )
                 tem_var.append(page_url)
-                #logger.info(tem_var)
+                #print(tem_var)
                 if tem_var[2] in addresses:
                     continue
                 addresses.append(tem_var[2])
@@ -131,10 +126,10 @@ def fetch_data():
     
       
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

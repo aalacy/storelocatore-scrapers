@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('loft_com')
-
-
 
 
 
@@ -40,7 +35,7 @@ def fetch_data():
         if link != "1)":
             city_link = "https://stores.loft.com/" + \
                 i.find("a")['href'].replace("..", "")
-            # logger.info(city_link)
+            # print(city_link)
             r1 = session.get(city_link)
             soup1 = BeautifulSoup(r1.text, "lxml")
             citylink = soup1.find_all(
@@ -56,14 +51,14 @@ def fetch_data():
                         store_link = soup2.find_all(
                             "a", class_="c-location-grid-item-link visit-page-YA")
                         for st in store_link:
-                            # logger.info(st['href'].replace("..","").replace("//",""))
+                            # print(st['href'].replace("..","").replace("//",""))
                             r3 = session.get("https://stores.loft.com/" + st['href'].replace("..", "").replace("//", ""))
                             soup3 = BeautifulSoup(r3.text, "lxml")
                             if soup3.find("h2",{"class":"closed-title"}):
                                 continue
                             page_url = "https://stores.loft.com/" + \
                                 st['href'].replace("..", "").replace("//", "")
-                            # logger.info(page_url)
+                            # print(page_url)
                             streetAddress = soup3.find(
                                 "span", {"itemprop": "streetAddress"}).text.strip()
                             state = soup3.find(
@@ -85,7 +80,7 @@ def fetch_data():
                                 'content']
                             longitude = soup3.find("meta", {"itemprop": "longitude"})[
                                 'content']
-                            # logger.info(phone)
+                            # print(phone)
                             tem_var = []
                             tem_var.append("https://www.loft.com/")
                             tem_var.append(name)
@@ -102,10 +97,10 @@ def fetch_data():
                             tem_var.append(hours)
                             tem_var.append(page_url)
                             yield tem_var
-                            # logger.info("========================================", tem_var)
+                            # print("========================================", tem_var)
 
                     else:
-                        # logger.info(c.find("a")['href'])
+                        # print(c.find("a")['href'])
                         # pass
                         one_link = "https://stores.loft.com" + \
                             c.find("a")['href'].replace("..", "")
@@ -113,7 +108,7 @@ def fetch_data():
                         try:
                             r4 = session.get(one_link)
                         except:
-                            #logger.info(page_url)
+                            #print(page_url)
                             continue
                         soup4 = BeautifulSoup(r4.text, "lxml")
                         if soup4.find("h2",{"class":"closed-title"}):
@@ -138,7 +133,7 @@ def fetch_data():
                             'content']
                         longitude = soup4.find("meta", {"itemprop": "longitude"})[
                             'content']
-                        # logger.info(phone)
+                        # print(phone)
                         tem_var = []
                         tem_var.append("https://www.loft.com/")
                         tem_var.append(name)
@@ -155,7 +150,7 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # logger.info("========================================", tem_var)
+                        # print("========================================", tem_var)
             else:
                 l = []
                 for lname in soup1.find_all("h5", class_="c-location-grid-item-title"):
@@ -187,7 +182,7 @@ def fetch_data():
                             "table", class_="c-location-hours-details").stripped_strings)).strip()
                     except:
                         hours = "<MISSING>"
-                    # logger.info(hours_of_operation)
+                    # print(hours_of_operation)
                     tem_var = []
                     tem_var.append("https://www.loft.com/")
                     tem_var.append(location_name)
@@ -205,13 +200,13 @@ def fetch_data():
                     tem_var.append(page_url)
                     yield tem_var
         else:
-            # logger.info(i.find("a")['href'].replace("..",""))
-            # logger.info("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
+            # print(i.find("a")['href'].replace("..",""))
+            # print("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
             one_link1 = "https://stores.loft.com/" + \
                 i.find("a")['href'].replace("..", "")
             page_url = one_link1
             r5 = session.get(one_link1)
-            # logger.info("--------------------------")
+            # print("--------------------------")
 
             soup5 = BeautifulSoup(r5.text, "lxml")
             if soup5.find("h2",{"class":"closed-title"}):
@@ -232,7 +227,7 @@ def fetch_data():
             latitude = soup5.find("meta", {"itemprop": "latitude"})['content']
             longitude = soup5.find("meta", {"itemprop": "longitude"})[
                 'content']
-            # logger.info(phone)
+            # print(phone)
             tem_var = []
             tem_var.append("https://www.loft.com/")
             tem_var.append(name)
@@ -249,7 +244,7 @@ def fetch_data():
             tem_var.append(hours)
             tem_var.append(page_url)
             yield tem_var
-            # logger.info("========================================", tem_var)
+            # print("========================================", tem_var)
 
     base_url = "https://stores.loft.com/ca.html"
     r = session.get(base_url)
@@ -264,7 +259,7 @@ def fetch_data():
             soup1 = BeautifulSoup(r1.text, "lxml")
             citylink = soup1.find_all(
                 "li", {"class": "c-directory-list-content-item"})
-            # logger.info(citylink)
+            # print(citylink)
             for c in citylink:
                 link1 = c.text.split("(")[-1]
                 if link1 != "1)":
@@ -275,7 +270,7 @@ def fetch_data():
                     store_link = soup2.find_all(
                         "a", class_="c-location-grid-item-link visit-page-YA")
                     for st in store_link:
-                        # logger.info(st['href'].replace("..","").replace("//",""))
+                        # print(st['href'].replace("..","").replace("//",""))
                         r3 = session.get(
                             "https://stores.loft.com/" + st['href'].replace("..", "").replace("//", ""))
                         page_url = "https://stores.loft.com/" + \
@@ -304,7 +299,7 @@ def fetch_data():
                             'content']
                         longitude = soup3.find("meta", {"itemprop": "longitude"})[
                             'content']
-                        # logger.info(phone)
+                        # print(phone)
                         tem_var = []
                         tem_var.append("https://www.loft.com/")
                         tem_var.append(name)
@@ -321,10 +316,10 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # logger.info("========================================", tem_var)
+                        # print("========================================", tem_var)
 
                 else:
-                    # logger.info(c.find("a")['href'])
+                    # print(c.find("a")['href'])
                     # pass
                     one_link = "https://stores.loft.com" + \
                         c.find("a")['href'].replace("..", "")
@@ -352,7 +347,7 @@ def fetch_data():
                         'content']
                     longitude = soup4.find("meta", {"itemprop": "longitude"})[
                         'content']
-                    # logger.info(phone)
+                    # print(phone)
                     tem_var = []
                     tem_var.append("https://www.loft.com/")
                     tem_var.append(name)
@@ -369,15 +364,15 @@ def fetch_data():
                     tem_var.append(hours)
                     tem_var.append(page_url)
                     yield tem_var
-                    # logger.info("========================================", tem_var)
+                    # print("========================================", tem_var)
         else:
-            # logger.info(i.find("a")['href'].replace("..",""))
-            # logger.info("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
+            # print(i.find("a")['href'].replace("..",""))
+            # print("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
             one_link1 = "https://stores.loft.com/" + \
                 i.find("a")['href'].replace("..", "")
             page_url = one_link1
             r5 = session.get(one_link1)
-            # logger.info("--------------------------")
+            # print("--------------------------")
 
             soup5 = BeautifulSoup(r5.text, "lxml")
             if soup5.find("h2",{"class":"closed-title"}):
@@ -398,7 +393,7 @@ def fetch_data():
             latitude = soup5.find("meta", {"itemprop": "latitude"})['content']
             longitude = soup5.find("meta", {"itemprop": "longitude"})[
                 'content']
-            # logger.info(phone)
+            # print(phone)
             tem_var = []
             tem_var.append("https://www.loft.com/")
             tem_var.append(name)
@@ -415,7 +410,7 @@ def fetch_data():
             tem_var.append(hours)
             tem_var.append(page_url)
             yield tem_var
-            # logger.info("========================================", tem_var)
+            # print("========================================", tem_var)
 
 
 def scrape():

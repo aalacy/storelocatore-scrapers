@@ -4,11 +4,6 @@ import csv
 import string
 import re, time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jwentertainment_com')
-
-
 
 
 
@@ -45,15 +40,15 @@ def fetch_data():
         link = div.find('a')
         link = link['href']        
         page = requests.get(link)
-        #logger.info(link)
+        #print(link)
         soup = BeautifulSoup(page.text,"html.parser")
         maindiv = soup.find('section',{'class':'event_locations'})
         title = maindiv.find('h4').text
-        #logger.info(title)
+        #print(title)
         address = maindiv.find('p',{'class':'white mb-4'}).text
-        #logger.info(address)
+        #print(address)
         address = usaddress.parse(address)
-            #logger.info(address)
+            #print(address)
         m = 0
         street = ""
         city = ""
@@ -79,16 +74,16 @@ def fetch_data():
         
         contacts = maindiv.findAll('a',{'class':'learn_more_btn w-100'})
         phone = contacts[0]['href']
-        #logger.info(phone)
+        #print(phone)
         coords = contacts[1]['href']        
         start = coords.find('@')+1
         end = coords.find(',',start)
         lat = coords[start:end]
-        #logger.info(lat)
+        #print(lat)
         start = end + 1
         end = coords.find(',',start)
         longt = coords[start:end]
-        #logger.info(longt) 
+        #print(longt) 
         hours = maindiv.find('table',{'table table-striped timetable_locations'}).text
         hours = hours.replace('am',' am ')
         hours = hours.replace('pm',' pm ')
@@ -97,7 +92,7 @@ def fetch_data():
         phone = phone.replace('tel:','')
         title = title.replace(' TRAMPOLINE PARK','')
         city = city.replace(',','')
-        #logger.info(hours)
+        #print(hours)
         data.append([
              'https://jwentertainment.com/',
               link,
@@ -115,7 +110,7 @@ def fetch_data():
               hours
             ])
 
-        #logger.info(data[p])
+        #print(data[p])
         #p+=1
         
         

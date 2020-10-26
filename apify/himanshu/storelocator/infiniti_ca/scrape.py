@@ -7,11 +7,6 @@ import sgzip
 import time
 import requests
 from concurrent.futures import ThreadPoolExecutor
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('infiniti_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
@@ -45,7 +40,7 @@ def _send_multiple_rq(vk):
     with ThreadPoolExecutor(max_workers=len(vk)) as pool:
         # for data in list(pool.map(get_url,list_of_urls)):
         return list(pool.map(get_url,vk))
-                # logger.info(data.text)
+                # print(data.text)
 
 def fetch_data():
     return_main_object = []
@@ -67,8 +62,8 @@ def fetch_data():
     list_of_urls=[]
     while zip_code:
         result_coords = []
-        # logger.info(zip_code)
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))        
+        # print(zip_code)
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))        
         list_of_urls.append("https://us.nissan-api.net/v2/dealers?size=50&isMarketingDealer=true&location="+str(zip_code)+"&serviceFilterType=AND&include=openingHours")  
         # if len(list_of_urls)==5:
         #     break
@@ -81,10 +76,10 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
-    #logger.info("len---- ",len(list_of_urls))
+    #print("len---- ",len(list_of_urls))
     data = _send_multiple_rq(list_of_urls)
     for q in data:
-        # logger.info(q)
+        # print(q)
         r1= q.json()
         if "dealers" in  r1:
             locator_domain = "https://www.infiniti.ca/"
@@ -128,7 +123,7 @@ def fetch_data():
                     else:
                         weekDay=day[h['weekDay']-1]
                         hours_of_operation += ' ' +day[h['weekDay']-1]+ ' '+"closed"
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
                 # try:
                 #     r1 = requests.get(page_url ,headers=headers)
                 # except:
@@ -146,8 +141,8 @@ def fetch_data():
                     continue
                 addresses.append(str(store[2]) )
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # logger.info("data =="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data =="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
 
 

@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('follett_com')
-
-
 
 session = SgRequests()
 
@@ -33,7 +28,7 @@ def fetch_data():
         if "http://www.skyo.com/" in link.find_all("a")[-1]['href']:
             continue
         page_url = base_url+link.find_all("a")[-1]['href']
-        # logger.info(page_url)
+        # print(page_url)
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("span",{"itemprop":"name"}).text.strip()
@@ -75,8 +70,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(page_url)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # logger.info("data ==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
+        # print("data ==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
         yield store
 
 def scrape():

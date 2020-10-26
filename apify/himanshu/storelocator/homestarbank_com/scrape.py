@@ -5,11 +5,6 @@ import re
 import sgzip
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('homestarbank_com')
-
-
 s = requests.Session()
 
 
@@ -46,12 +41,12 @@ def fetch_data2():
               }
     while coords:
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             url = 'https://midlandsb.locatorsearch.com/GetItems.aspx'
             data = "lat=" + str(coords[0]) + "&lng=" + str(coords[1]) + \
                 "&searchby=FIATM%7C&SearchKey=&rnd=1589454899459"
-            # logger.info(coords)
+            # print(coords)
             s = requests.Session()
             r = session.post(
                 'https://midlandsb.locatorsearch.com/GetItems.aspx',
@@ -105,7 +100,7 @@ def fetch_data2():
                 country_code = "CA"
             else:
                 continue
-            # logger.info(zipp)
+            # print(zipp)
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
             locator_domain = "https://homestarbank.com"
@@ -137,14 +132,14 @@ def fetch_data2():
                 continue 
             addresses2.append(store[1]+" "+store[2])
             yield store
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if len(loc) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(loc) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +
@@ -171,14 +166,14 @@ def fetch_data1():
     while coords:
         # try:
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info(coords[0], coords[1])
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print(coords[0], coords[1])
 
         try:
             url = 'https://midlandsb.locatorsearch.com/GetItems.aspx'
             data = "lat=" + str(coords[0]) + "&lng=" + str(coords[1]) + \
                 "&searchby=FCS%7C&SearchKey=&rnd=1589454899459"
-            # logger.info(coords)
+            # print(coords)
             
             r = session.post(
                 'https://midlandsb.locatorsearch.com/GetItems.aspx',
@@ -187,7 +182,7 @@ def fetch_data1():
         except Exception as e:
             continue
             # pass
-            # logger.info(e)
+            # print(e)
         addresses = []
         country_code = "US"
         try:
@@ -195,14 +190,14 @@ def fetch_data1():
         except Exception as e:
             continue
             # pass
-            # logger.info(e)
+            # print(e)
         soup = BeautifulSoup(pagereq.content, 'html.parser')
         add2 = soup.find_all("add2")
         address1 = soup.find_all("add1")
         loc = soup.find_all("marker")
         # lat1 = loc[1].attrs['lat']
         # lng1 = loc[1].attrs['lng']
-        # logger.info(soup)
+        # print(soup)
         hours = soup.find_all("contents")
         name = soup.find_all("title")
         locator_domain = "https://homestarbank.com"
@@ -226,7 +221,7 @@ def fetch_data1():
                 location_name = name[i].text.split(">")[1].replace("</a", "")
             else:
                 location_name = name[i].text
-                # logger.info(location_name)
+                # print(location_name)
             if "Monday:" in hours[i].text:
                 soup_hour = BeautifulSoup(hours[i].text, 'lxml')
                 h = []
@@ -244,12 +239,12 @@ def fetch_data1():
                 else:
                     hours_of_operation = "  ".join(h)
                 location_type = 'branch'
-                # logger.info(hours_of_operation)
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # print(hours_of_operation)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                 # hours_of_operation = (hours[i].text.replace("</td><td>", " ").replace("<tr><td>","").replace("</td></tr>"," ").replace("</table><div>"," ").replace("<br>"," ").replace(" </div>","").split("'0'>")[1].replace("</div>",""))
-            # logger.info(hours1)
-            # logger.info(add2[i].text.replace("<br>",",").replace("<b>","").replace("</b>","").strip().split(",")[2])
+            # print(hours1)
+            # print(add2[i].text.replace("<br>",",").replace("<b>","").replace("</b>","").strip().split(",")[2])
 
             latitude = loc[i].attrs['lat']
             longitude = loc[i].attrs['lng']
@@ -277,14 +272,14 @@ def fetch_data1():
             addresses1.append(store[1]+" "+store[2])
 
             yield store
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if len(loc) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(loc) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

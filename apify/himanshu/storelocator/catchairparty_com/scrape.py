@@ -5,11 +5,6 @@ import re
 import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('catchairparty_com')
-
-
 
 
 
@@ -71,7 +66,7 @@ def fetch_data():
 
             info = s_loc.find('section',class_ = 'location_top_main').find_all('div',class_='row')[1]
             loc= info.find('div',class_ = 'col-xs-12')
-            # logger.info(loc.prettify())
+            # print(loc.prettify())
             page_url = tag['href']
             loc_list = list(loc.stripped_strings)
             location_name = loc_list[0].strip()
@@ -118,8 +113,8 @@ def fetch_data():
             #     continue
             # addresses.append(street_address)
 
-            logger.info("data = " + str(store))
-            logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print("data = " + str(store))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

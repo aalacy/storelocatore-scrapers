@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('luxehotels_com')
-
-
 
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -58,9 +53,9 @@ def fetch_data():
         r1 = session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         lat =soup1.find_all('script', {'type': 'text/javascript'})
-        # logger.info(lat)
-        # logger.info(len(lat))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~')
+        # print(lat)
+        # print(len(lat))
+        # print('~~~~~~~~~~~~~~~~~~~~~~')
         if(len(lat)==11):
             lat1= soup1.find_all('script', {'type': 'application/ld+json'})[2].text.split('"latitude": ')[1]
             latitude= lat1.split('longitude')[0].strip().replace('"','').replace(',','').strip()
@@ -91,8 +86,8 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append("<MISSING>")
         tem_var.append(page_url)
-       #logger.info(tem_var)
-       #logger.info('~~~~~~~~~~~~~~~~~~~`')
+       #print(tem_var)
+       #print('~~~~~~~~~~~~~~~~~~~`')
         return_main_object.append(tem_var)
 
 

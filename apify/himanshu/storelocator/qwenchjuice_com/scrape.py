@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('qwenchjuice_com')
-
-
 
 
 session = SgRequests()
@@ -49,7 +44,7 @@ def fetch_data():
         if len(obj) < 3:
             city = obj[1].strip().split(' ')
             zip = city[-1]
-            # logger.info(zip)
+            # print(zip)
             state = city[-2]
             tmp = ''
             for i in range(-3, -1+len(city)*-1, -1):

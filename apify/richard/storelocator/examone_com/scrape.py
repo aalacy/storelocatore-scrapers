@@ -4,11 +4,6 @@ import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('examone_com')
-
-
 
 URL = "https://www.examone.com/"
 
@@ -46,7 +41,7 @@ class Scraper(Scrape):
             data = driver.find_elements_by_css_selector('script')[-2]
             data = json.loads(data.get_attribute('innerHTML').replace('/* <![CDATA[ */', '').replace('/* ]]> */', '').replace('var php_vars = "', '').replace('\\', '').strip()[:-2])
             stores.extend(data)
-            logger.info(f"{len(data)} stores scraped for {zipcode_search}.")
+            print(f"{len(data)} stores scraped for {zipcode_search}.")
 
         for store in stores:
             if store['qsl_id'] not in self.seen:

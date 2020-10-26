@@ -4,11 +4,6 @@ import json
 from datetime import timedelta
 from datetime import datetime
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pharmaca_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -50,7 +45,7 @@ def fetch_data():
             zip_code = '<MISSING>'
         state = obj['state']
         street_address = obj['address']
-        # logger.info(street_address)
+        # print(street_address)
         lat = obj['lat']
         longit = obj['lng']
         phone_number = obj['phone']

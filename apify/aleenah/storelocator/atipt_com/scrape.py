@@ -2,11 +2,6 @@ import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('atipt_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -70,8 +65,8 @@ def fetch_data():
                 hours=soup.find_all('div', {'class': 'hours'})
 
                 tim=""
-                logger.info(url)
-                #logger.info(len(hours))
+                print(url)
+                #print(len(hours))
                 if len(hours)!=0:
                     for i in range(7):
                         ps = hours[i].find_all('p')

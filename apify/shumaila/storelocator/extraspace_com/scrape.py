@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('extraspace_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,11 +33,11 @@ def fetch_data():
         #time.sleep(8)
     except:
         pass
-    #logger.info(r.text)
+    #print(r.text)
     
     soup =BeautifulSoup(r.text, "html.parser")
     #maindiv = soup.find('div',{'id':'self-storage-locations'})
-    #logger.info(maindiv)
+    #print(maindiv)
     maindiv = soup.findAll('a')
     for lt in maindiv:
         try:
@@ -51,12 +46,12 @@ def fetch_data():
         except:
             pass
         
-    logger.info('sitemap',len(state_list))
+    print('sitemap',len(state_list))
     p = 0
     for alink in state_list:
        
         statelink = alink #"https://www.extraspace.com" + alink['href']
-        #logger.info(statelink)
+        #print(statelink)
         try:
             r1 = session.get(statelink, headers=headers, verify=False)#requests.get(statelink,timeout = 30)
         except:
@@ -64,13 +59,13 @@ def fetch_data():
   
         soup1 =BeautifulSoup(r1.text, "html.parser")
         maindiv1 = soup1.find('div',{'id':'acc-main'})
-        #logger.info(maindiv1)
+        #print(maindiv1)
         link_list = maindiv1.findAll('a')
-        #logger.info("NEXT PAGE",len(link_list))
+        #print("NEXT PAGE",len(link_list))
         for alink in link_list:
             if alink.text.find('Extra Space Storage #') > -1:
                 link = "https://www.extraspace.com" + alink['href']
-                #logger.info(link)
+                #print(link)
                 #input()
                 
                 r2 = session.get(link, headers=headers, verify=False)#requests.get(link)
@@ -107,7 +102,7 @@ def fetch_data():
                 title = title.replace("?","")
                 hours = hours.replace('am', ' am').replace('pm',' pm').replace('-',' - ')
                 flag = True
-                #logger.info(len(data))
+                #print(len(data))
 
 
                 if flag:
@@ -127,11 +122,11 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     
             
-        logger.info(".................")
+        print(".................")
 
     return data
 

@@ -5,11 +5,6 @@ from random import randint
 import json
 
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('paisanospizza_com')
-
-
 
 
 def write_output(data):
@@ -42,7 +37,7 @@ def fetch_data():
 		store = json.loads(item.text)
 		link = store['url'].split("?")[0]
 		location_name = store['name'] + " " + store['address']['addressLocality']
-		logger.info(location_name)
+		print(location_name)
 
 		street_address = store['address']['streetAddress']
 		city = store['address']['addressLocality']

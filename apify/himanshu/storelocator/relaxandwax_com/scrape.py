@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('relaxandwax_com')
-
-
 
 session = SgRequests()
 
@@ -53,14 +48,14 @@ def fetch_data():
             state=madd[-1].strip().split(' ')[0].strip()
             zip=madd[-1].strip().split(' ')[1].strip()
         else:
-            # logger.info(madd)
+            # print(madd)
             state = madd[-1].split()[-2]
             zip = madd[-1].split()[-1]
             if len(madd[-1].split()) > 2:
                 address= madd[0].replace('\r\n',' ')
                 city = madd[-1].split()[0]
                 
-                # logger.info(address,city,state,zip)
+                # print(address,city,state,zip)
             else:
                 if len( madd[0].split()) ==3:
                     address =  "".join(madd[0]).strip()
@@ -89,8 +84,8 @@ def fetch_data():
         store.append(loc['lng'])
         store.append("<MISSING>")
         store.append('<MISSING>')
-        # logger.info(str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 def scrape():

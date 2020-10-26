@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('balladhealth_org')
-
-
 
 
 
@@ -38,11 +33,11 @@ def fetch_data():
 	soup= BeautifulSoup(r.text,"lxml")
 	
 	for link1  in soup.find_all("div",{"class":"view-id-locations"}):
-		# logger.info()
+		# print()
 		for link in link1.find_all("div",{"class":"views-row"}):
 			location_type = link1['class'][3].replace("view-display-id-",'').replace("_",' ')
 			street_address = list(link.find("div",{"class":"views-field views-field-address"}).stripped_strings)[0].split("Suite")[0].split("Floor")[0].replace(",",'')
-			# logger.info(street_address)
+			# print(street_address)
 			city = list(link.find("div",{"class":"views-field views-field-address"}).stripped_strings)[-1].split(",")[0]
 			
 
@@ -54,7 +49,7 @@ def fetch_data():
 				state = state_list[-1]
 			else:
 				state="<MISSING>"
-			# logger.info(state)
+			# print(state)
 			if us_zip_list:
 				zipp = us_zip_list[-1]
 			else:
@@ -84,8 +79,8 @@ def fetch_data():
 			store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours.encode('ascii', 'ignore').decode('ascii').strip(),page_url]
 
-			# logger.info("data = " + str(store))
-			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			# print("data = " + str(store))
+			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 			yield store
 
 

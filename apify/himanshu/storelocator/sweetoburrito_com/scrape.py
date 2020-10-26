@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sweetoburrito_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -122,11 +117,11 @@ def fetch_data():
                 addres = data.select('.iconbox_content_container')[0].get_text().strip().split('Address:')[1].split('for')[0].replace('Online', '').replace('Order', '').strip().split(',')
                 if len(addres) == 2:
                     street_address = addres[0].replace(" Provo","").replace(" Orem","")
-                    # logger.info(street_address)
+                    # print(street_address)
                     zip = addres[1].strip()
                 else:
                     street_address = addres[0]
-                   # logger.info(street_address)
+                   # print(street_address)
                     zip = "<MISSING>"
             if "Sun" in address[:4] or "am" in address[:4] or "Mon-" in address[:4]:
                 if "Address" in address.split(":")[0]:

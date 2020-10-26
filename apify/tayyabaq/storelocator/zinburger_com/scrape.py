@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from lxml import html
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zinburger_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -34,7 +29,7 @@ def fetch_data():
     r  = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text,"html.parser")
     divlist = soup.findAll('div',{'class':'fusion-one-third'})
-    #logger.info(len(divlist))
+    #print(len(divlist))
                            
     for div in divlist:
         try:
@@ -48,7 +43,7 @@ def fetch_data():
             if det.find('To place an order') > -1:
                 det = det.split('.',1)[1]
             det = det.lstrip().rstrip().splitlines()
-            #logger.info(det)         
+            #print(det)         
             m = 0           
             street = det[m]
             m += 1
@@ -57,7 +52,7 @@ def fetch_data():
                 m += 1
             
             city, state = det[m].split(', ',1)
-            #logger.info(statem)
+            #print(statem)
             state = state.lstrip()
             state,pcode= state.split(' ',1)
             
@@ -83,11 +78,11 @@ def fetch_data():
                 hours = hours.replace('\n',' ').replace('HOURS ','').lstrip()
             
             data.append(['https://zinburger.com/','https://zinburger.com/locations/',title,street,city,state,pcode,'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
-            #logger.info(p,data[p])         
+            #print(p,data[p])         
             p += 1
             
         except Exception as e:
-            #logger.info(e)
+            #print(e)
             pass
      
     return data

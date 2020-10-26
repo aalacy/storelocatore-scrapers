@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('topsbarbq_com')
-
-
 
 
 
@@ -90,8 +85,8 @@ def fetch_data():
             hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
         return_main_object.append(store)
-        # logger.info(str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
     # store_name=[]
@@ -106,7 +101,7 @@ def fetch_data():
     #         if len(list(p1.stripped_strings))==7:
     #             store_name.append(list(p1.stripped_strings)[0])
     #             street_address = list(p1.stripped_strings)[2].split(',')[0]
-    #             logger.info(street_address)
+    #             print(street_address)
     #             city = list(p1.stripped_strings)[2].split(',')[1]
     #             state=list(p1.stripped_strings)[2].split(',')[2].split( )[0]
     #             zipcode = list(p1.stripped_strings)[2].split(',')[2].split( )[1]
@@ -133,8 +128,8 @@ def fetch_data():
     #     store.append("http://topsbarbq.com")
     #     store.append(store_name[i])
     #     store.extend(store_detail[i])
-    #     logger.info("data == "+str(store))
-    #     logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    #     print("data == "+str(store))
+    #     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     #     return_main_object.append(store)
 
     # return return_main_object

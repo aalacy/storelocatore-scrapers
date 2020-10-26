@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sweetgreen_com')
-
-
 
 
 
@@ -62,7 +57,7 @@ def fetch_data():
             hours_of_operation = y.replace("Hello World!!","<MISSING>").replace("Always","<MISSING>").replace("\r\n","").lstrip().strip().rstrip()
         else:
             hours_of_operation = '<MISSING>'
-        # logger.info(hours_of_operation)
+        # print(hours_of_operation)
         latitude = loc["latitude"]
         longitude = loc["longitude"]
         a = location_name.lower().strip().replace("sg outpost at","").replace("sg outpost at ","").lstrip().replace(" ","-").replace("---","-").replace("--","-").replace(".","").replace(",","").replace("–-","").replace("&-","").replace("+-","").replace("(","").replace(")","").replace("'","-").replace("/","")

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('deadriver_com')
-
-
 
 
 
@@ -39,7 +34,7 @@ def fetch_data():
     base_url = "https://www.deadriver.com"
 
     while zip_code:
-        # logger.info(zip_code)
+        # print(zip_code)
         result_coords = []
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         try:
@@ -69,17 +64,17 @@ def fetch_data():
         hours_of_operation = ""
         if current_results_len > 0:
             for location in json_data["d"]:
-                # logger.info(location)
+                # print(location)
                 street_address = location["AddressOne"] + " " + location["AddressTwo"]
                 city = location["City"]
                 zipp = location["ZipCode"]
                 state = location["State"]
-                # logger.info(zipp)
+                # print(zipp)
                 phone = location["PhoneOne"]
                 longitude = location["Longitude"]
                 latitude = location["Latitude"]
                 location_name = (str(city)+" , "+str(state))
-                # logger.info(location_name)
+                # print(location_name)
                 page_url = "<MISSING>"
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -88,7 +83,7 @@ def fetch_data():
                     continue
                 addresses.append(str(store[2]))
                 store = [x if x else "<MISSING>" for x in store]
-                # logger.info("~~~~~~~~~~~~~~~~`"+str(store))
+                # print("~~~~~~~~~~~~~~~~`"+str(store))
                 yield store
 
         if current_results_len < MAX_RESULTS:

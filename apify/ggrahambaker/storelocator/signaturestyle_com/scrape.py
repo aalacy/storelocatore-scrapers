@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('signaturestyle_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -52,7 +47,7 @@ def fetch_data():
         try:
             phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
         except NoSuchElementException:
-            logger.info('closed')
+            print('closed')
             continue
 
         if phone_number not in duplicate_checker:

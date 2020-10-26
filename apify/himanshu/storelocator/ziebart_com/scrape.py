@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ziebart_com')
-
-
 
 session = SgRequests()
 
@@ -68,13 +63,13 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
     
     #----- us locations ------#
     
-    # logger.info("start")
+    # print("start")
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -101,12 +96,12 @@ def fetch_data():
         page_url = ""
         hours_of_operation = ""
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         page =1
         while True:
             r= session.get("https://www.ziebart.com/find-my-ziebart?zipcode="+str(zip_code)+"&distance=100&page="+str(page),headers= headers)
             soup = BeautifulSoup(r.text,"lxml")
-            # logger.info(page)
+            # print(page)
             ul = soup.find("ul",class_="sfStoreList")
             if ul:
                 for li in ul.find_all("li",class_="store-detail"):
@@ -134,8 +129,8 @@ def fetch_data():
                         continue
                     addresses.append(str(store[2])+str(store[-1]))
 
-                    # logger.info("data = " + str(store))
-                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     
                     yield store
                     
@@ -145,10 +140,10 @@ def fetch_data():
             
         
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

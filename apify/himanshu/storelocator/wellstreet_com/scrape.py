@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('wellstreet_com')
-
-
 
 
 session = SgRequests()
@@ -51,7 +46,7 @@ def fetch_data():
             try:
                 hours = " ".join(list(location_soup.find('div',{"class":"hours"}).stripped_strings))
             except:
-                # logger.info(location_url)
+                # print(location_url)
                 continue
             if "This facility" in hours:
                 hours = "<MISSING>"

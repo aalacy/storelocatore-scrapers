@@ -2,11 +2,6 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cicis_com')
-
-
 
 
 options = Options()
@@ -30,7 +25,7 @@ def write_output(data):
 
 def get_info(driver):
     location_name = driver.find_element_by_css_selector('h1.c-location-title').text
-    logger.info("location name" , location_name)
+    print("location name" , location_name)
     try:
         street_addr = driver.find_element_by_css_selector('span.c-address-street.c-address-street-1').text + " " + driver.find_element_by_css_selector('span.c-address-street.c-address-street-2').text
     except:
@@ -61,7 +56,7 @@ def fetch_data():
             stores1 = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
             if stores1 == []:
                 try:
-                    logger.info("inside first if first try:    " , page_url)
+                    print("inside first if first try:    " , page_url)
                     location_name, street_addr, city, state, zipcode, phone, hours_of_op, latitude, longitude = get_info(
                         driver)
                     data.append([
@@ -81,14 +76,14 @@ def fetch_data():
                         hours_of_op
                     ])
                     count = count + 1
-                    logger.info(count)
+                    print(count)
                 except:
                     locations = driver.find_elements_by_css_selector('a.location-link.location-link-site')
                     locations_names = [locations[i].get_attribute('href') for i in range(0, len(locations))]
                     for i in range(0, len(locations_names)):
                         driver.get(locations_names[i])
                         page_url = locations_names[i]
-                        logger.info("inside first if first except :     " , page_url)
+                        print("inside first if first except :     " , page_url)
                         time.sleep(5)
                         location_name, street_addr, city, state, zipcode, phone, hours_of_op, latitude, longitude = get_info(
                             driver)
@@ -109,7 +104,7 @@ def fetch_data():
                             hours_of_op
                         ])
                         count = count + 1
-                        logger.info(count)
+                        print(count)
             else:
                 name_sub = [stores1[i].get_attribute('href') for i in range(0, len(stores1))]
                 for i in range(0,len(name_sub)):
@@ -117,7 +112,7 @@ def fetch_data():
                     page_url = name_sub[i]
                     time.sleep(5)
                     try:
-                        logger.info("inside else second try :     ", page_url)
+                        print("inside else second try :     ", page_url)
                         location_name, street_addr, city, state, zipcode, phone, hours_of_op, latitude, longitude = get_info(driver)
                         data.append([
                             'https://www.cicis.com/',
@@ -136,9 +131,9 @@ def fetch_data():
                             hours_of_op
                         ])
                         count = count + 1
-                        logger.info(count)
+                        print(count)
                     except:
-                        logger.info("inside else second except :     ", page_url)
+                        print("inside else second except :     ", page_url)
                         #location_name = driver.find_element_by_css_selector('h1.page-title').text
                         locations = driver.find_elements_by_css_selector('a.location-link.location-link-site')
                         locations_names = [locations[i].get_attribute('href') for i in range(0, len(locations))]
@@ -146,7 +141,7 @@ def fetch_data():
                             driver.get(locations_names[i])
                             page_url = locations_names[i]
                             time.sleep(5)
-                            logger.info(page_url)
+                            print(page_url)
                             location_name, street_addr, city, state, zipcode, phone, hours_of_op, latitude, longitude = get_info(driver)
                             data.append([
                                 'https://www.cicis.com/',
@@ -165,7 +160,7 @@ def fetch_data():
                                 hours_of_op
                             ])
                             count = count + 1
-                            logger.info(count)
+                            print(count)
 
 
     time.sleep(3)

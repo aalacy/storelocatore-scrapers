@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abchome_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +32,7 @@ def fetch_data():
         loc =div.find('div', {'class': 'locations__title'}).text.strip()
         data = div.find_all('div', {'class': 'contact-wrapper__details'})
         addr=data[0].find_all('p')
-        #logger.info(addr)
+        #print(addr)
         street=addr[0].text
         cs=addr[1].text.strip().split(',')
         city = cs[0].strip()

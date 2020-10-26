@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('menswearhouse_com')
-
-
 
 
 session = SgRequests()
@@ -45,7 +40,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #logger.info("zip_code === "+zip_code)
+        #print("zip_code === "+zip_code)
         # data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
         
         
@@ -78,7 +73,7 @@ def fetch_data():
         street_address1 = ''
         street_address2 = ''
         store_name=''
-        # logger.info("location_url ==== ",loc['collection'])
+        # print("location_url ==== ",loc['collection'])
         if "DocumentList" in loc:
             current_results_len = len(loc['DocumentList']) 
             
@@ -97,7 +92,7 @@ def fetch_data():
                 soup = BeautifulSoup(data['working_hours_ntk'], "lxml")
 
                 hours_of_operation =  " ".join(list(soup.stripped_strings)).lower().replace("pm"," pm ").replace("am",' am ').replace("sun"," sun ").replace("mon"," mon ").replace("wed"," wed ").replace("thu"," thu ").replace("fri"," fri ").replace("sat"," sat ").replace("tue"," tue ")
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
     
                 # do your logic.
                 page_url = "https://www.menswearhouse.com/store-locator/"+str(data['stloc_id'])
@@ -118,18 +113,18 @@ def fetch_data():
                 addresses.append(store[2] + store[-3])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
             # return_main_object.append(store)
 
         # yield store
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

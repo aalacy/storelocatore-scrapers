@@ -4,11 +4,6 @@ import csv
 from random import randint
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chemungcanal_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -34,18 +29,18 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.find_all(class_="location-box height-100")
-	logger.info("Got " + str(len(items)) + " locations")
+	print("Got " + str(len(items)) + " locations")
 	time.sleep(randint(1,2))
 
 	data = []
 	for item in items:
 		locator_domain = "chemungcanal.com"
 		location_name = item.h3.text.strip()
-		logger.info(location_name)
+		print (location_name)
 
 		raw_address = item.find(class_="location-address").text.strip().split("\n")
 		street_address = raw_address[0]
@@ -71,7 +66,7 @@ def fetch_data():
 			location_type = "MAIN OFFICE"
 
 		# Maps
-		# logger.info("Getting map info ..")
+		# print("Getting map info ..")
 		map_link = item.find("a")['href']
 
 		req = session.get(map_link, headers = headers)
@@ -79,8 +74,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

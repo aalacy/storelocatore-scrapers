@@ -3,4 +3,3 @@ uszipcode
 asyncio
 aiohttp
 sgzip
-sglogging

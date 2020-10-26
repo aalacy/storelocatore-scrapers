@@ -6,11 +6,6 @@ import json
 from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mickeythemoose_com')
-
-
 
 
 session = SgRequests()
@@ -46,12 +41,12 @@ def fetch_data():
         "x-wpgmza-action-nonce": keys1
     }
     r = session.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",headers=headers,data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1').json()
-    # logger.info(r)
+    # print(r)
     return_main_object = []
     if "meta" in r:
         for loc in r['meta']:
             page_url = loc['link']
-            # logger.info(loc['link'])
+            # print(loc['link'])
             r1=session.get(loc['link'])
             name=loc['title'].strip()
             storeno=loc['id']
@@ -59,7 +54,7 @@ def fetch_data():
             lng=loc['lng']
             soup=BeautifulSoup(r1.text,'lxml')
             main=list(soup.find('div',{"class":"store_info"}).find('div',{"class":"gray-box"}).stripped_strings)
-            # logger.info(main)
+            # print(main)
             del main[0]
             address=main[0].strip()
             ct=main[1].split(',')
@@ -91,8 +86,8 @@ def fetch_data():
             store.append(page_url)
 
 
-            # logger.info("data ==== "+str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data ==== "+str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
     return return_main_object
 

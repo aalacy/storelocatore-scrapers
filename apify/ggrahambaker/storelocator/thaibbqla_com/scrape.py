@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thaibbqla_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -70,7 +65,7 @@ def fetch_data():
     ## up to body
     body = tr.find_element_by_xpath('..')
 
-    # logger.info(body.text.split('\n'))
+    # print(body.text.split('\n'))
     p_cont = body.find_elements_by_css_selector('p')
     all_store_data = []
     hours = 'Sunday - Thursday 11:00 a.m. - 10:00 p.m. Friday & Saturday 11:00 a.m. - 11:00 p.m.'

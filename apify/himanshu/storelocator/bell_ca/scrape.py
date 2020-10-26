@@ -6,11 +6,6 @@ import json
 import sgzip
 import time
 import unidecode
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bell_ca')
-
-
 
 
 def write_output(data):
@@ -49,7 +44,7 @@ def fetch_data():
         y = coord[1]
         # y = "-67.27968"
 
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = requests.get("https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="+str(x)+"%2C"+str(y)+"&stype=ll&async=results&key", headers=headers)
 
         soup = BeautifulSoup(r.text,"lxml")
@@ -95,14 +90,14 @@ def fetch_data():
             addresses.append(store[2])
             store = [unidecode.unidecode(x).strip() if x else "<MISSING>" for x in store]
             yield store
-            # logger.info("data == " + str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print("data == " + str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         if len(data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kevajuicesw_com')
-
-
 
 
 session = SgRequests()
@@ -29,7 +24,7 @@ def fetch_data():
     return_main_object = []
     parts = soup.find("div",{"class": "entry-content content"})
     for semi_parts in parts.find_all("div",{"class": re.compile("x-column one")}):
-        # logger.info(semi_parts)
+        # print(semi_parts)
         p_tags = semi_parts.find_all("p")
         if p_tags == []:
             continue

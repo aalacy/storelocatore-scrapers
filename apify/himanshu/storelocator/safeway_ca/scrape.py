@@ -5,11 +5,6 @@ import re
 import json
 import time
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('safeway_ca')
-
-
 
 
 session = SgRequests()
@@ -78,8 +73,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        # logger.info("data =="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
     
         

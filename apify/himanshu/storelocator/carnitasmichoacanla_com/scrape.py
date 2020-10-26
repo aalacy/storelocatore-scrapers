@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('carnitasmichoacanla_com')
-
-
 
 
 
@@ -31,7 +26,7 @@ def fetch_data():
     r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     data = soup.find_all("div",{"class":"entry-content"})
-    # logger.info(data)
+    # print(data)
     name_store=[]
     store_detail=[]
     return_main_object=[]
@@ -92,7 +87,7 @@ def fetch_data():
         store.append(longitude[i])
         store.append(hours[i])
         store.append('https://carnitasmichoacanla.com/locations/')
-        # logger.info(hours[i])
+        # print(hours[i])
         yield store
 
 

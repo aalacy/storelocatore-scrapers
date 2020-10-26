@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hawaiianbarbecue_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +37,7 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     for link in link_list:
-        logger.info(link)
+        print(link)
         if 'undefined' in link:
             continue
 

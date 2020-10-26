@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('holidaystationstores_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -91,7 +86,7 @@ def fetch_data():
             continue
         addressess.append(store[2])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        #logger.info(store)
+        #print(store)
         yield store
 
     

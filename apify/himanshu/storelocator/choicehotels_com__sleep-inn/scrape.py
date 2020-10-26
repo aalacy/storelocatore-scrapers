@@ -6,11 +6,6 @@ import unicodedata
 import sgzip
 import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('choicehotels_com__sleep-inn')
-
-
 
 session = SgRequests()
 
@@ -39,10 +34,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0',
             "Origin": "https://www.choicehotels.com",
@@ -90,7 +85,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("https://www.choicehotels.com/" + str(store_data["id"]))
             yield store
-        #logger.info(len(data))
+        #print(len(data))
         search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()
 

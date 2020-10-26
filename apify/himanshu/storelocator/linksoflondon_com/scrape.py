@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('linksoflondon_com')
-
-
 
 
 
@@ -35,7 +30,7 @@ def fetch_data():
 
 
     for val in soup.find('div', {'id': 'store-location-results'}).find_all('div', {'class': 'store-information'}):
-        # logger.info(val)
+        # print(val)
 
         store_number = val.find('a')['href'].split('=')[1].strip()
 

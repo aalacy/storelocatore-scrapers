@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shinola_com')
-
-
 
 
 
@@ -84,8 +79,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 return_main_object.append(store)
-                # logger.info('data ==' + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~')
+                # print('data ==' + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~')
         if last_page is True:
             break
         count += 1
@@ -132,8 +127,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             return_main_object.append(store)
-            # logger.info('data ==' + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~')
+            # print('data ==' + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
     # r = session.get(
     #     'https://www.shinola.com/shinstorelocator/index/searchlocation/?location=&shinolaStoresCurrentPage=0').json()
@@ -171,8 +166,8 @@ def fetch_data():
     #                 continue
     #             addresses.append(store[2])
     #             return_main_object.append(store)
-    #             # logger.info('data ==' + str(store))
-    #             # logger.info('~~~~~~~~~~~~~~~~~~~~~~')
+    #             # print('data ==' + str(store))
+    #             # print('~~~~~~~~~~~~~~~~~~~~~~')
 
 
 def scrape():

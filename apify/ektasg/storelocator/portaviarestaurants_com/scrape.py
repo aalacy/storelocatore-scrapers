@@ -4,11 +4,6 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('portaviarestaurants_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,7 +33,7 @@ def fetch_data():
     for link in linklist:
         if link.text.find('Visit Us') > -1:
             link = 'https://portaviarestaurants.com'+link['href']
-            logger.info(link)
+            print(link)
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             title = soup.find('h2',{'class':'elementor-heading-title'}).text
@@ -91,7 +86,7 @@ def fetch_data():
                         '<MISSING>',
                         hours.replace('Hours','').lstrip()
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
                 
    

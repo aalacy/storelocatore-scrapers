@@ -3,11 +3,6 @@ import json
 import requests
 import sgzip
 from Scraper import Scrape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aao-usa_com')
-
-
 
 
 URL = "https://aao-usa.com"
@@ -70,7 +65,7 @@ class Scraper(Scrape):
                 else []
             )
             stores.extend(data)
-            logger.info(
+            print(
                 f"{len(data)} stores scraped for coords Lat: {coords[0]} Long:  {coords[1]}"
             )
 

@@ -5,11 +5,6 @@ from selenium.webdriver.support.ui import Select
 import csv
 import time 
 import re 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('marshalls_com')
-
-
 
 def get_driver():
 	options = Options()
@@ -66,7 +61,7 @@ def fetch_data():
 				time.sleep(6)
 			except: 
 				continue
-			#logger.info(p)
+			#print(p)
 			locs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[3]').get_attribute('value'))
 			streets.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/form/div[4]/div[1]').text.split('\n')[0])
 			try:

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('caa_ca')
-
-
 
 session = SgRequests()
 def write_output(data):
@@ -66,8 +61,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours)
         store.append(page_url)
-        # logger.info("data ==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        # print("data ==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
         yield store
 
 def scrape():

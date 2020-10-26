@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('avera_org')
-
-
 session = SgRequests()
 
 
@@ -31,7 +26,7 @@ def fetch_data():
     for d in option[1:]:
         
         location_type = d.text
-        # logger.info(location_type)
+        # print(location_type)
         r1 = session.get("https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1")
         soup1 = BeautifulSoup(r1.text, "lxml")        
         if soup1.find("select",{"class":"SuperShort"}): 
@@ -51,7 +46,7 @@ def fetch_data():
                     hp = soup3.find("div",{"class":"LocationProfile"})
                     if  hp != None:
                         links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
-                        # logger.info("new link===",links)
+                        # print("new link===",links)
                         r4 = session.get(links)
                         soup4 = BeautifulSoup(r4.text, "lxml")
                         data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
@@ -76,7 +71,7 @@ def fetch_data():
 
                     else:
                         data = json.loads(soup3.find("script",{"type":"application/ld+json"}).text)
-                        # logger.info(data)
+                        # print(data)
                         location_name = data['name']
                         street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
                         city = data['address']['addressLocality']
@@ -101,8 +96,8 @@ def fetch_data():
                     if str(duplicate)  in addresses:
                         continue
                     addresses.append(str(duplicate))
-                    #logger.info("data = " + str(store))
-                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
                                         
         else:
@@ -120,7 +115,7 @@ def fetch_data():
                 hp = soup3.find("div",{"class":"LocationProfile"})
                 if  hp != None:
                     links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
-                    # logger.info("new link===",links)
+                    # print("new link===",links)
                     r4 = session.get(links)
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
@@ -145,7 +140,7 @@ def fetch_data():
 
                 else:
                     data = json.loads(soup3.find("script",{"type":"application/ld+json"}).text)
-                    # logger.info(data)
+                    # print(data)
                     location_name = data['name']
                     street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
                     city = data['address']['addressLocality']
@@ -170,8 +165,8 @@ def fetch_data():
                 if str(duplicate)  in addresses:
                     continue
                 addresses.append(str(duplicate))
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store       
 
 

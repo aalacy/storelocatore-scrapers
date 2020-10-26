@@ -4,11 +4,6 @@ import csv
 import time
 import re
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sprouts_com')
-
-
 
 
 def write_output(data):
@@ -52,8 +47,8 @@ def fetch_data():
 	try:
 		item = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	locations = item.find_all(class_="cell small-6 medium-3 store-states")
 	for location in locations:
@@ -65,10 +60,10 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
+			print(u)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		stores=item.find_all(class_="cell medium-4 large-3 list-by-state")
 
@@ -77,16 +72,16 @@ def fetch_data():
 
 	total_links = len(urls)
 	for i, u in enumerate(urls):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 
 		req = session.get(u, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
+			print(u)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locs.append(item.find('h1').text.strip())
 		try:

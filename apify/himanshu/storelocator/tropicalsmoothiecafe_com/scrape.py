@@ -7,11 +7,6 @@ import sgzip
 import json
 import  pprint
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tropicalsmoothiecafe_com')
-
-
 
 
 session = SgRequests()
@@ -84,8 +79,8 @@ def fetch_data():
     while coords:
 
             result_coords = []
-           # logger.info("zip_code === " + str(coords))
-            #logger.info("ramiang zip =====" + str(search.current_zip))
+           # print("zip_code === " + str(coords))
+            #print("ramiang zip =====" + str(search.current_zip))
             
             r = request_wrapper("https://locations.tropicalsmoothiecafe.com/search?q=" + str(search.current_zip) + "&r=" + str(MAX_RESULTS),'get', headers=headers)
             if r == None:
@@ -94,7 +89,7 @@ def fetch_data():
                 continue
             soup = BeautifulSoup(r.text, "lxml")
             current_results_len =len(soup.find_all("span",{"class":re.compile("LocationName-brand")}))
-            #logger.info(current_results_len)
+            #print(current_results_len)
 
 
             json = r.json()

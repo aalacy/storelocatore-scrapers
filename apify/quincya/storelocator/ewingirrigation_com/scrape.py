@@ -12,11 +12,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ewingirrigation_com')
-
-
 
 
 def get_driver():
@@ -46,14 +41,14 @@ def fetch_data():
 	driver = get_driver()
 	time.sleep(2)
 
-	logger.info("Website loading..")
+	print("Website loading..")
 	driver.get(base_link)
 	time.sleep(randint(2,4))
 
 	element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
 		(By.CLASS_NAME, "store_content")))
 
-	logger.info("Loaded!")
+	print("Loaded!")
 	time.sleep(randint(3,4))
 
 	all_links = []
@@ -73,20 +68,20 @@ def fetch_data():
 	data = []
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 
 		req = session.get(link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			logger.info(link)
+			print(link)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locator_domain = "ewingirrigation.com"
 		location_name = "Ewing " + item.find('h2').text.strip()
-		logger.info(location_name)
+		print(location_name)
 
 		raw_address = item.find(class_='address').text.replace("\r\n\r\n","\n").split("\n")
 		street_address = raw_address[0].strip()

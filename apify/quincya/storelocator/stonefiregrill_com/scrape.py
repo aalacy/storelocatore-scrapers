@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('stonefiregrill_com')
-
-
 
 
 def get_driver():
@@ -43,8 +38,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 	
 	section = base.find('ul', attrs={'class': 'location_grid clearfix'})
 	items = section.findAll('li')
@@ -59,13 +54,13 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		locator_domain = "stonefiregrill.com"
 		content = base.find('div', attrs={'class': 'row'})
 		location_name = content.find('h1').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		
 		raw_data = str(base.find('span', attrs={'itemprop': 'address'})).replace('<p>',"").replace('</p>',"").replace('\n',"").replace(',',"").split('<br/>')
 		street_address = content.find('span', attrs={'class': 'address'}).text.strip()

@@ -5,11 +5,6 @@ import usaddress
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('highsdairystores_com')
-
-
 
 
 
@@ -49,9 +44,9 @@ def fetch_data():
         store = stores[n].text
         start = store.find("#")
         store = store[start+1:len(store)]
-        logger.info(store)
+        print(store)
         link = "http://highsstores.com/StoreHome/" + store
-        logger.info(link)
+        print(link)
         driver = get_driver()
         driver.get(link)
         time.sleep(1)
@@ -101,18 +96,18 @@ def fetch_data():
         if len(longt) < 3:
             longt = "<MISSING>"
 
-        logger.info(title)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
-        logger.info(phone)
-        logger.info(lat)
-        logger.info(longt)
-        logger.info(hours)
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+        print(phone)
+        print(lat)
+        print(longt)
+        print(hours)
 
-        logger.info(p)
-        logger.info("......................................")
+        print(p)
+        print("......................................")
         p += 1
 
         data.append([

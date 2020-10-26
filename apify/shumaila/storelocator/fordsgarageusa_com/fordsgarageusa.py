@@ -5,11 +5,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fordsgarageusa_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,13 +32,13 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     link_list = soup.findAll('div',{'class':'service-content'})
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     for rep in link_list:
         link = rep.find('a')
         title = link.text
         maindiv = rep.findAll('p')
-        #logger.info(states.text.strip())
+        #print(states.text.strip())
         link = 'https://www.fordsgarageusa.com'+ link['href']
         r = session.get(link, headers=headers, verify=False)
         ccode = 'US'
@@ -76,7 +71,7 @@ def fetch_data():
             if end == -1:
                end = coord.find('!3m',start) 
             lat = coord[start:end]
-            logger.info(link)
+            print(link)
             street = address[0:address.find('\n')]
             address = address[address.find('\n')+1:len(address)]
             city,state = address.split(', ')
@@ -119,7 +114,7 @@ def fetch_data():
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
     
    
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                
                 
@@ -132,9 +127,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

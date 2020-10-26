@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 from selenium.common.exceptions import NoSuchElementException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lumberliquidators_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -70,29 +65,29 @@ def fetch_data():
     for i, link in enumerate(store_link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        logger.info(link)
-        logger.info(i)
+        print(link)
+        print(i)
 
         try:
             location_name = driver.find_element_by_css_selector('h1#location-name').text.replace('\n', ' ')
         except NoSuchElementException:
             ## more locations
-            logger.info('')
-            logger.info('')
-            logger.info('more locs!')
+            print('')
+            print('')
+            print('more locs!')
             store_links = driver.find_elements_by_css_selector('a.Teaser-titleLink')
             for store in store_links:
-                logger.info(store.get_attribute('href'))
+                print(store.get_attribute('href'))
                 store_link_list.append(store.get_attribute('href'))
 
             continue
 
-        logger.info(location_name)
+        print(location_name)
 
         if 'ON-' in link:
             country_code = 'CA'
             addy = driver.find_element_by_css_selector('div.Core-address').text.split('\n')
-            logger.info(addy)
+            print(addy)
             street_address = addy[0]
             city, state, zip_code = can_addy_ext(addy[1])
 
@@ -100,7 +95,7 @@ def fetch_data():
             country_code = 'US'
 
             addy = driver.find_element_by_css_selector('div.Core-address').text.replace('\n', ' ')
-            logger.info(addy)
+            print(addy)
 
             if '2465 Highway 6 and 50' in addy:
                 street_address = '2465 Highway 6 and 50'
@@ -134,20 +129,20 @@ def fetch_data():
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']
 
-        logger.info(street_address, city, state, zip_code)
+        print(street_address, city, state, zip_code)
 
         phone_number = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href').replace(
             'tel:', '')
 
-        logger.info(phone_number)
+        print(phone_number)
         hours = driver.find_element_by_css_selector('table.c-location-hours-details').text.replace('\n', ' ').replace(
             'Day of the Week', '').strip()
-        logger.info(hours)
+        print(hours)
 
         lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
-        logger.info(longit, lat)
-        logger.info()
+        print(longit, lat)
+        print()
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'

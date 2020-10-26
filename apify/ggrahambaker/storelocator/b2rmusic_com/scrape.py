@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('b2rmusic_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +32,7 @@ def fetch_data():
     rows = driver.find_elements_by_css_selector('tr.row')
     link_arr = []
     for row in rows:
-        # logger.info(row.find_element_by_css_selector('a').get_attribute('href'))
+        # print(row.find_element_by_css_selector('a').get_attribute('href'))
         link_arr.append(row.find_element_by_css_selector('a').get_attribute('href'))
 
     all_store_data = []

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jiffytrip_com')
-
-
 
 session = SgRequests()
 
@@ -38,7 +33,7 @@ def fetch_data():
     for div in divs[1:]:
         #location_name = div
         cols = div.find_all('div')
-        #logger.info(cols)
+        #print(cols)
         store_number = cols[0].text
         location_name = cols[2].text
         street_address = cols[2].text

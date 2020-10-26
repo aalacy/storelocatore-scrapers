@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thefreshgrocer_com')
-
-
 
 
 
@@ -82,10 +77,10 @@ def fetch_data():
         addresses.append(list_address[0])
 
         map_url = script.find('div', {'class': 'store__controls'}).find('a')['href']
-        # logger.info('Map Url ===== ' + str(map_url))
-        # logger.info(str(len(addresses)) + ' == list_address ===== ' + str(list_address))
-        # logger.info('list_hours ===== ' + str(list_hours))
-        # logger.info('Distance ===== ' + str(script.find('span',{'class':'store__distance'}).text))
+        # print('Map Url ===== ' + str(map_url))
+        # print(str(len(addresses)) + ' == list_address ===== ' + str(list_address))
+        # print('list_hours ===== ' + str(list_hours))
+        # print('Distance ===== ' + str(script.find('span',{'class':'store__distance'}).text))
 
         street_address = list_address[0]
         phone = list_address[-1]
@@ -100,8 +95,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

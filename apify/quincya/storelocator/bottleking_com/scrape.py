@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bottleking_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'over_store_div'})
 
@@ -41,7 +36,7 @@ def fetch_data():
 		location_name = item.find('a').get_text(separator=u' ').replace("\n"," ").replace("\r"," ").strip()
 		location_name = re.sub(' +', ' ', location_name)
 		if location_name != "":
-			logger.info(location_name)
+			print (location_name)
 			street_address = item.find('div', attrs={'class': 'store_address'}).text.replace("\n"," ").replace("\r"," ").strip()
 			raw_data = item.find('div', attrs={'class': 'store_citystatezip'}).text.replace("\n"," ").replace("\r"," ").strip()
 			city = raw_data[:raw_data.find(',')].strip()

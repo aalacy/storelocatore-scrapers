@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('brightpathkids_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,14 +26,14 @@ def fetch_data():
             else:
                 states.append(lurl)
     for state in states:
-        logger.info(state)
+        print(state)
         r2 = session.get(state, headers=headers, stream=True)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
             if '<div class="text-center">	<a href="https://brightpathkids.com/locations/' in line2:
                 locs.append(line2.split('href="')[1].split('"')[0])
     for loc in locs:
-        logger.info(loc)
+        print(loc)
         website = 'brightpathkids.com'
         country = 'CA'
         typ = '<MISSING>'

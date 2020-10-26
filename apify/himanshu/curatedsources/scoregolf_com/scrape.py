@@ -6,11 +6,6 @@ import json
 import time
 session = SgRequests()
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('scoregolf_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +30,7 @@ def fetch_data():
         page_url = base_url+link['href']
         if "/golf-course-guide/angel's-view-golf-course-oakville-ontario-canada" in link['href'] or "/golf-course-guide/club-de-golf-des-iles-inc-l'Étang-du-nord, qc-quebec-canada" in link['href']:
             continue
-        #logger.info(page_url)
+        #print(page_url)
         try:
             r1 = requests.get(page_url)
         except:

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from requests.exceptions import RequestException # ignore_check
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kroger_com__fuel')
-
-
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -35,10 +30,10 @@ def write_output(data):
 def post(url, headers, data, attempts=1):
     global session
     if attempts > 10: 
-        logger.info(f'failed post to {url} after 10 tries. giving up')
+        print(f'failed post to {url} after 10 tries. giving up')
         raise SystemExit
     try: 
-        # logger.info(f'attept {attempts} posting to {url}')
+        # print(f'attept {attempts} posting to {url}')
         r = session.post(url, headers=headers, data=data)
         return r
     except RequestException as ex:
@@ -49,7 +44,7 @@ def post(url, headers, data, attempts=1):
 def get(url, headers, attempts=1):
     global session
     if attempts > 10: 
-        logger.info(f'failed get {url} after 10 tries. giving up')
+        print(f'failed get {url} after 10 tries. giving up')
         raise SystemExit
     try: 
         r = session.get(url, headers=headers)
@@ -65,9 +60,9 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         website = 'kroger.com/fuel'
-        # logger.info('%s...' % coord)
+        # print('%s...' % coord)
         url = 'https://www.kroger.com/stores/api/graphql'
         data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(coord) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
         
@@ -86,7 +81,7 @@ def fetch_data():
                             brand = 'KROGER'
                             name = item.split('vanityName":"')[1].split('"')[0]
                             division = item.split('"divisionNumber":"')[1].split('"')[0]
-                            #logger.info(name + '|' + division)
+                            #print(name + '|' + division)
                             store = item.split('"storeNumber":"')[1].split('"')[0]
                             try:
                                 phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('"','')
@@ -131,7 +126,7 @@ def fetch_data():
                                 hours = hours.replace(': :',':')
                                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

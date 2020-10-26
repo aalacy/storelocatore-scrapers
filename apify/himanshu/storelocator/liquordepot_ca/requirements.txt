@@ -3,4 +3,3 @@ requests==2.11.1
 beautifulsoup4==4.7.1
 selenium==3.141.0
 webdriver_manager==1.8.2
-sglogging

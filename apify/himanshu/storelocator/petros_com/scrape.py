@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('petros_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -135,7 +130,7 @@ def fetch_data():
                 hours = " ".join(" ".join(full[4:-1]).split("Hours:")[1:]).strip().replace("*Note: Dining room closes one hour earlier than close time",'')
             else:
                 street_address = full[0]
-                # logger.info("street_address",street_address)
+                # print("street_address",street_address)
                 phone = list(p1.stripped_strings)[-1]
                 city = full[1].split(',')[0]
                 name = city
@@ -143,7 +138,7 @@ def fetch_data():
                 zipcode = full[1].split(',')[1].split( )[1]
                 # full.insert(0,"Hours")
                 hours = " ".join(" ".join(full[4:-1]).split("Hours:")[1:]).strip().replace("*Note: Dining room closes one hour earlier than close time",'')
-            # logger.info(street_address)
+            # print(street_address)
             if "2 Market Square" in street_address:
                 hours = "Sundays-Thursdays: 11 AM – 6 PM Fridays & Saturdays: 11 AM – 8 PM"
             if "2217 North Charles Sevier Blvd." in street_address:

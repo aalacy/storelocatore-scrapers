@@ -4,11 +4,6 @@ import re
 import json
 import requests
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('porters_us_com')
-
-
 session = SgRequests()
 
 
@@ -88,8 +83,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # logger.info("data===="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data===="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
 
 

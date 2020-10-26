@@ -3,11 +3,6 @@ import re
 from bs4 import BeautifulSoup as BS
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('arbys_com')
-
-
 session = SgRequests()
 
 base_url = 'https://arbys.com'
@@ -35,7 +30,7 @@ def fetch_data():
             for url in ct_soup.find_all("a",{"class":"location-name ga-link"}):
                 page_url = url['href']
                 location_soup = BS(session.get(page_url).text,"lxml")
-               # logger.info("page_url:--------- ",page_url)
+               # print("page_url:--------- ",page_url)
                 json_datas={}
                 try:
                     json_datas=(str(location_soup.find("script",{"type":"application/ld+json"})).split('application/ld+json">')[1].split("</script>")[0])
@@ -48,7 +43,7 @@ def fetch_data():
                 # json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and '"addressLocality"' in tag.text).text)[0]
                 location_name=location_soup.find("span",{"class":"location-name"}).text
                 location_name = json_data[0]['name']
-                # logger.info(location_name)
+                # print(location_name)
                 street_address = json_data[0]['address']['streetAddress']
                 city = json_data[0]['address']['addressLocality']
                 state = json_data[0]['address']['addressRegion']
@@ -77,7 +72,7 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-                #logger.info(store)
+                #print(store)
                 yield store
     
 

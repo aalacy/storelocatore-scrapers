@@ -6,11 +6,6 @@ import json
 from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('odfl_com')
-
-
 
 
 def write_output(data):
@@ -53,10 +48,10 @@ def fetch_data():
             "//input[@name='locatorForm:j_idt44']").click()
         # exit()
         try:
-            #logger.info("----------------------", state)
+            #print("----------------------", state)
             element = WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//li[@style='color:red; display:block']"))
-            #logger.info("----------------------", state)
+            #print("----------------------", state)
             continue
         except:
             pass
@@ -106,8 +101,8 @@ def fetch_data():
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
-            # logger.info(store)
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print(store)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         driver.find_element_by_xpath("//input[@value='Return']").click()
 

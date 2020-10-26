@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('laclinica_org')
-
-
 
 
 
@@ -44,7 +39,7 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "lxml")
 
             main_address = soup.find('p', {'class': 'address'}).text.split(',')
-            # logger.info(main_address)
+            # print(main_address)
 
             if len(main_address) == 3:
                 street_address = main_address[0].strip()
@@ -85,7 +80,7 @@ def fetch_data():
             hours_of_operation = soup.find('p',{'class':'hours'}).text.replace('Hours:','').strip() if soup.find('p',{'class':'hours'}) else '<MISSING>'
             page_url = value['url']
             street_address  = street_address.split('Suite')[0].split('Floor')[0].replace(city,'')
-            # logger.info(street_address)
+            # print(street_address)
             if "210 Hospital Drive Vallejo" in street_address or "100 Whitney Ave Vallejo" in  street_address:
                 street_address = street_address.replace("Vallejo",'')
                 city = 'vallejo'

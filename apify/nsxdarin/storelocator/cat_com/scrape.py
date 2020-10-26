@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cat_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -22,7 +17,7 @@ def fetch_data():
     allstores = []
     urls = ['https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=500&searchDistance=700&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&appId=n6HDEnXnYRTDAxFr&searchValue=-71.0183787%2C42.0834335','https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=500&searchDistance=700&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&appId=n6HDEnXnYRTDAxFr&searchValue=-118.032844%2C33.9791793','https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=5000&searchDistance=5000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&appId=n6HDEnXnYRTDAxFr&searchValue=-115.8431267%2C35.2270869','https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=5000&searchDistance=5000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7&serviceId=1%2C2&appId=n6HDEnXnYRTDAxFr&searchValue=-90%2C40','https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=5000&searchDistance=5000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&appId=n6HDEnXnYRTDAxFr&searchValue=-80.8431267%2C35.2270869']
     for url in urls:
-        logger.info(url)
+        print(url)
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -131,7 +126,7 @@ def fetch_data():
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(20, 70, 10):
         for y in range(-60, -160, -10):
-            logger.info(str(x) + ',' + str(y))
+            print(str(x) + ',' + str(y))
             url = 'https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&&searchType=location&maxResults=500&searchDistance=700&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&appId=n6HDEnXnYRTDAxFr&searchValue=' + str(y) + '%2C' + str(x)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():

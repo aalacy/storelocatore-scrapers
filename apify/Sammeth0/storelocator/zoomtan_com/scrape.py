@@ -5,11 +5,6 @@ import pandas as pd
 from selenium.webdriver.support.ui import Select
 import csv
 import time 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zoomtan_com')
-
-
 
 def get_driver():
 	options = Options()
@@ -73,7 +68,7 @@ def fetch_data():
 			for url in urls:
 				page_url=url.get_attribute('href')
 				pages_url.append(page_url)
-				logger.info(pages_url)
+				print(pages_url)
 				driver_page= get_driver()
 				driver_page.get(page_url)
 				time.sleep(3)

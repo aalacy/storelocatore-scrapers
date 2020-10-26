@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('phillyconnection_com')
-
-
 
 
 
@@ -86,7 +81,7 @@ def fetch_data():
         return_object.append("<MISSING>")
         return_object.append("<MISSING>")
         return_main_object.append(return_object)
-        # logger.info(return_object)
+        # print(return_object)
     return return_main_object
 
 def scrape():

@@ -7,11 +7,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('longchamp_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -106,7 +101,7 @@ def fetch_data():
                         hours_of_op
                     ])
             count = count + 1
-            logger.info(count)
+            print(count)
 
     # US Stores
     driver.get("https://us.longchamp.com/stores")
@@ -182,7 +177,7 @@ def fetch_data():
             hours_of_op
         ])
         count = count + 1
-        logger.info(count)
+        print(count)
 
 
     time.sleep(3)

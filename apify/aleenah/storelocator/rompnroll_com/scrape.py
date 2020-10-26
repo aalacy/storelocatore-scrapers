@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rompnroll_com')
-
-
 
 
 def write_output(data):
@@ -30,20 +25,20 @@ def fetch_data():
     res=session.get("https://rompnroll.com/locations")
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'card-body'})
-    logger.info(len(divs))
+    print(len(divs))
     del divs[4] #singapore
 
     for div in divs:
         lis=div.find_all('li')
-        logger.info(len(lis))
+        print(len(lis))
         for li in lis:
 
             if'<span style="">' in str(li):
-                logger.info('in')
+                print('in')
                 continue
 
             url=li.find('a').get('href')
-            logger.info(url)
+            print(url)
             res = session.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
             data=str(soup)

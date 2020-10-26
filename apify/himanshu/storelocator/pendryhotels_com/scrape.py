@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pendryhotels_com')
-
-
 
 
 
@@ -61,7 +56,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,'lxml')
     info = soup.find('div',{'class':'menu-pendry'}).find('div',class_='col-md-4 order-md-5 menu-pendry__column-outer')
     for a in info.find_all('a'):
-        # logger.info(a['href'])
+        # print(a['href'])
         r_loc = session.get(a['href'],headers = headers)
         soup_loc =BeautifulSoup(r_loc.text,'lxml')
         loc = soup_loc.find('span',class_= 'page-footer__address page-footer__address--small')
@@ -73,7 +68,7 @@ def fetch_data():
             street_address = address[0].strip()
             city = address[1].strip()
             location_name =city
-            # logger.info(location_name)
+            # print(location_name)
             if len(address) >3:
 
                 state = address[2].strip()
@@ -82,7 +77,7 @@ def fetch_data():
 
                 state = address[-1].split()[0].strip()
                 zipp = address[-1].split()[-1].strip()
-            # logger.info(city,zipp,state,street_address)
+            # print(city,zipp,state,street_address)
             latitude = loc.find('a')['href'].split('@')[-1].split(',')[0].strip()
             longitude = loc.find('a')['href'].split('@')[-1].split(',')[1].strip()
 
@@ -90,8 +85,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == "" or x == None  else x for x in store]
 
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

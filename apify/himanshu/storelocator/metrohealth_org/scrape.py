@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('metrohealth_org')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -45,7 +40,7 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         page_url = data['clickUri']
-        # logger.info(page_url)
+        # print(page_url)
         r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         try:
@@ -68,8 +63,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        # logger.info("data==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         yield store
         

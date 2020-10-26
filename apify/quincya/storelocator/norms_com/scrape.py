@@ -5,11 +5,6 @@ import time
 import re
 
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('norms_com')
-
-
 
 
 def write_output(data):
@@ -37,8 +32,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	all_scripts = base.find_all('script')
 	for script in all_scripts:
@@ -64,7 +59,7 @@ def fetch_data():
 		locator_domain = "norms.com"
 		
 		location_name = re.findall('title":.+,"lat', item)[0].replace('title":','').split(",")[0].replace('"',"")
-		logger.info(location_name)
+		print(location_name)
 		
 		zip_code = re.findall('zip":.+,"tags"', item)[0].replace('zip":"','').split(",")[0].replace('"',"")
 

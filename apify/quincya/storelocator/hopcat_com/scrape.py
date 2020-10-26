@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hopcat_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -31,10 +26,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find(class_="item-list").find_all('a') 
@@ -50,13 +45,13 @@ def fetch_data():
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locator_domain = "hopcat.com"
 
 		location_name = item.find('option', selected=True).text
-		logger.info(location_name)
+		print(location_name)
 
 		raw_data = item.find(id="utility_nav").find(class_="view-content").find_all('li')
 		raw_address = raw_data[0].text.replace("Ave. ", "Ave, ").replace("Michigan,","MI").replace("ST. ", "ST, ").replace("St. ", "ST, ")\

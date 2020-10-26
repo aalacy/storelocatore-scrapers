@@ -5,11 +5,6 @@ import json
 import time
 import html5lib
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nissan_co_uk')
-
-
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
@@ -64,20 +59,20 @@ def fetch_data():
     data = (soup.find("script",{"type":"text/javascript"}).text.split(',"dealers":')[1].split("};")[0])
     json_data = json.loads(data)
     for i in json_data:
-        # logger.info()
+        # print()
             page5 = ((i['id']).replace("gb_nissan_05","").replace("51894","1894").replace("1780","1932").replace("1700","1931").replace("1004","51004").replace("1807","1943").replace("1071","1942"))
-            # logger.info(page5 ,"----------------------------------------------------------------------------------")
+            # print(page5 ,"----------------------------------------------------------------------------------")
             link = "https://www.nissan.co.uk/dealer-homepage."+str(page5)+".html"
             r = request_wrapper(link,"get",headers=headers)
             soup = BeautifulSoup(r.text,"html5lib")
             try:
                 data1 = (soup.find("script",{"type":"application/ld+json"}).text)
             except:
-                # logger.info(link)
+                # print(link)
                 continue
             json_data = json.loads(data1)
             location_name = json_data['name']
-            # logger.info(location_name)
+            # print(location_name)
             street_address = json_data['address']['streetAddress']
             city = json_data['address']['addressLocality']
             state = json_data['address']['addressCountry']
@@ -103,7 +98,7 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append("<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            # logger.info(store)
+            # print(store)
             if store[7] in address :
                 continue
             address.append(store[7])

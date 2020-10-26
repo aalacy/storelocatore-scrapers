@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('unitynationalbk_com')
-
-
 
 
 def write_output(data):
@@ -31,7 +26,7 @@ def fetch_data():
     url = 'https://unitynationalbk.com/locations/?place=&latitude=&longitude=&type=location&parent_bank%5B%5D=unity-national-bank'
     flag = True
     while flag:
-        #logger.info(url)
+        #print(url)
         page = requests.get(url)
         soup = BeautifulSoup(page.text, "html.parser")
         divlist = soup.findAll('div',{'class':'location-list-result'})
@@ -109,7 +104,7 @@ def fetch_data():
                     m = end + 1
 
                 ltype = temp
-                # logger.info(ltype)
+                # print(ltype)
             except:
                 ltype = "<MISSING>"
             if len(pcode)<5:
@@ -134,7 +129,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
 
         next = soup.find('a', {'class': 'next page-numbers'})

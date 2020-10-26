@@ -4,11 +4,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('myidealdental_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +28,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser") 
     divlist = soup.find('div',{'class':'locations-list-wrapper'}).findAll('li', {'class': 'locations-list-item'})
-    # logger.info("states = ",len(divlist))
+    # print("states = ",len(divlist))
     p = 0
     for div in divlist:
         link = div.find('div', {'class': 'location-links'}).find('a')['href']
@@ -50,7 +45,7 @@ def fetch_data():
 
             # Street
         street_address = data['address']['streetAddress']
-        # logger.info(street_address)
+        # print(street_address)
 
             # city
         city = data['address']['addressLocality']
@@ -108,7 +103,7 @@ def fetch_data():
                         lon,
                         hours_of_operation
                     ])
-        #logger.info(p,output[p])
+        #print(p,output[p])
         p += 1
 
         

@@ -1,3 +1,2 @@
 bs4
 sgrequests
-sglogging

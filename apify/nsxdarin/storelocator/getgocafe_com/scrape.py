@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('getgocafe_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -21,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
     for x in range(0, 325, 25):
-        logger.info(('Pulling Range %s...' % str(x)))
+        print(('Pulling Range %s...' % str(x)))
         try:
             url = 'https://www.getgocafe.com/api/sitecore/locations/getlocationlistvm?q=banner:(code+(GG))&skip=' + str(x) + '&top=25&orderBy=geo.distance(storeCoordinate,%20geography%27POINT(-93.2871%2044.9427)%27)%20asc'
             r = session.get(url, headers=headers, verify=False)
@@ -48,7 +43,7 @@ def fetch_data():
                 lng = item['Address']['Coordinates']['Longitude']
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
-            logger.info('No More Locations Found...')
+            print('No More Locations Found...')
 
 def scrape():
     data = fetch_data()

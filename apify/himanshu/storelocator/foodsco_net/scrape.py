@@ -4,11 +4,6 @@ import re
 import json
 from sgrequests import SgRequests
 import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('foodsco_net')
-
-
 
 session = SgRequests()
 
@@ -33,13 +28,13 @@ def fetch_data():
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     }
     for state in states:
-        logger.info(state)
+        print(state)
         r = session.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
         json_data = json.loads(str1.replace("\\",""))
-        # logger.info(json_data)
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print(json_data)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         
     ##### store
     
@@ -48,9 +43,9 @@ def fetch_data():
             if key["banner"]:
                 if "FOODSCO" not in key["banner"]:
                     continue
-                    # logger.info("ltype == ",key["banner"])
+                    # print("ltype == ",key["banner"])
                 location_type = "foodsco"
-                # logger.info(location_type)
+                # print(location_type)
                 location_name = key['vanityName']
                 street_address = key['address']['addressLine1'].capitalize()
                 city = key['address']['city'].capitalize()
@@ -88,8 +83,8 @@ def fetch_data():
                 if (store[-7]) in addresses:
                     continue
                 addresses.append(store[-7])
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
                 yield store
 
     

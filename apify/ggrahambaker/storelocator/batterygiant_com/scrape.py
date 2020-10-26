@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('batterygiant_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,8 +41,8 @@ def fetch_data():
 
         if 'Panama' in content[0]:
             continue
-        #logger.info(len(content))
-        #logger.info(content)
+        #print(len(content))
+        #print(content)
         if len(content) == 13:
             street_address = content[3]
             city, state, zip_code = addy_ext(content[4])

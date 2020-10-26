@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nbbank_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -49,7 +44,7 @@ def fetch_data():
         stores = driver.find_elements_by_xpath("//tr[contains(@class,'data_item_detail_row data_type_61_detail_row')]")
         for store in stores:
             location_name = store.find_element_by_css_selector('td.field_display.field_display_single_line_text.field_display_field_id_451').text
-            logger.info(location_name)
+            print(location_name)
             address= store.find_element_by_css_selector('div.address_display').text.replace('View on Map','')
             address_split = address.splitlines()
             country = "US"

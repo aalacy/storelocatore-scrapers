@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('advanceautoparts_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +37,7 @@ def fetch_data():
                         else:
                             locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for state in states:
-        #logger.info('Pulling State %s...' % state)
+        #print('Pulling State %s...' % state)
         r = session.get(state, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -57,7 +52,7 @@ def fetch_data():
                             locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                                 
     for city in cities:
-        #logger.info('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
@@ -68,7 +63,7 @@ def fetch_data():
                         locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for loc in locs:
         loc = loc.replace('&#39;','%27').replace('.com//','.com/')
-        #logger.info('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         LFound = True
         tries = 0
         while LFound:

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('buckhorngrill_com')
-
-
 
 
 session = SgRequests()
@@ -42,10 +37,10 @@ def fetch_data():
         link_soup = BeautifulSoup(link_r.text,'lxml')
 
         location_name = link_soup.find("h2",{"class":"location-title"}).text
-        # logger.info(name)
+        # print(name)
         addr = link_soup.find("p",{"class":"location-address"}).text.split(",")
-        # logger.info(addr)
-        # logger.info(len(addr))
+        # print(addr)
+        # print(len(addr))
         if len(addr) == 3:
             street_address = addr[0]
             city = addr[1].strip()

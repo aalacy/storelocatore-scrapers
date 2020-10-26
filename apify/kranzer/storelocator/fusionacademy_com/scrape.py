@@ -7,11 +7,6 @@ from lxml import html
 import base
 import requests, json
 from urllib.parse import urljoin
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fusionacademy_com')
-
-
 
 
 
@@ -68,7 +63,7 @@ class Scrape(base.Spider):
                     pass
             i.add_xpath('phone', './/a[contains(@href, "tel")]/text()', base.get_first)
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
-            logger.info(i)
+            print(i)
             yield i
 
 if __name__ == '__main__':

@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('connectnowonline_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -31,10 +26,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -52,7 +47,7 @@ def fetch_data():
 		raw_data = base.find(id="content").find(class_="vc_row wpb_row vc_inner vc_row-fluid")
 
 		location_name = base.h1.text.strip()
-		logger.info(link)
+		print(link)
 		
 		raw_address = raw_data.find_all("p")[1].text.replace("\xa0"," ").replace("TX,","TX").split("\n")
 		if " PM" in raw_address[0]:

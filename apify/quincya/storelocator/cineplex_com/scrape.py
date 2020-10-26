@@ -8,11 +8,6 @@ import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cineplex_com')
-
-
 
 
 def get_driver():
@@ -50,8 +45,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	last_page_num = int(base.find_all(class_="page-num")[-1].text)
 	
@@ -61,10 +56,10 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			logger.info(search_link)
+			print(search_link)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		results = base.find_all(class_="showtime-theatre")
 
@@ -83,15 +78,15 @@ def fetch_data():
 	time.sleep(2)
 
 	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 		time.sleep(randint(1,2))
 		req = session.get(link, headers = HEADERS)
 
 		try:
 			item = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 		
 		location_name = item.find("h1").text.strip()
 		raw_address = item.find(class_="margin-bot-sm").text.strip().split(",")

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('truereligion_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -24,7 +19,7 @@ def fetch_data():
     base_url = "https://www.truereligion.com"
     data = '{"request":{"appkey":"1C4F6E2A-C3CC-11E2-A252-16BE05D25870","formdata":{"geoip":false,"dataview":"store_default","limit":500,"geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":"","longitude":"","state":"","province":"","city":"","address1":"","postalcode":""}]},"searchradius":"5000","stateonly":"","where":{"or":{"fullprice":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"internationalwholesale":{"eq":""}}},"false":"0"}}}'
     json_data = session.post('https://hosted.where2getit.com/truereligion/rest/locatorsearch?like=0.09181422211445356', data=data).json()['response']['collection']
-    # logger.info(json_data)
+    # print(json_data)
     addressess = []
     
     for poi in json_data:

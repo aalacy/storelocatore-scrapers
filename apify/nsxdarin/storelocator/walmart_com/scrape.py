@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('walmart_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,7 +18,7 @@ def fetch_data():
     url = 'https://www.walmart.com/sitemap_store_main.xml'
     ids = []
     for code in sgzip.for_radius(50):
-        logger.info(('Pulling Zip Code %s...' % code))
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr=' + code + '&distance=100'
         website = 'walmart.com'
         typ = 'Store'

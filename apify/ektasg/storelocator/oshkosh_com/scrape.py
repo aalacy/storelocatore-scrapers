@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('oshkosh_com')
-
-
 
 
 options = Options()
@@ -97,7 +92,7 @@ def fetch_data():
                       hours_of_op
                     ])
                 count+=1
-                logger.info(count)
+                print(count)
             driver.quit()
             driver2.quit()
 
@@ -167,7 +162,7 @@ def fetch_data():
                     '<MISSING>'
                 ])
                 count += 1
-                logger.info(count)
+                print(count)
 
             time.sleep(3)
             driver3.quit()

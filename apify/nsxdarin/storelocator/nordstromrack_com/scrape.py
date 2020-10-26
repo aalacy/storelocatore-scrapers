@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nordstromrack_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -41,7 +36,7 @@ def fetch_data():
                         else:
                             locs.append(lurl)
         for state in states:
-            logger.info(('Pulling State %s...' % state))
+            print(('Pulling State %s...' % state))
             r2 = session.get(state, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
             for line2 in r2.iter_lines(decode_unicode=True):
@@ -56,7 +51,7 @@ def fetch_data():
                             else:
                                 locs.append(lurl)
         for city in cities:
-            logger.info(('Pulling City %s...' % city))
+            print(('Pulling City %s...' % city))
             r2 = session.get(city, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
             for line2 in r2.iter_lines(decode_unicode=True):
@@ -67,7 +62,7 @@ def fetch_data():
                             lurl = 'https://stores.nordstromrack.com/' + item.split('"')[0]
                             locs.append(lurl)
         for loc in locs:
-            logger.info(('Pulling Location %s...' % loc))
+            print(('Pulling Location %s...' % loc))
             website = 'nordstromrack.com'
             typ = 'Store'
             store = '<MISSING>'

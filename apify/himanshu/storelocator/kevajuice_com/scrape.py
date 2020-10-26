@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kevajuice_com')
-
-
 
 
 
@@ -36,7 +31,7 @@ def fetch_data():
     addresses = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -65,7 +60,7 @@ def fetch_data():
                 address = list(loc1.find("p",class_="stores").find_next("p").stripped_strings)
                 if "(Near Food Court)" in address[0]:
                     del address[0]
-                # logger.info(address)
+                # print(address)
                 street_address = address[0].strip()
                 if "201 Third St. NW" == street_address:
                     street_address = street_address + " " + "Suite D"
@@ -176,13 +171,13 @@ def fetch_data():
                 r_store = session.get(store_url, headers=headers)
                 soup_store = BeautifulSoup(r_store.text, "lxml")
                 table = soup_store.find('table')
-                # logger.info(table)
+                # print(table)
                 for tr in table.find_all('tr')[1:]:
                     page_url = store_url
-                    # logger.info(page_url)
+                    # print(page_url)
                     address = list(tr.find_all('td')[0].stripped_strings)
-                    # logger.info(address)
-                    # logger.info('~~~~~~~~~~~~~~')
+                    # print(address)
+                    # print('~~~~~~~~~~~~~~')
                     if address == []:
                         location_name = "<MISSING>"
                         street_address = "<MISSING>"
@@ -190,7 +185,7 @@ def fetch_data():
                         state = "<MISSING>"
                         zipp = "<MISSING>"
                     if len(address) == 1:
-                        # logger.info(address)
+                        # print(address)
                         location_name = address[0].strip()
                         street_address = "<MISSING>"
                         city = "<MISSING>"

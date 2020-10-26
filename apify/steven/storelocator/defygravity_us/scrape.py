@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('defygravity_us')
-
-
 
 # Location URL
 location_url = 'http://www.defygravity.us/'
@@ -42,7 +37,7 @@ def pull_info(content):
 
     for href in store_hrefs:
 
-        logger.info(href)
+        print(href)
 
         store = pull_content(href)
 
@@ -178,7 +173,7 @@ def pull_info(content):
         ]
 
 
-        logger.info(temp_data)
+        print(temp_data)
         store_data = store_data + [temp_data]
 
 

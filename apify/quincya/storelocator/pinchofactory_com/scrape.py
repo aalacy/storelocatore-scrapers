@@ -4,11 +4,6 @@ import csv
 import time
 import re
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pinchofactory_com')
-
-
 
 
 def write_output(data):
@@ -45,7 +40,7 @@ def fetch_data():
 			location_name = item.find('strong').text.strip()
 		except:
 			location_name = item.find('b').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		try:
 			raw_data = item.find('p').a
 			street_address = item.find('p').a.span.text

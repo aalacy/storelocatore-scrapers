@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('76_com')
-
-
 
 
 session = SgRequests()
@@ -38,11 +33,11 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-       # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+       # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-       # logger.info("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250")
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+       # print("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250")
         r = session.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250",headers=headers)
         data = r.json()["d"]["results"]
         for store_data in data:
@@ -70,10 +65,10 @@ def fetch_data():
             store.append(page_url)
             yield store
         if len(data) < MAX_RESULTS:
-            #logger.info("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-           # logger.info("max count update")
+           # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -10,11 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('farmstore_com')
-
-
 
 
 def get_driver():
@@ -43,7 +38,7 @@ def fetch_data():
 
 	base_link = "https://www.farmstore.com/locations"
 
-	logger.info("Loading page ..")
+	print("Loading page ..")
 	driver.get(base_link)
 	time.sleep(randint(2,3))
 
@@ -52,13 +47,13 @@ def fetch_data():
 			(By.ID, "retail-panel")))
 		time.sleep(randint(2,4))
 	except:
-		logger.info("Timeout waiting on page to load!")
+		print("Timeout waiting on page to load!")
 
 	data = []
 
 	base = BeautifulSoup(driver.page_source,"lxml")
 	items = base.find_all(class_="retail-result result row")
-	logger.info("Found %s items" %(len(items)))
+	print("Found %s items" %(len(items)))
 	for item in items:
 		locator_domain = "farmstore.com"
 		location_name = item.find(class_="store-name").text

@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fatmos_com')
-
-
 
 
 def write_output(data):
@@ -31,12 +26,12 @@ def fetch_data():
     divs_list = soup.findAll('div', {'class': 'news_item'})
 
     cleanr = re.compile('<.*?>')
-    logger.info(len(divs_list))
+    print(len(divs_list))
     for divs in divs_list:
         store = divs['id']
         title = divs.find('h3').text
         details = divs.findAll('p')
-        logger.info(len(details))
+        print(len(details))
         links = divs.findAll('a')
         for link in links:
             if link.text == "Map":
@@ -113,7 +108,7 @@ def fetch_data():
         else:
 
             start = link.find("&sll=", 0)
-            logger.info("link = ", start)
+            print("link = ", start)
             start = link.find("=", start)
             end = link.find(",", start)
             lat = link[start+1:end]
@@ -129,20 +124,20 @@ def fetch_data():
             city = city[start+1:len(city)]
 
         city = city.lstrip()
-        logger.info(store)
-        logger.info(title)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
-        logger.info(phone)
-        logger.info(lat)
-        logger.info(longt)
-        #logger.info(details)
-        logger.info(link)
+        print(store)
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+        print(phone)
+        print(lat)
+        print(longt)
+        #print(details)
+        print(link)
 
 
-        logger.info("........................")
+        print("........................")
         data.append([
             url,
             url,

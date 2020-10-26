@@ -4,11 +4,6 @@ import string
 import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('waxcenter_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -39,26 +34,26 @@ def fetch_data():
     soup = BeautifulSoup(page.text,"html.parser")
     maindiv = soup.find('ul',{'id':'bowse-content'})
     repo_list = maindiv.findAll("a",{'class':'ga-link'})
-    #logger.info(len(repo_list))
+    #print(len(repo_list))
     for repo in repo_list:
-        #logger.info("STATE",repo.text)
+        #print("STATE",repo.text)
         statelink = repo['href']
-        #logger.info(statelink)
+        #print(statelink)
         page1 = session.get(statelink, headers=headers, verify=False)#requests.get(statelink)
         soup1 = BeautifulSoup(page1.text,"html.parser")
         maindiv = soup1.find('ul',{'class','map-list'})
         city_list = maindiv.findAll("div", {'class': 'map-list-item'})
-        #logger.info('city-',len(city_list))
+        #print('city-',len(city_list))
         
         for clink in city_list:
             #link = link.find('a')
             clink = clink.find('a',{'class','ga-link'})['href']
-            #logger.info(clink)
+            #print(clink)
             page2 = session.get(clink, headers=headers, verify=False)#requests.get(clink)
             soup2 = BeautifulSoup(page2.text,"html.parser")
             maindiv = soup2.find('ul',{'class','map-list'})
             link_list = maindiv.findAll("div", {'class': 'map-list-item'})            
-            #logger.info("BRANCHES",len(link_list))
+            #print("BRANCHES",len(link_list))
             for link in link_list:
                 if link.text.lower().find('soon') > -1:
                     continue
@@ -67,7 +62,7 @@ def fetch_data():
                 store = link['title'].split('#')[1]
                 title =  link.text.replace('\n','')
                 link = link['href']
-                #logger.info(link)
+                #print(link)
                 page3 = session.get(link, headers=headers, verify=False)#requests.get(link)               
                 hours = BeautifulSoup(page3.text,'html.parser')
                 try:
@@ -104,7 +99,7 @@ def fetch_data():
                       longt,
                       hours
                   ])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 p += 1
                 
                 #input()

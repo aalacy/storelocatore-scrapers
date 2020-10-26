@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mypaninicafe_com')
-
-
 
 
 options = Options()
@@ -37,7 +32,7 @@ def fetch_data():
     page_url = "https://paninikabobgrill.com/our-locations/#"
     for store in stores:
         location_name = store.find_element_by_css_selector('div.location-address').get_attribute('data-location')
-        logger.info(location_name)
+        print(location_name)
         if location_name == 'coming-soon':
             pass
         else:
@@ -110,7 +105,7 @@ def fetch_data():
                   hours_of_op
                 ])
             count+=1
-            logger.info(count)
+            print(count)
 
     time.sleep(3)
     driver.quit()

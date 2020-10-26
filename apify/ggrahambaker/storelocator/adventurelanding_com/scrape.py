@@ -5,11 +5,6 @@ import json
 import usaddress
 import re
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('adventurelanding_com')
-
-
 
 
 def get_driver():
@@ -76,7 +71,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        logger.info(link)
+        print(link)
         hours_link = 'plan-your-visit/hours/'
         addy_link = 'plan-your-visit/directions/'
 

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('samsung_com__us__samsung-experience-store')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -59,7 +54,7 @@ def fetch_data():
         store.append(lng)
         store.append(hour.replace("In-store shopping hours: ",'').replace("Curbside pickup or repairs by appointment only.",'').replace("In-store shopping hours: ",''))
         store.append(page_url)
-        # logger.info(store)
+        # print(store)
         return_main_object.append(store)
     return return_main_object
 

@@ -5,11 +5,6 @@ import re
 import json
 import unicodedata
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sportclips_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -36,7 +31,7 @@ def fetch_data():
     addressesess=[]
     soup = BeautifulSoup(r.text, "lxml")
     for anchor in soup.find_all("div",{"class":"locations-list locations-list-noicon"}):
-        # logger.info(len())
+        # print(len())
         for coming in anchor.find_all("p"):
             the_word='COMING SOON!'
             words = coming.find(text=lambda text: text and the_word in text)
@@ -47,7 +42,7 @@ def fetch_data():
                     if "products" in link['href']:
                         continue
                     page_url = link['href'].replace("www.",'')
-                    # logger.info(link)
+                    # print(link)
                     try:
                         r1 = session.get(page_url)
                     except:
@@ -94,8 +89,8 @@ def fetch_data():
                     if store[2] in addressesess:
                         continue
                     addressesess.append(store[2])
-                    # logger.info("data == "+str(store))
-                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # print("data == "+str(store))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
             
 def scrape():

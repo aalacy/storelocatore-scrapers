@@ -4,4 +4,3 @@ sgvalidator==0.0.19
 sgrequests
 lxml
 aiohttp
-sglogging

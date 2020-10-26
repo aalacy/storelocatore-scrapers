@@ -3,11 +3,6 @@ import json
 from sgrequests import SgRequests
 import sgzip
 from tenacity import retry, stop_after_attempt
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('comfortkeepers_ca')
-
-
 
 session = SgRequests()
 
@@ -49,7 +44,7 @@ def fetch_data():
     key_set=set([])
     count=0
     while postcode:
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         results = query_zip(postcode)
         result_coords=[]
         for r in results:
@@ -91,14 +86,14 @@ def fetch_data():
                     "<MISSING>",  # timing
                     "https://www.comfortkeepers.ca/wp-admin/admin-ajax.php"])
         if len(results) < MAX_COUNT:
-            logger.info("max distance update")
+            print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(results) == MAX_COUNT:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
 
         postcode = search.next_coord()
-    logger.info("count = ",count)
+    print("count = ",count)
     return all
 
 def scrape():

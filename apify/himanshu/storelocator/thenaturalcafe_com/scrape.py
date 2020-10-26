@@ -14,7 +14,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -51,16 +51,11 @@ def fetch_data():
  
     import warnings
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thenaturalcafe_com')
-
-
 
     warnings.simplefilter('ignore',InsecureRequestWarning)
     r = session.get('https://thenaturalcafe.com/locations/',headers = headers,verify = False)
     soup = BeautifulSoup(r.text,'lxml')
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
     for loc in soup.find_all('div',class_='location'):
         iframe = loc.find('iframe')['src'].split('&ll=')
         if len(iframe) >1:
@@ -102,8 +97,8 @@ logger = SgLogSetup().get_logger('thenaturalcafe_com')
             continue
         addresses.append(store[2])
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
 
 

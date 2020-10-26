@@ -5,11 +5,6 @@ import time
 from random import randint
 import json
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('magnusonhotels_com__brand__magnuson__magnuson-independents')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -40,8 +35,8 @@ def fetch_data():
 	try:
 		main_base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 	
 	items = main_base.find_all(class_="hoteltop")
 	
@@ -59,8 +54,8 @@ def fetch_data():
 			try:
 				main_base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
 	
 			items = main_base.find_all(class_="hoteltop")
 			
@@ -73,7 +68,7 @@ def fetch_data():
 
 	for link in final_links:
 		final_link = "https://api.magnusonhotels.com/api/v1/hotels/find/" + link
-		logger.info(final_link)
+		print(final_link)
 		try:
 			if final_link == "https://api.magnusonhotels.com/api/v1/hotels/find/atria-hotel-and-rv-mcgregor":
 				raise

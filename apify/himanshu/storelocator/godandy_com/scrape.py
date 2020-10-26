@@ -7,11 +7,6 @@ from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('godandy_com')
-
-
 
 
 def write_output(data):
@@ -32,11 +27,11 @@ def fetch_data():
     base_url = "https://www.godandy.com/"
 
     soup = BeautifulSoup(driver.page_source, "lxml")
-    # logger.info(soup)
+    # print(soup)
 
     for number in range(1,70):
         page_url = "https://www.godandy.com/store_details.cfm?Store="+str(number)
-        # logger.info(page_url)
+        # print(page_url)
     
         driver.get(page_url)
         soup1 = BeautifulSoup(driver.page_source, "lxml")
@@ -78,8 +73,8 @@ def fetch_data():
                 store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
         store = [x.replace("–","-") if type(x) == str else x for x in store]
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # logger.info("data ==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        # print("data ==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
         yield store
        
 def scrape():

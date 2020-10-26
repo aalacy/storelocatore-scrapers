@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chcarolinaherrera_com')
-
-
 
 
 session = SgRequests()
@@ -42,7 +37,7 @@ def fetch_data():
         data = state_soup.find("script").text.split("STL.storeArray = ")[1].split("];")[0] + "]"
         location_list1 = (data.replace("'",'"').replace('""','"').replace('"extCountry": ",','"extCountry": "",').replace('"info":",','"info":"",').replace('"emailTo" : ",','"emailTo" : "",'))
         location_list = json.loads(location_list1)
-        # logger.info(location_list)
+        # print(location_list)
         for i in range(len(location_list)):
             store_data = location_list[i]
             store = []

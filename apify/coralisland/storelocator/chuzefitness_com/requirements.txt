@@ -4,4 +4,3 @@ beautifulsoup4==4.7.1
 selenium==3.141.0
 usaddress==0.5.10
 sgrequests
-sglogging

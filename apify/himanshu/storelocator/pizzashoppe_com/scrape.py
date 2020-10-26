@@ -5,11 +5,6 @@ from bs4 import BeautifulSoup
 import sgzip
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzashoppe_com')
-
-
 
 session = SgRequests()
 
@@ -82,7 +77,7 @@ def fetch_data():
                 hours_of_operation = hh[0]
             else:
                 hours_of_operation =  hh[0]
-            # logger.info(hours_of_operation)
+            # print(hours_of_operation)
             
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -97,20 +92,20 @@ def fetch_data():
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation.replace("Opening Hours",' ').replace("o'Clock",'').strip() if hours_of_operation else '<MISSING>')
-            # logger.info(hours_of_operation.replace("Opening Hours",' ').replace("o'Clock",'').strip())
+            # print(hours_of_operation.replace("Opening Hours",' ').replace("o'Clock",'').strip())
             store.append(page_url)
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
             
         if len(response) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(response) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -5,11 +5,6 @@ import re
 import sgzip
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bylinebank_com')
-
-
 
 
 
@@ -72,7 +67,7 @@ def fetch_data():
 				phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
 			else:
 				phone = "<MISSING>"
-			# logger.info(name[i])
+			# print(name[i])
 			location_name = name[i].text.replace("<br>","").strip()
 			page_url = "https://www.bylinebank.com/locator/"
 
@@ -118,15 +113,15 @@ def fetch_data():
 				continue
 			addresses.append(store[2])
 
-			# logger.info("data = " + str(store))
-			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			# print("data = " + str(store))
+			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 			yield store
 
 		if current_results_len < MAX_RESULTS:
-			# logger.info("max distance update")
+			# print("max distance update")
 			search.max_distance_update(MAX_DISTANCE)
 		elif current_results_len == MAX_RESULTS:
-			# logger.info("max count update")
+			# print("max count update")
 			search.max_count_update(result_coords)
 		else:
 			raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -187,8 +182,8 @@ def fetch_data():
 					continue
 				addresses.append(store[2])
 
-				# logger.info("data = " + str(store))
-				# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+				# print("data = " + str(store))
+				# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 				yield store
 
 				
@@ -221,7 +216,7 @@ def fetch_data():
 	# 		phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
 	# 	else:
 	# 		phone = "<MISSING>"
-	# 	# logger.info(name[i])
+	# 	# print(name[i])
 	# 	location_name = name[i].text.replace("<br>","")
 	# 	page_url = "https://www.bylinebank.com/locator/"+location_name.lower().replace(" ","-").replace("/","-").strip()
 
@@ -262,7 +257,7 @@ def fetch_data():
 	# 	store1.append(longitude if longitude else '<MISSING>')
 	# 	store1.append(hours_of_operation if hours_of_operation else '<MISSING>')
 	# 	store1.append(page_url)
-	# 	logger.info("data=="+str(store1))
+	# 	print("data=="+str(store1))
 	# 	yield store1
 
 
@@ -289,7 +284,7 @@ def fetch_data():
 	# 		phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
 	# 	else:
 	# 		phone = "<MISSING>"
-	# 	# logger.info(name[i])
+	# 	# print(name[i])
 	# 	location_name = name[i].text.replace("<br>","")
 	# 	page_url = "https://www.bylinebank.com/locator/"+location_name.lower().replace(" ","-").replace("/","-").strip()
 
@@ -330,7 +325,7 @@ def fetch_data():
 	# 	store2.append(hours_of_operation if hours_of_operation else '<MISSING>')
 	# 	store2.append(page_url)
 	# 	yield store2
-	# 	logger.info("data == ",str(store2))
+	# 	print("data == ",str(store2))
 
 def scrape():
 	data = fetch_data()

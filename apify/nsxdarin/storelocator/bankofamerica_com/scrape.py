@@ -4,11 +4,6 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bankofamerica_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +27,7 @@ def fetch_data():
         if '<loc>' in line:
             sitemaps.append(line.split('>')[1].split('<')[0])
     for sm in sitemaps:
-        logger.info(('Pulling Sitemap %s...' % sm))
+        print(('Pulling Sitemap %s...' % sm))
         smurl = sm
         with open('branches.xml.gz','wb') as f:
             f.write(urllib.request.urlopen(smurl).read())
@@ -44,10 +39,10 @@ def fetch_data():
                         if '.html' in lurl and '.m.' not in lurl:
                             if lurl not in locs:
                                 locs.append(lurl)
-        logger.info((str(len(locs)) + ' Locations Found...'))
+        print((str(len(locs)) + ' Locations Found...'))
     stores = []
     for loc in locs:
-        #logger.info('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         PFound = True
         while PFound:
             try:

@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aspencreekgrill_com')
-
-
 
 
 def get_driver():
@@ -42,8 +37,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	driver = get_driver()
 	data = []
@@ -57,12 +52,12 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		locator_domain = "aspencreekgrill.com"
 		location_name = base.find('title').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		section = base.find('div', attrs={'class': 'widget widget_cristiano_contact'})
 		raw_data = str(section.p).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
 		street_address = raw_data[0].strip()

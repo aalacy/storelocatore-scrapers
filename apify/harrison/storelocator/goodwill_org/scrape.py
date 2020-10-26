@@ -2,11 +2,6 @@ import csv
 import requests
 import sgzip
 import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('goodwill_org')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,7 +60,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         form_data = get_form_data(coord[0], coord[1])
         stores = session.post(URL, headers=HEADERS, data=form_data).json()
         result_coords = []
@@ -93,7 +88,7 @@ def fetch_data():
                 record = [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
                 locations.append(record)
         if len(stores) == MAX_RESULTS:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected " + MAX_RESULTS + " results")

@@ -4,11 +4,6 @@ import re
 import json
 from sgrequests import SgRequests
 from googletrans import Translator
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mitsubishi-motors_ca')
-
-
 translator = Translator()
 session = SgRequests()
 
@@ -120,8 +115,8 @@ def fetch_data():
         store.append(lng)
         store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
-        #logger.info("data == "+str(store))
-        #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        #print("data == "+str(store))
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         if store[2] in addressess:
             continue
         addressess.append(store[2])

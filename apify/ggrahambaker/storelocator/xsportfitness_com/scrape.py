@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoAlertPresentException
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('xsportfitness_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -100,9 +95,9 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        logger.info()
-        logger.info(store_data)
-        logger.info()
+        print()
+        print(store_data)
+        print()
         all_store_data.append(store_data)
 
     driver.quit()

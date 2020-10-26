@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cyclebar_com')
-
-
 
 
 
@@ -106,7 +101,7 @@ def fetch_data():
             store.append(
                 hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(location_url)
-            #logger.info("data ==" + str(store))
+            #print("data ==" + str(store))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
             yield store

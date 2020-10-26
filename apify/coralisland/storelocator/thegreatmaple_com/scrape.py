@@ -5,11 +5,6 @@ from lxml import etree
 import json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thegreatmaple_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -63,7 +58,7 @@ def fetch_data():
     store_list = response.xpath('//li[@id="menu-item-15359"]')[0].xpath('.//a/@href')[1:]
 
     for store_link in store_list:
-        #logger.info(store_link)
+        #print(store_link)
 	
         store = etree.HTML(session.get(store_link, headers=headers).text)
         try:
@@ -77,7 +72,7 @@ def fetch_data():
         if store_link =='http://thegreatmaple.com/sandiego':
             details = eliminate_space(store.xpath('.//div[@class="tatsu-text-inner tatsu-align-center  clearfix"]')[1].xpath('.//text()'))
         point = 0
-        #logger.info(details)
+        #print(details)
         for idx, de in enumerate(details):
             if 'hours' == de.lower():
                 point = idx
@@ -89,10 +84,10 @@ def fetch_data():
             output.append(details[point-4]) #location name
         else:
             output.append('<MISSING>') #location name
-        #logger.info(details[point-3])
+        #print(details[point-3])
         output.append(details[point-3]) #address
         address = details[point-2].strip().split(',')
-#        logger.info(address)
+#        print(address)
         output.append(address[0]) #city
         output.append(address[1].strip().split(' ')[0]) #state
         output.append(address[1].strip().split(' ')[1]) #zipcode
@@ -117,7 +112,7 @@ def fetch_data():
             pass
         
         output.append(hours) #opening hours
-       # logger.info(output)
+       # print(output)
         output_list.append(output)        
     return output_list
 

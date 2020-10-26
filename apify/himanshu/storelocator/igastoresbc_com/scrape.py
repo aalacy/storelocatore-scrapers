@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('igastoresbc_com')
-
-
 
 
 
@@ -21,7 +16,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -57,16 +52,16 @@ def fetch_data():
     r = session.get(
         "https://www.igastoresbc.com/find-a-store/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
     table = soup.find('table', {'id': 'stores-data'})
-    # logger.info(table.prettify())
+    # print(table.prettify())
     tbody = table.find('tbody')
     for rows in tbody.findChildren('tr'):
-        # logger.info(rows)
+        # print(rows)
         list_rows = list(rows.stripped_strings)
-        # logger.info(list_rows)
-        # logger.info(len(list_rows))
-        # logger.info("~~~~~~~~~~~~")
+        # print(list_rows)
+        # print(len(list_rows))
+        # print("~~~~~~~~~~~~")
 
         location_name = "".join(list_rows[1].strip())
         zipp = "".join(list_rows[3].strip())
@@ -76,14 +71,14 @@ def fetch_data():
         longitude = "".join(list_rows[7].strip())
         last_td = rows.find_all('td')[-2]
         list_td = list(last_td.stripped_strings)
-        # logger.info(list_td )
+        # print(list_td )
         list2 = [x.replace('\n', '').replace(
             '\t', '').replace('<br />', ' ') for x in list_td]
         p1 = "".join(list2).split(
             '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')
-        # logger.info(p1)
-        # logger.info(len(p1))
-        # logger.info("~~~~~~~~~~~~~~~`")
+        # print(p1)
+        # print(len(p1))
+        # print("~~~~~~~~~~~~~~~`")
         if len(p1) == 4:
             phone = "".join(list2).split(
                 '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[2].split('<td>')[-1].split('</td>')[0].replace('Phone:', "").strip()
@@ -92,17 +87,17 @@ def fetch_data():
             if "&nbsp;</td></tr></tbody></table></td></tr><tr>" == "".join(list2).split('<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[4].strip():
                 phone = "".join(list2).split(
                     '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[6].split('</td>')[0].strip().replace('Bakery / Deli 250-493-7713 Customer Service ','')
-                # logger.info(phone1)
+                # print(phone1)
                
             else:
                 phone = "".join(list2).split(
                     '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[4].split('</td>')[0].strip()
-            # logger.info(phone1)
+            # print(phone1)
         hours = "".join(list2).split(
             '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')
-        # logger.info(hours)
-        # logger.info(len(hours))
-        # logger.info("~~~~~~~~~~")
+        # print(hours)
+        # print(len(hours))
+        # print("~~~~~~~~~~")
         if len(hours) == 4:
             hours_of_operation = "".join(list2).split(
                 '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[3].split('<td>')[1].split('</td>')[0].replace('<p>', "").replace('</p>', "").replace("Hours:", '').strip()
@@ -115,13 +110,13 @@ def fetch_data():
             else:
                 hours_of_operation = "".join(list2).split(
                     '<td style="line-height: 1.5em; padding: 3px 0px; vertical-align: top;">')[6].split('</td>')[0].strip()
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
         store = ["<MISSING>" if x == "" else x for x in store]
         return_main_object.append(store)
-        # logger.info("data = " + str(store))
-        # logger.info(
+        # print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     return return_main_object

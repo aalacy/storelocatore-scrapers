@@ -4,11 +4,6 @@ from lxml import etree
 import json
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hawthorn_com')
-
-
 
 base_url = 'https://www.wyndhamhotels.com'
 
@@ -102,7 +97,7 @@ def fetch_data():
         latitude = lat_lng.split(",")[0]
         longitude = lat_lng.split(",")[1]
         title = detail.xpath('//h1[contains(@class, "property-name")]/span/text()')[0]
-        logger.info(title)
+        print(title)
         country_code = 'us' 
         hours = "24 hours open"
 

@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ssmhealth_com')
-
-
 
 
 
@@ -36,7 +31,7 @@ def fetch_data():
 
 	r = session.get("https://www.ssmhealth.com/location-results/acupuncture?range=0&zip=11576&lat=40.7985&lng=-73.6476#locationResults")
 	soup= BeautifulSoup(r.text,"lxml")
-	# logger.info(soup.prettify())
+	# print(soup.prettify())
 	for loc in soup.find("select",{"id":"specialtyLocType"}).find_all("option")[1:]:
 		location_type = loc["value"].lower().replace(" ","-").strip()
 		r1 =session.get("https://www.ssmhealth.com/location-results/"+str(location_type)+"?range=0&zip=11576&lat=40.7985&lng=-73.6476#locationResults")
@@ -47,7 +42,7 @@ def fetch_data():
 			page_no =1
 			while True:
 
-				# logger.info(location_type)
+				# print(location_type)
 				r2 = session.get("https://www.ssmhealth.com/location-results/"+str(location_type)+"?range=0&zip=11576&lat=40.7985&lng=-73.6476&page="+str(page_no))
 				soup2 = BeautifulSoup(r2.text,"lxml")
 				for loc_block in  soup2.find_all("div",class_="location-block LocationResult"):
@@ -78,8 +73,8 @@ def fetch_data():
 					if street_address in addresses:
 						continue
 					addresses.append(street_address)
-					# logger.info("data = " + str(store))
-					# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+					# print("data = " + str(store))
+					# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 					yield store
 				if page_no >= int(page):
@@ -89,7 +84,7 @@ def fetch_data():
 
 		else:
 			# pass
-			#logger.info("https://www.ssmhealth.com/location-results/"+str(location_type)+"?range=0&zip=11576&lat=40.7985&lng=-73.6476#locationResults")
+			#print("https://www.ssmhealth.com/location-results/"+str(location_type)+"?range=0&zip=11576&lat=40.7985&lng=-73.6476#locationResults")
 			r2 = session.get("https://www.ssmhealth.com/location-results/"+str(location_type)+"?range=0&zip=11576&lat=40.7985&lng=-73.6476")
 			soup2 = BeautifulSoup(r2.text,"lxml")
 			for loc_block in  soup2.find_all("div",class_="location-block LocationResult"):
@@ -120,8 +115,8 @@ def fetch_data():
 				if street_address in addresses:
 					continue
 				addresses.append(street_address)
-				# logger.info("data = " + str(store))
-				# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+				# print("data = " + str(store))
+				# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 				store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 				yield store
 

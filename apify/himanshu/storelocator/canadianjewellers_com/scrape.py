@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('canadianjewellers_com')
-
-
 
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -57,7 +52,7 @@ def fetch_data():
 
             state = (detail[-1].replace(" Canada","").replace("USA","").replace("Corner Brook Plaza","<MISSING>").replace("None","").replace("Ontario","ON").replace("Nova Scotia","<MISSING>").replace("Edmonton","<MISSING>"))
 
-            # logger.info(detail)
+            # print(detail)
             if len(detail)==3:
                 address = detail[1].replace("- Seattle","<MISSING>")
                 name = detail[0]
@@ -99,14 +94,14 @@ def fetch_data():
         
             addresses.append(tem_var[2])
             yield tem_var
-            # logger.info("======================tem",tem_var)
-            # logger.info(tem_var)
+            # print("======================tem",tem_var)
+            # print(tem_var)
            
            
 
 
 
-        # logger.info("==========================================================",new_link)
+        # print("==========================================================",new_link)
     
 
 def scrape():

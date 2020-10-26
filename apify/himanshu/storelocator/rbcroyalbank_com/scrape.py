@@ -8,11 +8,6 @@ import json
 import time
 import sgzip
 import pprint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rbcroyalbank_com')
-
-
 
 
 
@@ -70,7 +65,7 @@ def fetch_data():
     addressess = []
     search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas = True)
-    # logger.info("====")
+    # print("====")
 
     MAX_RESULTS = 51
     MAX_DISTANCE = 50
@@ -101,7 +96,7 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
         page_url = ''
-        # logger.info("==============",str(search.current_zip))
+        # print("==============",str(search.current_zip))
         # "N4W"
         # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"
         data = 'useCookies=1&lang=&q='+str(search.current_zip)+'&searchBranch=1&searchATM=1'
@@ -130,7 +125,7 @@ def fetch_data():
                     location_name  = list(loc_dat1.stripped_strings)[0]
                     street_address = list(loc_dat1.stripped_strings)[1]
                     city_state_zipp = list(loc_dat1.stripped_strings)[2].strip().lstrip()
-                    # logger.info("===========loc_dat1=",list(loc_dat1.stripped_strings))
+                    # print("===========loc_dat1=",list(loc_dat1.stripped_strings))
 
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(city_state_zipp))
                     us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(city_state_zipp))
@@ -201,13 +196,13 @@ def fetch_data():
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
-                # logger.info("====================",store)
+                # print("====================",store)
                 yield store
                   
 
-        # logger.info("==================================",current_results_len)
+        # print("==================================",current_results_len)
         if current_results_len < MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

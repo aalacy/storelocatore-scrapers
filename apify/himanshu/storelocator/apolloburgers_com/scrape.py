@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('apolloburgers_com')
-
-
 
 
 session = SgRequests()
@@ -54,7 +49,7 @@ def fetch_data():
                 street_address = list(j.stripped_strings)[0]
                 if "copyright" in street_address.lower():
                     continue
-                # logger.info(street_address)
+                # print(street_address)
                 city = list(j.stripped_strings)[1].replace("No. ","").split(",")[0]
                 state = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[0]
                 zipcode = list(j.stripped_strings)[1].replace("No. ","").split(",")[1].split( )[1]
@@ -81,7 +76,7 @@ def fetch_data():
                     
    
   
-    # logger.info(store_detail)
+    # print(store_detail)
     for i in range(len(store_name)):
         store = list()
         store.append("https://apolloburgers.com")

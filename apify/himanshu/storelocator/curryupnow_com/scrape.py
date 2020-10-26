@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('curryupnow_com')
-
-
 
 
 
@@ -62,9 +57,9 @@ def fetch_data():
     for loc_list in r['results']['locations']:
         try:
             if "COMING SOON" not in loc_list['name']:
-                # logger.info(location_name)
+                # print(location_name)
                 location_type = loc_list['tags']
-                # logger.info(location_type)
+                # print(location_type)
                 if "mortar and pestle bar" in location_type:
                     location_type = "mortar and pestle bar"
                 else:
@@ -125,8 +120,8 @@ def fetch_data():
                 store.append(
                     hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                # logger.info("data====" + str(store))
-                # logger.info(
+                # print("data====" + str(store))
+                # print(
                 #     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                 return_main_object.append(store)

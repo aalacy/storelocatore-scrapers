@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gradysbbq_com')
-
-
 
 def get_driver():
     options = Options() 
@@ -41,8 +36,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('p', attrs={'class': 'locationsList'})
 
@@ -53,7 +48,7 @@ def fetch_data():
 		raw_link = item.a['href']
 		link = "https://www.gradysbbq.com/locations/" + raw_link[raw_link.rfind("/")+1:]
 		location_name = item.find('a').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		raw_address = item.text.strip()
 		street_address = raw_address[raw_address.find("   ")+1:raw_address.rfind("   ")].replace("\n","").strip()
 		if "," in street_address:					
@@ -77,8 +72,8 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		driver.get(link)
 		time.sleep(2)

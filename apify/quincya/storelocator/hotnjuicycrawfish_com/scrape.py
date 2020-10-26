@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hotnjuicycrawfish_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'iconbox-wrapper w-col w-col-3 w-col-medium-6'})
 
@@ -43,7 +38,7 @@ def fetch_data():
 		except:
 			continue
 
-		logger.info(page_link)
+		print (page_link)
 		city_text = item.find('h4').text
 		city = city_text[:city_text.find(',')].title()
 		if "Planet" in city:
@@ -54,8 +49,8 @@ def fetch_data():
 		try:
 			new_base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		location_name = new_base.find('title').text
 		location_name = location_name[:location_name.find("-")].strip()

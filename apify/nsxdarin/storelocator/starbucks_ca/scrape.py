@@ -3,11 +3,6 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('starbucks_ca')
-
-
 
 weekday = datetime.datetime.today().weekday()
 
@@ -35,7 +30,7 @@ def fetch_data():
         y = coord.split(',')[1]
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.starbucks.ca/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)

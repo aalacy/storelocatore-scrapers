@@ -5,11 +5,6 @@ import re
 import unicodedata
 import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rodewayinn_com')
-
-
 
 
 session = SgRequests()
@@ -72,7 +67,7 @@ def fetch_data():
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else "<MISSING>")
         yield store
-        # logger.info("===========",store)
+        # print("===========",store)
     
 def scrape():
     data = fetch_data()

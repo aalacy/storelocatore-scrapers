@@ -6,11 +6,6 @@ from random import randint
 import json
 
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('curzoncinemas_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	driver = SgSelenium().chrome()
 	time.sleep(2)
@@ -49,7 +44,7 @@ def fetch_data():
 	for item in items:
 
 		link = "https://www.curzoncinemas.com" + item.a['href']
-		logger.info(link)
+		print(link)
 		driver.get(link)
 		time.sleep(randint(10,12))
 		base = BeautifulSoup(driver.page_source,"lxml")

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('haffnersoil_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -70,7 +65,7 @@ def fetch_data():
         tem_var.append(lon)
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
-        # logger.info(tem_var)
+        # print(tem_var)
         yield tem_var
 
 

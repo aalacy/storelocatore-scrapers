@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chilis_ca')
-
-
 
 
 session = SgRequests()
@@ -54,14 +49,14 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find_all("a", {"class": re.compile("btn-map")}):
-        # logger.info("location_url === " + str(script["id"]))
+        # print("location_url === " + str(script["id"]))
         location_url = "http://www.chilis.ca/skins/chilis/js/" + script["id"].replace("link-", "") + ".js"
         
-        logger.info("location_url === " + location_url)
+        print("location_url === " + location_url)
         r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
-        # logger.info(soup_location)
+        # print(soup_location)
 
         split_location = soup_location.text.split("var marker")
 
@@ -84,14 +79,14 @@ def fetch_data():
                 address_list.pop(index_reimage[0])
 
             if address_list[-1].strip():
-                # logger.info("full_address === " + str(address_list))
+                # print("full_address === " + str(address_list))
 
                 index_phone = [i for i, s in enumerate(address_list) if phone in s]
 
                 if index_phone:
                     hours_of_operation = address_list[index_phone[0]+1].replace(")","")
-                # logger.info("hours_of_operation == " + str(hours_of_operation))
-                # logger.info("address_list====",address_list)
+                # print("hours_of_operation == " + str(hours_of_operation))
+                # print("address_list====",address_list)
                 
                 location_name = address_list[0]
                 city = location_name
@@ -122,7 +117,7 @@ def fetch_data():
 
                     country_code = "CA"
 
-                # logger.info("fffffffffffffffff",hours_of_operation.replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace(".*Breakfast Served at ALL airport locations",'').replace("PM"," PM "))
+                # print("fffffffffffffffff",hours_of_operation.replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace(".*Breakfast Served at ALL airport locations",'').replace("PM"," PM "))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip().replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace("*Breakfast Served at ALL airport locations",'').replace("PM"," PM ").replace("AM",' AM '), page_url]
 
@@ -132,8 +127,8 @@ def fetch_data():
                     store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
                     if "(780) 890-7766" in store or "(403) 760-8502" in store or "(403) 250-2072" in store:
-                        # logger.info("data = " + str(store))
-                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # print("data = " + str(store))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
 
 

@@ -6,11 +6,6 @@ import json
 from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('verawang_com')
-
-
 
 
 
@@ -86,9 +81,9 @@ def fetch_data():
     r = session.post(page_url, headers=headers,
                       data="action=load_search_results&query=&type%5B%5D=13&type%5B%5D=14&type%5B%5D=15&type%5B%5D=16&type%5B%5D=57")
     json_data = r.json()
-    # logger.info("rtext === " + str(json_data))
+    # print("rtext === " + str(json_data))
     soup = BeautifulSoup(json_data["locations"], "lxml")
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
 
     for script in soup.find_all("div", {"data-js": "openInfoBox"}):
 
@@ -96,11 +91,11 @@ def fetch_data():
         longitude = str(script["data-lng"])
         store_number = script["data-id"]
         location_name = script.find("h4").text
-        # logger.info(script.prettify())
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(script.prettify())
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         country_name = getplace(latitude, longitude)
-        # logger.info("geo_url === " + str(country_name))
+        # print("geo_url === " + str(country_name))
         if "United States of America" != country_name and "Canada" != country_name:
             continue
         if "Canada" == country_name:
@@ -152,7 +147,7 @@ def fetch_data():
                 state = address_list[1].split(',')[1].split()[0].strip()
                 # zipp = " ".join(address_list[1].split(',')[
                 # 1].split()[1:]).strip()
-                # logger.info(street_address+ "  | "+city +" | "+state+" | "+zipp)
+                # print(street_address+ "  | "+city +" | "+state+" | "+zipp)
             elif us_zip_list:
                 street_address = " ".join(address_list[:2]).strip()
                 city = address_list[2].split(',')[0].strip()
@@ -191,14 +186,14 @@ def fetch_data():
         else:
             pass
         # if "1888 Coney Island Avenue" in street_address:
-            # logger.info(address_list)
+            # print(address_list)
 
         us_zip_list = re.findall(re.compile(
             r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(address_list)))
         ca_zip_list = re.findall(
             r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(address_list)))
-        # logger.info(address_list)
-        # logger.info(us_zip_list, ca_zip_list)
+        # print(address_list)
+        # print(us_zip_list, ca_zip_list)
         if us_zip_list:
             zipp = us_zip_list[-1].strip()
         elif ca_zip_list:
@@ -212,23 +207,23 @@ def fetch_data():
                 if loc["country"] in ["Canada", "United States"]:
                     st = loc["street"]
                     if st in street_address:
-                        # logger.info(st)
+                        # print(st)
                         if loc["postal_code"] != None:
                             zip = loc["postal_code"].strip()
 
                         else:
-                            # logger.info(st)
+                            # print(st)
                             zip = "<MISSING>"
 
                         z.append(zip)
                     else:
                         zip = "<MISSING>"
-            # logger.info(z)
+            # print(z)
             if z != []:
                 zipp = "".join(z)
             else:
                 zipp = "<MISSING>"
-            # logger.info(street_address, zipp)
+            # print(street_address, zipp)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -239,8 +234,8 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 

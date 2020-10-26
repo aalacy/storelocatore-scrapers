@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hilton_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,7 +23,7 @@ def fetch_data():
         if '<loc>https://www3.hilton.com/en/hotels/' in line and 'accommodations/index.html' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    logger.info(len(locs))
+    print(len(locs))
     for loc in locs:
         sname = loc.split('https://www3.hilton.com/en/hotels/')[1].split('/')[0]
         country = ''
@@ -37,7 +32,7 @@ def fetch_data():
         if sname in canada:
             country = 'CA'
         if country == 'CA' or country == 'US':
-            logger.info('Pulling Location %s...' % loc)
+            print('Pulling Location %s...' % loc)
             website = 'hilton.com'
             typ = '<MISSING>'
             name = ''

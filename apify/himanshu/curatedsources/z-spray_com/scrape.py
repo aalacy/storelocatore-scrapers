@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('z-spray_com')
-
-
 
 
 def write_output(data):
@@ -72,7 +67,7 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
 
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            # logger.info('----demo '+str(store))
+            # print('----demo '+str(store))
             # return_main_object.append(store)
             yield store
 

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('amnb_com')
-
-
 
 
 session = SgRequests()
@@ -56,7 +51,7 @@ def fetch_data():
 
     for  i in data['branches']:
         tem_var =[]
-        # logger.info(i)
+        # print(i)
         store_name.append(i['name'])
         street_address = i["address"]
         city = i["city"]
@@ -75,7 +70,7 @@ def fetch_data():
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
         tem_var.append(i["description"].replace("ATM available during business hours"," ").replace("Hours:","").strip().replace("."," ").replace("Drive-Thru Mon"," Drive-Thru Mon").replace("24 Hour ATM"," 24 Hour ATM"))
-        # logger.info()
+        # print()
         store_detail.append(tem_var)
      
         

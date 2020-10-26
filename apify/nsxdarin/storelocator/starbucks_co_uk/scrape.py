@@ -3,11 +3,6 @@ import os
 from sgrequests import SgRequests
 import datetime
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('starbucks_co_uk')
-
-
 
 weekday = datetime.datetime.today().weekday()
 
@@ -30,7 +25,7 @@ def fetch_data():
         for y in range(17, -82, -1):
             xlat = float(float(x) / 30)
             ylng = float(float(y) / 10)
-            logger.info(str(xlat) + ', ' + str(ylng))
+            print(str(xlat) + ', ' + str(ylng))
             url = 'https://www.starbucks.co.uk/api/v1/store-finder?latLng=' + str(xlat) + '%2C' + str(ylng)
             r = session.get(url, headers=headers)
             array = json.loads(r.content)

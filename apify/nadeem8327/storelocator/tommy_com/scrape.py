@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression]
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tommy_com')
-
-
 
 html = requests.get("https://global.tommy.com/int/en/stores")
 soup = BeautifulSoup(html.text,"html.parser")
@@ -68,6 +63,6 @@ with open("data.csv",mode="w") as file:
 
         data=["www_tommy_com",location_name,street_address,city,"<MISSING>",zip_code,
                 "US","<MISSING>",contact_number,"<MISSING>",latitude,longitude,hours_of_operation,raw_address]
-                #logger.info(data)
+                #print(data)
         fl_writer.writerow(data)
 #driver.quit()

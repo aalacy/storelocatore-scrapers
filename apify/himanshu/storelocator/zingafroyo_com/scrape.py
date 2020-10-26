@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from collections import Counter
 
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zingafroyo_com')
-
-
 
 
 
@@ -43,7 +38,7 @@ def remov_duplicates(input):
     # joins two adjacent elements in iterable way
     s = " ".join(UniqW.keys())
     return s
-    # logger.info(s)
+    # print(s)
 def fetch_data():
     header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
@@ -69,7 +64,7 @@ def fetch_data():
             if street_address.split()[0].isdigit():
                 city = street_address.split()[-1]
                 street_address = " ".join(street_address.split()[:-1])
-                # logger.info()
+                # print()
 
             else:
                 v = street_address.encode('ascii', 'ignore').decode('ascii')
@@ -131,7 +126,7 @@ def fetch_data():
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
 
-            # logger.info('data===', store)
+            # print('data===', store)
             yield store
 
             # return return_main_object

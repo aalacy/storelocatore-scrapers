@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import json
 
 import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dollartree_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,33 +34,33 @@ def fetch_data():
     res=session.get("https://www.dollartree.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     sls = soup.find('div', {'class': 'content_area'}).find_all('a')
-    logger.info("sls: ",len(sls))
+    print("sls: ",len(sls))
     count=0
     for sl in sls:
         res = session.get(sl.get('href'))
-        #logger.info(sl.get('href'))
+        #print(sl.get('href'))
         soup = BeautifulSoup(res.text, 'html.parser')
         cls = soup.find('div', {'class': 'content_area'}).find_all('a')
-        #logger.info("cls",len(cls))
+        #print("cls",len(cls))
         for cl in cls:
             res = session.get(cl.get('href'))
-            #logger.info(cl.get('href'))
+            #print(cl.get('href'))
 
             soup = BeautifulSoup(res.text, 'html.parser')
-            #logger.info(soup)
+            #print(soup)
             pls = soup.find_all('div', {'itemprop': 'address'})
-            #logger.info("pls: ",len(pls))
+            #print("pls: ",len(pls))
 
             for p in pls:
                 p=p.find('a')
                 page_url.append(p.get('href'))
                 count+=1
-            #logger.info(len(page_url))
-    logger.info(count)
+            #print(len(page_url))
+    print(count)
     key_set=set([])
     all =[]
     for url in page_url:
-        #logger.info(url)
+        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data = soup.find_all('script', {'type': 'application/ld+json'})[1].contents
@@ -75,8 +70,8 @@ def fetch_data():
         tim=""
         for l in timl:
             tim+= l["dayOfWeek"][0]+": "+l["opens"]+" - "+l["closes"]+" "
-        #logger.info(url)
-        #logger.info(js)
+        #print(url)
+        #print(js)
         p=js["telephone"]
         if p.strip()=="":
             p="<MISSING>"

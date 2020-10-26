@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('famoussamsarizona_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +27,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
     store_list = soup.findAll('div', {'class': 'txtNew'})[2:]
-    logger.info(len(store_list))
+    print(len(store_list))
     hours = ''
     t = 0
     for store in store_list:
@@ -50,15 +45,15 @@ def fetch_data():
         phone = text[3]
         data.append(['https://www.famoussamsarizona.com/','https://www.famoussamsarizona.com/locations',title,street,city,state,pcode,'US',
                         '<MISSING>',phone,'<MISSING>','<INACCESSIBLE>','<INACCESSIBLE>',hours])
-        #logger.info(p,data[p])               
+        #print(p,data[p])               
 
         
     return data
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

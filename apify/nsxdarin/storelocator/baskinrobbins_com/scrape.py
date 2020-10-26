@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('baskinrobbins_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +24,7 @@ def fetch_data():
             'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=60.0661071&longitude=-150.38417770000001&maxResults=1000&tenant=br-us'
             ]
     for url in urls:
-        logger.info(url)
+        print(url)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
         items = array['getStoresResult']['stores']

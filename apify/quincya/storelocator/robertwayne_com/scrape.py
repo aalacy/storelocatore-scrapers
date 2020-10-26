@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('robertwayne_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,10 +30,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -46,12 +41,12 @@ def fetch_data():
 	locator_domain = "robertwayne.com"
 
 	for i, item in enumerate(items):
-		logger.info("Element %s of %s" %(i+1,len(items)))
+		print("Element %s of %s" %(i+1,len(items)))
 		if "phone" not in item.text.lower():
 			continue
 
 		location_name = item.h3.text.strip()
-		logger.info(location_name)
+		print(location_name)
 		
 		raw_address = item.find_all("p")[-2].text.replace(" Northridge"," ,Northridge").split(",")
 		street_address = " ".join(raw_address[:-2]).strip()

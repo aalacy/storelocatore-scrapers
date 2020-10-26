@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('daysinn_ca')
-
-
 
 
 
@@ -44,12 +39,12 @@ def fetch_data():
                 # store_request = session.get('https://www.wyndhamhotels.com/en-ca/hotels/99778')
                 store_request = session.get(
                     'https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
-                # logger.info(store_request)
+                # print(store_request)
             except Exception as e:
-                # logger.info('error =>' + str(e))
+                # print('error =>' + str(e))
                 if(str(e) == "Exceeded 30 redirects."):
                     continue
-            # logger.info('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
+            # print('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
             page_url = 'https://www.wyndhamhotels.com' + \
                 semi_parts.find("a")['href']
@@ -61,8 +56,8 @@ def fetch_data():
                 latitude = coords['geo']['latitude']
                 longitude = coords['geo']['longitude']
 
-                # logger.info(latitude,longitude,page_url)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~')
+                # print(latitude,longitude,page_url)
+                # print('~~~~~~~~~~~~~~~~~~~~~')
             else:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
@@ -71,10 +66,10 @@ def fetch_data():
                 locationDetails = store_soup.find(
                     "div", {"class": "property-info"})
                 temp_storeaddresss = list(locationDetails.stripped_strings)
-                # logger.info(temp_storeaddresss[-2])
+                # print(temp_storeaddresss[-2])
                 if temp_storeaddresss[-2].strip() not in ["US", "CA"]:
                     continue
-                # logger.info(temp_storeaddresss[-2].strip())
+                # print(temp_storeaddresss[-2].strip())
                 location_name = temp_storeaddresss[0]
                 street_address = temp_storeaddresss[1]
                 city = temp_storeaddresss[3]
@@ -108,7 +103,7 @@ def fetch_data():
                     else:
                         continue
 
-                # logger.info(zipp)
+                # print(zipp)
 
                 return_object.append(base_url)
                 return_object.append(location_name)
@@ -124,8 +119,8 @@ def fetch_data():
                 return_object.append(longitude)
                 return_object.append("<MISSING>")
                 return_object.append(page_url)
-                # logger.info("===="+str(return_object))
-                # logger.info('~~~~~~~~~~~~~~~~~~`')
+                # print("===="+str(return_object))
+                # print('~~~~~~~~~~~~~~~~~~`')
                 yield return_object
 
 

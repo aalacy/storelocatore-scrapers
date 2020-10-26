@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cellularsales_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +45,7 @@ def fetch_data():
         longi = coord[1]
         url = "https://www.cellularsales.com/wp-admin/admin-ajax.php?action=store_search&lat=" + str(
             lati) + "&lng=" + str(longi) + "&max_results=25&search_radius=500"
-        #logger.info(url)
+        #print(url)
         r = session.get(url)
         allocs = r.json()
         result_coords = []
@@ -86,10 +81,10 @@ def fetch_data():
             timing.append(tim)
             result_coords.append((al["lat"], al["lng"]))
         if len(allocs) < MAX_RESULTS:
-            logger.info("max distance update")
+            print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(allocs) == MAX_RESULTS:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         coord = search.next_coord()
     all = []

@@ -7,11 +7,6 @@ from bs4 import BeautifulSoup
 import re
 import unicodedata
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ltcrevolution_com')
-
-
 
 
 session = SgRequests()
@@ -82,8 +77,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

@@ -2,11 +2,6 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('papavinositaliankitchen_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -42,7 +37,7 @@ def fetch_data():
                 loc_type = 'Spageddies'
             else:
                 loc_type = 'PapaVinos'
-            logger.info("location_name........" , location_name)
+            print("location_name........" , location_name)
             address = store.find_element_by_css_selector('div.desc > strong').get_attribute('textContent').splitlines()
             street_addr = address[0]
             state_city_zip = address[1]
@@ -67,7 +62,7 @@ def fetch_data():
                   hours_of_op
                 ])
             count+=1
-            logger.info(count)
+            print(count)
 
     time.sleep(3)
     driver.quit()

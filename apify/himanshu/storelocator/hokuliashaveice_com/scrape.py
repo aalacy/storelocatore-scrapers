@@ -6,11 +6,6 @@ import json
 # import sgzip
 # import time
 import html5lib
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hokuliashaveice_com')
-
-
 
 
 
@@ -66,7 +61,7 @@ def fetch_data():
     s = script.text.split(' var features = ')[-1].split('];')[0] + ']'.replace('\n','')
     sc= s.split(' position:')
     sc.pop(0)
-    # logger.info(sc)
+    # print(sc)
     for i in sc:
         info = i.replace('\n','').replace('  ','')
         latitude= info.split('(')[1].split(')')[0].split(',')[0]
@@ -78,14 +73,14 @@ def fetch_data():
             if element != '':
                 add_list.append(element)
 
-        # logger.info(add_list)
-        # logger.info(address)
-        # logger.info(len(address))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print (add_list)
+        # print(address)
+        # print(len(address))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~')
         if len(add_list) ==2:
-            # logger.info(address)
-            # logger.info(len(address))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(address)
+            # print(len(address))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~')
             add= " ".join(add_list).split(',')
 
             if len(add) == 2:
@@ -96,63 +91,63 @@ def fetch_data():
                     zipp = "<MISSING>"
                     location_name = city
                 else:
-                    # logger.info(add[-1].split())
+                    # print(add[-1].split())
                     city = add[-1].split()[0]
                     state = add[-1].split()[1]
                     zipp = add[-1].split()[-1]
                     location_name = city
-                # logger.info(street_address,city,state,zipp)
+                # print(street_address,city,state,zipp)
             else :
-                # logger.info(add)
-                # logger.info(len(add))
-                # logger.info('~~~~~~~~~~~~~~`')
+                # print(add)
+                # print(len(add))
+                # print('~~~~~~~~~~~~~~`')
                 street_address =add[0].strip()
                 city = add[-2].strip()
                 state = add[-1].split()[0]
                 zipp = add[-1].split()[-1]
-                # logger.info(zipp,state)
+                # print(zipp,state)
         elif len(add_list) ==3:
-            # logger.info(add_list)
-            # logger.info(len(add_list))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(add_list)
+            # print(len(add_list))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~')
             if " 1143 Prince Ave" not in add_list[0] and " 3341 Lexington Road" not in add_list[0]:
                 location_name = add_list[0].strip()
                 street_address = add_list[1]
                 city = add_list[2].split(',')[0]
 
                 sz= add_list[2].split(',')[-1]
-                # logger.info(sz.split())
+                # print(sz.split())
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(sz))
                 if us_zip_list != []:
                     zipp = us_zip_list[0]
-                    # logger.info(zipp)
+                    # print(zipp)
                 else:
                     m = re.findall(r'\d', sz)
                     zip = "".join(m)
-                    # logger.info(zip.split())
+                    # print(zip.split())
                     if zip.split() != []:
                         zipp= zip
-                        # logger.info(zipp)
+                        # print(zipp)
                     else :
                         zipp = "<MISSING>"
 
                 if len(sz.split()) ==2:
                     state = sz.split()[0].strip()
-                    # logger.info(state)
+                    # print(state)
                 else:
                     # a = re.findall(r'^\w+$',sz)
                     if zip.split() != []:
                         state = sz.split(zip)[0].strip()
-                        # logger.info(state)
+                        # print(state)
                     else:
                         state = sz.strip()
-                # logger.info(state,zipp)
-                # logger.info(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
-                # logger.info(state)
+                # print(state,zipp)
+                # print(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
+                # print(state)
             else:
-                # logger.info(add_list)
-                # logger.info(len(add_list))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print(add_list)
+                # print(len(add_list))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~')
                 street_address = add_list[0].strip()
                 city="Athens"
                 state = "GA"
@@ -162,14 +157,14 @@ def fetch_data():
                 else:
                     zipp = zipp_list[0]
                 location_name = city
-                # logger.info(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
+                # print(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
         elif len(add_list) == 4:
-            # logger.info(add_list)
-            # # # # logger.info(len(address))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(add_list)
+            # # # # print(len(address))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~')
             location_name = add_list[0].strip()
             street_address = " ".join(add_list[1:-1]).replace(', KS 66061','')
-            # logger.info(street_address)
+            # print(street_address)
             csz = add_list[-1].split(',')
             if len(csz) >1:
                 city = csz[0].strip()
@@ -179,7 +174,7 @@ def fetch_data():
                 else:
                     state = csz[1].split()[0]
                     zipp = csz[1].split()[-1]
-            # logger.info(city,state,zipp)
+            # print(city,state,zipp)
         elif len(add_list) ==5:
             if add_list[0] == " 3341 Lexington Road":
                 continue
@@ -191,8 +186,8 @@ def fetch_data():
                 zipp = add_list[3].split(',')[1].split()[-1].strip()
         else:
             continue
-        # logger.info(zipp)
-        # logger.info(street_address +" | "+city+" | "+state+" | "+zipp +" | "+location_name)
+        # print(zipp)
+        # print(street_address +" | "+city+" | "+state+" | "+zipp +" | "+location_name)
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),info.split('message:')[-1])
         if phone_list !=[]:
             phone = phone_list[0].strip()
@@ -203,42 +198,42 @@ def fetch_data():
         if "Check for " in  " ".join(hours) or "Call for" in  " ".join(hours):
             hours_of_operation = "<MISSING>"
         else:
-            # logger.info(hours)
-            # logger.info(len(hours))
-            # logger.info('~~~~~~~~~~~~')
+            # print(hours)
+            # print(len(hours))
+            # print('~~~~~~~~~~~~')
 
 
             if len(hours) ==2:
                 hours_of_operation = hours[0].strip()
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
             else:
-                # logger.info(hours)
-                # logger.info(len(hours))
-                # logger.info('~~~~~~~~~~~~')
+                # print(hours)
+                # print(len(hours))
+                # print('~~~~~~~~~~~~')
                 hours_list = hours[1].strip()
-                # logger.info(hours_list.split())
+                # print(hours_list.split())
                 if hours_list.split() != []:
 
                     if len(hours_list.split()) >1:
                         p =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),str(hours_list))
                         if p ==[]  :
                             hours_of_operation = hours_list
-                            # logger.info(hours_of_operation)
+                            # print(hours_of_operation)
                         else:
                             p1 = "".join(p)
-                            # logger.info(hours_list.split(p1))
+                            # print(hours_list.split(p1))
                             h = hours_list.split(p1)[-1].split()
                             if h == []:
                                 hours_of_operation = "<MISSING>"
                             else:
                                 hours_of_operation = hours_list.split(p1)[-1].strip()
-                                # logger.info(hours_of_operation)
+                                # print(hours_of_operation)
 
                     else:
                         hours_of_operation = "<MISSING>"
                 else:
                     hours_of_operation = "<MISSING>"
-        # logger.info(hours_of_operation)
+        # print(hours_of_operation)
 
         if location_name == "Temecula - Promenade Mall" or location_name == "Victoria Gardens" or location_name == "Delaware":
             continue
@@ -252,8 +247,8 @@ def fetch_data():
         #     continue
         # addresses.append(street_address)
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

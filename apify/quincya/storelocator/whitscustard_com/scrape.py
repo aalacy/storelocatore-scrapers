@@ -2,11 +2,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('whitscustard_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,7 +44,7 @@ def fetch_data():
 	locator_domain = "whitscustard.com"
 
 	for link in final_links:
-		# logger.info(link)
+		# print(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 

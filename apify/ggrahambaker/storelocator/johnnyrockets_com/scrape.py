@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('johnnyrockets_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -47,7 +42,7 @@ def fetch_data():
     all_store_data = []
 
     for i, link in enumerate(link_list):
-        # logger.info(link)
+        # print(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 

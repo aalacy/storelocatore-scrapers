@@ -2,11 +2,6 @@ import csv
 import re, time
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('studiothree_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,7 +33,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
     # Fetch stores
     divlist = soup.findAll('div',{'class':'two-col-f'})
-    logger.info((len(divlist)))
+    print((len(divlist)))
     for n in range(0,len(divlist)-2):
         title = divlist[n].find('h6').text
         try:
@@ -85,7 +80,7 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         #p += 1
         
    

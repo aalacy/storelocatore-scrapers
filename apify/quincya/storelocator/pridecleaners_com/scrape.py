@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pridecleaners_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,7 +34,7 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.h3.text.strip()
-		# logger.info(location_name)
+		# print(location_name)
 		
 		raw_address = list(item.p.stripped_strings)
 

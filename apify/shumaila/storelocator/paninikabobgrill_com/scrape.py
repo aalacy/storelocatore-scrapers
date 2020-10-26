@@ -4,11 +4,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('paninikabobgrill_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -45,14 +40,14 @@ def fetch_data():
     coordlist = '['+re.sub(pattern, ' ', coordlist).replace('); locArray.push(',',').replace(');','').replace(', }','}').replace("'",'"').rstrip() +']'
     coordlist = json.loads(coordlist)
     
-    #logger.info(coordlist)
+    #print(coordlist)
     for div in storelist:
         
         link = div.find('a',{'class':'location-url'})['href'].strip()
         title = div.find('h3').text.strip()
         phone = div.find('div',{'class':'location-phone'}).text.replace('\t','').replace('\n','').strip()
         address = div.find('div',{'class':'locations-footer'}).find('a')['href'].split('dir//')[1].replace('Panini Kabob Grill','').lstrip()
-        #logger.info(address)
+        #print(address)
         street,city,state= address.split(', ')
         state,pcode = state.lstrip().split(' ',1)
         if city.find('Ste. 101 ') > -1:
@@ -70,13 +65,13 @@ def fetch_data():
                 store = loc["id"]
                 lat = loc['lat']
                 longt = loc['lng']
-                #logger.info('Yes')
+                #print('Yes')
                 break
 
         if lat ==  '<MISSING>':        
             for coord in coordlist:            
                 if title.lower().find(coord['name'].lower().replace('-',' ')) > -1:
-                    #logger.info(title,coord['name'])
+                    #print(title,coord['name'])
                     lat = coord['latitude']
                     longt = coord['longitude']
                     break
@@ -84,7 +79,7 @@ def fetch_data():
             r1 = session.get(link, headers=headers, verify=False)
             soup1= BeautifulSoup(r1.text,'html.parser')
             hours = soup1.find('div',{'id':'hours'}).text.replace('\n','').replace('Hours:','').strip()
-            #logger.info('No')
+            #print('No')
             
         data.append([
                 'https://paninikabobgrill.com/',
@@ -102,7 +97,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
         
@@ -110,10 +105,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

@@ -6,11 +6,6 @@ import json
 import time
 from sgrequests import SgRequests
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gallogiro_com')
-
-
 
 session = SgRequests()
 def write_output(data):
@@ -38,7 +33,7 @@ def fetch_data():
         r_loc = session.get(a["href"],headers=headers)
         soup_loc = BeautifulSoup(r_loc.text,"lxml")
         data = soup_loc.find(lambda tag: (tag.name == "script") and "window.APP_OPTIONS" in tag.text).text
-        # logger.info(data.split("APP_INITIALIZATION_STATE=")[1].split("]")[0])
+        # print(data.split("APP_INITIALIZATION_STATE=")[1].split("]")[0])
         latitude = data.split("APP_INITIALIZATION_STATE=")[1].split("]")[0].split(",")[1]
         longitude = data.split("APP_INITIALIZATION_STATE=")[1].split("]")[0].split(",")[-1]
         try:
@@ -71,7 +66,7 @@ def fetch_data():
 						store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("–","-"), page_url]
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
-        # logger.info(store)
+        # print(store)
 
 
 def scrape():

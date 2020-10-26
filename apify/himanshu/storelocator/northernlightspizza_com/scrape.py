@@ -5,11 +5,6 @@ import re
 import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('northernlightspizza_com')
-
-
 
 
 
@@ -77,7 +72,7 @@ def fetch_data():
                 zipp = data['address'].split(",")[2].split(" ")[2]
             except:
                 zipp = "<MISSING>"
-            # logger.info(data['desc'].split("\n"))
+            # print(data['desc'].split("\n"))
             if "Hours" in data['desc'].split("\n"):
                 try:
                     phone = data['desc'].split("\n")[0]
@@ -102,13 +97,13 @@ def fetch_data():
                         store_number, phone.replace("Dine-In, Carryout & Delivery!",""), location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == "" else x for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             store = [x.replace("–","-") for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            # logger.info(store)
+            # print(store)
     
     # return return_main_object
 

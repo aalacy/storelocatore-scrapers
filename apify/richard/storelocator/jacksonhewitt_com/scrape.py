@@ -4,11 +4,6 @@ import requests
 import sgzip
 from Scraper import Scrape
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jacksonhewitt_com')
-
-
 
 URL = "https://www.jacksonhewitt.com"
 
@@ -87,7 +82,7 @@ class Scraper(Scrape):
             try:
                 data = json.loads(response.content)["Offices"]
             except:
-                logger.info('sleeeeeping..............\n\n\n\n\n\n\n\n\n')
+                print('sleeeeeping..............\n\n\n\n\n\n\n\n\n')
                 time.sleep(60)
                 response = requests.get(
                     f"https://www.jacksonhewitt.com/api/offices/search/{zipcode}",
@@ -97,7 +92,7 @@ class Scraper(Scrape):
                 data = json.loads(response.content)["Offices"]
 
             stores.extend(data)
-            logger.info(f"{len(data)} of locations scraped for zipcode: {zipcode}")
+            print(f"{len(data)} of locations scraped for zipcode: {zipcode}")
 
         for store in stores:
             if store["OfficeNumber"] not in seen:

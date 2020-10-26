@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bartons-lumber_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,11 +32,11 @@ def fetch_data():
    
     divlist = soup.select_one('li:contains("Locations")').select("a[href*=content]")
     
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     for div in divlist:
         link = 'https://www.bartons-lumber.com' + div['href']
-        #logger.info(link)
+        #print(link)
         r = session.get(link, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
         title  = soup.find('h1').text
@@ -72,7 +67,7 @@ def fetch_data():
                         '<MISSING>',
                         hours
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
         

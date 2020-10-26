@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dior_com')
-
-
 
 
 session = SgRequests()
@@ -55,12 +50,12 @@ def fetch_data():
     data = r.json()["items"]
     return_main_object = []
     for i in range(0,len(data),100):
-        logger.info(i)
+        print(i)
         url = "https://tpc33of0na.execute-api.eu-west-1.amazonaws.com/prod/PointOfSale?ids="
         temp_number = i + 100
         if i + 100 > len(data):
             temp_number = len(data)
-        logger.info(str(temp_number) + "========")
+        print(str(temp_number) + "========")
         for j in range(i,temp_number):
             url = url + data[j][0] + ","
         url = url[:-1]
@@ -74,7 +69,7 @@ def fetch_data():
                     return_main_object.append(store)
         except:
             for m in range(i,i+100):
-                logger.info(m)
+                print(m)
                 url = "https://tpc33of0na.execute-api.eu-west-1.amazonaws.com/prod/PointOfSale?ids=" + str(data[i])
                 location_reqeust = session.get(url)
                 try:

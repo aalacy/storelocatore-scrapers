@@ -8,18 +8,13 @@ from requests.exceptions import RequestException  # ignore_check
 
 def log(*args, **kwargs):
     if show_logs == True:
-        logger.info(" ".join(map(str, args)), **kwargs)
-        logger.info("")
+        print(" ".join(map(str, args)), **kwargs)
+        print("")
 
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests  # ignore_check
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('educationaloutfitters_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()

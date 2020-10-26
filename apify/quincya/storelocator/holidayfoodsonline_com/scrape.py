@@ -4,11 +4,6 @@ import csv
 from random import randint
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('holidayfoodsonline_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -34,8 +29,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.find_all('div', attrs={'data-tab-icon': 'fa fa-shopping-cart'})
 	
@@ -43,7 +38,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "holidayfoodsonline.com"
 		location_name = item.find('h2').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		
 		raw_data = item.ul.find_all('li')
 		raw_address = raw_data[3].text.strip()

@@ -1,10 +1,5 @@
 from sgrequests import SgRequests
 import csv
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mortensondental_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,7 +28,7 @@ def fetch_data():
 	for store in stores:
 		location_name = store['name'].strip()
 		link  = store['web']
-		# logger.info(link)
+		# print(link)
 
 		street_address = store['address'].strip()
 		city = store['city']

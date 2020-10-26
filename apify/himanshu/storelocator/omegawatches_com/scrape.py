@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('omegawatches_com')
-
-
 
 
 
@@ -24,7 +19,7 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
-            # logger.info(row)
+            # print(row)
             writer.writerow(row)
 
 
@@ -44,7 +39,7 @@ def fetch_data():
     data = soup.find("script", text=re.compile("var stores =")).text.split(
         "var stores = ")[1].split("; var pm_countries")[0]
     json_data = json.loads(data)
-    # # logger.info(json_data)
+    # # print(json_data)
 
     for i in json_data:
         # name = i["name"]
@@ -131,7 +126,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store
-            #logger.info(store)
+            #print(store)
 
 
 def scrape():

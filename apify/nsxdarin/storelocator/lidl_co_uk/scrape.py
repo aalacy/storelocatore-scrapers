@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lidl_co_uk')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -24,7 +19,7 @@ def fetch_data():
     for coord in coords:
         lat = coord.split(',')[0]
         lng = coord.split(',')[1]
-        logger.info(('Pulling Coordinates %s-%s...' % (lat, lng)))
+        print(('Pulling Coordinates %s-%s...' % (lat, lng)))
         url = 'https://spatial.virtualearth.net/REST/v1/data/588775718a4b4312842f6dffb4428cff/Filialdaten-UK/Filialdaten-UK?spatialFilter=nearby(' + lat + ',' + lng + ',1000)&$filter=Adresstyp%20Eq%201&$top=1001&$format=json&$skip=0&key=Argt0lKZTug_IDWKC5e8MWmasZYNJPRs0btLw62Vnwd7VLxhOxFLW2GfwAhMK5Xg&Jsonp=displayResultStores'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

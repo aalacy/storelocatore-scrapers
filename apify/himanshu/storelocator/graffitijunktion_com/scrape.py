@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('graffitijunktion_com')
-
-
 
 
 
@@ -43,7 +38,7 @@ def fetch_data():
     #         for i in k1['places']:
     #             lat.append(i['location']['lat'])
     #             lng.append(i['location']['lng'])
-    #             # logger.info(i['location']['lng'])
+    #             # print(i['location']['lng'])
     # exit()
     data1 = soup.find_all("h2",{"style":"font-weight:bold;"})
     for d in data1:

@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ritters_com')
-
-
 
 
 base_url = 'https://www.ritters.com'
@@ -83,7 +78,7 @@ def fetch_data():
     for store in store_list:
         store_id = validate(store.split('location.php?id=')[1].split('>')[0]).replace("'", "")
         store_link = 'https://www.ritters.com/location.php?id=' + store_id
-        logger.info(store_link)
+        print(store_link)
         geo_loc = eliminate_space(store.split(']')[0].split(','))
         store_info = etree.HTML(session.get(store_link,  headers=headers).text)
         output = []

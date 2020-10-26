@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('minitstop_com')
-
-
 
 
 
@@ -43,12 +38,12 @@ def fetch_data():
 
             for id,val in enumerate(json_data):
                 for key in  json_data[val].keys():
-                    # logger.info(json_data[val][key])
+                    # print(json_data[val][key])
                     dk[json_data[val][key]['title']]= [json_data[val][key]['lat'],json_data[val][key]['lng']]
                 # for
-                # logger.info(json_data[val].keys())
+                # print(json_data[val].keys())
 
-                # logger.info(val.text.split('var wpgmaps_localize_marker_data = '))
+                # print(val.text.split('var wpgmaps_localize_marker_data = '))
                 # exit()
 
 
@@ -224,7 +219,7 @@ def fetch_data():
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store)
-    logger.info(return_main_object)
+    print(return_main_object)
     return return_main_object
 
 

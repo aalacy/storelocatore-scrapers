@@ -1,11 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mgmresorts_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +42,7 @@ def fetch_data():
 		if "mgmresorts.com" not in link:
 			continue
 
-		# logger.info(link)
+		# print(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 

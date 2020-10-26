@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fiveguys_co_uk')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +28,7 @@ def fetch_data():
                     if 'http' not in lurl:
                         states.append('https://restaurants.fiveguys.co.uk/' + lurl)
     for state in states:
-        logger.info(state)
+        print(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -72,7 +67,7 @@ def fetch_data():
             loc = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
-        logger.info(loc)
+        print(loc)
         loc = loc.replace('&#39;',"%27").replace('&amp;','%26')
         website = 'fiveguys.co.uk'
         country = 'GB'

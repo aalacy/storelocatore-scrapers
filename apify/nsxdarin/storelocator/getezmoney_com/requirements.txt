@@ -1,3 +1,2 @@
 sgrequests
 usaddress==0.5.10
-sglogging

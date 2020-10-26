@@ -4,11 +4,6 @@ import csv
 import string
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('searsoptical_com')
-
-
 
 
 def write_output(data):
@@ -30,18 +25,18 @@ def fetch_data():
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     statelinks = soup.findAll('a',{'class':'c-directory-list-content-item-link'})
-    #logger.info(len(statelinks))
+    #print(len(statelinks))
     for states in statelinks:
         statelink = "https://locations.searsoptical.com/" + states['href']
-        #logger.info("state = ", statelink)
+        #print("state = ", statelink)
         page1 = requests.get(statelink)
         soup1 = BeautifulSoup(page1.text, "html.parser")
         citylinks = soup1.findAll('a', {'class': 'c-directory-list-content-item-link'})
-        #logger.info("cities = ",len(citylinks))
+        #print("cities = ",len(citylinks))
         if len(citylinks) > 0:
             for cities in citylinks:
                 citylink = "https://locations.searsoptical.com/" + cities['href']
-                #logger.info("city = ",citylink)
+                #print("city = ",citylink)
                 page2 = requests.get(citylink)
                 soup2 = BeautifulSoup(page2.text, "html.parser")
                 try:
@@ -52,7 +47,7 @@ def fetch_data():
                         branch = branch.find('a')
                         branchlink = "https://locations.searsoptical.com/" + branch['href']
                         branchlink = branchlink.replace("../","")
-                        #logger.info("branch = ", branchlink)
+                        #print("branch = ", branchlink)
                         page3 = requests.get(branchlink)
                         soup3 = BeautifulSoup(page3.text, "html.parser")
                         data.append(extract(soup3,branchlink))
@@ -67,7 +62,7 @@ def fetch_data():
                     branch = branch.find('a')
                     branchlink = "https://locations.searsoptical.com/" + branch['href']
                     branchlink = branchlink.replace("../", "")
-                    #logger.info("branch = ", branchlink)
+                    #print("branch = ", branchlink)
                     page3 = requests.get(branchlink)
                     soup3 = BeautifulSoup(page3.text, "html.parser")
                     data.append(extract(soup3,branchlink))
@@ -107,20 +102,20 @@ def extract(soup,link):
     pcode = pcode.strip()
     if len(store) > 9:
         store = "<MISSING>"
-    #logger.info(link)
-    #logger.info(title)
-    #logger.info(store)
-    #logger.info(street)
-    #logger.info(city)
-    #logger.info(state)
-    #logger.info(pcode)
-    #logger.info(ccode)
-    #logger.info(phone)
-    #logger.info(hours)
-    #logger.info(lat)
-    #logger.info(longt)
+    #print(link)
+    #print(title)
+    #print(store)
+    #print(street)
+    #print(city)
+    #print(state)
+    #print(pcode)
+    #print(ccode)
+    #print(phone)
+    #print(hours)
+    #print(lat)
+    #print(longt)
     data = ['https://searsoptical.com/',link,title,street,city,state,pcode,ccode,store,phone,'<MISSING>',lat,longt,hours]
-    #logger.info(data)
+    #print(data)
     return data
 
 def scrape():

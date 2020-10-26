@@ -5,11 +5,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('blackfinnameripub_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,12 +32,12 @@ def fetch_data():
    
     link_list = soup.findAll('a', {'class': 'location_btn'})
     repo_list = soup.findAll('div', {'class': 'location_content'})
-    logger.info("states = ",len(link_list))
+    print("states = ",len(link_list))
     p = 0
     for repo in repo_list:
         store = repo['id']
         store = store.replace('location_','')
-        #logger.info(store)
+        #print(store)
         link = ''
         for j in range(0,len(link_list)):
             
@@ -57,7 +52,7 @@ def fetch_data():
                 phone = phone.replace('\n','')
                 phone = phone.replace('.','-')
                 temp = address.find('span').text
-                logger.info(temp)
+                print(temp)
                 address = address.find('input')
                 if len(temp) < 2:                    
                     address = address['value']
@@ -68,7 +63,7 @@ def fetch_data():
                 hours = hours.replace('\n',' ')
                 hours = hours.replace('Hours of Operations','')
                 hours = hours.lstrip()
-                #logger.info(address)
+                #print(address)
                 address = address.replace('\n',' ')
                 address = address.lstrip()
                 address = usaddress.parse(address)
@@ -116,8 +111,8 @@ def fetch_data():
                 if hours.lower().find('after') > -1 :
                     hours = hours[0:hours.find('After')]
                 hours = hours.rstrip()
-                #logger.info(phone)
-                #logger.info(hours) 
+                #print(phone)
+                #print(hours) 
                 data.append([
                     'https://blackfinnameripub.com/',
                     link,                   
@@ -134,9 +129,9 @@ def fetch_data():
                     "<MISSING>",
                     hours
                                 ])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 p += 1
-                #logger.info(".....................")
+                #print(".....................")
                 
                 
 
@@ -148,9 +143,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

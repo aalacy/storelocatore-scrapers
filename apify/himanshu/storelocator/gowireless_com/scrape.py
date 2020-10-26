@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import xmltodict
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gowireless_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +28,7 @@ def fetch_data():
     data_tt = data_json_new['locator']['store']
     return_main_object=[]
     for loc in data_tt['item']:
-        # logger.info(loc['address'].split("  ")[-1])
+        # print(loc['address'].split("  ")[-1])
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc['address'].split("  ")[-1]))
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(loc['address'].split("  ")[-1]))
         state_list = re.findall(r'([A-Z]{2})', str(loc['address'].split("  ")[-1]))
@@ -56,7 +51,7 @@ def fetch_data():
         if hours != None:
             # hours_of_operation =hours.replace('<span style="color: rgb(85&#44; 85&#44; 85); font-size: 12px;">','').replace("</span>",'').replace('<span style="font-size: 11pt; font-family: Calibri&#44; sans-serif;">','').replace("<p>",'').replace("</p>",'').replace("&nbsp;",'').replace("<br>",'').strip().lstrip()
             hours_of_operation = BeautifulSoup(loc['operatingHours'],"lxml").text.replace("&nbsp;",'').replace("<br>",'').replace("-�","-").strip().lstrip()
-        # logger.info(hours.text)
+        # print(hours.text)
         phone = loc['telephone']
         store_no = loc['storeId']
         tem_var =[]
@@ -74,7 +69,7 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
         tem_var.append(page_url)
-        # logger.info(tem_var)
+        # print(tem_var)
         return_main_object.append(tem_var)
     return return_main_object
 def scrape():

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('goodfortunesupermarket_com')
-
-
 
 
 
@@ -69,7 +64,7 @@ def fetch_data():
         tem_var.append(log)
         tem_var.append("<MISSING>")
         tem_var.append("http://goodfortunesupermarket.com/desktop.php?page=0&sale=ny")
-        logger.info(tem_var)
+        print(tem_var)
         return_main_object.append(tem_var)
         
 

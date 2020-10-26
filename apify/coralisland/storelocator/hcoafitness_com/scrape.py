@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from lxml import etree
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hcoafitness_com')
-
-
 
 base_url = 'https://www.hcoafitness.com'
 
@@ -61,7 +56,7 @@ def fetch_data():
     store_data = {}
     for store_html in store_htmls:
         detail_url = validate(store_html.xpath(".//a/@href")[0])
-        logger.info(detail_url)
+        print(detail_url)
         detail_request = session.get(detail_url)
         detail = BeautifulSoup(detail_request.text,"lxml")
 

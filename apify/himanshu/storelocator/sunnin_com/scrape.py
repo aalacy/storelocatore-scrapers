@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sunnin_com')
-
-
 
 
 
@@ -43,7 +38,7 @@ def fetch_data():
             page_url = "http://sunnin.com/"+i.a['href']
             soup1= BeautifulSoup(r.text,"lxml")
             v= soup1.find_all("div",{"class":"description"})[-1]
-            # logger.info(soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[0])
+            # print(soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[0])
             latitude=soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[1]
             longitude= soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[0]
 
@@ -71,8 +66,8 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append(hours)
         tem_var.append(page_url)
-        # logger.info(str(tem_var))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(str(tem_var))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         store_detail.append(tem_var)
 
     for i in range(len(store_name)):
@@ -80,8 +75,8 @@ def fetch_data():
         store.append("http://sunnin.com/")
         store.append(store_name[i])
         store.extend(store_detail[i])
-        # logger.info(str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
 
     return return_main_object

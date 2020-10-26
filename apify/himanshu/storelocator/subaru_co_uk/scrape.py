@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('subaru_co_uk')
-
-
 
 
 def write_output(data):
@@ -110,7 +105,7 @@ def fetch_data():
                 except:pass
                 try:hours_of_operation = " ".join(list(soup1.find("div",{"class":"opening-times-container"}).find("div",{"class":"row"}).stripped_strings))
                 except:pass
-        # logger.info(new_page_url)
+        # print(new_page_url)
         store_number = mp1['id']
         store = []
         store.append(base_url)
@@ -133,7 +128,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(new_page_url if new_page_url else "<MISSING>")
-        # logger.info("~~~~~~~~~~~~~~~~ ",store)
+        # print("~~~~~~~~~~~~~~~~ ",store)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
 

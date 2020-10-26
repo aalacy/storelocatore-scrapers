@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('raymondjames_com')
-
-
 
 
 
@@ -59,9 +54,9 @@ def fetch_data():
                   'radius': 8000, 'location': '11576', 'page': str(page)}
         r = session.get(
             "https://www.raymondjames.com/dotcom/api/searchbranches/?location=11576&radius=8000", headers=headers, params=params)
-        # logger.info("json==" + r.text)
-        # logger.info(str(page))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("json==" + r.text)
+        # print(str(page))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         json_data = r.json()
 
         if page > 371:
@@ -84,9 +79,9 @@ def fetch_data():
                     street1 = result['address']['line1']
                     street2 = "".join(result['address']['line2'])
                     street12 = street1, street2
-                    # logger.info(street12)
+                    # print(street12)
                     street_address = " ".join(street12)
-                    # logger.info(street_address)
+                    # print(street_address)
                 if result['address']['line1'] != None and result['address']['line2'] != None and result['address']['line3']:
                     street1 = result['address']['line1']
                     street2 = result['address']['line2']
@@ -107,7 +102,7 @@ def fetch_data():
                     zipp = "<MISSING>"
                 else:
                     zipp = result['address']['zip']
-                # logger.info(state, zipp)
+                # print(state, zipp)
                 if result['address']['latitude'] == None:
                     latitude = "<MISSING>"
                 else:
@@ -128,8 +123,8 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info("data = " + str(store))
-                # logger.info(
+                # print("data = " + str(store))
+                # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)

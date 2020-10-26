@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tirefactory_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,7 +48,7 @@ def fetch_data():
                                 loc = data[1].strip()
                                 street=data[2].strip()
                                 csz=data[3].strip().split(',')
-                                logger.info(csz)
+                                print(csz)
                                 phone=data[4].strip()
                                 tim= data[9].strip().replace('M','Monday').replace('F','Friday')+" "+data[10].strip().replace('SAT','Saturday')+" "+data[11].strip().replace('SUN','Sunday')
                                 city=csz[0].strip()

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('charlotterusse_com')
-
-
 
 
 
@@ -56,10 +51,10 @@ def fetch_data():
     json_data = session.get(url, headers=headers).json()
     # soup = BeautifulSoup(r.text, "lxml")
 
-    # logger.info("json_data === "+ str(json_data))
+    # print("json_data === "+ str(json_data))
     for location in json_data["stores"]:
 
-        # logger.info("location === " + str(location))
+        # print("location === " + str(location))
         street_address = location["address"]["line1"] +" "+ location["address"]["line2"]+" "+ location["address"]["line3"]
         location_name = location["address"]["name"]
         city = location["address"]["city"]
@@ -87,8 +82,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fourseasons_com')
-
-
 
 
 
@@ -39,8 +34,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("ul", {"class": "Navigation-mainLinks"}):
         semi_part = parts.find_all("li", {"class": "Navigation-item"})[0]
-        # logger.info(base_url + semi_part.find("a")['href'])
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(base_url + semi_part.find("a")['href'])
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         store_request = session.get(base_url + semi_part.find("a")['href'])
         store_soup = BeautifulSoup(store_request.text, "lxml")
         dl = store_soup.find('dl', class_='Accordion')
@@ -91,22 +86,22 @@ def fetch_data():
                     state = address[-1].split()[0]
                     zipp = address[-1].split()[1]
                 elif "U.S.A." in " ".join(address):
-                    # logger.info(address[-1].split())
+                    # print(address[-1].split())
                     state = " ".join(address[-1].split()[:-2])
                     zipp = address[-1].split()[-2].strip()
                 elif "Canada" in " ".join(address):
-                    # logger.info(address[-1].split())
+                    # print(address[-1].split())
                     state = " ".join(address[-1].split()[:-3])
                     zipp = " ".join(address[-1].split()[-3:-1])
-                    # logger.info(state, zipp)
+                    # print(state, zipp)
             elif len(address) == 4:
-                # logger.info(address)
+                # print(address)
                 if "Canada" in " ".join(address):
                     street_address = address[0].strip()
                     state = address[1].split()[-1].strip()
                     zipp = address[-2].strip()
                 elif " U.S.A." == address[-1]:
-                    # logger.info(address)
+                    # print(address)
                     street_address = address[0].strip()
                     state = address[-2].split()[0].strip()
                     zipp = address[-2].split()[1].strip()
@@ -136,7 +131,7 @@ def fetch_data():
                 else:
                     country_code = "US"
             else:
-                # logger.info(address)
+                # print(address)
                 country_code = "US"
             if('Location' in temp_storeaddresss):
                 temp_storeaddresss.remove('Location')
@@ -174,8 +169,8 @@ def fetch_data():
             return_object.append(page_url)
             return_main_object.append(return_object)
 
-            #logger.info('data==' + str(return_object))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~')
+            #print('data==' + str(return_object))
+            #print('~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 

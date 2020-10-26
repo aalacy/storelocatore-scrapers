@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 from selenium.webdriver.support.ui import Select
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('calibercollision_com')
-
-
 
 
 options = Options()
@@ -55,10 +50,10 @@ def fetch_data():
         select.select_by_index(index)
         time.sleep(3)
         locs = driver.find_elements_by_css_selector('div.loc-result > a')
-        #logger.info("locs..........", locs)
+        #print("locs..........", locs)
         for loc in locs:
             url = loc.get_attribute('href')
-            logger.info(url)
+            print(url)
             driver2.get(url)
             time.sleep(1)
             try:
@@ -97,7 +92,7 @@ def fetch_data():
                 hours_of_op
             ])
             count=count+1
-            logger.info(count)
+            print(count)
 
     time.sleep(3)
     driver.quit()

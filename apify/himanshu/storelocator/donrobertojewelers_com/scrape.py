@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('donrobertojewelers_com')
-
-
 
 
 session = SgRequests()
@@ -33,7 +28,7 @@ def fetch_data():
     locations_url = "https://donrobertojewelers.com/storelocator"
     r = session.get(locations_url,headers=headers)
     soup = BeautifulSoup(r.text,'lxml')
-    # logger.info(s)
+    # print(s)
     jd = str(soup).split('"locationItems": ')[1].split('                }')[0]
     json_data = json.loads(jd)
 

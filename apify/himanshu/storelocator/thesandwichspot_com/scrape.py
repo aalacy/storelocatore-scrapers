@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thesandwichspot_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -31,7 +26,7 @@ def fetch_data():
     soup= BS(session.get("https://www.thesandwichspot.com/locations").text,"lxml")
     for div in soup.find_all("div",{"id":re.compile("inlineContent-gridContainer")})[2:35]:
         location_name = div.find("h4").text
-        # logger.info(location_name)
+        # print(location_name)
         addr = list(div.find_all("div",{"data-packed":"false"})[1].stripped_strings)
         street_address = addr[0].replace("\xa0"," ")
         if len(addr[1].split(",")) == 3:
@@ -48,7 +43,7 @@ def fetch_data():
             lat = lat_lng[location_name]['lat']
             lng = lat_lng[location_name]['lng']
         except:
-            # logger.info(location_name)
+            # print(location_name)
             lat = "<MISSING>"
             lng = "<MISSING>"
         page_url = div.find_all("a")[-1]['href']

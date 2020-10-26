@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thebeerstore_ca')
-
-
 
 
 
@@ -58,7 +53,7 @@ def fetch_data():
             data_url = data.get('href')
             page_url = data_url
             city = data.parent.findAll('li')[-1].get_text().split(',')[0].replace('\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t', '').strip()
-            # logger.info(city)
+            # print(city)
             detail_url = session.get(data_url, headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             detail_data = detail_soup.find('div', {'class', 'store_detail'})
@@ -100,8 +95,8 @@ def fetch_data():
                 addresses.append(store_number)
 
 
-                # logger.info("data = " + str(store))
-                # logger.info(
+                # print("data = " + str(store))
+                # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)

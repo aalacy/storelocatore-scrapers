@@ -3,4 +3,3 @@ bs4==0.0.1
 usaddress
 requests==2.7.0
 pandas==0.25.1
-sglogging

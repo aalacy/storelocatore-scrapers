@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import shapely
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('americandeli_com')
-
-
 
 
 session = SgRequests()
@@ -31,7 +26,7 @@ def fetch_data():
     output=[]
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36","x-requested-with": "XMLHttpRequest"}
     for cd in cord:
-        # logger.info(cd)
+        # print(cd)
         try:
             r = session.get("https://americandeli.com/wp-admin/admin-ajax.php?action=store_search&lat="+cd[0]+"&lng="+cd[1]+"&max_results=200&search_radius=50",headers=headers)
             if r.text=="":
@@ -71,8 +66,8 @@ def fetch_data():
                 if adrr not in output:
                     output.append(adrr)
                     return_main_object.append(store)
-                # logger.info(store)
-                # logger.info("==============")
+                # print(store)
+                # print("==============")
         except:
             continue
     return return_main_object

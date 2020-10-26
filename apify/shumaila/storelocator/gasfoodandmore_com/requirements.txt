@@ -4,4 +4,3 @@ usaddress
 requests==2.7.0
 sgrequests
 lxml
-sglogging

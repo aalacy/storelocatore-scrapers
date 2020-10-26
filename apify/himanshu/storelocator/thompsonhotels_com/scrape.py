@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thompsonhotels_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -53,11 +48,11 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for div in soup.find("div", class_="artsy-menu-columns clearfix").find_all("ul"):
         # for li in div.find_all("li"):
-        #     logger.info(li.prettify)
-        #     logger.info("~~~~~~~~~~~")
+        #     print(li.prettify)
+        #     print("~~~~~~~~~~~")
         for a in div.find_all("a"):
             page_url = a['href']
-            # logger.info(page_url)
+            # print(page_url)
             r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
 
@@ -67,7 +62,7 @@ def fetch_data():
             list_add = list(addr.stripped_strings)
 
             list_add = [el.replace('\r\n', ',') for el in list_add]
-            # logger.info(list_add)
+            # print(list_add)
             if soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")}):
                 latitude = soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")})['href'].split("@")[1].split(",")[0]
                 longitude=soup_loc.find("a",{"href":re.compile("https://www.google.com/maps/")})['href'].split("@")[1].split(",")[1].split(",")[0]
@@ -110,7 +105,7 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
 
-        # logger.info(zipp, state)
+        # print(zipp, state)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -121,8 +116,8 @@ def fetch_data():
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info(
+                # print("data = " + str(store))
+                # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 

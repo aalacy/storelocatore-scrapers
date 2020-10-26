@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('velvettaco_com')
-
-
 
 
 
@@ -44,7 +39,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
+    # print("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
@@ -84,7 +79,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(openingHours)
         tem_var.append(i['href'])
-        # logger.info(tem_var)
+        # print(tem_var)
         return_main_object.append(tem_var)
         
 

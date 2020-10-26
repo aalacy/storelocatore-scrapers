@@ -5,11 +5,6 @@ import string
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gvgrocery_com')
-
-
 
 
 def write_output(data):
@@ -51,7 +46,7 @@ def fetch_data():
 
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
-    logger.info(len(repo_list))
+    print(len(repo_list))
 
     for n in range(0,len(repo_list)):
 
@@ -90,17 +85,17 @@ def fetch_data():
         phone = phone.replace("T : ","")
 
 
-        logger.info(title)
-        logger.info(store)
-        logger.info(street)
-        logger.info(city)
-        logger.info(pcode)
-        logger.info(phone)
-        #logger.info(coord)
-        logger.info(lat)
-        logger.info(longt)
-        logger.info(p)
-        logger.info("...........................")
+        print(title)
+        print(store)
+        print(street)
+        print(city)
+        print(pcode)
+        print(phone)
+        #print(coord)
+        print(lat)
+        print(longt)
+        print(p)
+        print("...........................")
         p += 1
         data.append([
             'http://www.gvgrocery.com',

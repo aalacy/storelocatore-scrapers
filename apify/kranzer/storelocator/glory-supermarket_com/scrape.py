@@ -5,11 +5,6 @@ import base
 import requests, json
 from urllib.parse import urljoin
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('glory-supermarket_com')
-
-
 crawled = []
 class Scrape(base.Spider):
 
@@ -35,7 +30,7 @@ class Scrape(base.Spider):
             i.add_xpath('zip', '//div[contains(@class,"addressfield-container-inline")]/span[@class="postal-code"]/text()', base.get_first)
             i.add_value('country_code', 'US')
             i.add_xpath('hours_of_operation', '//div[contains(@class, "field-name-field-store-hours")]/p/text()', lambda x: '; '.join(x).replace('\n','').replace('\r','').replace('\t','').replace('  ',''))
-            logger.info(i)
+            print(i)
             yield i
 
 

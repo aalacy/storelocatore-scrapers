@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import html5lib
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cmxcinemas_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     
-        # logger.info("zip_code === "+zip_code)
+        # print("zip_code === "+zip_code)
     locator_domain = "https://www.cmxcinemas.com"
     location_name = ""
     street_address = ""
@@ -94,8 +89,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         
 def scrape():

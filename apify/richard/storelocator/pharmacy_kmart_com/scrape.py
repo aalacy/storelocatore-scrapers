@@ -2,11 +2,6 @@ import requests
 import sgzip
 from Scraper import Scrape
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pharmacy_kmart_com')
-
-
 
 URL = "https://pharmacy.kmart.com"
 
@@ -91,14 +86,14 @@ class Scraper(Scrape):
             )
             data = json.loads(response.content)
             stores.extend(data)
-            logger.info(f"{len(data)} stores scraped for zipcode {zip_search}")
+            print(f"{len(data)} stores scraped for zipcode {zip_search}")
 
         for store in stores:
             if store["unitNumber"] not in seen:
-                logger.info(store)
-                logger.info()
-                logger.info()
-                logger.info()
+                print(store)
+                print()
+                print()
+                print()
                 # Store ID
                 location_id = store["unitNumber"]
 

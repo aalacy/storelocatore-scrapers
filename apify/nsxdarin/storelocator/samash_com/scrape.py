@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('samash_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -30,7 +25,7 @@ def fetch_data():
     for item in array['response']['collection']:
         states.append(item['name'])
     for state in states:
-        logger.info(('Pulling State %s...' % state))
+        print(('Pulling State %s...' % state))
         url = 'https://hosted.where2getit.com/samashmusic/rest/getlist?lang=en_US'
         payload = {"request":{"appkey":"F1BBEE32-0D3E-11DF-AB7B-8CB43B999D57","formdata":{"order":"city","-softmatch":"1","objectname":"Locator::Store","where":{"clientkey":{"eq":""},"state":{"eq":state},"name":{"ilike":""}}}}}
         r = session.post(url, data=json.dumps(payload), headers=headers)

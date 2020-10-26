@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dollartreecanada_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -45,14 +40,14 @@ def fetch_data():
     for i in range(0,len(name)):
             driver2.get(name[i])
             page_url = name[i]
-            #logger.info(page_url)
+            #print(page_url)
             time.sleep(1)
             stores1 = driver2.find_elements_by_css_selector('div.details > p:nth-child(4) > a')
             name_sub = [stores1[m].get_attribute('href') for m in range(0, len(stores1))]
             for j in range(0,len(name_sub)):
                     driver3.get(name_sub[j])
                     page_url = name_sub[j]
-                    #logger.info(page_url)
+                    #print(page_url)
                     time.sleep(1)
                     store_view_details = driver3.find_elements_by_css_selector('div.details > p > a')
                     store_view_details_lnks = [store_view_details[n].get_attribute('href') for n in range(0, len(store_view_details))]
@@ -60,7 +55,7 @@ def fetch_data():
                         driver4.get(store_view_details_lnks[k])
                         time.sleep(1)
                         page_url = store_view_details_lnks[k]
-                        #logger.info(page_url)
+                        #print(page_url)
                         location_name = driver4.find_element_by_css_selector('#block-block-3 > h1').text
                         location_name = location_name.split("Welcome to ")[1]
                         store_id = driver4.find_element_by_css_selector('div.detailsPad > div:nth-child(2) > span:nth-child(1)').text
@@ -91,7 +86,7 @@ def fetch_data():
                             hours_of_op
                         ])
                         count = count + 1
-                        logger.info(count)
+                        print(count)
 
     time.sleep(3)
     driver.quit()

@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tamollys_com')
-
-
 
 
 def get_driver():
@@ -42,8 +37,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	section = base.find('div', attrs={'class': 'b2b-location-items'})
 	items = section.findAll('li')
@@ -52,7 +47,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "tamollys_com"		
 		location_name = item.find('h2').text.strip()
-		logger.info(location_name)
+		print (location_name)
 		
 		raw_data = str(item.find('p')).replace('<p>',"").replace('</p>',"").replace('\n',"").strip().split('<br/>')
 		street_address = raw_data[0].strip()

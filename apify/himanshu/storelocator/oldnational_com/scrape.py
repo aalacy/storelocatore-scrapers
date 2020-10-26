@@ -7,11 +7,6 @@ import re
 import json
 import sgzip
 import http.client
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('oldnational_com')
-
-
 
 
 def write_output(data):
@@ -62,12 +57,12 @@ def fetch_data():
         res = conn.getresponse()
         data = res.read()
         json_data = json.loads(data.decode("utf-8"))
-        # logger.info(json_data)
+        # print(json_data)
         current_results_len = (len(json_data))
         for value in json_data['Locations']:
 
             base_url = "https://www.oldnational.com/"
-            # logger.info(value)
+            # print(value)
             types = value['LocationType']
             if types=="WM":
                 types = "Wealth Management"
@@ -87,7 +82,7 @@ def fetch_data():
             country_code = 'US'
             store_number ="<MISSING>"
             phone = value['MainPhone']
-            # logger.info(phone)
+            # print(phone)
             if str(phone) == 'None':
                 phone = ''
             latitude = value['Lat']
@@ -125,15 +120,15 @@ def fetch_data():
             store.append(new_time if new_time else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
             
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

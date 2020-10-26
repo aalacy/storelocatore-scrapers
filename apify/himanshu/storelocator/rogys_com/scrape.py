@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rogys_com')
-
-
 
 
 
@@ -31,7 +26,7 @@ def fetch_data():
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://www.rogys.com"
     r = session.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
@@ -40,7 +35,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -59,7 +54,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
 
     json_data = r.json()
-    logger.info("data ==== " + str(len(json_data['search_results']['current_blog_locations'])))
+    print("data ==== " + str(len(json_data['search_results']['current_blog_locations'])))
 
     # current_brand_locations = []
     content_parsing = "action=get_brand_results_list&"
@@ -90,7 +85,7 @@ def fetch_data():
         index += 1
     content_parsing + "post_id:483"
 
-    logger.info(str(index) + " ====== " + content_parsing)
+    print(str(index) + " ====== " + content_parsing)
 
     r1 = session.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
                        data=content_parsing)
@@ -101,7 +96,7 @@ def fetch_data():
 
     soup = BeautifulSoup(r1.text + r2.text, "lxml")
 
-    # logger.info("data ==== "+ str(soup))
+    # print("data ==== "+ str(soup))
 
     for script in soup.find_all("div", {"class": "col-xs-12 result-info-wrap"})[:-1]:
         address_list = list(script.stripped_strings)
@@ -128,8 +123,8 @@ def fetch_data():
         schedule_index = [i for i, s in enumerate(address_list) if 'schedule a visit' in s.lower()]
         enrolled_index = [i for i, s in enumerate(address_list) if 'enrolled families' in s.lower()]
 
-        logger.info("address_list === " + str(address_list))
-        logger.info("enrolled_index === " + str(enrolled_index))
+        print("address_list === " + str(address_list))
+        print("enrolled_index === " + str(enrolled_index))
 
         zipp = address_list[age_index[0] - 1]
         state = address_list[age_index[0] - 2]
@@ -142,14 +137,14 @@ def fetch_data():
             hours_of_operation = ",".join(address_list[enrolled_index[0] + 2:])
         else:
             hours_of_operation = ",".join(address_list[schedule_index[0] + 2:])
-        # logger.info("location_url === " + map_location)
-        # logger.info("indices === " + str(address_list[age_index[0]]))
+        # print("location_url === " + map_location)
+        # print("indices === " + str(address_list[age_index[0]]))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

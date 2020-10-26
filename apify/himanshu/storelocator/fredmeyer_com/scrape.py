@@ -5,11 +5,6 @@ import re
 import sgzip
 import json
 import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fredmeyer_com')
-
-
 session = SgRequests()
 
 
@@ -34,8 +29,8 @@ def fetch_data():
     zip_code = search.next_zip()
     while zip_code:
         result_coords = []
-        # logger.info("zip_code === " + str(zip_code))
-        # logger.info("ramiang zip =====" + str(search.zipcodes_remaining()))
+        # print("zip_code === " + str(zip_code))
+        # print("ramiang zip =====" + str(search.zipcodes_remaining()))
         headers = {
             'User-Agent': "PostmanRuntime/7.19.0",
             'content-type' : 'application/json;charset=UTF-8'
@@ -89,8 +84,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
 
         ###fuel store
@@ -136,15 +131,15 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
     
         if len(datas)+len(datas1) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(datas)+len(datas1) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aspendental_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -25,7 +20,7 @@ def fetch_data():
     Found = True
     x = 0
     while Found:
-        logger.info(x)
+        print(x)
         Found = False
         url = 'https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=5568aa1809f16997ec2ac0c1ed321f59&jsLibVersion=v0.12.1&sessionTrackingEnabled=true&input=dentist%20near%20me&experienceKey=aspen_dental_answers&version=PRODUCTION&verticalKey=locations&limit=50&offset=' + str(x) + '&queryId=878323fa-cfa8-42f2-836f-975b7b1837b9&locale=en'
         r = session.get(url, headers=headers)
@@ -43,10 +38,10 @@ def fetch_data():
                         if '\\u0026utm_source=' in lurl:
                             lurl = lurl.split('\\u0026utm_source=')[0]
                         locs.append(lurl)
-                        logger.info(lurl)
-    logger.info(('Found %s Locations...' % str(len(locs))))
+                        print(lurl)
+    print(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'aspendental.com'
         typ = 'Office'
         hours = ''

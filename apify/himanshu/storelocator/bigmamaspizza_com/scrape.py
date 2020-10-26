@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from bs4 import BeautifulSoup as bs
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bigmamaspizza_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -31,7 +26,7 @@ def fetch_data():
     for location in soup.find("ul",{'class':"locations-list"}).find_all("li",{'class':"location"}):
         page_url =location.find("a",text=re.compile("Order Online"))['href']
         soup1 = bs(session.get(page_url).text,'lxml')
-        # logger.info(soup1.find("a",text=re.compile("View Map")))
+        # print(soup1.find("a",text=re.compile("View Map")))
         try:
             hours_of_operation = (" ".join(list(soup1.find("div",{"id":"store-hours"}).find("table").stripped_strings)))
         except:

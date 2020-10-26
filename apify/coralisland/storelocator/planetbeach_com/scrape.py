@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('planetbeach_com')
-
-
 
 
 def write_output(data):
@@ -30,22 +25,22 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        logger.info("Got today page")
+        print("Got today page")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     store_url_list = base.find(id="textResults").find_all("li")
     for store in store_url_list:
         store_url = store.a['href']
         detail_request = session.get(store_url, headers = HEADERS)
-        logger.info(store_url)
+        print(store_url)
         time.sleep(randint(1,2))
         try:
             item = BeautifulSoup(detail_request.text,"lxml")
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         geoinfo = str(item.find_all(class_="hidden-md hidden-lg")[-1]).split('red%7C')[1].split("')")[0].split(',')
         hours = item.find(class_="map-hours").text.replace('\n', '').replace("pm","pm ").strip()

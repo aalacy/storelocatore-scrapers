@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from lxml import etree
 import json
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jinya-ramenbar_com')
-
-
 
 base_url = 'http://jinya-ramenbar.com'
 
@@ -97,7 +92,7 @@ def fetch_data():
     response = etree.HTML(source)
     store_links = [x.attrib['href'] for x in response.xpath('//div[@class="content"]//a[contains(@href, "jinyaramenbar.com/locations")]')]
     for store_link in store_links:
-        logger.info(store_link)
+        print(store_link)
         if 'coming-soon' in store_link:
             continue
         output = []

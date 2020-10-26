@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('unitypoint_org')
-
-
 
 session = SgRequests()
 
@@ -55,7 +50,7 @@ def fetch_data():
 				hours_of_operation="<MISSING>"
 				store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-				# logger.info(latitude)
+				# print(latitude)
 				yield store
 			except:
 				pass
@@ -98,7 +93,7 @@ def fetch_data():
 	state = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[-1].strip().split(" ")[0]
 	zipp = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[-1].strip().split(" ")[1]
 	phone = list(soup3.find("aside",{"class":"page-callouts"}).stripped_strings)[-1]
-	# logger.info(soup3.find_all("iframe")[2]['src'].split("&sll=")[1].split(",")[1].split("&")[0])
+	# print(soup3.find_all("iframe")[2]['src'].split("&sll=")[1].split(",")[1].split("&")[0])
 	# .find("div",{"class":"columns"}).find("div",{"class":"column column-third column-1"}).find("li").find("a").text.replace("Main Hospital:",'')
 	store1 = ["https://www.unitypoint.org", location_name, street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]

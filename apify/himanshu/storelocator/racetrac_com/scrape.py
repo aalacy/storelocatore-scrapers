@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('racetrac_com')
-
-
 
 
 session = SgRequests()
@@ -75,7 +70,7 @@ def fetch_data():
             hours_of_operation = "24 Hours / 7 Days"
         else:
             hours_of_operation = "<MISSING>"
-        # logger.info(hours_of_operation)
+        # print(hours_of_operation)
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = ["<MISSING>" if x == "" or x == None else x for x in store]
         # attr = store[2] + " " + store[3]
@@ -83,8 +78,8 @@ def fetch_data():
             continue
         addresses.append(store[-1])
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         yield store
    
@@ -97,7 +92,7 @@ def fetch_data():
 
     # data = '{"swLat":25.82303640133416,"swLng":-115.6947670532553,"neLat":41.79048379771046,"neLng":-61.202579553255305,"features":[]}'
     # r = session.post("https://racetrac.com/Services.asmx/Locate",headers=headers,data=data)
-    # logger.info(r.text)
+    # print(r.text)
     # exit()
     # return_main_object = []
     # location_list = r.json()
@@ -124,7 +119,7 @@ def fetch_data():
     #             store.append("<MISSING>")
     #             store.append("<MISSING>")
     #             yield store
-    #             logger.info(store)
+    #             print(store)
 
 def scrape():
     data = fetch_data()

@@ -4,11 +4,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fastmed_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,19 +32,19 @@ def fetch_data():
     statelist = soup.find('div', {'class': 'states-list'})
     statelist = statelist.findAll('h2')
     for state in statelist:
-        logger.info(state.text)
+        print(state.text)
         state = state.find('a')['href']
-        #logger.info(state)
+        #print(state)
         r = session.get(state, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
         branchlist = soup.find('div',{'id':'all-locations'}).findAll('h3')
-        #logger.info(len(branchlist))
+        #print(len(branchlist))
         for branch in branchlist:
             try:
                 branch = branch.find('a')['href']
             except:
                 continue
-            logger.info(branch)
+            print(branch)
             r = session.get(branch, headers=headers, verify=False)
             soup =BeautifulSoup(r.text, "html.parser")
             hours = ''
@@ -60,7 +55,7 @@ def fetch_data():
                hours = re.sub(pattern, " ", str(hourd.text))
                hours = hours.replace('\n',' ').strip()            
             except Exception as e:
-                logger.info(e)
+                print(e)
                 hours = '<MISSING>'
             
             
@@ -106,7 +101,7 @@ def fetch_data():
             title = title.encode('ascii', 'replace').decode()
             title = title.replace('?','-')
             data.append(['https://www.fastmed.com/',branch, title, street, city, state, pcode, 'US', '<MISSING>', phone, '<MISSING>', lat, longt, hours])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
             #input()
             
@@ -117,9 +112,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

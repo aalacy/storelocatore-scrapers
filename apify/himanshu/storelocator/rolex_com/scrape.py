@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rolex_com')
-
-
 
 
 
@@ -63,8 +58,8 @@ def fetch_data():
                         city = b[-3].split()[0].strip()
                         state = b[-3].split()[-1].strip()
                     elif len(b[-3].split()) == 3:
-                        # logger.info(b[-3].split())
-                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # print(b[-3].split())
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         city = " ".join(
                             b[-3].split()[:-1]).replace('North', '').replace('South', '')
                         if "New" == city.split()[-1]:
@@ -88,21 +83,21 @@ def fetch_data():
                 if "Columbia" == state:
                     # state = " ".join(b[-3].split(',')[1:])
                     state = "British Columbia"
-                    # logger.info(state)
+                    # print(state)
                 if "Mexico" == state or "Hampshire" == state or "Island" == state:
                     state = " ".join(b[-3].split()[1:])
-                    # logger.info(state)
+                    # print(state)
                 if b[-1] == 'United States':
                     country_code = "US"
                 elif b[-1] == 'Canada':
                     country_code = "CA"
                 else:
                     pass
-                    # logger.info(b[-1])
-                    # logger.info("~~~~~~~~~~~~~")
+                    # print(b[-1])
+                    # print("~~~~~~~~~~~~~")
                 zip = vj['postalCode'].encode(
                     'ascii', 'ignore').decode('ascii').strip()
-                # logger.info(city + " | " + state + " | " +
+                # print(city + " | " + state + " | " +
                 #       zip + " |  " + country_code)
 
                 phone = vj['phone1'].encode(
@@ -146,9 +141,9 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info(zip)
-                #logger.info("data====", str(store))
-                #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                # print(zip)
+                #print("data====", str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
                 return_main_object.append(store)
                 # yield store
 

@@ -5,11 +5,6 @@ import re
 import json
 import urllib3
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('eat_co_uk')
-
-
 
 session = SgRequests()
 
@@ -56,7 +51,7 @@ def fetch_data():
             state =  "<MISSING>"
         page_url = "https://eat.co.uk/"+data['href']
         store_number = page_url.split("_")[-1].strip()
-        # logger.info("https://eat.co.uk/"+data['href'])
+        # print("https://eat.co.uk/"+data['href'])
         r1 = session.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
         soup1= BeautifulSoup(r1.text,"lxml")
         hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings)).replace("Opening Times","").strip()
@@ -88,7 +83,7 @@ def fetch_data():
         tem_var.append(page_url)
         tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
         
-        # logger.info("tem_var============ ",tem_var)
+        # print("tem_var============ ",tem_var)
         yield tem_var
 
   

@@ -5,11 +5,6 @@ import re
 import json
 import csv
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('haagendazs_us')
-
-
 
 
 
@@ -97,14 +92,14 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            #logger.info("~~~~~~~~~~~~~~~~~~~  ",store)
+            #print("~~~~~~~~~~~~~~~~~~~  ",store)
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -148,8 +143,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        # logger.info("data ====="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data ====="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
     

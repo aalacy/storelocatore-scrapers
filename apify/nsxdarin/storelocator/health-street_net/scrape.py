@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('health-street_net')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,7 +33,7 @@ def fetch_data():
                 locs.append(line2.split('<loc>')[1].split('<')[0])
     for loc in locs:
         names = []
-        logger.info(loc)
+        print(loc)
         lat = ''
         lng = ''
         hours = ''

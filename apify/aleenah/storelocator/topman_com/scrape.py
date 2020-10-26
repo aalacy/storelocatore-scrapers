@@ -3,11 +3,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('topman_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -215,7 +210,7 @@ def fetch_data():
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             scripts = soup.find_all('script', {'type': 'application/ld+json'})
 
-        logger.info(len(divs))
+        print(len(divs))
         for div in divs:
             if div.find_elements_by_class_name("Store-address") ==[]:        #assuming if no address associated either closed or havent started yet
                 continue
@@ -295,7 +290,7 @@ def fetch_data():
                 street.append(st)
     for scr in scripts:
             g = re.findall(r'.*"openingHours":"([^"]*)","',scr.text)[0]
-            #logger.info(g)
+            #print(g)
             if g =="":
                 timing.append("<MISSING>")
             else:

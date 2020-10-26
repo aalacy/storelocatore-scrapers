@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('seabrafoods_com')
-
-
 
 
 
@@ -44,7 +39,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
+    # print("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
@@ -53,17 +48,17 @@ def fetch_data():
     base_url= "https://www.powr.io/plugins/map/wix_view.json?cacheKiller=1571909457810&compId=comp-igjuritt&deviceType=desktop&height=660&instance=rcz7n1lIMmlfZ_wr1zJ6ADAlm_cOdZKFwO94_73Xy34.eyJpbnN0YW5jZUlkIjoiZWFkMzc4MTEtY2ExYy00MGEwLThjODQtMzAzMzg0MjM3ZmVhIiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMTktMTAtMjRUMTE6MDE6NDEuNzAyWiIsInVpZCI6bnVsbCwiaXBBbmRQb3J0IjoiNDUuNTYuMTQ4Ljk1LzMyODI0IiwidmVuZG9yUHJvZHVjdElkIjoicHJlbWl1bSIsImRlbW9Nb2RlIjpmYWxzZSwiYWlkIjoiNjAzMDRiZmQtNDliMy00OGI4LTljNjQtMjAwZDJkMGM4ZjhlIiwic2l0ZU93bmVySWQiOiJjNjM1MWYzNC01MDBkLTRkYzktOTc0MS0xN2FjOWQxNmRkNDIifQ&locale=en&pageId=dmwpr&siteRevision=1069&viewMode=site&width=978"
 
     locations = session.get(base_url,headers=headers).json()
-    # logger.info(locations['content']['locations'])
+    # print(locations['content']['locations'])
     # soup= BeautifulSoup(r.text,"lxml")
     # return_main_object=[]
     for loc in locations['content']['locations']:
         full_address = loc['address']
-        # logger.info(loc['address'])
+        # print(loc['address'])
         tem_var =[]
         name = loc['name']
         soup1= BeautifulSoup(loc['name'],"lxml")
         name1 = soup1.text
-        logger.info(soup1.text)
+        print(soup1.text)
         
         soup= BeautifulSoup(loc['description'],"lxml")
         
@@ -97,7 +92,7 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append(hours.replace('\r',''))
         tem_var.append("<MISSING>")
-        # logger.info(tem_var)
+        # print(tem_var)
         if "281 Ferry St" in tem_var:
             pass
         else:

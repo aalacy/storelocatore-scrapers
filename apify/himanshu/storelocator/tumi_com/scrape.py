@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tumi_com')
-
-
 
 
 
@@ -38,7 +33,7 @@ def minute_to_hours(time):
         
     else:
         k1 = str(int(str(time / 60).split(".")[1]) * 6)[:2]
-        # logger.info(k1[:2])
+        # print(k1[:2])
         # round(answer, 2)
         return str(hour) + ":" + k1 + " " + am
         
@@ -124,10 +119,10 @@ def fetch_data():
                         else:
                             contry = "US"
                         
-                        # logger.info("===lennnnnnnnnnn=======",len(zip1.strip()))
+                        # print("===lennnnnnnnnnn=======",len(zip1.strip()))
 
                         
-                        # logger.info("===zippppppppppppppppppppp=======",zip1)    
+                        # print("===zippppppppppppppppppppp=======",zip1)    
                         latitude = lat
                         longitude = lng
                         tem_var.append("https://www.tumi.com")
@@ -148,14 +143,14 @@ def fetch_data():
                         if tem_var[2] in addressess:
                             continue
                         addressess.append(tem_var[2])
-                        # logger.info("=============================",tem_var)
+                        # print("=============================",tem_var)
                         yield tem_var
                         
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -169,7 +164,7 @@ def fetch_data():
     #        continue 
                 
     #    addresses.append(store[3])
-    #    logger.info(store)
+    #    print(store)
        
        
 

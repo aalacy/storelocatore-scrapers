@@ -6,11 +6,6 @@ from random import randint
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('saborcocinamexicana_com')
-
-
 
 def get_driver():
 	options = Options() 
@@ -46,17 +41,17 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
 	raw_data = base.find(id="comp-k96idoil3inlineContent-gridContainer").p.text.split(",")
 	locator_domain = "saborcocinamexicana.com"
 	location_name = base.find(class_="color_11").text
-	logger.info(location_name)
+	print(location_name)
 	
 	street_address = raw_data[0].strip()
 	city = raw_data[1].strip()

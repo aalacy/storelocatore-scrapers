@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dulux_ca')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +24,7 @@ def fetch_data():
         if '<li><a href="/diy/trouver-un-magasin/' in line:
             states.append('https://www.dulux.ca/diy/store-locator' + line.split('/trouver-un-magasin')[1].split('"')[0])
     for state in states:
-        logger.info(('Pulling Province %s...' % state))
+        print(('Pulling Province %s...' % state))
         r2 = session.get(state, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -37,7 +32,7 @@ def fetch_data():
                 cities.append('https://www.dulux.ca/diy/where-to-buy/ca/' + line2.split('/ca/')[1].split('"')[0])
     for city in cities:
         locs = []
-        logger.info(('Pulling City %s...' % city))
+        print(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -47,7 +42,7 @@ def fetch_data():
                     alllocs.append(lurl)
                     locs.append(lurl)
         for loc in locs:
-            logger.info(('Pulling Location %s...' % loc))
+            print(('Pulling Location %s...' % loc))
             r2 = session.get(loc, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
             lines = r2.iter_lines(decode_unicode=True)

@@ -3,11 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('grottopizza_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,10 +27,10 @@ def fetch_data():
     driver.get('https://www.grottopizza.com/locations/')
     time.sleep(6)
     if 'class="cta-button italia white-text red-bg align-center centered parent-relative' in str(driver.page_source):
-      logger.info('here')
+      print('here')
     stores=re.findall(r'<a href="([^"]+)" class="cta-button italia white-text red-bg align-center centered parent-relative',str(driver.page_source))
     store_links = [stores[n].get_attribute('href') for n in range(0,len(stores))]
-    logger.info((len(stores)))
+    print((len(stores)))
     for n in range(1,len(store_links)):
         driver.get(store_links[n])
         time.sleep(2)

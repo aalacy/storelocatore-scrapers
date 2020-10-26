@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ems_com')
-
-
 
 session = SgRequests()
 
@@ -39,15 +34,15 @@ def fetch_data():
             if r['stores'][i]['address2']:
                 address+=' '+r['stores'][i]['address2'].strip()
             page_url = "https://www.ems.com/store-details?StoreID="+str([i][-1])
-            # logger.info(page_url)
+            # print(page_url)
             r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             h1 = soup1.find("div",{"class":"store-info clearfix"}).find("div",{"class":"right"})
             hours_of_operation = re.sub(r"\s+", " ", h1.text)
 
-            # logger.info(hours_of_operation)
+            # print(hours_of_operation)
 
-            # logger.info(r['stores'][i])
+            # print(r['stores'][i])
             name=r['stores'][i]['name'].strip()
             city=r['stores'][i]['city'].strip()
             state=r['stores'][i]['stateCode'].strip()

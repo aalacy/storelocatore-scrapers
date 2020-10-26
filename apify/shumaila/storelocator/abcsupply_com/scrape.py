@@ -7,11 +7,6 @@ import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abcsupply_com')
-
-
 
 
 def write_output(data):
@@ -45,13 +40,13 @@ def fetch_data():
     for i in range(0,len(states)):
         p = 0
         url = 'https://www.abcsupply.com/locations/location-results'
-        #logger.info(states[i])
+        #print(states[i])
         result = requests.get(url, data={'State': states[i]})
         #time.sleep(1)
         soup = BeautifulSoup(result.text,"html.parser")
         hoursd = soup.findAll('ul',{'class':'dropdown-menu'})
         links = soup.findAll('div',{'class':'location-name'})
-        #logger.info(result.text)
+        #print(result.text)
         result = result.text
         start = 0
         
@@ -59,7 +54,7 @@ def fetch_data():
         try:
             counr = soup.find('div',{'class':'rcount'}).find('strong').text
             total = total + int(counr)
-            #logger.info(states[i],counr, total)
+            #print(states[i],counr, total)
         except:
             pass
         
@@ -110,7 +105,7 @@ def fetch_data():
                 hours = hours.lstrip()
                 if len(hours) < 3:
                     hours = "<MISSING>"
-                logger.info([
+                print([
                     'https://www.abcsupply.com/',
                     link,
                     title,
@@ -149,8 +144,8 @@ def fetch_data():
 
 
 
-        logger.info("............................")
-    logger.info(total)
+        print("............................")
+    print(total)
     return data
 
 def scrape():

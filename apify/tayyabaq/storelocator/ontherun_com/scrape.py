@@ -2,16 +2,11 @@ from bs4 import BeautifulSoup
 import csv
 import requests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ontherun_com')
-
-
 
 url = "http://ontherun.com/site/store-locator"
 json_url = 'http://www.ontherun.com//site/locator/json/0/0/0'
 html = requests.get(json_url).json()
-logger.info(len(html))
+print(len(html))
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:

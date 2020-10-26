@@ -7,11 +7,6 @@ import subprocess
 
 
 import sgvalidator
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('texasfamilyfitness_com')
-
-
 
 
 
@@ -51,7 +46,7 @@ except IndexError:
 
 
 
-    logger.info("Please include a data location!")
+    print("Please include a data location!")
 
 
 

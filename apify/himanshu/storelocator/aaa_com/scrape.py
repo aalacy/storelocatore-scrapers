@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aaa_com')
-
-
 
 
 session = SgRequests()
@@ -31,7 +26,7 @@ def fetch_data():
         location_request = session.get(location_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = data[i]["name"]
-        logger.info(name)
+        print(name)
         location_address = list(location_soup.find("div",{"class":"aaa-branch-address"}).stripped_strings)
         phone = location_soup.find("a",{"class":"aaa-branch-phone"}).text
         hours = list(location_soup.find("div",{"class":"aaa-branch-hours"}).stripped_strings)

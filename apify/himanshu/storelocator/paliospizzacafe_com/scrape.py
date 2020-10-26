@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('paliospizzacafe_com')
-
-
 
 
 session = SgRequests()
@@ -64,7 +59,7 @@ def fetch_data():
         store.append(location_url)
         for i in range(len(store)):
             store[i] = html.unescape(store[i])
-        logger.info(store)
+        print(store)
         yield store
 
 def scrape():

@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jenis_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,8 +28,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -45,7 +40,7 @@ def fetch_data():
 		link = item["href"]
 		if "http" not in link:
 			continue
-		logger.info(link)
+		print(link)
 
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")

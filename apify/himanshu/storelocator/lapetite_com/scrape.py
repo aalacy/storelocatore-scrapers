@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lapetite_com')
-
-
 
 session = SgRequests()
 
@@ -38,8 +33,8 @@ def fetch_data():
     base_url = "https://www.lapetite.com"
     while zip_code:
         result_coords =[]
-        # logger.info("zip_code === "+zip_code)
-        # logger.info("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("zip_code === "+zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         try:
             r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=50",headers=headers,timeout=10)
             soup = BeautifulSoup(r.text,"lxml")

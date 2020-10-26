@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('awaytravel_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -37,7 +32,7 @@ def fetch_data():
     all=[]
     for store in stores:
         url="https://www.awaytravel.com"+store
-        logger.info(url)
+        print(url)
         if "london" in url:
             con="UK"
         else:
@@ -45,7 +40,7 @@ def fetch_data():
         driver.get(url)
         time.sleep(3)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        #logger.info(soup)
+        #print(soup)
         ll = soup.find('div', {'class': 'store__map js-map'}).get('data-map')
         loc=soup.find('h1', {'class': 'heading--1'}).text
         lat=re.findall(r'"lat": (-?[\d\.]*)',ll)[0]
@@ -61,7 +56,7 @@ def fetch_data():
         if tim=="":
                 tim="<MISSING>"
         phone = soup.find('a', {'itemprop': 'telephone'}).text.strip()
-        #logger.info(phone)
+        #print(phone)
 
         all.append([
             "https://www.awaytravel.com",

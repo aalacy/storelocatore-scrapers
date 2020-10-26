@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mybankcnb_com')
-
-
 
 
 
@@ -81,7 +76,7 @@ def fetch_data():
                 v= list(soup3.find("td",{"width":"50%"}).stripped_strings)[-4:]
                 v1 = [words.replace("\xa0","").replace("n/a","") for words in v ]
                 hours.append(" ".join(v1).replace("F: (580) 765-0615",""))
-                # logger.info(list(soup3.find("td",{"width":"50%"}).stripped_strings))
+                # print(list(soup3.find("td",{"width":"50%"}).stripped_strings))
             else:
                 hours.append(" ".join(list(h3.stripped_strings)[-4:]))
             tem_var.append(street_address)

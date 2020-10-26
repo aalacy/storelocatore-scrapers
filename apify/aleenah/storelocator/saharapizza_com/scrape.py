@@ -2,11 +2,6 @@ import csv
 import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('saharapizza_com')
-
-
 
 session = SgRequests()
 
@@ -36,9 +31,9 @@ def fetch_data():
     page_url=[]
 
     res=session.get("http://saharapizza.com/store_locations.htm")
-    logger.info(res)
+    print(res)
     soup = BeautifulSoup(res.text, 'html.parser')
-    #logger.info(soup)
+    #print (soup)
     trs = soup.find('table', {'id': 'table2'}).find_all('tr')
     del trs[0]
     for tr in trs:
@@ -50,7 +45,7 @@ def fetch_data():
         if "Catering" in tds[0].find('b').text.strip():
             continue
         if addr=="":
-            logger.info("empty")
+            print("empty")
             cities.append("<MISSING>")
             states.append("<MISSING>")
             street.append("<MISSING>")
@@ -63,9 +58,9 @@ def fetch_data():
             title= tds[1].get('title')
             l = tds[0].find('b').text.strip().split("/")[0].strip()
             addr = re.sub(r"[ ]+",r" ",addr.replace("\r\n", "").replace("\n", ""))
-         #   logger.info(addr)
+         #   print(addr)
             if l in title :
-                #logger.info("in")
+                #print("in")
                 title=title.split(",")
                 sz= title[-1].strip().split(" ")
                 states.append(sz[0])
@@ -74,7 +69,7 @@ def fetch_data():
                 street.append(title[0])
 
             else:
-                #logger.info("not in")
+                #print("not in")
                 if l == "Bolivia":
                     continue
 
@@ -87,14 +82,14 @@ def fetch_data():
 
             if "Hours:" in addr:
                 timing.append(addr.split("Hours:")[1].strip())
-                #logger.info(addr.split("Hours:")[1].strip())
+                #print(addr.split("Hours:")[1].strip())
             else:
                 timing.append("<MISSING>")
 
             locs.append(l)
 
         ph = re.findall(r'([\(\) 0-9\-]+)',tds[2].find('b').text)[0].strip()
-        #logger.info(ph)
+        #print(ph)
         if ph!= "":
             if len(ph) <8:
                 ph = re.findall(r'([\(\) 0-9\-]+)', tds[3].find('b').text)[0].strip()
@@ -103,7 +98,7 @@ def fetch_data():
 
             phones.append(ph)
 
-        #logger.info(tds[0].find('b').text.strip())
+        #print(tds[0].find('b').text.strip())
 
     all = []
     for i in range(0, len(locs)):

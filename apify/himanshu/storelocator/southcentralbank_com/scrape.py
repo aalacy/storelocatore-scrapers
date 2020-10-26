@@ -5,11 +5,6 @@ import re
 # import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('southcentralbank_com')
-
-
 
 
 
@@ -65,15 +60,15 @@ def fetch_data():
     for row in soup.find_all('div',class_='panel-group'):
 
         location_name = row.h4.text.strip()
-        logger.info(location_name)
+        print(location_name)
         coords = row.find('div',class_='marker')
         latitude= coords['data-lat']
         longitude  = coords['data-lng']
         address= row.find('div',class_= "map-panel")
         list_address= list(address.stripped_strings)
-        # logger.info(len(list_address))
-        # logger.info(list_address)
-        # logger.info("~~~~~~~~~~~~~~~~~~")
+        # print(len(list_address))
+        # print(list_address)
+        # print("~~~~~~~~~~~~~~~~~~")
         if len(list_address) ==3:
             street_address = list_address[1]
             city = list_address[-1].split(',')[0]
@@ -109,7 +104,7 @@ def fetch_data():
 
                     x = list(divide_chunks(list_address, n))
                     for  i in x:
-                        # logger.info(i)
+                        # print(i)
                         location_name = i[0]
                         street_address = i[1]
                         city = i[-1].split(',')[0]
@@ -130,7 +125,7 @@ def fetch_data():
 
                     x = list(divide_chunks(list_address, n))
                     for i in x:
-                        # logger.info(i)
+                        # print(i)
                         street_address = i[0]
                         city = i[-1].split(',')[0]
                         state = i[-1].split(',')[-1].split()[0]
@@ -208,8 +203,8 @@ def fetch_data():
         store.append(page_url if page_url else '<MISSING>')
         store = [x.replace("–","-") for x in store]
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # logger.info("data===="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data===="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return_main_object.append(store)
 
     return return_main_object

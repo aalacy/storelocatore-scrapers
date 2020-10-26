@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('larosagrill_com')
-
-
 
 
 
@@ -75,7 +70,7 @@ def fetch_data():
             tem_var.append(log)
             tem_var.append(hours)
             tem_var.append(page_ur)
-            # logger.info("tem_var",tem_var)
+            # print("tem_var",tem_var)
             yield tem_var
            
         except:

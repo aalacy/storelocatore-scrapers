@@ -7,11 +7,6 @@ from bs4 import BeautifulSoup
 import re
 # import unicodedata
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('good-sam_com')
-
-
 
 
 session = SgRequests()
@@ -49,7 +44,7 @@ def fetch_data():
         for x in loc:
             store_number = x["entry_id"]
             location_name = x["title"]
-            # logger.info(location_name)
+            # print(location_name)
             latitude = x["latitude"]
             longitude = x["longitude"]
             state = x["location_state"]
@@ -70,14 +65,14 @@ def fetch_data():
                     zipp="<MISSING>"
                 if street_address:
                     street_address = street_address
-                    # logger.info(street_address)
+                    # print(street_address)
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    # logger.info(street_address)
-                    # logger.info("data = " + str(store))
-                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print(street_address)
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     temp.append(store)
                 else:
                     if soup2.find("div",class_="accordion"):
@@ -113,9 +108,9 @@ def fetch_data():
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
                                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                                # logger.info(street_address)
-                                # logger.info("data = " + str(store))
-                                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                                # print(street_address)
+                                # print("data = " + str(store))
+                                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                                 temp.append(store)   
                     else:
                         for div in soup2.find("div",class_="article-text").find_all("p"):
@@ -149,9 +144,9 @@ def fetch_data():
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
                                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                                # logger.info(street_address)
-                                # logger.info("data = " + str(store))
-                                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                                # print(street_address)
+                                # print("data = " + str(store))
+                                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                                 temp.append(store)
 
                             except:
@@ -167,9 +162,9 @@ def fetch_data():
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # logger.info(street_address)
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print(street_address)
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 temp.append(store)
             
 
@@ -181,7 +176,7 @@ def fetch_data():
             continue
         addresses.append(temp[i][-1])
         yield temp[i]
-        # logger.info(temp[i])
+        # print(temp[i])
 
 def scrape():
     data = fetch_data()

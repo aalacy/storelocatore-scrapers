@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('volkswagen_co_uk')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,7 +31,7 @@ def fetch_data():
         lat = loc.split('|')[1]
         lng = loc.split('|')[2]
         loc = loc.split('|')[0]
-        logger.info(loc)
+        print(loc)
         url = 'https://cdn6.prodworksngwapi.de/sds/search/v2/dealers/' + loc + '?dv=1591269&tenant=v-gbr-dcc'
         r2 = session.get(url, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'

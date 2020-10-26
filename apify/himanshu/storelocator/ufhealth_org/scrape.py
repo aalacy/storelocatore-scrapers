@@ -5,11 +5,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ufhealth_org')
-
-
 
 
 session = SgRequests()
@@ -37,21 +32,21 @@ def fetch_data():
 
     r_search_location = session.get("https://ufhealth.org/search/locations", headers=headers)
     soup_search_location = BeautifulSoup(r_search_location.text, "lxml")
-    # logger.info("soup_search_location === "+ str(soup_search_location))
+    # print("soup_search_location === "+ str(soup_search_location))
     for cat_tag in soup_search_location.find_all("option", {"value": re.compile("im_field_dpt_specialty:")}):
 
         cat_url = "https://ufhealth.org/search/locations?f%5B0%5D=im_field_dpt_specialty%3A" + \
                   cat_tag["value"].split("im_field_dpt_specialty:")[1].split('"')[0]
 
         while True:
-            # logger.info(cat_tag.text + " == type_tag  === " + str(cat_url))
+            # print(cat_tag.text + " == type_tag  === " + str(cat_url))
             r_locations = session.get(cat_url, headers=headers)
 
             if r_locations is None:
                 continue
 
             soup_locations = BeautifulSoup(r_locations.text, "lxml")
-            # logger.info("soup_locations = "+ str(soup_locations.find("a",{"title":"Go to next page"})))
+            # print("soup_locations = "+ str(soup_locations.find("a",{"title":"Go to next page"})))
 
             for single_location in soup_locations.find_all("li", {"class": "search-result divclick"}):
 
@@ -72,8 +67,8 @@ def fetch_data():
                 page_url = single_location.find("a")["href"]
 
                 # page_url = "https://ufhealth.org/uf-health-congenital-heart-center/maps"
-                # logger.info(page_url)
-                # logger.info("page_url ==== " + page_url)
+                # print(page_url)
+                # print("page_url ==== " + page_url)
                 # do your logic here.
                 r_store = session.get(page_url + "/maps", headers=headers)
 
@@ -85,7 +80,7 @@ def fetch_data():
 
                 if soup_store.find("div", {"class": "street-address"}):
                     street_address = " ".join(list(soup_store.find("div", {"class": "street"}).stripped_strings))
-                    # logger.info(street_address)
+                    # print(street_address)
 
                 if soup_store.find("div", {"class": "span-15 omega location-title"}):
                     location_name = soup_store.find("div", {"class": "span-15 omega location-title"}).text
@@ -111,27 +106,27 @@ def fetch_data():
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_raw))
                     if phone_list:
                         phone = phone_list[0]
-                        # logger.info(phone)
+                        # print(phone)
                     else:
                         phone = phone_raw.split(":")[1].replace("WELL","").replace("1NOW","").replace("PEDS","").replace("RUNR","").replace("SPNE","").replace("4FRC","").replace("Outpatient","").replace("KIDS","").replace("HELP","").replace("TMS","").strip()
                         # phone = phone_raw.split(":")[1].replace("Outpatient","").replace("TMS","").strip()
-                        # logger.info(phone)
+                        # print(phone)
                 elif soup_store.find("div",{"class":"field field-name-field-alt-phone field-type-text field-label-inline clearfix"}):
                     phone_raw = " ".join(list(soup_store.find("div",{"class":"field field-name-field-alt-phone field-type-text field-label-inline clearfix"}).stripped_strings))
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_raw))
                     if phone_list:
                         phone = phone_list[0]
-                        # logger.info(phone)
+                        # print(phone)
                     else:
                         phone = phone_raw.split(":")[1].replace("WELL","").replace("1NOW","").replace("PEDS","").replace("RUNR","").replace("Outpatient","").replace("SPNE","").replace("4FRC","").replace("KIDS","").replace("KIDS","").replace("HELP","").replace("TMS","").strip()
                         # phone = phone_raw.split(":")[1].replace("Outpatient","").replace("TMS","").strip()
-                        # logger.info(phone)
+                        # print(phone)
                         
                 else:
                     phone = "<MISSING>"
                 if "352-265-" == phone:
                     phone = "352-265-7337"
-                # logger.info(phone)
+                # print(phone)
                 
                 if soup_store.find("div", {"class": "field field-name-field-hours-of-operation field-type-table field-label-hidden"}):
                     hours_raw = soup_store.find("div", {
@@ -144,7 +139,7 @@ def fetch_data():
                 except:
                     latitude="<MISSING>"
                     latitude="<MISSING>"
-                # logger.info(street_address)
+                # print(street_address)
                 if "Suite" in street_address or "suite" in street_address:
                     street_address = street_address.split("Suite")[0].split(",")[0].strip()
 
@@ -157,14 +152,14 @@ def fetch_data():
 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    # logger.info("data = " + str(store))
-                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
 
-            # logger.info("cat_url next url == "+ str(soup_locations.find("a",{"title","Go to next page"})))
+            # print("cat_url next url == "+ str(soup_locations.find("a",{"title","Go to next page"})))
             if soup_locations.find("a", {"title": "Go to next page"}):
                 cat_url = base_url + soup_locations.find("a", {"title": "Go to next page"})["href"]
-                # logger.info("next page")
+                # print("next page")
             else:
                 break
 

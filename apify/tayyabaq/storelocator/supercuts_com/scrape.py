@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('supercuts_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,22 +37,22 @@ def fetch_data():
             if str(sr).startswith("/locations/"):
                   store_links.append(sr)
     mylist = list(dict.fromkeys(store_links))
-    #logger.info(len(mylist))
+    #print(len(mylist))
     #count=1
     for u in mylist:
         ul='https://www.supercuts.com/'+u
-        #logger.info(count)
+        #print(count)
         #count+=1
         try:
             pg=session.get(ul)
         except:
-            logger.info("")
+            print("")
         else:
             soup = BeautifulSoup(pg.content, "html.parser")
             try:
                 loc=soup.find("h2",class_='hidden-xs salontitle_salonlrgtxt').text
             except:
-                logger.info("")
+                print("")
             else:
                 street=soup.find("span",class_='street-address').text
                 cty=soup.find("span",itemprop='addressLocality').text

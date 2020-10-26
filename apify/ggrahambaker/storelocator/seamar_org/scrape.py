@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('seamar_org')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -73,7 +68,7 @@ def fetch_data():
                     
                     hours_raw = cols[1].prettify().split('\n')
                     hours_arr = [h for h in hours_raw if '<' not in h]
-                    #logger.info(hours_arr)
+                    #print(hours_arr)
                     hours = ''
                     for h in hours_arr:
                         if 'Hours' in h:

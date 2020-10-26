@@ -10,11 +10,6 @@ import re
 import json
 from datetime import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('policeone_com__law-enforcement-directory')
-
-
 
 
 show_logs = False
@@ -30,8 +25,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    logger.info(" ".join(map(str, args)), **kwargs)
-    logger.info("")
+    print(" ".join(map(str, args)), **kwargs)
+    print("")
 
 
 def get_time():

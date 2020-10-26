@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('johnstonmurphy_com')
-
-
 
 
 
@@ -87,7 +82,7 @@ def fetch_data():
                     city = list(i.stripped_strings)[2].split(',')[0]
                     if len(list(i.stripped_strings)[2].split(',')[1].split( ))==1:
                         state = list(i.stripped_strings)[2].split(',')[1].split( )[0]
-                        # logger.info(list(i.stripped_strings)[2].split(',')[1].split( ))
+                        # print(list(i.stripped_strings)[2].split(',')[1].split( ))
                     else:
                         if len(list(i.stripped_strings)[2].split(',')[1].split( )[-1])==3:
                             zip1 = " ".join(list(i.stripped_strings)[2].split(',')[1].split( )[-2:])
@@ -97,7 +92,7 @@ def fetch_data():
                             city = list(i.stripped_strings)[2].split(',')[0]
                             zip1 = list(i.stripped_strings)[2].split(',')[1].split( )[-1]
                             state = " ".join(list(i.stripped_strings)[2].split(',')[1].split( )[:-1])
-                            # logger.info(" ".join(list(i.stripped_strings)[2].split(',')[1].split( )[:-1]))
+                            # print(" ".join(list(i.stripped_strings)[2].split(',')[1].split( )[:-1]))
             else:
                 name = list(i.stripped_strings)[0]
                 if len(list(i.stripped_strings)[2].split(","))==2:
@@ -113,7 +108,7 @@ def fetch_data():
                     zip1 = " ".join(list(i.stripped_strings)[1].split(",")[1].split( )[1:])
                     phone  = "<MISSING>"
                     
-                    # logger.info(" ".join(list(i.stripped_strings)[1].split(",")[1].split( )[1:]))
+                    # print(" ".join(list(i.stripped_strings)[1].split(",")[1].split( )[1:]))
                 
             
             tem_var.append("https://www.johnstonmurphy.com")
@@ -136,7 +131,7 @@ def fetch_data():
             tem_var.append('<MISSING>')
             if tem_var[3] not in addresses:
                 addresses.append(tem_var[3])
-                #logger.info(tem_var)
+                #print(tem_var)
                 yield tem_var
         # exit()
     

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rosesdiscountstores_com__bill')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +25,7 @@ def fetch_data():
             st = (" ".join(store_data["visibleAddress"].split(",")[:-3]))
         except:
             st = (" ".join(store_data["address"].split(",")[:-3]))
-            # logger.info(st)
+            # print(st)
         if "38703" in store_data["postcode"]:
             st = "3001 US Highway 82, East St"
         store.append(st)

@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('talbots_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +21,7 @@ def fetch_data():
     jso=res.json()["stores"]
 
     for id,js in jso.items():
-        #logger.info(id)
+        #print(id)
         all.append([
             "https://www.talbots.com",
             js["name"],

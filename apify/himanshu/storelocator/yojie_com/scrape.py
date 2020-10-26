@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sys
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('yojie_com')
-
-
 
 
 
@@ -49,7 +44,7 @@ def fetch_data():
     page_url = "https://www.yojie.com/locations.html"
     r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
     coord = []
     l1 = soup.find(lambda tag: (tag.name == "script")
                    and "initMap" in tag.text).text.split("var artesia =")[1].split(';')[0]
@@ -81,8 +76,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
-        # logger.info("data ===" + str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data ===" + str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
 
 

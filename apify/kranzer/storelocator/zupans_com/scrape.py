@@ -8,11 +8,6 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zupans_com')
-
-
 crawled = []
 class Scrape(base.Spider):
 
@@ -40,7 +35,7 @@ class Scrape(base.Spider):
                 i.add_value('longitude', js[js.find('@')+1:].split(',')[1])
             except:
                 pass
-            logger.info(i)
+            print(i)
             yield i
 
 

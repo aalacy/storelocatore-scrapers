@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('beallsoutlet_com')
-
-
 
 
 session = SgRequests()
@@ -19,7 +14,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -68,7 +63,7 @@ def fetch_data():
                 city = st[1].split(',')[0]          # 
                 state = st[1].split(',')[1].split(' ')[1]
                 zip = st[1].split(',')[1].split(' ')[2]
-                # logger.info(zip)
+                # print(zip)
                 
             elif (len(st)== 3):
                 address = st[0]

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tcmarkets_com')
-
-
 
 def get_value(item):
     if item == None or len(item) == 0:
@@ -64,7 +59,7 @@ def fetch_data():
     del stores[0]
     for store in stores:
         url=store.get('href')
-        logger.info(url)
+        print(url)
         if 'https://tcmarkets.com/store-finder/dixon-ace-hardware/' in url:
             continue
         res = session.get(url)
@@ -81,7 +76,7 @@ def fetch_data():
             tim = data[data.index(addr) + 1].text.strip()
             addr=addr.text.strip()
             p = re.findall(r'\([\d]{3}\)[\d \-]+', tim)
-            logger.info(p)
+            print(p)
             if p != []:
                 phone = p[0]
                 

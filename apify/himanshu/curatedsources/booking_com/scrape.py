@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('booking_com')
-
-
 session = SgRequests()
 
 
@@ -35,11 +30,11 @@ def fetch_data():
             if Accommodation['href'].count("/") == 2:
                 continue
             
-            # logger.info(":::::::::::::::::::::",Accommodation.text,":::::::::::::::::::::")
+            # print(":::::::::::::::::::::",Accommodation.text,":::::::::::::::::::::")
             accmd_soup = bs(session.get(base_url + Accommodation['href']).content, "lxml")
 
             for region_link in accmd_soup.find("h2",text=re.compile("Top Regions in Canada")).parent.findNext("div").find_all("a"):
-                # logger.info(re.sub(r'\s+'," ",region_link.text))
+                # print(re.sub(r'\s+'," ",region_link.text))
                 region_soup = bs(session.get(base_url + region_link['href']).content, "lxml")
                 
                 region_id = region_soup.find("a",{"title":re.compile("All ")})['href'].split("region=")[1].split(";")[0]
@@ -114,7 +109,7 @@ def fetch_data():
                     offset += 25
            
         except Exception as e:
-            # logger.info(e)
+            # print(e)
             continue   
     
     addressess=[]
@@ -136,14 +131,14 @@ def fetch_data():
             for i in range(0,int(total_page)):
                 sub_url="https://www.booking.com/searchresults.html?tmpl=searchresults&city="+str(city_id)+"&dest_id="+str(city_id)+"&dest_type=city&offset="+str(i*25)
                 soup4 = bs(session.get(sub_url).text,'lxml')
-                # logger.info(sub_url)
+                # print(sub_url)
                 for tag in soup4.find("div",{"class":"hotellist"}).find_all("div",{'class':"sr-hotel__title-wrap"}):
                     if tag.find("a")['href'] in dummy:
                         continue
                     dummy.append(tag.find("a")['href'])
                     soup5 = bs(session.get("https://www.booking.com"+tag.find("a")['href'].strip()).text,'lxml')
                     page_url = "https://www.booking.com"+tag.find("a")['href'].strip()
-                    # logger.info(page_url)
+                    # print(page_url)
                     zipps=''
                     street_address=''
                     states=''
@@ -195,8 +190,8 @@ def fetch_data():
                         #          str else x for x in store]
                         store = [x.encode('ascii', 'ignore').decode(
                             'ascii').strip() if type(x) == str else x for x in store]
-                        # logger.info("data ===" + str(store))
-                        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                        # print("data ===" + str(store))
+                        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
                         yield store
                     except:
                         pass

@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('williams-sonoma_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -47,7 +42,7 @@ def fetch_data():
         purl = loc.split('|')[0]
         country = loc.split('|')[1]
         typ = ''
-        logger.info(('Pulling Location %s...' % purl))
+        print(('Pulling Location %s...' % purl))
         website = 'williams-sonoma.com'
         hours = ''
         name = ''

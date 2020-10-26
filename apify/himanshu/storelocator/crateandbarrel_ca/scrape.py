@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import random
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('crateandbarrel_ca')
-
-
 
 
 session = SgRequests()
@@ -68,8 +63,8 @@ def fetch_data():
                     frame = hour.text
                     hours.append(frame)
                 hours_of_operation = ", ".join(hours)
-                # logger.info(name)
-                # logger.info(hours_of_operation)
+                # print(name)
+                # print(hours_of_operation)
                
 
         store = []
