@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('duanereade_com')
+
+
 
 
 
@@ -57,12 +62,12 @@ def fetch_data():
             continue
 
         json_data = r.json()
-        # print(str(intdex ) + " === "+ str(json_data))
+        # logger.info(str(intdex ) + " === "+ str(json_data))
 
         if "results" not in json_data:
             break
 
-        # print("json_data === "+ str(json_data))
+        # logger.info("json_data === "+ str(json_data))
         for address_list in json_data['results']:
             store_number = address_list["storeNumber"]
 
@@ -76,15 +81,15 @@ def fetch_data():
             page_url = "https://www.walgreens.com"+ address_list["storeSeoUrl"]
             try:
                 location_type = address_list["store"]['storeBrand']
-                # print(location_type)
+                # logger.info(location_type)
             except:
                 # location_type = "<MISSING>"
                 location_type = page_url.split('/')[-2].split('-')[0].strip()
-                # print(location_type)
+                # logger.info(location_type)
             phone = address_list["store"]['phone']['areaCode'] + address_list["store"]['phone']['number']
 
 
-            # print("store_url ==== "+ str(store_url))
+            # logger.info("store_url ==== "+ str(store_url))
 
             while True:
                 try:
@@ -112,7 +117,7 @@ def fetch_data():
                 photo_hours_str = " ".join(list(soup_hours.find("div",{"id":"photoHoursList"}).stripped_strings))
                 hours_of_operation += "Photo "+photo_hours_str+"  "
 
-            # print("soup_hours === "+ str(hours_of_operation))
+            # logger.info("soup_hours === "+ str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
@@ -121,8 +126,8 @@ def fetch_data():
                 addresses.append(store[2] + store[-3])
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         intdex += 1

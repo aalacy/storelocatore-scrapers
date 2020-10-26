@@ -7,6 +7,11 @@ import re, time, usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('raleys_com')
+
+
 
 
 def write_output(data):
@@ -48,7 +53,7 @@ def fetch_data():
     for repo in repo_list:
         link = repo.find('a',{'class':'btn btn-hollow'})
         link = link['href']
-        print(link)
+        logger.info(link)
         title = repo.find('h2').text
         address = repo.find('address').text
         address = re.sub(pattern, " ", address)
@@ -70,7 +75,7 @@ def fetch_data():
 
         lat = repo['data-lat']
         longt = repo['data-lng']
-        print(address)
+        logger.info(address)
         address = usaddress.parse(address)
 
         i = 0
@@ -110,19 +115,19 @@ def fetch_data():
         else:
             ltype = ltype[0:len(ltype)-1]
 
-        #print(title)
-        #print(street)
-        #print(city)
-        #print(state)
-        #print(pcode)
-        #print(phone)
-        #print(lat)
-        #print(longt)
-        #print(hours)
-        #print(ltype)
-        #print(p)
+        #logger.info(title)
+        #logger.info(street)
+        #logger.info(city)
+        #logger.info(state)
+        #logger.info(pcode)
+        #logger.info(phone)
+        #logger.info(lat)
+        #logger.info(longt)
+        #logger.info(hours)
+        #logger.info(ltype)
+        #logger.info(p)
         p += 1
-        #print(("............................."))
+        #logger.info(("............................."))
         data.append([
             'https://www.raleys.com/',
             link,

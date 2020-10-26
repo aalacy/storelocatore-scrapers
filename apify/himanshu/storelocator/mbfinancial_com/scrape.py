@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mbfinancial_com')
+
+
 
 
 session = SgRequests()
@@ -60,7 +65,7 @@ def fetch_data():
     return_main_object = []
     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
         if states["href"].count("/") == 2:
-            # print("https://locations.53.com/" + states["href"].replace("../",""))
+            # logger.info("https://locations.53.com/" + states["href"].replace("../",""))
             location_request = session.get("https://locations.53.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup,"https://locations.53.com/" + states["href"])
@@ -70,17 +75,17 @@ def fetch_data():
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
                 if city["href"].count("/") == 2:
-                    # print("https://locations.53.com/" + city["href"].replace("../",""))
+                    # logger.info("https://locations.53.com/" + city["href"].replace("../",""))
                     location_request = session.get("https://locations.53.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,"https://locations.53.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
-                    # print("https://locations.53.com/" + city["href"].replace("../",""))
+                    # logger.info("https://locations.53.com/" + city["href"].replace("../",""))
                     city_request = session.get("https://locations.53.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"location-name-link"}):
-                        # print("https://locations.53.com/" + location["href"].replace("../",""))
+                        # logger.info("https://locations.53.com/" + location["href"].replace("../",""))
                         location_request = session.get("https://locations.53.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,"https://locations.53.com/" + location["href"].replace("../",""))

@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import time 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('volvocars_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -65,9 +70,9 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        # print(search.current_zip)
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # logger.info(search.current_zip)
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         location_url = "https://liveapi.yext.com/v2/accounts/1342454/entities/geosearch?api_key=e3101b0a7c8f6bbd85f09c65cc1f29c7&v=20200630&location="+str(search.current_zip)+"&radius=500&countryBias=US&languages=en&limit=50"
         r = request_wrapper(location_url,"get",headers=headers)
         json_data1 = r.json()
@@ -105,10 +110,10 @@ def fetch_data():
             address.append(store[2])
             yield store
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

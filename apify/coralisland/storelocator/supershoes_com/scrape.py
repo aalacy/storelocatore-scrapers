@@ -4,6 +4,11 @@ import pdb
 import requests
 from lxml import etree
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('supershoes_com')
+
+
 
 
 base_url = 'https://www.supershoes.com'
@@ -62,7 +67,7 @@ def fetch_data():
         request = session.post(url, data=data, headers=headers)
         response = etree.HTML(request.text)
         store_list = response.xpath('//div[@id="nearest"]/ul/li')
-        print(('~~~~~~~~~~~', city, len(store_list)))
+        logger.info(('~~~~~~~~~~~', city, len(store_list)))
         for store in store_list:
             store = eliminate_space(store.xpath('.//text()'))
             output = []

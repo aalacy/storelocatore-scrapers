@@ -6,6 +6,11 @@ import re, time
 import usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('samsmartinc_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -53,7 +58,7 @@ def fetch_data():
             title = detail.find('h5').text
             store = title[title.find('#')+1:len(title)]
             address = str(detail.find('p'))
-            #print(title,store,address)
+            #logger.info(title,store,address)
             street = address[address.find('p>')+2:address.find('<',address.find('p>')+1)]
             
             city = address[address.find('/>')+2:address.find(',')]
@@ -61,10 +66,10 @@ def fetch_data():
             state=state.lstrip()
             pcode = state[state.find(' ')+1:len(state)]
             state = state[0:state.find(' ')]
-            #print(street,city,state,pcode)
+            #logger.info(street,city,state,pcode)
             start = end + 1
             detail = str(soup1.find('section'))
-            #print(detail)
+            #logger.info(detail)
             mstart = detail.find(pcode)
             mstart = detail.find('>',mstart)+1
             mend = detail.find('<br',mstart)
@@ -88,7 +93,7 @@ def fetch_data():
                             longt,
                             "<MISSING>"
                         ])
-            print(p,data[p])
+            logger.info(p,data[p])
             p += 1
             
         except:
@@ -99,9 +104,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

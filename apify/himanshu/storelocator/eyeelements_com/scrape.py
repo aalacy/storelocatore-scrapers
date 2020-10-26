@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('eyeelements_com')
+
+
 
 
 session = SgRequests()
@@ -57,7 +62,7 @@ def fetch_data():
     addresses = []
     cords = sgzip.coords_for_radius(50)
     for cord in cords:
-        # print("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+str(cord[0])+"&lng="+str(cord[1]))
+        # logger.info("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+str(cord[0])+"&lng="+str(cord[1]))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }

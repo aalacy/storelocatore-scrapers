@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fracturedprune_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -24,7 +29,7 @@ def fetch_data():
             typ = line.split('<h2>')[1].split('<')[0]
         if '<h3><a href="https://fracturedprune.com/location/' in line:
             locs.append(line.split('href="')[1].split('"')[0] + '|' + typ)
-    print(('Found %s Locations.' % str(len(locs))))
+    logger.info(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         lurl = loc.split('|')[0]
         typ = loc.split('|')[1]
@@ -39,7 +44,7 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        print(('Pulling Location %s...' % lurl))
+        logger.info(('Pulling Location %s...' % lurl))
         r2 = session.get(lurl, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         lines = r2.iter_lines(decode_unicode=True)

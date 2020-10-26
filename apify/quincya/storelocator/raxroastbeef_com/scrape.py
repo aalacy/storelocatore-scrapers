@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('raxroastbeef_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'clearfix grpelem'})
 	items = items[:-1]
@@ -36,7 +41,7 @@ def fetch_data():
 		location_name = item.findAll('p')[0].text.strip()		
 		if "Coming" in location_name:
 			continue
-		print (location_name)
+		logger.info(location_name)
 		street_address = item.findAll('p')[1].text.strip()
 		raw_line = item.findAll('p')[2].text.strip()
 		city = raw_line[:raw_line.find(",")].strip()

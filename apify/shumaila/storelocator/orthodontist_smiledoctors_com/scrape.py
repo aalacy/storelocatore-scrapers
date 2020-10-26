@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('orthodontist_smiledoctors_com')
+
+
 
 
 def write_output(data):
@@ -30,7 +35,7 @@ def fetch_data():
     link_list = soup.findAll('a',{'class':'link'})
     for alink in link_list:
         alink = alink['href']
-        print(alink)
+        logger.info(alink)
         if alink.find('https') > -1:
             page = requests.get(alink)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -38,7 +43,7 @@ def fetch_data():
             for div in maindiv:
                 link = div.find('a')
                 link = link['href']
-                print(link)
+                logger.info(link)
                 page1 = requests.get(link)
                 soup1 = BeautifulSoup(page1.text, "html.parser")
                 hdetail = soup1.find('div', {'class': 'banner'})
@@ -76,15 +81,15 @@ def fetch_data():
                 longt = hdetail[start:end]
                 if hours.find("Clinic hours can vary") > -1:
                     hours = "<MISSING>"
-                #print(title)
-                #print(street)
-                #print(city)
-                #print(state)
-                #print(pcode)
-                #print(phone)
-                print(hours)
-                #print(lat)
-                #print(longt)
+                #logger.info(title)
+                #logger.info(street)
+                #logger.info(city)
+                #logger.info(state)
+                #logger.info(pcode)
+                #logger.info(phone)
+                logger.info(hours)
+                #logger.info(lat)
+                #logger.info(longt)
                 if street.find('Grand Opening') == -1:
                     data.append([
                         'https://orthodontist.smiledoctors.com/',
@@ -103,7 +108,7 @@ def fetch_data():
                         hours
                     ])
 
-            #print(("..................."))
+            #logger.info(("..................."))
 
     return data
 

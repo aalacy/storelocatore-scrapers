@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('apoyo-financiero_com')
+
+
 
 
 session = SgRequests()
@@ -29,7 +34,7 @@ def fetch_data():
         location_name = "apoyo-financiero at - " + store_data['name']
         raw_address = store_data['address'].split(",")
         raw_street = raw_address[0].split(' ')
-        # print(raw_street)
+        # logger.info(raw_street)
 
         if "Fontana" or "Fresno" or "Norwalk" in raw_street:
             st = " ".join(raw_street[0:-1])

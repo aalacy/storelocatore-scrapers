@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pandaexpress_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -25,7 +30,7 @@ def fetch_data():
             st = lurl.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[1]
             if st not in mexico:
                 locs.append(lurl)
-    print(('Found %s Locations.' % str(len(locs))))
+    logger.info(('Found %s Locations.' % str(len(locs))))
     canada = ['AB','BC','MB','QC','NB','NL','NS','ON','PE','SK','YT','NU','NT']
     for loc in locs:
         name = ''

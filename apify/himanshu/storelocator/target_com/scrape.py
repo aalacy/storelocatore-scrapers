@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('target_com')
+
+
 
 
 session = SgRequests()
@@ -66,7 +71,7 @@ def fetch_data():
                         else:
                             hours = hours + " " + store_hours[i]["day_name"] + " Closed"
                     store.append(hours if hours != "" else "<MISSING>")
-                    #print(store)
+                    #logger.info(store)
                     return_main_object.append(store)
                     break
                 except:

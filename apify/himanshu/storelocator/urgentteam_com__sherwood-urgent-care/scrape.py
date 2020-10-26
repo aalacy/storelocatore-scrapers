@@ -6,6 +6,11 @@ import re
 from sgrequests import SgRequests
 session = SgRequests()
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('urgentteam_com__sherwood-urgent-care')
+
+
 
 
 def write_output(data):
@@ -67,8 +72,8 @@ def fetch_data():
         #     addresses.append(str(store[2]) + str(store[-3]))
 
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
         

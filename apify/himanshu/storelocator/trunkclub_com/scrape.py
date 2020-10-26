@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('trunkclub_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -45,7 +50,7 @@ def fetch_data():
         #     addresses =  store_data["address"]["addressLocality"]+ ' '+ "Suite 3102"
         # if "525 9th Street NW" in store_data["address"]["addressLocality"]:
         #     addresses =  store_data["address"]["addressLocality"]+ ' '+ "Suite 700"
-        #print(addresses)
+        #logger.info(addresses)
         store.append("https://www.trunkclub.com")
         store.append(store_data["address"]["addressLocality"].replace("Culver City","Los Angeles").replace("New York","New York City").replace("Washington","Washington D.C."))
         store.append(addresses.replace("525 9th Street NW","525 9th Street NW Suite 700").replace("501 Boylston Street","501 Boylston Street Suite 3102"))
@@ -60,7 +65,7 @@ def fetch_data():
         store.append(store_data["geo"]["longitude"])
         store.append(hours_of_operation)
         store.append(data5)
-        #print(store)
+        #logger.info(store)
         return_main_object.append(store)
     return return_main_object
 def scrape():

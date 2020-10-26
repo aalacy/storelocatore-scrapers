@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('drafthouse_com')
+
+
 
 
 def write_output(data):
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find_all(id="markets-page")
@@ -45,8 +50,8 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "drafthouse.com"
 
@@ -58,7 +63,7 @@ def fetch_data():
 			if "Coming Soon" in location_name:
 				continue
 
-			print(location_name)
+			logger.info(location_name)
 			raw_address = item.find_all("a")[-2].text.strip().split("\n")
 
 			street_address = raw_address[0].strip()
@@ -78,8 +83,8 @@ def fetch_data():
 			try:
 				maps = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				print('[!] Error Occured. ')
-				print('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 
 			try:
 				raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

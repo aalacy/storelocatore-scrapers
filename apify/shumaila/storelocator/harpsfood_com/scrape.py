@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import usaddress
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('harpsfood_com')
+
+
 
 
 def write_output(data):
@@ -31,7 +36,7 @@ def fetch_data():
             link = links['href']
             link = link.replace("..","")
             link = "https://www.harpsfood.com" + link
-            print(link)
+            logger.info(link)
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
             detail = soup.find('table')
@@ -40,7 +45,7 @@ def fetch_data():
                 link = td.find('a')
                 try:
                     link = link['href']
-                    print(link)
+                    logger.info(link)
                     page = requests.get(link)
                     soup = BeautifulSoup(page.text, "html.parser")
                     address = soup.find('p', {'class': 'Address'}).text
@@ -68,7 +73,7 @@ def fetch_data():
                             pcode = pcode + " " + temp[0]
 
                         i += 1
-                    print(address)
+                    logger.info(address)
                     try:
                         phone = soup.find('p', {'class': 'PhoneNumber'})
                         phone = phone.find('a').text
@@ -97,8 +102,8 @@ def fetch_data():
                                 flag = False
                             i += 1
                     except:
-                        print("..")
-                    # print(dl)
+                        logger.info("..")
+                    # logger.info(dl)
                     city = city.replace(",", "")
                     start = street.find(":")
                     street = street[start+1:len(street)]
@@ -137,18 +142,18 @@ def fetch_data():
                     if len(longt) < 2 or longt == "undefined":
                         longt = "<MISSING>"
 
-                    print(title)
-                    print(street)
-                    print(city)
-                    print(state)
-                    print(pcode)
-                    print(phone)
-                    print(store)
-                    print(lat)
-                    print(longt)
-                    print(hours)
-                    print(p)
-                    print("................")
+                    logger.info(title)
+                    logger.info(street)
+                    logger.info(city)
+                    logger.info(state)
+                    logger.info(pcode)
+                    logger.info(phone)
+                    logger.info(store)
+                    logger.info(lat)
+                    logger.info(longt)
+                    logger.info(hours)
+                    logger.info(p)
+                    logger.info("................")
 
                     data.append([
                         url,
@@ -168,7 +173,7 @@ def fetch_data():
                     p += 1
 
                 except:
-                    print("error")
+                    logger.info("error")
 
     return data
 

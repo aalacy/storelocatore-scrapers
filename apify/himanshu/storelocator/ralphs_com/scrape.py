@@ -5,6 +5,11 @@ import re
 import sgzip
 import json
 import phonenumbers
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ralphs_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -26,8 +31,8 @@ def fetch_data():
     zip_code = search.next_zip()
     while zip_code:
         result_coords = []
-        # print("zip_code === " + str(zip_code))
-        # print("ramiang zip =====" + str(search.zipcodes_remaining()))
+        # logger.info("zip_code === " + str(zip_code))
+        # logger.info("ramiang zip =====" + str(search.zipcodes_remaining()))
         headers = {
             'User-Agent': "PostmanRuntime/7.19.0",
             'content-type' : 'application/json;charset=UTF-8'
@@ -83,8 +88,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
         ###fuel store
         try:
@@ -132,14 +137,14 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
         if len(datas)+len(datas1) < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(datas)+len(datas1) == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

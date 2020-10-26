@@ -5,6 +5,11 @@ import time
 from random import randint
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cote_co_uk')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
 
 	for store in stores:
 		link = store["link"]
-		print(link)
+		logger.info(link)
 
 		location_name = store['post_title']
 		street_address = (store['address_1'] + " " + store['address_2']).replace("`","'").strip()

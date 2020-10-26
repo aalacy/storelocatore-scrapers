@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sherwin-williams_com')
+
+
 
 
 session = SgRequests()
@@ -47,10 +52,10 @@ def fetch_data():
         coord = search.next_coord()
         while coord:
             result_coords = []
-            # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
             x = coord[0]
             y = coord[1]
-            # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+            # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
             r_data = 'sideBarType=LSTORES&latitude=' + str(x) + '&longitude=' + str(y) + '&radius=75&uom=SMI&abbrv=us&storeType=' + loc_type + '&countryCode=&requesttype=ajax&langId=&storeId=' + str(store_id)  + '&catalogId=' + str(catalogId)
             r = session.post("https://www.sherwin-williams.com/AjaxStoreLocatorSideBarView?langId=-1&storeId=" + str(store_id),headers=r_headers,data=r_data)
             soup = BeautifulSoup(r.text,"lxml")
@@ -86,13 +91,13 @@ def fetch_data():
                 hours = " ".join(list(location_soup.find("div",{'class':"store-hours-table"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")
                 store.append("<MISSING>")
-                # print(store)
+                # logger.info(store)
                 yield store
             if len(data) < MAX_RESULTS:
-                # print("max distance update")
+                # logger.info("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif len(data) == MAX_RESULTS:
-                # print("max count update")
+                # logger.info("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")

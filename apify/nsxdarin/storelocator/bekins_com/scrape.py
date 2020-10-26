@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bekins_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -22,7 +27,7 @@ def fetch_data():
         if '<loc>https://www.bekins.com/find-a-local-agent/agents/' in line and '<loc>https://www.bekins.com/find-a-local-agent/agents/<' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    print(('Found %s Locations.' % str(len(locs))))
+    logger.info(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = ''
         add = ''
@@ -30,7 +35,7 @@ def fetch_data():
         state = ''
         zc = ''
         phone = '<MISSING>'
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         website = 'bekins.com'
         typ = 'Agent'
         if 'ams-relocation' not in loc and 'bekins-northwest' not in loc:

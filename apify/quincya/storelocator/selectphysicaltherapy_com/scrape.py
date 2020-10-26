@@ -5,6 +5,11 @@ import re
 import json
 import time
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('selectphysicaltherapy_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -28,10 +33,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	new_base = str(base).replace("</li><li>",",").replace("<br/>",",,").replace('<img src="h'," ,,DDD").replace('"/>',"DDD,,").replace("Request an Appointment",",,").replace("Featured Services",",,")
 	final_base = BeautifulSoup(new_base,"lxml")
@@ -44,7 +49,7 @@ def fetch_data():
 		raw_data = item["Html"].split(",,")
 		location_name = raw_data[0].strip()
 
-		print (location_name)
+		logger.info(location_name)
 		location_type = raw_data[-3].replace("DDDt","ht").replace("DDD","")
 
 		if len(raw_data) == 7:

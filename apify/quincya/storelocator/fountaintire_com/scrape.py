@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fountaintire_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,8 +39,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	js = base.text
 	store_data = json.loads(js)
@@ -47,13 +52,13 @@ def fetch_data():
 	data = []
 	for id_num in ids:
 		final_link = "https://www.fountaintire.com/stores/details/" + id_num
-		print(final_link)
+		logger.info(final_link)
 		req = session.get(final_link, headers = HEADERS)
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 			
 		locator_domain = "fountaintire.com"
 

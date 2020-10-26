@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jwtumbles_com')
+
+
 
 
 
@@ -44,7 +49,7 @@ def fetch_data():
             city = list(soup.find("address").stripped_strings)[1].split(',')[-3]
             st = " ".join(list(soup.find("address").stripped_strings)[1].split(',')[:-3])
             phone = list(soup.find("address").stripped_strings)[-2]
-            # print( list(soup.find("address").stripped_strings)[-2])
+            # logger.info( list(soup.find("address").stripped_strings)[-2])
 
     
             if us_zip_list:
@@ -66,7 +71,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(hours)
             tem_var.append(page_url)
-            # print(tem_var)
+            # logger.info(tem_var)
             return_main_object.append(tem_var)
         
 

@@ -5,6 +5,11 @@ import re
 import json
 import cgi
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('familythriftcenter_com')
+
+
 
 
 
@@ -75,7 +80,7 @@ def fetch_data():
                     continue
             addresses.append(store[2])
             yield store
-            #print("--------------------",store)
+            #logger.info("--------------------",store)
             
         if current_results_len < MAX_RESULTS:
             

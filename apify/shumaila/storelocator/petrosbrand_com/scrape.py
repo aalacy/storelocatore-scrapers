@@ -5,6 +5,11 @@ import re, time
 import usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petrosbrand_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +37,7 @@ def fetch_data():
     maindiv = maindiv.findAll('a')
     for rep in maindiv:
         link ='https://www.petrosbrand.com' + rep['href']
-        #print(link)
+        #logger.info(link)
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, 'html.parser')
         divlist = soup.findAll('div',{'class':'text-box'})
@@ -49,7 +54,7 @@ def fetch_data():
                 
                 if div.text.find('Hours') > -1:
                     hours = div.text.replace('\n',' ').replace('Hours','').replace('pm',' pm').lstrip().rstrip()
-                    #print(hours)
+                    #logger.info(hours)
                 if div.text.find('Location') > -1:
                     det = div.text.split('Location')[1].lstrip().split('[')[0].splitlines()
                     street = det[0]
@@ -59,11 +64,11 @@ def fetch_data():
                     state = temp[-2]
                     city = link.split('locations/petros-',1)[1].replace('-',' ')
                     phone = det[2]
-                    #print(det)
+                    #logger.info(det)
                     coord = div.find('a',{'class':'btn'})['href']
                     r = session.get(coord, headers=headers, verify=False)
                     coord = r.url
-                    #print(coord)
+                    #logger.info(coord)
                     coord = coord.split('@',1)[1].split(',17z' ,1)[0]
                     lat,longt = coord.split(',')
                     title = soup.find('h1',{'class':"page-header"}).text
@@ -83,12 +88,12 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                    #print(p,data[p])
+                    #logger.info(p,data[p])
                     p += 1
                 
                     
             except Exception as e:
-                print(e)
+                logger.info(e)
                 pass
 
        
@@ -119,9 +124,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

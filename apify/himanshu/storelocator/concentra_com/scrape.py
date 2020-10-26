@@ -5,6 +5,11 @@ import re
 import json
 import phonenumbers
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('concentra_com')
+
+
 
 session = SgRequests()
 def write_output(data):
@@ -29,7 +34,7 @@ def fetch_data():
     r = session.get("https://www.concentra.com//sxa/search/results/?s={449ED3CA-26F3-4E6A-BF21-9808B60D936F}|{449ED3CA-26F3-4E6A-BF21-9808B60D936F}&itemid={739CBD3C-A3B6-4CA2-8004-BF6005BB28E9}&v={D907A7FD-050F-4644-92DC-267C1FDE200C}&p=1000").json()
     for data in r['Results']:
         page_url = base_url+data['Url']
-        # print(page_url)
+        # logger.info(page_url)
         location_r = session.get(page_url)
         soup = BeautifulSoup(location_r.text, "lxml")
         try:
@@ -62,8 +67,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        # logger.info("data ==="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
         yield store
 
 def scrape():

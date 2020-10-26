@@ -6,6 +6,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('asda_com')
+
+
 
 session = SgRequests()
 
@@ -77,7 +82,7 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # print("========================================",tem_var)
+                        # logger.info("========================================",tem_var)
 
                 else:
                     one_link="https://storelocator.asda.com/"+c.find("a")['href']

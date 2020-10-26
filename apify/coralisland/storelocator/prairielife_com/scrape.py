@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from io import StringIO
 from html.parser import HTMLParser
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('prairielife_com')
+
+
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -70,7 +75,7 @@ def fetch_data():
         store_endpoint = url.format(store_id)
         data = session.get(store_endpoint, headers=headers).json()
         if 'path' not in data:
-            print(store_id)
+            logger.info(store_id)
             if misses >= 100:
                 break
             else:

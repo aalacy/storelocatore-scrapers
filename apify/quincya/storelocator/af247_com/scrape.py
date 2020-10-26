@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('af247_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_items = base.find(class_="full_location_list").find_all('a')
 
@@ -45,8 +50,8 @@ def fetch_data():
 			try:
 				base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				print('[!] Error Occured. ')
-				print('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 		
 			next_items = base.find(class_="full_location_list").find_all('a')
 			for next_item in next_items:
@@ -55,15 +60,15 @@ def fetch_data():
 
 	data = []
 	for i, final_link in enumerate(final_links):
-		print("Link %s of %s" %(i+1,len(final_links)))
+		logger.info("Link %s of %s" %(i+1,len(final_links)))
 		final_req = session.get(final_link, headers = HEADERS)
-		print(final_link)
+		logger.info(final_link)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "af247.com"
 

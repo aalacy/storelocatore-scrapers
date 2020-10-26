@@ -8,6 +8,11 @@ import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPLETED
 from requests.exceptions import ProxyError
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gnc_com')
+
+
 
 
 show_logs = False
@@ -55,7 +60,7 @@ def sleep(min=2, max=10):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
+    logger.info(" ".join(map(str, args)), **kwargs)
 
 
 def write_output(data):
@@ -147,8 +152,8 @@ def search_zip(zip, reset=False, attempts=1):
         increment_request_count()
         return get_json_data(r.text)["features"]
     except Exception as ex:
-        print(f'>>> exception searching zip {zip} >>> {ex}')
-        print(f'resetting session to try again')
+        logger.info(f'>>> exception searching zip {zip} >>> {ex}')
+        logger.info(f'resetting session to try again')
         return search_zip(zip, reset=True, attempts=attempts+1)
 
 
@@ -181,8 +186,8 @@ def get_location(loc, reset_session=False, attempts=1):
         r = session.get(url, headers=get_headers)
         r.raise_for_status()
     except Exception as ex:
-        print(f'>>> exception getting location {loc} >>> {ex}')
-        print(f'resetting session to try again')
+        logger.info(f'>>> exception getting location {loc} >>> {ex}')
+        logger.info(f'resetting session to try again')
         return get_location(loc, reset_session=True, attempts=attempts+1)
 
     increment_request_count()

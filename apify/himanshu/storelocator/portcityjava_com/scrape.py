@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('portcityjava_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +47,7 @@ def fetch_data():
             p = i.find_all('p')
             for index,j in enumerate(p):
                 tem_var=[]
-                # print(list(j.stripped_strings))
+                # logger.info(list(j.stripped_strings))
                 street_address = list(j.stripped_strings)[0]
                 city = (list(j.stripped_strings)[1])
                 state = (list(j.stripped_strings)[3])

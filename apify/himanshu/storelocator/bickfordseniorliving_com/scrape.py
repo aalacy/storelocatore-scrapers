@@ -7,6 +7,11 @@ from bs4 import BeautifulSoup
 import re
 # import unicodedata
 # import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bickfordseniorliving_com')
+
+
 
 
 session = SgRequests()
@@ -40,7 +45,7 @@ def fetch_data():
             "radius": "90",
             "_token": str(token)
         }
-        # print(state)
+        # logger.info(state)
         r = session.post("https://www.bickfordseniorliving.com/search",data=data,headers=headers).json()
         branch_list = BeautifulSoup(r["branchList"],"lxml")
         marker_data = r["markerData"]
@@ -73,8 +78,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

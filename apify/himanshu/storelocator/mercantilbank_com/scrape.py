@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mercantilbank_com')
+
+
 
 
 
@@ -46,8 +51,8 @@ def fetch_data():
                 if len(val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' '))  == 3:
                     state = val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' ')[0] + ' ' +val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' ')[1]
                     zip = val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' ')[2]
-                    print(state)
-                    print(zip)
+                    logger.info(state)
+                    logger.info(zip)
                 else:
                     state = val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' ')[0]                
                     zip = val['address'].replace('<br />','').split('\n')[1].split(',')[1].strip().split(' ')[1]
@@ -88,7 +93,7 @@ def fetch_data():
             
 
             return_main_object.append(store)
-            print(store)
+            logger.info(store)
     return return_main_object
 
 

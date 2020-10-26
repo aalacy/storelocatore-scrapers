@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('goldendelirestaurant_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")    
    
     divlist = soup.findAll('div', {'class': 'contact-icon'})
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     cleanr = re.compile(r'<[^>]+>')
     for div in divlist:
@@ -62,7 +67,7 @@ def fetch_data():
                         '<MISSING>',
                         hours
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
 
@@ -74,9 +79,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

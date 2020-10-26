@@ -3,12 +3,8 @@ import $exec.migrate_crawler_utils
 def is_sglogging_not_in_reqs(reqs_file: os.Path): Boolean = 
     !File(reqs_file.toString).contentAsString.contains("sglogging")
 
-def insert_sglogging_in_reqs(reqs_file: os.Path): Unit = {
-    val reqfile = File(reqs_file.toString)
-    val old_string = reqfile.contentAsString
-    val new_content = s"${old_string}\nsglogging\n".replaceAll("\n+", "\n")
-    reqfile overwrite new_content
-}
+def insert_sglogging_in_reqs(reqs_file: os.Path): Unit = 
+    insert_in_reqs(reqs_file, "sglogging")
 
 def has_print_statements(python_file_path: os.Path): Boolean =
     File(python_file_path.toString).contentAsString.indexOf("print") != -1
@@ -55,20 +51,8 @@ lazy val full_program = scrapers_without_sglogging.zipWithIndex map { case (dir,
     process_scraper(dir)
 }
 
-lazy val aleenahs_scrapers = all_scrapers_from_author(sg_dir / 'apify / 'aleenah) filter { scraper_dir =>
-    (requirements_txt_in_dir(scraper_dir) map is_sglogging_not_in_reqs) getOrElse false
-}
-
-lazy val migrate_aleenah = aleenahs_scrapers.zipWithIndex map { case (dir, idx) => 
-    println(s"[${idx} / ${aleenahs_scrapers.length}] Processing $dir ...")
-    process_scraper(dir)
-}
-
-// Migrate Aleenah's scrapers
-migrate_aleenah.toList
-
 // Executes the program
-// full_program.toList
+full_program.toList
 
 // println(all_scrapers.size, all_scrapers.toSet.size)
 

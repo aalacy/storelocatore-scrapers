@@ -4,3 +4,4 @@ requests==2.11.1
 us==1.0.0
 zipcodes==1.0.5
 sgselenium
+sglogging

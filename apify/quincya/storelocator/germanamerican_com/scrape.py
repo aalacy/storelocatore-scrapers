@@ -4,6 +4,11 @@ import csv
 import json
 import time
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('germanamerican_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -36,9 +41,9 @@ def fetch_data():
 	items = base.find_all(class_="cta-lnk lnk")
 
 	for i, item in enumerate(items):
-		print("Link %s of %s" %(i+1,len(items)))
+		logger.info("Link %s of %s" %(i+1,len(items)))
 		link = "https://germanamerican.com" + item["href"]
-		print(link)
+		logger.info(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 

@@ -3,6 +3,11 @@ import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('urbanbrickspizza_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +55,7 @@ def fetch_data():
         latitude = store['lat']
         longitude = store['lng']
         link = store["url"]
-        # print(link)
+        # logger.info(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 

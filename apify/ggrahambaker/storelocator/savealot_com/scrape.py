@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('savealot_com')
+
+
 
 session = SgRequests()
 
@@ -20,7 +25,7 @@ def fetch_data():
     
     init_search_url = 'near_lat=47.600392&near_lon=-122.3353602&threshold=4000&services__in=&within_business=true&limit=2000'
     base_url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?'
-    print(base_url + init_search_url)
+    logger.info(base_url + init_search_url)
     page = session.get(base_url + init_search_url)
     loc_json = json.loads(page.content)
     rest_url = loc_json['meta']['next']

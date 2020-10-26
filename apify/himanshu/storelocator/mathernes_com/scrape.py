@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mathernes_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +36,7 @@ def getDecodedPhoneNo(encoded_phone_no):
                     _dg = key
             _real_phone += _dg
         return _real_phone
-    # print("phone ==== " + getDecodedPhoneNo(_phone))
+    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
@@ -74,7 +79,7 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append(hours)
         tem_var.append(loc['url'])
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
     return return_main_object
 def scrape():

@@ -5,3 +5,4 @@ sgzip
 certifi
 urllib3
 pyopenssl
+sglogging

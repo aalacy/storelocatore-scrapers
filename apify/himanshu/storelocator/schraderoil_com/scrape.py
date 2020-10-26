@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 # from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('schraderoil_com')
+
+
 
 session = SgRequests()
 
@@ -24,7 +29,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     m = (soup.text.split("var arStores = [];")[1].split("// new location for stores")[0])
     n = m.split("] = [];")
-    # print(n[2])
+    # logger.info(n[2])
 
     for j in range(1,19):
         d = n[j]
@@ -53,7 +58,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append("https://www.schraderoil.com/find-a-location/")
-        # print(store)
+        # logger.info(store)
 
         if store[2] in addresses:
             continue

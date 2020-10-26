@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import  pprint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('beefobradys_com')
+
+
 
 
 
@@ -34,7 +39,7 @@ def fetch_data():
     
     k = session.get("https://locationstogo.com/beefs/pinsNearestBeefs.ashx?lat1=27.971&lon1=-82.49&range=500000000&fullbar=%25&partyroom=%25&catering=%25&breakfast=%25&onlineordering=%25", headers=header).json()
     for val in k:
-        # print(val['address'])
+        # logger.info(val['address'])
         locator_domain = base_url
         location_name =  val['title']
         street_address = val['address']
@@ -71,8 +76,8 @@ def fetch_data():
         # if store[3] in addresses:
         #     continue
         # addresses.append(store[3])
-        print("data = " + str(store))
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        logger.info("data = " + str(store))
+        logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
         
        

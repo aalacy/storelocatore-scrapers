@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smoothiefactory_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,7 +33,7 @@ def fetch_data():
     sitemap = 'https://momentfeed-prod.apigee.net/api/v2/llp/sitemap?auth_token=ZLHQWBGKROQFVIUG&country=US'
     maplist = session.get(sitemap, headers=headers, verify=False).json()['locations']
     loclist = session.get(url, headers=headers, verify=False).json()
-    #print(maplist)
+    #logger.info(maplist)
     hourd = {"1":"Mon","2":"Tues","3":"Wed","4":"Thurs","5":"Fri","6":"Sat","7":"Sun"}
     for loc in loclist:
         loc = loc['store_info']
@@ -62,13 +67,13 @@ def fetch_data():
                 pass
 
         status = 0
-        #print(street)
-        #print(len(maplist))
+        #logger.info(street)
+        #logger.info(len(maplist))
         for t in maplist:
-            #print(t['store_info']['address'])
+            #logger.info(t['store_info']['address'])
             #input()
             if street.find(t['store_info']['address']) > -1:
-                #print("YES")
+                #logger.info("YES")
                 link = 'https://locations.smoothiefactory.com' +t["llp_url"]
                 if t['open_or_closed'].find('coming soon') > -1:
                     status = 1
@@ -94,7 +99,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
 
@@ -106,9 +111,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

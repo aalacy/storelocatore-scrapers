@@ -5,3 +5,4 @@ sgrequests
 sgzip
 sgselenium
 bs4
+sglogging

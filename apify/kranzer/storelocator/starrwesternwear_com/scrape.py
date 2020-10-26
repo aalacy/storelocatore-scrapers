@@ -8,6 +8,11 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('starrwesternwear_com')
+
+
 crawled = []
 class Scrape(base.Spider):
 

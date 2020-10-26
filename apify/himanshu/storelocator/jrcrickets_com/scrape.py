@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jrcrickets_com')
+
+
 
 
 
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -49,13 +54,13 @@ def fetch_data():
     longitude = "<MISSING>"
     hours_of_operation = ""
 
-    # print("data ====== "+str(soup))
+    # logger.info("data ====== "+str(soup))
 
     location_menu = soup.find(lambda tag: (tag.name == "a") and "LOCATIONS" == tag.text.strip()).parent
     for script_url in location_menu.find("ul",{"class":"sub-menu"}).find_all("a"):
         location_url = base_url +"/"+ script_url["href"]
 
-        # print("href  === "+str(location_url))
+        # logger.info("href  === "+str(location_url))
         r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
@@ -65,7 +70,7 @@ def fetch_data():
             if 'More info' in list_location:
                 list_location.remove('More info')
 
-            # print(str(len(list_location)) + " ==== script === " + str(list_location))
+            # logger.info(str(len(list_location)) + " ==== script === " + str(list_location))
 
             location_name = list_location[0]
             street_address = list_location[1]
@@ -76,7 +81,7 @@ def fetch_data():
             city_state_zipp_index = [i for i, s in enumerate(list_location) if 'Hours:' in s]
             city_state_zipp = list_location[city_state_zipp_index[0]-1].replace('US', "").split(",")
 
-            # print("city_state_zipp === "+ str(city_state_zipp))
+            # logger.info("city_state_zipp === "+ str(city_state_zipp))
 
             if len(city_state_zipp) > 1:
                 city = city_state_zipp[0]
@@ -111,7 +116,7 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
 
-            # print("street_address === " + str(street_address))
+            # logger.info("street_address === " + str(street_address))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,location_url]
@@ -121,8 +126,8 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

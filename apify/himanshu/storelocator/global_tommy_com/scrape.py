@@ -8,6 +8,11 @@ import sgzip
 from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('global_tommy_com')
+
+
 
 
 session = SgRequests()
@@ -51,10 +56,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = session.get("https://global.tommy.com/en_int/api/store_finder?lat="+ str(x) + "&lng=" + str(y) + "&radius=50000000",headers=headers)
         data = r.json()["data"]
         for store_data in data:
@@ -98,7 +103,7 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             yield store
         if len(data) == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

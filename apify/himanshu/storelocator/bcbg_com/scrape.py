@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bcbg_com')
+
+
 
 
 session = SgRequests()
@@ -47,7 +52,7 @@ def parser(location_soup,current_country):
     store.append(lat)
     store.append(lng)
     store.append(hours)
-    print(store)
+    logger.info(store)
     return store
 
 def fetch_data():
@@ -74,7 +79,7 @@ def fetch_data():
                 store_data = parser(location_soup,current_country)
                 return_main_object.append(store_data)
             else:
-                print(states["href"])
+                logger.info(states["href"])
                 state_request = session.get("https://locations.bcbg.com/" + states["href"])
                 state_soup = BeautifulSoup(state_request.text,"lxml")
                 for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):

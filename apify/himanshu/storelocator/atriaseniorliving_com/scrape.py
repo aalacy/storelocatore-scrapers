@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('atriaseniorliving_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -31,7 +36,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     for state_link in soup.find("ul",{"id":"subpages"}).find_all("li"):
         # state_link_url = state_link.a["href"]
-        # print("state === ",str(state_link.a.text))
+        # logger.info("state === ",str(state_link.a.text))
         r1 = session.get(state_link.a["href"],headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         script = json.loads(soup1.find("script",text=re.compile("var CommunityList =")).text.split("var CommunityList = ")[1].split("};")[0]+"}")
@@ -58,8 +63,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #logger.info("data = " + str(store))
+            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
     ############################ CA location ###############################
@@ -92,8 +97,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         
     

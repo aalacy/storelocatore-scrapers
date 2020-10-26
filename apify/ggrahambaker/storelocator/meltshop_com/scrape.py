@@ -1,6 +1,11 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('meltshop_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
         hours = ps[0].text.replace('\n', ' ')
 
         link = loc.find_all("a")[-1]["href"]
-        # print(link)
+        # logger.info(link)
         if "pittsburgh-airport" in link:
             link = "https://www.meltshop.com/locations/pittsburgh-airport"
             street_address = "1000 Airpot Blvd"

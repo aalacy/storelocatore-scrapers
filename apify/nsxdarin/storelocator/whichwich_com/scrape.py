@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('whichwich_com')
+
+
 
 
 session = SgRequests()
@@ -26,7 +31,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         payload = {'search': '',
                    'hdnLat': str(x),
                    'hdnLng': str(y),
@@ -66,7 +71,7 @@ def fetch_data():
                         lng = item.split('"google_longitude":"')[1].split('"')[0]
                         if store not in ids:
                             ids.append(store)
-                            print(('Pulling Store ID #%s...' % store))
+                            logger.info(('Pulling Store ID #%s...' % store))
                             if '0' not in hours:
                                 hours = '<MISSING>'
                             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

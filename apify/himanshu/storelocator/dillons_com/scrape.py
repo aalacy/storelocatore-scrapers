@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dillons_com')
+
+
 
 
 session = SgRequests()
@@ -33,9 +38,9 @@ def fetch_data():
     code = search.next_zip()
     while code:
         result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         zip_code = code
-        # print('Pulling Zip %s...' % (zip_code))
+        # logger.info('Pulling Zip %s...' % (zip_code))
         r_data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+ zip_code + r'","filters":[]},"operationName":"storeSearch"}'
         r = session.post("https://www.dillons.com/stores/api/graphql",headers=headers,data=r_data)
         data = r.json()["data"]['storeSearch']
@@ -69,7 +74,7 @@ def fetch_data():
                     hours = hours + " " + hour_detail["displayName"] + " " + hour_detail["displayHours"]
                 store.append(hours if hours != "" else "<MISSING>")
                 yield store
-        # print("max count update")
+        # logger.info("max count update")
         search.max_count_update(result_coords)
         code = search.next_zip()
 

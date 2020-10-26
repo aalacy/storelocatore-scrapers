@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('brotoloc_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -47,9 +52,9 @@ def fetch_data():
         # if store[2]  in addressess123:
         #     continue
         # addressess123.append(store[2])
-        # print(store)
+        # logger.info(store)
         yield store
-        # print(location_name)
+        # logger.info(location_name)
     for value in urls:
         r1 = session.get(value)
         soup1 = BeautifulSoup(r1.text, "html5lib")
@@ -75,7 +80,7 @@ def fetch_data():
             # if store[2]  in addressess123:
             #     continue
             # addressess123.append(store[2])
-            # print(store)
+            # logger.info(store)
             yield store
 
 

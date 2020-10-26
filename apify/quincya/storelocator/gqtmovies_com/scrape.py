@@ -1,6 +1,11 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gqtmovies_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,7 +35,7 @@ def fetch_data():
 		locator_domain = "gqtmovies.com"
 
 		link = "https://www.gqtmovies.com" + page['value'] + "/theater-info"
-		# print(link)
+		# logger.info(link)
 		req = session.get(link, headers = HEADERS)
 		item = BeautifulSoup(req.text,"lxml")
 

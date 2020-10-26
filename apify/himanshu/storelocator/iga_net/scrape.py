@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('iga_net')
+
+
 
 
 
@@ -48,7 +53,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     # skip = 0
     # while True:
-    #     print(skip)
+    #     logger.info(skip)
     r = session.get(
         "https://www.iga.net/api/en/Store/get?Latitude=45.489599&Longitude=-73.585324&Skip=0&Max=500", headers=headers);
 
@@ -57,7 +62,7 @@ def fetch_data():
         locator_domain = "https://www.iga.net/"
         location_name = x['Name']
         hours_of_operation = x['OpeningHours']
-        # print(hours_of_operation)
+        # logger.info(hours_of_operation)
         street_address = x['AddressMain']['Line']
         city = x['AddressMain']['City']
         state = x['AddressMain']['Province']
@@ -77,14 +82,14 @@ def fetch_data():
 
             hours_of_operation = " ".join(
                 list(div.stripped_strings)).replace("Open hours", "").strip()
-            # print(hours_of_operation)
-            # print("~~~~~~~~~~~~~~~~~~~~`")
+            # logger.info(hours_of_operation)
+            # logger.info("~~~~~~~~~~~~~~~~~~~~`")
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         # store = ["<MISSING>" if x == "" else x for x in store]
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print("data = " + str(store))
-        # print(
+        # logger.info("data = " + str(store))
+        # logger.info(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 

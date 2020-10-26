@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('truefoodkitchen_com')
+
+
 session = SgRequests()
 HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -25,16 +30,16 @@ def fetch_data():
     soup = BeautifulSoup(r.content, 'html.parser')
     maind = soup.find('div', {'class': 'type-location'})
     link_list = maind.findAll('li',{'class':'location-links'})
-    print(len(link_list))    
+    logger.info(len(link_list))    
     for link in link_list:
         try:
             link = link.find('a')['href']            
             r = session.get(link,headers = HEADERS)
-            #print(link)
+            #logger.info(link)
             soup = BeautifulSoup(r.text, 'html.parser')
             location = r.text.split('var locations = [',1)[1].split('];',1)[0]          
             location = json.loads(location)
-            #print(location)
+            #logger.info(location)
             title = location['title']
             street = location['street']
             city = location['city']
@@ -45,9 +50,9 @@ def fetch_data():
             lat = coord[0]
             longt = coord[1]
             loc_id = r.text.split("momentFeedID = '" ,1)[1].split("';")[0]
-            #print(loc_id)
+            #logger.info(loc_id)
             hourlink = 'https://momentfeed-prod.apigee.net/lf/location/store-info/'+loc_id+'?auth_token=IFWKRODYUFWLASDC'
-            #print(hourlink)
+            #logger.info(hourlink)
             r = session.get(hourlink,headers = HEADERS).json()
             store = r['corporateId']
             hourlist = r['hours'].split(';')
@@ -58,7 +63,7 @@ def fetch_data():
                 if len(temp) == 1:
                     continue
                
-                #print(temp)
+                #logger.info(temp)
                 day = hours_map[temp[0]]
                 n = 2
                 start = [temp[1][i:i+n] for i in range(0, len(temp[1]), n)]
@@ -76,7 +81,7 @@ def fetch_data():
                     part = ' pm '
                     
                 startstr = str(start1)+' : ' + start2 +' '+ part
-                #print("STR+",startstr)
+                #logger.info("STR+",startstr)
                 
                 
                 n = 2
@@ -115,7 +120,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1    
             
                 

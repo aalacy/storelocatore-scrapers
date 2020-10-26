@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jchristophers_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
@@ -56,7 +61,7 @@ def fetch_data():
                 yield store
     if exists:
         for data in exists.find_all('a'):
-            # print(data)
+            # logger.info(data)
             if 'ubereats' in data.get('href'):
                 page_url = data.get('href')
                 location_soup = BeautifulSoup(session.get(page_url).text, "lxml")

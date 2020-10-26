@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('brewsters_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,11 +33,11 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     lis = driver.find_elements_by_css_selector('a.icon-arrow-right')
-    print(len(lis))
+    logger.info(len(lis))
     link_list = []
     for li in lis:
         if len(li.get_attribute('href')) > 30:
-            print(li.get_attribute('href'))
+            logger.info(li.get_attribute('href'))
             link_list.append(li.get_attribute('href'))
 
     all_store_data = []
@@ -41,40 +46,40 @@ def fetch_data():
         driver.get(link)
         main = driver.find_element_by_css_selector('main#main')
         # main.find_element_by_css_selector
-        print()
-        print(main.text.split('\n'))
+        logger.info()
+        logger.info(main.text.split('\n'))
         content = main.text.split('\n')
-        print(len(content))
+        logger.info(len(content))
         if len(content) == 17:
             location_name = content[1]
             street_address = content[4]
 
-            print(content[4])
-            print(content[5])
+            logger.info(content[4])
+            logger.info(content[5])
             city, state, zip_code = addy_ext(content[5])
             phone_number = content[6].replace('Phone:', '').replace('BREW', '2739').replace('HOPS', '4677')[:-7].strip()
-            print(phone_number)
-            print(content[9])
+            logger.info(phone_number)
+            logger.info(content[9])
             hours = ''
             for h in content[9:-1]:
                 hours += h + ' '
             hours = hours.strip()
-            print(hours)
-            print()
+            logger.info(hours)
+            logger.info()
         else:
             location_name = content[1]
             street_address = content[5]
 
-            print(content[5])
-            print(content[6])
+            logger.info(content[5])
+            logger.info(content[6])
             city, state, zip_code = addy_ext(content[6])
             phone_number = content[7].replace('Phone:', '').replace('BREW', '2739').replace('HOPS', '4677')[:-7].strip()
-            print(phone_number)
+            logger.info(phone_number)
             hours = ''
             for h in content[10:-1]:
                 hours += h + ' '
             hours = hours.strip()
-            print(hours)
+            logger.info(hours)
 
         location_name = '<MISSING>'
         country_code = 'CA'
@@ -87,7 +92,7 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
 
-        print()
+        logger.info()
 
     driver.quit()
     return all_store_data

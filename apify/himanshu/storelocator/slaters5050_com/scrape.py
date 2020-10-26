@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('slaters5050_com')
+
+
 
 
 session = SgRequests()
@@ -31,7 +36,7 @@ def fetch_data():
     url = "http://slaters5050lasvegas.com/"
     r1 = session.get(url,headers=headers)
     soup1 = BeautifulSoup(r1.text,"lxml")
-    # print(soup1)
+    # logger.info(soup1)
     addresses123 = []
     raw_data = soup1.find("div",{'class':"vc_column-inner vc_custom_1512389166631"})
     name1 = raw_data.h2.text.strip()
@@ -59,9 +64,9 @@ def fetch_data():
     store.append(longitude1)
     store.append(hours1.encode('ascii', 'ignore').decode('ascii').strip())
     store.append("http://slaters5050lasvegas.com/")
-    # print(store)
+    # logger.info(store)
     yield store
-    # print(soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0])
+    # logger.info(soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0])
 
     
     for location in soup.find_all("li",{'class':re.compile("menu-item menu-item-type-post_type menu-item-object-locations")}):
@@ -69,7 +74,7 @@ def fetch_data():
         page_url =  location.find("a")["href"]
         if page_url == "https://slaters5050.com/locations/las-vegas/":
             continue
-        # print(page_url)
+        # logger.info(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find("main",{'role':"main"}).find("h1").text.replace("–","-").strip()
         if "Mamala Bay - Closed" in name:
@@ -80,7 +85,7 @@ def fetch_data():
         if "Free Valet Parking" in address[-1]:
             del address[-1]
         if len(address) != 1:
-            # print(address)
+            # logger.info(address)
             if len(address[1].split(",")) != 2:
                 address[0] = " ".join(address[0:2])
                 del address[1]
@@ -99,7 +104,7 @@ def fetch_data():
                 state = address[-1].split(",")[0]
                 city = address[0].split(",")[-1]
                 address1 = address[0].split(",")[0]
-                # print(address[0].split(",")[0])
+                # logger.info(address[0].split(",")[0])
             else:
                 address1 = address[0]
                 city = address[-1].split(",")[0]
@@ -107,7 +112,7 @@ def fetch_data():
             if address[0] in addresses123:
                 continue
             addresses123.append(address[0])
-            # print(address)
+            # logger.info(address)
             hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).split("Happy Hour")[0]
             if "Wake" in hours:
                 hours = hours[:hours.find("Wake")].strip()
@@ -116,17 +121,17 @@ def fetch_data():
             except:
                 phone = "<MISSING>"
         else:
-            # print(page_url)
+            # logger.info(page_url)
             state = address[-1].split(",")[-1]
             city = address[-1].split(",")[0]
-            # print(address[-1].split(",")[0])
+            # logger.info(address[-1].split(",")[0])
             try:
                 hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings))
                 if "Wake" in hours:
                     hours = hours[:hours.find("Wake")].strip()
             except:
                 hours = "<MISSING>"
-            # print(hours)
+            # logger.info(hours)
             phone = location_soup.find("p",{'class':"phone"}).text.strip()
 
         store = []
@@ -146,7 +151,7 @@ def fetch_data():
         store.append(page_url)
         yield store
         # # return_main_object.append(store)
-        # print(store)
+        # logger.info(store)
    
                 
 

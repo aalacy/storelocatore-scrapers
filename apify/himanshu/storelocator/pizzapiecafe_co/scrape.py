@@ -5,6 +5,11 @@ import re
 import json
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pizzapiecafe_co')
+
+
 
 
 
@@ -70,13 +75,13 @@ def fetch_data():
         latitude = z['latitude']
         longitude = z['longitude']
         hours_of_operation = "Mon-Thu " +" " +z['open']['weekday'] + "- " + z['close']['weekday']+"   "+"Fri-sat " +z['open']['weekday']+" - "+z['close']['friday']+"    "+"Sun "+ z['open']['sunday']+" - "+z['close']['sunday']
-        # print(hours_of_operation)
+        # logger.info(hours_of_operation)
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
 
-        print("data = " + str(store))
-        print(
+        logger.info("data = " + str(store))
+        logger.info(
             '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

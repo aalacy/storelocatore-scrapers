@@ -5,6 +5,11 @@ import re
 import json
 import time
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('brightnow_com')
+
+
 
 
 session = SgRequests()
@@ -105,7 +110,7 @@ def fetch_data():
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            # print(store)
+            # logger.info(store)
 
 
 def scrape():

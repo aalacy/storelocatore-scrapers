@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('seat_co_uk')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -29,13 +34,13 @@ def fetch_data():
     base_url = "https://www.seat.co.uk"
     while zip_code:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         soup = bs(session.get("https://dealersearch.seat.com/xml?app=seat-gbr&max_dist=0&city="+str(zip_code)+"&_=1591338622355").content, "lxml")
         current_results_len = len(soup.find_all("partner"))
         for data in soup.find_all("partner"):
             
             location_name = data.find_all("name")[1].text
-            # print(location_name)
+            # logger.info(location_name)
             
             street_address = data.find("street").text
             city = data.find("city").text
@@ -116,14 +121,14 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print(store)
+            # logger.info(store)
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

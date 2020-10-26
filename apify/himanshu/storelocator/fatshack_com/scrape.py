@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fatshack_com')
+
+
 
 
 
@@ -42,7 +47,7 @@ def fetch_data():
             else:
                 # time.append()
                 time.append(" ".join(list(hours1.stripped_strings)[1:]).replace("Â","").replace("â","").replace("\xa0",""))
-                # print(time.encode('\x80','replace'))
+                # logger.info(time.encode('\x80','replace'))
         for phone in phones:
             if len(phone.text.split(',')) ==1:
                 phone_no.append(phone.text.split(',')[0])

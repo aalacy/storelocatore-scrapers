@@ -6,6 +6,11 @@ import json
 from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('billskhakis_com')
+
+
 
 
 session = SgRequests()
@@ -31,14 +36,14 @@ def fetch_data():
     count = int(soup.find("a",{'class':"last"}).text.strip())
     for i in range(1,count + 1):
         geo_object = []
-        # print("https://www.billskhakis.com/store-locator/search?distance=5000&near=11756&p=" + str(i))
+        # logger.info("https://www.billskhakis.com/store-locator/search?distance=5000&near=11756&p=" + str(i))
         while True:
             try:
                 driver.get("https://www.billskhakis.com/store-locator/search?distance=5000&near=11756&p=" + str(i))
                 time.sleep(2)
                 temp_soup = BeautifulSoup(driver.page_source,"lxml")
                 time.sleep(2)
-                # print("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
+                # logger.info("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
                 geo_request = session.get("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
                 for geo_details in geo_request.text.split("createMarker(")[1:]:
                     lat = geo_details.split("lat:")[1].split(",")[0].replace('"',"")
@@ -107,7 +112,7 @@ def fetch_data():
             del geo_object[0]
             store.append("<MISSING>")
             store.append("https://www.billskhakis.com/store-locator/search?distance=5000&near=11756&p=" + str(i))
-            # print(store)
+            # logger.info(store)
             yield store
 
 def scrape():

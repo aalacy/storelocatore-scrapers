@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thelittlebeet_com')
+
+
 
 
 def write_output(data):
@@ -26,10 +31,10 @@ def fetch_data():
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'location__body'})
 
@@ -37,7 +42,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "thelittlebeet.com"
 		location_name = item.find('h2').text.strip()
-		print (location_name)
+		logger.info(location_name)
 		raw_data = str(item.find('div', attrs={'class': 'sqs-block-content'}).p).replace("<p>","").replace("</p>","").split('<br/>')
 		if len(raw_data) > 2:			
 			street_address = (raw_data[0][raw_data[0].find(">") +1 :] + " " + raw_data[1]).replace("&amp;","&").replace("  "," ")

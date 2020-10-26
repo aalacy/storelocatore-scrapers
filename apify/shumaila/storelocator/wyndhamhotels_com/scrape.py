@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wyndhamhotels_com')
+
+
 
 
 def write_output(data):
@@ -30,67 +35,67 @@ def fetch_data():
     for repo in repo_list:
         link = repo.find('a')
         link = "https://www.wyndhamhotels.com"+ link['href']
-        print(link)
+        logger.info(link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         ddiv = soup.find('div', {'class': 'property-info'})
-        #print(ddiv)
+        #logger.info(ddiv)
         soup = str(soup)
         start = soup.find('overview_propertyId')
         start = soup.find("=",start) + 3
         end = soup.find(";", start)
         store = soup[start:end-1]
-        print(store)
+        logger.info(store)
         start = soup.find('property_country_code')
         start = soup.find("=", start) + 3
         end = soup.find(";", start)
         ccode = soup[start:end - 1]
-        print(ccode)
+        logger.info(ccode)
         start = soup.find("@context")
         start = soup.find("name",start)
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         title = soup[start:end - 1]
-        print(title)
+        logger.info(title)
         start = soup.find("streetAddress")
         start = soup.find(":",start)+2
         end = soup.find(",", start)
         street = soup[start:end - 1]
-        print(street)
+        logger.info(street)
         start = soup.find("addressLocality")
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         city = soup[start:end - 1]
-        print(city)
+        logger.info(city)
         start = soup.find("addressRegion")
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         state = soup[start:end - 1]
-        print(state)
+        logger.info(state)
         start = soup.find("postalCode")
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         pcode = soup[start:end - 1]
-        print(pcode)
+        logger.info(pcode)
         start = soup.find("latitude")
         start = soup.find(":", start) + 1
         end = soup.find(",", start)
         lat = soup[start:end - 1]
-        print(lat)
+        logger.info(lat)
         start = soup.find("longitude")
         start = soup.find(":", start) +1
         end = soup.find("}", start)
         longt = soup[start:end - 1]
         longt = re.sub("\r","",longt)
         longt = re.sub("\n", "", longt)
-        print(longt)
+        logger.info(longt)
         start = soup.find("telephone")
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         phone = soup[start:end - 1]
         if len(phone) > 16:
             phone = "<MISSING>"
-        print(phone)
+        logger.info(phone)
 
         if ccode == "US" or ccode == "CA":
             data.append([

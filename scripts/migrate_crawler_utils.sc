@@ -52,6 +52,20 @@ def insert_this_after(file_path: os.Path, insert: String, after_last: String): U
 def insert_import(python_file: os.Path, import_line: String): Unit =
     insert_this_after(python_file, s"\n${import_line}\n", "import")
 
+
+def insert_in_reqs(reqs_file: os.Path, requirement: String): Unit = {
+    val reqfile = File(reqs_file.toString)
+    val old_string = reqfile.contentAsString
+    val new_content = s"${old_string}\n${requirement}\n".replaceAll("\n+", "\n")
+    reqfile overwrite new_content
+}
+
+def delete_from_reqs(reqs_file: os.Path, requirement_fragment: String): Unit = {
+    val reqfile = File(reqs_file.toString)
+    val new_reqs = reqfile.lines.filterNot(_.contains(requirement_fragment)).reduce(_ + "\n" + _)
+    reqfile.overwrite(new_reqs)
+}
+
 lazy val sg_dir = pwd / up
 
 lazy val all_scrapers = all_authors(sg_dir) flatMap all_scrapers_from_author

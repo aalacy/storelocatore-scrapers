@@ -7,6 +7,11 @@ import sgzip
 from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thomassabo_com')
+
+
 
 
 
@@ -69,7 +74,7 @@ def fetch_data():
     base_url = "https://www.thomassabo.com"
     while coord:
         result_coords = []
-        # print(coord)
+        # logger.info(coord)
         # ul="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat=40.7876&lng=-74.06&filterBy="
         f = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=" + \
             str(MAX_DISTANCE) + "&lat=" + \
@@ -82,7 +87,7 @@ def fetch_data():
 
         # soup= BeautifulSoup(r.text,"lxml")
         # k = json.loads(soup)
-        # print(soup)
+        # logger.info(soup)
         # url ="https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius"+str(MAX_DISTANCE)+"&searchPhrase=10009&searchDistance=50&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
         # try:
         #     r = session.get(ulr1).json()
@@ -104,7 +109,7 @@ def fetch_data():
                     country_code = "CA"
                 else:
                     continue
-                #print(country_code)
+                #logger.info(country_code)
                 name = loc['name'].strip()
                 address = loc['address1'].strip()
                 city = loc['city'].strip()
@@ -124,16 +129,16 @@ def fetch_data():
                     else:
                         continue
                 else:
-                    # print(loc)
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # logger.info(loc)
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                     zipp = "<MISSING>"
-                # print(zipp, country_code)
+                # logger.info(zipp, country_code)
                 try:
                     hours = BeautifulSoup(loc["storeHours"], "lxml")
                     list_hours = list(hours.stripped_strings)
                     hour = " ".join(list_hours).strip()
-                    # print(hour)
+                    # logger.info(hour)
                 except:
                     hour = "<MISSING>"
 
@@ -163,15 +168,15 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-                # print("data====" + str(store))
-                # print(
+                # logger.info("data====" + str(store))
+                # logger.info(
                 #     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

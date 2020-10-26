@@ -5,6 +5,11 @@ import requests
 from lxml import etree
 import json
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jimmassey_com')
+
+
 
 
 base_url = 'http://www.jimmassey.com'
@@ -106,7 +111,7 @@ def fetch_data():
         output.append(get_value(store['latitude'])) #latitude
         output.append(get_value(store['longitude'])) #longitude        
         output.append(get_value(store_hours).replace('Hours:', '')) #opening hours
-        print(output)
+        logger.info(output)
         output_list.append(output)
     return output_list
 

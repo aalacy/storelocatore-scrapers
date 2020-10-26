@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 import requests
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('examone_com')
+
+
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -18,7 +23,7 @@ def write_output(data):
 def fetch_data():
     stores = []
     for code in sgzip.for_radius(100):
-        print(('Pulling Zip %s...' % code))
+        logger.info(('Pulling Zip %s...' % code))
         url = 'https://www.examone.com/locations/?zipInput=' + code + '&dist=100&submit=find+locations'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

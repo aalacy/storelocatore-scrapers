@@ -4,6 +4,11 @@ import re
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('scooterscoffee_com')
+
+
 
 URL = "https://scooterscoffee.com/"
 
@@ -63,7 +68,7 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['id'] not in self.seen:
-                print(f"Getting information for: {store['permalink']}")
+                logger.info(f"Getting information for: {store['permalink']}")
 
                 # Store ID
                 location_id = store['id']

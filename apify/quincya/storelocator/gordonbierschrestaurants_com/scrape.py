@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gordonbierschrestaurants_com')
+
+
 
 
 def write_output(data):
@@ -28,8 +33,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -40,7 +45,7 @@ def fetch_data():
 		raw_data = item.text.split("\n")
 
 		location_name = item.h5.text
-		print(location_name)
+		logger.info(location_name)
 		
 		raw_address = item.p.text
 		city = location_name
@@ -67,8 +72,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.find(class_="css-nsigw3 eh6u8tz2").find_all('p')
 
@@ -77,7 +82,7 @@ def fetch_data():
 			break
 		if "strong" in str(item):
 			location_name = item.text
-			print(location_name)
+			logger.info(location_name)
 		
 			raw_address = items[i+1].text
 			city = raw_address.split(",")[-2].strip()

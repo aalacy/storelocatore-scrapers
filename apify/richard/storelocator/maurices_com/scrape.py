@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maurices_com')
+
+
 
 URL = "https://www.maurices.com/"
 
@@ -37,13 +42,13 @@ class Scraper(Scrape):
         country_urls = ['https://locations.maurices.com/ca', 'https://locations.maurices.com/us']
 
         for url in country_urls:
-            print(f"Getting info for {url}")
+            logger.info(f"Getting info for {url}")
             driver.get(url)
             state_data = [state_url.get_attribute('href') for state_url in driver.find_elements_by_css_selector('a.Directory-listLink')]
             state_urls.extend(state_data)
 
         for state_url in state_urls:
-            print(f"Getting info for {state_url}")
+            logger.info(f"Getting info for {state_url}")
             driver.get(state_url)
             stores.extend([city.get_attribute('href') for city in driver.find_elements_by_css_selector('a.Directory-listLink') if city.get_attribute('data-count') == '(1)'])
             multi_stores = [city.get_attribute('href') for city in driver.find_elements_by_css_selector('a.Directory-listLink') if city.get_attribute('data-count') != '(1)']
@@ -61,7 +66,7 @@ class Scraper(Scrape):
         )
 
         for store in stores:
-            print(f"Getting details for {store}")
+            logger.info(f"Getting details for {store}")
             driver.get(store)
 
             # Store ID

@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('giovannispizzapower_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -67,7 +72,7 @@ def fetch_data():
         location_type = '<MISSING>'
         store_number = '<MISSING>'
 
-        print(link)
+        logger.info(link)
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]

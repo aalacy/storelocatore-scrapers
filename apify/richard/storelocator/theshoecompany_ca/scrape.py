@@ -3,6 +3,11 @@ import requests
 
 from pypostalcode import PostalCodeDatabase
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('theshoecompany_ca')
+
+
 
 URL = "https://www.theshoecompany.ca"
 
@@ -59,7 +64,7 @@ class Scraper(Scrape):
             r = requests.get('https://www.theshoecompany.ca/api/v1/stores/search', headers=headers, params=params)
             data = json.loads(r.content)['Response']['sortedlist'].values()
             stores.extend(data)
-            print(f'{len(data)} locations scraped for postal code {postalcode}')
+            logger.info(f'{len(data)} locations scraped for postal code {postalcode}')
 
 
         for store in stores:

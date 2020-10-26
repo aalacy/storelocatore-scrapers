@@ -5,6 +5,11 @@ import json
 from selenium.webdriver.support.ui import Select
 import time
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lafitness_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -64,10 +69,10 @@ def fetch_data():
                 
     all_store_data = []
     for link in link_list:
-        print(link)
-        print()
-        print()
-        print()
+        logger.info(link)
+        logger.info()
+        logger.info()
+        logger.info()
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         

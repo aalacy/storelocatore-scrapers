@@ -4,6 +4,11 @@ import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('michaelkors_com')
+
+
 
 
 URL = "https://www.michaelkors.com/"
@@ -46,13 +51,13 @@ class Scraper(Scrape):
             except:
                 data = []
             stores.extend(data)
-            print(f"{len(data)} locations received for zipcode: {zip_search}")
+            logger.info(f"{len(data)} locations received for zipcode: {zip_search}")
 
         for store in stores:
             if store['url'] not in self.seen and store['url'].split('/')[0] in ['us', 'ca']:
                 url = "https://locations.michaelkors.com/" + store['url']
                 driver.get(url)
-                print(f"Getting data for {url}")
+                logger.info(f"Getting data for {url}")
 
                 # Location ID
                 location_id = store['id']

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('threebearsalaska_com')
+
+
 
 
 
@@ -34,7 +39,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -53,12 +58,12 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = ""
 
-    # print("soup ==== " + str(soup))
+    # logger.info("soup ==== " + str(soup))
 
     for script in soup.find('li', {'id': 'menu-item-5072'}).find_all('a'):
         # list_address = list(script.stripped_strings)
         if script['href'] != '#':
-            # print("script ===== " + str(script['href']))
+            # logger.info("script ===== " + str(script['href']))
             location_url = script['href']
             r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -104,7 +109,7 @@ def fetch_data():
             else:
                 full_address = ",".join(list_address)
 
-            # print("list_address ==== " + str(full_address))
+            # logger.info("list_address ==== " + str(full_address))
 
             if not full_address.find('https://') >= 0:
                 if len(full_address.split(',')[-1].strip().split(' ')) > 1:
@@ -145,8 +150,8 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

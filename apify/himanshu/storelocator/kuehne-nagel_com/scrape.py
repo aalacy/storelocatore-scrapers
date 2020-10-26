@@ -3,6 +3,11 @@ import re
 from  sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kuehne-nagel_com')
+
+
 session = SgRequests()
 base_url = 'http://kuehne-nagel.com'
 
@@ -57,7 +62,7 @@ def fetch_data():
                 store.append(hours)
                 store.append(url)
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print(store)
+                # logger.info(store)
                 yield store
         elif index==1:
             soup = BS(session.get(url).text, "lxml")
@@ -71,7 +76,7 @@ def fetch_data():
                             hours_of_operation = " ".join(list(dt.find("p",{"class":"location__hours text-14 mb-0"}).stripped_strings))
                         except:
                             hours_of_operation=''
-                        # print(hours_of_operation)
+                        # logger.info(hours_of_operation)
                         zipp = adr[1].split()[0]
                         city = " ".join(adr[1].split()[1:])
                         street_address = adr[0]
@@ -92,7 +97,7 @@ def fetch_data():
                         store.append(hours_of_operation.replace("\r","").replace("\n","").replace("\t","").replace("Mo  Fr:","Mo-Fr"))
                         store.append("<MISSING>")
                         store = [str(x).replace("\n",'').replace("\r",'').replace("–","-") if x else "<MISSING>" for x in store]
-                        # print(store)
+                        # logger.info(store)
                         yield store
         
 def scrape():

@@ -18,6 +18,11 @@ session = SgRequests()
 
 
 # import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petermillar_com')
+
+
 
 
 def write_output(data):
@@ -27,7 +32,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -93,7 +98,7 @@ def fetch_data():
     cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(
         ",", ";")
 
-    # print(cookies_string)
+    # logger.info(cookies_string)
 
     headers = {
         'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -116,10 +121,10 @@ def fetch_data():
             if "https://www.petermillar.com/f/store-locator/dallas-tx-peter-millar-mens-clothing-store.html" in link['href']:
                 data2 = s.get(link['href'], headers=headers)
                 page_url1.append(link['href'])
-                # print("https://www.petermillar.com"+link['href'])
+                # logger.info("https://www.petermillar.com"+link['href'])
                 # soup2 = BeautifulSoup(driver.page_source, "lxml")
                 soup3 = BeautifulSoup(data2.text, "lxml")
-                # print(soup3.find_all("div",{"class":"col col-text"})[1])
+                # logger.info(soup3.find_all("div",{"class":"col col-text"})[1])
                 add.append(soup3.find_all("div", {"class": "col col-text"})[
                            1].text.strip().replace("(", "").replace(")", "").replace(" ", "").replace(".", "").replace("-", "").strip())
                 hours.append(soup3.find_all(
@@ -128,7 +133,7 @@ def fetch_data():
                 data2 = s.get("https://www.petermillar.com" +
                               link['href'], headers=headers)
                 page_url1.append("https://www.petermillar.com" + link['href'])
-                # print("https://www.petermillar.com"+link['href'])
+                # logger.info("https://www.petermillar.com"+link['href'])
                 # soup2 = BeautifulSoup(driver.page_source, "lxml")
                 soup2 = BeautifulSoup(data2.text, "lxml")
                 add.append(soup2.find_all("div", {"class": "col col-text"})[
@@ -136,8 +141,8 @@ def fetch_data():
                 hours.append(soup2.find_all(
                     "div", {"class": "col col-text"})[-1].text.strip())
 
-    # print("----------------hours-----",hours)
-    # print("---------------add------",add)
+    # logger.info("----------------hours-----",hours)
+    # logger.info("---------------add------",add)
     # exit()
     r = session.get(
         'https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/2295/stores.js?callback=SMcallback2', headers=headers)
@@ -146,11 +151,11 @@ def fetch_data():
     json_data = json.loads(script)
     for x in json_data['stores']:
         # if x['url']:
-            # print(x['url'])
+            # logger.info(x['url'])
         latitude = x['latitude']
         longitude = x['longitude']
         country_name = getplace(latitude, longitude)
-        # print("country_name === "+str(country_name))
+        # logger.info("country_name === "+str(country_name))
         if "United States of America" != country_name and "Canada" != country_name:
             continue
         else:
@@ -158,17 +163,17 @@ def fetch_data():
             page_url2 = ''
             for q in range(len(hours)):
                 if x['phone'] != None:
-                    # print(x['phone'].replace("(","").replace(")","").replace(" ","-"))
-                    # print("------------------======================")
+                    # logger.info(x['phone'].replace("(","").replace(")","").replace(" ","-"))
+                    # logger.info("------------------======================")
                     if x['phone'].strip().replace("(", "").replace(")", "").replace(" ", "").replace(".", "").replace("-", "").strip() == add[q].strip():
-                        # print(x['phone'].strip().replace("(", "").replace(")", "").replace(
+                        # logger.info(x['phone'].strip().replace("(", "").replace(")", "").replace(
                         #     " ", "").replace(".", "").replace("-", "").strip() + " " + add[q].strip())
-                        # print(page_url1[q])
-                        # print("~~~~~~~~~~~~~~~")
+                        # logger.info(page_url1[q])
+                        # logger.info("~~~~~~~~~~~~~~~")
                         hours_of_operation = hours[q].replace(
                             "Store Manager: Lachan Medley", "Mon - Fri: 9 am - 6 pm, Sat: 9 am - 5 pm, Sun: 1 pm - 5 pm Christmas Eve: 9 am - 3 pm Christmas Day: Closed December 26th: Closed  New Year's Eve: 9 am - 3 pm New Year's Day: Closed")
                         page_url2 = page_url1[q]
-            # print(x['address'].strip())
+            # logger.info(x['address'].strip())
             store_number = x['id']
             location_name = x['name'].replace(
                 '&AMP;', 'and').replace('(', '').capitalize()
@@ -184,7 +189,7 @@ def fetch_data():
                 zipp = ca_zip_list[0]
                 country_code = "CA"
             else:
-                # print("country_name === "+str(country_name))
+                # logger.info("country_name === "+str(country_name))
                 if "United States of America" == country_name:
                     zipp = "<MISSING>"
                     country_code = "US"
@@ -192,8 +197,8 @@ def fetch_data():
                     zipp = "<MISSING>"
                     country_code = "CA"
 
-            # print(zipp,country_code)
-            # print('~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(zipp,country_code)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~')
 
             address = x['address'].split(',')
             if " United States" in address:
@@ -207,7 +212,7 @@ def fetch_data():
                 city = address[3]
                 state = address[-2]
 
-                # print(state)
+                # logger.info(state)
 
             elif len(address) == 5:
                 if " Vero Beach" not in address:
@@ -226,16 +231,16 @@ def fetch_data():
                     street_address = address[0].replace(
                         'Inwood Village', '').replace('Town Square', '').strip()
                     city = address[1]
-                    # print(address[-2])
+                    # logger.info(address[-2])
                     state_list = re.findall(
                         r' ([A-Z]{2}) ', str(" ".join(address[1:]).strip()))
                     if state_list == []:
                         state = address[-1].strip()
-                        # print(address)
+                        # logger.info(address)
 
                     else:
                         state = "".join(state_list).strip()
-                    # print(state)
+                    # logger.info(state)
                 else:
                     street_address = " ".join(address[:2])
                     city = address[2]
@@ -254,8 +259,8 @@ def fetch_data():
                     state = address[-1].split()[0]
 
             elif len(address) == 2:
-                # print(address)
-                # print(len(address))
+                # logger.info(address)
+                # logger.info(len(address))
                 street_address = address[0].replace('\n', ' ').replace('Greenville', '').replace('Huntsville', '').replace(
                     'Chestnut Hill', '').replace('Palm Desert', '').replace('S Tifton', '').replace('Atlantic City', '').strip()
                 city = " ".join(address[0].split()[-2:]
@@ -268,8 +273,8 @@ def fetch_data():
                     city = st_address[-1].split()[0]
                     state = st_address[-1].split()[1]
                     zipp = st_address[-1].split()[-1]
-                    # print(street_address +" | "+city+ " | "+state+" | "+zipp+ " | "+country_code)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info(street_address +" | "+city+ " | "+state+" | "+zipp+ " | "+country_code)
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 else:
                     street_address = " ".join(st_address)
                     if "Scottsdale" in street_address:
@@ -278,8 +283,8 @@ def fetch_data():
                         city = "<MISSING>"
                     state = "<MISSING>"
                     zipp = "<MISSING>"
-                # print(street_address +" | "+city+ " | "+state+" | "+zipp+ " | "+country_code)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info(street_address +" | "+city+ " | "+state+" | "+zipp+ " | "+country_code)
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             street_address = street_address.replace(
                 '>', '').capitalize().strip()
 
@@ -299,9 +304,9 @@ def fetch_data():
         if street_address in addresses:
             continue
         addresses.append(street_address)
-        # print(state)
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info(state)
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

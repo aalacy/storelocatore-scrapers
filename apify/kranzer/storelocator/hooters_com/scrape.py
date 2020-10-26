@@ -11,6 +11,11 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import etree
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hooters_com')
+
+
 urls = []
 crawled = set()
 

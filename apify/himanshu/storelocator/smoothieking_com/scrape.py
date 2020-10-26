@@ -7,6 +7,11 @@ import json
 import sgzip
 import time 
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smoothieking_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -85,8 +90,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             
-            # print("data ==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``````")
+            # logger.info("data ==="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``````")
             yield store 
         page+=1
 

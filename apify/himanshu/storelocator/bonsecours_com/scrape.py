@@ -5,6 +5,11 @@ import re
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bonsecours_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -55,12 +60,12 @@ def fetch_data():
             r1 = session.get(page_url,headers=headers)
             soup_loc = BeautifulSoup(r1.text,"lxml")
             phone = link['Location']['Phone']
-            # print(page_url)
+            # logger.info(page_url)
             try:
                 hours_of_operation =" ".join(list(soup_loc.find("div",class_="col w-100 w-sm-50 w-md-100 w-xl-50 py3 small bl").stripped_strings))
             except:
                 hours_of_operation="<MISSING>"
-            # print(hours_of_operation)
+            # logger.info(hours_of_operation)
             longitude = link['Location']['Latitude']
             latitude = link['Location']['Longitude']
             store =[]
@@ -74,13 +79,13 @@ def fetch_data():
                 continue
             addressess123.append(str(store[2]+store[-5]))
             yield store
-            #print(store)
+            #logger.info(store)
             
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

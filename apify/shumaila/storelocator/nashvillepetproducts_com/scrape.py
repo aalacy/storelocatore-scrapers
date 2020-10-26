@@ -4,6 +4,11 @@ import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('nashvillepetproducts_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -41,10 +46,10 @@ def fetch_data():
             title = store.find('h1').text          
           
             if store.find('div',{'class':'elementor-text-editor'}).text.find('Address') == -1:
-                #print("No")
+                #logger.info("No")
                 pass
             else:
-                #print("YES")               
+                #logger.info("YES")               
                 l = store.find('p').text 
                 page_url = "http://nashvillepetproducts.com/locations/"
                 info = store.find('div',{'class':'elementor-text-editor'})
@@ -110,11 +115,11 @@ def fetch_data():
                       hours
                     ])
                 
-                    #print(p,data[p])
+                    #logger.info(p,data[p])
                     p += 1
             
         except Exception as e:
-            #print(e)
+            #logger.info(e)
             pass
            
 

@@ -5,6 +5,11 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('takinittothepump_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,7 +42,7 @@ def fetch_data():
     
     soup1 =BeautifulSoup(r1.text, "html.parser")
     divlist1 = soup1.findAll('div', {'class': 'locations'})
-    #print(soup)
+    #logger.info(soup)
     divlist = soup.findAll('marker')
     for div in divlist:
        
@@ -86,9 +91,9 @@ def fetch_data():
         phone =  cleanr.sub(' ', str(phone))
         phone = phone[phone.find(':')+1:len(phone)]
         phone = phone.strip()
-        print(title,phone)
+        logger.info(title,phone)
         data.append(['https://takinittothepump.com/','https://takinittothepump.com/location.php', title, street, city, state, pcode, 'US', store, phone, '<MISSING>', lat, longt, '<MISSING>'])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
 
@@ -100,9 +105,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

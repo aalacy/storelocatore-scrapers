@@ -10,6 +10,11 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('nygard_com')
+
+
 
 def get_driver():
     options = Options()
@@ -100,14 +105,14 @@ def fetch_data():
                     data_record['hours_of_operation'] = '<MISSING>'
                     data_record['page_url'] = '<MISSING>'
                     data.append(data_record)
-                    #print(len(data))
+                    #logger.info(len(data))
                     
             else:        
                 for sss in range(len(stores)):
                     add_ph = stores[sss].text.split("\n")
                     add_ph = [a.strip() for a in add_ph]
                     add_ph =  list(filter(None,add_ph))
-                    #print(add_ph)
+                    #logger.info(add_ph)
                     p_list = []
                     phone = add_ph[-1]
                     for p in phone:
@@ -133,7 +138,7 @@ def fetch_data():
     
                     street_address =','.join(add_ph)
                     #if street_address == 'NAIN                , NL':
-                        #print( list(filter(None,stores[sss].text.split("\n"))))
+                        #logger.info( list(filter(None,stores[sss].text.split("\n"))))
                     #    break
                     zipcode = '<MISSING>'
                     if "nyg" in location_name.lower():

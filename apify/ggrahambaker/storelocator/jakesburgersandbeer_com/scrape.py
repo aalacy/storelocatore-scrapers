@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jakesburgersandbeer_com')
+
+
 
 session = SgRequests()
 
@@ -46,15 +51,15 @@ def fetch_data():
         zip_code = addy_info_rest[2]
         
         hours_temp = content.find('p', {'class': 'hours'})
-        # print(hours_temp.text.strip().split('\n'))
+        # logger.info(hours_temp.text.strip().split('\n'))
         hours = ''
         for hour in hours_temp.text.strip().split('\n'):
             h = hour.replace('\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t', '')
             hours += h + ' '
             
-        # print(hours)
+        # logger.info(hours)
         phone_temp = content.find('p', {'class': 'phone'})
-        #print(phone_temp.text.strip())
+        #logger.info(phone_temp.text.strip())
         phone_number = phone_temp.text.strip()
         
         country_code = 'US'

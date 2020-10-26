@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('firstwatch_com')
+
+
 
 session = SgRequests()
 
@@ -14,7 +19,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -55,11 +60,11 @@ def fetch_data():
             location_list = r.json()
         except:
             continue
-        # print('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]))
+        # logger.info('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]))
         if location_list != []:
 
             for location in location_list:
-                # print(location['zip'])
+                # logger.info(location['zip'])
                 # us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(location['zip']))[0]
                 # ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(location['zip']))[0]
                 # if location['zip'] not in[us_zip_list,ca_zip_list]:
@@ -74,7 +79,7 @@ def fetch_data():
                     city = location['city']
                     state = location['state']
                     zipp = location['zip']
-                    print(zipp)
+                    logger.info(zipp)
                     latitude = location['latitude']
                     longitude = location['longitude']
                     phone = location['phone']
@@ -83,8 +88,8 @@ def fetch_data():
                     # if "OPEN NOW" not in location['open'] and 'open' not in location['open']  and "CLOSED" not in location['open']:
 
                     #     hours_of_operation = location['open'].replace('@','at')
-                    #     # print(hours_of_operation)
-                    #     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #     # logger.info(hours_of_operation)
+                    #     # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     # else:
                     #     hours_of_operation = "<MISSING>"
 
@@ -97,8 +102,8 @@ def fetch_data():
                         hours_of_operation = h1 + " "+h2
                     else:
                         hours_of_operation = "<MISSING>"
-                    # print(hours_of_operation)
-                    # print('~~~~~~~~~~~~~~')
+                    # logger.info(hours_of_operation)
+                    # logger.info('~~~~~~~~~~~~~~')
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                     store = ["<MISSING>" if x == "" or x == None else x for x in store]
@@ -106,8 +111,8 @@ def fetch_data():
                         continue
                     addresses.append(street_address)
 
-                    #print("data = " + str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #logger.info("data = " + str(store))
+                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                     return_main_object.append(store)
                 except:

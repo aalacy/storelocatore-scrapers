@@ -5,6 +5,11 @@ import re
 import io
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('applebeescanada_com')
+
+
 
 
 
@@ -35,8 +40,8 @@ def fetch_data():
     for data in exists.findAll('a'):
         if data.get('href') == '' or data.get('href') is None:
             state = data.get_text().strip()
-            # print(state)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(state)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         else:
             data_url = "http://www.applebeescanada.com" + data.get('href')
             page_url = data_url
@@ -48,7 +53,7 @@ def fetch_data():
                 address = detail_block.find('h5').get_text().strip().split(',')
                 street_address = ''.join(
                     address[:-1]).strip().replace('Calgary', '').replace('Alberta', '').strip()
-                # print(street_address)
+                # logger.info(street_address)
                 if address[0][0:2].isdigit():
                     city = address[-2]
                 elif "Sunridge Mall" in address[0]:
@@ -76,7 +81,7 @@ def fetch_data():
                     else:
                         hours_of_operation = hours.replace(
                             ', Name: Peter Ennis', '').replace('&', 'to').strip()
-                # print(hours_of_operation)
+                # logger.info(hours_of_operation)
                 store = []
                 store.append("http://www.applebeescanada.com")
 
@@ -96,9 +101,9 @@ def fetch_data():
                 store.append(page_url)
                 store = [str(x).encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
-                # print(store[-2])
-                # print("data == " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info(store[-2])
+                # logger.info("data == " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 return_main_object.append(store)
             else:
                 pass

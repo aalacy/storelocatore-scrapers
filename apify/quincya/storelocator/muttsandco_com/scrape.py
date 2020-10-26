@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('muttsandco_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -36,7 +41,7 @@ def fetch_data():
 		base = BeautifulSoup(req.text,"lxml")
 
 		location_name = "Mutts & Co - " + base.h1.text.strip()
-		# print(link)
+		# logger.info(link)
 		
 		raw_address = str(base.find(class_="col-md-11")).replace("<br/","").replace("</div","").split(">")[1:-1]
 		street_address = raw_address[0].strip()

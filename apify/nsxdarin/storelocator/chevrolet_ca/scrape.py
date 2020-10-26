@@ -1,5 +1,10 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chevrolet_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -24,7 +29,7 @@ def fetch_data():
               'Truro','Prince Rupert','Dawson Creek','St Amable','Les Iles de la Madeleine','Bathurst','Whistler','Brighton','Lloydminster (Part)','Gander','Sidney','Rothesay','Terrace','Summerland','Val des Monts','Estevan','Erin','Kincardine','Montmagny','North Saanich','Mackenzie County','Rawdon','Warman','La Tuque','Meaford','Weyburn','South Dundas','LIle Perrot','Williams Lake','Elliot Lake','Marieville','Cantley','Notre Dame de lIle Perrot','Coldstream','Carleton Place','Lambton Shores','Nelson','View Royal','Queens','Selkirk','Hawkesbury','St Felicien','St Sauveur','Ste Agathe des Monts','St Raymond','Sechelt','Whitecourt','South Huron','Roberval','Ste Julienne','Temiskaming Shores','Hinton','Quesnel','Morinville','Moncton','Grey Highlands','Stratford','Mont Tremblant','Martensville','Bois des Filion','Carignan','Brockton','Amherst','Lorraine','Blackfalds','Notre Dame des Prairies','Pont Rouge','Oromocto','Olds','Huron East','St Hippolyte','New Glasgow','Bromont','Penetanguishene','Qualicum Beach','Farnham','West Perth','Arnprior','Smiths Falls','Coaticook','Minto','Morden','Mono','Ladysmith','Bridgewater','Dauphin','Taber','Otterburn Park','South Bruce Peninsula','Edson','Stoneham et Tewkesbury','Kapuskasing','La Malbaie','Renfrew','Coaldale','Nicolet','Portugal Cove St Philips','Kitimat','Shelburne','Happy Valley Goose Bay']
               
     for city in cities:
-        print(city)
+        logger.info(city)
         url = 'https://www.chevrolet.ca/OCRestServices/dealer/city/v1/chevrolet/' + city + '?distance=200&maxResults=25'
         r = session.get(url, headers=headers)
         website = 'chevrolet.ca'
@@ -66,7 +71,7 @@ def fetch_data():
                             hours = '<MISSING>'
                         if store not in sids:
                             sids.append(store)
-                            print(store)
+                            logger.info(store)
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

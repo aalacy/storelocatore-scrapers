@@ -7,6 +7,11 @@ from bs4 import BeautifulSoup
 import re
 # import unicodedata
 # import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fivestarseniorliving_com')
+
+
 
 
 session = SgRequests()
@@ -41,7 +46,7 @@ def fetch_data():
             page_url = "https://www.fivestarseniorliving.com"+loc[2].replace('"',"").replace('\\',"").strip()
         else:
             page_url = loc[2].replace('"',"").replace('\\',"").strip()
-        # print(page_url)
+        # logger.info(page_url)
         r1 = session.get(page_url,headers=headers)
         soup = BeautifulSoup(r1.text,"lxml") 
         try:
@@ -66,8 +71,8 @@ def fetch_data():
                 addresses.append(str(store[1]) + str(store[2]))
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         # except:

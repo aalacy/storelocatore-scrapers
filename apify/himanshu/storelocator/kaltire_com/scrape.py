@@ -6,6 +6,11 @@ import json
 import unicodedata
 import requests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kaltire_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -39,7 +44,7 @@ def fetch_data():
         hours = " ".join(list(soup1.find("div",{"class":"small-12 medium-6 columns store-hours"}).stripped_strings))
 
 
-        # print(soup1.find("p",{"class":"store-name"}))
+        # logger.info(soup1.find("p",{"class":"store-name"}))
       
         store = []
         location_type="<MISSING>"
@@ -62,8 +67,8 @@ def fetch_data():
         if store[2] in addressesess:
             continue
         addressesess.append(store[2])
-        # print("data == "+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("data == "+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
 
 def scrape():

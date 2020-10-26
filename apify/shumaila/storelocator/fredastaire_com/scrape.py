@@ -6,6 +6,11 @@ import json
 import usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fredastaire_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
     loclist = loclist +']'
     loclist = json.loads(loclist)
     for loc in loclist:
-        #print(loc)
+        #logger.info(loc)
         store = loc['id']
         title = loc['title']
         address = loc['address']
@@ -75,7 +80,7 @@ def fetch_data():
             phone = "<MISSING>"
         if ccode == "United States" and link.find('COMING SOON') == -1:
             data.append(['https://www.fredastaire.com/',link,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,"<MISSING>"])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
         
 

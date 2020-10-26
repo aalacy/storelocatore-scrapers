@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vim_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    logger.info("soup ===  first")
 
     base_url = "https://www.vim.com"
     r = session.get("https://www.vim.com/apps/store-locator", headers=headers)
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -56,7 +61,7 @@ def fetch_data():
         soup_location = script.split("});")[0]
 
         list_location = soup_location.split(",")
-        # print(str(len(list_location)) + " == list_locations ====== " + str(list_location))
+        # logger.info(str(len(list_location)) + " == list_locations ====== " + str(list_location))
 
         latitude = list_location[0].replace("lat:", "").strip()
         longitude = list_location[1].replace("lng:", "").strip()
@@ -75,7 +80,7 @@ def fetch_data():
             "&gt;", ">")
         sz_str_soup = BeautifulSoup(sz_str, "lxml")
         sz_str_list = list(sz_str_soup.stripped_strings)
-        # print("address == " + str(sz_str_list))
+        # logger.info("address == " + str(sz_str_list))
         if len(sz_str_list) > 1:
             state = sz_str_list[0]
             zipp = sz_str_list[1]
@@ -90,15 +95,15 @@ def fetch_data():
 
         phone = soup_phone_hour.find('span',{"class":"phone"}).text.split("Fax:")[0]
         hours_of_operation = soup_phone_hour.find('span',{"class":"phone"}).text.split("M-F:")[1].replace("\"}","")
-        # print("soup_location ===== "+str(soup_phone_hour))
-        # print("phone ===== "+phone)
-        # print("hours_of_operation ===== "+hours_of_operation)
+        # logger.info("soup_location ===== "+str(soup_phone_hour))
+        # logger.info("phone ===== "+phone)
+        # logger.info("hours_of_operation ===== "+hours_of_operation)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

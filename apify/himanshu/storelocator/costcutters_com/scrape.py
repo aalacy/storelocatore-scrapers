@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('costcutters_com')
+
+
 
 
 
@@ -87,8 +92,8 @@ def fetch_data():
         
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            #print("data===="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            #logger.info("data===="+str(store))
+            #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
 
        

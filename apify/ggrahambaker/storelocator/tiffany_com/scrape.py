@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tiffany_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -49,7 +54,7 @@ def fetch_data():
 
     locs = driver.find_elements_by_css_selector('div.store-list__store-item')
     link_list = []
-    print(len(locs))
+    logger.info(len(locs))
     for loc in locs:
         store_link = loc.find_element_by_css_selector('a.cta')
         link_list.append(store_link.get_attribute('href'))
@@ -58,10 +63,10 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        print(link)
-        print(i)
+        logger.info(link)
+        logger.info(i)
         location_name = driver.find_element_by_css_selector('h1.heading').text
-        print(location_name)
+        logger.info(location_name)
 
         addy = driver.find_element_by_css_selector('div.store-address').text.replace('\n', ' ')
         if 'Westfield Century City' in addy:
@@ -78,17 +83,17 @@ def fetch_data():
         else:
             street_address, city, state, zip_code = parse_address(addy)
 
-        print(street_address, city, state, zip_code)
+        logger.info(street_address, city, state, zip_code)
 
         hours = driver.find_element_by_css_selector('p.store-timings').text.replace('\n', ' ').strip()
-        print(hours)
+        logger.info(hours)
         phone_number = driver.find_element_by_css_selector('p.store-contact').find_element_by_css_selector(
             'a.tel-link').get_attribute('data-interaction-name').strip()
-        print(phone_number)
+        logger.info(phone_number)
 
         lat = driver.find_element_by_css_selector('tiffany-maps').get_attribute('markeratlat')
         longit = driver.find_element_by_css_selector('tiffany-maps').get_attribute('markeratlng')
-        print(lat, longit)
+        logger.info(lat, longit)
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'

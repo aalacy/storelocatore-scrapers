@@ -4,6 +4,11 @@ import string
 import re, time,json
 import usaddress
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('deliastamales_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +38,7 @@ def fetch_data():
     
     for loc in loclist:
         content = re.sub(pattern,'',loc.text)
-        #print(content)
+        #logger.info(content)
         title = content.split('Address:')[0]
         address= content.split('Address:')[1].split('Phone:')[0].replace('USA','')
         phone = content.split('Phone:')[1].split('«')[0]
@@ -77,7 +82,7 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
         #input()
                 
@@ -87,9 +92,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

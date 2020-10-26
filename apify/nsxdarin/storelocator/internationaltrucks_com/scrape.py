@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('internationaltrucks_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -19,20 +24,20 @@ def write_output(data):
 def post(url, headers, data, attempts=1): 
     global session
     if attempts == 10:
-        print(f'could not post after {attempts} tries, giving up')
+        logger.info(f'could not post after {attempts} tries, giving up')
         raise SystemExit
     try: 
         r = session.post(url, headers=headers, data=data)
         return r
     except Exception as ex:
-        print(f'exception getting {url}: {ex}')
+        logger.info(f'exception getting {url}: {ex}')
         session = SgRequests() 
         return post(url, headers, data, attempts+1)
 
 
 def fetch_data():
     locs = []
-    # print('Alaska')
+    # logger.info('Alaska')
     locstr = 'Anchorage, AK'
     payload = {"searchType":"Location",
                "searchValue":locstr,
@@ -89,7 +94,7 @@ def fetch_data():
                     if store not in locs:
                         locs.append(store)
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    # print('Hawaii')
+    # logger.info('Hawaii')
     locstr = 'Honolulu, HI'
     payload = {"searchType":"Location",
                "searchValue":locstr,
@@ -148,7 +153,7 @@ def fetch_data():
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(23, 50):
         for y in range(-63, -125, -1):
-            # print(str(x) + ', ' + str(y))
+            # logger.info(str(x) + ', ' + str(y))
             locstr = str(x) + ', ' + str(y)
             payload = {"searchType":"Location",
                        "searchValue":locstr,
@@ -212,7 +217,7 @@ def fetch_data():
 
     for x in range(40, 70):
         for y in range(-52, -141, -1):
-            # print(str(x) + ', ' + str(y))
+            # logger.info(str(x) + ', ' + str(y))
             locstr = str(x) + ', ' + str(y)
             payload = {"searchType":"Location",
                        "searchValue":locstr,

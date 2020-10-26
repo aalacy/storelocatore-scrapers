@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petco_com__unleashed')
+
+
 
 
 
@@ -33,8 +38,8 @@ def fetch_data():
     return_main_object = []
     addresss = []
     link = (soup.find_all("a", {"class": "gaq-link", "data-gaq": "List, Region"}))
-    # print(link)
-    # print(len(link))
+    # logger.info(link)
+    # logger.info(len(link))
     # exit()
 
     
@@ -52,26 +57,26 @@ def fetch_data():
             for q in details:
                 tem_var = [] 
                 page_url = q['href']
-                # print(page_url)
+                # logger.info(page_url)
                 r3 = session.get(q['href'], headers=headers)
                 soup3 = BeautifulSoup(r3.text, "html5lib")
                 json1 = json.loads(soup3.find(
                     "script", {"type": "application/ld+json"}).text)
-                # print(json1)
-            #     # print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+                # logger.info(json1)
+            #     # logger.info("+++++++++++++++++++++++++++++++++++++++++++++++++++")
                 if "Unleashed" in soup3.find("span", class_="location-name").text.strip():
 
                     location_name = soup3.find("span", class_="location-name").text.strip()
                     store_number = soup3.find("span", class_="store-number").text.replace("Store:", "").strip()
-                    # print(location_name)
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    # print("============================link", details)
+                    # logger.info(location_name)
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # logger.info("============================link", details)
                 
                     hours = " ".join(list(soup3.find("div", {"class": "hours"}).stripped_strings))
                     latitude = json1[0]['geo']['latitude']
                     longitude = json1[0]['geo']['longitude']
                     name = json1[0]['mainEntityOfPage']['breadcrumb']['itemListElement'][0]['item']['name']
-                    # print(json1[0]['address'])
+                    # logger.info(json1[0]['address'])
                     phone = json1[0]['address']['telephone']
                     st = json1[0]['address']['streetAddress']
                     city = json1[0]['address']['addressLocality']
@@ -96,8 +101,8 @@ def fetch_data():
                         continue
                     addresss.append(tem_var[2])
 
-                    # print("==", str(tem_var))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # logger.info("==", str(tem_var))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield tem_var
 
 

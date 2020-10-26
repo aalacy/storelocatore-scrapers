@@ -5,6 +5,11 @@ import re
 import json
 import usaddress as usd
 import collections as coll
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kungfutea_com')
+
+
 
 tm={
    'Recipient': 'recipient',
@@ -72,11 +77,11 @@ def fetch_data():
                     street_address_raw = value['streetaddress'].replace(" (Garage A Food Court Entrance)","")
                     addr_format = usd.tag(street_address_raw,tm)
                     addr = list(addr_format[0].items())
-                    # print(location_name)
-                    # print(usd.parse(street_address_raw))
-                    # print(addr)
-                    # print(idx)
-                    # print("================================")
+                    # logger.info(location_name)
+                    # logger.info(usd.parse(street_address_raw))
+                    # logger.info(addr)
+                    # logger.info(idx)
+                    # logger.info("================================")
             
                     street_address_ca = value['streetaddress'].replace(" (Garage A Food Court Entrance)","").split(" ")
                     if location_name == "Edmonton":

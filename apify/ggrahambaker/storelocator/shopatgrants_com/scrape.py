@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopatgrants_com')
+
+
 
 session = SgRequests()
 
@@ -44,11 +49,11 @@ def fetch_data():
             for addy in addy_info:
                 if addy.isupper() and len(addy) == 2:
                     state = addy
-                    #print(state)
+                    #logger.info(state)
                     break
                 else:
                     city += addy + ' '
-                    #print(city)
+                    #logger.info(city)
             #city = addy_info[0].replace(',','')
             #state = addy_info[1]
             
@@ -71,8 +76,8 @@ def fetch_data():
                     split_index = i
                 last = c
                 
-            #print(split_index)
-            #print(text[:split_index])
+            #logger.info(split_index)
+            #logger.info(text[:split_index])
             location_name = text[:split_index]
             street_address = text[:split_index]
             

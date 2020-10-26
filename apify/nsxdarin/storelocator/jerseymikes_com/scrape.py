@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jerseymikes_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,7 +28,7 @@ def fetch_data():
         url = 'https://www.jerseymikes.com/locations?search=' + code + '&page=1'
         while Found:
             try:
-                print(('Pulling Zip Code %s-%s...' % (code, str(pagenum))))
+                logger.info(('Pulling Zip Code %s-%s...' % (code, str(pagenum))))
                 Found = False
                 r = session.get(url, headers=headers)
                 if r.encoding is None: r.encoding = 'utf-8'

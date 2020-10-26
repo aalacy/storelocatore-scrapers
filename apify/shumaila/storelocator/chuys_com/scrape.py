@@ -5,6 +5,11 @@ import csv
 import string
 import re
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chuys_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,33 +41,33 @@ def fetch_data():
     pattern = re.compile(r'\s\s+')
     for repo in repo_list:
         link = "https://www.chuys.com" + repo['href']
-        #print(link)
+        #logger.info(link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("title").text
-        #print(title)
+        #logger.info(title)
         tempt = soup.find('h1').text
         maindiv = soup.find('div', {'class': 'location-info'})
         address = maindiv.find('p', {'class': 'address'}).text
         address = re.sub(pattern, "", address)
-        #print(address)
+        #logger.info(address)
         address = str(address)
         start = address.find("|")
         street = address[0:start-1]
         street = street.replace(",", "")
-        #print(street)
+        #logger.info(street)
         start = start + 2
         end = address.find(",", start)
         city = address[start:end-1]
-        #print(city)
+        #logger.info(city)
         start = end + 2
         end = address.find(" ", start)
         state = address[start:end]
-        #print(state)
+        #logger.info(state)
         start = end + 1
         end = len(address)
         pcode = address[start:end]
-        #print(pcode)
+        #logger.info(pcode)
         phone = maindiv.find('p', {'class': 'phone'}).text
         phone = re.sub(pattern, "", phone)
         start = phone.find("|")
@@ -70,7 +75,7 @@ def fetch_data():
             phone = phone[2:start]
         else:
             phone = phone[2:len(phone)]
-        #print(phone)
+        #logger.info(phone)
 
         if len(phone) < 4:
             phone = "<MISSING>"
@@ -78,7 +83,7 @@ def fetch_data():
         hours = re.sub(pattern, " ", hours)
         if len(hours) < 4:
             hours = "<MISSING>"
-        #print(hours)
+        #logger.info(hours)
         if tempt.find('Coming Soon') == -1:
             data.append([
             url,
@@ -96,7 +101,7 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
-            print(p,data[p])
+            logger.info(p,data[p])
             p += 1
 
     return data

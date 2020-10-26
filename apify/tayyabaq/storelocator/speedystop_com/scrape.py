@@ -3,6 +3,11 @@ import os
 import requests
 import re, time
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('speedystop_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
     
     for i in range(0, len(stores), 4):
         coord=stores[i].find('a').get('onclick')
-        #print(coord)
+        #logger.info(coord)
         la=re.findall(r'\((-?[\d\.]+),-?[\d\.]+',coord)
         lo=re.findall(r'\(-?[\d\.]+,(-?[\d\.]+)',coord)
         if la != []:
@@ -46,7 +51,7 @@ def fetch_data():
         else:
          long.append('<MISSING>')
         location_name.append(stores[i].get_text().replace('\xc2\xa0',' '))
-        #print(stores[i].get_text())
+        #logger.info(stores[i].get_text())
         store_no.append(stores[i].get_text().split("#")[1])
     for i in range(1, len(stores), 4):
         addr=str(stores[i]).replace("\r\n","").split("<br/>")

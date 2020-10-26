@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('centura_org')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
@@ -99,8 +104,8 @@ def fetch_data():
                 continue
             adressessess.append(str(store[2]+str(store[7])+store[-1]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-           # print("data==="+str(store))
-          #  print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+           # logger.info("data==="+str(store))
+          #  logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 
             yield store

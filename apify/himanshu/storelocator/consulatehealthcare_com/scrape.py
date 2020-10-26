@@ -5,6 +5,11 @@ import re
 from datetime import datetime
 session = SgRequests()
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('consulatehealthcare_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline="") as output_file:
@@ -34,13 +39,13 @@ def fetch_data():
 
     response = session.get(url, headers=headers).json()
     for data in response['locations']: 
-        print(data)
+        logger.info(data)
         # exit()
         locator_domain='http://consulatehealthcare.com/'
         street_address = data['store_info']['address']
         street_address1 = data['store_info']['address_extended']
         page_url = "https://centers.consulatehealthcare.com"+data['llp_url']
-        # print("page",page_url)
+        # logger.info("page",page_url)
         city = data['store_info']['locality']
         zipp = data['store_info']['postcode']
         state = data['store_info']['region']
@@ -48,7 +53,7 @@ def fetch_data():
         response1 = session.get(api, headers=headers).json()
         for data1 in response1:
             location_name = data1['store_info']['name']
-            # print(data1['store_info']
+            # logger.info(data1['store_info']
             phone = data1['store_info']['phone']
             latitude =data1['store_info']['latitude']
             longitude = data1['store_info']['longitude']
@@ -71,7 +76,7 @@ def fetch_data():
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-        # print("store--------------------",store)
+        # logger.info("store--------------------",store)
         yield store
 
 

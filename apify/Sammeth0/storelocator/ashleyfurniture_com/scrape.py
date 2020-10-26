@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ashleyfurniture_com')
+
+
 
 
 def write_output(data):
@@ -47,8 +52,8 @@ def fetch_data():
 	try:
 		item = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 	
 	link=item.find(class_="state-col")
 	links=link.find_all("a")
@@ -61,25 +66,25 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			print(u)
+			logger.info(u)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		stores=item.find_all(class_="storeName")
 		for s in stores:
 			pages.append("https://stores.ashleyfurniture.com" + s.find("a")['href'])
 
 	for i, p in enumerate(pages):
-		print("Link %s of %s" %(i+1,len(pages)))
+		logger.info("Link %s of %s" %(i+1,len(pages)))
 		req = session.get(p, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			print(p)
+			logger.info(p)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		loc = item.find('h1').text.strip().split(',')[0]
 		if "coming soon" in loc.lower():

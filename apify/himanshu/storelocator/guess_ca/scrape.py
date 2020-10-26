@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('guess_ca')
+
+
 
 
 
@@ -75,25 +80,25 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print("zip_code === " + zip_code)
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("zip_code === " + zip_code)
 
         # zip_code = "96753"
 
         locations_url = "https://maps.stores.guess.com.prod.rioseo.com/api/getAsyncLocations?template=search&level=search&search="+str(zip_code)
         r_locations = request_wrapper(locations_url,"get", headers=headers)
 
-        # print("r_locations.text ==== " + r_locations.text)
+        # logger.info("r_locations.text ==== " + r_locations.text)
 
         locations_json = r_locations.json()
 
         if locations_json["markers"] is None:
 
             if current_results_len < MAX_RESULTS:
-                # print("max distance update")
+                # logger.info("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif current_results_len == MAX_RESULTS:
-                # print("max count update")
+                # logger.info("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -101,12 +106,12 @@ def fetch_data():
             continue
 
         current_results_len = len(locations_json["markers"])  # it always need to set total len of record.
-        # print("current_results_len === " + str(current_results_len))
+        # logger.info("current_results_len === " + str(current_results_len))
 
         locations_soup = BeautifulSoup(locations_json["maplist"],"lxml")
-        # print("locations_soup ~~~~~ "+ str(locations_soup.find("div",{"class":"tlsmap_list"}).text))
+        # logger.info("locations_soup ~~~~~ "+ str(locations_soup.find("div",{"class":"tlsmap_list"}).text))
         locations_json = json.loads("["+locations_soup.find("div",{"class":"tlsmap_list"}).text[:-1]+"]")
-        # print("locations_json === "+ str(locations_json))
+        # logger.info("locations_json === "+ str(locations_json))
         for adr_json in locations_json:
 
             locator_domain = base_url
@@ -144,21 +149,21 @@ def fetch_data():
             hours_of_operation = ""
 
             hours_json = json.loads(adr_json["hours_sets:primary"])
-            # print("hours_json === " + str(hours_json))
+            # logger.info("hours_json === " + str(hours_json))
             if "days" in hours_json:
                 for days in hours_json["days"]:
                     hours_of_operation += " "+days +" "
-                    # print('hours_json["days"][days] === '+ str(type(hours_json["days"][days])))
+                    # logger.info('hours_json["days"][days] === '+ str(type(hours_json["days"][days])))
                     if type(hours_json["days"][days]) is list:
                         for timing in hours_json["days"][days][0]:
-                            # print("timing === "+ str(hours_json["days"][days]))
+                            # logger.info("timing === "+ str(hours_json["days"][days]))
                             hours_of_operation += timing +" : "+hours_json["days"][days][0][timing] +" "
                     else:
                         hours_of_operation += hours_json["days"][days]
 
                 hours_of_operation = hours_of_operation.strip()
 
-            # print("hours_of_operation === "+ hours_of_operation)
+            # logger.info("hours_of_operation === "+ hours_of_operation)
 
             ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
@@ -178,15 +183,15 @@ def fetch_data():
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

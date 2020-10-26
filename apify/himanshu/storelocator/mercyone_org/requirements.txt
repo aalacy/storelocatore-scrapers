@@ -1,3 +1,4 @@
 sgrequests
 bs4
 html5lib
+sglogging

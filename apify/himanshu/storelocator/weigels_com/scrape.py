@@ -22,6 +22,11 @@ def fetch_data():
     #import certifi # This should be already installed as a dependency of 'requests'
     import warnings
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('weigels_com')
+
+
 
     warnings.simplefilter('ignore',InsecureRequestWarning)
     base_url = "https://weigels.com"
@@ -118,8 +123,8 @@ def fetch_data():
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         store = [x if x else "<MISSING>" for x in store]
         return_main_object.append(store)
-        # print("data =="+str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+        # logger.info("data =="+str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
     return return_main_object
 
 def scrape():

@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zehrs_ca')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -25,7 +30,7 @@ def addy_ext(addy):
     city = addy[0]
     state_zip = addy[1].strip().split(' ')
     if len(state_zip) == 4:
-        print('four!!')
+        logger.info('four!!')
     else:
         state = state_zip[0]
         zip_code = state_zip[1] + ' ' + state_zip[2]

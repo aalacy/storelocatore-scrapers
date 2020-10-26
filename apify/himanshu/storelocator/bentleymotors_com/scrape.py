@@ -5,6 +5,11 @@ import re
 import json
 import time
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bentleymotors_com')
+
+
 
 
 
@@ -70,7 +75,7 @@ def fetch_data():
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            # print(store)
+            # logger.info(store)
             yield store
 
 def scrape():

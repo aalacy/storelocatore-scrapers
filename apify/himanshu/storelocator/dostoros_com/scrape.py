@@ -5,6 +5,11 @@ import re
 import json
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('dostoros_com')
+
+
 
 
 
@@ -58,7 +63,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,'lxml')
     a = soup.find('div',class_='locations').find('div',class_='columns').find_all('a')
     for i in a:
-        # print()
+        # logger.info()
         r = session.get('https://www.dostoros.com'+i['href'],headers = headers)
         soup = BeautifulSoup(r.text,'lxml')
         info = soup.find('div',class_= 'locations').find('div',class_='columns').find('div',class_='list').find('div',class_='copy og')
@@ -80,7 +85,7 @@ def fetch_data():
             list_hours = list(hours.stripped_strings)
             if "hours" == list_hours[0] or "Now Open" == list_hours[0]:
                 hours_of_operation = " ".join(list_hours[1:])
-                # print(hours_of_operation)
+                # logger.info(hours_of_operation)
             else:
                 hours_of_operation = "<MISSING>"
             coords = loc.find('div',class_='info').find('div',class_='mapit').a['href'].split('@')[-1].split('/')[0].split(',')
@@ -98,8 +103,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
 
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            logger.info("data = " + str(store))
+            logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

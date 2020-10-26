@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('loblaws_com')
+
+
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -26,7 +31,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(1000, 2000):
-        print(x)
+        logger.info(x)
         url = 'https://www.loblaws.ca/api/pickup-locations/' + str(x)
         r = session.get(url, headers=headers)
         if 'Could not find' not in r.text and 'storeDetails' in r.text:

@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mybpstation_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -22,7 +27,7 @@ def fetch_data():
             latn = x + 1
             lnge = y
             lngw = y - 1
-            print((str(x) + ',' + str(y)))
+            logger.info((str(x) + ',' + str(y)))
             url = 'https://bpretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=' + str(lats) + '&sw%5B%5D=' + str(lngw) + '&ne%5B%5D=' + str(latn) + '&ne%5B%5D=' + str(lnge) + '&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json'
             r = session.get(url, headers=headers)
             if r.encoding is None: r.encoding = 'utf-8'

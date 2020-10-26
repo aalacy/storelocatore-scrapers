@@ -6,6 +6,11 @@ import re
 # import json
 # import http.client
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('caribbeancinemas_com')
+
+
 
 
 
@@ -87,14 +92,14 @@ def fetch_data():
                     longitude = coords['src'].split('=')[1].split(',')[
                         1].split('&')[0]
             else:
-                # print(page_url)
+                # logger.info(page_url)
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
             info = rr_soup.find('div', class_='sections_group').find(
                 'div', class_='items_group clearfix').find('div', {'id': 'cineinfo'})
             location_name = info.h4.text.strip()
-            # print(location_name)
+            # logger.info(location_name)
 
             list_phone = list(info.find('li', class_='phone').stripped_strings)
             if list_phone != []:
@@ -131,13 +136,13 @@ def fetch_data():
                     location_name = "<MISSING>"
                     city = "<MISSING>"
                     state = "<MISSING>"
-                    # print(list_address)
-                    # print(len(list_address))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info(list_address)
+                    # logger.info(len(list_address))
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 # street_address = list_address[0].strip()
                 # c = page_url.split('/')[-2]
-                # # print(p_url)
+                # # logger.info(p_url)
                 # if "cinestarguadeloupe.com" == c:
                 #     city = "<MISSING>"
                 # elif "caribbean-cinemas-vip-at-paseo-herencia" == c:
@@ -146,7 +151,7 @@ def fetch_data():
 
                 #     city = c.replace(
                 #         '-cinemas', '').replace('-megaplex-8', '').strip()
-                # print(city)
+                # logger.info(city)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -155,10 +160,10 @@ def fetch_data():
                 continue
             addresses.append(store[2])
 
-            # print(street_address)
+            # logger.info(street_address)
 
-            # print("data = " + str(store))
-            # print(
+            # logger.info("data = " + str(store))
+            # logger.info(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
@@ -201,9 +206,9 @@ def fetch_data():
                 phone = info.find('li', class_='phone').text.strip()
                 address = info.find('li', class_='address')
                 list_address = list(address.stripped_strings)
-                # print(list_address)
-                # print(len(list_address))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info(list_address)
+                # logger.info(len(list_address))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 if len(list_address) > 1:
                     phone_list = re.findall(re.compile(
                         ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address[-1]))
@@ -211,9 +216,9 @@ def fetch_data():
                     if phone_list == []:
                         location_name = list_address[0].strip()
                         tag_address = list_address[1].split(',')
-                        # print(tag_address)
-                        # print(len(tag_address))
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # logger.info(tag_address)
+                        # logger.info(len(tag_address))
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         city = info.h4.text.strip()
                         if len(tag_address) > 1:
                             state = tag_address[-1].split()[0].strip()
@@ -243,8 +248,8 @@ def fetch_data():
                     state = "<MISSING>"
                 if "Guayama" not in city and "Fajardo" not in city and "Aguadilla" not in city:
                     city = "<MISSING>"
-                #     print(list_address)
-                #     print('~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #     logger.info(list_address)
+                #     logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~')
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]
@@ -252,8 +257,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # print("data = " + str(store))
-                # print(
+                # logger.info("data = " + str(store))
+                # logger.info(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)

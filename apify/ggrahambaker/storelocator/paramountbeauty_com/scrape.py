@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('paramountbeauty_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
     all_store_data = []
     for store in stores:
         details = store.text.split('\n')
-        print(len(details))
+        logger.info(len(details))
         location_name = '<MISSING>'
         street_address = details[2]
         city, state, zip_code = addy_extractor(details[3])
@@ -53,8 +58,8 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print(store_data)
-        print()
+        logger.info(store_data)
+        logger.info()
         all_store_data.append(store_data)
 
     driver.quit()

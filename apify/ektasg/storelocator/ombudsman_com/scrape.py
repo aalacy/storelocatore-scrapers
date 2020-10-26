@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ombudsman_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -43,7 +48,7 @@ def fetch_data():
             driver2.get(names[i])
             time.sleep(5)
             page_url = names[i]
-            print(page_url)
+            logger.info(page_url)
             lat=[]
             lng=[]
             coords = driver2.find_elements_by_xpath("//script[@type='text/javascript']")
@@ -57,13 +62,13 @@ def fetch_data():
                     pass
             try:
                 state_stores = driver2.find_elements_by_css_selector('ul.state-list-column > li')
-                #print("isnide try state_stores........." , state_stores)
+                #logger.info("isnide try state_stores........." , state_stores)
             except:
                 pass
             k=0
             for state_store in state_stores:
                 store_name= state_store.find_element_by_css_selector('h4').text
-                print(store_name)
+                logger.info(store_name)
                 lat = json_Data[k]['point']['lat']
                 lng= json_Data[k]['point']['lng']
                 try:
@@ -113,7 +118,7 @@ def fetch_data():
                     ])
                 count+=1
                 k+=1
-                print(count)
+                logger.info(count)
 
 
     time.sleep(3)

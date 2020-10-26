@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('daysinn_com')
+
+
 
 
 session = SgRequests()
@@ -64,7 +69,7 @@ def fetch_data():
     try:
         r = session.get(location_url1, headers=headers,  allow_redirects=False)
     except Exception as e :
-        # print(e)
+        # logger.info(e)
         pass
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[0:51]
@@ -76,14 +81,14 @@ def fetch_data():
             try:
                 r1 = session.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
-                # print(e)
+                # logger.info(e)
                 pass
             soup1= BeautifulSoup(r1.text,"lxml")
             b = soup1.find("script",{"type":"application/ld+json"})
             if b != [] and b != None:
                 h  = json.loads(b.text)  
                 location_name = (h['name'])
-                # print(location_name)
+                # logger.info(location_name)
                 street_address = h['address']["streetAddress"]              
                 latitude = h['geo']["latitude"]      
                 longitude = h['geo']["longitude"]                 
@@ -126,9 +131,9 @@ def fetch_data():
                 addresses.append(store[2])
                 yield store
     a1 = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[51:61]
-    # print(a1)
+    # logger.info(a1)
     for y1 in a1:
-        # print(y1)
+        # logger.info(y1)
         e1 = (y1.find_all("li",{"class":"property"}))
         for b1 in e1:
             k1 = (b1.find('a')['href'])
@@ -137,13 +142,13 @@ def fetch_data():
                 r2 = session.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 pass
-                # print(e)
+                # logger.info(e)
             soup1= BeautifulSoup(r2.text,"lxml")
             b1 = soup1.find("script",{"type":"application/ld+json"})
             if b1 != [] and b1 != None:
                 h1  = json.loads(b1.text)  
                 location_name = (h1['name'])
-                # print(location_name)
+                # logger.info(location_name)
                 street_address = h1['address']["streetAddress"]              
                 latitude = h1['geo']["latitude"]      
                 longitude = h1['geo']["longitude"]                 

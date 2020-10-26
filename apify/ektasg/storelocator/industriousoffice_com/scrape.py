@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('industriousoffice_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,27 +34,27 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
     state_list = soup.find('section',{'class':'section-all-locations-v2 my-lg'}).findAll('li', {'class': 'market'})
-    #print("states = ",len(state_list))
+    #logger.info("states = ",len(state_list))
     p = 0
     cleanr = re.compile(r'<[^>]+>')
     for states in state_list:
-        #print(states.find('a').text)
+        #logger.info(states.find('a').text)
         '''if states.find('a').text.lower().find('coming soon') > -1 :
             continu
             e
         states = states.find('a')['href']
         if states.find('techspace') > -1:
             continue'''
-        ##print(states.find('a').text)
+        ##logger.info(states.find('a').text)
         statenow = states.find('a').text
         states = states.find('a')['href']
-        #print(states)
+        #logger.info(states)
         r = session.get(states, headers=headers, verify=False)
        
         try:
             r = r.text.split('var marketLocations = ',1)[1].split('];',1)[0]
             loclist = json.loads(r+']')
-            #print(len(loclist))
+            #logger.info(len(loclist))
             for loc in loclist:
                 city = loc['city']
                 state = loc['abbr']
@@ -89,7 +94,7 @@ def fetch_data():
                             longt,
                             '<MISSING>'
                                     ])
-                    #print(p,data[p])
+                    #logger.info(p,data[p])
                     p += 1
                     
         except:
@@ -124,16 +129,16 @@ def fetch_data():
                             longt,
                             '<MISSING>'
                                     ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
                     
     return data
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('checkers_com')
+
+
 
 
 
@@ -77,7 +82,7 @@ def fetch_data():
                     tem_var.append(hours)
                     tem_var.append(page_url)
                     yield tem_var
-                    # print("========================================", tem_var)
+                    # logger.info("========================================", tem_var)
             for c in citylink:
                 link1 = c.text.split("(")[-1]
                 if link1 != "1)":
@@ -127,7 +132,7 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # print("========================================", tem_var)
+                        # logger.info("========================================", tem_var)
 
                 else:
                     one_link = "https://locations.checkers.com/" + \
@@ -169,7 +174,7 @@ def fetch_data():
                     tem_var.append(hours)
                     tem_var.append(page_url)
                     yield tem_var
-                    # print("========================================", tem_var)
+                    # logger.info("========================================", tem_var)
         else:
             one_link1 = "https://locations.checkers.com/" + i.find("a")['href']
             page_url = one_link1
@@ -189,7 +194,7 @@ def fetch_data():
             latitude = soup5.find("meta", {"itemprop": "latitude"})['content']
             longitude = soup5.find("meta", {"itemprop": "longitude"})[
                 'content']
-            # print(streetAddress)
+            # logger.info(streetAddress)
 
             tem_var = []
             tem_var.append("https://checkers.com")
@@ -207,7 +212,7 @@ def fetch_data():
             tem_var.append(hours)
             tem_var.append(page_url)
             yield tem_var
-            # print("========================================", tem_var)
+            # logger.info("========================================", tem_var)
 
 
 def scrape():

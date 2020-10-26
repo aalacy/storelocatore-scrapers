@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('montefiore_org')
+
+
 session = SgRequests()
 
 
@@ -103,7 +108,7 @@ def fetch_data():
                     city = full[1].split(",")[0]
                     state = full[1].split(",")[1].split( )[0]
                     zipp = full[1].split(",")[1].split( )[1]
-                    # print(zipp)
+                    # logger.info(zipp)
                     phone = full[3]
                 except:
                     street_address = full[1]
@@ -207,7 +212,7 @@ def fetch_data():
                             continue
                         addresses.append(store[2])
                         # yield store
-                        # print(store)
+                        # logger.info(store)
                         temp.append(store)
                         
             else:
@@ -215,7 +220,7 @@ def fetch_data():
                     url1 = soup1.find("nav",class_="footer-links").find("a",text=re.compile("Locations"))
                     r= session.get("https://www.cham.org"+url1["href"])
                     soup = BeautifulSoup(r.text,"lxml")
-                    # print(soup.prettify())
+                    # logger.info(soup.prettify())
                     loc = list(soup.find_all("div",class_="freeXML")[-1].find("p").stripped_strings)
                     street_address = loc[0]
                     city = loc[1].split(",")[0]
@@ -232,7 +237,7 @@ def fetch_data():
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     # yield store
-                    # print(store)
+                    # logger.info(store)
                     temp.append(store)
                     for loc in soup.find("div",class_="freeTxt").find_all("div",class_="column xsm-24 sm-12"):
                         list_loc = list(loc.stripped_strings)
@@ -295,7 +300,7 @@ def fetch_data():
                                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                                 # yield store
-                                # print(store)
+                                # logger.info(store)
                                 temp.append(store)
                             else:
                                 for i in list_loc[1:]:
@@ -318,7 +323,7 @@ def fetch_data():
                                         continue
                                     addresses.append(store[2])
                                     # yield store
-                                    # print(store)
+                                    # logger.info(store)
                                     temp.append(store)
                     else:
                         r= session.get(url)
@@ -369,7 +374,7 @@ def fetch_data():
                             continue
                         addresses.append(store[2])
                         # yield store
-                        # print(store)
+                        # logger.info(store)
                         temp.append(store)
 
         except Exception as e:
@@ -406,7 +411,7 @@ def fetch_data():
                             continue
                         addresses.append(store[2])
                         # yield store
-                        # print(store)
+                        # logger.info(store)
                         temp.append(store)
             else:
                 r= session.get(url)
@@ -436,7 +441,7 @@ def fetch_data():
                             continue
                         addresses.append(str(store[2]))
                         # yield store
-                        # print(store)
+                        # logger.info(store)
                         temp.append(store)
                 except:
                     if "montefioreslc" in url:
@@ -464,7 +469,7 @@ def fetch_data():
                                 continue
                             addresses.append(store[2])
                             # yield store
-                            # print(store)
+                            # logger.info(store)
                             temp.append(store)
                     else:
                         pass
@@ -494,7 +499,7 @@ def fetch_data():
                 hours_of_operation = " ".join(hours).replace("–","-").strip()
                 
             else:
-                # print(address)
+                # logger.info(address)
                 hours_of_operation = "<MISSING>"
             try:
                 data=int(address[0].strip()[0])
@@ -518,7 +523,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             # yield store
-            # print(store)
+            # logger.info(store)
             temp.append(store)
         except:
             continue
@@ -588,7 +593,7 @@ def fetch_data():
             continue
         addresses.append(store[2])
         # yield store
-        # print(store) 
+        # logger.info(store) 
         temp.append(store)  
 
     for i in range(len(temp)):
@@ -596,7 +601,7 @@ def fetch_data():
             continue
         addresses.append(temp[i][1] +" "+temp[i][2])
         yield temp[i]
-       # print(temp[i])
+       # logger.info(temp[i])
 
 def scrape():
     data = fetch_data()

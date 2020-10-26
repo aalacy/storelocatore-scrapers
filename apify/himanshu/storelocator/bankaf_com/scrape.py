@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bankaf_com')
+
+
 
 
 
@@ -32,7 +37,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -80,8 +85,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

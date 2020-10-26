@@ -7,6 +7,11 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('doolys_ca')
+
+
 
 session = SgRequests()
 
@@ -52,7 +57,7 @@ def fetch_data():
         # for button in
     try:
         for button in driver.find_elements_by_xpath("//div[@class='uVccjd HzV7m-pbTTYe-KoToPc-ornU0b-hFsbo HzV7m-KoToPc-hFsbo-ornU0b']"):
-            #print(j.click())
+            #logger.info(j.click())
 
             time.sleep(3)
             button.click()
@@ -61,7 +66,7 @@ def fetch_data():
     # fO2voc-jRmmHf-MZArnb-Q7Zjwb
     # fO2voc-jRmmHf-MZArnb-Q7Zjwb
     for button in driver.find_elements_by_xpath("//div[contains(@index, '')]"):
-        # print("======================== ",button.get_attribute("index"))
+        # logger.info("======================== ",button.get_attribute("index"))
         try:
             try:
                 driver.find_element_by_xpath(
@@ -86,7 +91,7 @@ def fetch_data():
                 store_zip = store_zip_split[-1]
             else:
                 store_zip = "<MISSING>"
-            # print(store_zip)
+            # logger.info(store_zip)
             state_split = re.findall("([A-Z]{2})", address)
             if state_split:
                 state = state_split[-1]
@@ -119,14 +124,14 @@ def fetch_data():
             store.append('https://www.doolys.ca/locations-1')
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
-            # print('data == ' + str(store))
-            # print('~~~~~~~~~~`````````````')
+            # logger.info('data == ' + str(store))
+            # logger.info('~~~~~~~~~~`````````````')
             yield store
             time.sleep(5)
             driver.find_element_by_xpath(
                 "//div[@class='U26fgb mUbCce p9Nwte HzV7m-tJHJj-LgbsSe qqvbed-a4fUwd-LgbsSe']").click()
         except Exception as e:
-            # print(",",e)
+            # logger.info(",",e)
             time.sleep(3)
             pass
 

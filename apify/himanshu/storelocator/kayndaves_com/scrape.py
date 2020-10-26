@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kayndaves_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
    
     divlist = soup.find('div', {'id': "comp-kczp38o9"}).findAll('div',{'data-testid':'richTextElement'})
     
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     for div in divlist:
         content = div.text.strip().splitlines()
@@ -57,7 +62,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
     
     return data

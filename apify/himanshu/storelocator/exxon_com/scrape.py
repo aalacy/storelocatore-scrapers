@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('exxon_com')
+
+
 
 
 session = SgRequests()
@@ -30,11 +35,11 @@ def fetch_data():
 
 	while coords:
 		result_coords = []
-		# print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-		# print(coords[0],coords[1])
+		# logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+		# logger.info(coords[0],coords[1])
 		base_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1="+str(coords[0])+"&Latitude2="+str(coords[0]+1)+"&Longitude1="+str(coords[1])+"&Longitude2="+str(coords[1]+1)+"&DataSource=RetailGasStations&Country=US"
 		# base_url = "https://www.exxon.com/en/find-station/?longitude1="+str(coords[1])+"&longitude2="+str(coords[1]-1)+"&latitude1="+str(coords[0])+"&latitude2="+str(coords[0]-1)
-		# print(base_url)
+		# logger.info(base_url)
 		r = session.get(base_url).json()
 		return_main_object = []
 		current_result_len = len(r)
@@ -72,12 +77,12 @@ def fetch_data():
 			addresses.append(str(store[2])+str(store[-1]))
 			store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]	       
 			yield store
-			# print(store)
+			# logger.info(store)
 		if current_result_len < MAX_RESULTS:
-			# print("max distance update")
+			# logger.info("max distance update")
 			search.max_distance_update(MAX_DISTANCE)
 		elif current_result_len == MAX_RESULTS:
-			# print("max count update")
+			# logger.info("max count update")
 			search.max_count_update(result_coords)
 		else:
 			raise Exception("expected at most " + str(MAX_RESULTS) + " results")

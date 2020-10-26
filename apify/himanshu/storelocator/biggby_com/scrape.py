@@ -6,6 +6,11 @@ import json
 import time
 from datetime import datetime
 import phonenumbers
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('biggby_com')
+
+
 
 
 
@@ -155,7 +160,7 @@ def fetch_data():
         if store[2] in addresess:
             continue
         addresess.append(store[2])
-        #print("===", str(store))
+        #logger.info("===", str(store))
         yield  store
 
 

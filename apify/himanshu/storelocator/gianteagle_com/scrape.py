@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gianteagle_com')
+
+
 
 
 
@@ -55,7 +60,7 @@ def fetch_data():
 
         if json_locations["Locations"] is None or json_locations["FuelPriceVMs"] is None:
             break
-        print(str(skip_counter) + " json_locations == " + str(len(json_locations["Locations"])) + " = " + str(
+        logger.info(str(skip_counter) + " json_locations == " + str(len(json_locations["Locations"])) + " = " + str(
             len(json_locations["FuelPriceVMs"])))
         skip_counter += len(json_locations["Locations"])
 
@@ -74,7 +79,7 @@ def fetch_data():
             longitude = str(location_super_market["Address"]["Coordinates"]["Longitude"])
             location_type = location_super_market["Details"]["Type"]["Name"]
 
-            # print(str(location_super_market["Address"]["Coordinates"])+" === " + str(latitude))
+            # logger.info(str(location_super_market["Address"]["Coordinates"])+" === " + str(latitude))
 
             hours_of_operation = ""
             index = 0
@@ -84,7 +89,7 @@ def fetch_data():
                     hours_of_operation += days[index] + " " + time_period["HourDisplay"] + " "
                 index += 1
 
-            # print("store_number == "+ hours_of_operation)
+            # logger.info("store_number == "+ hours_of_operation)
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
@@ -94,8 +99,8 @@ def fetch_data():
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x and x else "<MISSING>"
                          for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

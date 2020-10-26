@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shopnsavefood_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +37,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
+        logger.info(link)
         driver.get(link)
         driver.implicitly_wait(10)
         location_name = driver.find_element_by_css_selector('h3').text
@@ -53,9 +58,9 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        print(store_data)
-        print()
-        print()
+        logger.info(store_data)
+        logger.info()
+        logger.info()
         
         all_store_data.append(store_data)
         

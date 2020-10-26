@@ -3,6 +3,11 @@ import re
 from lxml import etree
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('santanderbank_com')
+
+
 
 base_url = 'https://www.santanderbank.com'
 
@@ -35,7 +40,7 @@ def write_output(data):
             writer.writerow(row)
 
 def parse_detail(store, link):
-    print(link)
+    logger.info(link)
     output = []
     output.append(base_url) # url
     output.append(link) # url
@@ -97,7 +102,7 @@ def fetch_data():
             city_list = state_response.xpath('//a[@class="c-directory-list-content-item-link"]/@href')
             store_list = state_response.xpath('//a[@class="location-tile-link Link"]/@href')
             if len(city_list) > 0:
-                print("city_list")
+                logger.info("city_list")
                 for city in city_list:
                     city = 'https://locations.santanderbank.com/' + city
                     city_response = etree.HTML(session.get(city, headers=headers2).text)
@@ -112,14 +117,14 @@ def fetch_data():
                         else:                            
                             output_list.append(parse_detail(city_response, city))
             elif len(store_list) > 0:
-                print("store_list")
+                logger.info("store_list")
                 for store in store_list:
                     store = 'https://locations.santanderbank.com/' + store.replace('../', '')
                     store_response = etree.HTML(session.get(store, headers=headers2).text)
                     if store_response is not None:
                         output_list.append(parse_detail(store_response, store))
             else:
-                print("store")
+                logger.info("store")
                 output_list.append(parse_detail(state_response, state))
     return output_list
 

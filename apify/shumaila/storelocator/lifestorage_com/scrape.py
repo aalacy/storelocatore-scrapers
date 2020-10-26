@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lifestorage_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
         state = state.lower()
         state = state.replace(" ","-")
         slink = "https://www.lifestorage.com/storage-units/" + state +"/"
-        print(slink)
+        logger.info(slink)
         page = requests.get(slink)
         soup = BeautifulSoup(page.text, "html.parser")
         mainul = soup.find_all('ul', {'class': 'noList storeRows cityList'})
@@ -45,12 +50,12 @@ def fetch_data():
            mainul=mainul[0]
         li_list = mainul.findAll('li')
         del li_list[0]
-        print('li_list',len(li_list))
+        logger.info('li_list',len(li_list))
 
         for li in li_list:
             blink = li.find('a')
             blink = blink['href']
-            print(blink)
+            logger.info(blink)
             check = True
             pagenum = 1
             while check:

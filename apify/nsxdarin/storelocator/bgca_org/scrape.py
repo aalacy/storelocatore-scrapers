@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bgca_org')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -59,7 +64,7 @@ def fetch_data():
         for y in range(-66, -126, -1):
             lat = str(x)
             lng = str(y)
-            print((str(lat) + ',' + str(lng)))
+            logger.info((str(lat) + ',' + str(lng)))
             url = 'https://bgcaorg-find-a-c-1488560011850.appspot.com//x/v1/clubs/' + lat + '/' + lng + '/100/'
             r = session.get(url, headers=headers)
             if r.encoding is None: r.encoding = 'utf-8'

@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('acehardware_com')
+
+
 
 
 
@@ -83,13 +88,13 @@ def fetch_data():
             json_data = json.loads(script.text)
             latitude = json_data["Longitude"]
             longitude = json_data["Latitude"]
-           # print(latitude, longitude)
+           # logger.info(latitude, longitude)
         except Exception as e:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            #print(e)
-            #print(page_url)
-            #print("====================")
+            #logger.info(e)
+            #logger.info(page_url)
+            #logger.info("====================")
 
         store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
                  store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
@@ -97,8 +102,8 @@ def fetch_data():
         # if str(store[2]) + str(store[-3]) not in addresses:
         #     addresses.append(str(store[2]) + str(store[-3]))
         store = [x if x else "<MISSING>" for x in store]
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
 

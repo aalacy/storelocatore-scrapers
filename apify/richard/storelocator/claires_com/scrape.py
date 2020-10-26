@@ -3,6 +3,11 @@ import sgzip
 
 from Scraper import Scrape
 from uszipcode import SearchEngine
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('claires_com')
+
+
 
 URL = "https://www.claires.com/"
 
@@ -56,7 +61,7 @@ class Scraper(Scrape):
             }
             data = requests.post('https://www.claires.com/on/demandware.store/Sites-clairesNA-Site/en_US/Stores-GetNearestStores', headers=headers, data=data).json()['stores']
             stores.extend(data)
-            print(f"{len(data)} locations scraped for coords: {coords[0]}, {coords[1]}")
+            logger.info(f"{len(data)} locations scraped for coords: {coords[0]}, {coords[1]}")
 
         for store in stores:
             if store['id'] not in self.seen:

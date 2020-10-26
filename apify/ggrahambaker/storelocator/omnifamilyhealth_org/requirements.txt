@@ -3,3 +3,4 @@ sgselenium
 usaddress==0.5.10
 sgrequests
 beautifulsoup4==4.7.1
+sglogging

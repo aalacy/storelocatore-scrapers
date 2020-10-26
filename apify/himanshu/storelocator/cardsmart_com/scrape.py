@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cardsmart_com')
+
+
 
 session = SgRequests()
 
@@ -94,7 +99,7 @@ def fetch_data():
 
             if "601 Broadway" in street_address or "370C Market St" in street_address or "578 Valley Rd" in street_address or "40 Chatham Rd" in street_address:
                 state = 'New Jersey'
-            # print(city)
+            # logger.info(city)
             store=[]
             store.append("https://www.cardsmart.com/")
             store.append(location_name)
@@ -117,7 +122,7 @@ def fetch_data():
             addressess.append(store[2])
           
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("----------------------",store)
+            # logger.info("----------------------",store)
             yield store
    
 def scrape():

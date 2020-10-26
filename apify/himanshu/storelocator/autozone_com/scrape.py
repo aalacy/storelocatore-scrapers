@@ -5,6 +5,11 @@ import json
 import time
 import platform
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('autozone_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -29,13 +34,13 @@ def fetch_data():
             r1 = session.get(state_link, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             page_url = state_link
-            # print("page_url:111",page_url)
+            # logger.info("page_url:111",page_url)
             street_address = soup1.find("span",{"class":"c-address-street-1"}).text.strip()
             state = soup1.find("abbr",{"class":"c-address-state"}).text
             zip1 = soup1.find("span",{"class":"c-address-postal-code"}).text
             city = soup1.find("span",{"class":"c-address-city"}).text
             name = " ".join(list(soup1.find("h1",{"class":"c-location-title"}).stripped_strings))
-            # print(name)
+            # logger.info(name)
             try:
                 store_number = (name.split("#")[1])
             except:
@@ -61,14 +66,14 @@ def fetch_data():
             store1.append(page_url)
             store1 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
             yield store1
-            # print("========================================",store1)
+            # logger.info("========================================",store1)
         else:
             r2 = session.get(state_link, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             for count in soup2.find_all("li",{"class":"c-directory-list-content-item"}):
                 if count.find("span",{"class":"c-directory-list-content-item-count"}).text == "(1)":
                     page_url = "https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href']
-                    # print("page_url:222",page_url)
+                    # logger.info("page_url:222",page_url)
                     r3 = session.get(page_url, headers=headers)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     street_address = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
@@ -79,7 +84,7 @@ def fetch_data():
                     zip1 = soup3.find("span",{"class":"c-address-postal-code"}).text
                     city = soup3.find("span",{"class":"c-address-city"}).text
                     name = " ".join(list(soup3.find("h1",{"class":"c-location-title"}).stripped_strings))
-                    # print(name)
+                    # logger.info(name)
                     try:
                         store_number = (name.split("#")[1])
                     except:
@@ -105,13 +110,13 @@ def fetch_data():
                     store2.append(page_url)
                     store2 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store2]
                     yield store2
-                    # print("========================================",store2)
+                    # logger.info("========================================",store2)
                 else:
                     r4 = session.get("https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href'], headers=headers)
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     for url in soup4.find_all("a",{"data-ya-track":"visitpage"}):
                         page_url = url['href'].replace('..','https://www.autozone.com/locations')
-                        # print("page_url:333",page_url)
+                        # logger.info("page_url:333",page_url)
                         r5 = session.get(page_url, headers=headers)
                         soup5 = BeautifulSoup(r5.text, "lxml")
                         try:
@@ -125,7 +130,7 @@ def fetch_data():
                         zip1 = soup5.find("span",{"class":"c-address-postal-code"}).text
                         city = soup5.find("span",{"class":"c-address-city"}).text
                         name = " ".join(list(soup5.find("h1",{"class":"c-location-title"}).stripped_strings))
-                        # print(name)
+                        # logger.info(name)
                         try:
                             store_number = (name.split("#")[1])
                         except:
@@ -151,14 +156,14 @@ def fetch_data():
                         store3.append(page_url)
                         store3 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store3]
                         yield store3
-                        # print("========================================",store3)
+                        # logger.info("========================================",store3)
     ## For WC location
     r_wc = session.get("https://www.autozone.com/locations/dc/washington.html", headers=headers)
     soup_wc = BeautifulSoup(r_wc.text, "lxml")
     for link in soup_wc.find_all("div",{"class":"c-location-grid-col col-lg-4 col-sm-5 col-xs-12"}):
         page_url = link.find("h5",class_="c-location-grid-item-title").find("a")["href"].replace("..","https://www.autozone.com/locations")
-        # print(page_url)
-        # print("page_url:444",page_url)
+        # logger.info(page_url)
+        # logger.info("page_url:444",page_url)
         name = link.find("h5",class_="c-location-grid-item-title").find("a").text.strip()
         try:
             store_number = (name.split("#")[1])
@@ -193,7 +198,7 @@ def fetch_data():
         store4.append(page_url)
         store4 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store4]
         yield store4
-        # print("========================================",store4)
+        # logger.info("========================================",store4)
 def scrape():
     data = fetch_data()
     write_output(data)

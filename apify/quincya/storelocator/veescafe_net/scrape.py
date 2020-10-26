@@ -5,6 +5,11 @@ import time
 from random import randint
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('veescafe_net')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,8 +34,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -46,7 +51,7 @@ def fetch_data():
 	raw_address = json.loads("{" + raw_address)
 
 	location_name = base.title.text
-	print(location_name)
+	logger.info(location_name)
 
 	street_address = raw_address['streetNumber'] + " " + raw_address['street']
 	city = raw_address['city']

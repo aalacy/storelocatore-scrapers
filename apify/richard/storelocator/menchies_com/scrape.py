@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('menchies_com')
+
+
 
 
 URL = "https://www.menchies.com/"
@@ -41,7 +46,7 @@ class Scraper(Scrape):
             # Name
             location_title = store.find_element_by_css_selector('span.font-purple.title-case').get_attribute('textContent')
 
-            print(f"Currently scraping: {location_title}")
+            logger.info(f"Currently scraping: {location_title}")
 
             # Store ID
             location_id = '<MISSING>'

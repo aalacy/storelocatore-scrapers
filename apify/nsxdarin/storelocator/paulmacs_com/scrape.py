@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('paulmacs_com')
+
+
 
 
 def get_driver():
@@ -44,7 +49,7 @@ def fetch_data():
             if '<loc>https://paulmacs.com/location/' in line:
                 lurl = line.split('<loc>')[1].split('<')[0]
                 locs.append(lurl)
-    print(('Found %s Locations.' % str(len(locs))))
+    logger.info(('Found %s Locations.' % str(len(locs))))
     driver = get_driver()
     for loc in locs:
         LocFound = True
@@ -63,16 +68,16 @@ def fetch_data():
             lat = ''
             country = 'US'
             lng = ''
-            # print('Pulling Location %s ...' % loc)
+            # logger.info('Pulling Location %s ...' % loc)
 
             try:
                 driver.get(loc)
                 if "down for maintenance" in driver.page_source:
-                    print('site is currently down for maintenance')
+                    logger.info('site is currently down for maintenance')
                     raise SystemExit
                 lines = driver.page_source.split('\n')
             except Exception as ex:
-                print(('---- trying again after exception: \n %s ---' % ex))
+                logger.info(('---- trying again after exception: \n %s ---' % ex))
                 driver = get_driver()
                 driver.get(loc)
                 lines = driver.page_source.split('\n')

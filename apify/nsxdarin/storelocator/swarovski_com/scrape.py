@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('swarovski_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -20,7 +25,7 @@ def fetch_data():
     for item in coords:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        print(('%s - %s...' % (lat, lng)))
+        logger.info(('%s - %s...' % (lat, lng)))
         rad = 1000
         if lng == '-95':
             rad = 500

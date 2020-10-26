@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('walk-ons_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     divlist = soup.findAll('div', {'class': 'locationList'})
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     for div in divlist:        
         loclist = div.findAll('div', {'class': 'locationItem'})
@@ -37,7 +42,7 @@ def fetch_data():
             link = loc.find('a')['href']
             if link.find('locations.walk-ons.com') == -1:
                 continue
-            print(link)
+            logger.info(link)
             r = session.get(link, headers=headers, verify=False)
             soup =BeautifulSoup(r.text, "html.parser")
             title = soup.find('div',{'class':'Location-Name'}).text
@@ -74,7 +79,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                 
 
@@ -86,9 +91,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

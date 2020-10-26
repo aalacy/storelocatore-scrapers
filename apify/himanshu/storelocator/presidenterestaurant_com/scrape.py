@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('presidenterestaurant_com')
+
+
 
 
 
@@ -25,7 +30,7 @@ def fetch_data():
         'accept': 'application/json'
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
     addresses = []
     base_url = "https://www.presidentebarandgrill.com"
 
@@ -51,7 +56,7 @@ def fetch_data():
     hours_of_operation = ""
 
     for script in soup.find_all("div", {"class": "wpb_raw_code wpb_content_element wpb_raw_html"}):
-        # print("location ==== " + str(script.parent.find("h4").text))
+        # logger.info("location ==== " + str(script.parent.find("h4").text))
 
         full_address_url = script.find("iframe")["src"]
         geo_request = session.get(full_address_url, headers=headers)
@@ -62,7 +67,7 @@ def fetch_data():
                 lat = json.loads(script_geo.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][0]
                 lng = json.loads(script_geo.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][1]
 
-        # print("geo_data ===== "+ geo_data)
+        # logger.info("geo_data ===== "+ geo_data)
         location_name = geo_data.split(',')[0]
         street_address =geo_data.split(',')[1]
         city =geo_data.split(',')[2]
@@ -73,7 +78,7 @@ def fetch_data():
 
         phone = "("+ script.parent.find("h4").text.split("(")[1]
 
-        # print("phone === "+ str(phone))
+        # logger.info("phone === "+ str(phone))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
@@ -83,8 +88,8 @@ def fetch_data():
 
             store = [x if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         # break
 

@@ -5,6 +5,11 @@ import json
 import time
 import sgzip 
 import os
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('firstwatch_com')
+
+
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -35,10 +40,10 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print(("remaining zipcodes: " + str(search.zipcodes_remaining())))
+        logger.info(("remaining zipcodes: " + str(search.zipcodes_remaining())))
         x = coord[0]
         y = coord[1]
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.firstwatch.com/api/get_locations.php?latitude=' + str(x) + '&longitude=' + str(y)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -70,13 +75,13 @@ def fetch_data():
             country = 'US'
             store = item['corporate_id']
             ids.add(store)
-            print(('Pulling Store ID #%s...' % store))
+            logger.info(('Pulling Store ID #%s...' % store))
             locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
         if len(array) < MAX_RESULTS:
-            print("max distance update")
+            logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(array) == MAX_RESULTS:
-            print("max count update")
+            logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + MAX_RESULTS + " results")

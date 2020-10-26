@@ -2,6 +2,11 @@ import requests
 
 from geopy.geocoders import Nominatim
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('justsalad_com')
+
+
 
 geolocator = Nominatim(user_agent="justsalad_com_scraper")
 URL = "https://justsalad.com"
@@ -60,7 +65,7 @@ class Scraper(Scrape):
 
             if not store['properties']['locationID'][0].isalpha():
                 store = store['properties']
-                print(f"Now scraping {store['locationName']}")
+                logger.info(f"Now scraping {store['locationName']}")
 
                 # Name
                 location_title = store['locationName']

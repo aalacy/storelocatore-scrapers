@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('regencyhospital_com')
+
+
 
 
 session = SgRequests()
@@ -89,7 +94,7 @@ def fetch_data():
             store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-            # print(store)
+            # logger.info(store)
         count = count + 8
     
 

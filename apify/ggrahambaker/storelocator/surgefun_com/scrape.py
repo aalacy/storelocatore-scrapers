@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('surgefun_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +47,7 @@ def fetch_data():
         
         response = session.get(link + '/ContactUs/', headers = HEADERS)
         soup = BeautifulSoup(response.content, 'html.parser')
-        # print(link)
+        # logger.info(link)
         location_name = soup.find('span', {'id': 'header-location'}).text.strip()
         
         google_link = soup.find('div', {'class': 'google-map'}).find('iframe')['src']
