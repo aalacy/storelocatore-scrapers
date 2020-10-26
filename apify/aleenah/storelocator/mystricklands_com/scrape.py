@@ -88,7 +88,7 @@ def fetch_data():
 
     for page_url in page_urls:
         response = session.get(page_url)
-        bs4 = BeautifulSoup(response.text,features="lxml")
+        bs4 = BeautifulSoup(response.text, features="lxml")
 
         matched = re.search("(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
 
@@ -142,7 +142,7 @@ def fetch_data():
             location_name,
             location_type,
             store_number,
-            street_address,
+            street_address.strip(),
             city,
             state,
             zipcode,
