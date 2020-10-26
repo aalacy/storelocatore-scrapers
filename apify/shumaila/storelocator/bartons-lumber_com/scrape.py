@@ -25,35 +25,34 @@ def fetch_data():
     data = []
     pattern = re.compile(r'\s\s+')
     cleanr = re.compile(r'<[^>]+>')
-    url = 'https://cristyspizza.com/'
+    url = 'https://www.bartons-lumber.com/'
     r = session.get(url, headers=headers, verify=False)
     
     soup =BeautifulSoup(r.text, "html.parser")
    
-    divlist = soup.select_one('li:contains("Store Locations")').select("a[href*=location]")
+    divlist = soup.select_one('li:contains("Locations")').select("a[href*=content]")
+    
    # print("states = ",len(state_list))
     p = 0
     for div in divlist:
-        link = div['href']
+        link = 'https://www.bartons-lumber.com' + div['href']
         #print(link)
         r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text,'html.parser')
-        content = soup.findAll('div',{'class':'fl-html'})[0].findAll('p')
-        try:
-            coord = soup.findAll('div',{'class':'fl-html'})[1].find('iframe')['src']
-        except:
-            coord = soup.findAll('div',{'class':'fl-html'})[2].find('iframe')['src']
-        address = content[0].text.splitlines()
-        street = address[0]
-        city, state =address[1].split(', ',1)
-        state, pcode = state.lstrip().split(' ',1)
-        phone = content[1].text
-        hours = content[2].text.replace('\n',' ')
-        title = soup.find('h1').text.replace('\n','').split()
-        lat,longt = coord.split('!2d',1)[1].split('!2m',1)[0].split('!3d')
-        
+        soup =BeautifulSoup(r.text, "html.parser")
+        title  = soup.find('h1').text
+        street = soup.find('div',{'class':'street-block'}).text
+        city = soup.find('span',{'class':'locality'}).text
+        state = soup.find('span',{'class':'state'}).text
+        pcode = soup.find('span',{'class':'postal-code'}).text
+        phone = soup.find('div',{'class':'field-name-gsl-props-phone'}).text
+        hours = soup.find('section',{'class':'field-type-office-hours'}).text
+        hourlist = soup.findAll('span',{'class':'oh-display'})
+        hours = ''
+        for hr in hourlist:
+            hours = hours + hr.text +' '
+       
         data.append([
-                        'https://cristyspizza.com/',
+                        'https://www.bartons-lumber.com/',
                         link,                   
                         title,
                         street,
@@ -64,23 +63,21 @@ def fetch_data():
                         '<MISSING>',
                         phone,
                         '<MISSING>',
-                        lat,
-                        longt,
+                        '<MISSING>',
+                        '<MISSING>',
                         hours
                     ])
         #print(p,data[p])
         p += 1
-                
-            
-            
-     
+        
+        
     return data
 
 
 def scrape():
-    
+  
     data = fetch_data()
     write_output(data)
-   
+  
 
 scrape()

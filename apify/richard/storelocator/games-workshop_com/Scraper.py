@@ -12,6 +12,7 @@ class Scrape:
             # Header
             writer.writerow([
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",

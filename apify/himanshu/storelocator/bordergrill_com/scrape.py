@@ -43,9 +43,10 @@ def fetch_data():
             city,state = content[2].split(', ',1)
             state,pcode = state.lstrip().split(' ',)
             phone = content[3]
+            link = 'https://www.bordergrill.com' + div.find('a',{'class':'btn-brand'})['href']
             if phone.find('Direction') > -1:
                 phone = '<MISSING>'
-            
+            #print(link)
             try:
                 hours = det.split('Hours')[1].split('\n',1)[1].split('View',1)[0]
                 hours = hours.replace('\n', ' ')
@@ -55,19 +56,33 @@ def fetch_data():
                     pass
             except:
                 hours = '<MISSING>'
+            if hours == '<MISSING>':
+                r = session.get(link, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text,'html.parser')
+                #print('1')
+                try:
+                    hours = soup.text.split('Sun-Mon',1)[1].split('\n',1)[0].replace('pm','pm ').replace('Closed','Closed ')
+                    hours = 'Sun-Mon'+hours
+                except:
+                    try:
+                        hours = soup.text.split('Mon – Sun',1)[1].split('\n',1)[0].replace('pm','pm ').replace('Closed','Closed ')
+                        hours = 'Mon – Sun'+hours
+                    except:
+                        hours = '<MISSING>'
+           
             coord = div.find('a')['href']           
             if coord.find('@') == -1:
                 r = session.get(coord, headers=headers, verify=False)
                 coord = r.url
             lat,longt = coord.split('@',1)[1].split('data',1)[0].split(',',1)
             longt = longt.split(',',1)[0]
-            link = 'https://www.bordergrill.com' + div.find('a',{'class':'btn-brand'})['href']
+            
            
             data.append([
                             'https://www.bordergrill.com',
                             link,                   
                             title,
-                            street,
+                            street.replace(',',''),
                             city,
                             state,
                             pcode,

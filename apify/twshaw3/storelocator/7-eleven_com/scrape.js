@@ -45,7 +45,6 @@ async function getAuthToken() {
 	const text = $('script[type="application/json"]').html()
 	const parsed = JSON.parse(text)
 	const token = parsed.props.initialState.authentication.rewardsTokens.access_token;
-	console.log(token)
 	return token;
 }
 

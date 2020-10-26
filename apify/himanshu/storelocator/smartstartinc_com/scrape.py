@@ -4,10 +4,13 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-sessreion = SgRequests()
+
+
+
+session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('smartstartinc_com.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -17,6 +20,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 states = {
         'AK': 'Alaska',
         'AL': 'Alabama',
@@ -76,21 +80,6 @@ states = {
         'WV': 'West Virginia',
         'WY': 'Wyoming'
 }
-prov_terr = {
-    'AB': 'Alberta',
-    'BC': 'British Columbia',
-    'MB': 'Manitoba',
-    'NB': 'New Brunswick',
-    'NL': 'Newfoundland and Labrador',
-    'NT': 'Northwest Territories',
-    'NS': 'Nova Scotia',
-    'NU': 'Nunavut',
-    'ON': 'Ontario',
-    'PE': 'Prince Edward Island',
-    'QC': 'Quebec',
-    'SK': 'Saskatchewan',
-    'YT': 'Yukon'
-}
 
 def fetch_data():
     headers = {
@@ -99,7 +88,7 @@ def fetch_data():
 
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes=["US"])
     MAX_RESULTS = 500
     MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
@@ -107,7 +96,7 @@ def fetch_data():
 
     base_url = "https://www.smartstartinc.com/"
 
-    r_token = sessreion.get(base_url, headers=headers)
+    r_token = session.get(base_url, headers=headers)
     token = r_token.text.split("ss_webapi_bearer = '")[1].split("'")[0]
     company_id = r_token.text.split("ss_api_company_id = '")[1].split("'")[0]
 
@@ -119,12 +108,21 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
+
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+
         locations_url = "https://webapi.smartstartinc.com/api/Shared/StoreLocations/LookupByZip" \
                         "?companyId=" + str(company_id) + "&countryISOCode=US&zipCode=" + \
-                        str(zip_code) + "&limit=500"
-        json_data = sessreion.get(locations_url, headers=headers).json()
+                        str(zip_code) + "&limit=100"
+
+
+        json_data = session.get(locations_url, headers=headers).json()
+        
         current_results_len = len(json_data["Data"])  
+        
+
         for script in json_data["Data"]:
+
             locator_domain = base_url
             location_name = ""
             street_address = ""
@@ -139,37 +137,28 @@ def fetch_data():
             longitude = ""
             page_url = ""
             hours_of_operation = ""
+
             location_name = script["Name"]
             street_address = script["AddressLine1"]
             if script["AddressLine2"]:
                 street_address += " " + script["AddressLine2"]
             store_number = script["StoreNumber"]
             state = script["State"]
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(script["PostalCode"]))
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(script["PostalCode"]))
-            if ca_zip_list:
-                zipp = ca_zip_list[0]
-                country_code = "CA"
-            if us_zip_list:
-                zipp = us_zip_list[0]
-                country_code = "US"
-
             city = script["City"]
-
-            phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(script["PhoneNumber"]))
-            if phone_list:
-                phone = phone_list[0]
+            phone = script["WebPhoneNumber"]
 
             if script["HoursOfOperation"]:
-                hours_of_operation = re.sub(r'\s+'," ",script["HoursOfOperation"]).replace("<br>Appointment-Only","").replace("<br>Walk-ins Welcome","").replace("<BR>Walk-Ins Welcome","")
+                hours_of_operation = re.sub(r'\s+'," ",script["HoursOfOperation"])
             latitude = str(script["Latitude"])
             longitude = str(script["Longitude"])
 
             result_coords.append((latitude, longitude))
             if state in states:
+                zipp = script['PostalCode']     
                 page_url = "https://www.smartstartinc.com/locations/" + states[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + street_address.replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
-            if state in prov_terr:
-                page_url = "https://www.smartstartinc.com/locations/" + prov_terr[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + street_address.replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
+                country_code = "US"      
+            else:
+                continue
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
@@ -186,8 +175,18 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
+
+   
+
+
+
+
+
+       
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

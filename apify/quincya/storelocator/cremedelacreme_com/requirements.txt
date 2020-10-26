@@ -1,6 +1,3 @@
+lxml==4.3.3
 sgrequests
-lxml==4.3.4
-html5lib
 beautifulsoup4==4.7.1
-html5lib
-
