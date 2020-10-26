@@ -85,6 +85,8 @@ def fetch_data():
                     hours = hours + " " + days[hour["dayNumber"]] + " " + hour["value"]
                 store.append(hours)
             if "Desigual" in loacation_name:
+                if i['isOpen'] == True:
+                    hours = "Temporary closed"
                 store = []
                 store.append("https://www.desigual.com/")
                 store.append(loacation_name if loacation_name else "<MISSING>") 
@@ -104,7 +106,6 @@ def fetch_data():
                     continue
                 address.append(store[2])
                 yield store
-        
         if data_len < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
         elif data_len == MAX_RESULTS:
@@ -117,4 +118,3 @@ def scrape():
     write_output(data)
 
 scrape()
-

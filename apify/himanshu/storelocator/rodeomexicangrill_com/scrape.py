@@ -25,17 +25,18 @@ def fetch_data():
     }
     base_url= "https://www.rodeomexicangrill.com/"
     r = session.get(base_url,headers=headers)
-    soup= BeautifulSoup(r.text,"html5lib")
-    return_main_object=[]
+    soup = BeautifulSoup(r.text,"html5lib")
+    return_main_object = []
     lat = []
     lng =[]
-    loc=(soup.find_all("div",{"class":"col-md-4 col-xs-12"}))
-    k=soup.find("script",{"type":"application/json","class":"js-react-on-rails-component"})
+    loc = (soup.find_all("div",{"class":"col-md-4 col-xs-12 pm-location"}))
+    k = soup.find("script",{"type":"application/json","class":"js-react-on-rails-component"})
     jd = json.loads(k.text)['preloadQueries'][0]['data']['restaurant']['locations']
     for data in jd:
         if data['lat']:
             lat.append(data['lat'])
             lng.append(data['lng'])
+
     for index,i in enumerate(loc):
         tem_var=[]
         name = list(i.stripped_strings)[0]

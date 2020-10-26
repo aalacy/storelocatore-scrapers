@@ -1,0 +1,13 @@
+{
+  "name": "burgerimscraper",
+  "version": "1.0.0",
+  "description": "BurgerIM Store Location Scraper",
+  "main": "scrape.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "author": "Harrison Hayes",
+  "dependencies": {
+    "axios": "^0.19.0"
+  }
+}

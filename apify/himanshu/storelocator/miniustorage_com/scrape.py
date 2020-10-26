@@ -1,3 +1,4 @@
+
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -7,7 +8,6 @@ session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -25,8 +25,9 @@ def fetch_data():
     soup = bs(r.text,'html5lib')
     jd = json.loads(soup.find_all("script",{"type":"application/ld+json"})[1].text)['location']
     for val in jd:
-        location_name = val['name'].replace("&#8211;","-")
+        
         street_address = val['address']['streetAddress']
+        location_name = val['name'].replace("&#8211;","-").replace(street_address,'').replace(" - 1400 County Line Rd",'').replace(" - 1177 Camelback",'').replace('- Merriman Road','').replace("- Dyer Road",'')
         city = val['address']['addressLocality']
         state = val['address']['addressRegion']
         zipp = val['address']['postalCode']
@@ -35,7 +36,7 @@ def fetch_data():
         latitude = val['geo']['latitude']
         longitude = val['geo']['longitude']
         page_url = "https://www.miniustorage.com/location/USA/"+state+"/"+city.replace(" ","-")+"/"+city.lower().replace(" ","-")+"/"
-
+        hours_of_operation = "Mon - Fri: 9:00 AM - 6:00 PM, Sat: 8:00 AM - 6:00 PM, Sun: 9:00 AM - 3:00 PM"
         store = []
         store.append(base_url if base_url else "<MISSING>")
         store.append(location_name if location_name else "<MISSING>") 
@@ -43,17 +44,16 @@ def fetch_data():
         store.append(city if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
         store.append(zipp if zipp else "<MISSING>")
-        store.append( "US")
+        store.append("US")
         store.append("<MISSING>") 
         store.append(phone if phone else "<MISSING>")
         store.append(location_type)
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(hours_of_operation)
         store.append(page_url if page_url else "<MISSING>")
         yield store
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-

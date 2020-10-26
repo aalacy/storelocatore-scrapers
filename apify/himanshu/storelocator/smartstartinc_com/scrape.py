@@ -10,7 +10,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('smartstartinc_com.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -20,6 +20,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 states = {
         'AK': 'Alaska',
         'AL': 'Alabama',
@@ -79,21 +80,6 @@ states = {
         'WV': 'West Virginia',
         'WY': 'Wyoming'
 }
-prov_terr = {
-    'AB': 'Alberta',
-    'BC': 'British Columbia',
-    'MB': 'Manitoba',
-    'NB': 'New Brunswick',
-    'NL': 'Newfoundland and Labrador',
-    'NT': 'Northwest Territories',
-    'NS': 'Nova Scotia',
-    'NU': 'Nunavut',
-    'ON': 'Ontario',
-    'PE': 'Prince Edward Island',
-    'QC': 'Quebec',
-    'SK': 'Saskatchewan',
-    'YT': 'Yukon'
-}
 
 def fetch_data():
     headers = {
@@ -102,8 +88,8 @@ def fetch_data():
 
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 25
+    search.initialize(country_codes=["US"])
+    MAX_RESULTS = 500
     MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
@@ -111,11 +97,9 @@ def fetch_data():
     base_url = "https://www.smartstartinc.com/"
 
     r_token = session.get(base_url, headers=headers)
-    token = r_token.text.split('ss_webapi_bearer = "')[1].split('"')[0]
-    company_id = r_token.text.split('ss_api_company_id = "')[1].split('"')[0]
+    token = r_token.text.split("ss_webapi_bearer = '")[1].split("'")[0]
+    company_id = r_token.text.split("ss_api_company_id = '")[1].split("'")[0]
 
-    # print("token === " + token)
-    # print("company_id === " + company_id)
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -126,23 +110,18 @@ def fetch_data():
         result_coords = []
 
         # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print("zip_code === " + zip_code)
 
         locations_url = "https://webapi.smartstartinc.com/api/Shared/StoreLocations/LookupByZip" \
                         "?companyId=" + str(company_id) + "&countryISOCode=US&zipCode=" + \
-                        str(zip_code) + "&limit=" + str(MAX_RESULTS)
+                        str(zip_code) + "&limit=100"
 
-        # print("location_url ==== " + locations_url)
 
-        r_locations = session.get(locations_url, headers=headers)
-        json_data = r_locations.json()
-        # print(json.dumps(json_data,indent=4))
-        current_results_len = len(json_data["Data"])  # it always need to set total len of record.
-        # print("current_results_len === " + str(current_results_len))
+        json_data = session.get(locations_url, headers=headers).json()
+        
+        current_results_len = len(json_data["Data"])  
+        
 
         for script in json_data["Data"]:
-
-            # print("script === " + str(script))
 
             locator_domain = base_url
             location_name = ""
@@ -156,11 +135,8 @@ def fetch_data():
             location_type = ""
             latitude = ""
             longitude = ""
-            raw_address = ""
             page_url = ""
             hours_of_operation = ""
-
-            # do your logic here
 
             location_name = script["Name"]
             street_address = script["AddressLine1"]
@@ -168,31 +144,21 @@ def fetch_data():
                 street_address += " " + script["AddressLine2"]
             store_number = script["StoreNumber"]
             state = script["State"]
-
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(script["PostalCode"]))
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(script["PostalCode"]))
-
-            if ca_zip_list:
-                zipp = ca_zip_list[0]
-                country_code = "CA"
-
-            if us_zip_list:
-                zipp = us_zip_list[0]
-                country_code = "US"
-
             city = script["City"]
+            phone = script["WebPhoneNumber"]
 
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(script["PhoneNumber"]))
-            if phone_list:
-                phone = phone_list[0]
-
-            hours_of_operation = script["HoursOfOperation"]
+            if script["HoursOfOperation"]:
+                hours_of_operation = re.sub(r'\s+'," ",script["HoursOfOperation"])
             latitude = str(script["Latitude"])
             longitude = str(script["Longitude"])
 
             result_coords.append((latitude, longitude))
             if state in states:
+                zipp = script['PostalCode']     
                 page_url = "https://www.smartstartinc.com/locations/" + states[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + street_address.replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
+                country_code = "US"      
+            else:
+                continue
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
@@ -200,21 +166,23 @@ def fetch_data():
                 addresses.append(str(store[1]) + str(store[2]))
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
+   
+
+
+
+
+
+       
 
 def scrape():
     data = fetch_data()
