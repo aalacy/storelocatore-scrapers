@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
 
@@ -8,56 +8,69 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     base_url = "https://fastautoloansvirginiainc.com"
-    r = session.get(base_url + "/closest-stores?loan_type=all&num=0")
-    data = r.json()["locations"]
-    return_main_object = []
-    for i in range(len(data)):
-        store_data = data[i]
-        store = []
-        store.append("https://fastautoloansvirginiainc.com")
-        store.append(store_data['business_name'])
-        store.append(store_data["address_line_1"] + store_data["address_line_2"] if store_data["address_line_2"] != None else store_data["address_line_1"])
-        store.append(store_data['locality'])
-        store.append(store_data['administrative_area'])
-        store.append(store_data["postal_code"])
-        store.append(store_data["country"])
-        store.append(store_data["id"])
-        store.append(store_data["primary_phone"])
-        store.append("fast auto loans")
-        store.append(store_data["latitude"])
-        store.append(store_data["longitude"])
-        hours = ""
-        if store_data["monday_hours"] == None and store_data["tuesday_hours"] and store_data["wednesday_hours"]:
-            continue
-        else:
-            if store_data["monday_hours"] != None:
-                hours = hours + str(store_data["monday_hours"])
-            if store_data["tuesday_hours"] != None:
-                hours = hours + str(store_data["tuesday_hours"])
-            if store_data["wednesday_hours"] != None:
-                hours = hours + str(store_data["wednesday_hours"])
-            if store_data["thursday_hours"] != None:
-                hours = hours + str(store_data["thursday_hours"])
-            if store_data["friday_hours"] != None:
-                hours = hours + str(store_data["friday_hours"])
-            if store_data["saturday_hours"] != None:
-                hours = hours + str(store_data["saturday_hours"])
-            if store_data["sunday_hours"] != None:
-                hours = hours + str(store_data["sunday_hours"])
-        store.append(hours if hours != "" else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+
+    soup = bs(session.get("https://fastautoloansvirginiainc.com/sitemap.xml").text, "lxml")
+    
+    for url in soup.find_all("loc"):
+
+        if "virginia-title-loan-locations" in url.text:
+
+            page_url = url.text
+            
+            location_soup = bs(session.get(page_url).text, "lxml")
+            try:
+                json_data = json.loads(location_soup.find(lambda tag: (tag.name == "script") and "streetAddress" in tag.text).text)
+            except:
+                continue
+            street_address = json_data['address']['streetAddress']
+            city = json_data['address']['addressLocality']
+            state = json_data['address']['addressRegion']
+            zipp = json_data['address']['postalCode']
+
+            location_name = "Title Loans Are Here At {0}, {1}".format(city,state.upper())
+            phone = json_data['telephone']
+            coords = location_soup.find("a",href = re.compile("https://www.google.com/maps/place"))['href']
+            lat = coords.split("@")[1].split(",")[0]
+            lng = coords.split("@")[1].split(",")[1]
+            
+            try:
+                hours = " ".join(list(location_soup.find("span",{"class":"s1"}).stripped_strings))
+            except:
+                hours = "<MISSING>"
+            
+            store_number = page_url.split("/")[4].replace("va","")
+            
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append(store_number)
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            store.append(hours)
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+           
+            yield store
+
+            
 
 def scrape():
     data = fetch_data()

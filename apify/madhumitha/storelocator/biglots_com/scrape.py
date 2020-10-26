@@ -3,9 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-import time
 session = SgRequests()
-
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -65,7 +63,7 @@ us_state_abbrev = {
 }
 
 def write_output(data):
-    with open('biglots_com.csv', mode='w', encoding='utf-8', newline='') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
@@ -75,13 +73,13 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    soup = bs( session.get("https://local.biglots.com/sitemap.xml").text, "lxml")
+    soup = bs( requests.get("https://local.biglots.com/sitemap.xml").text, "lxml")
 
     for l in soup.find_all('xhtml:link', href = True):
         
             if l['href'].count("/") >= 5 and "holiday" not in l['href']:
                 page_url = l['href']
-                l_soup = bs(session.get(page_url).text, "lxml")
+                l_soup = bs(requests.get(page_url).text, "lxml")
                 
                 location_name = l_soup.find('h1', attrs = {'class':'Hero-title'}).text.strip()
                 
