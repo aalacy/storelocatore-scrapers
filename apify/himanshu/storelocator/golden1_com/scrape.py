@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('golden1_com')
+
+
 
 
 
@@ -39,8 +44,8 @@ def fetch_data():
     data_len = 0
     coords = search.next_coord()
     while coords:
-        # print("zip_code === " + str(coords))
-        # print("ramiang zip =====" + str(search.current_zip))
+        # logger.info("zip_code === " + str(coords))
+        # logger.info("ramiang zip =====" + str(search.current_zip))
         data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=false&sharedatm=false&swlat="+str(coords[0])+"&swlng="+str(coords[1])+"&nelat="+str(coords[0])+"&nelng="+str(coords[1])+"&centerlat="+str(coords[0])+"&centerlng="+str(coords[1])+"&userlat=&userlng="
         location_url = 'https://www.golden1.com/api/BranchLocator/GetLocations'
         try:
@@ -93,13 +98,13 @@ def fetch_data():
                     if store[2] in addressess:
                         continue
                     addressess.append(store[2])
-                    # print(store)
+                    # logger.info(store)
                     yield store
             if data_len < MAX_RESULTS:
-                # print("max distance update")
+                # logger.info("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif data_len == MAX_RESULTS:
-                # print("max count update")
+                # logger.info("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")

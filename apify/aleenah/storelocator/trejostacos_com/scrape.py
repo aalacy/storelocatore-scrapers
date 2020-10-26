@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('trejostacos_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +33,7 @@ def fetch_data():
 
     for url in urls:
         url = "https://www.trejostacos.com"+url.get('href')
-        print(url)
+        logger.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         loc = soup.find('h1').text.strip()
@@ -43,7 +48,7 @@ def fetch_data():
         except:
             """
         coord = soup.find('div', {'class': 'sqs-block map-block sqs-block-map sized vsize-12'}).get('data-block-json')
-        #print(coord)
+        #logger.info(coord)
         #street=re.findall(r'"addressLine1":"([^"]+)"',coord)[0]
         #csz=re.findall(r'"addressLine2":"([^"]+)"',coord)[0].split(',')
         #city=csz[0].strip()
@@ -55,16 +60,16 @@ def fetch_data():
             phone=h2s[0].find_all('a')[1].text
         except:
             phone="<MISSING>"
-        #print(str(h2s[0]))
+        #logger.info(str(h2s[0]))
         street,city,sz=re.findall(r'>(.*)<br/>(.*),(.*)</a>',str(h2s[0]))[0]
-       # print(str(h2s[0]))
+       # logger.info(str(h2s[0]))
         sz=sz.strip().split(" ")
         state=sz[0]
         zip=sz[1].replace('</a><br/><a','')
         street =street.split('>')[-1]
-        #print(street, city, phone)
+        #logger.info(street, city, phone)
         tim=h2s[1].text.replace('DAY','DAY ').replace('  ',' ')
-        print(tim)
+        logger.info(tim)
 
         all.append([
                 "https://www.trejostacos.com",

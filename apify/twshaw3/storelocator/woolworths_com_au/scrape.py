@@ -3,6 +3,11 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('woolworths_com_au')
+
+
 
 MAX_RESULTS = 1000
 
@@ -43,7 +48,7 @@ def fetch_data():
     postcode = search.next_zip()
     while postcode:
         result_coords = []
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(postcode)
         response = session.get(url, headers=HEADERS).json()
         stores = response["Stores"]
@@ -70,10 +75,10 @@ def fetch_data():
             hours_of_operation = parse_hours(store['TradingHours'])
             locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         if len(stores) > 0:
-            print("max count update")
+            logger.info("max count update")
             search.max_count_update(result_coords)
         else:
-            print("{} zero results!".format(postcode))
+            logger.info("{} zero results!".format(postcode))
         postcode = search.next_zip()
     return locations
 
@@ -81,5 +86,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 
-print("scrape")
+logger.info("scrape")
 scrape()

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chelseagroton_com')
+
+
 
 
 
@@ -39,7 +44,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # print("phone ==== " + getDecodedPhoneNo(_phone))
+    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     addressess =[]
@@ -102,7 +107,7 @@ def fetch_data():
             tem_var.append(longitude1 if longitude1 else "<MISSING>")
             tem_var.append(hours)
             tem_var.append("<MISSING>")
-            # print(tem_var)
+            # logger.info(tem_var)
             return_main_object.append(tem_var)
         else:
             strong = data1.find_all("strong")
@@ -138,7 +143,7 @@ def fetch_data():
                 #     continue
         
                 # addressess.append(tem_var1[2])
-                # print(tem_var1)
+                # logger.info(tem_var1)
                 return_main_object.append(tem_var1)
         
 

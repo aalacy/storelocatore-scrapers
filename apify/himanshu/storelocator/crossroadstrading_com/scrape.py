@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('crossroadstrading_com')
+
+
 
 
 
@@ -93,7 +98,7 @@ def fetch_data():
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("----------------------",store)
+            # logger.info("----------------------",store)
             yield store
      
 

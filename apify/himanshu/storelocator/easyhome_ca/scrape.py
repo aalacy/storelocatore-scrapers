@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('easyhome_ca')
+
+
 
 session = SgRequests()
 
@@ -64,7 +69,7 @@ def fetch_data():
                 index = 2
                 char = ':'
                 saturdayOpen = i['saturdayOpen'][:index] + char + i['saturdayOpen'][index + 1:]+''+str(0)
-                # print(i['saturdayClose'])
+                # logger.info(i['saturdayClose'])
 
                 index1 = 2
                 char = ':'
@@ -73,13 +78,13 @@ def fetch_data():
                 index2 = 2
                 char = ':'
                 weekdayOpen = i['weekdayOpen'][:index2] + char + i['weekdayOpen'][index2 + 1:]+''+str(0)
-                # print(weekdayOpen)
+                # logger.info(weekdayOpen)
 
                 index3 = 2
                 char = ':'
                 weekdayClose = i['weekdayClose'][:index3] + char + i['weekdayClose'][index3 + 1:]+''+str(0)
 
-                # print(weekdayClose)
+                # logger.info(weekdayClose)
 
                 # time ="saturdayOpen" + ' '+saturdayOpen.replace("90:0","09:00")+ ' '+ 'saturdayClose'+ ' '+str(saturdayClose)+ ' '+'Mon-Fri'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)
                 time ='Mon-Fri:'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)+ ', Sat: '+  saturdayOpen.replace("90:0","09:00")+' - ' + str(saturdayClose)
@@ -88,13 +93,13 @@ def fetch_data():
                 time="<MISSING>"
                 
             
-            # print(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
+            # logger.info(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
         
         # else:
         #     time="<MISSING>"
             
 
-        # print(time)
+        # logger.info(time)
        
 
        

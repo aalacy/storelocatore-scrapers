@@ -5,6 +5,11 @@ import re, time
 import json
 import usaddress
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cinebistro_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,14 +41,14 @@ def fetch_data():
             citylist = loc['city']
             state = loc['state']
             for city in citylist:
-                #print(city)
+                #logger.info(city)
                 title = city['cinemaname']
                 store = city['cinemaid']
                 street = city['address']
                 pcode = city['postalcode']
                 cityn = city['locCity']
                 link = 'https://www.cmxcinemas.com/Locationdetail/'+ city['slugname']
-                #print(link)
+                #logger.info(link)
                 r = session.get(link, headers=headers, verify=False)
                 try:
                     longt,lat = r.text.split('!2d',1)[1].split('!2m',1)[0].split('!3d')
@@ -66,7 +71,7 @@ def fetch_data():
                             longt,
                             '<MISSING>'
                         ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
                 #input()
           
@@ -78,10 +83,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

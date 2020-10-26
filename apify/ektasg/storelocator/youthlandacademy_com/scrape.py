@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('youthlandacademy_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +38,7 @@ def fetch_data():
     for loc in loclist:
         title = loc['post_title']
         link = 'https://www.youthlandacademy.com/locations/'+title.lower().replace(' ','-')+'?location='+title
-        #print(link)
+        #logger.info(link)
         #input()
         lat = loc['google_coords'][0]
         longt = loc['google_coords'][1]
@@ -67,7 +72,7 @@ def fetch_data():
                     longt,
                     hours
                 ])
-            print(p,data[p])
+            logger.info(p,data[p])
             p += 1
         
                     
@@ -76,10 +81,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tommy_com')
+
+
 session = SgRequests()
 
 
@@ -46,11 +51,11 @@ def fetch_data():
                 else:
                     location_name = "<MISSING>"
                 street_address = (data['address1'] +" "+ str(data['address2'])).replace("None",'').strip()
-                # print(street_address)
+                # logger.info(street_address)
                 city = data['city']
                 state = data['state']
                 zipp = data['postalcode']
-                # print(zipp)
+                # logger.info(zipp)
                 country_code = data['country']
                 if "clientkey" in data:
                     store_number = data['clientkey']
@@ -109,16 +114,16 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data ======="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # logger.info("data ======="+str(store))
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
 
-        # print("max count update")
+        # logger.info("max count update")
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

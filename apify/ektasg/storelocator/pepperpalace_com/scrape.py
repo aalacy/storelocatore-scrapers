@@ -7,6 +7,11 @@ import usaddress
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pepperpalace_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -56,27 +61,27 @@ def fetch_data():
     fullcontent=[]
     for i in locationURLs:
         if i == "https://pepperpalace.com/pages/new-orleans-decatur-street":
-            print("coming soon!")
+            logger.info("coming soon!")
             continue
         if i == "https://pepperpalace.com/pages/new-orleans-chartres":
-            print("new-orleans-chartres")
+            logger.info("new-orleans-chartres")
             driver.get(i)   
             text=driver.find_element_by_class_name("rte").text.replace('\u200b',' ').replace('\u00A0',' ')
             fullcontent.append(text)
             count=count+1
-            print(count)
-            #print(text)
+            logger.info(count)
+            #logger.info(text)
             continue
         driver.get(i)   
         text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
-        print(count)
+        logger.info(count)
  
     del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
-        #print(locationURLs[store])
+        #logger.info(locationURLs[store])
         location_name = fullcontent[store].split(loc_name_splitter)[0]
         location_name=location_name.strip()
         if(location_name==''):
@@ -87,7 +92,7 @@ def fetch_data():
         city = locationText[store].lower()
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
-            #print(phno)
+            #logger.info(phno)
             alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
             phno=phno.lower()
             for letter in alphabet:
@@ -98,7 +103,7 @@ def fetch_data():
                 phno=[v for v in phno if v in '1234567890- ()']
                 str1=""
                 phno=str1.join(phno)
-            #print(phno)
+            #logger.info(phno)
             raw_address = fullcontent[store].split('(')[0]
         else:
             driver.get(locationURLs[store])
@@ -108,7 +113,7 @@ def fetch_data():
             else:
 
               phno='('+inlines[0].text.replace("\n"," ").split('(')[1]
-              #print(phno)
+              #logger.info(phno)
               alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
               phno=phno.lower()
               for letter in alphabet:
@@ -119,11 +124,11 @@ def fetch_data():
                 phno=[v for v in phno if v in '1234567890- ()']
                 str1=""
                 phno=str1.join(phno).strip()
-              #print(phno)
+              #logger.info(phno)
             raw_address = fullcontent[store]
         if(location_name in raw_address):
             raw_address=raw_address.replace(location_name,"").replace("pepperpalacemallga@gmail.com","")
-        #print( fullcontent[store])
+        #logger.info( fullcontent[store])
     
         if locationURLs[store] in  canadas:
             country='CA'
@@ -198,10 +203,10 @@ def fetch_data():
         cit=re.findall(r'[0-9A-Za-z\.]([A-Z][a-z]+)',addr)
         if cit != []:
           city=cit[-1]+addr.split(cit[-1])[-1].replace(",","")
-          #print(cit)
+          #logger.info(cit)
         else:
           city=addr.split(" ")[-1].replace(",","")
-          #print("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+          #logger.info("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         street_addr=addr.replace(city,"").replace("\n","").strip().strip(",").strip()
         if locationURLs[store] =="https://pepperpalace.com/pages/new-orleans-chartres":
             #uff = street_addr.split(" ")[-1]

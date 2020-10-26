@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fastraccafe_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +38,7 @@ def fetch_data():
     res=session.get("https://fastraccafe.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     trs= soup.find('table',{'class',"locationsTable"}).find('tbody').find_all('tr')
-    print(len(trs))
+    logger.info(len(trs))
     for tr in trs:
         check= tr.find('td',{'class':'store-links'}).text.lower()
         if "coming soon" in check:
@@ -46,7 +51,7 @@ def fetch_data():
         street.append(ps[0].text.strip())
         addr=ps[1].text.split(",")
         cities.append(addr[0].strip())
-        #print(addr)
+        #logger.info(addr)
         addr=addr[1].strip().split("\n")
         states.append(addr[0])
         zips.append(addr[1])

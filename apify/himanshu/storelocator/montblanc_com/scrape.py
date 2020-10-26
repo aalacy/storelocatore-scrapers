@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('montblanc_com')
+
+
 session = SgRequests()
 
 
@@ -27,7 +32,7 @@ def fetch_data():
     ids = bs(session.get("https://www.montblanc.com/en-ar/store-locator#search/country/ar/store-type/PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_STORE,PHYSICAL_STORE_ATTRIBUTE_STORE_TYPE_OUTLET").text,'lxml')
     ids = ids.find("div",{"class":"mb-storeLocator__wrap"}).text.split("storeLocatorConfig.APIConnectClientID =")[1].split('";')[0].replace('"','').strip()
     for q in range(0,5):
-        # print(":---------------------------",str(q))
+        # logger.info(":---------------------------",str(q))
         url = "https://www.montblanc.com/api/richemont1//wcs/resources/store/montblanc_US/storelocator/boutiques?pageSize=1000&pageNumber="+str(q)
         payload = {}
         headers = {
@@ -123,7 +128,7 @@ def fetch_data():
                     if str(raw_address1+page_url) in addressesess:
                         continue
                     addressesess.append(str(raw_address1+page_url))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
                     yield store
                     # if [] != data['openingTimes']:
                     #     for q in data['openingTimes']:

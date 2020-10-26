@@ -2,6 +2,11 @@ from selenium import webdriver
 import re, time, csv
 import requests
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('originalbuscemis_com')
+
+
 
 
 def get_driver():
@@ -36,7 +41,7 @@ def fetch_data():
     data = []
     driver.get('https://originalbuscemis.com/locations/')
     repo_list = driver.find_elements_by_class_name('color_11')
-    print(len(repo_list))
+    logger.info(len(repo_list))
     for i in driver.find_elements_by_xpath('//div[@class="results_wrapper"]'):
         title = i.find_element_by_css_selector('span[class="location_name"]').text
 
@@ -63,7 +68,7 @@ def fetch_data():
         start = store.find("wrapper")
         start = store.find("_", start) + 1
         store = store[start:len(store)]
-        #print(store)
+        #logger.info(store)
         geo_data = i.find_element_by_xpath('//*[@id="slp_right_cell_32"]/span[3]/a')
         geo_data = geo_data.get_attribute('href')
         driver1 = get_driver()
@@ -93,11 +98,11 @@ def fetch_data():
         if detail.find("OPENING SOON!") > -1:
             break
 
-        # print(detail)
+        # logger.info(detail)
         start = 0
         end = detail.find("\n", start)
         title = detail[start:end]
-        #print(title)
+        #logger.info(title)
         # data['location_name'].append(title)
         start = end + 1
         end = detail.find("\n", start)
@@ -114,9 +119,9 @@ def fetch_data():
             phone = detail[start:end]
 
 
-        #print(title)
-        #print(street)
-        #print(phone)
+        #logger.info(title)
+        #logger.info(street)
+        #logger.info(phone)
 
         city = "<MISSING>"
         state = "<MISSING>"
@@ -147,13 +152,13 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>"
             ])
-        #print(data)
-        # print(data)
+        #logger.info(data)
+        # logger.info(data)
 
-        # print("...............")
+        # logger.info("...............")
     #for i in range(0, len(data)):
-     #   print(data[i])
-    print(len(data))
+     #   logger.info(data[i])
+    logger.info(len(data))
 
 
     return data

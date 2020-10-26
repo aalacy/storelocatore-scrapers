@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup as bs
 import re
 from lxml import etree
 import sys
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bigairusa_com')
+
+
 
 
 
@@ -125,7 +130,7 @@ def pull_info(content):
                 # If it still wasn't found, kill code and investigate
                 if street_raw == None:
 
-                    print(f'address parse will not work for {href}')
+                    logger.info(f'address parse will not work for {href}')
                     sys.exit()
 
                 # If it was found, move on
@@ -139,7 +144,7 @@ def pull_info(content):
                     # If it doesn't exist, then kill the code
                     else:
 
-                        print(f'address parse will not work for {href}')
+                        logger.info(f'address parse will not work for {href}')
                         sys.exit()
 
                 # Pull street address
@@ -178,7 +183,7 @@ def pull_info(content):
             # If it still wasn't found, kill code and investigate
             if street_raw == None:
 
-                print(f'address parse will not work for {href}')
+                logger.info(f'address parse will not work for {href}')
                 sys.exit()
 
             else:
@@ -194,7 +199,7 @@ def pull_info(content):
                         street_raw = '660 Spartan Blvd #200 I Spartanburg, SC 29301 I (864) 580-6462'
                     else:
                         # Else kill the code
-                        print(f'address parse will not work for {href}. No delimiters.')
+                        logger.info(f'address parse will not work for {href}. No delimiters.')
                         sys.exit()
 
             # Pull street address

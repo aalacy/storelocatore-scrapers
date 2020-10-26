@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('milios_com')
+
+
 
 
 options = Options()
@@ -41,7 +46,7 @@ def fetch_data():
         driver.get(names[i])
         time.sleep(5)
         location_name = driver.find_element_by_css_selector('div.location-info-left > h1').text
-        print(location_name)
+        logger.info(location_name)
         raw_address = driver.find_element_by_css_selector('div.address-locator').text
         address = raw_address.splitlines()
         street_addr = address[0]

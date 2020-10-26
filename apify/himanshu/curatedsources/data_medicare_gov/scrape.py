@@ -4,6 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('data_medicare_gov')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +37,7 @@ def fetch_data():
         tem_var =[]
         Facility_ID = loc['provider_id']
         location_name = loc['hospital_name']
-        # print(location_name)
+        # logger.info(location_name)
         street_address = loc['address']
         city = loc['city']
         state = loc['state']
@@ -46,7 +51,7 @@ def fetch_data():
         location_type = loc['hospital_type']
         
         if "geocoded_column" in loc:
-            # print(loc['geocoded_column']['coordinates'][0])
+            # logger.info(loc['geocoded_column']['coordinates'][0])
             latitude = loc['geocoded_column']['coordinates'][1]
             longitude = loc['geocoded_column']['coordinates'][0]
         else:
@@ -74,7 +79,7 @@ def fetch_data():
         if tem_var[2] in addresses:
             continue
         addresses.append(tem_var[2])
-        # print(tem_var)
+        # logger.info(tem_var)
         # return_main_object.append(tem_var)
         yield tem_var
         

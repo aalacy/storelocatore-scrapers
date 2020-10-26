@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('nordstrom_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -20,7 +25,7 @@ def fetch_data():
     for coord in coords:
         lat = coord.split(',')[0]
         lng = coord.split(',')[1]
-        print(('Pulling %s-%s...' % (lat, lng)))
+        logger.info(('Pulling %s-%s...' % (lat, lng)))
         url = 'https://public.api.nordstrom.com/v2/storeservice/geocode?latitude=' + lat + '&longitude=' + lng + '&distance=100&apikey=Gneq2B6KqSbEABkg9IDRxuxAef9BqusJ&apigee_bypass_cache=1&format=json'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

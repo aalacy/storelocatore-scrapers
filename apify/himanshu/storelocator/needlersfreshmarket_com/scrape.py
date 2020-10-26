@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('needlersfreshmarket_com')
+
+
 
 
 
@@ -39,7 +44,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # print("phone ==== " + getDecodedPhoneNo(_phone))
+    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     return_main_object =[]
     headers = {
@@ -47,7 +52,7 @@ def fetch_data():
         }
     base_url= "https://api.freshop.com/1/stores?app_key=needle&has_address=true&limit=-1&token=cc7addbba26f04aaff389c432080acf4"
     locations = session.get(base_url,headers=headers).json()
-    # print(locations)
+    # logger.info(locations)
     # soup= BeautifulSoup(r.text,"lxml")
     return_main_object=[]
     for loc in locations['items']:
@@ -63,7 +68,7 @@ def fetch_data():
         phone = (phone1.replace("\n"," ").split("  ")[0])
         store = loc['store_number']
         tem_var =[]
-        # print(phone)
+        # logger.info(phone)
         if len(zip1)== 6 or len(zip1)== 7:
             country = "CA"
         else:
@@ -82,7 +87,7 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append(hours)
         tem_var.append(loc['url'])
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
         
 

@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pennzoil_com')
+
+
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -26,7 +31,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         website = 'pennzoil.com'
@@ -60,10 +65,10 @@ def fetch_data():
                 if 'PENNZOIL' in name.upper():
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
 ##        elif len(array) == MAX_RESULTS:
-##            print("max count update")
+##            logger.info("max count update")
 ##            search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chemicalbank_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,10 +34,10 @@ def fetch_data():
     p = 0
     loclist = session.get(url, headers=headers, verify=False).json()['Results']
     
-    print(len(loclist))
+    logger.info(len(loclist))
     
     for loc in loclist:
-        #print(loc)
+        #logger.info(loc)
         loc = loc['BankLocation']
         
         city = loc['Address']['City']
@@ -74,7 +79,7 @@ def fetch_data():
                     longt,
                     hours
                 ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
             
        
@@ -82,10 +87,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

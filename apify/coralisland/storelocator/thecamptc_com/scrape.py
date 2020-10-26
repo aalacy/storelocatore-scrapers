@@ -7,6 +7,11 @@ from sgrequests import SgRequests
 from lxml import etree
 
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thecamptc_com')
+
+
 
 base_url = 'https://www.thecamptc.com'
 
@@ -59,7 +64,7 @@ def fetch_data():
         store_link = validate(store_link.xpath('./@href'))
         if "mexicali" in store_link:
             continue
-        print(store_link)
+        logger.info(store_link)
         store = etree.HTML(session.get(store_link).text)
         output = []
         raw_address = eliminate_space(store.xpath('.//div[@class="location-details"][1]//text()'))

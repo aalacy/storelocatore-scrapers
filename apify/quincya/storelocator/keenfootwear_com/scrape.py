@@ -4,6 +4,11 @@ import csv
 import time
 
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('keenfootwear_com')
+
+
 
 
 def write_output(data):
@@ -31,14 +36,14 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.find_all(class_="cta-card-center")
 	for item in items:
 		locator_domain = "keenfootwear.com"
 		location_name = "KEEN GARAGES " + item.find('h5').text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 
 		raw_address = str(item.p)[3:-4].replace("\n","").split("<br/>")[0]
 
@@ -56,15 +61,15 @@ def fetch_data():
 		hours_of_operation = ' '.join(str(item.p)[3:-4].replace("\n","").split("<br/>")[2:]).replace('<span class="fw-bold">Hours:</span> ',"")
 
 		link = item.a['href']
-		print(link)
+		logger.info(link)
 
 		req = session.get(link, headers = HEADERS)
 
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		try:
 			map_link = maps.find_all("iframe")[1]['src']

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import sgzip 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smartstyle_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,10 +36,10 @@ def fetch_data():
     dup_tracker = set()
 
     while coord:
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://info3.regiscorp.com/salonservices/siteid/6/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.8/0.5/true'
 
         r = session.get(url, headers=HEADERS)
@@ -88,7 +93,7 @@ def fetch_data():
 
             hours = hours.strip()
             if street_address not in dup_tracker:
-                print(street_address)
+                logger.info(street_address)
                 dup_tracker.add(street_address)
             else:
                 continue

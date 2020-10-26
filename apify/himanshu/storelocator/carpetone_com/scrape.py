@@ -5,6 +5,11 @@ import re
 import sgzip
 import json
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('carpetone_com')
+
+
 
 
 
@@ -60,12 +65,12 @@ def fetch_data():
     page_url = "<MISSING>"
 
     while coord:
-        # print("-------------------" + str(zip_code))
+        # logger.info("-------------------" + str(zip_code))
         result_coords =[]
         try:
             r = session.get('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +
                          str(coord[0]) + '&longitude=' + str(coord[1]), headers=headers)
-            # print('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +str(coord[0]) + '&longitude=' + str(coord[1]))
+            # logger.info('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +str(coord[0]) + '&longitude=' + str(coord[1]))
         except:
             pass
 
@@ -74,7 +79,7 @@ def fetch_data():
             current_results_len = len(json_data)
         except:
             pass
-        # print(json_data)
+        # logger.info(json_data)
 
         for x in json_data:
             # try:
@@ -92,15 +97,15 @@ def fetch_data():
             if ca_zip_list:
                 zipp = ca_zip_list[0]
                 country_code = "CA"
-            #print(zipp)
+            #logger.info(zipp)
             latitude = x['Latitude']
             longitude = x['Longitude']
             store_number = x['LocationNumber']
             url = x['MicroSiteURL']
-            # print(url)
+            # logger.info(url)
             if url != None:
                 page_url = url
-                #print("~~~~~~~~~~~~~~~~~~~~~~  ",page_url)
+                #logger.info("~~~~~~~~~~~~~~~~~~~~~~  ",page_url)
                 try:
                     r_loc = session.get(page_url, headers=headers)
                 except:
@@ -147,16 +152,16 @@ def fetch_data():
             if store_number in addresses:
                 continue
             addresses.append(store_number)
-            # print("data====" + str(store))
-            # print(
+            # logger.info("data====" + str(store))
+            # logger.info(
             #     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

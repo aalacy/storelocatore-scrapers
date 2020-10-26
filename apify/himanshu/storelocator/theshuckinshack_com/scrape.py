@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('theshuckinshack_com')
+
+
 
 
 
@@ -36,7 +41,7 @@ def fetch_data():
             if "https://www.theshuckinshack.com/location/easley/" in location["href"]:
                 continue
             page_url = location["href"]
-           # print(page_url)
+           # logger.info(page_url)
             location_request = session.get(location["href"], headers=headers)
             location_soup = BeautifulSoup(location_request.text, "lxml")
             if list(location_soup.find("div", {"class": "flex-column-30"}).find_all("p")[0].stripped_strings) == []:
@@ -47,7 +52,7 @@ def fetch_data():
                 city = address[1]
                 zipp = "<MISSING>"
             else:
-                # print(address[1])
+                # logger.info(address[1])
                 city = address[1].split(",")[0]
                 if len(address[1].split(",")[1].split(" ")) == 3:
                     zipp = address[1].split(",")[1].split(" ")[2]
@@ -81,8 +86,8 @@ def fetch_data():
             store.append(hours.replace("Â", " ")
                          if hours != "" else "<MISSING>")
             store.append(page_url)
-            # print('data===' + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
+            # logger.info('data===' + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~`')
             return_main_object.append(store)
     return return_main_object
 

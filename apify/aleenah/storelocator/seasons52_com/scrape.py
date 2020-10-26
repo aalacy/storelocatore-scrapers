@@ -5,6 +5,11 @@ from selenium.webdriver.support.expected_conditions import presence_of_element_l
 import re
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('seasons52_com')
+
+
 
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17'
 
@@ -54,8 +59,8 @@ def fetch_data():
       div = wait.until(presence_of_element_located((By.CSS_SELECTOR, ".fin_all_location_sec")))
     except:
       body = wait.until(presence_of_element_located((By.TAG_NAME, "body")))
-      print(starting_url)
-      print(body.text[0:1000])
+      logger.info(starting_url)
+      logger.info(body.text[0:1000])
       raise SystemExit
 
     uls = div.find_elements_by_css_selector("ul")
@@ -85,8 +90,8 @@ def fetch_data():
           # div = driver.find_element_by_class_name("left-bar")
         except:
           body = wait.until(presence_of_element_located((By.TAG_NAME, "body")))
-          print(url)
-          print(body.text[0:1000])
+          logger.info(url)
+          logger.info(body.text[0:1000])
           raise SystemExit
 
         try:
@@ -94,7 +99,7 @@ def fetch_data():
                 "\r\n", " ").replace("\n", " ").strip()
         except:
             gm = "<MISSING>"
-        # print(gm)
+        # logger.info(gm)
         gms.append(gm)
         p = div.find_element_by_tag_name("p")
         t = p.text.split("\n")

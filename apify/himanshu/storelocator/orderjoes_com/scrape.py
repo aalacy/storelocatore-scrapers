@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('orderjoes_com')
+
+
 
 
 
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -75,7 +80,7 @@ def fetch_data():
         tem_var.append(lng[index])
         tem_var.append(hour)
         tem_var.append('https://www.orderjoes.com/locations/') 
-        # print(tem_var)
+        # logger.info(tem_var)
 
         return_main_object.append(tem_var)
         

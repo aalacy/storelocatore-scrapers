@@ -6,6 +6,11 @@ import sgzip
 import time 
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mitsubishicars_com')
+
+
 
 session = SgRequests()
 
@@ -35,8 +40,8 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print(zip_code)
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info(zip_code)
         
         try:
             link = "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="+str(zip_code)+'&idealer=false&ecommerce=false'
@@ -61,7 +66,7 @@ def fetch_data():
             storeno = loc['bizId']
             if link:
                 page_url = "http://"+link.lower()
-                # print(page_url)
+                # logger.info(page_url)
                 if "http://www.verneidemitsubishi.com" in page_url or "http://www.kingautomitsubishi.com" in page_url or "http://www.verhagemitsubishi.com" in page_url or "http://www.sisbarro-mitsubishi.com" in page_url or "http://www.delraymitsu.net" in page_url:
                     hours_of_operation = "<INACCESSIBLE>"
                 else:
@@ -104,18 +109,18 @@ def fetch_data():
             store.append(lng)
             store.append(hours_of_operation)
             store.append(page_url)
-            #print("data == "+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            #logger.info("data == "+str(store))
+            #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

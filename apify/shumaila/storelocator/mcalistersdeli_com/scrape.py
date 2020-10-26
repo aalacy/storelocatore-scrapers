@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mcalistersdeli_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,29 +35,29 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     state_list = soup.find('ul', {'class': 'cpt-state-city-list'}).findAll('a')
-    print("states = ",len(state_list))
+    logger.info("states = ",len(state_list))
     
     p = 0
     for states in state_list:
-        print(states.text)
+        logger.info(states.text)
         states = 'https://www.mcalistersdeli.com' + states['href']
         r = session.get(states, headers=headers, verify=False)
         ccode = 'US'
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.find('ul', {'class': 'cpt-state-city-list'}).findAll('a')
 
-        #print("cities = ",len(city_list))
+        #logger.info("cities = ",len(city_list))
         
 
         for cities in city_list:
             #cities = cities.find('a')
-            #print(cities.text.strip())
+            #logger.info(cities.text.strip())
             cities = 'https://www.mcalistersdeli.com' + cities['href']
             r = session.get(cities, headers=headers, verify=False)
             
             soup = BeautifulSoup(r.text, "html.parser")
             branch_list = soup.find('div', {'class': 'sct-locations-list'}).findAll('p',{'class':'itm-store-name'})
-            #print("Branches",len(branch_list),cities)
+            #logger.info("Branches",len(branch_list),cities)
 
             for branch in branch_list:
                 link = 'https://www.mcalistersdeli.com' + branch.find('a')['href'] 
@@ -116,7 +121,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
                 #input()
                 
@@ -129,9 +134,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

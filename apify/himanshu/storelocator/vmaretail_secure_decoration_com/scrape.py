@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vmaretail_secure_decoration_com')
+
+
 
 session = SgRequests()
 
@@ -21,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
 
     base_url = "https://vmaretail.secure-decoration.com"
     r = session.get("https://vmaretail.secure-decoration.com/contact", headers=headers)
@@ -29,7 +34,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -49,7 +54,7 @@ def fetch_data():
     page_url = "https://vmaretail.secure-decoration.com/contact"
     # for script in soup.find_all("a", {"onclick": re.compile("focus_and_popup")}):
     address_list = list(soup.find('div',{"id":"995e3e96-470f-4b12-9bb9-aebe488821ac_text"}).stripped_strings)
-    # print("address_list ==== "+str(address_list))
+    # logger.info("address_list ==== "+str(address_list))
 
     street_address = address_list[1]
     zipp = address_list[2]
@@ -63,8 +68,8 @@ def fetch_data():
     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
              store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-    # print("data = " + str(store))
-    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    # logger.info("data = " + str(store))
+    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     return_main_object.append(store)
 

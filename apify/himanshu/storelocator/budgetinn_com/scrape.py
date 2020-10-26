@@ -5,6 +5,11 @@ import re
 import sgzip
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('budgetinn_com')
+
+
 
 
 session = SgRequests()
@@ -53,21 +58,21 @@ def fetch_data():
     page_url = "<MISSING>"
     r= session.get("https://secure.rezserver.com/hotels/search/search_list.php?refid=5533&rooms=1&adults=2&children=0&express_deals=&query=11576&_=1570192273749",headers = headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # print(soup.prettify())
+    # logger.info(soup.prettify())
     for ul in soup.find_all('ul'):
         for a in ul.find_all('a'):
             loc_id = a['href'].split('&')[-2]
 
             loc_type =  a['href'].split('&')[-2].split("_")[0]
-            # print(loc_type)
+            # logger.info(loc_type)
             r_loc = session.get('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533',headers=headers)
-            # print('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533')
+            # logger.info('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533')
             try:
                 json_data = r_loc.json()
-                # print(json_data)
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info(json_data)
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             except Exception as e:
-                print("Error = "+ str(e))
+                logger.info("Error = "+ str(e))
                 time.sleep(10)
                 continue
             for z in json_data['hotels']:
@@ -82,7 +87,7 @@ def fetch_data():
                     location_type= "budgetinn"
                 else:
                     location_type = "<MISSING>"
-                # print(location_type)
+                # logger.info(location_type)
 
 
                 location_name = z['name']
@@ -139,8 +144,8 @@ def fetch_data():
 
 
 
-                #print("data===="+str(store))
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                #logger.info("data===="+str(store))
+                #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                 return_main_object.append(store)
 

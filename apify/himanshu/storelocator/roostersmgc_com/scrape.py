@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('roostersmgc_com')
+
+
 
 
 
@@ -44,8 +49,8 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
             get_url ="https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/0.8/0.5/true"
            
@@ -60,11 +65,11 @@ def fetch_data():
         
         
         # json_data = json.loads(r_utf)
-        # print("json_Data === " + str(json_data))
+        # logger.info("json_Data === " + str(json_data))
         current_results_len = int(len(json_data['stores']))
-        # print(json_data)
-        # print(current_results_len) # it always need to set total len of record.
-        # print("current_results_len === " + str(current_results_len))
+        # logger.info(json_data)
+        # logger.info(current_results_len) # it always need to set total len of record.
+        # logger.info("current_results_len === " + str(current_results_len))
 
         locator_domain = base_url
         location_name = ""
@@ -109,10 +114,10 @@ def fetch_data():
             street_address1 = street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[0]
             
             city =  " ".join(street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[1:]).replace(",","")
-            #print("street_address1",city)
+            #logger.info("street_address1",city)
             
             street_address2 = street_address1.split("  ")[0]
-            # print("|================",street_address2.split("  "))
+            # logger.info("|================",street_address2.split("  "))
             page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address2, city, state, zipp, country_code,
@@ -125,15 +130,15 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

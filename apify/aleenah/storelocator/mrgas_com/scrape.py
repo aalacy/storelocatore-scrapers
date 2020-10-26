@@ -2,6 +2,11 @@ import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mrgas_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,13 +28,13 @@ def fetch_data():
 
     for store in stores:
         url = "http://mrgas.com"+store.get('href')
-        print(url)
+        logger.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #print(soup)
+        #logger.info(soup)
         loc = soup.find('h2', {'class': 'itemTitle'}).text.strip()
         data=soup.find_all('span', {'class': 'itemExtraFieldsValue'})
-        print(data)
+        logger.info(data)
         street=data[1].text.strip()
         addr=data[2].text.strip().split(",")
         city=addr[0]

@@ -6,6 +6,11 @@ import sgzip
 import json
 import phonenumbers
 from tenacity import retry, stop_after_attempt
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('food4less_com')
+
+
 
 
 def write_output(data):
@@ -40,7 +45,7 @@ def fetch_data():
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
     while zip_code:
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         datas = query_zip(zip_code)
         result_coords = []
         for key in datas['stores']:

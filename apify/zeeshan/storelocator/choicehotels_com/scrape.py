@@ -9,6 +9,11 @@ from six.moves.urllib import request, parse
 import ssl
 
 from pdb import set_trace as bp
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('choicehotels_com')
+
+
 
 class ChoiceHotels(base.Base):
 
@@ -82,7 +87,7 @@ class ChoiceHotels(base.Base):
         return opener.open(self.url, data=parse.urlencode(payload).encode()).read()
 
     def crawl(self):
-        print ("in crawl")
+        logger.info("in crawl")
         self.headers.update({
             'authority': 'www.choicehotels.com'
             ,'method': 'POST'
@@ -124,11 +129,11 @@ class ChoiceHotels(base.Base):
         
         for state in self.us_states:
             payload['placeName'] = state
-            print(self.do_request())
+            logger.info(self.do_request())
             #request = requests.post(self.url, data=payload, headers=self.headers, proxies=self.proxy_settings)
-            #print ("request status code: {}".format(request.status_code))
+            #logger.info("request status code: {}".format(request.status_code))
             #if request.status_code == 200:
-            #    print("got a 200")
+            #    logger.info("got a 200")
             #    obj = request.json()
             #    for hotel in obj.get('hotels', []):
             #        row = self._map_data(hotel)
@@ -136,6 +141,6 @@ class ChoiceHotels(base.Base):
             
 
 if __name__ == '__main__':
-    print("running choicehotels.py")
+    logger.info("running choicehotels.py")
     ch = ChoiceHotels()
     ch.run()

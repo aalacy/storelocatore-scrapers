@@ -5,6 +5,11 @@ import json
 from sgrequests import SgRequests
 from sgrequests import SgRequests
 import phonenumbers
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lesliespool_com')
+
+
 
 
 session = SgRequests()
@@ -33,7 +38,7 @@ def fetch_data():
         
         if link['href'].count("/") > 2:
             page_url = base_url + link['href']
-            # print(page_url)
+            # logger.info(page_url)
             if "https://www.lesliespool.com/san-antonio-texas/san-antonio-2/stores.htm" in page_url:
                 continue
 
@@ -72,8 +77,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data===="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # logger.info("data===="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
 
         # except:

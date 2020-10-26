@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('xscapetheatres_com')
+
+
 
 
 
@@ -63,9 +68,9 @@ def fetch_data():
                     return_object.append("<MISSING>")
                     return_object.append("<MISSING>")
                     return_object.append("<MISSING>")
-                    print(return_object)
+                    logger.info(return_object)
                     return_main_object.append(return_object)
-    print(return_main_object)
+    logger.info(return_main_object)
     return return_main_object
 def scrape():
     data = fetch_data()

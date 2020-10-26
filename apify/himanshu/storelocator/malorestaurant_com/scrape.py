@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('malorestaurant_com')
+
+
 
 
 
@@ -31,14 +36,14 @@ def fetch_data():
     k1 = (soup.find("div",{"id":"text-3"}))
     hors = " ".join(list(k.stripped_strings))
     v = list(k1.stripped_strings)
-    # print(list(k1.stripped_strings))
+    # logger.info(list(k1.stripped_strings))
     tem_var=[]
     tem_var.append("http://www.malorestaurant.com")
     tem_var.append(v[1].replace(", Silver Lake",""))
     tem_var.append(v[1].replace(", Silver Lake",""))
-    # print(v[2])
+    # logger.info(v[2])
     tem_var.append(v[1].split(",")[-2])
-    # print(v[1].split(",")[-2])
+    # logger.info(v[1].split(",")[-2])
     tem_var.append(v[2].split( )[0])
     tem_var.append(v[2].split( )[1])
     tem_var.append("US")
@@ -48,7 +53,7 @@ def fetch_data():
     tem_var.append("<MISSING>")
     tem_var.append("<MISSING>")
     tem_var.append(hors.replace("Reservations & Hours ",""))
-    # print(tem_var)
+    # logger.info(tem_var)
     return_main_object.append(tem_var)
     
     

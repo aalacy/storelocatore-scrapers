@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from random import randint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('brigantine_com')
+
+
 
 def get_driver():
     options = Options() 
@@ -41,7 +46,7 @@ def fetch_data():
         if "coming soon" in cont[0].lower():
             continue
         location_name = cont[0].split('(')[0].strip()
-        print(location_name)
+        logger.info(location_name)
         phone_number = cont[1]
         street_address = cont[2]
         city = cont[3].replace(",","")

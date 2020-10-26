@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tonyromas_com')
+
+
 
 
 def write_output(data):
@@ -25,9 +30,9 @@ def fetch_data():
     temp1 =loadmain("https://locations.tonyromas.com/united-states")
     temp2 =loadmain("https://locations.tonyromas.com/canada")
 
-    print(temp1)
-    print(temp2)
-    print(endprint)
+    logger.info(temp1)
+    logger.info(temp2)
+    logger.info(endprint)
     return data
     # Your scraper here
 
@@ -51,8 +56,8 @@ def loadmain(mainlink):
             states = "https://locations.tonyromas.com" + states['href']
         else:
             states = "https://locations.tonyromas.com/" + states['href']
-        #print("loop1")
-        print(states)
+        #logger.info("loop1")
+        logger.info(states)
         page = requests.get(states)
         c = 1
         soup = BeautifulSoup(page.text, "html.parser")
@@ -72,7 +77,7 @@ def loadmain(mainlink):
                     cities = "https://locations.tonyromas.com" + cities
                 else:
                     cities = "https://locations.tonyromas.com/" + cities
-                print(cities)
+                logger.info(cities)
 
                 page = requests.get(cities)
 
@@ -80,8 +85,8 @@ def loadmain(mainlink):
                 try:
                     geo = soup.find('span', {'class': 'coordinates'})
                     coord = geo.findAll('meta')
-                    print("loop2")
-                    #print("state = ", s, " cities = ", c, " branch= ", b)
+                    logger.info("loop2")
+                    #logger.info("state = ", s, " cities = ", c, " branch= ", b)
                     data = extractinfo(cities, soup)
                     b += 1
                 except:
@@ -89,7 +94,7 @@ def loadmain(mainlink):
                     branches = soup.findAll('a', {'class': 'Teaser-titleLink Link--body'})
 
                     if len(branches) > 0:
-                        print("loop3")
+                        logger.info("loop3")
 
                         for branch in branches:
                             #branch = branch.find('a', {'class': 'Teaser-titleLink Link--body'})
@@ -98,26 +103,26 @@ def loadmain(mainlink):
                             blink = blink.replace("..", "")
                             blink = blink.replace("//","/")
                             blink = "https://locations.tonyromas.com" + blink
-                            print(blink)
+                            logger.info(blink)
                             page = requests.get(blink)
                             soup = BeautifulSoup(page.text, "html.parser")
                             try:
-                                print("loop4")
+                                logger.info("loop4")
                                 geo = soup.find('span', {'class': 'coordinates'})
                                 coord = geo.findAll('meta')
                                 nut = str(soup)
                                 if nut.find("404 page not found.") == -1:
-                                    print("ENTER")
+                                    logger.info("ENTER")
                                     data = extractinfo(blink, soup)
                                     b += 1
                                 else:
-                                    print("404 page not found.")
-                                    print(cities)
+                                    logger.info("404 page not found.")
+                                    logger.info(cities)
                                     missing += 1
                             except:
-                                print("loop5")
+                                logger.info("loop5")
                                 inter = soup.findAll('a', {'class': 'Teaser-titleLink Link--body'})
-                                #print("brancccccccccccccccccccccccch")
+                                #logger.info("brancccccccccccccccccccccccch")
                                 for binter in inter:
                                     blink = binter['href']
                                     blink = blink.replace("../", "")
@@ -126,7 +131,7 @@ def loadmain(mainlink):
                                     else:
                                         blink = "https://locations.tonyromas.com/" + blink
 
-                                    print(blink)
+                                    logger.info(blink)
                                     page = requests.get(blink)
                                     soup = BeautifulSoup(page.text, "html.parser")
                                     temp = str(soup)
@@ -134,11 +139,11 @@ def loadmain(mainlink):
                                         data = extractinfo(blink,soup)
                                         b += 1
                                     else:
-                                        print("404 page not found.")
+                                        logger.info("404 page not found.")
                                         missing += 1
 
                     else:
-                        print("404 page not found.")
+                        logger.info("404 page not found.")
                         missing += 1
 
 
@@ -202,19 +207,19 @@ def extractinfo(link, soup):
         ltype = "Branch | ATM"
 
 
-    print(title)
-    print(store)
-    #print(ltype)
-    print(street)
-    print(city)
-    print(state)
-    print(pcode)
-    print(ccode)
-    print(phone)
-    print(lat)
-    print(longt)
-    print(hours)
-    print('..................')
+    logger.info(title)
+    logger.info(store)
+    #logger.info(ltype)
+    logger.info(street)
+    logger.info(city)
+    logger.info(state)
+    logger.info(pcode)
+    logger.info(ccode)
+    logger.info(phone)
+    logger.info(lat)
+    logger.info(longt)
+    logger.info(hours)
+    logger.info('..................')
 
 
 

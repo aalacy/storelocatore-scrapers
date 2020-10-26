@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thehoxton_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +36,7 @@ def fetch_data():
     linklist = soup.find('nav',{'class':'nav-container__locations-nav'}).findAll('a')
     for link in linklist:       
         if link.text.find('coming') == -1:
-            #print(link)
+            #logger.info(link)
             title = link.text
             try:
                 link = link['href']
@@ -46,7 +51,7 @@ def fetch_data():
                 street , city, state = address.split(', ')
                 state,pcode = state.lstrip().split(' ',1)
                 phone = r.text.split('please call ',1)[1].split('<',1)[0].replace('.','').replace('+1','')
-                #print(phone)
+                #logger.info(phone)
                 data.append([
                 'https://thehoxton.com/',
                 link,                   
@@ -63,7 +68,7 @@ def fetch_data():
                 '<MISSING>',
                 '<MISSING>'
                 ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
         
             
@@ -73,10 +78,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

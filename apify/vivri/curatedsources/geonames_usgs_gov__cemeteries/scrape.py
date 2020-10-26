@@ -7,6 +7,11 @@ from concurrent.futures import *
 import simple_network_utils
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('geonames_usgs_gov__cemeteries')
+
+
 
 MISSING = "<MISSING>"
 FEATURE_URL_PREFIX = 'https://geonames.usgs.gov/apex/f?p=138:3:::NO:3:P3_FID,P3_TITLE:'
@@ -59,7 +64,7 @@ def fetch_data(feature_id: str):
         return feature_id, pageurl, raw_data
 
     except Exception as e:
-        print(f"Error while fetching from {page_url} - {e}")
+        logger.info(f"Error while fetching from {page_url} - {e}")
         return None
 
 def parse_record_data(feature_id: str, pageurl: str, raw_response) -> list:

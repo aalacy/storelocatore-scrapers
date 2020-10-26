@@ -1,5 +1,10 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bringfido_com__resource__veterinarians')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -22,7 +27,7 @@ def fetch_data():
     while Found:
         page = page + 24
         Found = False
-        print(page)
+        logger.info(page)
         url = 'https://www.bringfido.com/resource/?region=united_states&type=V&start=' + str(page) + '&__amp_source_origin=https%3A%2F%2Fwww.bringfido.com'
         r = session.get(url, headers=headers)
         website = 'bringfido.com'
@@ -65,7 +70,7 @@ def fetch_data():
     while Found:
         page = page + 24
         Found = False
-        print(page)
+        logger.info(page)
         url = 'https://www.bringfido.com/resource/?region=canada&type=V&start=' + str(page) + '&__amp_source_origin=https%3A%2F%2Fwww.bringfido.com'
         r = session.get(url, headers=headers)
         website = 'bringfido.com'

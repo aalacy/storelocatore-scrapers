@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zegna_com')
+
+
 
 
 
@@ -36,7 +41,7 @@ def fetch_data():
 
             city_request = session.get(base_url + link, headers=headers)
             city_soup = BeautifulSoup(city_request.text, "lxml")
-            # print(base_url + link)
+            # logger.info(base_url + link)
             if city_soup.find("div", {"class": "baa-list-left"}) == None:
                 pass
             else:
@@ -71,7 +76,7 @@ def fetch_data():
                     store.append(hours if hours != "" else "<MISSING>")
                     page_url = base_url + store_data["url"]
                     store.append(page_url)
-                    # print(store)
+                    # logger.info(store)
                     return_main_object.append(store)
                 break
     return return_main_object

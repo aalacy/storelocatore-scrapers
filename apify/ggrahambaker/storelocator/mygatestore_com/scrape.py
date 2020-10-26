@@ -4,6 +4,11 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mygatestore_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +35,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     storelist = soup.find('store').findAll('item')
-    #print("states = ",len(storelist))
+    #logger.info("states = ",len(storelist))
     for store in storelist:
         title = store.find('location').text
         address = store.find('address').text.replace('&#44;','').strip()
@@ -39,7 +44,7 @@ def fetch_data():
             address1 = address
         except:
             pass
-        #print(address)
+        #logger.info(address)
         address = usaddress.parse(address)
         #input()
         i = 0
@@ -91,16 +96,16 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
         
     return data
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -2,6 +2,11 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('alliancebanks_com')
+
+
 
 
 options = Options()
@@ -65,7 +70,7 @@ def fetch_data():
                 '<MISSING>',
                 hours_of_op.replace('\n','').replace('Drive',' Drive').replace('Walk',' Walk').replace('Friday','Friday ').replace('  ',' ')
             ])
-        #print(count,data[count])
+        #logger.info(count,data[count])
         count = count + 1
        
     driver.quit()

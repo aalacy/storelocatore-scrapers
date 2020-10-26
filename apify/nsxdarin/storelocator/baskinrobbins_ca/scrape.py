@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('baskinrobbins_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -48,7 +53,7 @@ def fetch_data():
                 add = addinfo.split(',',1)[0].strip()
             else:
                 add = addinfo.split(',')[0].strip()
-            #print(addinfo)
+            #logger.info(addinfo)
             try:
                 zc = addinfo.rsplit(',',1)[1].strip().split(' ',1)[1]
             except:

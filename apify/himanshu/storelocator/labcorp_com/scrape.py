@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('labcorp_com')
+
+
 session = SgRequests()
 
 
@@ -37,10 +42,10 @@ def fetch_data():
 
     while coord:
         result_coords = []
-     #   print(search.current_zip)
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+     #   logger.info(search.current_zip)
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://www.labcorp.com/labs-and-appointments/results?lat="+str(coord[0])+"&lon="+str(coord[1])+"&radius="+str(MAX_DISTANCE)
-        # print(location_url)
+        # logger.info(location_url)
         try:
             r = session.get(location_url, headers=headers)
         except:
@@ -52,7 +57,7 @@ def fetch_data():
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data['lc_psc_locator']:
                 current_results_len = len(json_data['lc_psc_locator']['psc_locator_app']['settings']['labs'])
-              #  print(current_results_len)
+              #  logger.info(current_results_len)
                 for i in json_data['lc_psc_locator']['psc_locator_app']['settings']['labs']:  
                      
                     location_name = i['name'].replace('-APPOINTMENT ONLY','').replace('- APPOINTMENT ONLY','').replace('- APPT.  RECOMMENDED','').replace('SATURDAY BY APPT. ONLY','').replace('- APOINTMENT ONLY','')
@@ -93,10 +98,10 @@ def fetch_data():
             pass
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

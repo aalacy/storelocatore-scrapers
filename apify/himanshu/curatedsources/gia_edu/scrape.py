@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gia_edu')
+
+
 
 
 def write_output(data):
@@ -13,7 +18,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -48,7 +53,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    # print("zip_code == " + zip_code)
+    # logger.info("zip_code == " + zip_code)
     r = requests.get('https://www.gia.edu/otmm_wcs_int/getRetailerLocations.jsp?reqUrl=https://webapps.gia.edu/RetailerLookUpService/retailerLookup.do&Latitude=33.1412124&Longitude=-117.32051230000002&Radius=100000&Stores=70000', headers=headers)
     json_data = r.json()
     myvalues = [i['results'] for i in json_data if 'results' in i]
@@ -57,27 +62,27 @@ def fetch_data():
         country_code = x['address']['country']
 
 
-        # print(ca_zip_list,us_zip_list)
+        # logger.info(ca_zip_list,us_zip_list)
         if  "US" == country_code or "us" == country_code or "Us" == country_code or "u.s." == country_code or "U.S." == country_code or "usa" == country_code or "USA" == country_code or "United States" == country_code =="United States Virgin Islands" == country_code or "U.S.A." == country_code or "u.s.a" == country_code or "United States of America" == country_code or "U.S. Virgin Islands" == country_code or "UNITED STATES" == country_code or "Canada" == country_code  or "Canada." == country_code or "CANADA" == country_code:
 
 
             if "" != x['address']['zip']:
-                # print(x['address']['zip'],country_code)
+                # logger.info(x['address']['zip'],country_code)
                 if "Canada" in country_code or "CANADA" in country_code:
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(x['address']['zip']))
                     if ca_zip_list != []:
                         zipp = ca_zip_list[0].strip()
                     else:
                     # zipp = x['address']['zip'].replace('/ Ontario','').upper().replace('-',' ')
-                        # print(zipp)
+                        # logger.info(zipp)
                         zipp = "<MISSING>"
                     country_code = "CA"
-                    # print(country_code,zipp)
+                    # logger.info(country_code,zipp)
                 else:
                     zip = x['address']['zip'].replace('CA','').replace('\\uFFFD','').strip()
-                    # print(zip)
-                    # print("len=="+str(len(zip)))
-                    # print('~~~~~~~~~~~~~~~~~~~~~`')
+                    # logger.info(zip)
+                    # logger.info("len=="+str(len(zip)))
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~`')
                     if len(zip) ==3:
 
                         zipp = "00"+zip
@@ -94,11 +99,11 @@ def fetch_data():
                     else:
                         zipp = zip
                         country_code = "US"
-                    # print(zipp)
+                    # logger.info(zipp)
 
 
             else:
-                # print( x['address']['zip'],x['address']['country'])
+                # logger.info( x['address']['zip'],x['address']['country'])
                 if "Canada" in country_code or "CANADA" in country_code:
                     zipp = "<MISSING>"
                     country_code = "CA"
@@ -106,8 +111,8 @@ def fetch_data():
                 else:
                     zipp = "<MISSING>"
                     country_code = "US"
-                    # print("zipp === "+x['address']['zip'],country_code)
-                    # print(country_code,zipp)
+                    # logger.info("zipp === "+x['address']['zip'],country_code)
+                    # logger.info(country_code,zipp)
 
             if "L4N  1A4" == zipp:
                 zipp = "L4N 1A4"
@@ -119,8 +124,8 @@ def fetch_data():
             store_number = '<MISSING>'
             location_name = x['storename'].replace('\\','').capitalize().strip()
             street_address = x['address']['street'].replace('\\','').replace('>','').capitalize().strip()
-            # print(street_address)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(street_address)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             city = x['address']['city'].split(',')[0].replace('\\','').replace('u00E9','e').replace('u00C8','c').capitalize().strip()
             state =x['address']['state'].replace('.','').strip()
             if "Vancouver" or "Vancourver" in state:
@@ -136,7 +141,7 @@ def fetch_data():
             else:
                 latitude = lat
                 longitude = lng
-            # print(latitude,longitude)
+            # logger.info(latitude,longitude)
             phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x['address']['phone']))
             if phone_list:
                 phone = phone_list[0]
@@ -155,23 +160,23 @@ def fetch_data():
                 hours_of_operation = " ".join(h).replace('moned:','to ').replace('tueed','to ').replace('weded:','to ').replace('thued:','to ').replace('fried:','to ').replace('sated:','to ').replace('suned:Closed','').replace('st','').replace('suned:','to ').strip()
             else:
                 hours_of_operation = "<MISSING>"
-            # print(hours_of_operation)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(hours_of_operation)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x == "" or x ==
                      None else x for x in store]
             # store = [x if x else "<MISSING>" for x in store]
-            # print(store[1:3])
+            # logger.info(store[1:3])
 
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
 
 
-            # print(state)
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(state)
+            #logger.info("data = " + str(store))
+            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
 
 

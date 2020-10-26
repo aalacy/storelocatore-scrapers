@@ -11,6 +11,11 @@ from bs4 import BeautifulSoup as bs
 import json
 from datetime import datetime
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('napaonline_com')
+
+
 
 
 show_logs = False
@@ -60,8 +65,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
-    print("")
+    logger.info(" ".join(map(str, args)), **kwargs)
+    logger.info("")
 
 
 def get_time():
@@ -315,7 +320,7 @@ def scrape_multiple_in_city(url):
 
 def crawl_city_url(url):
     # the url argument is of type bs4.element.Tag
-    # print(f'type(url): {type(url)}')
+    # logger.info(f'type(url): {type(url)}')
     if "(1)" in url.text:
         return scrape_one_in_city(url)
     else:
@@ -329,7 +334,7 @@ def fetch_data():
     r = get("https://www.napaonline.com/en/auto-parts-stores-near-me")
 
     if not r: 
-        print(f'could not get initial locator page. giving up')
+        logger.info(f'could not get initial locator page. giving up')
         raise SystemExit
 
     soup = bs(r.text, "lxml")
@@ -350,7 +355,7 @@ def fetch_data():
                 cities_in_state = result.result()
                 city_urls.extend(cities_in_state)
             except Exception as ex: 
-                print(f'crawl_state_url with result {result} threw exception: {ex}')
+                logger.info(f'crawl_state_url with result {result} threw exception: {ex}')
                 
     log(f'found {len(city_urls)} city urls')
 

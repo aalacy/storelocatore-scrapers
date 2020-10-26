@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('redlion_com__red-lion-inn-suites')
+
+
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,7 +28,7 @@ def fetch_data():
         if '<loc>https://www.redlion.com/red-lion-inn-suites/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines(decode_unicode=True)
         website = 'redlion.com/red-lion-inn-suites'

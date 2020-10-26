@@ -4,6 +4,11 @@ from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('amazon_com__4star')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -60,7 +65,7 @@ def fetch_data():
         link_list.append(link)
 
     all_store_data = []
-    #print(len(link_list))
+    #logger.info(len(link_list))
     for link in link_list:
         
         driver.get(link)
@@ -157,7 +162,7 @@ def fetch_data():
         location_type = '<MISSING>'
         
         phone_number = phone_number.strip()
-        print(phone_number)
+        logger.info(phone_number)
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number.encode("ascii", "replace").decode().replace("?",""), location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)

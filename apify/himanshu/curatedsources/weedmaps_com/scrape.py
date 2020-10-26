@@ -6,6 +6,11 @@ import json
 import time
 from random import choice
 import html5lib
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('weedmaps_com')
+
+
 
 
 def get_proxy():
@@ -19,7 +24,7 @@ def proxy_request(request_type, url, **kwargs):
     while 1:
         try:
             proxy = get_proxy()
-            # print("Using Proxy {}".format(proxy))
+            # logger.info("Using Proxy {}".format(proxy))
             r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
             break
         except:
@@ -57,7 +62,7 @@ def fetch_data():
         if location_list == []:
             break
         for weed in location_list:
-            #print("page number is=========="+str(page))
+            #logger.info("page number is=========="+str(page))
             location_name = weed['name'].encode('ascii', 'ignore').decode('ascii').strip()
             if "Coming Soon" in location_name:
                 continue
@@ -106,7 +111,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print("data ======="+str(store))
+            #logger.info("data ======="+str(store))
             yield store
         
         page += 1

@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bakedbymelissa_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -45,15 +50,15 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		stores = json.loads(base.text)['items']
 
 		for store in stores:		
 			locator_domain = "bakedbymelissa.com"
 			location_name = store['name']
-			print(location_name)
+			logger.info(location_name)
 
 			street_address = store['street']
 			city = store['city']

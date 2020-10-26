@@ -1,3 +1,4 @@
 sgrequests
 sgzip
 requests_toolbelt
+sglogging

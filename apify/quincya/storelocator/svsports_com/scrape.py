@@ -5,6 +5,11 @@ import time
 from random import randint
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('svsports_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,8 +34,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -62,10 +67,10 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			print(link)
+			logger.info(link)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
 		store_data = json.loads(script)

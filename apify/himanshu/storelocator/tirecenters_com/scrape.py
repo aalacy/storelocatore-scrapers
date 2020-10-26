@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tirecenters_com')
+
+
 
 
 session = SgRequests()
@@ -34,7 +39,7 @@ def fetch_data():
     for i in range(0,50):
         city = (r[i][0])
         url = "http://www.tirecenters.com/m/locations_lsh.cfc?method=getlocs&mystate="+str(city)+"&myregion=all&returnformat=JSON"
-        # print(url)
+        # logger.info(url)
         r1 = session.get(url, headers=headers).json()
         for value in r1:
             street_address = value['addr1']

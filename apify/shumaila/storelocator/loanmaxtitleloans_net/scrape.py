@@ -4,6 +4,11 @@ import string
 import re, time
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('loanmaxtitleloans_net')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,39 +34,39 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
     state_list = soup.findAll('li', {'class': 'state_item'})
-   # print("states = ",len(state_list))
+   # logger.info("states = ",len(state_list))
     p = 0
     for states in state_list:
         states = states.find('a')
-        #print(states.text.strip())
+        #logger.info(states.text.strip())
         states = 'https://www.loanmaxtitleloans.net' + states['href']
         r = session.get(states, headers=headers, verify=False)
         ccode = 'US'
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.find('div', {'class': 'location_list_container second'}).findAll('a')
 
-        #print("cities = ",len(city_list))
+        #logger.info("cities = ",len(city_list))
 
         for cities in city_list:
             #cities = cities.find('a')
-            #print(cities.text.strip())
+            #logger.info(cities.text.strip())
             cities = 'https://www.loanmaxtitleloans.net'+ cities['href']
-            #print(cities)
+            #logger.info(cities)
             r = session.get(cities, headers=headers, verify=False)
             
             soup = BeautifulSoup(r.text, "html.parser")
             branch_list = soup.findAll('div', {'id': 'nd_locationStores'})
-            #print(len(branch_list))
+            #logger.info(len(branch_list))
  
             for branch in branch_list:
-                #print(branch.text)
+                #logger.info(branch.text)
                 branch = branch.find('a',{'class':'flex'})
                 if branch['href'] == '':
                     pass
                 else:
                     link = 'https://www.loanmaxtitleloans.net' +branch['href']
                     
-                    #print(link)
+                    #logger.info(link)
                     r = session.get(link, headers=headers, verify=False)    
                     
                     soup = BeautifulSoup(r.text, "html.parser")
@@ -77,7 +82,7 @@ def fetch_data():
                     else:
                         name.append(street)
                         data.append(['https://www.loanmaxtitleloans.net',link,title,street,city,state,pcode,'US','<MISSING>',phone,'<MISSING>','<MISSING>','<MISSING>',hours])
-                        #print(p,data[p])
+                        #logger.info(p,data[p])
                         p += 1
                         
 
@@ -89,9 +94,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -7,6 +7,11 @@ import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('livwell_com')
+
+
 
 
 def get_driver():
@@ -43,10 +48,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		# print("Got today page")
+		# logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -54,9 +59,9 @@ def fetch_data():
 	locator_domain = "livwell.com"
 
 	for i, item in enumerate(items):
-		print(str(i+1) + " of " + str(len(items)))
+		logger.info(str(i+1) + " of " + str(len(items)))
 		location_name = item.a.text.strip()
-		print(location_name)
+		logger.info(location_name)
 		
 		raw_data = item.find(class_="post-description").find_all("p")
 		street_address = raw_data[0].text.strip()

@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lewisdrug_com')
+
+
 
 
 def write_output(data):
@@ -32,13 +37,13 @@ def fetch_data():
         for link in links:
            if link.text == "Details ":
                 link = link['href']
-                #print(link)
-                #print(p)
+                #logger.info(link)
+                #logger.info(p)
                 page = requests.get(link)
                 soup = BeautifulSoup(page.text, "html.parser")
                 scriptlist = soup.findAll('script', {'type': 'application/ld+json'})
                 detail = str(scriptlist[3])
-                #print(detail)
+                #logger.info(detail)
                 start = detail.find("name", 0)
                 start = detail.find(":", start) + 3
                 end = detail.find(",", start) - 1
@@ -88,11 +93,11 @@ def fetch_data():
                 hours = ""
                 hourlist = soup.findAll('div', {'class': 'hour'})
                 for temph in hourlist:
-                    #print("Hours = ",temph.text)
+                    #logger.info("Hours = ",temph.text)
                     hours = hours + temph.text +' '
 
                 hours = hours.replace('\u200b','')
-                #print(hours)
+                #logger.info(hours)
                 
 
                 if len(street) < 4:
@@ -130,7 +135,7 @@ def fetch_data():
                     longt,
                     hours
                 ])
-                print(data[p])
+                logger.info(data[p])
                 p += 1
 
     return data

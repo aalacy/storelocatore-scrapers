@@ -7,3 +7,4 @@ phonenumbers==8.10.14
 us==1.0.0
 zipcodes==1.0.5
 sgzip
+sglogging

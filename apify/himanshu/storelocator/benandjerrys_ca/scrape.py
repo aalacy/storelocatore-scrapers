@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('benandjerrys_ca')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -48,7 +53,7 @@ def fetch_data():
             continue
       
         soup = BeautifulSoup(r.text, "lxml")
-        # print(soup)
+        # logger.info(soup)
         
         locator_domain = base_url
         location_name = ""
@@ -80,13 +85,13 @@ def fetch_data():
             longitude = script.find('longitude').text
             phone = script.find('cakephone').text.replace('&#xa0;', "")
             icon = script.find('icon').text.strip()
-            # print(icon)
-            # print("~~~~~~~~~~~~~~~~")
+            # logger.info(icon)
+            # logger.info("~~~~~~~~~~~~~~~~")
             if "Store" in icon:
                 location_type = "Store"
             elif "shop" in icon or "default" in icon:
                 location_type = "Scoop shops"
-                # print(zipp)
+                # logger.info(zipp)
             else:
                 continue
 
@@ -145,10 +150,10 @@ def fetch_data():
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

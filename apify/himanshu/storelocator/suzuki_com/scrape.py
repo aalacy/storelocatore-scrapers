@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('suzuki_com')
+
+
 
 
 session = SgRequests()
@@ -42,8 +47,8 @@ def fetch_data():
     zip = search.next_zip()
     while zip:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #print('Pulling Lat-Long %s...' % (str(zip)))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info('Pulling Lat-Long %s...' % (str(zip)))
         try:
             r = session.get(base_url+'/DealerSearchHandler.ashx?zip='+str(zip)+'&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=4&country=en')
         except:
@@ -99,10 +104,10 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
         if len(soup.find_all('dealerinfo')) < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(soup.find_all('dealerinfo')) == MAX_RESULTS:
-            #print("max count update")
+            #logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

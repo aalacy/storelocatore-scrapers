@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tmphysiciannetwork_org')
+
+
 
 
 session = SgRequests()
@@ -65,7 +70,7 @@ def fetch_data():
         # if zip not in output:
         #     output.append(zip)
         yield store
-        # print(store)
+        # logger.info(store)
 def scrape():
     data = fetch_data()
     write_output(data)

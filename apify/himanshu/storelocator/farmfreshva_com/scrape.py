@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('farmfreshva_com')
+
+
 
 
 session = SgRequests()
@@ -51,7 +56,7 @@ def fetch_data():
         store.append('<MISSING>')
         store.append('<MISSING>')
         return_main_object.append(store)
-        #print("data ==== "+str(store))
+        #logger.info("data ==== "+str(store))
     return return_main_object
         
 def scrape():

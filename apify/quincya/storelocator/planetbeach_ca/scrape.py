@@ -8,6 +8,11 @@ from random import randint
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('planetbeach_ca')
+
+
 
 
 def get_driver():
@@ -62,10 +67,10 @@ def fetch_data():
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got main page")
+		logger.info("Got main page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	items = base.find_all(class_="icon_description")
 
@@ -73,7 +78,7 @@ def fetch_data():
 
 		locator_domain = "planetbeachcanada.com"
 		location_name = item.h4.text.strip()
-		print(location_name)
+		logger.info(location_name)
 
 		raw_address = item.p.text.strip().split("\n")
 
@@ -102,8 +107,8 @@ def fetch_data():
 			try:
 				maps = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				print('[!] Error Occured. ')
-				print('[?] Check whether system is Online.')
+				logger.info('[!] Error Occured. ')
+				logger.info('[?] Check whether system is Online.')
 
 			try:
 				raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

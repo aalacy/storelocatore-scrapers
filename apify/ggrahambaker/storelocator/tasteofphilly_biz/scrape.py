@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tasteofphilly_biz')
+
+
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -28,16 +33,16 @@ def fetch_data():
     for store in stores:
         title = store.find('a').text
         link = 'https://www.tasteofphilly.biz'+store.find('a')['href']
-        #print(p,link)
+        #logger.info(p,link)
         r = session.get(link, headers=headers, verify=False)
-        #print(link)
+        #logger.info(link)
         '''if 'famous' in r.url:
             continue'''
         soup = BeautifulSoup(r.text,'html.parser')
         try:
             flag = 0
             content = soup.find('meta',{'property':'og:description'})['content']
-            #print(content)
+            #logger.info(content)
             if content.find('thanks!') > -1:
                 det = content.split('thanks! ',1)[1]
             elif content.find(']') > -1:
@@ -131,7 +136,7 @@ def fetch_data():
             
             try:
                 coord = soup.find('iframe')['src']
-                #print(coord)
+                #logger.info(coord)
                 
                 lat,longt = coord.split('sll=',1)[1].split('&',1)[0].split(',')
                 
@@ -155,7 +160,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
                 
         except:

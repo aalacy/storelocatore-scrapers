@@ -4,6 +4,11 @@ import time
 import re
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('altabank_com')
+
+
 
 
 def write_output(data):
@@ -29,8 +34,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	locations = base.findAll(class_='location-card')
 	locator_domain = "altabank.com"

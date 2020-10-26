@@ -7,6 +7,11 @@ import urllib.parse
 from sgselenium import SgSelenium
 import time
 from selenium.webdriver.support.wait import WebDriverWait
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('familyfareconveniencestores_com')
+
+
 
 
 def write_output(data):
@@ -25,7 +30,7 @@ def write_output(data):
 
 
 def fetch_data():
-    # print("start")
+    # logger.info("start")
 
     base_url = "http://www.familyfareconveniencestores.com"
 
@@ -38,12 +43,12 @@ def fetch_data():
 
     for button in driver.find_elements_by_xpath("//select[@name='ctl00$LeftNavigation$CommunityDDL$CityDDL']/option"):
         city = button.get_attribute("value")
-        # print("city === " + city)
+        # logger.info("city === " + city)
         if len(city) == 0:
             pass
         else:
-            # print("city === " + city)
-            # print(city)
+            # logger.info("city === " + city)
+            # logger.info(city)
             cities.append(city)
     
     
@@ -51,7 +56,7 @@ def fetch_data():
         driver.find_element_by_xpath("//select[@name='ctl00$LeftNavigation$CommunityDDL$CityDDL']").click()
         driver.find_element_by_xpath("//option[@value='" + city + "']").click()
         # WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath("//option[@value='']"))  # wait until data
-        # print(city)
+        # logger.info(city)
         list_a = []
         for a_tag in driver.find_elements_by_xpath("//a[contains(@id,'MainContent_ResultsGridView_LocationHL')]"):
             list_a.append(a_tag.get_attribute("id"))
@@ -84,23 +89,23 @@ def fetch_data():
             page_url = driver.current_url
 
             # do your scrapping logic  using driver.pagesource
-            # print("States ==== " + str(page_url))
+            # logger.info("States ==== " + str(page_url))
             soup_location = BeautifulSoup(driver.page_source, "lxml")
             hours_of_operation  = " ".join(list(soup_location.find("td",{"id":"Inside_MainColumn"}).find("table").stripped_strings))
             geo_url  = soup_location.find("iframe")["src"]
-            # print("geourl === "+ str(geo_url))
+            # logger.info("geourl === "+ str(geo_url))
             latitude = geo_url.split("marker=")[1].split("%2C")[0]
             longitude = geo_url.split("marker=")[1].split("%2C")[1]
-            # print("latitude === "+ str(latitude))
-            # print("longitude "+ str(longitude))
+            # logger.info("latitude === "+ str(latitude))
+            # logger.info("longitude "+ str(longitude))
             store = [locator_domain, location_name, street_address, city,state,zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("Hours of Operation: TBD","<MISSING>"), page_url]
 
             if str(store[2]) not in addresses and country_code:
                 addresses.append(str(store[2]))
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
             driver.back()

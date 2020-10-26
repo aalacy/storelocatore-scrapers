@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kellystavern_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	main_page = base.findAll('div', attrs={'class': 'popup_anchor'})
 	items = set()
@@ -39,14 +44,14 @@ def fetch_data():
 
 	data = []
 	for link in items:
-		print ("Getting link: " + link)
+		logger.info("Getting link: " + link)
 		req = requests.get(link, headers=headers)
 
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "kellystavern.com"
 		content = base.findAll('div', attrs={'class': 'clearfix grpelem'})[-1]

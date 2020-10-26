@@ -8,6 +8,11 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cvs_com')
+
+
 
 start_time = datetime.now()
 
@@ -39,9 +44,9 @@ def write_output(data):
 
     end_time = datetime.now()
     timedelta = end_time - start_time
-    print('--------------------')
+    logger.info('--------------------')
     duration = time.strftime('%H:%M:%S', time.gmtime(timedelta.total_seconds()))
-    print(f"duration: {duration}")
+    logger.info(f"duration: {duration}")
 
 def get_session(reset=False):
     if not hasattr(thread_local, "session") or (reset == True):
@@ -94,14 +99,14 @@ def scrape_city_urls(city_urls, loc_urls):
             loc_urls.extend(d["locs"])
 
 def get_location(loc):
-    print(f"Pulling Location: {loc}")
+    logger.info(f"Pulling Location: {loc}")
 
     session = get_session()
     r = session.get(loc, headers=headers)
     location = BeautifulSoup(r.text, "html.parser")
     script = location.select_one("#structured-data-block")
     if not script:
-        print(f"Unable to fetch location: {loc}")
+        logger.info(f"Unable to fetch location: {loc}")
         return None
 
     structured_data = script.string
@@ -145,13 +150,13 @@ def fetch_data():
     city_urls = urls["cities"]
     loc_urls = urls["locs"]
 
-    print(f"number of states: {len(state_urls)}")
+    logger.info(f"number of states: {len(state_urls)}")
     scrape_state_urls(state_urls, city_urls)
 
-    print(f"number of cities: {len(city_urls)}")
+    logger.info(f"number of cities: {len(city_urls)}")
     scrape_city_urls(city_urls, loc_urls)
 
-    print(f"number of locations: {len(loc_urls)}")
+    logger.info(f"number of locations: {len(loc_urls)}")
     return scrape_loc_urls(loc_urls)
         
 

@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('target_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -21,9 +26,9 @@ def fetch_data():
         line = str(line.decode('utf-8'))
         if '"apiKey\\":\\"' in line:
             key = line.split('"apiKey\\":\\"')[1].split('\\')[0]
-    print(key)
+    logger.info(key)
     for code in sgzip.for_radius(100):
-        print('Pulling Zip Code %s...' % code)
+        logger.info('Pulling Zip Code %s...' % code)
         url = 'https://redsky.target.com/v3/stores/nearby/' + code + '?key=' + key + '&limit=500&within=100&unit=mile'
         r = session.get(url, headers=headers)
         lines = r.iter_lines()
@@ -51,7 +56,7 @@ def fetch_data():
                         r2 = session.get(loc, headers=headers)
                         hours = ''
                         if store not in ids:
-                            print(loc)
+                            logger.info(loc)
                             ids.append(store)
                             for line2 in r2.iter_lines():
                                 line2 = str(line2.decode('utf-8'))

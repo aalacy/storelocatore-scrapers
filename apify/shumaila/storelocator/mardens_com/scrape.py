@@ -5,6 +5,11 @@ import usaddress
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mardens_com')
+
+
 
 
 def write_output(data):
@@ -37,10 +42,10 @@ def fetch_data():
     time.sleep(2)
 
     details = driver.find_elements_by_class_name("location-block")
-    print(len(details))
+    logger.info(len(details))
     p = 1
     for n in range(0, len(details)):
-        print(details[n].get_attribute('href'))
+        logger.info(details[n].get_attribute('href'))
         link = details[n].get_attribute('href')
         driver = get_driver()
         driver.get(link)
@@ -51,7 +56,7 @@ def fetch_data():
         hours = hours.replace("\n", "|")
         address = driver.find_element_by_class_name("location-address").text
         address = usaddress.parse(address)
-        print(address)
+        logger.info(address)
         i = 0
         street = ""
         city = ""
@@ -87,15 +92,15 @@ def fetch_data():
         city = city.replace(",", "")
         state = state.replace(",", "")
         pcode = pcode.replace(",", "")
-        print(p)
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(ccode)
-        print(phone)
-        print(hours)
+        logger.info(p)
+        logger.info(title)
+        logger.info(street)
+        logger.info(city)
+        logger.info(state)
+        logger.info(pcode)
+        logger.info(ccode)
+        logger.info(phone)
+        logger.info(hours)
 
         data.append([
             url,

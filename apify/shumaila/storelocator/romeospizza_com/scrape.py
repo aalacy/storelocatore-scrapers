@@ -4,6 +4,11 @@ import string
 import re, time,json
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('romeospizza_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -60,7 +65,7 @@ def fetch_data():
             try:
                 content = link.text
                 content = re.sub(pattern,'\n',content).lstrip().splitlines()
-                #print(content)
+                #logger.info(content)
                 title = content[0]
                 street = content[1]
                 city,state = content[2].split(', ',1)
@@ -89,7 +94,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
         

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('osf_com')
+
+
 
 
 session = SgRequests()
@@ -25,7 +30,7 @@ def fetch_data():
     main=soup.find_all('a',{'class':"e-link"})
     for li in main:
         r1 = session.get(li['href'])
-        print(li['href'])
+        logger.info(li['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         name=soup1.find('h1',{"class":"m-pageHeader_location__title"}).text.strip()
         madd=soup1.find('p',{"class":'m-pageHeader_location__address'}).text.strip().split(',')

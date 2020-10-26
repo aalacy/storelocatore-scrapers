@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import time
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gasbuddy_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,7 +38,7 @@ def fetch_data():
         while Found:
             Found = False
             time.sleep(1)
-            print(state + ': ' + str(count))
+            logger.info(state + ': ' + str(count))
             url = 'https://www.gasbuddy.com/assets-v2/api/stations?regionCode=' + state + '&fuel=1&maxAge=0&cursor=' + str(count) + '&countryCode=US'
             r = session.get(url, headers=headers)
             count = count + 25
@@ -89,7 +94,7 @@ def fetch_data():
         while Found:
             Found = False
             time.sleep(1)
-            print(county + ': ' + str(count))
+            logger.info(county + ': ' + str(count))
             url = 'https://www.gasbuddy.com/assets-v2/api/stations?area=' + cname + '&countyId=' + cid + '&cursor=' + str(count) + '&regionCode=TX&countryCode=US'
             r = session.get(url, headers=headers)
             count = count + 25
@@ -143,7 +148,7 @@ def fetch_data():
         while Found:
             Found = False
             time.sleep(1)
-            print(state + ': ' + str(count))
+            logger.info(state + ': ' + str(count))
             url = 'https://www.gasbuddy.com/assets-v2/api/stations?regionCode=' + state + '&fuel=1&maxAge=0&cursor=' + str(count) + '&countryCode=CA'
             r = session.get(url, headers=headers)
             count = count + 25

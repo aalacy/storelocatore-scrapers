@@ -2,6 +2,11 @@ import csv
 import os
 from sgselenium import SgSelenium
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('patelbros_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +45,7 @@ def fetch_data():
     done = False
     for i in range(0, 10):
         locations = driver.find_elements_by_css_selector('div.store-locator__infobox')
-        #print(i)
+        #logger.info(i)
         for loc in locations:
             if loc.text == '':
                 continue
@@ -78,9 +83,9 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
             
-            # print()
-            #print(store_data)
-            #print()
+            # logger.info()
+            #logger.info(store_data)
+            #logger.info()
             all_store_data.append(store_data)
 
         if done:

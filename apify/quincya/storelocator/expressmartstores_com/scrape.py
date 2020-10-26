@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('expressmartstores_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,7 +42,7 @@ def fetch_data():
 		base = BeautifulSoup(req.text,"lxml")
 
 		location_name = base.find(class_="phone clearfix").h2.text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 		
 		raw_address = str(base.find(class_="address clearfix").p).split("<br/>")
 

@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('citi_com')
+
+
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -33,12 +38,12 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         url = 'https://online.citi.com/gcgapi/prod/public/v1/geoLocations/places/retrieve'
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
         array = []
         result_coords = []
-        print(('%s - %s...' % (str(x), str(y))))
+        logger.info(('%s - %s...' % (str(x), str(y))))
         payload = '{"type":"branchesAndATMs","inputLocation":[' + str(y) + ',' + str(x) + '],"resultCount":"500","distanceUnit":"MILE","findWithinRadius":"500"}'
         payload = json.loads(payload)
         r = session.post(url, headers=headers, data=json.dumps(payload))
@@ -74,12 +79,12 @@ def fetch_data():
                             if store not in ids and 'america' in country:
                                 ids.add(store)
                                 country = 'US'
-                                print(('Pulling Store ID #%s...' % store))
+                                logger.info(('Pulling Store ID #%s...' % store))
                                 if '-Closing' in name:
                                     name = name.split('-Closing')[0]
                                 yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

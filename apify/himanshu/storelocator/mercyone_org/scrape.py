@@ -6,6 +6,11 @@ import json
 import re
 import time
 import random
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mercyone_org')
+
+
 
 session = SgRequests()
 
@@ -145,8 +150,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data == "+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data == "+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
     raise SystemExit

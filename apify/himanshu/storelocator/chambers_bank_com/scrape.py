@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 from json import loads
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chambers_bank_com')
+
+
 
 
 
@@ -32,20 +37,20 @@ def fetch_data():
     longitude =[]
     loc = session.get("https://www.chambers.bank/ajax/locations",headers = header).json()
     for i in loc:
-        # print(i)
+        # logger.info(i)
         if not i['name']:
             pass
         else:
             lat.append(i['lat'])
             lng.append(i['lng'])
-            # print(i["phone"])
+            # logger.info(i["phone"])
             name1.append(i["phone"])
 
 
-    # print(len(lat))
+    # logger.info(len(lat))
     db =  soup.find_all('div',{'class':'location'})
     for index,val in enumerate(db):
-        # print(index)
+        # logger.info(index)
         locator_domain = base_url
         location_name = val.find_previous('h3').text.strip()
         street_address = val.find('p',{'class':'address'}).text.split('\n')[0].strip()
@@ -56,7 +61,7 @@ def fetch_data():
         else:
             state = val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[0].split()[-2].strip()
         zip = (val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(",")[-1].split( )[-1].replace("AR","<MISSING>"))
-        # print(city +" | "+state+" | "+zip)
+        # logger.info(city +" | "+state+" | "+zip)
         store_number = '<MISSING>'
         phone = val.find('p',{'class':'address'}).find_next('p').text.replace('Phone:','').strip()
         country_code = 'US'
@@ -66,7 +71,7 @@ def fetch_data():
 
         for i in range(len(name1)):
             if name1[i]==phone:
-                # print(street_address)
+                # logger.info(street_address)
                 latitude.append(lat[index])
                 longitude.append(lng[index])
 
@@ -96,9 +101,9 @@ def fetch_data():
         if "1900 East Oak Street" in store:
             store[10]="35.0914721"
             store[11]="-92.4007896"
-            # print(store)
+            # logger.info(store)
         return_main_object.append(store)
-    # print(len(latitude))
+    # logger.info(len(latitude))
     return return_main_object
 
 

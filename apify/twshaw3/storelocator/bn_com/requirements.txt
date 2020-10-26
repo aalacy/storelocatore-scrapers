@@ -7,3 +7,4 @@ futures
 sgzip
 sgrequests
 tenacity
+sglogging

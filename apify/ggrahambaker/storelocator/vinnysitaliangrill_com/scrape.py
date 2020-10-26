@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vinnysitaliangrill_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,11 +37,11 @@ def fetch_data():
     all_store_data = []
     for loc in locs:
         address = loc.find_element_by_css_selector('p.descrizione_location').text.split('\n')
-        print(address)
+        logger.info(address)
         street_address = address[0]
         if 'Garrisonville' in street_address:
             seen_count += 1
-            print(seen_count)
+            logger.info(seen_count)
             if seen_count == 2:
                 continue
 
@@ -58,7 +63,7 @@ def fetch_data():
             city, state, zip_code = addy_ext(address[1])
 
         phone_number = loc.find_element_by_css_selector('p.telefono_location').text.replace('Phone:', '').strip()
-        print(phone_number)
+        logger.info(phone_number)
 
         country_code = 'US'
         location_name = '<MISSING>'

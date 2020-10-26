@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hsbc_ca')
+
+
 
 
 session = SgRequests()
@@ -58,10 +63,10 @@ def fetch_data():
             if dt['location']['contacts'] != None:
                 # phone = dt['location']['contacts'][-1].split("Phone|")[-1] 
                 phone= re.sub(r'[a-zA-Z|]', '', dt['location']['contacts'][-1])
-                #print(phone)
+                #logger.info(phone)
             if country == "Canada":
                 country="CA"
-            # print("==========================================")
+            # logger.info("==========================================")
             lat=dt['location']['address']['lat']
             lng=dt['location']['address']['lng']
             store=[]
@@ -94,14 +99,14 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            # print(store)
+            # logger.info(store)
             yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

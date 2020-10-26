@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tljus_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,7 +42,7 @@ def fetch_data():
 		base = BeautifulSoup(req.text,"lxml")
 
 		location_name = base.find('meta', attrs={'property': "og:title"})['content']
-		print(location_name)
+		logger.info(location_name)
 		
 		raw_data = base.find('meta', attrs={'property': "og:description"})['content'].replace("(Inside H-mart)","").replace("Blvd Houston","Blvd, Houston").replace("Blvd, #A","Blvd #A,")\
 		.replace("G 202","G 202,").replace("–","-").replace("Doraville GA","Doraville, GA").replace("IL, ","IL ").replace("#107","#107,").replace("B-115","B-115,")

@@ -4,3 +4,4 @@ usaddress
 us
 uszipcode
 pypostalcode
+sglogging

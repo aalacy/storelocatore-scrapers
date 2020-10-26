@@ -5,6 +5,11 @@ import json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vitaminshoppe_com')
+
+
 
 URL = "https://www.vitaminshoppe.com/"
 
@@ -61,14 +66,14 @@ class Scraper(Scrape):
             data = requests.get('https://maps.locations.vitaminshoppe.com/api/getAsyncLocations', headers=headers, params=params).json()['markers']
             if data:
                 stores.extend(data)
-                print(f"{len(data)} locations scraped for {zip_search}")
+                logger.info(f"{len(data)} locations scraped for {zip_search}")
 
         for store in stores:
             store = json.loads(store['info'].replace('<div class="tlsmap_popup">', '').replace('</div>', ''))
             if store['fid'] not in self.seen:
                 driver.get(store['url'])
 
-                print(f"Getting additional information for {store['url']}")
+                logger.info(f"Getting additional information for {store['url']}")
 
                 # Store ID
                 location_id = store['fid']

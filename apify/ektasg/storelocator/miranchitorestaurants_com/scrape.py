@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('miranchitorestaurants_com')
+
+
 
 
 options = Options()
@@ -39,7 +44,7 @@ def fetch_data():
     count =0
     for store in stores:
         location_name = store.find_element_by_css_selector('h1.rp-directions-location-name').text
-        print(location_name)
+        logger.info(location_name)
         street_addr = store.find_element_by_css_selector('div:nth-child(2)').text
         state_city_zip = store.find_element_by_css_selector('div:nth-child(3)').text
         city = state_city_zip.split(',')[0]
@@ -66,7 +71,7 @@ def fetch_data():
               hours_of_op
             ])
         count+=1
-        print(count)
+        logger.info(count)
 
 
     time.sleep(3)

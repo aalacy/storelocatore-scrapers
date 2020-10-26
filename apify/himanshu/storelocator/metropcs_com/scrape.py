@@ -6,11 +6,16 @@ import re
 import json
 import sgzip
 import ssl
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('metropcs_com')
+
+
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
-    #print("Error##################")
+    #logger.info("Error##################")
     # Legacy Python that doesn't verify HTTPS certificates by default
     pass
 else:
@@ -43,13 +48,13 @@ def fetch_data():
 
     response1 =0
     while coord:
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         lat = coord[0]
         lng = coord[1]
         base_url = "https://www.metropcs.com/"
         url = "https://www.metrobyt-mobile.com/api/v1/commerce/store-locator"
-        # print(str(search.current_zip))
+        # logger.info(str(search.current_zip))
         # data="https://www.metrobyt-mobile.com/api/v1/commerce/store-locator?address=10429%20n%2019th%20ave%20phoenix%20az&store-type=All&min-latitude=33.58853657681159&max-latitude=33.58853657681159&min-longitude=-112.10864146226419&max-longitude=-112.10864146226419"
         querystring1 = {"address": ""+str(search.current_zip)+"", "store-type": "CorporateStore", "min-latitude": "19.50139",
                        "max-latitude": ""+str(lat)+"", "min-longitude": "-68.01197", "max-longitude": ""+str(lng)+""}
@@ -96,7 +101,7 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            # print(loc["address"]["streetAddress"])
+            # logger.info(loc["address"]["streetAddress"])
             try:
                 street_address = loc["location"]["address"]["streetAddress"]
             except:
@@ -115,7 +120,7 @@ def fetch_data():
                 zipp = "<MISSING>"
             if len(zipp.strip()) == 4:
                 zipp = "0" + zipp
-            #print(zipp)
+            #logger.info(zipp)
             try:
                 hours_of_operation = ""
                 for key, value in loc["openingHours"].items():
@@ -151,16 +156,16 @@ def fetch_data():
             if store1[2] in addresses:
                 continue
             addresses.append(store1[2])
-            #print("====", str(store1))
+            #logger.info("====", str(store1))
             yield store1
 
        
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

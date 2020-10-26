@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('edwardjones_com')
+
+
 
 session = SgRequests()
 
@@ -32,7 +37,7 @@ def fetch_data():
     }
     while zip_code: 
         result_coords = []
-        #print("zip_code === "+zip_code)
+        #logger.info("zip_code === "+zip_code)
         try:
             r = session.get("https://www.edwardjones.com/cgi/findFaByAddress.action?address=" + str(zip_code), headers=headers)
             json_data = r.json()
@@ -76,10 +81,10 @@ def fetch_data():
                         address.append(store[2])
                         yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jacksonhealth_org')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
 		link = item.a["href"]
 
 		location_name = item.h3.text.replace("–","-").strip()
-		print(link)
+		logger.info(link)
 		
 		raw_address = item.p.text.split(",")
 		street_address = " ".join(raw_address[:-3]).strip()

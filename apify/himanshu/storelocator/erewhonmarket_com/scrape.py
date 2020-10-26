@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('erewhonmarket_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +49,7 @@ def fetch_data():
     
     phone[3]="310.362.3062"
     phone[4]="310.561.8898"
-    #print(phone)
+    #logger.info(phone)
     for index,i in enumerate(k):
         if  list(i.stripped_strings) !=[]:
             tem_var=[]

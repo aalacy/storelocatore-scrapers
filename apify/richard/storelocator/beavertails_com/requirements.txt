@@ -2,3 +2,4 @@ selenium==3.141.0
 geopy==1.20.0
 pgeocode==0.1.1
 pypostalcode==0.3.4
+sglogging

@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('instyprints_com')
+
+
 
 session = SgRequests()
 
@@ -55,8 +60,8 @@ def fetch_data():
             phone_number = "612-254-6416"
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
-        # print(store_data)
-        # print()
+        # logger.info(store_data)
+        # logger.info()
         all_store_data.append(store_data)
     return all_store_data
 

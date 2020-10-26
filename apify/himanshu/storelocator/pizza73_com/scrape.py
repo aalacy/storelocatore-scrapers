@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pizza73_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -33,9 +38,9 @@ def fetch_data():
         result_coords = []
         lat = str(coord[0])
         lng = str(coord[1])
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #print('Pulling Lat-Long %s,%s..' % (lat,lng))
-        # print(lng)
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info('Pulling Lat-Long %s,%s..' % (lat,lng))
+        # logger.info(lng)
         base_url="https://www.pizza73.com/Pizza73/proxy.php?lng="+str(lng)+"&lat="+str(lat)
         try:
             r = requests.get(base_url)
@@ -69,14 +74,14 @@ def fetch_data():
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation.replace(" , ",' '))
-                # print(store)
+                # logger.info(store)
                 store.append(base_url)
                 main_arr.append(store)
                 # if store[2] in addresses:
                 #     continue
                 # addresses.append(store[2])
-                #print("data ==="+str(store))
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                #logger.info("data ==="+str(store))
+                #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 # yield store
                  
        
@@ -128,12 +133,12 @@ def fetch_data():
         store.append(hours_of_operation.replace(",",' '))
         store.append(base_url2)
         main_arr.append(store)
-        # print(store)
+        # logger.info(store)
         # if store[2] in addresses:
         #     continue
         # addresses.append(store[2])
-        #print("data ==="+str(store))
-        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        #logger.info("data ==="+str(store))
+        #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
     base_url1='https://www.pizza73.com/Pizza73/proxy.php?lng=-113.9577884&lat=51.15473189999999'
     
@@ -173,12 +178,12 @@ def fetch_data():
         store.append(hours_of_operation.replace(",",' '))
         store.append(base_url)
         main_arr.append(store)
-        # print(store)
+        # logger.info(store)
         # if store[2] in addresses:
         #     continue
         # addresses.append(store[2])
-        #print("data ==="+str(store))
-        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        #logger.info("data ==="+str(store))
+        #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         # yield store
     for data in range(len(main_arr)):
         if main_arr[data][2] in addresses:

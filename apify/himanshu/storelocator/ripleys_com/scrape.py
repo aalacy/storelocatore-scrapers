@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ripleys_com')
+
+
 
 
 
@@ -108,7 +113,7 @@ def fetch_data():
                 hours_index = [i for i, s in enumerate(hours_list) if 'Hours' in s]
                 hours_of_operation = " ".join(hours_list[hours_index[0]:])
         elif soup_location.find("div", {"class": "footerText"}):
-            # print("22222222222")
+            # logger.info("22222222222")
             full_address_list = list(soup_location.find("div", {"class": "footerText"}).stripped_strings)
             hours_tag = soup_location.find(lambda tag: (tag.name == "h6") and "Hours of Operation" == tag.text.strip())
             if hours_tag:
@@ -116,14 +121,14 @@ def fetch_data():
                 hours_of_operation = " ".join(hours_list)
 
         elif soup_location.find("span", {"id": "contact"}):
-            # print("33333333333")
+            # logger.info("33333333333")
             # https://www.ripleys.com/atlanticcity/
             # https://www.ripleysamsterdam.com/
             full_address_list = list(soup_location.find("span", {"id": "contact"}).parent.parent.stripped_strings)[1:]
             hours_tag = soup_location.find(
                 lambda tag: (tag.name == "span" or tag.name == "h3") and "HOURS" == tag.text.strip())
 
-            # print("hours_tag === " + str(hours_tag))
+            # logger.info("hours_tag === " + str(hours_tag))
             if hours_tag:
                 if hours_tag.parent.find_next_sibling("p"):
                     hours_list = list(hours_tag.parent.find_next_sibling("p").stripped_strings)
@@ -134,23 +139,23 @@ def fetch_data():
                     hours_of_operation = " ".join(hours_list)
 
         elif soup_location.find("div", {"class": "contact-info-container"}):
-            # print("44444444444444")
+            # logger.info("44444444444444")
             # https://www.ripleysnewyork.com/
             full_address_list = list(soup_location.find("div", {"class": "contact-info-container"}).stripped_strings)
             if soup_location.find("section", {"id": "text-4"}):
                 hours_list = list(soup_location.find("section", {"id": "text-4"}).stripped_strings)[:-1]
                 hours_of_operation = " ".join(hours_list)
         elif soup_location.find("div", {"class": "hotel-contact"}):
-            # print("55555555555")
+            # logger.info("55555555555")
             # https://marinersquare.com/
             full_address_list = list(soup_location.find("div", {"class": "hotel-contact"}).stripped_strings)
         elif soup_location.find("div", {"class": "block contact-info-block"}):
-            # print("666666666666")
+            # logger.info("666666666666")
             # http://www.ripleysdells.com/
             full_address_list = list(soup_location.find("div", {"class": "block contact-info-block"}).stripped_strings)
             street_address = full_address_list[-2].replace("\xa0", " ")
-            # print(full_address_list[-2] + " ======= ripleysdells street_address ==== " + str(street_address))
-            # print("splait array = "+ str(street_address.split(" ")))
+            # logger.info(full_address_list[-2] + " ======= ripleysdells street_address ==== " + str(street_address))
+            # logger.info("splait array = "+ str(street_address.split(" ")))
             hours_tag = soup_location.find(lambda tag: (tag.name == "strong") and "Current Hours:" == tag.text.strip())
             try:
                 hours_list = list(hours_tag.parent.parent.stripped_strings)
@@ -158,13 +163,13 @@ def fetch_data():
                 hours_list = ""
             hours_of_operation = " ".join(hours_list)
         elif soup_location.find("div", {"id": "text-2"}):
-            # print("7777777777777")
+            # logger.info("7777777777777")
             # https://www.ripleyaquariums.com/canada/
             full_address_list = list(soup_location.find("div", {"id": "text-2"}).stripped_strings)[1:]
             if soup_location.find("div", {"class": "mtphr-dnt-tick mtphr-dnt-default-tick mtphr-dnt-clearfix"}):
                 hours_list = list(soup_location.find("div", {
                     "class": "mtphr-dnt-tick mtphr-dnt-default-tick mtphr-dnt-clearfix"}).stripped_strings)
-                # print("77 hours_list == " + str(hours_list))
+                # logger.info("77 hours_list == " + str(hours_list))
                 hours_of_operation = " ".join(hours_list)
 
             if "," in full_address_list[0]:
@@ -174,7 +179,7 @@ def fetch_data():
                 street_address = full_address_list[0]
                 city = full_address_list[1].split(",")[0]
         elif soup_location.find("div", {"class": "contact-infotxt"}):
-            # print("888888888888")
+            # logger.info("888888888888")
             # http://www.ripleysthailand.com/index.php?p=attractions
             full_address_list = list(soup_location.find("div", {"class": "contact-infotxt"}).stripped_strings)[1:]
             hours_of_operation = list(soup_location.find("div", {"class": "contact-infotxt"}).stripped_strings)[0]
@@ -185,7 +190,7 @@ def fetch_data():
             hours_tag = soup_location.find(
                 lambda tag: (tag.name == "h4") and "WEEKLY OPERATING HOURS" == tag.text.strip())
             hours_of_operation = hours_tag.find_next_sibling("h5").text
-            # print("9999999999999")
+            # logger.info("9999999999999")
             # street_address = full_address_list[0].split(",")[0]
 
             if "," in full_address_list[0]:
@@ -232,14 +237,14 @@ def fetch_data():
         if not city:
             city = location_name.split(",")[0]
 
-        # print("hours_list === " + str(hours_list))
-        # print("hours of operation  === " + str(hours_of_operation))
-        # print("full_Address === " + str(full_address_list))
+        # logger.info("hours_list === " + str(hours_list))
+        # logger.info("hours of operation  === " + str(hours_of_operation))
+        # logger.info("full_Address === " + str(full_address_list))
 
         if not street_address:
             if zipp:
                 zipp_index = [i for i, s in enumerate(full_address_list) if zipp in s]
-                # print(str(city) + " === zipp_index === "+ str(zipp_index))
+                # logger.info(str(city) + " === zipp_index === "+ str(zipp_index))
                 if city in full_address_list[zipp_index[0]]:
                     city_index = full_address_list[zipp_index[0]].rindex(city)
 
@@ -249,7 +254,7 @@ def fetch_data():
 
                     if state_list:
                         state = state_list[0]
-                    # print("state_list === "+ str(state_list))
+                    # logger.info("state_list === "+ str(state_list))
                     if city_index == 0:
                         street_address = full_address_list[:zipp_index[0] + 1][0].replace("\n", ",").replace("\r", "")
                     else:
@@ -269,7 +274,7 @@ def fetch_data():
         
 
 
-        # print(str(street_address.strip()) + " ====== is num ========== "+ str(street_address.isnumeric()))
+        # logger.info(str(street_address.strip()) + " ====== is num ========== "+ str(street_address.isnumeric()))
         if street_address.strip().isnumeric():
             street_address = street_address + " " + city
         if "329  Alamo Plaza" in street_address:
@@ -291,8 +296,8 @@ def fetch_data():
             zipp="53965"
             hours_of_operation="Mon - Sun	Closed"
 
-        # print(str(street_address).encode('ascii', 'ignore').decode('ascii').strip()+ " !!! last street_address === "+ str(street_address))
-        # print("hours_of_operation === "+ str(hours_of_operation))
+        # logger.info(str(street_address).encode('ascii', 'ignore').decode('ascii').strip()+ " !!! last street_address === "+ str(street_address))
+        # logger.info("hours_of_operation === "+ str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation.replace('\t',''), page_url]
@@ -302,8 +307,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

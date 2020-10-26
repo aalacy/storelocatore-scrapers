@@ -11,6 +11,11 @@ from selenium.webdriver.common.keys import Keys
 
 import time
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('countrymartgrocery_com')
+
+
 
 
 def get_driver():
@@ -53,7 +58,7 @@ def fetch_data():
 	for i in range(len(items)):
 		item = items[i]
 		location_name = item.find(class_='fp-link-secondary').text.strip()
-		print(location_name)
+		logger.info(location_name)
 
 		location_type = "<MISSING>"
 

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('picklemans_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -30,15 +35,15 @@ def fetch_data():
     driver.get(
         "https://www.picklemans.com/locations.php")  # ,headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'})
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    # print(soup)
+    # logger.info(soup)
     urls = soup.find_all('p', {'class': 'storemapper-address'})
-    print(len(urls))
+    logger.info(len(urls))
     for url in urls:
         a = url.find_all('a')
         if a == []:
             continue
         url = "https://www.picklemans.com/" + a[0].get('href')
-        print(url)
+        logger.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
@@ -65,7 +70,7 @@ def fetch_data():
                     timl = timli[1].text
             else:
                 type = "open"
-        # print(timl)
+        # logger.info(timl)
 
         try:
             tim = re.findall(r'(Temporary Hours:.*)', timl.replace("\n", " ").replace(".", ""), re.DOTALL)[
@@ -77,10 +82,10 @@ def fetch_data():
         if 'CLOSED' == tim.strip():
             continue
         phone = soup.find('span', {'itemprop': 'telephone'}).text
-        # print(soup.find('iframe').get('src'))
+        # logger.info(soup.find('iframe').get('src'))
         long, lat = re.findall(r'.*!2d(.*)!3d([\d\.]+)!', soup.find('iframe').get('src'))[0]
 
-        # print(lat,long)
+        # logger.info(lat,long)
         all.append([
             "https://www.picklemans.com/",
             loc,

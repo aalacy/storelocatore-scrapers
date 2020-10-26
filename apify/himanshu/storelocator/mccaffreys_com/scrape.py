@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mccaffreys_com')
+
+
 
 
 
@@ -39,7 +44,7 @@ def getDecodedPhoneNo(encoded_phone_no):
         return _real_phone
 
 
-    # print("phone ==== " + getDecodedPhoneNo(_phone))
+    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
@@ -67,7 +72,7 @@ def fetch_data():
             country = "CA"
         else:
             country = "US"
-        # print(hours)
+        # logger.info(hours)
         tem_var.append("https://mccaffreys.com")
         tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8217;","").replace("&#038;",""))
         tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip())
@@ -88,7 +93,7 @@ def fetch_data():
             pass
 
             return_main_object.append(tem_var)
-            # print(tem_var)
+            # logger.info(tem_var)
         
 
    

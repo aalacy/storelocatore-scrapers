@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('samuraisams_net')
+
+
 
 
 session = SgRequests()
@@ -52,7 +57,7 @@ def fetch_data():
             hours = " ".join(list(location_soup.find("div",{"id":"storeHoursContainer"}).stripped_strings))
             store.append(hours if hours else "<MISSING>")
             store.append("https://www.samuraisams.net/stores/" + str(store_data["StoreId"]))
-            # print(store)
+            # logger.info(store)
             yield store
 
 def scrape():

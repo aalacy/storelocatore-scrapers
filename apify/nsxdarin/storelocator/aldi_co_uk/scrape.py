@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 import time
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('aldi_co_uk')
+
+
 
 show_logs = False
 session = SgRequests()
@@ -13,8 +18,8 @@ headers = {
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
-    print("")
+    logger.info(" ".join(map(str, args)), **kwargs)
+    logger.info("")
 
 
 def write_output(data):

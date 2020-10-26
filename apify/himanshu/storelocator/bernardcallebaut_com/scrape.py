@@ -6,6 +6,11 @@ import json
 import unicodedata
 # import sgzip
 # import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bernardcallebaut_com')
+
+
 
 
 
@@ -59,7 +64,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,'html.parser')
     for url in soup.find('div',class_='PageContent PageContent--narrow Rte').find_all('h5'):
         loc_url = url.a['href']
-        # print(page_url)
+        # logger.info(page_url)
         if "United States" == url.text:
             country_code = "US"
         else:
@@ -73,7 +78,7 @@ def fetch_data():
                 l_name = info.find('div',class_='easyslider-header').text.strip()
                 # city = location_name[0].split('/')[1].split(',')[0]
                 # state = location_name[0].split('/')[1].split(',')[-1]
-                # print(location_name)
+                # logger.info(location_name)
                 content = info.find('div',class_='easyslider-content')
                 for details in content.find_all('p'):
                     list_details = list(details.stripped_strings)
@@ -88,7 +93,7 @@ def fetch_data():
                         location_name  = city
                         phone =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_details[1]))[0]
                         hours_of_operation = " ".join(list_details[3:]).strip()
-                        # print(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
+                        # logger.info(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
                     elif len(list_details) ==6:
                         tag_address = list_details[0].split(',')
                         if len(tag_address) >2:
@@ -111,7 +116,7 @@ def fetch_data():
                         location_name = city
                         phone = list_details[2].strip()
                         hours_of_operation = ",".join(list_details[4:]).strip()
-                        # print(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
+                        # logger.info(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
                     elif len(list_details) ==7:
 
                         if "Domestic Terminal, Pre-security" in " ".join(list_details):
@@ -119,9 +124,9 @@ def fetch_data():
                         if "Departures Level" in " ".join(list_details):
                             list_details.remove('Departures Level – Gate A, Calgary International Airport')
 
-                        # print(list_details)
-                        # print(len(list_details))
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # logger.info(list_details)
+                        # logger.info(len(list_details))
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         tag_address = " ".join(list_details[:2]).strip().replace('Phone','').split(',')
                         if "Southcentre Mall" in tag_address[0]:
                             tag_address.remove('Southcentre Mall')
@@ -133,7 +138,7 @@ def fetch_data():
 
 
                             zipp = "<MISSING>"
-                            # print(zipp)
+                            # logger.info(zipp)
                             location_name = city
                             street_address = tag_address[0]
 
@@ -152,8 +157,8 @@ def fetch_data():
                             state = tag_address[3].strip()
                             zipp= tag_address[-1].strip()
                             location_name = city
-                        # print(street_address+" | "+city+" | "+state+" | "+zipp)
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                        # logger.info(street_address+" | "+city+" | "+state+" | "+zipp)
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
                         phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(list_details).split('Phone')[-1]))[0]
                         hours_of_operation = " ".join(list_details).split('Hours')[-1].strip()
 
@@ -162,9 +167,9 @@ def fetch_data():
                             list_details.remove('International Departure Level, Post-security')
                         if "Calgary International Airport" in " ".join(list_details):
                             list_details.remove('Calgary International Airport')
-                        # print(list_details)
-                        # print(len(list_details))
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # logger.info(list_details)
+                        # logger.info(len(list_details))
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         street_address =" ".join(list_details[0].split(',')[:-1]).strip()
 
                         if len(list_details[0].split(',')[-1].split()) !=2:
@@ -186,10 +191,10 @@ def fetch_data():
                     if ")" in store[8]:
                         if store[8][0] != "(":
                             store[8] = "(" + store[8]
-                    # print(location_name +" | "+street_address)
+                    # logger.info(location_name +" | "+street_address)
 
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info("data = " + str(store))
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     
                     for i in range(len(store)):
                         if type(store[i]) == str:
@@ -200,8 +205,8 @@ def fetch_data():
 
 
         except:
-            # print(loc_url)
-            # print('~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info(loc_url)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~')
             continue
 
     return return_main_object

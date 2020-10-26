@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('omnisourceusa_com')
+
+
 
 
 
@@ -35,7 +40,7 @@ def fetch_data():
     for i in script:
         if "var omniLocations" in i.text:
             jn =i.text.replace("var omniLocations = [","").replace("];","").replace("'", '"').strip().replace("'","").replace("\'", "\"").replace('\t','').replace('\n','').replace(',}','}').replace(',]',']')
-            # print(json.loads(jn,strict=False))
+            # logger.info(json.loads(jn,strict=False))
             for o in range(len(jn.split("lng"))):
                 if o>0:
                     log.append(jn.split("lng")[o].split(' "lat":')[0].replace('": "','').replace('",',""))
@@ -66,7 +71,7 @@ def fetch_data():
         tem_var.append(log[index])
         tem_var.append("<MISSING>")
         tem_var.append("https://www.omnisourceusa.com/locations")
-        # print(tem_var)
+        # logger.info(tem_var)
         return_main_object.append(tem_var)
         
 

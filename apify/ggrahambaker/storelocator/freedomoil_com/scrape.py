@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('freedomoil_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +26,7 @@ def fetch_data():
 
     all_store_data = []
     locs = driver.find_elements_by_css_selector('div.media.image-left.medium')
-    print(len(locs))
+    logger.info(len(locs))
     for loc in locs:
         content = loc.text.split('\n')
         street_address = content[0]

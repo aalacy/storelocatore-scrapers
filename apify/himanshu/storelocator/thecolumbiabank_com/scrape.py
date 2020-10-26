@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thecolumbiabank_com')
+
+
 
 
 
@@ -41,7 +46,7 @@ def fetch_data():
 
     soup_preview = BeautifulSoup(json_data["branchResults"].replace("\n", "").replace("\r", "").replace('\\"', '"'),
                                  "html.parser")
-    # print("soup_state === "+str(json_data["branchFlyouts"].replace("\n","").replace("\r","").replace('\\"','"')))
+    # logger.info("soup_state === "+str(json_data["branchFlyouts"].replace("\n","").replace("\r","").replace('\\"','"')))
 
     for script in soup.find_all("div", {"class": "location-item expanded-locations-item"}):
 
@@ -106,8 +111,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

@@ -8,6 +8,11 @@ from ssl import SSLError
 import html
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('riteaid_com')
+
+
 
 
 thread_local = threading.local()
@@ -43,7 +48,7 @@ def write_output(data):
 
 def enqueue_links(url):
 
-    # print('getting links from ' + url)
+    # logger.info('getting links from ' + url)
 
     locs = []
     cities = []
@@ -97,7 +102,7 @@ def scrape_city_urls(city_urls, loc_urls):
 
 
 def get_location(loc):
-    # print('Pulling Location %s ...' % loc)
+    # logger.info('Pulling Location %s ...' % loc)
     session = get_session()
     website = 'riteaid.com'
     typ = 'RiteAid'
@@ -158,7 +163,7 @@ def get_location(loc):
     if hours == '':
         hours = '<MISSING>'
     if 'closed' in name.lower():
-        # print('skipping closed store: ', loc)
+        # logger.info('skipping closed store: ', loc)
         pass
     else:
         if store != '':
@@ -182,7 +187,7 @@ def fetch_data():
 
     scrape_city_urls(city_urls, loc_urls)
 
-    # print('loc_urls: ', len(loc_urls))
+    # logger.info('loc_urls: ', len(loc_urls))
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]

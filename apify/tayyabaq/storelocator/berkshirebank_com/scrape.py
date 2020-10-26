@@ -3,6 +3,11 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('berkshirebank_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -60,7 +65,7 @@ def fetch_data():
         lat, lon = parse_geo(driver.find_element_by_css_selector('iframe').get_attribute('src'))
         latitude.append(lat)
         longitude.append(lon)
-        print(lat)
+        logger.info(lat)
         hours = driver.find_element_by_class_name("mb-4").text
         if hours !="":
             hours_of_operation.append(hours)

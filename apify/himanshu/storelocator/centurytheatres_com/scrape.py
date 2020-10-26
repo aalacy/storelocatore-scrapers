@@ -5,6 +5,11 @@ import re
 import json
 import time
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('centurytheatres_com')
+
+
 
 session = SgRequests()
 
@@ -33,7 +38,7 @@ def fetch_data():
     for i in data.find_all("a"):
 
         page_url = base_url+i['href']+"#theatreInfo"
-        #print(page_url)
+        #logger.info(page_url)
         r1 = session.get(page_url, headers=headers, verify=False)
         soup1 = BeautifulSoup(r1.text, "lxml")
         info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text

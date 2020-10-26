@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('familyfoods_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,12 +33,12 @@ def fetch_data():
     for repo in repo_list:
         link = repo.find('a')
         link = link['href']
-        print(link)
+        logger.info(link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         detlist = soup.findAll('div', {'class': 'location-info'})
         for detail in detlist:
-           # print(detail)
+           # logger.info(detail)
             address = detail.find('a')
             detail = str(detail)
             start = detail.find(">")+1
@@ -41,7 +46,7 @@ def fetch_data():
             title = detail[start:end]
             title = re.sub(pattern,"",title)
             #start = detail.find("Address", end) + 1
-            #print(start)
+            #logger.info(start)
             try:
                 href = address['href']
                 href = str(href)
@@ -68,9 +73,9 @@ def fetch_data():
                 lat = "<MISSING>"
                 longt = "<MISSING>"
 
-            print(title)
-            print(lat)
-            print(longt)
+            logger.info(title)
+            logger.info(lat)
+            logger.info(longt)
             start = 0
             start = detail.find("Address")
             start = detail.find("blank",start)
@@ -87,16 +92,16 @@ def fetch_data():
 
                 if address[1] == '/':
                     address = detail[start+4:end]
-                # print("?????????????")
-                # print(address)
+                # logger.info("?????????????")
+                # logger.info(address)
                 start = 0
                 end = address.find("<br")
                 if end == -1:
                     end = address.find(",")
                 street = address[start:end]
-                print(street)
+                logger.info(street)
                 start = address.find("r/>", end)
-                # print(start)
+                # logger.info(start)
                 if start == -1:
                     start = address.find(",", end)
                 else:
@@ -117,7 +122,7 @@ def fetch_data():
                     end = address.find(" ", start + 2)
 
                 state = address[start:end]
-            # print(state)
+            # logger.info(state)
                 start = end + 1
                 end = address.find("<",start)
                 xip = address[start:end]
@@ -131,7 +136,7 @@ def fetch_data():
                     start = detail.find(">")
                     end = detail.find("<", start)
                 street = detail[start+1:end]
-                print(street)
+                logger.info(street)
                 city = "<MISSING>"
                 state = "<MISSING>"
                 start = detail.find("r>", start)
@@ -140,11 +145,11 @@ def fetch_data():
 
 
 
-            # print(xip)
+            # logger.info(xip)
             start = detail.find("Phone") + 7
             end = detail.find("<br", start)
             phone = detail[start:end]
-            # print(phone)
+            # logger.info(phone)
             street = street.lstrip()
             city = city.lstrip()
             state = state.lstrip()
@@ -189,8 +194,8 @@ def fetch_data():
                 xip = "R2K 2S9"
             if xip.find("R0G 1GO") != -1:
                 xip = "R0G 1G0"
-                print(xip[1:3])
-                print(xip[5])
+                logger.info(xip[1:3])
+                logger.info(xip[5])
 
             if len(xip) < 4:
                xip = "<MISSING>"
@@ -211,11 +216,11 @@ def fetch_data():
             if state == "NWT":
                 state = "NT"
 
-            print(city)
-            print(state)
-            print(xip)
-            print(phone)
-            print("..................")
+            logger.info(city)
+            logger.info(state)
+            logger.info(xip)
+            logger.info(phone)
+            logger.info("..................")
 
             data.append([
                 url,

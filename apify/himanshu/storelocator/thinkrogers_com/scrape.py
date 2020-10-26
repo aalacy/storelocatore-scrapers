@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thinkrogers_com')
+
+
 
 
 
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -29,7 +34,7 @@ def fetch_data():
     r = session.get(
         "https://www.thinkrogers.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # print(soup.prettify())
+    # logger.info(soup.prettify())
 
     return_main_object = []
 
@@ -69,9 +74,9 @@ def fetch_data():
             del x[-1]
             del x[4]
             del x[-2]
-        # print(str(res))
+        # logger.info(str(res))
         for single_list in res:
-            # print(single_list)
+            # logger.info(single_list)
             street_address = "".join(single_list[0])
             city = "".join(single_list[1])
             state = "".join(single_list[2])
@@ -84,8 +89,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
             store = ["<MISSING>" if x == "" else x for x in store]
             return_main_object.append(store)
-            print("data = " + str(store))
-            print(
+            logger.info("data = " + str(store))
+            logger.info(
                 '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     return return_main_object

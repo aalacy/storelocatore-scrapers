@@ -4,6 +4,11 @@ import sgzip
 import datetime
 import json
 from tenacity import *
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('starbucks_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -104,7 +109,7 @@ def fetch_data():
     locations = []
     ids = set()
     while query_coord:
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         stores = query_locator(query_coord)
         if len(stores) == 0:
             search.max_distance_update(MAX_DISTANCE)

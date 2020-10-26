@@ -8,6 +8,11 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('manchuwok_com')
+
+
 
 def get_driver():
     options = Options() 
@@ -92,7 +97,7 @@ def fetch_data():
 				item = items[i]
 				
 				if location_name == "Manchuwok " + item.find(class_="results_row_right_column").span.text.strip():
-					print(location_name)
+					logger.info(location_name)
 					got_loc = True
 
 					street_address = item.find(class_="slp_result_address slp_result_street").text.strip()
@@ -148,7 +153,7 @@ def fetch_data():
 					data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 					break
 			if not got_loc:
-				print("Missed: " + location_name + "..  Retrying ..")
+				logger.info("Missed: " + location_name + "..  Retrying ..")
 				run_count = run_count + 1
 	return data
 

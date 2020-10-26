@@ -6,6 +6,11 @@ from random import randint
 import re
 
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('myvue_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -48,17 +53,17 @@ def fetch_data():
 	locator_domain = "myvue.com"
 
 	for i, item in enumerate(items):
-		print("Link %s of %s" %(i+1,len(items)))
+		logger.info("Link %s of %s" %(i+1,len(items)))
 		link = "https://www.myvue.com/cinema/" + item['href'].split("/")[-2] + "/getting-here"
 		link = link.replace("bury-the rock","bury-the-rock")
 		req = session.get(link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			print(link)
+			logger.info(link)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		location_name = base.find(class_="select-cinema__wrapper").text.strip()
 

@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pitstopva_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,8 +33,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -41,7 +46,7 @@ def fetch_data():
 		raw_data = item.text.strip().split("\n")
 
 		location_name = raw_data[0].strip()
-		print(location_name)
+		logger.info(location_name)
 
 		street_address = raw_data[1].strip()
 		raw_address = raw_data[2].split(",")

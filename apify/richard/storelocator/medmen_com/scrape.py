@@ -1,6 +1,11 @@
 import requests
 
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('medmen_com')
+
+
 
 
 URL = "https://www.medmen.com/"
@@ -43,7 +48,7 @@ class Scraper(Scrape):
 
         stores = requests.get('https://cdn.contentful.com/spaces/1ehd3ycc3wzr/environments/master/entries', headers=headers, params=params).json()['items']
 
-        print(f"{len(stores)} locations scraped.")
+        logger.info(f"{len(stores)} locations scraped.")
 
 
         for store in stores:

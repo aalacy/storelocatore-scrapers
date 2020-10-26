@@ -2,6 +2,11 @@ import csv
 import re
 from sgrequests import SgRequests
 from requests.utils import add_dict_to_cookiejar
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('prevea_com')
+
+
 
 
 session = SgRequests()
@@ -124,10 +129,10 @@ def fetch_data():
     r = get_western_locations(csrf_token, view_state)
     parse_locations(r, locs)
 
-    # print('locs', locs)
+    # logger.info('locs', locs)
 
     for loc in locs:
-        # print('Pulling Location %s...' % loc)
+        # logger.info('Pulling Location %s...' % loc)
         website = 'prevea.com'
         typ = ''
         hours = ''

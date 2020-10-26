@@ -2,6 +2,11 @@ import csv
 import re
 from sgrequests import SgRequests
 from geo_grid import *
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mobil_com')
+
+
 
 
 session = SgRequests()
@@ -76,7 +81,7 @@ def fetch_data(box: Rect) -> list:
             location_type="mobil"
             store.append(location_type)
         else:
-            print("!Unknown location type, skipping! Branding img:" + exxon['BrandingImage'])
+            logger.info("!Unknown location type, skipping! Branding img:" + exxon['BrandingImage'])
             yield []
             continue
 

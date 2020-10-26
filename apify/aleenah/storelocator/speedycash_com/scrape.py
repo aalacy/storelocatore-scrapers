@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 import json
 import re
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('speedycash_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,11 +39,11 @@ def fetch_data():
         for i in timi:
             tim+=i+": "
             tim+= str(timi[i]['openHour'])+":"+str(timi[i]['openMin'])+" - "+str(timi[i]['closeHour'])+":"+str(timi[i]['closeMin'])+" "
-        #print(tim)
+        #logger.info(tim)
 
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #print(soup.find('script', {'type': 'application/ld+json'}).json)
+        #logger.info(soup.find('script', {'type': 'application/ld+json'}).json)
         data = re.findall(r'({.*})',str(soup.find('script', {'type': 'application/ld+json'})))[0]
         data=json.loads(data)
 

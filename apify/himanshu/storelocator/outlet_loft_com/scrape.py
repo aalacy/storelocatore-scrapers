@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('outlet_loft_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -33,7 +38,7 @@ def fetch_data():
             r1 = session.get(city_link)
             soup1= BeautifulSoup(r1.text,"lxml")
             citylink= soup1.find_all("li",{"class":"c-directory-list-content-item"})
-            # print(citylink)
+            # logger.info(citylink)
             for c in citylink:
                 link1 = c.text.split("(")[-1]
                 if link1 != "1)":
@@ -42,7 +47,7 @@ def fetch_data():
                     soup2= BeautifulSoup(r2.text,"lxml")
                     store_link = soup2.find_all("a",class_="c-location-grid-item-link visit-page-YA")
                     for st in store_link:
-                        # print(st['href'].replace("..","").replace("//",""))
+                        # logger.info(st['href'].replace("..","").replace("//",""))
                         r3 = session.get("https://stores.loft.com/"+st['href'].replace("..","").replace("//",""))
                         page_url ="https://stores.loft.com/"+st['href'].replace("..","").replace("//","")
                         soup3= BeautifulSoup(r3.text,"lxml")
@@ -75,14 +80,14 @@ def fetch_data():
                         tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
-                        # print("========================================",tem_var)
+                        # logger.info("========================================",tem_var)
 
                 else:
-                    # print(c.find("a")['href'])
+                    # logger.info(c.find("a")['href'])
                     # pass
                     one_link="https://stores.loft.com"+c.find("a")['href'].replace("..","")
                     page_url = one_link
-                    # print(page_url)
+                    # logger.info(page_url)
                     r4 = session.get(one_link)
                     soup4= BeautifulSoup(r4.text,"lxml")
                     if soup4.find("h2",{"class":"closed-title"}):
@@ -117,14 +122,14 @@ def fetch_data():
                     tem_var.append(hours)
                     tem_var.append(page_url)
                     yield tem_var
-                    # print("========================================",tem_var)
+                    # logger.info("========================================",tem_var)
         else:
-            # print(i.find("a")['href'].replace("..",""))
-            # print("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
+            # logger.info(i.find("a")['href'].replace("..",""))
+            # logger.info("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
             one_link1 = "https://stores.loft.com/"+i.find("a")['href'].replace("..","")
             page_url = one_link1
             r5 = session.get(one_link1)
-            # print("--------------------------")
+            # logger.info("--------------------------")
         
             soup5= BeautifulSoup(r5.text,"lxml")
             if soup5.find("h2",{"class":"closed-title"}):
@@ -158,7 +163,7 @@ def fetch_data():
             tem_var.append(hours)
             tem_var.append(page_url)
             yield tem_var
-            # print("========================================",tem_var)
+            # logger.info("========================================",tem_var)
 
 
     

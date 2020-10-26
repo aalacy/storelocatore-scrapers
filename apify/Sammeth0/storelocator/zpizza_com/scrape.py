@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zpizza_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -48,7 +53,7 @@ def fetch_data():
         hours = ''
         hourd= []
         hourd.append('none')
-        #print(title)
+        #logger.info(title)
         try:
             for hr in hourlist:
                 dt = hr.split(' ',1)[0]
@@ -65,9 +70,9 @@ def fetch_data():
             hours = hours.replace('Su','Sunday').replace('Mo','Monday').replace('Tu','Tuesday').replace('We','Wednesday').replace('Th','Thursday').replace('Fr','Friday').replace('Sa','Saturday')
         except:
             hours = '<MISSING>'
-        #print(hours)
+        #logger.info(hours)
         data.append(['https://www.zpizza.com/',link,title,street,city,state,pcode,ccode,store,phone,"<MISSING>",lat,longt,hours])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
         
     
@@ -77,10 +82,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

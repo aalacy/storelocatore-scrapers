@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('davisoil_net')
+
+
 
 
 options = Options()
@@ -66,7 +71,7 @@ def fetch_data():
                   '<MISSING>'
                 ])
         count+=1
-        print(count)
+        logger.info(count)
 
     time.sleep(3)
     driver.quit()

@@ -5,6 +5,11 @@ import requests
 from lxml import etree
 import json
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('johnnysph_com')
+
+
 
 base_url = 'https://johnnysph.com'
 
@@ -49,8 +54,8 @@ def fetch_data():
                         phone=(list(soup3.find("div",{"id":"viewOrderFrame"}).find("tr").stripped_strings)[-1])
                     except:
                         pass
-                        # print(href)
-                    # print(soup2)
+                        # logger.info(href)
+                    # logger.info(soup2)
                     lat = tag['lat']
                     lng =  tag['lng']
                     store = []
@@ -75,8 +80,8 @@ def fetch_data():
                     #          str else x for x in store]
                     store = [x.encode('ascii', 'ignore').decode(
                         'ascii').strip() if type(x) == str else x for x in store]
-                    # print("data ===" + str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # logger.info("data ===" + str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
 
 

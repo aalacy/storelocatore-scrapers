@@ -3,6 +3,11 @@ import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('finishline_com')
+
+
 
 URL = "https://www.finishline.com/"
 
@@ -44,7 +49,7 @@ class Scraper(Scrape):
             driver.get(f"https://stores.finishline.com/search.html?q={zip_search}")
             data = [loc.get_attribute('href') for loc in driver.find_elements_by_css_selector('a.location-card-link.location-card-link-page')]
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {zip_search}")
+            logger.info(f"{len(data)} locations scraped for {zip_search}")
             zip_search = search.next_zip()
 
         for store in stores:

@@ -5,6 +5,11 @@ import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ssl import SSLError
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('uhaul_com')
+
+
 
 
 thread_local = threading.local()
@@ -64,14 +69,14 @@ def get_cities_in_state(state_url):
     cities = []
     session = get_session()
 
-    #print('Pulling State %s ...' % state_url)
+    #logger.info('Pulling State %s ...' % state_url)
     random_sleep()
     try:
       r = session.get(state_url, headers=headers)
     except SSLError:
       session = get_session(reset=True)
       r = session.get(state_url, headers=headers)
-    #print('status: ', r.status_code)
+    #logger.info('status: ', r.status_code)
 
     for line in r.iter_lines(decode_unicode=True):
         if "<a href='/Locations/" in line:
@@ -101,13 +106,13 @@ def get_locations_in_city(city_url):
     allids = []
     coords = []
     alllocs = []
-    #print('Pulling City %s ...' % city_url)
+    #logger.info('Pulling City %s ...' % city_url)
     try: 
       r2 = session.get(city_url, headers=headers)
     except SSLError:
       session = get_session(reset=True)
       r2=session.get(city_url, headers=headers)
-    #print('status: ', r2.status_code)
+    #logger.info('status: ', r2.status_code)
     lines = r2.iter_lines(decode_unicode=True)
     for line2 in lines:
         if '"entityNum":"' in line2:
@@ -164,7 +169,7 @@ def fetch_data():
 def get_location(loc):
 
     session = get_session()
-    #print('Pulling Location %s ...' % loc.split('|')[0])
+    #logger.info('Pulling Location %s ...' % loc.split('|')[0])
     website = 'uhaul.com'
     typ = ''
     hours = ''
@@ -186,7 +191,7 @@ def get_location(loc):
     except SSLError:
       session = get_session(reset=True)
       r2 = session.get(lurl, headers=headers, timeout=5)
-    #print('status: ', r2.status_code)
+    #logger.info('status: ', r2.status_code)
 
     for line2 in r2.iter_lines(decode_unicode=True):
         if '<small class="text-light">(' in line2 and 'all room' not in line2:

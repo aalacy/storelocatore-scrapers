@@ -5,6 +5,11 @@ import time
 from random import randint
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gbk_co_uk')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
 
 	for store in stores:
 		link = "https://www.gbk.co.uk" + store["link"].split('"')[1]
-		print(link)
+		logger.info(link)
 
 		location_name = store['title']
 		raw_address = store['full_address'].split(",")

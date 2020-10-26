@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shakeshack_co_uk')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,7 +39,7 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.a.text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 		link = item.a["href"]
 
 		city = ""

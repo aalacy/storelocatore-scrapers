@@ -5,6 +5,11 @@ import string
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gioninos_com')
+
+
 
 
 def write_output(data):
@@ -38,19 +43,19 @@ def fetch_data():
     soup = BeautifulSoup(driver1.page_source, "html.parser")
     driver1.quit()
     divlist = soup.findAll('a',{'class': 'Muli-Regular legal-link'})
-    print(len(divlist))
+    logger.info(len(divlist))
     pattern = re.compile(r'\s\s+')
     p = 1
     for link in divlist:
         link = "https://www.gioninos.com" + link['href']
-        print(link)
+        logger.info(link)
         driver = get_driver()
         driver.get(link)
         time.sleep(2)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         #divlist = soup.findAll('script')
         script = str(soup)
-        #print(script)
+        #logger.info(script)
         start = script.find('"LocationId"')
         start = script.find(':', start) + 1
         end = script.find(',', start)
@@ -114,18 +119,18 @@ def fetch_data():
         if len(phone) < 6:
             phone = "<MISSING>"
 
-        #print(store)
-        #print(title)
-        #print(street)
-        #print(city)
-        #print(state)
-        #print(pcode)
-        #print(phone)
-        #print(lat)
-        #print(longt)
-        #print(hours)
-        #print(p)
-        #print("...........................")
+        #logger.info(store)
+        #logger.info(title)
+        #logger.info(street)
+        #logger.info(city)
+        #logger.info(state)
+        #logger.info(pcode)
+        #logger.info(phone)
+        #logger.info(lat)
+        #logger.info(longt)
+        #logger.info(hours)
+        #logger.info(p)
+        #logger.info("...........................")
         p += 1
         data.append([
             'https://www.gioninos.com/',

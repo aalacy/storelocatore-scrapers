@@ -8,6 +8,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('raleys_com__stores__nob-hill-foods')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -52,7 +57,7 @@ def fetch_data():
     for repo in repo_list:
         link = repo.find('a',{'class':'btn btn-hollow'})
         link = link['href']
-        #print(link)
+        #logger.info(link)
         title = repo.find('h2').text
         address = repo.find('address').text
         address = re.sub(pattern, " ", address)
@@ -75,7 +80,7 @@ def fetch_data():
 
         lat = repo['data-lat']
         longt = repo['data-lng']
-        #print(address)
+        #logger.info(address)
         address = usaddress.parse(address)
 
         i = 0
@@ -132,7 +137,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
 
     return data

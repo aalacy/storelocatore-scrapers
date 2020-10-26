@@ -7,6 +7,11 @@ import re
 import json
 import sgzip
 import warnings
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('busey_com')
+
+
 
 
 
@@ -60,9 +65,9 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        #print(search.current_zip)
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        #logger.info(search.current_zip)
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
             location_url = "https://www.busey.com/_/api/branches/"+str(lat)+"/"+str(lng)+"/500"
             r = session.get(location_url, headers=headers)
@@ -83,8 +88,8 @@ def fetch_data():
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #logger.info("data = " + str(store))
+                #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
     
         try:
@@ -104,17 +109,17 @@ def fetch_data():
             if str(store1[2]) + str(store1[-3]) not in addresses1:
                 addresses1.append(str(store1[2]) + str(store1[-3]))
                 store1 = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #logger.info("data = " + str(store))
+                #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store1
          
 
         current_results_len = len(json_data['branches'])+ len(json_data1['atms'])
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

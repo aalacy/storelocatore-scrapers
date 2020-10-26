@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('beautybrands_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
     for a in sa:
         a=a.find('a')
         url="https://www.beautybrands.com/"+a.get('href')
-        print(url)
+        logger.info(url)
         page_url.append(url)
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')

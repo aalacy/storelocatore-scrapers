@@ -7,6 +7,11 @@ import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('outback_com')
+
+
 
 def get_driver():
     options = Options()
@@ -55,11 +60,11 @@ def fetch_data():
     province_box = driver1.find_element_by_id("mainContent")
     poption = province_box.find_elements_by_tag_name('option')
     check = 0
-    print(len(poption))
+    logger.info(len(poption))
     for i in range(1,len(poption)):
         s1 = Select(driver1.find_element_by_id("mainContent"))
         s1.select_by_visible_text(poption[i].text)
-        #print(poption[i].text)
+        #logger.info(poption[i].text)
         time.sleep(2)
         flag = True
         while flag:
@@ -71,11 +76,11 @@ def fetch_data():
                         title = maindiv[j].find_element_by_tag_name('a').text
                         link = maindiv[j].find_element_by_tag_name('a').get_attribute('href')
                         link1 = link.replace("https://www.outback.com/locations","https://www.outback.com/partial/location/")
-                        #print(link1)
+                        #logger.info(link1)
                         page = requests.get(link1)
                         soup = BeautifulSoup(page.text,"html.parser")
                         detail = str(soup.find('jsonpush'))
-                        #print(detail)
+                        #logger.info(detail)
                         start = detail.find('Address')
                         start = detail.find(':',start)+2
                         end = detail.find('"', start)
@@ -122,7 +127,7 @@ def fetch_data():
                         hours = hours.replace("\n","")
                         if len(hours) < 3:
                             hours = "<MISSING>"
-                        #print(hours)
+                        #logger.info(hours)
                         data.append([
                             'https://www.outback.com/',
                             link,
@@ -139,8 +144,8 @@ def fetch_data():
                             longt,
                             hours
                         ])
-                        # print(p)
-                        #print(p, ",", data[p - 1])
+                        # logger.info(p)
+                        #logger.info(p, ",", data[p - 1])
                         p += 1
                         j += 1
 

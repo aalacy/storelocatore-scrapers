@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gpminvestments_com__roadrunnermarkets')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -41,7 +46,7 @@ def fetch_data():
                     if "," in full_address:
                         addr = full_address.split(",")
                         if len(addr) == 2:
-                            # print(full_address)
+                            # logger.info(full_address)
                             street_address = "233 Main St., PO Box 711"
                             city = "Preston"
                             raw_address = full_address
@@ -86,7 +91,7 @@ def fetch_data():
                     if state_list:
                         state = state_list[-1]
 
-                    # print(full_address)
+                    # logger.info(full_address)
                     if us_zip_list:
                         zipp = us_zip_list[-1]
 
@@ -130,10 +135,10 @@ def fetch_data():
                     store = ["<MISSING>" if x == "" or x == "  " else x for x in store]
 
                     yield store
-                    # print("data == " + str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                            # print(all_data)
-                        # print(state)
+                    # logger.info("data == " + str(store))
+                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            # logger.info(all_data)
+                        # logger.info(state)
 
     
 

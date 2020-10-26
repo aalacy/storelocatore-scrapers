@@ -5,6 +5,11 @@ import string
 import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('aspenfit_com')
+
+
 
 
 def write_output(data):
@@ -47,7 +52,7 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, "html.parser")
    
     link_list = soup.findAll('table', {'class': 'wsite-multicol-table'})
-    print(len(link_list))
+    logger.info(len(link_list))
     
 
     for repo in link_list:
@@ -65,7 +70,7 @@ def fetch_data():
            
             hours = cols[1].text
             
-            #print(link)
+            #logger.info(link)
             coords = str(cols[3].find('iframe')['src'])
             start = coords.find('long')
             start = coords.find('=',start)+1
@@ -102,7 +107,7 @@ def fetch_data():
                         hours
                     ])
         
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
             
         except:

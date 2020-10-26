@@ -5,6 +5,11 @@ import requests
 from lxml import etree
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chuzefitness_com')
+
+
 
 
 session = SgRequests()
@@ -50,7 +55,7 @@ def fetch_data():
    
     source = session.get(url,headers=headers, verify=False).text    
     data = source.split('var chuze_vars = ')[1].split('};')[0] + '}'
-    #print(data)
+    #logger.info(data)
     store_list = json.loads(data)['all_markers']
     for store in store_list:
         output = []

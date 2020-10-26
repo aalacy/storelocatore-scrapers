@@ -4,6 +4,11 @@ import re, time
 from bs4 import BeautifulSoup
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('childrens_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,7 +32,7 @@ def fetch_data():
     #content = json.load(urllib2.urlopen(url))
     res=content['response']
     docs=res['docs']
-    print(len(docs))
+    logger.info(len(docs))
     lnk = []
     lnk.append('none')
     p = 0
@@ -54,13 +59,13 @@ def fetch_data():
                 hrt=soup.find("span",class_="open-hours")
                 hrt=hrt['data-hours']
                 det = hrt.split(',')
-                #print(det)
+                #logger.info(det)
                 hr = ''
                 for dt in det:
-                    #print("enter")
+                    #logger.info("enter")
                     start,end = dt.lstrip().split(' ',1)[1].split('-')
                     end,tag = end.split(':')
-                    #print(start,end)
+                    #logger.info(start,end)
                     endtime = (int)(end)-12
                     if endtime == 11:
                         hr = hr + dt.lstrip().split(' ',1)[0] +' 24 Hours '
@@ -81,7 +86,7 @@ def fetch_data():
             if hr.find('Appointments') > -1:
                 hr ="<MISSING>"
             hr = hr.replace('\n',' ').replace('Su-','Sun - ').replace('Mo-','Mon - ').replace('Th ','Thurs ').replace('Fr ','Fri ').replace('Sa ','Sat ')
-            #print(hr)
+            #logger.info(hr)
             street=soup.find("span",itemprop="streetAddress").text
             street=street.replace("\n","")
             for i in range(1,10):
@@ -120,11 +125,11 @@ def fetch_data():
                      longt,
                      hr
                      ])
-                #print(p,data[p])
+                #logger.info(p,data[p])
                 p += 1
             
     
-    print(len(data))
+    logger.info(len(data))
     return data
 
 def scrape():

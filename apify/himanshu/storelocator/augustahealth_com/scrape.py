@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('augustahealth_com')
+
+
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -42,8 +47,8 @@ def fetch_data():
 		longitude = info.find("a",text = re.compile("Get Directions"))["href"].split("@")[1].split(",")[1]
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# logger.info("data = " + str(store))
+		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		yield store
 	r = session.get("https://www.augustahealth.com/urgent-care",headers=headers)
@@ -75,8 +80,8 @@ def fetch_data():
 		page_url ="https://www.augustahealth.com/urgent-care"
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# logger.info("data = " + str(store))
+		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		yield store
 	r = session.get("https://www.augustahealth.com/laboratory/locations",headers=headers)
@@ -98,8 +103,8 @@ def fetch_data():
 	page_url ="https://www.augustahealth.com/laboratory/locations"
 	store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-	# print("data = " + str(store))
-	# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+	# logger.info("data = " + str(store))
+	# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 	store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 	yield store
 	r = session.get("https://www.augustahealth.com/laboratory/locations",headers=headers)
@@ -107,7 +112,7 @@ def fetch_data():
 	for div_blue in soup.find_all("h3"):
 		location_name = div_blue.text
 		address = list(div_blue.find_next("div",class_="box-rounded-blue").find("p",class_="location").stripped_strings)
-		# print(address)
+		# logger.info(address)
 		street_address = address[0].split("Suite")[0]
 		city = address[-1].split(",")[0]
 		state = address[-1].split(",")[-1].split()[0].strip()
@@ -122,8 +127,8 @@ def fetch_data():
 		page_url ="https://www.augustahealth.com/laboratory/locations"
 		store = [locator_domain, location_name, street_address.replace(",",""), city, state, zipp, country_code,
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# logger.info("data = " + str(store))
+		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		yield store
 def scrape():

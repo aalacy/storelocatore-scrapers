@@ -2,6 +2,11 @@ import csv
 import os
 import requests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pizzicatopizza_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -51,7 +56,7 @@ def fetch_data():
         p = q.find_all("p")
         for index,w in enumerate(q.find_all("h2")):
             location_name = w.text
-            # print(location_name)
+            # logger.info(location_name)
             phone_number = list(p[index].stripped_strings)[0]
             street_address = list(p[index].stripped_strings)[1]
             city = list(p[index].stripped_strings)[2].split(',')[0]

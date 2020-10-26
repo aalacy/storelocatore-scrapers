@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('coach_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     for state in states:
         storetypes = ['storeType-R','storeType-F','storeType-D','womenFootwear-true','Capability9-true']
         for stype in storetypes:
-            print(('Pulling State %s-%s...' % (state, stype)))
+            logger.info(('Pulling State %s-%s...' % (state, stype)))
             surl = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=' + state + '_state&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=0&sz=10&format=ajax'
             r2 = session.get(surl, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
@@ -101,7 +106,7 @@ def fetch_data():
                                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     storetypes = ['storeType-R','storeType-F','storeType-D','womenFootwear-true','Capability9-true']
     for stype in storetypes:
-        print(('Pulling Canada %s...' % stype))
+        logger.info(('Pulling Canada %s...' % stype))
         surl = 'https://www.coach.com/on/demandware.store/Sites-Coach_US-Site/en_US/Stores-FilterResult?firstQuery=CA_country&clickedOn=' + stype + '&showRFStoreDivider=false&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start=0&sz=10&format=ajax'
         r2 = session.get(surl, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'

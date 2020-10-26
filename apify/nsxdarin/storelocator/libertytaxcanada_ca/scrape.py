@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('libertytaxcanada_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,7 +35,7 @@ def fetch_data():
             states.append('https://www.libertytaxcanada.ca' + line.split('href="')[1].split('"')[0])
     for state in states:
         time.sleep(5)
-        print(('Pulling Province %s...' % state))
+        logger.info(('Pulling Province %s...' % state))
         r2 = session.get(state, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -38,7 +43,7 @@ def fetch_data():
                 locs.append('https://www.libertytaxcanada.ca' + line2.split('href="')[1].split('"')[0])
     for loc in locs:
         time.sleep(5)
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         website = 'libertytaxcanada.ca'
         typ = '<MISSING>'
         hours = ''

@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import json
 import requests
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('viewfrommyseat_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -26,7 +31,7 @@ def fetch_data():
         
         for venue in soup1.find_all("div",{"class":"level_header"}):
             location = venue.find("p").text.replace("See all","").replace("venues","")
-            # print(location_type)
+            # logger.info(location_type)
             venue_url = "https://aviewfrommyseat.com/"+venue.find("a")['href']
             r2 = session.get(venue_url, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
@@ -40,7 +45,7 @@ def fetch_data():
     data = soup.text.split("6_1582850194718(")[1].split(');')[0]
     json_data = json.loads(data)
     for mp in json_data:
-        # print(mp['name'])
+        # logger.info(mp['name'])
         location_name = (mp['name'].replace(' ',"+"))
         try:
             page_url = "https://aviewfrommyseat.com/venue/"+str(location_name)+"/about/" 

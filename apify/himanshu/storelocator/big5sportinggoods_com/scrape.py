@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('big5sportinggoods_com')
+
+
 
 
 session = SgRequests()
@@ -37,9 +42,9 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # print(search.current_zip)
+        # logger.info(search.current_zip)
 
-        # print("zip_code === ",lat)
+        # logger.info("zip_code === ",lat)
         base_url= "http://big5sportinggoods.com/store/integration/find_a_store.jsp?storeLocatorAddressField="+str(search.current_zip)+"&miles=100&lat="+str(lat)+"&lng="+str(lng)+"&showmap=yes"
         try:
             r = session.get(base_url)
@@ -47,7 +52,7 @@ def fetch_data():
             pass
         soup= BeautifulSoup(r.text,"lxml")
         a = (soup.find_all("div",{"class":"store-address"}))
-        # print(a)
+        # logger.info(a)
         current_results_len = len(a)
         c = (soup.find_all("input",{"name":"lngHidden"}))
         b = (soup.find_all("input",{"name":"latHidden"}))
@@ -83,13 +88,13 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store  
-            # print("--------------------",store) 
+            # logger.info("--------------------",store) 
        
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

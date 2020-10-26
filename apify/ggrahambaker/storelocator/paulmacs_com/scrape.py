@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('paulmacs_com')
+
+
 
 session = SgRequests()
 
@@ -54,7 +59,7 @@ def fetch_data():
     for li in lis[:-4]:
         location_name = li.find('span', {'class': 'h1'}).text
         
-        #print(li.find('p', {'class': 'address'}).text.strip().replace('\t', '').split('\n'))
+        #logger.info(li.find('p', {'class': 'address'}).text.strip().replace('\t', '').split('\n'))
         addy_info = li.find('p', {'class': 'address'}).text.strip().replace('\t', '').split('\n')
         
         if len(addy_info) == 2:
@@ -70,7 +75,7 @@ def fetch_data():
             state = addy_info[1]
             zip_code = addy_info[2]
             
-        #print(li.find_all('p', {'class': 'days'}))
+        #logger.info(li.find_all('p', {'class': 'days'}))
         h = li.find_all('p', {'class': 'days'})
         hours = ''
         for ho in h:

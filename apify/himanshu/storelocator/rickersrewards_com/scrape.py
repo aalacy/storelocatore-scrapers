@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import calendar
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rickersrewards_com')
+
+
 
 
 
@@ -16,7 +21,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -51,9 +56,9 @@ def fetch_data():
     while isFinish is not True:
         r = session.get(
             "https://getgocafe.com/api/sitecore/locations/getlocationlistvm?q=banner:(code+(GG))&skip=" + str(skip) + "&top=5&orderBy=geo.distance(storeCoordinate,%20geography%27POINT(72.8302%2021.1959)%27)%20asc", headers=headers)
-        # print("json==" + r.text)
-        # # print(str(page))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # logger.info("json==" + r.text)
+        # # logger.info(str(page))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         json_data = r.json()
 
@@ -67,24 +72,24 @@ def fetch_data():
                     location_name = x['Name']
                     if x['Address']['lineTwo'] == None or x['Address']['lineTwo'] == '-':
                         street_address = x['Address']['lineOne']
-                        # print(street_address)
+                        # logger.info(street_address)
                     else:
                         street1 = x['Address']['lineOne']
                         street2 = x['Address']['lineTwo']
                         street12 = street1, street2
                         street_address = " ".join(street12)
-                        # print(street_address)
+                        # logger.info(street_address)
                     city = x['Address']['City']
                     state = x['Address']['State']['Abbreviation']
                     zipp = x['Address']['Zip']
                     latitude = x['Address']['Coordinates']['Latitude']
                     longitude = x['Address']['Coordinates']['Longitude']
-                    # print(city, state, latitude, longitude)
+                    # logger.info(city, state, latitude, longitude)
                     phone1 = x['TelephoneNumbers']
                     ph = [y['DisplayNumber']
                           for y in phone1 if 'DisplayNumber' in y]
                     phone = "  or  ".join(ph)
-                    # print(phone)
+                    # logger.info(phone)
 
                     hour1 = x['HoursOfOperation']
                     # h1 = [y['DayNumber']
@@ -101,8 +106,8 @@ def fetch_data():
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation]
                     store = ["<MISSING>" if x == "" else x for x in store]
-                    print("data = " + str(store))
-                    print(
+                    logger.info("data = " + str(store))
+                    logger.info(
                         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                     return_main_object.append(store)

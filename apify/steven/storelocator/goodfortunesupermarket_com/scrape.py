@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('goodfortunesupermarket_com')
+
+
 
 # Location URL
 location_url = 'http://goodfortunesupermarket.com/desktop.php?page=0'
@@ -40,7 +45,7 @@ def pull_location_info(store_name,text_content):
         zip = re.search('\d{5,6}', text_content.find_all('p',{'class':'address-margin'})[0].text).group(0)
     else:
         # providence store is all messed up
-        print(text_content.p.text)
+        logger.info(text_content.p.text)
         if store_name == 'Providence':
             city = store_name
             street_add = re.search('(.*) %s' % city, text_content.p.text).group(0)[:-11]

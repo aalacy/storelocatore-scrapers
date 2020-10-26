@@ -4,6 +4,11 @@ import re
 import json
 import time
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('truevaluecompany_com')
+
+
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +40,7 @@ def fetch_data():
             data2 = (soup2.find_all("script",{"type":"application/ld+json"})[-1]).text
             json_data = json.loads(data2)
             link_3 = (json_data['url'])
-            # print(link_3)
+            # logger.info(link_3)
             r3 = session.get(link_3,headers=headers)
             soup3 = BeautifulSoup(r3.text,"lxml")
             try:
@@ -69,7 +74,7 @@ def fetch_data():
                 hours_of_operation = soup3.find("div",{"id":"all_hours"}).text.replace("\n","").replace("\r","").replace("\t","").replace("PM","PM, ").strip().lstrip().rstrip().replace("Sun","Sunday").replace("Sat","Saturday").replace("Fri","Friday").replace("Mon","Monday").replace("Tue","Tuesday").replace("Wed","Wednesday").replace("Thu","Thurseday")
                 page_url =soup3.find("meta",{"property":"business:contact_data:website"})['content']
                 store_number = page_url.split("/")[-1]
-                # print("---------------------done data---------------------------")
+                # logger.info("---------------------done data---------------------------")
 
             store = []
             store.append(base_url if base_url else "<MISSING>")

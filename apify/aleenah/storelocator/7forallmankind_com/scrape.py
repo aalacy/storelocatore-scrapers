@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('7forallmankind_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,10 +28,10 @@ def fetch_data():
     res=session.get("https://www.7forallmankind.com/store-locator/")
     soup = BeautifulSoup(res.text, 'html.parser')
     urls = soup.find('ul', {'id': 'list-store-detail'}).find_all('h3')
-    print(len(urls))
+    logger.info(len(urls))
     for url in urls:
         url=url.find('a').get('href')
-        #print(url)
+        #logger.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         div = soup.find('div', {'class': 'store-info'})
@@ -49,7 +54,7 @@ def fetch_data():
         else:
             phone="<MISSING>"
         tim=re.sub(r'[ ]+',' ',soup.find('div', {'class': 'table-responsive'}).text.replace('\n',' '))
-        #print(tim)
+        #logger.info(tim)
 
         lat,long=re.findall(r'{lat:(.*),lng:(.*),name:',str(soup))[0]
         all.append([

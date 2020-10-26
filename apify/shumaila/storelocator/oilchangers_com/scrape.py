@@ -4,6 +4,11 @@ import string
 import re, time, usaddress
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('oilchangers_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -84,7 +89,7 @@ def fetch_data():
             if len (state.rstrip()) > 2 and state != '<MISSING>':
                     city = city  + ' '+ state
                     state = '<MISSING>'
-            #print(phone,hours)
+            #logger.info(phone,hours)
             data.append([
                 'https://oilchangers.com',
                 'https://oilchangers.com/our-locations/',                   
@@ -101,12 +106,12 @@ def fetch_data():
                 longt,
                 hours.replace('\n', ' ').lstrip()
             ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
         
             
         except Exception as e:
-            print(e)
+            logger.info(e)
             break
 
         
@@ -114,10 +119,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 
