@@ -1,5 +1,3 @@
-
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -29,24 +27,18 @@ def fetch_data():
     location_url = "https://stores.guess.com/en/"
 
     all_soup = bs(session.get(location_url,headers=headers).content,"lxml")
-
     for a_link in all_soup.find("div",{"class":"browse mobile-collapse"}).find_all("a",{"data-ga":re.compile("Maplist, Region -")}):
-        
         city_soup = bs(session.get(a_link['href']).content, "lxml")
-
         for city_link in city_soup.find_all("a",{"data-ga":re.compile("Maplist, City -")}):
-        
             store_soup = bs(session.get(city_link['href']).content, "lxml")
-
             for url in store_soup.find_all("a",{"title":re.compile("#")}):
-                
                 page_url = url['href']
-                if session.get(page_url).status_code != 200:
+                if page_url=="https://stores.guess.com/us/en/fl/orlando/1-jeff-fuqua-blvd.-8022.html":
                     continue
-                location_soup = bs(session.get(page_url).content, "lxml")
-                
+                # if session.get(page_url).status_code != 200:
+                #     continue
+                location_soup = bs(session.get(page_url).content, "html5lib")
                 data = json.loads(location_soup.find(lambda tag:(tag.name == "script") and "RLS.defaultData" in tag.text).text.split(">")[1].split("<")[0].replace("\\",""))
-                
                 location_name = data['location_name']+" "+ data['location_shopping_center']
                 street_address = (data['address_1']+" "+ data['address_2']).strip()
                 city = data['city']
@@ -62,7 +54,6 @@ def fetch_data():
                 lng = data['lng']
                 phone = location_soup.find("a",{"data-ga":re.compile("Phone - "+str(store_number))}).text
                 hours = " ".join(list(location_soup.find("div",{"class":"hours"}).stripped_strings))
-        
                 store = []
                 store.append(base_url)
                 store.append(location_name)
@@ -83,14 +74,8 @@ def fetch_data():
                 addressess.append(str(store[2]+store[9]+store[-1]))
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-               # print("store:----------  ",store)
                 yield store
-
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

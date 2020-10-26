@@ -26,9 +26,20 @@ function parseHours(json) {
 }
 
 async function scrape() {
-	stores = []
-	const HEADERS = {
-		'Authorization': 'Bearer hIWHFeDpkoBaIxwB9wsaVD9SrxRSVU',
+  stores = []
+
+  const initialPage = await axios.get('https://www.7-eleven.com/locator');
+  const found = initialPage.data.match(/"access_token":"(\w+?)"/);
+  let accessToken = null;
+  if (found) {
+    accessToken = found[1];
+  }
+  if (!accessToken) {
+    console.log('Could not get auth token. Cannot proceed.')
+    process.exit(1);
+  }
+  const HEADERS = {
+    'Authorization': `Bearer ${accessToken}`,
 		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36',
 		'Host': 'api.7-eleven.com',
 		'Origin': 'https://www.7-eleven.com',

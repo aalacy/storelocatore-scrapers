@@ -25,8 +25,9 @@ def fetch_data():
     soup = bs(r.text,'html5lib')
     jd = json.loads(soup.find_all("script",{"type":"application/ld+json"})[1].text)['location']
     for val in jd:
-        location_name = val['name'].replace("&#8211;","-")
+        
         street_address = val['address']['streetAddress']
+        location_name = val['name'].replace("&#8211;","-").replace(street_address,'').replace(" - 1400 County Line Rd",'').replace(" - 1177 Camelback",'').replace('- Merriman Road','').replace("- Dyer Road",'')
         city = val['address']['addressLocality']
         state = val['address']['addressRegion']
         zipp = val['address']['postalCode']

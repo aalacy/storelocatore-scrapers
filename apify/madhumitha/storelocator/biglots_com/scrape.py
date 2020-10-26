@@ -1,13 +1,10 @@
 import csv
-import requests
-from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 import re
 import json
-import time
-
-DOMAIN = 'https://www.biglots.com'
-MISSING = '<MISSING>'
-
+session = SgRequests()
+import requests
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -70,43 +67,78 @@ def write_output(data):
     with open('data.csv', mode='w', encoding='utf-8', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    data=[]
-    url = "https://local.biglots.com/sitemap.xml"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    loc_url = soup.findAll('xhtml:link', href = True)
-    for l in loc_url:
-        try:
-            if len(re.split('/', l['href'])) >=6:
+    addresses = []
+    soup = bs( requests.get("https://local.biglots.com/sitemap.xml").text, "lxml")
+
+    for l in soup.find_all('xhtml:link', href = True):
+        
+            if l['href'].count("/") >= 5 and "holiday" not in l['href']:
                 page_url = l['href']
-                res = requests.get(page_url)
-                l_soup = BeautifulSoup(res.content, "html.parser")
+                l_soup = bs(requests.get(page_url).text, "lxml")
+                
                 location_name = l_soup.find('h1', attrs = {'class':'Hero-title'}).text.strip()
+                
                 street_address = l_soup.find('span', attrs = {'class':'c-address-street-1'}).text.strip()
+                
                 city = l_soup.find('span', attrs = {'class':'c-address-city'}).text.strip()
+                
                 state_ab = l_soup.find('span', attrs = {'class':'c-address-state'}).text.strip()
-                state = us_state_abbrev[state_ab]
-                zipcode = l_soup.find('span', attrs = {'class':'c-address-postal-code'}).text.strip()
+                
+                if len(state_ab) == 2:
+                    state = state_ab
+                else:
+                    state = us_state_abbrev[state_ab]
+                
+                zipp = l_soup.find('span', attrs = {'class':'c-address-postal-code'}).text.strip()
+                
                 phone = l_soup.find('div', attrs = {'class':'Phone-display Phone-display--withLink'}).text.strip()
+                
                 lat = l_soup.find('span', attrs = {'class':'c-js-distance-container'})['data-latitude']
-                lon = l_soup.find('span', attrs = {'class':'c-js-distance-container'})['data-longitude']
+                
+                lng = l_soup.find('span', attrs = {'class':'c-js-distance-container'})['data-longitude']
+                
                 store_number = l_soup.find('button', attrs = {'class':'Hero-button js-favorite-store'})['value']
+                
                 hrs = l_soup.findAll('tr', attrs = {'itemprop':'openingHours'})
+                
                 hours_of_operation = ''
                 for h in  hrs:
                     if h['content']:
                         hours_of_operation = hours_of_operation + h['content'] + ',' 
-                location_type = MISSING
-                data.append([DOMAIN, page_url, location_name, street_address, city, state, zipcode, 'US', store_number, phone, location_type, lat, lon, hours_of_operation])
-        except requests.exceptions.RequestException:
-            pass
-    return data
+               
+                
+                
+                store = []
+                store.append("https://www.biglots.com")
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append("US")
+                store.append(store_number)
+                store.append(phone)
+                store.append('<MISSING>')
+                store.append(lat)
+                store.append(lng)
+                store.append(hours_of_operation)
+                store.append(page_url)
+                
+                if store[2] in addresses:
+                    continue
+                addresses.append(store[2])
+                
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+               
+                yield store
+       
+   
 
 def scrape():
     data = fetch_data()

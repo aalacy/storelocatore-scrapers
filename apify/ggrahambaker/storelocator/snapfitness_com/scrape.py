@@ -41,7 +41,7 @@ def fetch_data():
         time.sleep(randint(2,4))
 
         element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-            (By.CLASS_NAME, "address")))
+            (By.ID, "resultsSection")))
         time.sleep(randint(2,4))
         
         locs = driver.find_elements_by_css_selector('.club-overview.Highlight0')
@@ -65,26 +65,18 @@ def fetch_data():
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
         # print(link)
-                
-        main = base.find(class_='location')
-        try:
-            location_name = main.h1.text
-        except:
-            location_name = main.h3.text
+        
+        location_name = base.find(class_='location-address').h2.text.strip()
 
         try:
-            phone_number = base.find(class_="details").find_all("li")[0].text.strip()
-            addy = str(base.find(class_="details").find_all("li")[1].span)
-            if "Snap" in phone_number:
-                phone_number = base.find(class_="details").find_all("li")[1].text.strip()
-                addy = str(base.find(class_="details").find_all("li")[2].span)
-            if not phone_number:
-                phone_number = '<MISSING>'
+            phone_number = base.find(class_="link_phonenumber").text.strip()
         except:
             phone_number = '<MISSING>'
-            
         
-        addy = addy.replace('<span>',"").replace('</span>',"").strip().split('<br/>')
+        if not phone_number:
+            phone_number = '<MISSING>'
+
+        addy = list(base.find(class_="location-address").find_all("p")[2].stripped_strings)
 
         if '/ca/' in link:
             country_code = 'CA'
@@ -103,13 +95,16 @@ def fetch_data():
                 zip_code = addy[1][addy[1].rfind(' '):].strip()
 
         state = addy[1][addy[1].find(zip_code)-3:addy[1].find(zip_code)].strip()
+        if state.upper() in ["SL","GJ","MX","PU","QE","CM","DF"]:
+            continue
+
         city = addy[1][:addy[1].rfind(state)].strip()
 
         if city == "Cary N":
             city = "Cary"
             state = "NC"
 
-        google_href = base.find(id='map')['href']
+        google_href = base.find(class_='location-map')['href']
         
         start = google_href.find('&query=')
         coords = google_href[start + len('&query='):].split(',')

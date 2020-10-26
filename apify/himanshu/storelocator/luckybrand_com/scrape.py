@@ -8,7 +8,7 @@ from sgrequests import SgRequests
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
+
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip",
                          "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
@@ -27,7 +27,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["US","CA"])
     MAX_RESULTS = 50
-    MAX_DISTANCE = 500
+    MAX_DISTANCE = 50
     coord = search.next_coord()
     base_url = "https://www.luckybrand.com"
     coord = search.next_coord()
@@ -78,7 +78,6 @@ def fetch_data():
                     hours = " ".join(list(soup.find(class_="hours-body").stripped_strings))
             if "Closed" in location_name:
                 continue
-            
             store = []
             store.append(base_url)            
             store.append(location_name)
@@ -99,10 +98,12 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store
-        if current_result_len == 0:
+        if current_result_len < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
-        else:
+        elif current_result_len == MAX_RESULTS:
             search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
 def scrape():
     data = fetch_data()

@@ -23,41 +23,36 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 0
     pattern = re.compile(r'\s\s+')
     cleanr = re.compile(r'<[^>]+>')
-    url = 'https://sesameplace.com/'
-    r = session.get(url, headers=headers, verify=False)   
-    soup =BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select('a:contains("Visit")')
-    for link in linklist:
-        #print(link['href'])
-        title = link.text.split('in ',1)[1]
-        link = link['href']
-        r = session.get(link, headers=headers, verify=False)
-        if r.text.find('coming soon') > -1:
-            continue
-        address = r.text.split('All Rights Reserved. ',1)[1].split('<',1)[0]
-        street,city,state = address.split(', ')
-        state,pcode = state.lstrip().split(' ',1)
-        try:
-            phone = r.text.split('tel:',1)[1].split('"')[0]
-        except:
-            phone = '<MISSING>'
-        try:
-            lat = r.text.split('"ParkCenterpointLatitude":',1)[1].split(',',1)[0]
-        except:
-            lat = '<MISSING>'
-        try:
-            longt = str((float)(r.text.split('"ParkCenterpointLongitude":',1)[1].split(',',1)[0])).replace('.','')     
-            longt = longt[0:3]+'.'+longt[3:len(longt)]
-            
-        except Exception as e:
-            
-            longt = '<MISSING>'
+    url = 'https://www.bartons-lumber.com/'
+    r = session.get(url, headers=headers, verify=False)
     
+    soup =BeautifulSoup(r.text, "html.parser")
+   
+    divlist = soup.select_one('li:contains("Locations")').select("a[href*=content]")
+    
+   # print("states = ",len(state_list))
+    p = 0
+    for div in divlist:
+        link = 'https://www.bartons-lumber.com' + div['href']
+        #print(link)
+        r = session.get(link, headers=headers, verify=False)
+        soup =BeautifulSoup(r.text, "html.parser")
+        title  = soup.find('h1').text
+        street = soup.find('div',{'class':'street-block'}).text
+        city = soup.find('span',{'class':'locality'}).text
+        state = soup.find('span',{'class':'state'}).text
+        pcode = soup.find('span',{'class':'postal-code'}).text
+        phone = soup.find('div',{'class':'field-name-gsl-props-phone'}).text
+        hours = soup.find('section',{'class':'field-type-office-hours'}).text
+        hourlist = soup.findAll('span',{'class':'oh-display'})
+        hours = ''
+        for hr in hourlist:
+            hours = hours + hr.text +' '
+       
         data.append([
-                        'https://sesameplace.com/',
+                        'https://www.bartons-lumber.com/',
                         link,                   
                         title,
                         street,
@@ -68,22 +63,21 @@ def fetch_data():
                         '<MISSING>',
                         phone,
                         '<MISSING>',
-                        lat,
-                        longt,
-                        '<INACCESSIBLE>'
+                        '<MISSING>',
+                        '<MISSING>',
+                        hours
                     ])
         #print(p,data[p])
         p += 1
-                
-            
-    
+        
         
     return data
 
 
-def scrape():    
+def scrape():
+  
     data = fetch_data()
     write_output(data)
-   
+  
 
 scrape()

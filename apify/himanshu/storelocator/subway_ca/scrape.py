@@ -6,6 +6,7 @@ import re
 import json
 from sgrequests import SgRequests
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,6 +15,7 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
     base_url= "https://restaurants.subway.com/canada"
     r = session.get(base_url)
