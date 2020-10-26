@@ -42,7 +42,7 @@ def is_sglogging_not_in_reqs(reqs_file: os.Path): Boolean =
 def insert_sglogging_in_reqs(reqs_file: os.Path): Unit = {
     val reqfile = File(reqs_file.toString)
     val old_string = reqfile.contentAsString
-    val new_content = s"${old_string}\nsglogging".replaceAll("\n\n", "\n")
+    val new_content = s"${old_string}\nsglogging\n".replaceAll("\n+", "\n")
     reqfile overwrite new_content
 }
 
