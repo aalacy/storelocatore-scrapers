@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('happyspizza_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,12 +46,12 @@ def fetch_data():
     driver.get("https://www.happyspizza.com/locations/")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     sa = soup.find_all('div', {'class': 'col-5 my-lg-3'})
-    #print(soup)
+    #logger.info(soup)
     for a in sa:
         url=a.find('a').get('href')
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        print(url)
+        logger.info(url)
         try:
 
             loc=soup.find('h1', {'class': 'hp-gradienttxt mt-3 mt-lg-5'}).text
@@ -76,7 +81,7 @@ def fetch_data():
         zip=addr[1]
         phone=soup.find('p', {'class': 'hp-cherry mb-lg-1 mt-3 mb-3'}).text.replace('Phone','').strip()
         tim=soup.find_all('div', {'class': 'row no-gutters'})[1].text.replace('am','am ').replace('pm','pm ').replace('day:','day: ').replace('  ',' ')
-        #print(tim)
+        #logger.info(tim)
         iframes=soup.find_all('iframe')
         if iframes==[]:
             lat=long="<MISSING>"

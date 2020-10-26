@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('clarksoneyecare_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +30,7 @@ def fetch_data():
     key_set=set([])
     coords = sgzip.coords_for_radius(50)
     for coord in coords:
-        #print(coord)
+        #logger.info(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
         res = session.get(url)
         try:
@@ -41,7 +46,7 @@ def fetch_data():
             res = session.get(js['permalink'])
             soup = BeautifulSoup(res.text, 'html.parser')
             tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
-            print(tim)
+            logger.info(tim)
             name=js["name"].replace(";s ","; ").replace( u'\u200b','')
             if ";" in name:
                 name=name.split(';')[-1]

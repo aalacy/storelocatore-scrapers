@@ -1,6 +1,11 @@
 import csv
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kloecknermetals_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -30,9 +35,9 @@ def fetch_data():
     page_url=[]
 
     driver.get('https://www.kloecknermetals.com/contact/kloeckner-branches/')
-    #print(r.html.render('return branches'))
+    #logger.info(r.html.render('return branches'))
     data=driver.execute_script("return branches")
-    print(len(data))
+    logger.info(len(data))
     for d in data:
         locs.append(d['branch_name'])
         street.append(d['branch_address'])

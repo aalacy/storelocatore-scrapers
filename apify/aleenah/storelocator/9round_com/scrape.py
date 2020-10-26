@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('9round_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,12 +42,12 @@ def fetch_data():
     s=divs[1].find_all('a')
     del s[0]
     sa+=s
-    # print(soup)
+    # logger.info(soup)
     for a in sa:
         url="https://www.9round.com/"+a.get('href')
         res=requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #print(url)
+        #logger.info(url)
 
         #soup = BeautifulSoup(driver.page_source, 'html.parser')
 
@@ -56,13 +61,13 @@ def fetch_data():
             del ca[0]
             for aa in ca:
                 page_url.append(aa.get('href'))
-    print(page_url)
+    logger.info(page_url)
     for url in page_url:
-        print(url)
+        logger.info(url)
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data=soup.find('script', {'type': 'application/ld+json'}).text
-        #print(data)
+        #logger.info(data)
         street.append(re.findall(r'"streetAddress": "([^"]*)"',data)[0].strip().replace('\u202a',""))
         cities.append(re.findall(r'"addressLocality": "([^"]*)"',data)[0].strip().replace('\u202a',""))
         states.append(re.findall(r'"addressRegion": "([^"]*)"',data)[0].strip().replace('\u202a',""))
@@ -94,7 +99,7 @@ def fetch_data():
             if "or" in ph:
                 ph=ph.split("or")[0].strip()
 
-        # print(ph)
+        # logger.info(ph)
         if ph == ""or ph==[]:
             ph = "<MISSING>"
         phones.append(ph)
@@ -115,7 +120,7 @@ def fetch_data():
         addr=soup.find('h4', {'class': 'h4-responsive font-weight-bolder'}).text.strip().split("\n")
         street.append(addr[0])
         addr=addr[1].split(",")
-        #print(addr)
+        #logger.info(addr)
         cities.append(addr[0])
         addr=addr[1].strip().split()
         states.append(addr[0])
@@ -125,7 +130,7 @@ def fetch_data():
             tim="<MISSING>"
         else:
             tim=tim[0].text
-        #    print(tim)
+        #    logger.info(tim)
         timing.append(tim)
         
         lat.append(soup.find('div', {'id': 'map-container'}).get('data-lat'))

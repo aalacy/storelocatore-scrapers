@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chachamatcha_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +35,7 @@ def fetch_data():
         st=store.find('strong').text
         add=store.find('span').text.replace("  "," ")
 
-        print(add)
+        logger.info(add)
         if "," in add:
             add=add.split(",")
             c = add[0]
@@ -39,8 +44,8 @@ def fetch_data():
             z = add[1]
         else:
             sz=add.strip().split(" ")
-            print(add)
-            print(sz)
+            logger.info(add)
+            logger.info(sz)
             z=sz[-1]
             s=sz[-2]
             c= add.replace(s+" "+z,"").strip()

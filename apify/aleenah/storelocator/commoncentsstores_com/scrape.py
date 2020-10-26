@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('commoncentsstores_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,15 +34,15 @@ def fetch_data():
     page_url=[]
 
     res=requests.get("http://www.commoncentsstores.com/locations.html")
-    #print(res)
+    #logger.info(res)
     soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
+    #logger.info(soup)
     divs = soup.find_all('div', {'class': 'col-sm-4 col-xs-11 bottom25'})
     for div in divs:
         page_url.append("http://www.commoncentsstores.com"+div.find('a').get('href'))
 
     for url in page_url:
-        print(url)
+        logger.info(url)
         
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -54,12 +59,12 @@ def fetch_data():
         lat.append(la)
         long.append(lo)
         div = soup.find('div', {'class': 'col-sm-4 col-sm-offset-1 col-xs-12'}).find('div', {'class': 'bottom30'})
-        #print(div.text)
+        #logger.info(div.text)
         tex=div.text.strip()
         l = tex.split("\n")[0]
         locs.append(l)
         tex=tex.replace(l,"").strip()
-        #print(tex)
+        #logger.info(tex)
         ty=re.findall(r'(.*)Address',tex,re.DOTALL)[0].strip()
         if ty=="":
             ty="<MISSING>"
@@ -76,7 +81,7 @@ def fetch_data():
         addr=addr[1].strip().split(" ")
         states.append(addr[0])
         zips.append(addr[1])
-        #print(tex)
+        #logger.info(tex)
         ph=re.findall(r'Phone\n([\(\)\- 0-9]+)Phone',tex,re.DOTALL)
         if ph!=[]:
             phones.append(ph[0].strip())

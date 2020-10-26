@@ -1,6 +1,11 @@
 import csv
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('iroparis_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,29 +30,29 @@ def fetch_data():
 
 
     """divs=driver.find_elements_by_class_name('Store-btnDetails js-Store-btnDetails--more Store-btnDetails--visible')
-    print(len(divs))
+    logger.info(len(divs))
     for div in divs:
         div.find_element_by_tag_name('i').click()"""
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    print(soup)
+    logger.info(soup)
     tims= str(soup).split('<div class="Store-slider js-Store-slider"')
 
-    print(tims)
+    logger.info(tims)
 
     divs = soup.find_all('div', {'class': 'Store-info'})
-    print(len(divs))
+    logger.info(len(divs))
     for div in divs:
         loc = div.find('h3').text
         addr=div.find('a', {'class': 'Store-text Store-text--underline'}).text.strip().split('\n')
-        #print(addr)
+        #logger.info(addr)
         city = div.find('span', {'class': 'Store-city'}).text
         street =addr[0]
         zip=addr[1].strip().split(' ')[0]
 
         phone=div.find('a', {'class': 'Store-text Store-text--phone'}).text
         tim = tims[divs.index(div)].split('div class="Store-opening">')[1].replace('OPENING HOURS','').replace('</div>','').replace('</ul>','').replace('<br/>','').replace('<ul class="Store-openingList">','').replace('<li class="Store-openingItem">','').replace('</li>','').strip().replace('\n',', ')
-        print(tim)
+        logger.info(tim)
 
         all.append([
             "https://www.iroparis.com",

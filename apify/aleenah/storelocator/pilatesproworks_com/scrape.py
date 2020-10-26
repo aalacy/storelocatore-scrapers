@@ -6,6 +6,11 @@ from pyzipcode import ZipCodeDatabase
 import time
 
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pilatesproworks_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -36,17 +41,17 @@ def fetch_data():
 
     #res=requests.get("https://www.pilatesproworks.com/locations")
     driver.get("https://www.pilatesproworks.com/locations")
-    #print(driver.page_source)
+    #logger.info(driver.page_source)
     time.sleep(1)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     divs = soup.find_all('div', {'class': 'slide sqs-gallery-design-grid-slide'})
     divs=divs[:10]
-    print(len(divs))
+    logger.info(len(divs))
     for div in divs:
         page_url.append("http://www.pilatesproworks.com/"+ div.find('a').get("href").split("/")[-1])
 
     for url in page_url:
-        print(url)
+        logger.info(url)
         driver.get(url)
         #res= requests.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -85,7 +90,7 @@ def fetch_data():
             phones.append("<MISSING>")
             lat.append("<MISSING>")
             long.append("<MISSING>")
-            #print(soup)
+            #logger.info(soup)
 
     all = []
     for i in range(0, len(locs)):

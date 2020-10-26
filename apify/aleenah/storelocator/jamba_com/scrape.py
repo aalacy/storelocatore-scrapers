@@ -1,6 +1,11 @@
 import csv
 import re
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jamba_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -54,7 +59,7 @@ def fetch_data():
         zips.append(info['postcode'].strip())
 
         page_url.append("https://locations.jamba.com"+store['llp_url'])
-        print(info['locality'])
+        logger.info(info['locality'])
     #page_url=list(set(page_url))
     headers = {
 
@@ -63,7 +68,7 @@ def fetch_data():
     for u in page_url:
         url='https://momentfeed-prod.apigee.net/api/llp.json?address='+street[page_url.index(u)].replace(" ","+")+"&auth_token=PQUBOCBNLKOUIYUP&locality="+cities[page_url.index(u)].replace(" ","+")+"&multi_account=false&pageSize=30&region="+states[page_url.index(u)]
         res=requests.get(url,headers=headers)
-        #print(url)
+        #logger.info(url)
         if 'message' in res.json() or 'error' in res.json() :
             ur=re.findall(r'(.*)#',street[page_url.index(u)].replace(" ","+"))
             if ur!=[]:
@@ -71,7 +76,7 @@ def fetch_data():
                 url = 'https://momentfeed-prod.apigee.net/api/llp.json?address=' + ur + "&auth_token=PQUBOCBNLKOUIYUP&locality=" +cities[page_url.index(u)].replace(" ", "+") + "&multi_account=false&pageSize=30&region=" + states[page_url.index(u)]
                 res = requests.get(url, headers=headers)
             if 'message' in res.json() or 'error' in res.json() :
-                print(url)
+                logger.info(url)
                 locs.append("<MISSING>")
                 ids.append("<MISSING>")
                 phones.append("<MISSING>")
@@ -82,7 +87,7 @@ def fetch_data():
 
         info = res.json()[0]['store_info']
         locs.append([x['data'] for x in res.json()[0]['custom_fields'] if x['name'] == 'store_name'][0])
-        #print([x['data'] for x in res.json()[0]['custom_fields'] if x['name'] == 'store_name'][0])
+        #logger.info([x['data'] for x in res.json()[0]['custom_fields'] if x['name'] == 'store_name'][0])
         ids.append(info['corporate_id'])
         ph=info['phone']
         if ph=="":
@@ -91,7 +96,7 @@ def fetch_data():
             phones.append(ph)
         tim=info['store_hours'].replace("1,","Monday: ").replace(";2,"," Tuesday: " ).replace(";3,"," Wednesday: ").replace(";4,"," Thusrday: ").replace(";5,"," Friday: ").replace(";6,"," Saturday: ").replace(";7,"," Sunday: ").replace(";","").replace(",","-")
         tim=re.sub(r'([0-9]{2})([0-9]{2})',r'\1:\2',tim)
-        print(tim)
+        logger.info(tim)
         
         if tim=="":
             timing.append("<MISSING>")

@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import re
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('honolulucookie_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +26,7 @@ def fetch_data():
     # Your scraper here
     res = session.get("https://www.honolulucookie.com/content/store-locations.asp")
     soup = BeautifulSoup(res.text, 'html.parser')
-    # print(soup)
+    # logger.info(soup)
     stores = soup.find_all('div', {'class': 'location-section'})
     del stores[0]
     for store in stores:
@@ -46,13 +51,13 @@ def fetch_data():
                 else:
                     street+=" "+lis[2].text.strip()
                     city = csz[0]
-                    print(csz)
+                    logger.info(csz)
                     csz = csz[1].strip().split(" ")
                     state = csz[0]
                     zip = csz[1]
             else:
                 city=csz[0]
-                print(csz)
+                logger.info(csz)
                 csz=csz[1].strip().split(" ")
                 state=csz[0]
                 zip=csz[1]

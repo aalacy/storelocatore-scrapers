@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('aloyoga_com')
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,7 +30,7 @@ def fetch_data():
     res=session.get("https://www.aloyoga.com/pages/stores")
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = re.findall(r'slideshowDataJson[\d] = ([^;]+)',str(soup))
-    print(len(divs))
+    logger.info(len(divs))
     for div in divs:
         js = json.loads(div)
         city=js['city'].split(',')[0]
