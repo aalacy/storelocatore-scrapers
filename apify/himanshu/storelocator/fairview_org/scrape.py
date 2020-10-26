@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fairview_org')
-
-
 
 session = SgRequests()
 
@@ -38,7 +33,7 @@ def fetch_data():
     for value in json.loads(response.text)['results']:
 
         page_url = value['ClickUri']
-        # logger.info(page_url)
+        # print(page_url)
         hours1='<MISSING>'
         jdata= json.loads(value['raw']['flocationdisplaycontent41631'])
         if jdata==None:
@@ -47,12 +42,12 @@ def fetch_data():
             location_name = jdata['Title']
         except:
             location_name = "<MISSING>"
-        # logger.info(location_name)
+        # print(location_name)
         # exit()
         response = session.post(page_url)
         soup = BeautifulSoup(response.text,'lxml')
-        # logger.info(soup.find("div",{"class":"hours-contact rte"}).find("h2").text)
-        # logger.info(page_url)
+        # print(soup.find("div",{"class":"hours-contact rte"}).find("h2").text)
+        # print(page_url)
         hours = soup.find(lambda tag: (tag.name == "h4") and "Hours" == tag.text.strip())
         if hours != None:
             hours1=' '.join(list(hours.parent.stripped_strings))
@@ -67,7 +62,7 @@ def fetch_data():
         zipp = jdata['Address']['Zip']
         latitude = jdata['Address']['Latitude']
         longitude = jdata['Address']['Longitude']
-        # logger.info(jdata['LocationPhones'])
+        # print(jdata['LocationPhones'])
         if "DisplayNumber" in  jdata['LocationPhones'][0]:
             phone = jdata['LocationPhones'][0]['DisplayNumber']
         if phone == "":
@@ -75,7 +70,7 @@ def fetch_data():
         if "FAIRVIEW" in phone:
             phone=phone.replace("-FAIRVIEW",'').replace("FAIRVIEW",'')
         phone = phone.split(";")[0].strip()
-        # logger.info(phone)
+        # print(phone)
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -87,7 +82,7 @@ def fetch_data():
         if store[1]+store[2]  in addressess123:
             continue
         addressess123.append(store[1]+store[2])
-        # logger.info(store)
+        # print(store)
         yield store
 
 

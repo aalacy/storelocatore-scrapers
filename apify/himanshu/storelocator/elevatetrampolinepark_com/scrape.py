@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('elevatetrampolinepark_com')
-
-
 
 
 session = SgRequests()
@@ -29,7 +24,7 @@ def fetch_data():
     return_main_object = []
     for location in soup.find_all('a', {'class': re.compile(r'et_pb_button et_pb_button.+')}):
         link = location['href']
-        # logger.info(link)
+        # print(link)
         location_request = session.get(link)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("h4") == None:

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('calibercollision_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -48,7 +43,7 @@ def fetch_data():
             store = '<MISSING>'
         r2 = session.get(loc, headers=headers)
         hours = ''
-        logger.info(loc)
+        print(loc)
         try:
             lines = r2.iter_lines()
             for line2 in lines:

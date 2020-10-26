@@ -10,11 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('iguanas_co_uk')
-
-
 
 
 def write_output(data):
@@ -50,7 +45,7 @@ def fetch_data():
     for store in stores:
         slug = store["fields"]["slug"]
         link = "https://www.iguanas.co.uk/restaurants/" + slug
-        logger.info(link)
+        print(link)
 
         api_link = "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug=" + slug + "%26include=10"
         

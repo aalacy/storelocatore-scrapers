@@ -3,11 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('seniorhelpers_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +25,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     
-        # logger.info("zip_code === "+zip_code)
+        # print("zip_code === "+zip_code)
     locator_domain = "https://www.seniorhelpers.com/"
     location_name = ""
     street_address = ""
@@ -65,7 +60,7 @@ def fetch_data():
                 phone  = soup1.find(lambda tag: (tag.name == "span") and "Contact" == tag.text.strip()).parent.parent.text.strip().replace("Contact",'').strip().lstrip()
             except:
                 phone="<MISSING>"
-            # logger.info(phone)
+            # print(phone)
             try:
                 hours_of_operation  = " ".join(list(soup1.find(lambda tag: (tag.name == "span") and "Hours" == tag.text.strip()).parent.parent.stripped_strings)).replace("Hours",'')
             except:
@@ -101,8 +96,8 @@ def fetch_data():
             #     continue
             # addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         
 def scrape():

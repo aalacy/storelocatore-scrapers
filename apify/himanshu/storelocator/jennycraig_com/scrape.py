@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jennycraig_com')
-
-
 
 
 session = SgRequests()
@@ -66,11 +61,11 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"regionlist gaq-link"}):
-        # logger.info(states["href"])
+        # print(states["href"])
         state_request = session.get(states["href"],headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for city in state_soup.find_all("a",{'class':"citylist gaq-link"}):
-            # logger.info(city["href"])
+            # print(city["href"])
             city_request = session.get(city["href"],headers=headers)
             city_soup = BeautifulSoup(city_request.text,"lxml")
             for location in city_soup.find("div",{"class":'tlsmap_list'}).find_all("div",recursive=False):

@@ -3,11 +3,6 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('consumersbank_com')
-
-
 
 
 session = SgRequests()
@@ -49,7 +44,7 @@ def fetch_data():
     r = session.get(
         "https://www.consumersbank.com/about-us/contact/locations-hours.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
     for li in soup.find_all('li',class_="loc"):
         location_name = li['data-title']
         street_address = li['data-address1'] + " " + li['data-address2']
@@ -84,8 +79,8 @@ def fetch_data():
 
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
-        logger.info("data = " + str(store))
-        logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print("data = " + str(store))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 

@@ -1,11 +1,6 @@
 import csv
 import sgzip
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('betfred_com')
-
-
 
 locator_domain = "https://www.betfred.com/"
 MAX_DISTANCE = 5
@@ -85,16 +80,16 @@ def fetch_data():
             for record in process_locations(ids, result_coords, locations):
                 yield record
         except Exception as e:
-            logger.info(f"Error on record parse/process; will retry later. Err: {e}")
-            logger.info(response.text)
+            print(f"Error on record parse/process; will retry later. Err: {e}")
+            print(response.text)
             retries.append(coord)
             continue
 
         if current_results_len == 0:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
 
         coord = search.next_coord()
@@ -106,8 +101,8 @@ def fetch_data():
             for record in process_locations(ids, [], locations):
                 yield record
         except Exception as e:
-            logger.info(f"Second error on record parse/process: {e}")
-            logger.info(response.text)
+            print(f"Second error on record parse/process: {e}")
+            print(response.text)
 
 
 def scrape():

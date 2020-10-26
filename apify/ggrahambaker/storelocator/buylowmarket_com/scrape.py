@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('buylowmarket_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +32,7 @@ def addy_extractor(src):
 def get_info(driver, tag, locator_domain, all_store_data):
     div = driver.find_element_by_css_selector('div' + tag)
     rows = div.find_elements_by_css_selector('div.row')
-    logger.info(len(rows))
+    print(len(rows))
     for row in rows:
         stores = row.find_elements_by_css_selector('div.col-md-4')
         for store in stores:
@@ -46,7 +41,7 @@ def get_info(driver, tag, locator_domain, all_store_data):
                 continue
             else:
                 location_name = ps[0].text
-                # logger.info(location_name)
+                # print(location_name)
                 ## all distro is the same, we only need one
 
                 if '#' in location_name:
@@ -57,18 +52,18 @@ def get_info(driver, tag, locator_domain, all_store_data):
                         store_number = location_name.split('#')[1][:2].strip()
                 else:
                     store_number = '<MISSING>'
-                # logger.info(store_number)
+                # print(store_number)
                 p_split = ps[1].text.split('\n')
                 street_address = p_split[0]
 
                 city, state, zip_code = addy_extractor(p_split[1])
-                # logger.info(street_address)
-                # logger.info(city, state, zip_code)
-                # logger.info(p_split)
+                # print(street_address)
+                # print(city, state, zip_code)
+                # print(p_split)
                 phone_number = p_split[2].replace('Phone #', '').replace('Phone#', '').strip()
                 if len(phone_number) > 15:
                     phone_number = phone_number[:-8]
-                # logger.info(phone_number)
+                # print(phone_number)
                 if 'Business Hours:' in p_split:
                     ind = p_split.index('Business Hours:')
                     hours = ''
@@ -77,7 +72,7 @@ def get_info(driver, tag, locator_domain, all_store_data):
                     hours = hours.strip()
                 else:
                     hours = '<MISSING>'
-                # logger.info(hours)
+                # print(hours)
                 country_code = 'US'
                 if 'Distribution' in location_name:
                     location_type = 'distribution center'
@@ -106,7 +101,7 @@ def fetch_data():
     nav = driver.find_element_by_css_selector('ul.nav')
     lis = nav.find_elements_by_css_selector('li')
     for i, li in enumerate(lis):
-        logger.info(i)
+        print(i)
         li.click()
         get_info(driver, targets[i], locator_domain, all_store_data)
 

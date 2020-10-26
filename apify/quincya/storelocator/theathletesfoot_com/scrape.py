@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('theathletesfoot_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,7 +29,7 @@ def fetch_data():
 		lat = coord_search[0]
 		lng = coord_search[1]
 		base_link = "https://theathletesfoot.com/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=100&search_radius=500" %(lat,lng)
-		logger.info(base_link)
+		print(base_link)
 
 		req = session.get(base_link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")

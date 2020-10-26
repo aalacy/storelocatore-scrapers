@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('napoleonsbakery_com')
-
-
 
 
 session = SgRequests()
@@ -62,9 +57,9 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # logger.info(city,state)
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(city,state)
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
 
     return return_main_object
@@ -86,7 +81,7 @@ def fetch_data():
     #     except:
     #         continue
     #     s.append(state_list)
-    # logger.info(s)
+    # print(s)
 
     # for i in k:
     #     k1 = i.find_all("li")
@@ -108,11 +103,11 @@ def fetch_data():
     #                 else:
 
     #                     hours = "<MISSING>"
-    #             # logger.info(data[0])
+    #             # print(data[0])
     #             store_name.append(new_words[0])
     #             street_address = (new_words[1])
     #             # state = s.pop(0)
-    #             # logger.info(state)
+    #             # print(state)
 
     #             phone = (new_words[2])
 
@@ -142,7 +137,7 @@ def fetch_data():
     #     store.append("http://napoleonsbakery.com")
     #     store.append(store_name[i].replace("-","").replace("*",""))
     #     store.extend(store_detail[i])
-    #     # logger.info(store)
+    #     # print(store)
     #     return_main_object.append(store)
 
     # return return_main_object

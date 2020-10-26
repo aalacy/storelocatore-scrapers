@@ -7,11 +7,6 @@ import string
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('homewatchcaregivers_com')
-
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -49,12 +44,12 @@ def fetch_data():
     for rep in repo_list:
         statelist.append(rep.text.lower())        
      
-    logger.info(len(statelist))
+    print(len(statelist))
     for i in range(1,len(statelist)):
         state = statelist[i]
         state = state.replace(' ','-')
         statelink = 'https://www.homewatchcaregivers.com/locations/'+state
-        #logger.info('state = ',i,statelist[i],statelink)
+        #print('state = ',i,statelist[i],statelink)
         try:
             count = 0
             page = 0
@@ -63,7 +58,7 @@ def fetch_data():
             mtrue = 0
             while True:
                 if mtrue == 0:
-                    #logger.info("MMMMMM")
+                    #print("MMMMMM")
                     r1  = driver.page_source
                     soup1 =BeautifulSoup(r1, "html.parser")
                     divlist = soup1.find('ul', {'class': 'state-list'})        
@@ -72,17 +67,17 @@ def fetch_data():
                         countdiv = soup1.find('div',{'class':'left flex'}).text
                         temp = countdiv[countdiv.find('of') + 2:len(countdiv)]
                         temp = temp.lstrip()
-                        #logger.info(temp)
+                        #print(temp)
                         count = int(temp)
                         
                     except Exception as e:
-                        #logger.info(e)
+                        #print(e)
                         count = 1
-                    #logger.info("COUNT = ",page,count)
+                    #print("COUNT = ",page,count)
                     if page == count:
                         break
-                   # logger.info(countdiv)
-                    #logger.info("len = ",len(divlist))
+                   # print(countdiv)
+                    #print("len = ",len(divlist))
                     #input()
                     for div in divlist:           
                         lat = div['data-latitude']
@@ -94,7 +89,7 @@ def fetch_data():
                         if link.find('http') == -1:
                             link = 'https://www.homewatchcaregivers.com'+link
                             
-                        #logger.info(link)
+                        #print(link)
                         r2 = session.get(link, headers=headers, verify=False)        
                         soup2 =BeautifulSoup(r2.text, "html.parser")
                         try:
@@ -143,7 +138,7 @@ def fetch_data():
                                 fflag = 1
                                 break
                         if fflag == 0:
-                            #logger.info("BBBB")
+                            #print("BBBB")
                             ment.append(title)
                             data.append([
                                         'https://www.homewatchcaregivers.com',
@@ -161,13 +156,13 @@ def fetch_data():
                                         longt,
                                         hours
                                     ])
-                            #logger.info(p,data[p])
+                            #print(p,data[p])
                             p += 1
                         
                 if count == 1:
                     page += 1
                 if count > 1:
-                    #logger.info("Enter")
+                    #print("Enter")
                     try:
                         driver.find_element_by_xpath('/html/body/main/form/section/div/aside/div[2]/ul/li[2]/a').click()
                         mtrue = 0
@@ -177,7 +172,7 @@ def fetch_data():
                         time.sleep(2)
                     except Exception as e:
                         mtrue = 1
-                        #logger.info("E!",e)
+                        #print("E!",e)
                     
                     
                 
@@ -185,7 +180,7 @@ def fetch_data():
 
         except Exception as e:
             # broken link or no store
-            #logger.info(e)
+            #print(e)
             pass
 
 

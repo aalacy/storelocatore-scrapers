@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kia_com')
-
-
 session = SgRequests()
 
 
@@ -38,8 +33,8 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        # logger.info("zip_code === "+zip_code)
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("zip_code === "+zip_code)
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://www.kia.com/us/services/en/dealers/search"
 
         data = r'{"type":"zip","zipCode":"'+str(zip_code)+'","dealerCertifications":[],"dealerServices":[]}'
@@ -59,7 +54,7 @@ def fetch_data():
             lng = store['location']['longitude']
             store_number = store['code'].replace(state,"")
             page_url = store['url'].lower()
-            # logger.info(page_url)
+            # print(page_url)
             hours = ""
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
             hours = "<MISSING>"
@@ -89,14 +84,14 @@ def fetch_data():
 
             yield store
         
-            # logger.info(store)
-        # logger.info(len(json_data))
+            # print(store)
+        # print(len(json_data))
 
         if len(json_data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(json_data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

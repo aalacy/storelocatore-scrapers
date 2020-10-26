@@ -2,11 +2,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('onestopstorespa_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -26,12 +21,12 @@ def fetch_data():
     time.sleep(5)
     iframes=driver.find_elements_by_tag_name('iframe')
 
-    logger.info(len(iframes))
+    print(len(iframes))
     #
     for frame in iframes:
         #if frame.get_attribute('aria-label')=="Google Maps":
         driver.switch_to.frame(frame)
-            #logger.info(str(frame))
+            #print(str(frame))
 
         links=driver.find_elements_by_tag_name('a')
         if len(links)==0:
@@ -39,7 +34,7 @@ def fetch_data():
             continue
 
         addr=re.findall(r'destination=(.*)',links[0].get_attribute('href'))[0].replace('%20',' ').split(',')
-        logger.info(addr)
+        print(addr)
         driver.switch_to.default_content()
         del addr[-1]
         zip=re.findall(r'[\d]{5}',addr[-1])

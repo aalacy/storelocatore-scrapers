@@ -6,11 +6,6 @@ import json
 import sgzip
 from sgselenium import SgSelenium
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('happybank_com')
-
-
 session = SgRequests()
 
 
@@ -45,8 +40,8 @@ def fetch_data1():
     base_url = "https://www.happybank.com"
     while zip_code:
         result_coords = []
-        #logger.info("zip_code === " + zip_code)
-        # logger.info("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("zip_code === " + zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # location_url = "https://www.happybank.com/Locations?bh-sl-address=96932&locpage=search"
         try:
             location_url = "https://www.happybank.com/Locations?bh-sl-address=" + \
@@ -93,7 +88,7 @@ def fetch_data1():
             if str(street_address+location_type+page_url) in addresses:
                 continue
             addresses.append(street_address+location_type+page_url)
-            # logger.info("https://www.happybank.com/Locations" + page_url)
+            # print("https://www.happybank.com/Locations" + page_url)
             phone = data['phone'].replace("BANK ", "")
             try:
                 r1 = session.get("https://www.happybank.com/Locations" +
@@ -113,16 +108,16 @@ def fetch_data1():
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         # if current_results_len < MAX_RESULTS:
-        #     # logger.info("max distance update")
+        #     # print("max distance update")
         #     search.max_distance_update(MAX_DISTANCE)
         if current_results_len < MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +
@@ -222,14 +217,14 @@ def fetch_data2():
                 continue
             addressesess.append(store[2])
             if store[1] != "<MISSING>":
-                # logger.info('data == ' + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print('data == ' + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
             time.sleep(5)
             driver.find_element_by_xpath(
                 "//div[@class='U26fgb mUbCce p9Nwte HzV7m-tJHJj-LgbsSe qqvbed-a4fUwd-LgbsSe']").click()
         except Exception as e:
-            # logger.info(e)
+            # print(e)
             continue
             time.sleep(3)
 

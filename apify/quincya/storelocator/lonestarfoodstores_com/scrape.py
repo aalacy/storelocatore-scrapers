@@ -4,11 +4,6 @@ import csv
 import time
 
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lonestarfoodstores_com')
-
-
 
 
 def write_output(data):
@@ -36,8 +31,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	locator_domain = "lonestarfoodstores.com"
 
@@ -57,7 +52,7 @@ def fetch_data():
 		if "Lone Star #" in row:
 			# New POI
 			location_name = row.replace("\u200b","").strip()
-			logger.info(location_name)
+			print(location_name)
 			store_number = location_name[location_name.find("#")+1:location_name.find("#")+3]
 			raw_address = rows[i+1].text
 			if "," not in raw_address:

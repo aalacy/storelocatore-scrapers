@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('moesoriginalbbq_com')
-
-
 
 session = SgRequests()
 
@@ -46,7 +41,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     # page_url = ""
     json_data = r.json()
-    # logger.info('json_data ===== ' + str(len(json_data['results']['locations'])))
+    # print('json_data ===== ' + str(len(json_data['results']['locations'])))
     for location_list in json_data['results']['locations']:
         location_name = location_list['name']
         store_number = str(location_list['id'])
@@ -56,7 +51,7 @@ def fetch_data():
         full_address = location_list['streetaddress'].replace("  ", " ")
         if not full_address.find('https://') >= 0:
             if len(full_address.split(',')[-1].strip().split(' ')) > 1:
-                #logger.info(full_address)
+                #print(full_address)
                 street_address = ','.join(full_address.split(',')[:-2])
                 city = full_address.split(',')[-2]
                 if len(street_address) == 0:
@@ -75,7 +70,7 @@ def fetch_data():
                     state = full_address.split(',')[-1]
                 if "CDMX" in state:
                     continue
-                # logger.info(state,zipp)
+                # print(state,zipp)
         else:
             street_address = "<MISSING>"
             city = "<MISSING>"
@@ -83,13 +78,13 @@ def fetch_data():
             state = "<MISSING>"
         if "30381" == zipp:
             # 349 14th St.
-            #logger.info(zipp)
+            #print(zipp)
             zipp = "30318"
-        # logger.info("data === " + str(full_address))
+        # print("data === " + str(full_address))
         location_url = location_list['website']
         page_url = location_url.replace("/lo/rome","/rome")
-        # logger.info(page_url)
-        # logger.info("location_url == "+ location_url)
+        # print(page_url)
+        # print("location_url == "+ location_url)
         r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
         if soup_location.find('h2') != None:
@@ -107,23 +102,23 @@ def fetch_data():
                 for br in tag_hours.find_all('br'):
                     br.replace_with(' ')
                 hours_of_operation = tag_hours.text.strip()
-                # logger.info(hours_of_operation)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print(hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
             elif "moesdenver" in location_url and "Denver" in city:
                 tag_hours = soup_location.find('div',class_='hours').find_all('div',class_='hour')[0].find('p')
                 for br in tag_hours.find_all('br'):
                     br.replace_with(' ')
                 hours_of_operation = tag_hours.text.strip()
             elif "moesbbqcharlotte" in location_url and "Matthews" in city:
-                # logger.info(city)
+                # print(city)
                 tag_hours= soup_location.find(lambda tag: (tag.name == 'h3') and "HOURS" in tag.text).find_next('p')
                 for br in tag_hours.find_all('br'):
                     br.replace_with(' ')
                 hours_of_operation = tag_hours.text.strip().split('Close')[0].strip()
-                # logger.info(city ,hours_of_operation)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print(city ,hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
             elif "moesbbqcharlotte" in location_url and "Waxhaw" in city:
-                # logger.info(city)
+                # print(city)
                 tag_hours= soup_location.find_all(lambda tag: (tag.name == 'h3') and "HOURS" in tag.text)[-1].find_next('p')
                 for br in tag_hours.find_all('br'):
                     br.replace_with(' ')

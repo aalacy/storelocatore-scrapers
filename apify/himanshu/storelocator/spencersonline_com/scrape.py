@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('spencersonline_com')
-
-
 
 session = SgRequests()
 
@@ -32,7 +27,7 @@ def fetch_data():
     m = (tag_store.text)
     for i in range(1,680):
         store_number = (m.split("store.STORE_NUMBER = '")[i].split("store.ADDRESS_LINE_1")[0].replace("';","").strip().lstrip())
-        # logger.info(store_number)
+        # print(store_number)
         # street_address = (m.split("store.ADDRESS_LINE_1 = '")[i].split("store.ADDRESS_LINE_2 =")[0].replace("';","").strip())
         street_address = (m.split("store.ADDRESS_LINE_2 = '")[i].split("store.CITY = '")[0].replace("';","").strip())
         # street_address = (street_address1 +" "+ street_address2).replace("\n","").replace("    "," ").strip()
@@ -46,7 +41,7 @@ def fetch_data():
         location_name = (m.split("store.STORE_NAME = '")[i].split("store.STORE_NUMBER = '")[0].replace("';","").strip())
         hours_of_operation = (m.split("store.STORE_STATUS = '")[i].split("';")[0].strip().replace("Coming Soon","<MISSING>"))
         STORE_ID = (m.split("store.STORE_ID = '")[i].split("store.STORE_NAME = '")[0].replace("';","").strip())
-        # logger.info(STORE_ID)
+        # print(STORE_ID)
         page_url = "https://www.spencersonline.com/store/"+str(location_name.strip().lstrip())+"/"+str(STORE_ID.strip().lstrip())+".uts"
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
@@ -77,7 +72,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url)
-        # logger.info(store)
+        # print(store)
         if store[2] in addresses:
             continue
         addresses.append(store[2])

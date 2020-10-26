@@ -3,11 +3,6 @@ import re
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('modoyoga_com')
-
-
 
 
 URL = "https://modoyoga.com/"
@@ -93,7 +88,7 @@ class Scraper(Scrape):
 
         for page_url in page_urls:
             driver.get(page_url)
-            logger.info(f'Getting information for {page_url}')
+            print(f'Getting information for {page_url}')
 
             # zip
             try:

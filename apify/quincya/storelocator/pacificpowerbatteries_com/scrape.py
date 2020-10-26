@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pacificpowerbatteries_com')
-
-
 
 def get_driver():
     options = Options() 
@@ -54,14 +49,14 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		locator_domain = "pacificpowerbatteries.com"
 		content = base.find('div', attrs={'class': 'container well'})
 		city = content.find('h1').text.strip()
 		location_name = base.find('title').text.strip() + " - " + city
-		logger.info(location_name)
+		print (location_name)
 		raw_line = content.find('a').text.strip()
 		street_address = raw_line[:raw_line.find(city)].strip()
 		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()

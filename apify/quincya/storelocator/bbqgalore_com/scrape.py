@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bbqgalore_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,10 +27,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	main_links = []
 	main_items = base.find_all('span', attrs={'style': 'font-size: medium;'})
@@ -52,13 +47,13 @@ def fetch_data():
 		try:
 			item = BeautifulSoup(final_req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locator_domain = "bbqgalore.com"
 
 		location_name = "Barbeques Galore " + item.find("h2").text.strip().title()
-		logger.info(location_name)
+		print(location_name)
 
 		try:
 			raw_address = str(item.find(class_="main-container").find_all("p")[0])[3:].split("<br/>")[:2]

@@ -6,11 +6,6 @@ import json
 import time
 import sgzip
 import urllib.parse
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kellyservices_ca')
-
-
 
 
 
@@ -80,7 +75,7 @@ def fetch_data():
 
     loc_search_url = 'https://branchlocator.kellyservices.com/default.aspx?s=&l='
     r_loc_search = session.get(loc_search_url, headers=headers)
-    # logger.info("r_loc_search === "+ str(r_loc_search.text))
+    # print("r_loc_search === "+ str(r_loc_search.text))
     soup_loc_search = BeautifulSoup(r_loc_search.text, "lxml")
     view_state = urllib.parse.quote(soup_loc_search.find("input", {"id": "__VIEWSTATE"})["value"])
     event_validation = urllib.parse.quote(soup_loc_search.find("input", {"id": "__EVENTVALIDATION"})["value"])
@@ -88,14 +83,14 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info("zip_code === " + zip_code)
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("zip_code === " + zip_code)
 
         # zip_code = 33127
         data = '__VIEWSTATE=' + view_state + '&__EVENTVALIDATION=' + event_validation + '&txtZip=' + str(
             zip_code) + '&btnSearch=+Search'
 
-        # logger.info("data == "+ data)
+        # print("data == "+ data)
         # r_locations = session.post("https://branchlocator.kellyservices.com/default.aspx", headers=headers, data=data)
 
         r_locations = request_wrapper("https://branchlocator.kellyservices.com/default.aspx","post", headers=headers,data=data)
@@ -108,7 +103,7 @@ def fetch_data():
 
         current_results_len = len(soup_locations.find_all("a", {
             "onclick": re.compile("setLocation")}))  # it always need to set total len of record.
-        # logger.info("current_results_len === " + str(current_results_len))
+        # print("current_results_len === " + str(current_results_len))
 
         for location in soup_locations.find_all("a", {"onclick": re.compile("setLocation")}):
             # previous_sibling
@@ -132,8 +127,8 @@ def fetch_data():
             hours_of_operation = ""
 
             # do your logic here
-            # logger.info("geo_url ==== " + str(geo_url))
-            # logger.info("r_locations ==== " + str(address_list))
+            # print("geo_url ==== " + str(geo_url))
+            # print("r_locations ==== " + str(address_list))
 
             store_number = location.parent.parent.find_previous_sibling("td").text.strip()
 
@@ -176,15 +171,15 @@ def fetch_data():
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 if store[2] == store[4]:
                     store[2] = "<MISSING>"
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -4,11 +4,6 @@ import csv
 import time
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cfsc_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,16 +27,16 @@ def fetch_data():
 
 	zips = sgzip.for_radius(50)
 	for i, zip_code in enumerate(zips):
-		logger.info("Zip %s of %s" %(i+1,len(zips)))
+		print("Zip %s of %s" %(i+1,len(zips)))
 		link = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=100&location=%s&limit=50&api_key=7620f61553e8f9aac3c03e159d2d8072&v=20181201&resolvePlaceholders=true&entityTypes=location" %zip_code
 		
 		req = session.get(link, headers = HEADERS)
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			logger.info(zip_code)
+			print(zip_code)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		store_data = json.loads(base.text)['response']['entities']
 		locator_domain = "cfsc.com"
@@ -55,7 +50,7 @@ def fetch_data():
 				continue
 
 			location_name = store["name"]
-			logger.info(location_name)
+			print(location_name)
 
 			street_address = store["address"]["line1"]
 			city = store["address"]["city"]

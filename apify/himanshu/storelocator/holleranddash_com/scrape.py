@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('holleranddash_com')
-
-
 
 session = SgRequests()
 
@@ -75,10 +70,10 @@ def fetch_data():
             yield store
 
         if len(json_data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(json_data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

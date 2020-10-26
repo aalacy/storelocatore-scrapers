@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('baileybanksandbiddle_com')
-
-
 
 
 
@@ -40,12 +35,12 @@ def fetch_data():
     # soup2= BeautifulSoup(r1.text,"lxml")
     # script  = soup2.find("script",{"type":"application/ld+json"})
     # data = json.loads(script.text.replace("// ]]>","").replace("// <![CDATA[",""))
-    # logger.info(data)
+    # print(data)
     
     # exit()
 
     for i in k:
-        # logger.info(i.a['href'])
+        # print(i.a['href'])
         tem_var =[]
         r = session.get("https://baileybanksandbiddle.com"+i.a['href'])
         soup1= BeautifulSoup(r.text,"lxml")
@@ -59,7 +54,7 @@ def fetch_data():
         jp = json.loads(script.text.replace("// ]]>","").replace("// <![CDATA[",""),strict=False)
         lat = jp["geo"]['latitude']
         lon = jp["geo"]['longitude']
-        # logger.info(jp["geo"]['longitude'])
+        # print(jp["geo"]['longitude'])
 
         st = list(soup1.find_all("div",{"class":"col-sm-4"})[1].stripped_strings)[1]
         city = list(soup1.find_all("div",{"class":"col-sm-4"})[1].stripped_strings)[2].split( )[0]
@@ -85,7 +80,7 @@ def fetch_data():
         tem_var.append(lat)
         tem_var.append(lon)
         tem_var.append(hours if  hours else "<MISSING>")
-        # logger.info(tem_var)
+        # print(tem_var)
         return_main_object.append(tem_var)
         
 

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thrifty_com')
-
-
 
 
 session = SgRequests()
@@ -53,10 +48,10 @@ def fetch_data():
                 if 'facebook_city' in locality:
                     
                     city = locality['facebook_city']
-                    # logger.info(page_url)
-                    # logger.info(data)
-                    # logger.info(city)
-                    # logger.info('==============================')
+                    # print(page_url)
+                    # print(data)
+                    # print(city)
+                    # print('==============================')
             state = data['store_info']['region']
             zipp = data['store_info']['postcode']
             country_code = data['store_info']['country']
@@ -99,8 +94,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             
-            # logger.info("data ==="+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``````")
+            # print("data ==="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``````")
             yield store 
         page+=1
         

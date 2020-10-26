@@ -1,11 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thecomfycow_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -43,7 +38,7 @@ def fetch_data():
 			continue
 
 		found_poi.append(location_name)
-		logger.info(location_name)
+		print (location_name)
 		
 		raw_data = str(item).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
 		street_address = raw_data[1][:raw_data[1].find(",")].strip()

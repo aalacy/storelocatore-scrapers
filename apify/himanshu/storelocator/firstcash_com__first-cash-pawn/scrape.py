@@ -8,11 +8,6 @@ import datetime
 import requests
 import unicodedata
 import pgeocode
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('firstcash_com__first-cash-pawn')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -37,7 +32,7 @@ def fetch_data():
         for i in range(len(data)):
             page_url = "http://find.cashamerica.us/#/storesdetails/"+str(data[i]['storeNumber'])+"/"+data[i]['brand']+"/"+str(data[i]['distance'])+'/'+ data[i]['hours']['displayText']  +'/'+data[i]['hours']['storeStatus']
             # soup = bs(requests.get(page_url).text,'lxml')
-            # logger.info(soup.find("table",{'class':"table-striped"}))
+            # print(soup.find("table",{'class':"table-striped"}))
             # data[i]['hours']['openTime']+' '+data[i]['hours']['closeTime']
             store_data = data[i]
             store = []

@@ -10,11 +10,6 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ppgpaints_com')
-
-
 
 def get_driver():
     options = Options()
@@ -31,7 +26,7 @@ def fetch_fields(driver,location_type,country_code):
     store_list = soup.find("div",attrs={"class":"store-list"}).find_all("div",attrs={"class":"store-details"})
     
     for sl in range(len(store_list)):
-        #logger.info(sl)
+        #print(sl)
         location_name = BeautifulSoup(str(store_list[sl].find("h2")).split('<span class="store-distance">')[0]).text
         address = store_list[sl].find("div",attrs={"class":"store-address"}).find_all("p")
         
@@ -40,7 +35,7 @@ def fetch_fields(driver,location_type,country_code):
             address[1] = address[1].replace(",,",",")
         except:
             address[1] = address[1]
-        #logger.info(address[1])
+        #print(address[1])
         if country_code == "US":
             try:
                 city,[state,zipcode] = address[1].text.strip().split(",")[0],address[1].text.strip().split(",")[-1].split(" ")[1:]
@@ -55,11 +50,11 @@ def fetch_fields(driver,location_type,country_code):
         city = city.strip()
         state = state.strip()
         zipcode = zipcode.strip()
-        #logger.info(store_list[sl].text)
+        #print(store_list[sl].text)
         try:
             phone = store_list[sl].find("a",attrs={"class":"mobile-hide"}).text.replace("Call","").strip()
         except:
-            #logger.info(store_list[sl])
+            #print(store_list[sl])
             phone = "<MISSING>"
             
         latitude = "<MISSING>"
@@ -90,17 +85,17 @@ def fetch_fields(driver,location_type,country_code):
 
 
 def check_zip(x):
-    #logger.info(x)
+    #print(x)
     if len(x) == 4:
         
         y = "0"+str(x)
-        #logger.info(y)
+        #print (y)
     elif len(x) == 9 and str(x) !="<MISSING>":
         y = x[:5]
-        logger.info(y)
+        print(y)
     elif len(x) == 8 and str(x) !="<MISSING>":
         y = "0"+x[:4]
-        logger.info(y)
+        print(y)
     else:
         y = x
     
@@ -110,10 +105,10 @@ def check_zip(x):
 
 def phone_check(x):
     if x != "<MISSING>":
-        #logger.info(x)
+        #print(x)
         y = x.replace("-","").replace(".","").strip()
         if len(y) < 10:
-            logger.info(x)
+            print(x)
             y = "<MISSING>"
         else:
             y = x
@@ -146,7 +141,7 @@ def fetch_data():
         country_code = countries[c]
         
         for st in range(len(states_list)):
-            logger.info(st)
+            print(st)
             element = driver.find_element_by_id("userAddress")
             element.clear()
             element.send_keys(states_list[st])

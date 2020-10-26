@@ -8,11 +8,6 @@ import json
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('encompasshealth_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()
@@ -28,8 +23,8 @@ show_logs = False
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    logger.info(" ".join(map(str, args)), **kwargs)
-    logger.info("")
+    print(" ".join(map(str, args)), **kwargs)
+    print("")
 
 
 def write_output(data):

@@ -2,11 +2,6 @@ import requests
 
 from pypostalcode import PostalCodeDatabase
 from Scraper import Scrape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('homesense_ca')
-
-
 
 
 URL = "https://www.homesense.ca/"
@@ -62,7 +57,7 @@ class Scraper(Scrape):
             }
             data = requests.post('https://mktsvc.tjx.com/storelocator/GetSearchResults', headers=headers, data=data).json()['Stores']
             stores.extend(data)
-            logger.info(f"{len(data)} locations scraped for {coord[0]}, {coord[1]}")
+            print(f"{len(data)} locations scraped for {coord[0]}, {coord[1]}")
 
         for store in stores:
             if ' '.join(store['Address'].split(' ')[:2]) not in self.seen:

@@ -12,11 +12,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cookiedelivery_com')
-
-
 
 
 def get_driver():
@@ -53,8 +48,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	items = base.find_all(class_='singlerowborder')
 	cities = []
@@ -72,12 +67,12 @@ def fetch_data():
 			(By.CSS_SELECTOR, ".form-control.txtZipCode")))
 		time.sleep(randint(1,2))
 	except:
-		logger.info("Page failed to load")
+		print("Page failed to load")
 
 	data= []
 	found_poi = []
 	for city in cities:
-		logger.info("Search: " + city)
+		print("Search: " + city)
 		search_element = driver.find_element_by_css_selector(".form-control.txtZipCode")
 		search_element.clear()
 		time.sleep(randint(1,2))
@@ -92,8 +87,8 @@ def fetch_data():
 				(By.CSS_SELECTOR, ".location-store")))
 			time.sleep(randint(1,2))
 		except:
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		pois = driver.find_elements_by_css_selector('.location-store')
 		driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_UP)
@@ -121,15 +116,15 @@ def fetch_data():
 					(By.ID, "locationOverview")))
 				time.sleep(randint(1,2))
 			except:
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
 
 			base = BeautifulSoup(driver.page_source,"lxml")
 			item = base.find(id="locationDetails")
 
 			locator_domain = "cookiedelivery.com"
 			location_name = item.find('h2').text.strip()
-			logger.info(location_name)
+			print(location_name)
 
 			raw_address = item.p.text.replace("\xa0"," ").strip().split("\n")
 			if "<!" in raw_address[0]:

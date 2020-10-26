@@ -11,11 +11,6 @@ from random import randrange
 import time
 import sgzip
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('la-z-boy_com')
-
-
 
 
 session = SgRequests()
@@ -54,8 +49,8 @@ def fetch_data():
     while zip:
         try:
             result_coords = []
-            # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-            # logger.info('Pulling zipcode  %s...' % (str(zip)))
+            # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            # print('Pulling zipcode  %s...' % (str(zip)))
             WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//input[@id='locator']"))
             if temp_zip == "":
@@ -98,7 +93,7 @@ def fetch_data():
             data = []
             for script in soup.find_all("script"):
                 if "var __locatorResults" in script.text:
-                    # logger.info(script.text.split("var __locatorResults = ")[1])
+                    # print(script.text.split("var __locatorResults = ")[1])
                     data = json.loads(script.text.split(
                         "var __locatorResults = ")[1])[0]["map"]
                     break
@@ -163,20 +158,20 @@ def fetch_data():
                          str else x for x in store]
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if type(x) == str else x for x in store]
-                # logger.info(store)
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print(store)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
             if len(data) < MAX_RESULTS:
-                # logger.info("max distance update")
+                # print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif len(data) == MAX_RESULTS:
-                # logger.info("max count update")
+                # print("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " +
                                 str(MAX_RESULTS) + " results")
         except Exception as e:
-            # logger.info(e)
+            # print(e)
             search.max_distance_update(MAX_DISTANCE)
             temp_zip = zip
             zip = search.next_zip()

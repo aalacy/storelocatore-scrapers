@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('snoozeeatery_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +24,7 @@ def fetch_data():
         if '<loc>https://www.snoozeeatery.com/locations/' in line and 'post_id' not in line:
             states.append(line.split('<loc>https://www.snoozeeatery.com/locations/')[1].split('/')[0])
     for state in states:
-        logger.info(('Pulling State %s...' % state))
+        print(('Pulling State %s...' % state))
         surl = 'https://snoozeeatery.com/wp-json/koa/v1/entry/' + state
         r2 = session.get(surl, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
@@ -41,10 +36,10 @@ def fetch_data():
                         bids = item.split(']')[0].split(',')
                         for bid in bids:
                             locs.append(bid)
-    logger.info(('Found %s Locations.' % str(len(locs))))
+    print(('Found %s Locations.' % str(len(locs))))
     for loc in locs:
         name = 'Snooze Eatery'
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'snoozeeatery.com'
         typ = 'Restaurant'
         lurl = 'https://snoozeeatery.com/wp-json/koa/v1/entry/' + loc

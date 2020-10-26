@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('malibufishgrill_com')
-
-
 
 
 
@@ -37,7 +32,7 @@ def fetch_data():
     # for link in links[:3]:
     #     r1 = session.get(link.find("a")['href'])
     #     soup1= BeautifulSoup(r1.text,"lxml")
-        # logger.info(soup1.find("div",{"id":"ember1125","class":"ember-view"}))
+        # print(soup1.find("div",{"id":"ember1125","class":"ember-view"}))
     for i in k:
         tem_var =[]
         v=(list(i.stripped_strings))

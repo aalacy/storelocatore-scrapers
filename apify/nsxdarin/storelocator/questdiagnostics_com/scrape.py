@@ -6,11 +6,6 @@ import sgzip
 import time
 import random
 from requests_toolbelt.utils import dump
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('questdiagnostics_com')
-
-
 
 session = SgRequests()
 
@@ -44,7 +39,7 @@ post_headers = {
 
 def debug(response):
     data = dump.dump_all(response)
-    logger.info(data.decode('utf-8'))
+    print(data.decode('utf-8'))
 
 
 def sleep(min=1, max=3):
@@ -70,10 +65,10 @@ def get_f5_cookie(response):
     #   maybe because it's marked HttpOnly?
     f5_cookie = None
     for cookie in response.cookies:
-        # logger.info(cookie)
+        # print(cookie)
         if cookie.name.startswith('f5'):
             f5_cookie = (cookie.name, response.cookies.get(cookie.name))
-            # logger.info('f5_cookie found: ', f5_cookie)
+            # print('f5_cookie found: ', f5_cookie)
     return f5_cookie
 
 
@@ -137,7 +132,7 @@ def fetch_data():
         y = float(coord[1])
         x = str(round(x, 2))
         y = str(round(y, 2))
-        # logger.info('searching coords: %s - %s ...' % (str(x), str(y)))
+        # print('searching coords: %s - %s ...' % (str(x), str(y)))
 
         locations = []
         result_coords = []
@@ -172,7 +167,7 @@ def fetch_data():
             locations = r.json()
         except json.decoder.JSONDecodeError as err:
             if r.status_code == 204:
-                # logger.info(f'no locations found')
+                # print(f'no locations found')
                 search.max_distance_update(MAX_DISTANCE)
                 coord = search.next_coord()
                 continue
@@ -181,8 +176,8 @@ def fetch_data():
         except Exception:
             raise
 
-        # logger.info(f'found {len(locations)} locations')
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print(f'found {len(locations)} locations')
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         for loc in locations:
             domain = 'questdiagnostics.com'
@@ -209,7 +204,7 @@ def fetch_data():
 
             if store_num not in ids:
                 ids.append(store_num)
-                # logger.info(f'Pulling Location: {store_num} ...')
+                # print(f'Pulling Location: {store_num} ...')
                 poi = [domain, lurl, name, address, city, state, zc,
                        country, store_num, phone, typ, lat, lng, hours]
                 poi = [str(x).encode('ascii', 'ignore').decode(

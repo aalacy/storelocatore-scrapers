@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('foreyes_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +26,7 @@ def fetch_data():
     while coord:
         result_coords = []
         lat = coord[0]
-        # logger.info(lat)
+        # print(lat)
         lng = coord[1]
         base_url = "https://www.foreyes.com"
         data = "action=get_properties&lat=39.8283459&lng=-98.5794797&dist=5000&queryType=distance&term=false"

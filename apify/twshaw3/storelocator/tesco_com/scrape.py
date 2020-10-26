@@ -2,11 +2,6 @@ import csv
 import os
 from sgrequests import SgRequests
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tesco_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -82,7 +77,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         lat, lng = coord[0], coord[1]
         url = URL_TEMPLATE.format(lat, lng)
         response = session.get(url, headers=HEADERS).json()
@@ -115,7 +110,7 @@ def fetch_data():
             hours_of_operation = parse_hours(store['openingHours'])
             locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         if len(stores) <= MAX_RESULTS:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + MAX_RESULTS + " results")

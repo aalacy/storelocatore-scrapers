@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('piedmont_org')
-
-
 session = SgRequests()
  
 def my_function(x):
@@ -94,8 +89,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        # logger.info("data ==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data ==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
                 
        

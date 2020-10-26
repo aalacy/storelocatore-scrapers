@@ -2,11 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('urbancookhouse_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,7 +41,7 @@ def fetch_data():
         else:
             address = loc.find_element_by_css_selector('span.address').find_element_by_css_selector('a')'''
         address = loc.find_element_by_css_selector('span.address').find_element_by_css_selector('a')
-        #logger.info(address.text)
+        #print(address.text)
         street_address = address.text.split('\n')[0]
         city, state, zip_code = addy_ext(address.text.split('\n')[1])
 
@@ -71,7 +66,7 @@ def fetch_data():
         page_url = 'http://www.urbancookhouse.com/location/'
         store_data = [locator_domain,page_url, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        #logger.info(store_data)
+        #print(store_data)
         all_store_data.append(store_data)
 
     driver.quit()

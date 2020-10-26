@@ -11,11 +11,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('finks_com')
-
-
 
 
 def get_driver():
@@ -50,8 +45,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     main_links = []
     main_items = base.find_all(class_="go-link")
@@ -70,16 +65,16 @@ def fetch_data():
         time.sleep(randint(1,2))
         try:
             item = BeautifulSoup(req.text,"lxml")
-            logger.info(link)
+            print(link)
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
         time.sleep(randint(1,2))
 
         locator_domain = "finks.com"
 
         location_name = item.find("h1").text.strip()
-        logger.info(location_name)
+        print(location_name)
 
         try:
             raw_address = item.find("address").text.strip().split("\n")
@@ -121,7 +116,7 @@ def fetch_data():
                 raise
         except:
             try:
-                logger.info("Opening gmaps..")
+                print("Opening gmaps..")
                 driver.get(raw_gps)
                 time.sleep(randint(6,8))
 
@@ -130,7 +125,7 @@ def fetch_data():
                 latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
                 longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
             except:
-                logger.info('Map not found..skipping')
+                print('Map not found..skipping')
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 

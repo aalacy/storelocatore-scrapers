@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('joansonthird_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'feature-column-text rte-setting marginTop15'})
 
@@ -42,7 +37,7 @@ def fetch_data():
 			location_name = item.find('h3').text.strip()
 		except:
 			continue
-		logger.info(location_name)
+		print (location_name)
 		
 		raw_data = str(item.p).replace('<p>',"").replace('</p>',"").replace('\n',"").replace(',',"").split('<br/>')
 		street_address = raw_data[0].strip()

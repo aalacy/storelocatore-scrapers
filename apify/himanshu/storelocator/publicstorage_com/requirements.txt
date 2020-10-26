@@ -3,4 +3,3 @@ sgrequests
 sgzip
 bs4
 html5lib
-sglogging

@@ -1,2 +1,2 @@
 sgrequests
-requests-random-user-agentsglogging
+requests-random-user-agent

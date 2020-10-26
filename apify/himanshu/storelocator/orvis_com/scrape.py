@@ -6,11 +6,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.wait import WebDriverWait
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('orvis_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +18,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    logger.info("start")
+    print("start")
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
@@ -31,7 +26,7 @@ def fetch_data():
     driver = SgSelenium().firefox()
     driver.get("https://stores.orvis.com/")
     WebDriverWait(driver, 25).until(lambda x: x.find_element_by_xpath("//a[@href='https://stores.orvis.com/']"))
-    logger.info("start 1")
+    print("start 1")
     time.sleep(10)
     soup = BeautifulSoup(driver.page_source,"lxml")
     return_main_object = []
@@ -42,8 +37,8 @@ def fetch_data():
             location_list = script.text.split("regionData:")[1].split("alias:")[1:-1]
             for i in range(len(location_list)):
                 state = location_list[i].split("}")[0].replace("'","").replace(" ","")
-                # logger.info(state)
-                # logger.info("https://stores.orvis.com/" + state)
+                # print(state)
+                # print("https://stores.orvis.com/" + state)
                 driver.get("https://stores.orvis.com/" + state)
                 WebDriverWait(driver, 25).until(lambda x: x.find_element_by_xpath("//a[@href='https://stores.orvis.com/']"))
                 time.sleep(5)
@@ -57,7 +52,7 @@ def fetch_data():
                             geo_object[store_name] = [lat,lng]
                 for location in state_soup.find_all("div",{"class":"OSL-results-column-wrapper"})[1:]:
                     name = location.find("h4",{"class":"margin-bottom-5"}).text
-                    # logger.info(name)
+                    # print(name)
                     address = list(location.find("p",{"class":"margin-bottom-10"}).stripped_strings)
                     if location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")):
                         phone = location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")).text
@@ -100,7 +95,7 @@ def fetch_data():
                         store.append("<INACCESSIBLE>")
                     store.append(hours)
                     store.append("https://stores.orvis.com/" + state)
-                    # logger.info(store)
+                    # print(store)
                     yield store
 
 def scrape():

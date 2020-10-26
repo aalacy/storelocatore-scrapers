@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nancyspizza_com')
-
-
 
 
 
@@ -37,7 +32,7 @@ def fetch_data():
         latitude = val['loc_lat']
         longitude =val['loc_long']
         phone = val['phone']
-        # logger.info(val)
+        # print(val)
         hours = ( 'monday'+' '+val['monday'] + ' tuesday ' +val['tuesday']+' wednesday ' +val['wednesday']+' thursday ' + val['thursday']+ ' friday '+val['friday']+ ' saturday ' +val['saturday']+ ' sunday ' +val['sunday'])
 
         store_name.append(val['name'])
@@ -152,7 +147,7 @@ def fetch_data():
         store.append("https://www.nancyspizza.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
-        logger.info(store)
+        print(store)
         return_main_object.append(store)
         
     return return_main_object

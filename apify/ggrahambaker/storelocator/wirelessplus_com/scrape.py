@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('wirelessplus_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +31,7 @@ def fetch_data():
             link = li.find('a')['href']
             
             page_url = locator_domain + link
-            logger.info(page_url)
+            print(page_url)
             r = session.get(page_url, headers = HEADERS)
             soup = BeautifulSoup(r.content, 'html.parser')
             

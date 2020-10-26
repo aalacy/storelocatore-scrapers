@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('drivetime_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -52,11 +47,11 @@ def fetch_data():
         try:
             content = driver.find_element_by_css_selector('div.dealership-details-container').get_attribute('innerHTML')
         except:
-            logger.info('sleeeeep')
+            print('sleeeeep')
             time.sleep(10)
             content = driver.find_element_by_css_selector('div.dealership-details-container').get_attribute('innerHTML')
         
-        #logger.info(content)
+        #print(content)
         soup = BeautifulSoup(content, 'html.parser')
 
         location_name = soup.find('h1', {'class': 'dealer-top-header'}).text

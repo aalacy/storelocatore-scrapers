@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('changsmongoliangrill_com')
-
-
 
 
 
@@ -45,7 +40,7 @@ def fetch_data():
     #         time = "<MISSING>"
         time = (" ".join(v[4:]))
         if "18925 SE McLoughlin Blvd, Milwaukie, OR 97267" in v:
-            # logger.info("".join(v[3:]))
+            # print("".join(v[3:]))
             
             tem_var.append("http://www.changsmongoliangrill.com")
             tem_var.append(soup1.find("h1",{"class":"page-title"}).text)

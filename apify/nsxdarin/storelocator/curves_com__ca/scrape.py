@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('curves_com__ca')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -24,7 +19,7 @@ def fetch_data():
     for xlat in range(44, 70):
         for ylng in range(-80, -52):
             url = 'https://www.curves.com/ca/find-a-club?location=Toronto,%20ON&lat=' + str(xlat) + '&lng=' + str(ylng)
-            logger.info(url)
+            print(url)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
@@ -32,11 +27,11 @@ def fetch_data():
                     phone = line.split('>&#x1F4DE;</i>')[1].split('<')[0]
                 if '<a href="https://www.wellnessliving.com' in line:
                     purl = line.split('href="')[1].split('"')[0]
-                    logger.info(purl)
+                    print(purl)
                     if purl not in ids:
                         ids.append(purl)
                         r2 = session.get(purl, headers=headers)
-                        logger.info('Pulling Location %s...' % purl)
+                        print('Pulling Location %s...' % purl)
                         name = ''
                         website = 'curves.com'
                         typ = 'Fitness Studio'

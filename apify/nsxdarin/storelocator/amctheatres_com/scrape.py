@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('amctheatres_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +26,7 @@ def fetch_data():
                     lurl = 'https://www.amctheatres.com/movie-theatres/' + item.split('"')[0]
                     cities.append(lurl)
     for city in cities:
-        logger.info('Pulling City %s...' % city)
+        print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode('utf-8'))
@@ -40,7 +35,7 @@ def fetch_data():
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
-        logger.info('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'amctheatres.com'
         typ = '<MISSING>'
         hours = '<MISSING>'

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lids_com')
-
-
 
 
 
@@ -73,9 +68,9 @@ def fetch_data():
         store.append(hours if hours != "" else "<MISSING>")
         store.append(page_url)
         return_main_object.append(store)
-        # logger.info(str(return_main_object))
-        # logger.info("data===" + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(str(return_main_object))
+        # print("data===" + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 

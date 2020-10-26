@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sajjstreeteats_com')
-
-
 
 
 session = SgRequests()
@@ -53,7 +48,7 @@ def fetch_data():
         if "false" in target_list["hasMap"]:
             pass
         else:
-            # logger.info()
+            # print()
             base_url= target_list["hasMap"]
             r = session.get(base_url,headers=headers)
             soup1= BeautifulSoup(r.text,"lxml").find("section",{"class":"content c-intro container-sm revealable"})

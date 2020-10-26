@@ -5,11 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shawfloors_com')
-
-
 
 
 def write_output(data):
@@ -53,7 +48,7 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
         sub_l = "https://shawfloors.com"
-        # logger.info(sub_l+i['href'])
+        # print(sub_l+i['href'])
 
         page_url = sub_l+i['href']
         try:
@@ -88,8 +83,8 @@ def fetch_data():
             addresses.append(str(store[2]) + str(store[-3]))
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         

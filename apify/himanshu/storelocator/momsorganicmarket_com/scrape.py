@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('momsorganicmarket_com')
-
-
 
 
 session = SgRequests()
@@ -30,7 +25,7 @@ def fetch_data():
     del main[0]
     for atag in main:
         link = atag['href']
-        logger.info(link)
+        print(link)
         r1 = session.get(link)
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find_all('div',{'class':"et_pb_blurb_container"})

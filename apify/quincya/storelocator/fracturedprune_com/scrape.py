@@ -1,11 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fracturedprune_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -29,8 +24,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	license = base.findAll('div', attrs={'class': 'location-container'})[1]
 	license_type = license.find('h2').text
@@ -65,8 +60,8 @@ def fetch_data():
 			try:
 				page_base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
 			try:
 				latitude = page_base.find('span', attrs={'class': 'latitude'}).text.strip()
 				longitude = page_base.find('span', attrs={'class': 'longitude'}).text.strip()
@@ -81,7 +76,7 @@ def fetch_data():
 				hours_of_operation = "<MISSING>"
 
 			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-			logger.info("Got page details")
+			print("Got page details")
 
 		return data
 	data = get_types(license_type,license_rows,data)

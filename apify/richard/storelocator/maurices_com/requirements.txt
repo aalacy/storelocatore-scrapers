@@ -1,1 +1,1 @@
-selenium==3.141.0sglogging
+selenium==3.141.0

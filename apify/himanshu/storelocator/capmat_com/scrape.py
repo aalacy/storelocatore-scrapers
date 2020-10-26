@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('capmat_com')
-
-
 
 session = SgRequests()
 
@@ -26,11 +21,11 @@ def fetch_data():
     base_url = "https://capmat.com"
     r = session.get(base_url+"/Contact.do")
     soup=BeautifulSoup(r.text ,"lxml")
-    # logger.info(r.text.split('v-google-map='))
+    # print(r.text.split('v-google-map='))
     lat_and_log ={}
     for j in json.loads(soup.find("div",class_="flex xl6 md6 sm12 xs12").find("v-select")[':items']):
         lat_and_log[j['name']]={"latitude":j['latitude'],"longitude":j['longitude'],"aboutUrl":j['aboutUrl']}
-    # logger.info(lat_and_log)
+    # print(lat_and_log)
     # exit()
     return_main_object = []
     cnt=0
@@ -76,7 +71,7 @@ def fetch_data():
         store.append(lat)
         store.append(lng)
         store.append(hour.replace('Hours: ',''))
-        # logger.info()
+        # print()
         store.append("https://capmat.com/"+lat_and_log[name]['aboutUrl'] if lat_and_log[name]['aboutUrl'] != None else "<NISSING>" )
         store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         return_main_object.append(store)

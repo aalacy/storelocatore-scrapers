@@ -5,11 +5,6 @@ import re
 import json
 import ast
 from collections import Counter 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('churchschicken_ca')
-
-
 
 
 session = SgRequests()
@@ -85,7 +80,7 @@ def fetch_data():
         tem_var.append(longitude)
         tem_var.append(hours_of_operation)
         tem_var.append(page_url)
-        # logger.info("=============================================",tem_var)
+        # print("=============================================",tem_var)
         tem_var = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in tem_var]
         yield tem_var
      

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('freseniuskidneycare_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -71,7 +66,7 @@ def fetch_data():
                 continue
             addressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info('---store--'+str(store))
+            # print('---store--'+str(store))
             yield store
         page_number += 1
 

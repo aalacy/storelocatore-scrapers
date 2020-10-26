@@ -4,11 +4,6 @@ import csv
 import json
 import sgzip
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('champschicken_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -50,7 +45,7 @@ def fetch_data():
 				link = "/".join(link.split("/")[:-1]) + "-" + link.split("/")[-1]
 			if link in found_poi:
 				continue
-			logger.info(link)
+			print(link)
 			found_poi.append(link)
 			location_name = "Champs Chicken - " + store['name']
 			try:

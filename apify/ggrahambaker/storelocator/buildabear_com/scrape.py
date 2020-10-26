@@ -5,11 +5,6 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 import time
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('buildabear_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -68,7 +63,7 @@ def fetch_data():
 
     all_store_data = []
     for i, link in enumerate(link_list):
-        logger.info(i, link)
+        print(i, link)
         driver.get(link)
         driver.implicitly_wait(10)
 

@@ -5,11 +5,6 @@ import time
 import re
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('theroomplace_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,7 +48,7 @@ def fetch_data():
     all_store_data = []
     for div in divs:
         link = "https://www.theroomplace.com/location/" + div.find_element_by_css_selector(".mz-locationlisting-name.show-store-detail").get_attribute("data-store-slug")
-        logger.info(link)
+        print(link)
         content = div.text.split('\n')
         location_name = content[0]
         street_address = content[1].replace("(Route 30)","").strip()

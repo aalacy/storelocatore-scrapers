@@ -4,11 +4,6 @@ import sgzip
 import time
 import json
 import requests # ignore_check
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('marcos_com')
-
-
 
 
 def override_retries():
@@ -36,22 +31,22 @@ def write_output(data):
 def get(url, headers, attempts=1):
     global session
     if attempts == 10:
-        logger.info(f'failed to get {url} after {attempts} tries. exiting')
+        print(f'failed to get {url} after {attempts} tries. exiting')
         raise SystemExit
     try: 
         r = session.get(url, headers=headers)
         r.raise_for_status()
-        # logger.info('status: ', r.status_code)
+        # print('status: ', r.status_code)
         return r
     except requests.exceptions.RequestException as ex:
         data = ex.response.json()
         if data["errors"]:
             # status 500 is returned when no locations found - treat this as non-error
-            # logger.info(data["errors"]["message"])
+            # print(data["errors"]["message"])
             return r
         else:
-            logger.info(f'Exception getting {url}: {ex}')
-            logger.info('... reset session and retry')
+            print(f'Exception getting {url}: {ex}')
+            print('... reset session and retry')
             session = SgRequests()
             return get(url, headers, attempts+1)
 
@@ -124,9 +119,9 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     for code in sgzip.for_radius(100):
-        # logger.info('Pulling Zip Code %s...' % code)
+        # print('Pulling Zip Code %s...' % code)
         url = 'https://www.marcos.com/api/stores/searchByStreetAddress?orderType=Pickup&street=&city=&state=&zip=' + code + '&radius=100&country=US'
-        # logger.info(url)
+        # print(url)
         r = get(url, headers=headers)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))

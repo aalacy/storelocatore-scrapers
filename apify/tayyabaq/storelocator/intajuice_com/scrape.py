@@ -3,11 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('intajuice_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -56,7 +51,7 @@ def fetch_data():
             location_name.append(driver.find_element_by_css_selector('h3').text)
         except:
             check= driver.find_elements_by_xpath("//div[contains(@style,'font-size:25px; text-align:center;')]")
-            logger.info(check)
+            print(check)
     for n in range(0,len(location_name)): 
             data.append([
                 'https://www.intajuice.com',

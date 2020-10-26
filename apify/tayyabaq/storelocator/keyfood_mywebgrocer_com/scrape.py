@@ -7,11 +7,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('keyfood_mywebgrocer_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,7 +48,7 @@ def fetch_data():
     state_options = [state_opt[n].text for n in range(0,len(state_opt))]
     for n in range(1,len(state_options)):
         time.sleep(3)
-        logger.info((state_options[n]))
+        print((state_options[n]))
         driver.find_element_by_xpath("//select[@name='selStates']/option[text()='%s']"%state_options[n]).click()
         driver.find_element_by_xpath("//select[@name='selZipCodeRadius']/option[text()='20 Miles']").click()
         driver.find_element_by_class_name('submitButton').click()

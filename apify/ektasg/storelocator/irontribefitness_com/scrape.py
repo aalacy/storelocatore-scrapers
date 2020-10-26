@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('irontribefitness_com')
-
-
 
 
 options = Options()
@@ -63,12 +58,12 @@ def fetch_data():
         else:
             break
     for j in range(0,len(names)):
-                logger.info("URL..........." , names[j])
+                print("URL..........." , names[j])
                 driver2.get(names[j])
                 time.sleep(5)
                 page_url = names[j]
                 location_name = driver2.find_element_by_css_selector('div.location-title > h1').text
-                logger.info("location_name" , location_name)
+                print("location_name" , location_name)
                 address = driver2.find_element_by_css_selector('div.col.span_1_of_3.sidebar > p:nth-child(2)').text
                 try:
                     tagged = usaddress.tag(address)[0]
@@ -139,7 +134,7 @@ def fetch_data():
                       '<MISSING>'
                     ])
                 count+=1
-                logger.info(count)
+                print(count)
 
 
     time.sleep(3)

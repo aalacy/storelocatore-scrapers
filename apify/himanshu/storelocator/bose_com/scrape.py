@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bose_com')
-
-
 
 
 session = SgRequests()
@@ -29,7 +24,7 @@ def fetch_data():
     data = r.json()
     page_id = data["nbPages"]
     for k in range(0,page_id):
-        logger.info(k)
+        print(k)
         r = session.get("https://bose.brickworksoftware.com/locations_search?hitsPerPage=10&page=0&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:bose.brickworksoftware.com+AND+publishedAt%3C%3D1563099396528&esSearch={%22page%22:" + str(k)+ ",%22storesPerPage%22:50,%22domain%22:%22bose.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[{%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:{%22lte%22:1563099396528}}],%22filters%22:[],%22aroundLatLngViaIP%22:true}&aroundLatLngViaIP=true")
         data = r.json()["hits"]
         for i in range(len(data)):

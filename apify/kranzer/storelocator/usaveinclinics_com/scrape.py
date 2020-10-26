@@ -3,11 +3,6 @@ import re
 import base
 import usaddress
 from urllib.parse import urljoin
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('usaveinclinics_com')
-
-
 
 class Scrape(base.Spider):
 
@@ -17,7 +12,7 @@ class Scrape(base.Spider):
         for location_url in locations['tree'].xpath('//div[@class="location-listing__buttons"]/a[1]/@href'):
             location = base.selector(location_url)
             if not location['tree'].xpath('//span[@class="breadcrumb_last"][contains(text(), "Coming Soon")]'):
-                logger.info(location_url)
+                print(location_url)
                 i = base.Item(location['tree'])
                 i.add_value('locator_domain', location['url'])
                 i.add_xpath('location_name', '//h1[@class="masthead__heading"]/text()', base.get_first)

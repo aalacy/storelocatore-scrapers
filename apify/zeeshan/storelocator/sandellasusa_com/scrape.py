@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from lxml import (html, etree,)
 
 from pdb import set_trace as bp
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sandellasusa_com')
-
-
 
 xpath = base.xpath
 
@@ -22,8 +17,8 @@ class Sandellasusa(base.Base):
 
     def map_data(self, row):
 
-        # logger.info('***********')
-        # logger.info(etree.tostring(row, pretty_print=True).decode("utf-8") )
+        # print('***********')
+        # print(etree.tostring(row, pretty_print=True).decode("utf-8") )
         
         name = xpath(row, './/span//text()').strip().decode("utf-8") 
         
@@ -53,7 +48,7 @@ class Sandellasusa(base.Base):
             # and it's not equal to the value of street_address, then treat it as the first line of the address
         if not re.match(self.re_address, second_line):
             address_first_line = xpath(row[1], './/span//text()').strip().decode("utf-8") 
-            # logger.info(f'address_first_line: {address_first_line}')
+            # print(f'address_first_line: {address_first_line}')
             if street_address and street_address not in address_first_line:
                 street_address = address_first_line + ' - ' + street_address
             else: 

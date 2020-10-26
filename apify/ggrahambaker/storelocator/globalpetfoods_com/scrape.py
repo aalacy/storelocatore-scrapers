@@ -6,11 +6,6 @@ import re
 
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('globalpetfoods_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +40,7 @@ def fetch_data():
         if 'Opening' in location_name:
             continue
 
-        logger.info(url)
+        print(url)
         raw_json = soup.find('script', {'type': 'application/ld+json'}).text.replace('\r\n', '').replace("\\\\\\\'", "'")
         formatted_json = raw_json.replace("\\", "").replace('<a href="https://miramichi.globalpetfoods.com/" target="_blank">SHOP NOW!</a>',"")
 
@@ -81,8 +76,8 @@ def fetch_data():
         try:
             maps = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         try:
             raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

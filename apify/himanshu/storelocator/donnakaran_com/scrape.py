@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('donnakaran_com')
-
-
 
 
 session = SgRequests()
@@ -54,7 +49,7 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text,"lxml")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:
-                logger.info(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
+                print(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
                 store.append(script.text.split('location":')[1].split('"latitude":')[1].split(",")[0])
                 store.append(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
         store.append("<MISSING>")

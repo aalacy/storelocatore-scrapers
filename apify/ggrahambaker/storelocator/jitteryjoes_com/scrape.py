@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jitteryjoes_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -81,7 +76,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        logger.info(store_data)
+        print(store_data)
         all_store_data.append(store_data)
 
     driver.quit()

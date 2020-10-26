@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('argos_co_uk')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -31,7 +26,7 @@ def fetch_data():
                     if 'Closed' not in item.split('"legacy_name":"')[1].split('"')[0]:
                         locs.append(item.split('"rel":"ui","href":"')[1].split('"')[0])
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'argos.co.uk'
         typ = '<MISSING>'
         hours = ''

@@ -3,11 +3,6 @@ import re
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('solasalonstudios_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +39,7 @@ def fetch_data():
 
         # Fetch data for each store url
         for store_url in store_urls:
-            # logger.info(store_url)
+            # print(store_url)
             req = session.get(store_url, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
 

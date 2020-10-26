@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nutrienagsolutions_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,9 +29,9 @@ def fetch_data():
         if len(zip_code) < 5:
             zip_code = '<MISSING>'
         elif len(zip_code) == 6:
-            #logger.info(zip_code)
+            #print(zip_code)
             zip_code = zip_code[0:3] + ' ' + zip_code[3:]
-            #logger.info(zip_code)
+            #print(zip_code)
 
         if len(zip_code.split(' ')) == 2:
             country_code = 'CA'

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cinnabon_homestead_com')
-
-
 
 session = SgRequests()
 
@@ -56,7 +51,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        # logger.info(store)
+        # print(store)
         store.append(base_url)
         
         yield store

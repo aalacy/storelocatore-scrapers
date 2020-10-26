@@ -13,11 +13,6 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import platform
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('applebees_com')
-
-
 
 
 show_logs = False
@@ -27,8 +22,8 @@ thread_local = threading.local()
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    logger.info(" ".join(map(str, args)), **kwargs)
-    logger.info("")
+    print(" ".join(map(str, args)), **kwargs)
+    print("")
 
 
 def get_time():
@@ -269,7 +264,7 @@ def get_city_urls(reset=False, attempts=1):
     city_urls = []
 
     if attempts > max_attempts:
-        logger.info(f'Max attempts ({max_attempts}) exceeded getting city urls from {sitemap_url}')
+        print(f'Max attempts ({max_attempts}) exceeded getting city urls from {sitemap_url}')
         quit_driver()
         raise SystemExit
 
@@ -282,12 +277,12 @@ def get_city_urls(reset=False, attempts=1):
 
     status_code = driver.requests[0].response.status_code if driver.requests[0].response else None
     log('status: ', status_code)
-    # logger.info('driver.requests[0] body', driver.requests[0].response.body)
-    # logger.info('driver.page_source', driver.page_source)
+    # print('driver.requests[0] body', driver.requests[0].response.body)
+    # print('driver.page_source', driver.page_source)
 
     if status_code == 403 or 'Access denied' in driver.title:
-        logger.info(f'Status code: {status_code}')
-        logger.info('Access denied, trying again ... ')
+        print(f'Status code: {status_code}')
+        print('Access denied, trying again ... ')
         return get_city_urls(reset=True, attempts=attempts+1)
     else:
         wait = WebDriverWait(driver, 30)

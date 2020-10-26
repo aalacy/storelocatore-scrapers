@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('clearchoice_com')
-
-
  
 
 
@@ -87,8 +82,8 @@ def fetch_data():
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = [x if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)

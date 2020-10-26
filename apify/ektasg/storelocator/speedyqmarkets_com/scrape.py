@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('speedyqmarkets_com')
-
-
 
 
 options = Options()
@@ -49,15 +44,15 @@ def fetch_data():
     for store in stores:
             store_id = store.get_attribute('data-store-id')
             location_name =  store.find_element_by_css_selector('div.wpsl-store-location > p > strong').text
-            logger.info(location_name)
+            print(location_name)
             street_addr = store.find_element_by_css_selector('span.wpsl-street').text
             state_city = store.find_element_by_css_selector('div.wpsl-store-location > p > span:nth-child(3)').text
-            logger.info(state_city)
+            print(state_city)
             city = state_city.split(' ')[:-1]
             citystr=''
             for i in range(0,len(city)):
                 citystr = citystr + city[i]
-            logger.info(citystr)
+            print(citystr)
             state = state_city.split(' ')[-1]
             data.append([
              'http://www.speedyqmarkets.com/',

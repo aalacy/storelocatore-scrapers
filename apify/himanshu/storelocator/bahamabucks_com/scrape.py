@@ -4,11 +4,6 @@ import re
 import json
 from sgselenium import SgSelenium
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bahamabucks_com')
-
-
 session = SgRequests()
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -112,9 +107,9 @@ def fetch_data():
             if street_address in addresses:
                 continue
             addresses.append(street_address)
-            # logger.info(state)
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(state)
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
             

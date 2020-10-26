@@ -5,11 +5,6 @@ import time
 from sgselenium import SgSelenium
 from sgrequests import SgRequests
 import logging
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kwiktrip_com')
-
-
 session = SgRequests()
 
 # supress error logging from selenium-wire
@@ -95,7 +90,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                #logger.info("~~~~~~~~~~~~~~~~~~~~~~  ",store)
+                #print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
                 yield store
         soup1 = BeautifulSoup(driver.page_source,"lxml")
         if soup1.find("a",{"id":"tablepress-4_next"}):

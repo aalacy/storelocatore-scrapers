@@ -4,4 +4,3 @@ beautifulsoup4==4.7.1
 sgzip
 phonenumbers
 tenacity
-sglogging

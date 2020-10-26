@@ -8,11 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('spacenk_com')
-
-
 
 
 def write_output(data):
@@ -42,8 +37,8 @@ def fetch_data():
 			(By.CSS_SELECTOR, ".ubsf_locations-list")))
 		time.sleep(randint(1,2))
 	except:
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	# Load full list
 	total_poi = ""
@@ -76,7 +71,7 @@ def fetch_data():
 	for final in final_links:
 		final_link = final[0]
 
-		logger.info(final_link)
+		print(final_link)
 		driver.get(final_link)
 		time.sleep(randint(1,2))
 
@@ -85,8 +80,8 @@ def fetch_data():
 				(By.CSS_SELECTOR, ".ubsf_details-details-title")))
 			time.sleep(randint(1,2))
 		except:
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		item = BeautifulSoup(driver.page_source,"lxml")
 
@@ -98,7 +93,7 @@ def fetch_data():
 				
 		locator_domain = "spacenk.com"
 		location_name = item.h1.text
-		# logger.info(location_name)
+		# print(location_name)
 
 		raw_address = item.find(class_="ubsf_details-address").text.split(",")
 		street_address = raw_address[0].strip()

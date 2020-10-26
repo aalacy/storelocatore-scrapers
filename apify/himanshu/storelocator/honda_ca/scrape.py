@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('honda_ca')
-
-
 
 
 
@@ -49,24 +44,24 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "https://api.honda.ca/dealer/H/Live/dealers/" + str(lat) + "/" + str(
             lng) + "/with-driving-distance"
 
         r = session.get(location_url, headers=headers)
 
-        # logger.info("location_url ==== " + location_url)
+        # print("location_url ==== " + location_url)
 
         # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
 
         # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
         json_data = r.json()
         # json_data = json.loads(r_utf)
-        # logger.info("json_Data === " + str(json_data))
+        # print("json_Data === " + str(json_data))
         current_results_len = int(len(json_data["Items"]))  # it always need to set total len of record.
-        # logger.info("current_results_len === " + str(current_results_len))
+        # print("current_results_len === " + str(current_results_len))
 
         locator_domain = base_url
         location_name = ""
@@ -85,7 +80,7 @@ def fetch_data():
 
         for location in json_data["Items"]:
 
-            # logger.info("location ==== " + str(location))
+            # print("location ==== " + str(location))
             # do your logic.
 
             store_number = location["Dealer"]["Id"]
@@ -118,16 +113,16 @@ def fetch_data():
 
                 store = [x if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         # yield store
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

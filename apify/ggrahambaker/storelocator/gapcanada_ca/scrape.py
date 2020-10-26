@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gapcanada_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -54,8 +49,8 @@ def fetch_data():
     dup_tracker = set()
     all_store_data = []
     for i, link in enumerate(link_list):
-        logger.info("Link %s of %s" %(i+1,len(link_list)))
-        logger.info(link)
+        print("Link %s of %s" %(i+1,len(link_list)))
+        print(link)
         if link != "https://www.gapcanada.ca/stores/on/london/":
             r = session.get(link, headers = HEADERS)
             soup = BeautifulSoup(r.content, 'html.parser')
@@ -117,7 +112,7 @@ def addy_ext(addy):
     city = addy[0]
     state_zip = addy[1].strip().split(' ')
     if len(state_zip) == 4:
-        logger.info('four!!')
+        print('four!!')
     else:
         state = state_zip[0]
         zip_code = state_zip[1] + ' ' + state_zip[2]

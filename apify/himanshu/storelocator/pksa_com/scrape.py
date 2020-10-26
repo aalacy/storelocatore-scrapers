@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pksa_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8", newline = "") as output_file:
@@ -33,7 +28,7 @@ def fetch_data():
             page_url = "https://pksa.com"+(location.find("a")['href'])
         except:
             continue
-        # logger.info(page_url)
+        # print(page_url)
         r = session.get(page_url,headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         data = (soup.find("div",{"class":"left-footer"}))

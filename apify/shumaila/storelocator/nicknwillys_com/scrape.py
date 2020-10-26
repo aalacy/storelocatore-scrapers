@@ -5,11 +5,6 @@ import re, time
 import json
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nicknwillys_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -41,12 +36,12 @@ def fetch_data():
         coord = coord.split('@')[1].split('/data')[0]
         lat, longt = coord.split(',',1)
         longt = longt.split(',',1)[0]
-        #logger.info(det)        
+        #print(det)        
         title = det[0].lstrip()
         address = det[1].lstrip()
         if address.find('MAP') > -1:
             address = address.split(' MAP')[0]
-            #logger.info("YES")
+            #print("YES")
             phone = det[2].lstrip().split(' ',1)[1].rstrip()
         else:
             phone = det[3].lstrip().split(' ',1)[1].rstrip()        
@@ -88,7 +83,7 @@ def fetch_data():
                 longt,
                 '<MISSING>'
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
         
@@ -96,10 +91,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

@@ -7,11 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('starcycleride_com')
-
-
 
 options = Options() 
 options.add_argument('--headless')
@@ -52,7 +47,7 @@ def fetch_data():
             store.find_element_by_css_selector('div.location p a').get_attribute('href')
         )
     for store_url in store_urls:
-        logger.info(store_url)
+        print(store_url)
         driver.get(store_url)
         store = driver.find_element_by_css_selector('div.text-center div.text-center')
         location_name = " ".join([

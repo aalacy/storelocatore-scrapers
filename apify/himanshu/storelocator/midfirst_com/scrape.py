@@ -5,11 +5,6 @@ import re
 import json
 from sgselenium import SgSelenium
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('midfirst_com')
-
-
 
 session = SgRequests()
 
@@ -54,7 +49,7 @@ def fetch_data():
 
     driver.get('https://www.midfirst.com/locations')
     cookies_list = driver.get_cookies()
-    # logger.info("cookies_list === " + str(cookies_list))
+    # print("cookies_list === " + str(cookies_list))
     cookies_json = {}
     for cookie in cookies_list:
         cookies_json[cookie['name']] = cookie['value']
@@ -63,8 +58,8 @@ def fetch_data():
         ",", ";")  # use for header cookie
 
     final_cookies_string = cookies_string + ";" + token_for_cookie
-    # logger.info("token_for_post === " + token_for_post)
-    # logger.info("final_cookies_string === " + final_cookies_string)
+    # print("token_for_post === " + token_for_post)
+    # print("final_cookies_string === " + final_cookies_string)
 
     # -----------------------------------------------------------------------------------
 
@@ -90,8 +85,8 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         r_location = session.post("https://www.midfirst.com/api/Locations", headers=headers,
                                    data="location-banking-center=on&location-atm=on&location-distance=" + str(
@@ -99,12 +94,12 @@ def fetch_data():
                                        lat) + "&location-long=" + str(
                                        lng) + "&__RequestVerificationToken=" + token_for_post)
 
-        # logger.info("r_location === " + r_location.text)
+        # print("r_location === " + r_location.text)
 
         json_data = r_location.json()
 
         current_results_len = int(len(json_data["FilteredResults"]))  # it always need to set total len of record.
-        # logger.info("current_results_len === " + str(current_results_len))
+        # print("current_results_len === " + str(current_results_len))
 
         locator_domain = base_url
         location_name = ""
@@ -123,7 +118,7 @@ def fetch_data():
 
         for location in json_data["FilteredResults"]:
 
-            # logger.info("location ==== " + str(location))
+            # print("location ==== " + str(location))
             # do your logic.
 
             store_number = str(location["Ref"])
@@ -142,7 +137,7 @@ def fetch_data():
                 hours_of_operation += day_hours["DayOfWeek"]["Name"] + " " + day_hours["OpeningTime"] + " - " + \
                                       day_hours["ClosingTime"] + " "
 
-            # logger.info("hours_of_operation === " + hours_of_operation)
+            # print("hours_of_operation === " + hours_of_operation)
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
@@ -152,15 +147,15 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

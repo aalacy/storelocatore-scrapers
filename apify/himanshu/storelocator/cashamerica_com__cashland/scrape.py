@@ -6,11 +6,6 @@ import json
 import datetime
 import requests
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cashamerica_com__cashland')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -29,7 +24,7 @@ def fetch_data():
         location_request = requests.request("GET","http://find.cashamerica.us/api/stores?p="+str(page)+"&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
         data = location_request.json()
         if "message" in data:
-            # logger.info(page)
+            # print(page)
             break
         for i in range(len(data)):
             store_data = data[i]

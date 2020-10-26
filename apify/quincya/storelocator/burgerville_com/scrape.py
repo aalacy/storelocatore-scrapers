@@ -12,11 +12,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('burgerville_com')
-
-
 
 def get_driver():
 	options = Options() 
@@ -57,7 +52,7 @@ def fetch_data():
 				(By.CLASS_NAME, "result-list-inner")))
 			time.sleep(randint(1,2))
 		except:
-			logger.info("Timeout waiting on results..skipping")
+			print("Timeout waiting on results..skipping")
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		items = base.find(class_="result-list-inner").find_all(class_="name")
@@ -75,15 +70,15 @@ def fetch_data():
 	final_links = list(all_links)
 	final_links.sort()
 	for i, final_link in enumerate(final_links):
-		logger.info("Link %s of %s" %(i+1,len(final_links)))
+		print("Link %s of %s" %(i+1,len(final_links)))
 		req = session.get(final_link, headers = HEADERS)
-		logger.info(final_link)
+		print(final_link)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		script = base.find('script', attrs={'type': "application/ld+json"}).text.strip()
 		store_data = json.loads(script)

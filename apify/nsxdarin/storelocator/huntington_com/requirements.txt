@@ -1,3 +1,2 @@
 sgrequests
 urllib3
-sglogging

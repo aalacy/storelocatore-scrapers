@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jerrysdeli_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +31,7 @@ def fetch_data():
     for tag in id_tags:
         main = driver.find_element_by_css_selector('div#' + tag)
 
-        logger.info(main.text.split('\n'))
+        print(main.text.split('\n'))
         content = main.text.split('\n')
 
         location_name = content[0]

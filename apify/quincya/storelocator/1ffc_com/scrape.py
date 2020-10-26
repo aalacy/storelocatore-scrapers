@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('1ffc_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,10 +28,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        logger.info("Got today page")
+        print("Got today page")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     main_links = []
     final_links = []
@@ -47,7 +42,7 @@ def fetch_data():
         main_links.append(main_link)
     
     for main_link in main_links:
-        logger.info(main_link)
+        print(main_link)
         req = session.get(main_link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
 
@@ -69,15 +64,15 @@ def fetch_data():
     data = []
     total_links = len(final_links)
     for i, final_link in enumerate(final_links):
-        logger.info("Link %s of %s" %(i+1,total_links))
-        logger.info(final_link)
+        print("Link %s of %s" %(i+1,total_links))
+        print(final_link)
         final_req = session.get(final_link, headers = HEADERS)
         item = BeautifulSoup(final_req.text,"lxml")
 
         locator_domain = "1ffc.com"
 
         location_name = item.find(class_="c-location-title").text.strip()
-        # logger.info(location_name)
+        # print(location_name)
 
         street_address = item.find(class_="Nap-address").find(class_='c-address-street-1').text.strip()
         try:

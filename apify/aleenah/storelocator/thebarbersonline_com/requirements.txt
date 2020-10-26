@@ -1,4 +1,3 @@
 sgselenium
 beautifulsoup4==4.8.0
 pyzipcode3==2.2
-sglogging

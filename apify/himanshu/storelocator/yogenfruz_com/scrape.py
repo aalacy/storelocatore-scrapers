@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('yogenfruz_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://www.yogenfruz.com"
     r = session.get("https://www.yogenfruz.com/storelocator/frozen-yogurt", headers=headers)
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -59,15 +54,15 @@ def fetch_data():
             country_code = script.text[:2].upper()
             r_country = session.get(script.get("href"), headers=headers)
             soup_country = BeautifulSoup(r_country.text, "lxml")
-            # logger.info(script.text+" = Country = "+script.get("href"))
+            # print(script.text+" = Country = "+script.get("href"))
 
             for script_country in soup_country.find_all("div", "blocks block-r-half alllocations"):
-                # logger.info(script_country.text +" = region = "+script_country.find("a").get("href"))
+                # print(script_country.text +" = region = "+script_country.find("a").get("href"))
                 r_region = session.get(script_country.find("a").get("href"), headers=headers)
                 soup_region = BeautifulSoup(r_region.text, "lxml")
 
                 for script_region in soup_region.find_all("div", "blocks block-r-half alllocations"):
-                    # logger.info(script_region.text +" = Brooks = "+script_region.find("a").get("href"))
+                    # print(script_region.text +" = Brooks = "+script_region.find("a").get("href"))
                     r_brooks = session.get(script_region.find("a").get("href"),headers=headers)
                     #r_brooks = session.get("https://www.yogenfruz.com/storelocator/city/whitby/ontario/canada",headers=headers)
 
@@ -77,7 +72,7 @@ def fetch_data():
                         location_name = script_brooks.find("a").text
                         if location_name == "":
                             location_name = "<MISSING>"
-                        # logger.info(script_brooks.find("a").text +" = Locations = "+script_brooks.find("a").get("href"))
+                        # print(script_brooks.find("a").text +" = Locations = "+script_brooks.find("a").get("href"))
                         # r_location = session.get(script_brooks.find("a",text="location details").get("href"),
                         # headers=headers)
                         r_location = session.get(script_brooks.find("a").get("href"), headers=headers)
@@ -110,43 +105,43 @@ def fetch_data():
                                 else:
                                     pass
 
-                        logger.info("~~~~~~~~~~~~~~~~~~~~~~country ==== " + script.text)
-                        logger.info("region ==== " + script_country.find("a").text)
-                        logger.info("brooks ==== " + script_region.find("a").text)
-                        logger.info("location_name ==== " + location_name)
-                        logger.info("address ==== " + address)
+                        print("~~~~~~~~~~~~~~~~~~~~~~country ==== " + script.text)
+                        print("region ==== " + script_country.find("a").text)
+                        print("brooks ==== " + script_region.find("a").text)
+                        print("location_name ==== " + location_name)
+                        print("address ==== " + address)
 
                         try:
                             latlong_url = soup_location.find("div", {"class": "container15px"}).find("a")["href"]
                             latitude = latlong_url.split("daddr=")[1].split(",")[0]
                             longitude = latlong_url.split("daddr=")[1].split(",")[1].split(" ")[0]
-                            logger.info("latlong_url ==== " + latlong_url)
+                            print("latlong_url ==== " + latlong_url)
                         except:
                             latitude = "<MISSING>"
                             longitude = "<MISSING>"
                             pass
 
                         street_address = address.split(",")[0]
-                        logger.info("street_address = " + street_address)
+                        print("street_address = " + street_address)
                         if ((len(address.split(",")[-2]) == 7 and country_code == "CA") or
                                 (len(address.split(",")[-2]) == 5 and country_code == "US")):
                             city = address.split(",")[-4];
-                            logger.info("city = " + city)
+                            print("city = " + city)
                             state = address.split(",")[-3].split(" ")[1];
-                            logger.info("state = " + state)
+                            print("state = " + state)
                             zipp = address.split(",")[-2]
-                            logger.info("zipp = " + zipp)
-                            logger.info("latitude = " + latitude)
-                            logger.info("longitude = " + longitude)
+                            print("zipp = " + zipp)
+                            print("latitude = " + latitude)
+                            print("longitude = " + longitude)
                         else:
                             city = address.split(",")[-3];
-                            logger.info("city = " + city)
+                            print("city = " + city)
                             state = address.split(",")[-2].split(" ")[1]
-                            logger.info("state = " + state)
+                            print("state = " + state)
                             zipp = "<MISSING>"
-                            logger.info("zipp = " + zipp)
-                            logger.info("latitude = " + latitude)
-                            logger.info("longitude = " + longitude)
+                            print("zipp = " + zipp)
+                            print("latitude = " + latitude)
+                            print("longitude = " + longitude)
 
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                  store_number, phone, location_type, latitude, longitude, hours_of_operation]

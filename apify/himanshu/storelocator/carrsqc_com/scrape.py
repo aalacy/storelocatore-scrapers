@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('carrsqc_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -68,7 +63,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # logger.info("data======="+str(store))
+                # print("data======="+str(store))
                 yield store
             else:
                 r1 = session.get("https://local.carrsqc.com/"+url['href'])
@@ -108,7 +103,7 @@ def fetch_data():
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
-                    # logger.info("data======="+str(store))
+                    # print("data======="+str(store))
                     yield store
 
     

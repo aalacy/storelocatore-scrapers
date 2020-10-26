@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lebanesetaverna_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,10 +27,10 @@ def fetch_data():
 	time.sleep(randint(2,4))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -45,7 +40,7 @@ def fetch_data():
 	for item in items:
 
 		location_name = item.h4.text.strip()
-		logger.info(location_name)
+		print(location_name)
 
 		zip_code = "<MISSING>"
 

@@ -5,4 +5,3 @@ html5lib
 unidecode
 requests==2.11.1
 
-sglogging

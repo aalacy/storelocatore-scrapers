@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('greenmill_com')
-
-
 
 session = SgRequests()
 
@@ -38,7 +33,7 @@ def fetch_data():
         page_url = link['href']
         r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
-        # logger.info(page_url)
+        # print(page_url)
         if soup1.find("div",{"itemprop":"name"}):
             location_name = soup1.find("div",{"itemprop":"name"}).text.strip()
         else:
@@ -58,7 +53,7 @@ def fetch_data():
             # soup1.find("li",{"class":"g1-column g1-three-fifth g1-valign-top"}).find_all("p")[3].text).strip()
         else:
             addr = list(soup1.find("p",{"style":"font-size: 13px;"}).stripped_strings)
-            # logger.info(page_url)
+            # print(page_url)
             street_address = addr[0]
             city = addr[1].split(",")[0]
             state = addr[1].split(",")[1].split(" ")[1]
@@ -87,8 +82,8 @@ def fetch_data():
         store.append(hours)
         store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # logger.info("data===="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data===="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
 
 

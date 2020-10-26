@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rosesdiscountstores_com')
-
-
 
 
 session = SgRequests()
@@ -84,7 +79,7 @@ def fetch_data():
         store.append(hour if hour else "<MISSING>")
         store.append("https://www.rosesdiscountstores.com/store-locator-index")
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # logger.info(store)
+        # print(store)
         yield store
 
 def scrape():

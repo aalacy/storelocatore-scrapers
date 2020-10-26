@@ -4,11 +4,6 @@ import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('exxon_com')
-
-
 
 
 URL = "https://www.exxon.com/"
@@ -51,10 +46,10 @@ class Scraper(Scrape):
             driver.get(location_url)
             try:
                 data = json.loads(driver.find_element_by_css_selector('pre').text)
-                logger.info(f'{len(data)} locations scraped')
+                print(f'{len(data)} locations scraped')
                 stores.extend(data)
             except:
-                logger.info('0 locations scraped')
+                print('0 locations scraped')
                 pass
 
         for store in stores:

@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mfg_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -43,7 +38,7 @@ def fetch_data():
 
 		for page_num in range(1,int(last_page)+1):
 			page_link = "https://www.mfg.com/search?page=" + str(page_num) + "&" +  "&".join(base_link.split("&")[1:])
-			logger.info(page_link)
+			print(page_link)
 	
 			req = session.get(page_link, headers = HEADERS)
 			base = BeautifulSoup(req.text,"lxml")
@@ -53,13 +48,13 @@ def fetch_data():
 
 				link = "https://www.mfg.com" + item.a["href"]
 				if link in all_links:
-					logger.info("Skipping Dup..")
+					print("Skipping Dup..")
 					continue
 
 				all_links.append(link)
 
 				location_name = item.find(class_="name").text.strip()
-				# logger.info(location_name)
+				# print(location_name)
 				store_number = "<MISSING>"
 				location_type = item.find(class_="category").text.replace("\t","").strip().replace("\n\n\n",",").strip()
 				if not location_type:

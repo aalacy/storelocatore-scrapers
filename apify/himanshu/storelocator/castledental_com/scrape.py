@@ -5,11 +5,6 @@ import re
 import sgzip
 import json
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('castledental_com')
-
-
 
 
 
@@ -89,7 +84,7 @@ def fetch_data():
                                 street_address = r_loc_json['data']['address']
                         else:
                             street_address = "<MISSING>"
-                        # logger.info(street_address)
+                        # print(street_address)
 
                         city = r_loc_json['data']['city']
                         state = r_loc_json['data']['state']
@@ -114,8 +109,8 @@ def fetch_data():
                         if store[1] + " " + store[2] in addresses:
                             continue
                         addresses.append(store[1] + " " + store[2])
-                        # logger.info("data = " + str(store))
-                        # logger.info(
+                        # print("data = " + str(store))
+                        # print(
                         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                         return_main_object.append(store)

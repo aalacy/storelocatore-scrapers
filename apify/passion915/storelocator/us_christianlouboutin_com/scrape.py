@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('us_christianlouboutin_com')
-
-
 
 # Site URL
 site_url = 'https://www.wyndhamhotels.com'
@@ -82,12 +77,12 @@ def pull_info(content):
                             # street_address = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address1'}).text + " " + content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
                             city = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'city'}).text
                             # state = "<MISSING>"
-                            # logger.info(locator_domain)
+                            # print(locator_domain)
                             # if content_store.find('span',{'class':'address2'}).text == '':
                                 # zip = "<MISSING>"
                             # else:
                             #     string_for_zip = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text.strip()
-                            #     # logger.info(string_for_zip)
+                            #     # print(string_for_zip)
                             #     if country_code == "CA":
                             #         zip = string_for_zip.replace('CA','').strip().split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -2] + " " + string_for_zip.strip().replace('CA','').split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -1]
                             #     else:

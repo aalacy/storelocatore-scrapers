@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('russellsconvenience_net')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -43,7 +38,7 @@ def fetch_data():
                 latitude = tab.find("a")['href'].split('/@')[1].split(',')[0]
                 longitude =tab.find("a")['href'].split('/@')[1].split(',')[1]
                 zipp =tab.find("a")['href'].split("+")[-1].split("/")[0]
-                # logger.info( )
+                # print( )
             except:
                 latitude="<MISSING>"
                 longitude="<MISSING>"
@@ -53,7 +48,7 @@ def fetch_data():
                 state=''
                 
                 if add[0][0].isdigit():
-                    # logger.info(add)
+                    # print(add)
                     if "333 Market Street" in add:
                         name = "SAN FRANCISCO, CA"
                     if "199 Fremont Street" in add:
@@ -79,7 +74,7 @@ def fetch_data():
                     else:
                         name=add[0]
                         address = add[1]
-                        # logger.info(address)
+                        # print(address)
                         if "505 S. Flower Street" in address or "333 S. Hope Street" in address:
                             city = "LOS ANGELES"
                             state = "CA"
@@ -131,7 +126,7 @@ def fetch_data():
                 if "17th Street Building" in add:
                     name  ="DENVER, CO"
                     address = add[1]
-                    # logger.info(address)
+                    # print(address)
                     phone = add[2]
                     hours =add[3]
 

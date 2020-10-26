@@ -3,4 +3,3 @@ sgselenium
 sgrequests
 beautifulsoup4==4.7.1
 
-sglogging

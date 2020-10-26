@@ -2,4 +2,4 @@ pandas==0.24.2
 lxml
 requests==2.11.1
 w3lib
-sgvalidator==0.0.19sglogging
+sgvalidator==0.0.19

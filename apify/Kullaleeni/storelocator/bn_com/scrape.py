@@ -12,11 +12,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bn_com')
-
-
 
 def fetch_data():
     #state_list = pd.read_csv("/home/srek/xyz/Odetta/US_states.csv").State_modified.dropna().tolist()
@@ -50,7 +45,7 @@ def fetch_data():
             
             
             if noofresults > 100:
-                logger.info(noofresults)
+                print(noofresults)
                         
             records = soup.find_all("div",attrs={"class":"col-sm-12 col-md-8 col-lg-8 col-xs-12"})
             
@@ -106,7 +101,7 @@ def fetch_data():
                 
                  
                 data_record = {}
-                #logger.info(address)
+                #print(address)
                 data_record['locator_domain'] = locator_domain
                 data_record['location_name'] = location_name
                 data_record['street_address'] = street_address

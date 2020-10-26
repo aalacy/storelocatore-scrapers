@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 import sgzip
 import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('acura_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,10 +34,10 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = URL_TEMPLATE.format(coord[0], coord[1])
         stores = session.get(url, headers=HEADERS).json()['Items']
-        logger.info(len(stores))
+        print(len(stores))
         result_coords = []
         for store in stores:
             data = store['Dealer']
@@ -67,10 +62,10 @@ def fetch_data():
                 record = [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
                 locations.append(record)
         if len(stores) == 0:
-            logger.info("max distance update")
+            print("max distance update")
             search.max_distance_update(100.0)
         else:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         coord = search.next_coord()
     return locations

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tomthumb_com')
-
-
 
 
 session = SgRequests()
@@ -81,8 +76,8 @@ def fetch_data():
             continue
         addresses.append(store[-1])
 
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         yield store
 # def parser(location_soup,url):
@@ -136,7 +131,7 @@ def fetch_data():
 #     return_main_object = []
 #     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
 #         if states["href"].count("/") == 2:
-#             # logger.info("https://local.tomthumb.com/" + states["href"].replace("../",""))
+#             # print("https://local.tomthumb.com/" + states["href"].replace("../",""))
 #             location_request = session.get("https://local.tomthumb.com/" + states["href"].replace("../",""))
 #             location_soup = BeautifulSoup(location_request.text,"lxml")
 #             store_data = parser(location_soup,"https://local.tomthumb.com/" + states["href"].replace("../",""))
@@ -146,22 +141,22 @@ def fetch_data():
 #             state_soup = BeautifulSoup(state_request.text,"lxml")
 #             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
 #                 if city["href"].count("/") == 2:
-#                     # logger.info("states" +"https://local.tomthumb.com/" + city["href"].replace("../",""))
+#                     # print("states" +"https://local.tomthumb.com/" + city["href"].replace("../",""))
 #                     location_request = session.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
 #                     location_soup = BeautifulSoup(location_request.text,"lxml")
 #                     store_data = parser(location_soup,"https://local.tomthumb.com/" + city["href"].replace("../",""))
 #                     yield store_data
 #                 else:
-#                     # logger.info("https://local.tomthumb.com/" + city["href"].replace("../",""))
+#                     # print("https://local.tomthumb.com/" + city["href"].replace("../",""))
 #                     city_request = session.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
 #                     city_soup = BeautifulSoup(city_request.text,"lxml")
 #                     for location in city_soup.find_all("a",{'class':"Teaser-nameLink"}):
-#                         # logger.info("city" + "https://local.tomthumb.com/" + location["href"].replace("../",""))
+#                         # print("city" + "https://local.tomthumb.com/" + location["href"].replace("../",""))
 #                         location_request = session.get("https://local.tomthumb.com/" + location["href"].replace("../",""))
 #                         location_soup = BeautifulSoup(location_request.text,"lxml")
 #                         store_data = parser(location_soup,"https://local.tomthumb.com/" + location["href"].replace("../",""))
 #                         yield store_data
-#                         logger.info(store_data)
+#                         print(store_data)
 
 
 def scrape():

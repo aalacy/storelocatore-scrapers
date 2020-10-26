@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kentsgrocery_com')
-
-
 
 
 options = Options()
@@ -46,7 +41,7 @@ def fetch_data():
     for i in stores:
         url=i.find_element_by_tag_name('a').get_attribute('href')
         driver.get(url)
-        logger.info(url)
+        print(url)
         time.sleep(5)
         location_name = driver.find_element_by_id('theStoreName').text
         raw_address = driver.find_element_by_css_selector('#storeInfoContain > p:nth-child(2)').text

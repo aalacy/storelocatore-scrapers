@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('trinity-health_org')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -21,7 +16,7 @@ def fetch_data():
     locinfo = []
     locs = []
     for x in range(0, 20):
-        logger.info(x)
+        print(x)
         loc = 'https://www.trinity-health.org/find-a-location/location-results?page=' + str(x) + '&count='
         r = session.get(loc, headers=headers)
         for line in r.iter_lines():
@@ -33,7 +28,7 @@ def fetch_data():
                         lurl = 'https://www.trinity-health.org/' + item.split('\\')[0]
                         locs.append(lurl)
     for loc in locs:
-        logger.info(loc)
+        print(loc)
         name = ''
         website = 'trinity-health.org'
         typ = '<MISSING>'

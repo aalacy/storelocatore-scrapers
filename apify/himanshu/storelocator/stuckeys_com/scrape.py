@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('stuckeys_com')
-
-
 
 
 session = SgRequests()
@@ -39,7 +34,7 @@ def fetch_data():
     
     for i in loc.keys():
         tem_var =[]
-    # logger.info("=================================",q)
+    # print("=================================",q)
 
         tem_var.append("https://stuckeys.com/")
         tem_var.append(loc[i]['na'])
@@ -59,7 +54,7 @@ def fetch_data():
         tem_var.append(loc[i]['lat'] if loc[i]['lat'] else "<MISSING>")
         tem_var.append(loc[i]['lng'] if loc[i]['lng'] else  "<MISSING>")
         link = loc[i]['gu']
-        logger.info(link)
+        print(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text,"lxml")
         try:
@@ -70,7 +65,7 @@ def fetch_data():
             hours = "<MISSING>"
         tem_var.append(hours)
         tem_var.append(link)
-        #logger.info(tem_var)
+        #print(tem_var)
         if tem_var[2] in addressess:
             continue
         addressess.append(tem_var[2])

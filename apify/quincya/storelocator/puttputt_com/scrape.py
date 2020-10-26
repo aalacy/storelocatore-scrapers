@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('puttputt_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -108,7 +103,7 @@ def fetch_data():
 			else:
 				link = final_link[0] + "hoursinfo"
 
-			logger.info(link)
+			print(link)
 
 			req = session.get(link, headers = HEADERS)
 			base = BeautifulSoup(req.text,"lxml")
@@ -146,7 +141,7 @@ def fetch_data():
 					data.append([locator_domain, link, location_name, street_address, city, state, "<MISSING>", country_code, "<MISSING>", phone, "<MISSING>", "<MISSING>", "<MISSING>", "<MISSING>"])
 					continue
 				else:
-					logger.info("No data found")
+					print("No data found")
 					break
 
 			try:

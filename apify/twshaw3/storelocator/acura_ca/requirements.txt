@@ -4,4 +4,3 @@ us==1.0.0
 zipcodes==1.0.5
 sgzip
 sgrequests
-sglogging

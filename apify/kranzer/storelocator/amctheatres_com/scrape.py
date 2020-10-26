@@ -5,11 +5,6 @@ from string import capwords
 import base
 import sgrequests
 from lxml import html, etree
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('amctheatres_com')
-
-
 crawled = []
 class Scrape(base.Spider):
     def crawl(self):

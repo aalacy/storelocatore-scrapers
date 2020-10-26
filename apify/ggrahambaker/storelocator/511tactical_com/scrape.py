@@ -7,11 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 import re
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('511tactical_com')
-
-
 
 
 def write_output(data):
@@ -80,7 +75,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        #logger.info(link[0])
+        #print(link[0])
         driver.get(link[0])
         try:
             WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.location-details')))

@@ -5,11 +5,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sullivanssteakhouse_com')
-
-
 session = SgRequests()
 
 
@@ -45,13 +40,13 @@ def fetch_data():
         state2.append(list1['post_title'].split(",")[1])
         lat1.append(list1['address']['lat'])
         log1.append(list1['address']['lng'])
-        # logger.info(list1['address']['lat'])
+        # print(list1['address']['lat'])
     for index,i in enumerate(k):
         name = i.find("h2").text.split(". ")[-1]
         phone = list(i.find("p").stripped_strings)[-1]
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(list(i.find("p").stripped_strings)[0]))
         state_list = re.findall(r' ([A-Z]{2})', str(str(list(i.find("p").stripped_strings)[0])))
-        # logger.info(i.find("p").text.replace("\n",' ').replace("\t",' ').split(","))
+        # print(i.find("p").text.replace("\n",' ').replace("\t",' ').split(","))
         if state_list:
             state = state_list[-1]
         page_url = i.find_all("a")[-1]
@@ -79,7 +74,7 @@ def fetch_data():
         tem_var.append(log1[index])
         tem_var.append(hours)
         tem_var.append(page_url['href'])
-        # logger.info(name.split(",")[-1])
+        # print(name.split(",")[-1])
         yield tem_var
     
 def scrape():

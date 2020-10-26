@@ -6,11 +6,6 @@ import json
 import time
 from datetime import datetime
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('skoda_co_uk')
-
-
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -41,7 +36,7 @@ def fetch_data():
         lat = data['Address']['Latitude']
         lng = data['Address']['Longitude']
         store_number = data['GlobalId'].split("-")[-1]
-        # logger.info(store_number)
+        # print(store_number)
         day = {"1":"Monday","2":"Tuesday","3":"wednesday","4":"Thurday","5":"Friday","6":"Saturday","7":"Sunday"}
         location_data = session.get("https://retailers.skoda-auto.com/api/210/en-gb/Dealers/GetDealer?id="+str(data['GlobalId'])+"&clientDate=2020-06-05%2014:58:20").json()
 

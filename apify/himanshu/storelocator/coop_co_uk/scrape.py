@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('coop_co_uk')
-
-
 
 
 def write_output(data):
@@ -78,7 +73,7 @@ def fetch_data():
                         continue
                     addresses.append(store[2])
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    # logger.info("~~~~~~~~~~~~~~~~~~~~  ",store)
+                    # print("~~~~~~~~~~~~~~~~~~~~  ",store)
                     yield store
 
     

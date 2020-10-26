@@ -8,11 +8,6 @@ from datetime import datetime
 import sgzip
 session = SgRequests()
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fiat_co_uk')
-
-
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -34,7 +29,7 @@ def fetch_data():
     base_url = "https://www.fiat.co.uk/"
 
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         soup = bs(session.get("https://dealerlocator.fiat.com/geocall/RestServlet?jsonp=callback&mkt=3112&brand=00&func=finddealerxml&serv=sales&track=1&x="+str(coord[1])+"&y="+str(coord[0])+"&rad=100&_=1591185101147").content, "lxml")
         try:
@@ -95,10 +90,10 @@ def fetch_data():
         except:
             pass
         if len(json_data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(json_data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

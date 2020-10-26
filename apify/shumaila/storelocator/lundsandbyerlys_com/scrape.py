@@ -6,11 +6,6 @@ import re, time
 import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lundsandbyerlys_com')
-
-
 
 def get_driver():
     options = Options()
@@ -46,7 +41,7 @@ def fetch_data():
 
         mtext = str(detail[n].find_element_by_class_name('wpsl-addressLeft').text)
         mtext = mtext.replace("\n", "|")
-        logger.info(mtext)
+        print(mtext)
         start = 0
         end = mtext.find("|",start)
         title = mtext[start:end]
@@ -90,7 +85,7 @@ def fetch_data():
             hours = hourslist[1].text
         else:
             hours = "<MISSING>"
-        logger.info(len(hourslist))
+        print(len(hourslist))
         street = street.lstrip()
         city = city.lstrip()
         state = state.lstrip()

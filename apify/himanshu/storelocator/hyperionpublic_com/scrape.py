@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import urllib3
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hyperionpublic_com')
-
-
 
 session = SgRequests()
 
@@ -76,7 +71,7 @@ def fetch_data():
             continue
         addresses.append(store[2])
         yield store
-        # logger.info(store)
+        # print(store)
 
 def scrape():
     data = fetch_data()

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('godfathers_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -131,12 +126,12 @@ def fetch_data():
                 location_type = '<MISSING>'
 
             if hours == '':
-                logger.info(store)
-                logger.info()
-                logger.info()
-                logger.info()
-                logger.info()
-                logger.info()
+                print(store)
+                print()
+                print()
+                print()
+                print()
+                print()
                 
             location_type = location_type.strip()
             hours = hours.strip()

@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ilovechillers_com')
-
-
 
 
 options = Options()
@@ -41,7 +36,7 @@ def fetch_data():
     for store in stores:
         try:
             location_name = store.find_element_by_css_selector('h2 > strong').text
-            logger.info("location_name", location_name)
+            print("location_name", location_name)
             tagged_addr = usaddress.tag(store.find_element_by_css_selector('p:nth-child(2)').text)[0]
             try:
                 street_address = tagged_addr['AddressNumber'] + " " + tagged_addr['StreetNamePreDirectional'] + " " + tagged_addr['StreetName'] + " " + tagged_addr['IntersectionSeparator'] + " " + tagged_addr['SecondStreetName'] + " " + tagged_addr['SecondStreetNamePostType']
@@ -59,7 +54,7 @@ def fetch_data():
             zipcode = re.sub(r'\n', "", zipcode)
             phone = tagged_addr['OccupancyIdentifier']
             phone = re.sub(r'[+]', "", phone)
-            logger.info("phone", phone)
+            print("phone", phone)
             hours_of_op = store.find_element_by_css_selector('p:nth-child(4)').text
             if hours_of_op == " ":
                 hours_of_op = store.find_element_by_css_selector('p:nth-child(3)').text

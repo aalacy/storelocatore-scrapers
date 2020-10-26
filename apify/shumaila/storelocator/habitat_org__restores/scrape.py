@@ -4,11 +4,6 @@ import string
 import re, time
 import sgzip, json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('habitat_org__restores')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,21 +37,21 @@ def fetch_data():
         count = 0
         result_coords = []
         url = 'https://www.habitat.org/local/restore?zip=' + query_coord
-        #logger.info(url)
+        #print(url)
         r = session.get(url, headers=headers, verify=False)
         try:
             loclist = r.text.split('"markers":',1)[1].split('}],',1)[0]
             loclist =json.loads(loclist)
-            #logger.info(len(loclist))
+            #print(len(loclist))
             for loc in loclist:
-                #logger.info(loc)
+                #print(loc)
                 title = loc['title']
                 lat = loc['position']['lat']
                 longt =  loc['position']['lng']
                 address= loc['details']['desc']
                 address = BeautifulSoup(address,'html.parser')
                 address = address.findAll('p')
-                #logger.info(len(address))
+                #print(len(address))
                 if len(address) == 0:
                     continue
                 if len(address) == 2:
@@ -109,22 +104,22 @@ def fetch_data():
                             longt,
                             '<MISSING>'
                         ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     #input()
                 
                 
         except Exception as e:
-            #logger.info(e)
+            #print(e)
             #input()
             pass
         
         search.max_distance_update(MAX_DISTANCE)
         '''elif count == MAX_RESULTS:  # check to save lat lngs to find zip that excludes them
-            logger.info("max count update")'''
+            print("max count update")'''
         search.max_count_update(result_coords)
         #else:
-         #   logger.info("oops! the maxcount should be", count)
+         #   print("oops! the maxcount should be", count)
           #  raise Exception("expected at most " + MAX_RESULTS + " results")
 
         query_coord = search.next_zip()
@@ -135,9 +130,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

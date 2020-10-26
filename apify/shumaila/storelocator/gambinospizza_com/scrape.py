@@ -6,11 +6,6 @@ import re, time
 import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gambinospizza_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -46,7 +41,7 @@ def fetch_data():
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
     p = 1
-    logger.info(len(li_list))
+    print(len(li_list))
     i = 1
     for divs in li_list:
         link = divs.find('a')
@@ -55,7 +50,7 @@ def fetch_data():
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         try:
-            #logger.info(link)
+            #print(link)
             mainul = soup.find('td', {'align': 'left'})
 
             links = mainul.findAll('a')
@@ -105,7 +100,7 @@ def fetch_data():
                             phone = "<MISSING>"
                             flag = 11
                         try:
-                            logger.info("ll")
+                            print("ll")
                             hlist = driver.find_element_by_xpath("/html/body/div[3]/div[2]/div/div[1]/div[2]").text
                             hlist = hlist.replace("\n", "|")
                             start = hlist.find("HOURS")
@@ -115,7 +110,7 @@ def fetch_data():
                             hours = hours.replace("\t", "")
 
                         except:
-                            logger.info("NN")
+                            print("NN")
                             flag = 12
                             start = hlist.find("HOURS")
                             start = hlist.find("|", start) + 1
@@ -134,7 +129,7 @@ def fetch_data():
                         map = soup.find('div', {'class': 'storemap'})
                         map = map.find('iframe')
                         maplink = map['src']
-                        #logger.info(maplink)
+                        #print(maplink)
                         start = maplink.find("!2d")
                         if start == -1:
                             lat = "<MISSING>"
@@ -199,18 +194,18 @@ def fetch_data():
 
 
                     flag = 8
-                    logger.info(link)
-                    logger.info(title)
-                    logger.info(street)
-                    logger.info(city)
-                    logger.info(state)
-                    logger.info(pcode)
-                    logger.info(phone)
-                    logger.info(hours)
-                    logger.info(lat)
-                    logger.info(longt)
-                    logger.info(p)
-                    logger.info("..................................")
+                    print(link)
+                    print(title)
+                    print(street)
+                    print(city)
+                    print(state)
+                    print(pcode)
+                    print(phone)
+                    print(hours)
+                    print(lat)
+                    print(longt)
+                    print(p)
+                    print("..................................")
                     p += 1
                     data.append([
                         url,

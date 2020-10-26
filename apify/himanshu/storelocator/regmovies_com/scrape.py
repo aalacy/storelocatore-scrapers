@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import http as http_
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('regmovies_com')
-
-
 
 
 
@@ -38,16 +33,16 @@ def fetch_data():
             r1 = session.get("https://www.regmovies.com/"+href['href'],headers=headers)
         except:
             pass
-        # logger.info("https://www.regmovies.com/"+href['href'])
+        # print("https://www.regmovies.com/"+href['href'])
         soup1 = BeautifulSoup(r1.text,"lxml")
         store_data = soup1.find(lambda tag: tag.name == "cinema-structured-data")
-        # logger.info("~~~~~~~~~~~~~~~~~~~~",store_data )
+        # print("~~~~~~~~~~~~~~~~~~~~",store_data )
         if store_data == None:
             continue
 
         address = store_data['data-address'].replace("["," ").replace("]"," ")
             
-        # logger.info(store_data['data-telephone'])
+        # print(store_data['data-telephone'])
         # location_list = json.loads(script.text.split("apiSitesList = ")[1].split("}}]")[0] + "}}]")
         # phone_request = session.get("https://www.regmovies.com" + location_list[0]["uri"],headers=headers)
         # phone_soup = BeautifulSoup(phone_request.text,"lxml")
@@ -78,7 +73,7 @@ def fetch_data():
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-        #logger.info(store)
+        #print(store)
         yield store
        
 

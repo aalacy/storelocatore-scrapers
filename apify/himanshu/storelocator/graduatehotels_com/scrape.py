@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('graduatehotels_com')
-
-
 
 
 
@@ -77,13 +72,13 @@ def fetch_data():
                 "meta")[-7]["content"].split("markers=")[1].split("%2C")[0].strip()
             longitude = soup_c.find_all(
                 "meta")[-7]["content"].split("markers=")[1].split("%2C")[1].split('&')[0].strip()
-            # logger.info(latitude, longitude)
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print(latitude, longitude)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         except:
             pass
         #     main = soup_loc.find("main", {"id": "main-container"})
-        #     # logger.info(main.prettify())
-        #     # logger.info("~~~~~~~~~~~~~~~~~~~~~~")
+        #     # print(main.prettify())
+        #     # print("~~~~~~~~~~~~~~~~~~~~~~")
         #     list_main = " ".join(list(main.stripped_strings))
         #     phone_list = re.findall(re.compile(
         #         ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_main))
@@ -97,7 +92,7 @@ def fetch_data():
         #         continue
         #     street_address = address[0].strip()
         #     # city = address[1].split(',')[0].strip()
-        #     logger.info("~~~~~~~~~~~~~~~~~~  ",address)
+        #     print("~~~~~~~~~~~~~~~~~~  ",address)
             # state = " ".join(address[1].split(',')[1].split()[:-1]) .strip()
             # us_zip_list = re.findall(re.compile(
             #     r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[1]))
@@ -108,7 +103,7 @@ def fetch_data():
             # latitude = "<MISSING>"
             # longitude = "<MISSING>"
 
-            # logger.info(page_url)
+            # print(page_url)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -123,8 +118,8 @@ def fetch_data():
         if store[2]  in addresses:
             continue
         addresses.append(store[2])
-        #logger.info("data = " + str(store))
-        #logger.info(
+        #print("data = " + str(store))
+        #print(
             #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 

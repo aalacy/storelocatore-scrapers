@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('heroburgers_com')
-
-
 
 
 
@@ -51,9 +46,9 @@ def fetch_data():
 
     if json_data != 0:
         # json_data = json.loads(r_utf)
-        # logger.info("json_Data === " + str(json_data))
+        # print("json_Data === " + str(json_data))
         # current_results_len = len(json_data)  # it always need to set total len of record.
-        # logger.info("current_results_len === " + str(current_results_len))
+        # print("current_results_len === " + str(current_results_len))
         for location in json_data:
 
             value  = json_data[location]
@@ -103,8 +98,8 @@ def fetch_data():
 
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            logger.info("data = " + str(store))
-            logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print("data = " + str(store))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
             # coord = search.next_coord()

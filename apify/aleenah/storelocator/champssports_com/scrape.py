@@ -2,11 +2,6 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('champssports_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,15 +36,15 @@ def fetch_data():
     can=uls[1].find_all('a')
 
     for a in usa:
-        #logger.info("usa")
+        #print("usa")
         if a.get('data-count') == "(1)":
-            #logger.info(url)
+            #print(url)
             page_url.append("https://stores.champssports.com/"+a.get('href').replace("../",""))
             countries.append('US')
         else:
 
             url = "https://stores.champssports.com/"+a.get('href').replace("../","")
-            #logger.info(url)
+            #print(url)
             res=requests.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
             sa = soup.find('div', {'class': 'Directory-content'}).find_all("a")
@@ -61,7 +56,7 @@ def fetch_data():
                         countries.append('US')
                 else:
                     url = "https://stores.champssports.com/" + d.get('href').replace("../","")
-                    #logger.info(url)
+                    #print(url)
                     res = requests.get(url)
                     soup = BeautifulSoup(res.text, 'html.parser')
                     sas = soup.find_all('a', {'class': 'Teaser-titleLink'})
@@ -74,11 +69,11 @@ def fetch_data():
         if a.get('data-count') == "(1)":
             page_url.append("https://stores.champssports.com/"+a.get('href').replace("../",""))
             countries.append('CA')
-            #logger.info(url)
+            #print(url)
         else:
 
             url = "https://stores.champssports.com/"+a.get('href')
-            #logger.info(url)
+            #print(url)
             res=requests.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
             sa = soup.find('div', {'class': 'Directory-content'}).find_all("a")
@@ -89,7 +84,7 @@ def fetch_data():
                     countries.append('CA')
                 else:
                     url = "https://stores.champssports.com/" + d.get('href').replace("../","")
-                    #logger.info(url)
+                    #print(url)
                     res = requests.get(url)
                     soup = BeautifulSoup(res.text, 'html.parser')
                     sas = soup.find_all('a', {'class': 'Teaser-titleLink'})
@@ -99,12 +94,12 @@ def fetch_data():
                            countries.append('CA')
 
     #page_url=set(page_url)
-    logger.info(len(page_url))
+    print(len(page_url))
 
     key_set=set([])
     k=0
     for url in page_url:
-        logger.info(url)
+        print(url)
         #if k==1:
          #      del page_url[page_url.index(url)-1]
         #k=0
@@ -121,7 +116,7 @@ def fetch_data():
         st=div.find('span', {'class': 'c-address-street-1'}).text
         z=div.find('span', {'class': 'c-address-postal-code'}).text
         if s+c+z+st in key_set:
-          logger.info("This is a duplicate, but its data is added to the file")
+          print("This is a duplicate, but its data is added to the file")
           """street.append("<MISSING>") 
           locs.append("<MISSING>")
           street.append("<MISSING>")
@@ -149,7 +144,7 @@ def fetch_data():
         timing.append(tim.strip().strip(',').replace("Mo","Monday").replace("Tu","Tuesday").replace("We","Wednesday").replace("Th","Thursday").replace("Fr","Friday").replace("Sa","Saturday").replace("Su","Sunday") )
 
         latlng=soup.find_all('meta')[17].get('content')
-        #logger.info(latlng)
+        #print(latlng)
         lat.append(re.findall(r'(-?[\d\.]+);',latlng)[0])
         long.append(re.findall(r';(-?[\d\.]+)',latlng)[0])
 
@@ -174,7 +169,7 @@ def fetch_data():
         row.append(page_url[i])  # page url
 
         all.append(row)
-        #logger.info(row)
+        #print(row)
 
     return all
 

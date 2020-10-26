@@ -3,11 +3,6 @@ import re
 from bs4 import BeautifulSoup
 import requests
 import os
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('croutonstogo_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +35,7 @@ def fetch_data():
 
     for div in divs:
         texts=div.text
-        logger.info(texts)
+        print(texts)
         tex = texts.split("\n")
         locs.append(tex[0])
         if re.findall(r'[0-9]{5}',tex[2]) != []:
@@ -59,7 +54,7 @@ def fetch_data():
         phones.append(re.findall(r'p ([0-9\.]+)',tex[i+1])[0])
         timing.append(re.findall(r'Mon.*Closed|Mon.*pm',texts,re.DOTALL)[0].replace("\n"," "))
 
-        logger.info(addr)
+        print(addr)
 
     all = []
     for i in range(0, len(locs)):

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from collections import OrderedDict 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ramuntos_com')
-
-
 
 
 
@@ -60,8 +55,8 @@ def fetch_data():
                 zip1 = v[2].split(',')[1].split( )[1]
                 hours = v[3]
                 phone = v[-2]
-                # logger.info(lat)
-                # logger.info("=====7",zip1)
+                # print(lat)
+                # print("=====7",zip1)
             elif len(v)==9:
                 lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
                 lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
@@ -72,8 +67,8 @@ def fetch_data():
                 zip1 = v[2].split(',')[1].split( )[1]
                 hours = (" ".join(v[3:7]))
                 phone = v[-2]
-                # logger.info(lat)
-                # logger.info("=====9",zip1)
+                # print(lat)
+                # print("=====9",zip1)
 
             elif len(v)==6:
                 lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
@@ -85,23 +80,23 @@ def fetch_data():
                 zip1 = v[1].split(',')[2].split( )[1]
                 hours = v[2]
                 phone = v[4]
-                # logger.info(v[1].split(',')[2].split( )[0])
-                # logger.info(lat)
-                # logger.info("=====6",zip1)
+                # print(v[1].split(',')[2].split( )[0])
+                # print(lat)
+                # print("=====6",zip1)
                
             elif len(v)==8:
                 lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
                 lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
                 name = v[0]
-                # logger.info(v)
+                # print(v)
                 st = v[1].split(',')[0]
                 city = v[2].split(',')[0]
                 state = v[2].split(',')[1].split( )[0]
                 zip1 = v[2].split(',')[1].split( )[1]
                 hours = v[3]
                 phone = v[5]
-                # logger.info(lat)
-                # logger.info("=====8",zip1)
+                # print(lat)
+                # print("=====8",zip1)
         tem_var.append("https://ramuntos.com")
         tem_var.append(name)
         tem_var.append(st)

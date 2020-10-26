@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hardees_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,7 +22,7 @@ def fetch_data():
         if ' <loc>https://hardees.com/locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        logger.info(loc)
+        print(loc)
         country = 'US'
         typ = '<MISSING>'
         name = ''

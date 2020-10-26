@@ -8,11 +8,6 @@ import usaddress
 from bs4 import BeautifulSoup
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('wyndhamhotels_com__microtel')
-
-
 
 base_url = 'https://www.wyndhamhotels.com'
 
@@ -84,10 +79,10 @@ def fetch_data():
 
     total_links = len(store_list)
     for i, detail_url in enumerate(store_list):        
-        logger.info(("Link %s of %s" %(i+1,total_links)))        
+        print(("Link %s of %s" %(i+1,total_links)))        
         detail_url = 'https://www.wyndhamhotels.com' + validate(detail_url.xpath('.//a')[0].xpath('./@href'))
         detail_request = session.get(detail_url)
-        logger.info(detail_url)
+        print(detail_url)
         time.sleep(randint(1,2))
         detail = etree.HTML(detail_request.text)
         store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0])

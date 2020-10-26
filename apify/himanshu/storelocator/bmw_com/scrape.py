@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bmw_com')
-
-
 
 
 session = SgRequests()
@@ -52,7 +47,7 @@ def fetch_data():
         hours = " ".join(list(BeautifulSoup(store_data["DefaultService"]["FormattedHours"],"lxml").stripped_strings))
         store.append(hours if hours != "" else "<MISSING>")
         store.append("<MISSING>")
-        #logger.info(store)
+        #print(store)
         yield store
 
     r1 = session.get("https://c2b-services.bmw.com/c2b-localsearch/services/api/v4/clients/BMWSTAGE2_DLO/digitalstage2_CA/pois?brand=BMW_BMWM&cached=off&callback=angular.callbacks._0&category=BM&country=CA&language=en&lat=0&lng=0&maxResults=700&showAll=true&unit=km",headers=headers)
@@ -90,7 +85,7 @@ def fetch_data():
         store.append(lng)
         store.append("<MISSING>")
         store.append("<MISSING>")
-       # logger.info(store)
+       # print(store)
         yield store
 
 

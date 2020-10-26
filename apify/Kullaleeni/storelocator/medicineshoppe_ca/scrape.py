@@ -12,11 +12,6 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('medicineshoppe_ca')
-
-
 
 def get_driver():
     options = Options()
@@ -35,7 +30,7 @@ def fetch_data():
     #states_list = df_ca_list.State.drop_duplicates().tolist()
     state_list = ["Alberta, CA","British Columbia, CA","Manitoba, CA","New Brunswick, CA","Newfoundland and Labrador, CA","Northwest Territories, CA","Nova Scotia, CA","Nunavut, CA","Ontario, CA","Prince Edward Island, CA","Quebec, CA","Saskatchewan, CA","Yukon, CA"]
     for i in range(len(state_list)):
-        logger.info(i)
+        print (i)
         #df_cities = df_ca_list.loc[df_ca_list.State == states_list[ca]].City_State.drop_duplicates().tolist()
         #if len(df_cities) >= 50:
         #    gap = 10

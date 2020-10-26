@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('appliancedirect_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,8 +28,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -46,7 +41,7 @@ def fetch_data():
 		raw_data = item.text.split("\n")
 
 		location_name = item.h4.text.strip()
-		# logger.info(location_name)
+		# print(location_name)
 		
 		raw_address = item.span.text.strip().split(",")
 		while True:

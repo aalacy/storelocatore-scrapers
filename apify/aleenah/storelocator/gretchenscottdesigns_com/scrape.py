@@ -3,11 +3,6 @@ import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from pyzipcode import ZipCodeDatabase
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gretchenscottdesigns_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,7 +41,7 @@ def fetch_data():
 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"}
     res = session.get("https://www.gretchenscottdesigns.com",headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
-  #  logger.info(soup)
+  #  print(soup)
     sa = soup.find('div', {'class': 'f_block f_block3'}).find_all("a")
 
     for a in sa:
@@ -56,7 +51,7 @@ def fetch_data():
     for url in page_url:
         res = session.get(url,headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
-        # logger.info(soup)
+        # print(soup)
         sa = soup.find('div', {'class': 'grid12-7'}).find_all("h3")
         tex=""
         for a in sa:
@@ -89,7 +84,7 @@ def fetch_data():
             phones.append(p[0])
             tex=tex.replace(p[0],"")
         tex=re.findall(r'(.*pm)',tex)[0]
-        #logger.info(tex)
+        #print(tex)
         timing.append(tex)
 
     all = []

@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('theupsstore_ca')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -26,7 +21,7 @@ def fetch_data():
     for coord in canada:
         lat = coord.split(',')[0]
         lng = coord.split(',')[1]
-        logger.info(('Pulling %s-%s...' % (lat, lng)))
+        print(('Pulling %s-%s...' % (lat, lng)))
         url = 'https://app-tupssca.herokuapp.com/index.php/stores/near.jsonp?lat=' + lat + '&lng=' + lng
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

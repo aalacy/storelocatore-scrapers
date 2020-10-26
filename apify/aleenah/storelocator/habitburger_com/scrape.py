@@ -2,11 +2,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('habitburger_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -51,11 +46,11 @@ def fetch_data():
                 if page_url[-1]!= l:
                     page_url.append(l)
     del page_url[0]
-    logger.info(len(page_url))
+    print(len(page_url))
 
     coming_soon=[]
     for url in page_url:
-        logger.info(url)
+        print(url)
         driver.get(url)
         cs=driver.find_elements_by_id("coming_soon")
         if cs != []:
@@ -69,8 +64,8 @@ def fetch_data():
 
         tex = the_script.text
         the_script=str(the_script)
-        logger.info(the_script)
-        #logger.info(tex)
+        print(the_script)
+        #print(tex)
         locs.append(re.findall(r'.*"name": "([^"]*)"', the_script,re.DOTALL)[0])
         types.append(re.findall(r'.*"@type": "([^"]*)"', the_script,re.DOTALL)[0])
         c=re.findall(r'.*"addressLocality": "([^"]*)"', the_script,re.DOTALL)[0]
@@ -103,7 +98,7 @@ def fetch_data():
         del page_url[page_url.index(u)]
 
     all = []
-    logger.info(len(locs))
+    print(len(locs))
     for i in range(0, len(locs)):
         row = []
         row.append("https://www.habitburger.com")

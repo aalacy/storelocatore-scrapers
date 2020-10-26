@@ -8,11 +8,6 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('southmoonunder_com')
-
-
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
@@ -35,7 +30,7 @@ def fetch_data():
     p = 0
     pattern = re.compile(r'\s\s+') 
     url = 'https://www.southmoonunder.com/store-locator?dwcont=C766496694'
-    logger.info(url)
+    print(url)
     driver.get(url)
     
     driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div[1]/div/div[1]/div[2]/form/fieldset/button').click()
@@ -76,7 +71,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                             
    

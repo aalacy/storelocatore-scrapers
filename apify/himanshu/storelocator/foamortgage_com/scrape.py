@@ -7,11 +7,6 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('foamortgage_com')
-
-
 
 
 session = SgRequests()
@@ -44,10 +39,10 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        #logger.info("zip_code === "+zip_code)
-       # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("zip_code === "+zip_code)
+       # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         location_url = "https://api.2xlo.com//wp-json/foa/v1/search/branch/"+str(zip_code)+"?k=f007836b4b5907b824451e19faf63520b9daee20&radius=300"
-        #logger.info(location_url)
+        #print(location_url)
        
         r = session.get(location_url,headers=headers)
         data = r.json()
@@ -79,7 +74,7 @@ def fetch_data():
                     hours_of_operation = day_span + ' - ' + time_span
                 except:
                     hours_of_operation = "<MISSING>"
-                #logger.info(hours_of_operation)
+                #print(hours_of_operation)
 
                 page_url = "https://www.foamortgage.com/branches/" + str(value['id']) + "/"
 
@@ -104,14 +99,14 @@ def fetch_data():
                 adressess.append(store[2])
                 yield store
 
-          #  logger.info(len(data['results']))
-       # logger.info("==================")
+          #  print(len(data['results']))
+       # print("==================")
 
         if len(data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

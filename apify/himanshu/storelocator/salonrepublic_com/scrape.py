@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('salonrepublic_com')
-
-
 
 
 
@@ -54,7 +49,7 @@ def fetch_data():
         store_number = "<MISSING>"
         country_code = "US"
         location_type = "<MISSING>"
-        # logger.info(page_url)
+        # print(page_url)
         r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, 'lxml')
         try:
@@ -94,8 +89,8 @@ def fetch_data():
             continue
         addresses.append(store[1] + " " + store[2])
 
-        #logger.info("data = " + str(store))
-        #logger.info(
+        #print("data = " + str(store))
+        #print(
             #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 

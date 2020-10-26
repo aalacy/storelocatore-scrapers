@@ -2,11 +2,6 @@ import csv
 import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bucadibeppo_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -66,17 +61,17 @@ def fetch_data():
                         page_url.append("https://locations.bucadibeppo.com/" +div.find("a").get("href").replace("../",""))
 
     for url in page_url:
-        #logger.info(url)
+        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #logger.info(soup)
+        #print(soup)
         #break
         try:
 
             ids.append(re.findall(r'{"ids":(.*),"pageSetId"',str(soup),re.DOTALL)[0])
-            #logger.info(url)
+            #print(url)
         except:
-                logger.info(url)
+                print(url)
                 ids.append("<MISSING>")
                 locs.append("<MISSING>")
                 street.append("<MISSING>")
@@ -90,11 +85,11 @@ def fetch_data():
                 continue
         """except:
             urll = "https://locations.bucadibeppo.com/" + soup.find('li', {'class': 'c-directory-list-content-item'}).find("a").get("href").replace("../","")
-            logger.info(urll)
+            print(urll)
             res = requests.get(urll)
             soup = BeautifulSoup(res.text, 'html.parser')
             urll = "soup.find('div', {'class': 'c-location-grid-col'}).find("a").get("href").replace("../","")
-            logger.info(urll)
+            print(urll)
             res = requests.get(urll)
             soup = BeautifulSoup(res.text, 'html.parser')
             page_url[page_url.index(url)]=urll
@@ -110,7 +105,7 @@ def fetch_data():
         topens= soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-open'})
         tcloses=soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-close'})
         tim=""
-        #logger.info("tdays",len(tdays),"topens",len(topens),"tcloses",len(tcloses))
+        #print("tdays",len(tdays),"topens",len(topens),"tcloses",len(tcloses))
         if len(topens)!=0 and len(tcloses)!=0 :
             for t in range(7):
                 tim+=tdays[t].text+": "+topens[t].text+" - "+tcloses[t].text+" "

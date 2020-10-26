@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import  pprint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bigredstores_net')
-
-
 
 
 
@@ -55,7 +50,7 @@ def fetch_data():
     location_url = "https://bigredstores.net/findus/"
     r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
+    # print(soup.prettify())
     for link in soup.find_all("div", class_="has-post-thumbnail"):
         list_add = list(link.stripped_strings)
         street_address = list_add[0].strip()
@@ -93,7 +88,7 @@ def fetch_data():
                     state = content[-1].split(',')[1].split()[0].strip()
                     zipp = content[-1].split(',')[1].split()[-1].strip()
                     phone = "<MISSING>"
-                # logger.info(phone)
+                # print(phone)
             else:
                 location_name = "<MISSING>"
                 state = content[-1].split(',')[1].split()[0].strip()
@@ -105,9 +100,9 @@ def fetch_data():
             state = "<MISSING>"
             zipp = "<MISSING>"
             phone = "<MISSING>"
-        # logger.info(phone)
+        # print(phone)
         if "72015" in phone:
-            # logger.info(phone)
+            # print(phone)
             phone = "<MISSING>"
         if "3544 Airport Road, Pearcy, AR" in street_address:
             street_address = list_add[0].split(',')[0].strip()
@@ -124,8 +119,8 @@ def fetch_data():
         store = [x.encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in store]
 
-        # logger.info("data = " + str(store))
-        # logger.info(
+        # print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         yield store

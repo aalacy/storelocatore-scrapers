@@ -8,11 +8,6 @@ from random import randint
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cpk_com')
-
-
 
 
 def get_driver():
@@ -53,7 +48,7 @@ def fetch_data():
 	all_links = []
 
 	for state in states:
-		logger.info("State: " + state)
+		print("State: " + state)
 		search_element = driver.find_element_by_id("Address2")
 		search_element.clear()
 		time.sleep(randint(1,2))
@@ -88,20 +83,20 @@ def fetch_data():
 	data = []
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 		time.sleep(randint(1,2))
 		req = session.get(link, headers = HEADERS)
 
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			logger.info("Got today page")
+			print("Got today page")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		locator_domain = "cpk.com"
 		location_name = item.find(class_='StoreName').text.strip()
-		logger.info(location_name)
+		print(location_name)
 
 		raw_data = str(item.find(class_="Address")).replace("</div>","").replace("<br/>"," ")
 		raw_data = raw_data[raw_data.find(">")+3:].strip().split('\n')

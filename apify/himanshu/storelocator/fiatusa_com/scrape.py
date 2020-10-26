@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fiatusa_com')
-
-
 
 
 
@@ -75,7 +70,7 @@ def fetch_data():
     address=[]
     while zip_code:
         result_coords = []
-        # logger.info("zips === " + str(zip_code))
+        # print("zips === " + str(zip_code))
 
         r = session.get(
             'https://www.fiatusa.com/bdlws/MDLSDealerLocator?brandCode=X&func=SALES&radius='+str(MAX_DISTANCE)+'&resultsPage=1&resultsPerPage='+str(MAX_RESULTS)+'&zipCode='+zip_code
@@ -87,8 +82,8 @@ def fetch_data():
             for i in k['dealer']:
                 tem_var=[]
                 st = i['dealerAddress1']
-                # logger.info(st)
-                # logger.info(i['departments']['sales']['hours']['sunday']['open']['time'] + ' '+i['departments']['sales']['hours']['sunday']['close']['time'])
+                # print(st)
+                # print(i['departments']['sales']['hours']['sunday']['open']['time'] + ' '+i['departments']['sales']['hours']['sunday']['close']['time'])
                 hours = 'sunday' +' '+i['departments']['sales']['hours']['sunday']['open']['time'].replace("0:00 0:00","Close") + ' '+i['departments']['sales']['hours']['sunday']['close']['time']+ ' '+'monday'+' '+i['departments']['sales']['hours']['monday']['open']['time'] + ' '+i['departments']['sales']['hours']['monday']['close']['time']+ ' '+ 'tuesday'+' '+i['departments']['sales']['hours']['tuesday']['open']['time'] + ' '+i['departments']['sales']['hours']['tuesday']['close']['time']+' '+'wednesday'+' '+i['departments']['sales']['hours']['wednesday']['open']['time'] + ' '+i['departments']['sales']['hours']['wednesday']['close']['time']+' '+'thursday'+' '+i['departments']['sales']['hours']['thursday']['open']['time'] + ' '+i['departments']['sales']['hours']['thursday']['close']['time']+' '+'friday'+' '+i['departments']['sales']['hours']['friday']['open']['time'] + ' '+i['departments']['sales']['hours']['friday']['close']['time']+ ' '+'saturday'+' '+i['departments']['sales']['hours']['saturday']['open']['time'] + ' '+i['departments']['sales']['hours']['saturday']['close']['time']
                 if len(i['dealerZipCode'])==6 or len(i['dealerZipCode'])==7:
                     c = "CA"
@@ -116,17 +111,17 @@ def fetch_data():
                 tem_var.append(hours.replace("0:00 0:00","Close"))
                 tem_var.append("<MISSING>")
                 result_coords.append((i['dealerShowroomLatitude'], i['dealerShowroomLongitude']))
-                # logger.info(tem_var)
+                # print(tem_var)
                 if tem_var[2] in addresses:
                     continue
                 addresses.append(tem_var[2])
                 yield tem_var
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

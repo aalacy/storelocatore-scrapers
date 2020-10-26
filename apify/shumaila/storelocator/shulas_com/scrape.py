@@ -4,11 +4,6 @@ import string
 import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shulas_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -34,7 +29,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)   
     soup =BeautifulSoup(r.text, "html.parser")   
     divlist = soup.findAll('div', {'class': "shula-menu__location"})
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     flag = 0
     for div in divlist:
@@ -44,7 +39,7 @@ def fetch_data():
             
             if link != 'https://shulasbarandgrill.com/' and link.find('location')== -1:
                 link = link.replace('.com/','.com/location-')
-            #logger.info(link)
+            #print(link)
             
             
             r = session.get(link, headers=headers, verify=False)
@@ -58,11 +53,11 @@ def fetch_data():
                 for i in range(0,len(titlelist)):
                     title = titlelist[i].text
                     address = addresslist[i].text.splitlines()
-                    #logger.info(address)
+                    #print(address)
                     city,state = address[-1].split(', ')
                     state,pcode = state.lstrip().split(' ',1)
                     street = ' '.join(address[0:len(address)-1])
-                    #logger.info(street)
+                    #print(street)
                     data.append([
                         'https://shulas.com/',
                         link,                   
@@ -79,14 +74,14 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>'
                     ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                 
                 continue
             try:
                 title = div.find('a').text
                 jslink ='https://knowledgetags.yextpages.net'+ r.text.split('https://knowledgetags.yextpages.net',1)[1].split('"',1)[0]
-                #logger.info(jslink)
+                #print(jslink)
                 r = session.get(jslink, headers=headers, verify=False)
                 address = r.text.split('"address":{',1)[1].split('}',1)[0]
                 address = '{' +address + '}'
@@ -148,7 +143,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 p += 1
                 
                     
@@ -185,7 +180,7 @@ def fetch_data():
                             longt,
                             hours
                         ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                 except:
                     content = soup.find('div',{'class':'shula-block-split-content-body'}).findAll('p')
@@ -217,7 +212,7 @@ def fetch_data():
                             '<MISSING>',
                             '<MISSING>'
                         ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     
             

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('home2suites3_hilton_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -24,7 +19,7 @@ def write_output(data):
 def fetch_data():
     count = 0
     lids = []
-    logger.info('Pulling Locations...')
+    print('Pulling Locations...')
     payload = {"operationName":"hotelMapZones","variables":{"brandCode":"HT"},"query":"query hotelMapZones($brandCode: String) {\n  hotelMapZones(brandCode: $brandCode) {\n    id {\n      x\n      y\n      __typename\n    }\n    bounds {\n      southwest {\n        latitude\n        longitude\n        __typename\n      }\n      northeast {\n        latitude\n        longitude\n        __typename\n      }\n      __typename\n    }\n    countries {\n      countryCode\n      stateCodes\n      __typename\n    }\n    brandCodes\n    __typename\n  }\n}\n"}
     url = 'https://www.hilton.com/graphql/customer?appName=dx-shop-dream-ui&operationName=hotelMapZones'
     r = session.post(url, headers=headers, data=json.dumps(payload))
@@ -75,7 +70,7 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        logger.info(str(count) + ' Locations Found...')
+        print(str(count) + ' Locations Found...')
 
 def scrape():
     data = fetch_data()

@@ -2,11 +2,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('perryandsonsmarketandgrille_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -42,7 +37,7 @@ def fetch_data():
 		locator_domain = "perryandsonsmarketandgrille.com"
 		content = base.find('div', attrs={'class': 'col-md-4 col-sm-5'})
 		location_name = content.find('h3').text.strip()
-		# logger.info(location_name)
+		# print (location_name)
 
 		raw_data = str(content.findAll('p')[-3]).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
 		try:

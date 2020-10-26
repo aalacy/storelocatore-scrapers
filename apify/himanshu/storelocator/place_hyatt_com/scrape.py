@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('place_hyatt_com')
-
-
 
 
 def write_output(data):
@@ -73,8 +68,8 @@ def fetch_data():
         store.append(longitude )
         store.append("<MISSING>")
         store.append(page_url)
-        # logger.info("data==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         yield store
     

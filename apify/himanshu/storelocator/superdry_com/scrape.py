@@ -5,11 +5,6 @@ import re
 import sgzip
 import json
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('superdry_com')
-
-
 
 
 session = SgRequests()
@@ -65,7 +60,7 @@ def fetch_data():
     page_url = "<MISSING>"
 
     for zip_code in zips:
-        # logger.info(zip_code)
+        # print(zip_code)
 
 
         r = session.get('https://www.superdry.com/index.php?option=com_store_collect&lng='+str(zip_code[1])+'&lat='+str(zip_code[0])+'&format=raw&task=nearest',headers = headers)
@@ -89,7 +84,7 @@ def fetch_data():
                     city = z['city'].split(',')[0]
                     if re.findall("[a-zA-Z]+", z['postcode']) != []:
                         state = "".join(re.findall("[a-zA-Z]+", z['postcode']))
-                        # logger.info(state)
+                        # print(state)
                     else:
                         state = "<MISSING>"
 
@@ -103,7 +98,7 @@ def fetch_data():
                     country_code = "CA"
                 else:
                     continue
-                # logger.info(zipp)
+                # print(zipp)
 
                 phone = z['phone']
                 latitude = z['latitude']
@@ -117,14 +112,14 @@ def fetch_data():
 
                     h2= ".".join(hour_split(i['hours'].split('-')[-1].replace('\r','').strip(),2))
                     h_format = h1+" AM - " + h2 + " PM"
-                    # logger.info(h_format)
+                    # print(h_format)
                     if "CL.OS.ED" not in h_format:
                         hours1 = i['day']+" " + h_format
-                        # logger.info(hours1)
+                        # print(hours1)
                         h.append(hours1)
                     else:
                         hours1 = i['day']+" " + i['hours']
-                        # logger.info(hours1)
+                        # print(hours1)
                         h.append(hours1)
                 hours_of_operation = ",".join(h).replace('\r','').strip()
                 page_url = "<MISSING>"
@@ -152,8 +147,8 @@ def fetch_data():
                     continue
 
                 addresses.append(store[2])
-                # logger.info("data===="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # print("data===="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 for i in range(len(store)):
                     if type(store[i]) == str:
                         store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))

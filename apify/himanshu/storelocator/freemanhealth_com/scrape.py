@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('freemanhealth_com')
-
-
 
 
 def write_output(data):
@@ -48,7 +43,7 @@ def fetch_data():
                                     addresses.append(str(d3['URL']))
                                     if "/location/" in d3['URL']:
                                         page_url1.append("https://www.freemanhealth.com"+d3['URL'])
-            # logger.info(page_url1)
+            # print(page_url1)
             for urls in page_url1:
                 response1 = requests.get(urls, headers=headers)
                 soup1 = BeautifulSoup(response1.text, "lxml")
@@ -56,7 +51,7 @@ def fetch_data():
                 # longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
                 street_address=(soup1.find("meta",{"itemprop":"streetAddress"})['content'])
                 name=soup1.find_all("meta",{"itemprop":'name'})[-1]['content']
-                # logger.info(name)
+                # print(name)
                 city = soup1.find("meta",{"itemprop":"addressLocality"})['content']
                 state = soup1.find("meta",{"itemprop":"addressRegion"})['content']
                 zipp = soup1.find("meta",{"itemprop":"postalCode"})['content']
@@ -81,8 +76,8 @@ def fetch_data():
                 if store[2] in addressesess:
                     continue
                 addressesess.append(store[2])
-                # logger.info("data ==="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data ==="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
                         
         

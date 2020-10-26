@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('picklemans_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -30,15 +25,15 @@ def fetch_data():
     page_url=[]
     driver.get("https://www.picklemans.com/locations.php")#,headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'})
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    #logger.info(soup)
+    #print(soup)
     urls = soup.find_all('p', {'class': 'storemapper-address'})
-    logger.info(len(urls))
+    print(len(urls))
     for url in urls:
         a = url.find_all('a')
         if a==[]:
             continue
         url="https://www.picklemans.com/"+a[0].get('href')
-        logger.info(url)
+        print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
@@ -64,7 +59,7 @@ def fetch_data():
                    timl=timli[1].text
             else:
                type = "open"
-        #logger.info(timl)
+        #print(timl)
         
         try:
            tim=re.findall(r'(Temporary Hours:.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip().replace("\t","").replace("    ","")
@@ -72,10 +67,10 @@ def fetch_data():
            tim=re.findall(r'Hours:(.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip()
            if "Hours:" in tim:
               tim=re.findall(r'Hours:(.*)',tim)[0]
-        #logger.info(soup.find('iframe').get('src'))
+        #print(soup.find('iframe').get('src'))
         long,lat=re.findall(r'.*!2d(.*)!3d([\d\.]+)!',soup.find('iframe').get('src'))[0]
-        #logger.info(tim)
-        #logger.info(lat,long)
+        #print(tim)
+        #print(lat,long)
         all.append([
             "https://www.picklemans.com/",
             loc,

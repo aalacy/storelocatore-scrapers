@@ -5,11 +5,6 @@ import re
 import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('childrenslighthouse_com')
-
-
 
 
 
@@ -80,8 +75,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
     store = ["<MISSING>" if x == "" else x for x in store]
 
-    # logger.info("data = " + str(store))
-    # logger.info(
+    # print("data = " + str(store))
+    # print(
     #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     return_main_object.append(store)
@@ -101,7 +96,7 @@ def fetch_data():
         latitude = z['lat']
         longitude = z['lon']
         page_url = base_url + z['website']
-        # logger.info(city,state,zipp)
+        # print(city,state,zipp)
 
 
 
@@ -110,8 +105,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
 
-        # logger.info("data = " + str(store))
-        # logger.info(
+        # print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

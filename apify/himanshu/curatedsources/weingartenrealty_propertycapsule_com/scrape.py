@@ -3,11 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('weingartenrealty_propertycapsule_com')
-
-
 
 
 def write_output(data):
@@ -17,7 +12,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -90,8 +85,8 @@ def fetch_data():
                     lng = address_tmp[6].split(',')[1].strip()
 
                
-                # logger.info(address_tmp[7])
-                # logger.info('=============================')
+                # print(address_tmp[7])
+                # print('=============================')
 
         tem_var.append('http://weingartenrealty.propertycapsule.com/')
         tem_var.append(location_name)
@@ -107,7 +102,7 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append("<MISSING>")
         tem_var.append(link)
-        logger.info(tem_var)
+        print(tem_var)
         return_main_object.append(tem_var)
                    
  

@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cricketwireless_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -24,7 +19,7 @@ def fetch_data():
     x = 0
     while PageFound:
         x = x + 1
-        logger.info(('Pulling Page %s...' % str(x)))
+        print(('Pulling Page %s...' % str(x)))
         url = 'https://momentfeed-prod.apigee.net/api/llp/cricket.json?auth_token=IVNLPNUOBXFPALWE&center=37.9358,-122.3477&multi_account=false&name=Cricket+Wireless+Authorized+Retailer,Cricket+Wireless+Store&page=' + str(x) + '&pageSize=100&type=store'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

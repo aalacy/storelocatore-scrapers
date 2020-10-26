@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jumpingworldusa_com')
-
-
 
 
 options = Options()
@@ -49,7 +44,7 @@ def fetch_data():
     names = [stores[i].get_attribute('href') for i in range(0, len(stores))]
     location_name = [stores[i].text for i in range(0, len(stores))]
     for j in range(0,len(names)):
-        logger.info("URL..........." , names[j])
+        print("URL..........." , names[j])
         if 'coming-soon' in names[j]:
             pass
         else:
@@ -57,7 +52,7 @@ def fetch_data():
             time.sleep(5)
             page_url = names[j]
             #location_name = driver2.find_element_by_css_selector('h1.vcex-module.vcex-heading.vcex-heading-plain > span.vcex-heading-inner.clr').text.replace('\n', ' ').replace(',',' ')
-            logger.info("location_name" , location_name[j])
+            print("location_name" , location_name[j])
             address = driver2.find_element_by_xpath("//a[contains(@href,'https://goo.gl/maps/')]").text
             tagged = usaddress.tag(address)[0]
             try:
@@ -113,7 +108,7 @@ def fetch_data():
                   hours_of_op
                 ])
             count+=1
-            logger.info(count)
+            print(count)
 
     time.sleep(3)
     driver.quit()

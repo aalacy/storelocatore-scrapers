@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('inlineartofexercise_com')
-
-
 
 session = SgRequests()
 
@@ -38,7 +33,7 @@ def fetch_data():
     soup = BeautifulSoup(page.content, 'html.parser')
 
     tail = soup.find('div', {'class': 'textwidget'})
-    #logger.info(tail.text.split('\n'))
+    #print(tail.text.split('\n'))
     tail_arr = tail.text.split('\n')
 
     country_code = 'US'

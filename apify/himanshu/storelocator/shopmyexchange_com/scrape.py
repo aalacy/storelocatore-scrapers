@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shopmyexchange_com')
-
-
 
 
 
@@ -49,8 +44,8 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "https://www.shopmyexchange.com/stores"
         try:
@@ -62,10 +57,10 @@ def fetch_data():
 
         soup = BeautifulSoup(r.text, "lxml")
 
-        # logger.info("soup ===== "+ str(soup))
+        # print("soup ===== "+ str(soup))
 
         current_results_len = len(soup.find_all("div", {"class": "address"}))  # it always need to set total len of record.
-        # logger.info("current_results_len === " + str(current_results_len))
+        # print("current_results_len === " + str(current_results_len))
 
         locator_domain = base_url
         location_name = ""
@@ -86,7 +81,7 @@ def fetch_data():
             for script in soup.find_all("div", {"class": "result pt-1"}):
                 page_url1= base_url+script.find('div',class_='store-details').find('a')['href']
                 store_number =script.find('div',class_='store-details').find('a')['href'].split('=')[-1].strip()
-                # logger.info(page_url,store_number)
+                # print(page_url,store_number)
 
                 full_address = list(script.find("div", {"class": "address"}).stripped_strings)
                 street_address = ", ".join(full_address[:-1])
@@ -94,7 +89,7 @@ def fetch_data():
                 state = full_address[-1].split(",")[1].replace('\xa0', " ").strip().split(" ")[0]
                 # zipp = " ".join(full_address[-1].split(",")[1].replace('\xa0', " ").strip().split(" ")[1:]).strip()
                 
-                # logger.info("-----------------------",full_address[-1])
+                # print("-----------------------",full_address[-1])
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address[-1].split(",")[1]))
                 
                 if us_zip_list:
@@ -108,11 +103,11 @@ def fetch_data():
                     country_code = "US"
               
 
-                # logger.info("CSZ == "+full_address[-1].split(",")[1].replace('\xa0', " "))
-                # logger.info("city == "+city)
-                # logger.info("state == "+state)
-                # logger.info("zipp == "+zipp)
-                # logger.info("country_code == "+country_code)
+                # print("CSZ == "+full_address[-1].split(",")[1].replace('\xa0', " "))
+                # print("city == "+city)
+                # print("state == "+state)
+                # print("zipp == "+zipp)
+                # print("country_code == "+country_code)
 
                 phone = script.find("div", {"class": "phone"}).find("a").text.split("/")[0]
 
@@ -130,15 +125,15 @@ def fetch_data():
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
                     store = [x if x else "<MISSING>" for x in store]
-                    #logger.info("data = " + str(store))
-                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

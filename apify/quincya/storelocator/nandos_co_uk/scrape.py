@@ -9,11 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nandos_co_uk')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -43,9 +38,9 @@ def fetch_data():
 	locator_domain = "nandos.co.uk"
 
 	for i, item in enumerate(items):
-		logger.info("Link %s of %s" %(i+1,len(items)))
+		print("Link %s of %s" %(i+1,len(items)))
 		link = "https://www.nandos.co.uk" + item.a['href']
-		logger.info(link)
+		print(link)
 
 		driver.get(link)
 		time.sleep(randint(2,3))

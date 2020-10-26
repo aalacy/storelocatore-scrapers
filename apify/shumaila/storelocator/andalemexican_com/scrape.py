@@ -1,11 +1,6 @@
 from bs4 import BeautifulSoup
 import csv, re
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('andalemexican_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +27,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     repo_list = soup.findAll('div', {'class': 'summary-content sqs-gallery-meta-container'})
-    logger.info(len(repo_list))
+    print(len(repo_list))
     
     for repo in repo_list:
         title = repo.find('a',{'class':'summary-title-link'})
@@ -47,7 +42,7 @@ def fetch_data():
         #address = content[3]
         address= re.sub(cleanr,'\n',str(address))
         address= re.sub(pattern,'\n',address.lstrip()).split('\n')
-        #logger.info(address)
+        #print(address)
         #hours = content[4].text
         street = address[0]      
         city,state = address[1].split(', ',1)
@@ -74,7 +69,7 @@ def fetch_data():
             hours.replace('Hours:','')
         ])
 
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
     return data

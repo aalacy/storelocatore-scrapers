@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('frys_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +37,7 @@ def fetch_data():
     for n in range(0,len(location_href)):
         link = location_href[n]
         links.append(link)
-        # logger.info(link)
+        # print(link)
         req = session.get(link, headers = HEADERS)
         base = BeautifulSoup(req.text,"lxml")
         location_name.append(base.find(id='text1').text.strip())

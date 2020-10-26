@@ -1,2 +1,2 @@
 selenium==3.141.0
-pypostalcode==0.3.4sglogging
+pypostalcode==0.3.4

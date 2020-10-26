@@ -8,11 +8,6 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ultramar_ca')
-
-
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
@@ -35,7 +30,7 @@ def fetch_data():
     data = []
     p = 0
     url = 'https://www.ultramar.ca/en-on/find-services-stations/'
-    logger.info(url)
+    print(url)
     driver.get(url)    
     while True:
         try:
@@ -84,7 +79,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                             
    

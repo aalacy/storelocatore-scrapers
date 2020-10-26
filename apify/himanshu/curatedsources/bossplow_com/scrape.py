@@ -3,11 +3,6 @@ from  sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bossplow_com')
-
-
 session = SgRequests()
 
 
@@ -32,7 +27,7 @@ def fetch_data():
         if link['href'].count('/') !=5:
             continue    
         page_url = base_url + link['href']
-        # logger.info(page_url)
+        # print(page_url)
         r1 = session.get(page_url)
         soup = BeautifulSoup(r1.text, "lxml")
         location_name = soup.find("h3").text.strip()
@@ -43,7 +38,7 @@ def fetch_data():
         zipp = " ".join(addr[0].split("|")[1].split(",")[1].split(" ")[2:]).upper()
         if zipp == "UB11 1FW":
             continue
-        # logger.info(zipp)
+        # print(zipp)
         if zipp.replace('-','').isdigit():
             country_code = "US"
         else:
@@ -73,8 +68,8 @@ def fetch_data():
         store.append('<MISSING>')
         store.append(hours if hours else '<MISSING>')
         store.append(page_url)
-       # logger.info("data ===="+str(store))
-        #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+       # print("data ===="+str(store))
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
              
 def scrape():

@@ -4,11 +4,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sleepexperts_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,7 +30,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     store_list = soup.findAll('div', {'class': 'StorePromo'})
-    logger.info("states = ",len(store_list))
+    print("states = ",len(store_list))
     for store in store_list:
         title = store.find('div',{'class':'StorePromo-title'}).text
         address = store.find('div',{'class':'StorePromo-address'}).text
@@ -79,7 +74,7 @@ def fetch_data():
                         '<INACCESSIBLE>',
                         hours.replace('\n','')
                     ])
-        logger.info(p,data[p])
+        print(p,data[p])
         p += 1
         
 
@@ -87,9 +82,9 @@ def fetch_data():
         
    
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

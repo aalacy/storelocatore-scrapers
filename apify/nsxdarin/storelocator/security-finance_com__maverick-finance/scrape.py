@@ -3,11 +3,6 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('security-finance_com__maverick-finance')
-
-
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -23,7 +18,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     for code in sgzip.for_radius(50):
-        logger.info(('Pulling Zip Code %s...' % code))
+        print(('Pulling Zip Code %s...' % code))
         url = 'https://www.securityfinance.com/wp-admin/admin-ajax.php?action=tba_locator_search&zip=' + code + '&radius=100&results=100'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -38,7 +33,7 @@ def fetch_data():
     for loc in locs:
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         website = 'www.security-finance.com'
         typ = ''
         store = ''

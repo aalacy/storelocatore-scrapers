@@ -9,11 +9,6 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import html, etree
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('physique57_com')
-
-
 crawled = []
 class Scrape(base.Spider):
     def crawl(self):

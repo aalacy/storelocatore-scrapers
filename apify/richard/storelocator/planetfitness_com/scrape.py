@@ -3,11 +3,6 @@ import requests
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('planetfitness_com')
-
-
 
 URL = "https://www.planetfitness.com/"
 
@@ -64,7 +59,7 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['status'] in ['OPEN', 'OPEN_RECENTLY'] and store['location']['address']['countryCode'] in ['US', 'CA']:
-                logger.info(f"Getting location information for {'https://www.planetfitness.com/gyms/' + store['slug']}")
+                print(f"Getting location information for {'https://www.planetfitness.com/gyms/' + store['slug']}")
 
                 # Store ID
                 location_id = store['pfClubId']

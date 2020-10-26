@@ -5,11 +5,6 @@ import string
 import re, time
 import usaddress
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ymca_net')
-
-
 
 
 def write_output(data):
@@ -37,20 +32,20 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     query_coord = search.next_zip()
-    logger.info(query_coord)
+    print(query_coord)
     # 2:56
     while query_coord:
         count = 0
         result_coords = []  # mantain the list of coords of data collected
         # for s in range(0,len(states)):
         url = 'https://www.ymca.net/find-your-y/?address=' + query_coord
-        logger.info(url)
+        print(url)
         try:
 
             page = requests.get(url)
             soup = BeautifulSoup(page.text, "html.parser")
             mainul = soup.findAll('ul', {'class': 'find-y-page'})
-            # logger.info(len(mainul))
+            # print(len(mainul))
             for ul in mainul:
                 li_list = ul.findAll('li')
                 count += len(li_list)  # to calculate total # of results
@@ -172,25 +167,25 @@ def fetch_data():
                                 longt,
                                 hours
                             ])
-                            #logger.info(p, ",", data[p])
+                            #print(p, ",", data[p])
                             p += 1
 
                     except Exception as e:
-                        logger.info(link)
-                        logger.info(e)
+                        print(link)
+                        print(e)
                         #pass
         except:
-            #logger.info(url)
-            #logger.info(e)
+            #print(url)
+            #print(e)
             pass
         #if count < MAX_RESULTS:  # check a near zip code
-        #logger.info("max distance update")
+        #print("max distance update")
         search.max_distance_update(MAX_DISTANCE)
         '''elif count == MAX_RESULTS:  # check to save lat lngs to find zip that excludes them
-            logger.info("max count update")'''
+            print("max count update")'''
         search.max_count_update(result_coords)
         #else:
-         #   logger.info("oops! the maxcount should be", count)
+         #   print("oops! the maxcount should be", count)
           #  raise Exception("expected at most " + MAX_RESULTS + " results")
 
         query_coord = search.next_zip()

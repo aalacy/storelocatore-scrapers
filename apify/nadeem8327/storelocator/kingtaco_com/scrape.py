@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kingtaco_com')
-
-
 
 
 html = requests.get("http://kingtaco.com/locations.html")
@@ -78,5 +73,5 @@ with open("data.csv",mode="w") as file:
 
 
 
-             #logger.info(data)
+             #print(data)
             #fl_writer.writerow(data)

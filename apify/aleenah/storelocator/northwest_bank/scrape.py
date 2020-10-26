@@ -4,11 +4,6 @@ import string
 import re, time,usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('northwest_bank')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -50,14 +45,14 @@ def fetch_data():
             latnow = coord['lat']
             lngnow = coord['lng']
             link ='https://www.northwest.bank/locations?state='+statenow+'&latlng='+str(latnow)+','+str(lngnow)+'&distance=1000&type=branch'
-            #logger.info(link)
+            #print(link)
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             try:
                 loclist = soup.find('div',{'class':'branches'}).findAll('li')
             except:
                 continue
-            #logger.info(len(loclist))
+            #print(len(loclist))
             for loc in loclist:
                 title = loc.find('h4').text
                 address = loc.find('p',{'class':'address'}).text.replace('\n',' ').lstrip()
@@ -127,7 +122,7 @@ def fetch_data():
                             longt,
                             hours
                         ])
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     #input()
                     
@@ -137,9 +132,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

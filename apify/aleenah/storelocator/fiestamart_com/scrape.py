@@ -2,11 +2,6 @@ import csv
 import re
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fiestamart_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -46,8 +41,8 @@ def fetch_data():
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36'}
     res=session.get("https://www.fiestamart.com/wp-json/store_locations/all",headers=headers)
-    #logger.info(res)
-    #logger.info(res.json())
+    #print(res)
+    #print(res.json())
     stores=res.json()['locations']
 
     for store in stores:
@@ -67,7 +62,7 @@ def fetch_data():
         page_url.append("https://www.fiestamart.com/store/"+store['address'].strip().replace(".","").replace(" ","-")+"_store-"+store['id'])
 
     for url in page_url:
-        #logger.info(url)
+        #print(url)
         headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'accept-encoding': 'gzip, deflate',
@@ -81,9 +76,9 @@ def fetch_data():
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
             'x-requested-with': 'XMLHttpRequest'                   }
         res=session.get(url,headers=headers)
-        #logger.info(res)
+        #print(res)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #logger.info(soup,"**********")
+        #print(soup,"**********")
         #div=soup.find('div',{'class':'store-info-wrapper'})
         tim =soup.find('div',{'class':'hours'}).text.replace("\n"," ").strip()
         if tim=="":

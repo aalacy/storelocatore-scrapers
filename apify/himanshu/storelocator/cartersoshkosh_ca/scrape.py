@@ -5,11 +5,6 @@ import re
 import json
 import unicodedata
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cartersoshkosh_ca')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,14 +32,14 @@ def fetch_data():
     location_url = "https://www.cartersoshkosh.ca/on/demandware.store/Sites-CartersCA-SFRA-Site/en_CA/Stores-GetNearestStores?postalCode=A1A&countryCode=CA&distanceUnit=imperial&maxdistance=1000000&lat=47.5702401&lng=-52.69563350000001"
     r = session.get(location_url, headers=headers)
     # soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup)
+    # print(soup)
     json_data = r.json()
     for key,value in json_data['stores'].items():
-        # logger.info(value.keys())
+        # print(value.keys())
         store_number = value['storeid']
-        # logger.info(value)
+        # print(value)
         location_name = "Carter's OshKosh"+" "+str(value['mallName'])
-        # logger.info(location_name)
+        # print(location_name)
         street_address = value['address1']+" "+value['address2']
         city = value['city']
         zipp  = value['postalCode']

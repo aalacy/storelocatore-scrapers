@@ -6,11 +6,6 @@ import csv
 # from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mysprintfs_com')
-
-
 
 
 session = SgRequests()
@@ -70,10 +65,10 @@ with open("data.csv",mode="w") as file:
                     state="<MISSING>"
                 urll = loc["href"]
             urll = main_url + urll
-            # logger.info(url1)
+            # print(url1)
             adrs = record.find(name="p",attrs={"class":"addr"})
             page_url = "https://mysprintfs.com"+record.find("h5").find("a")['href']
-            # logger.info(page_url)
+            # print(page_url)
 
             html1 = session.get(page_url)
             soup1 = BeautifulSoup(html1.text,"html.parser")
@@ -82,7 +77,7 @@ with open("data.csv",mode="w") as file:
             script = soup1.find(lambda tag: (tag.name == "script") and "center" in tag.text).text.split(".maps.LatLng")[-1].split(");")[0]
             latitude = script.replace("( ",'').split(",")[0]
             longitude = script.replace("( ",'').split(",")[-1]
-            # logger.info(script.replace("( ",'').split(",")[-1])
+            # print(script.replace("( ",'').split(",")[-1])
 
             for ad in adrs:
                 street_address = ad
@@ -111,9 +106,9 @@ with open("data.csv",mode="w") as file:
 
 
             street_address1 = street_address.replace(zipp,'').replace("'",'')
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~ ",street_address)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~ ",street_address)
             data=[locator_domain,location_name1,street_address1,city,state,zip_code,"US",store_number.replace("Store #",""),contact_number,"<MISSING>",
                   latitude,longitude,"<MISSING>",page_url]
-            # logger.info(data)
+            # print(data)
             fl_writer.writerow(data)
             

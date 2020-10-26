@@ -9,11 +9,6 @@ import platform
 import time
 import sgzip
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nationalcashadvance_com')
-
-
 
 
 session = SgRequests()
@@ -73,15 +68,15 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
         # r = session.get("https://www.nationalcashadvance.com/locations/results/11756/34.9918283/-90.0196623/50/",headers=headers)
-        #logger.info("https://www.nationalcashadvance.com/locations/results/11756/" + str(x) + "/" + str(y) + "/50/")
+        #print("https://www.nationalcashadvance.com/locations/results/11756/" + str(x) + "/" + str(y) + "/50/")
         r = request_wrapper("https://www.nationalcashadvance.com/locations/results/11756/" + str(x) + "/" + str(y) + "/50/","get",headers=headers)
         if r == None:
             coord = search.next_coord()
@@ -142,13 +137,13 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            #logger.info(store)
+            #print(store)
             yield store
         if len(soup.find_all("li",{"class":"location"})) < MAX_RESULTS:
-            #logger.info("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(soup.find_all("li",{"class":"location"})) == MAX_RESULTS:
-            #logger.info("max count update")
+            #print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

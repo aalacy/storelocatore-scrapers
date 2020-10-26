@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('facelogicspa_com')
-
-
 
 session = SgRequests()
 
@@ -33,7 +28,7 @@ def fetch_data():
     r = session.get("http://www.facelogicspa.com/pages/spas")
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find("div",{"class":"pt25 pl25 pr25 pb25"}).find_all("a"):
-        # logger.info(link)
+        # print(link)
         if "http" not in link['href']:
             
             page_url = "http://www.facelogicspa.com" + (link['href'].replace("about","contact-us"))
@@ -265,7 +260,7 @@ def fetch_data():
         store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
         stores.append(store)
-        # logger.info(store)
+        # print(store)
         yield store
         
 

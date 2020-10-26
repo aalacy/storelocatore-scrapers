@@ -2,11 +2,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kenworth_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -40,9 +35,9 @@ def fetch_data():
 	total_links = len(all_ids)
 	locator_domain = "kenworth.com"
 	for i, store_id in enumerate(all_ids):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 		link = "https://www.kenworth.com/dealers/dealer?d=" + store_id
-		logger.info(link)
+		print(link)
 		api_link = "https://services.anthology-digital.com/locations/dealers?dealer_code=%s&callback=?" %store_id
 		req = session.get(api_link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ebgames_ca')
-
-
 
 
 
@@ -48,7 +43,7 @@ def fetch_data():
             st = i['Address']
             if "Latitude" in i:
                 lat = i['Latitude']
-                logger.info(lat)
+                print(lat)
             else:
                 lat = "<MISSING>"
 

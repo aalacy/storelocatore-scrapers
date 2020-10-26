@@ -6,11 +6,6 @@ import re
 import ast
 import time
 import urllib.request
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chemicalbank_com')
-
-
 
 def get_driver():
 	options = Options()
@@ -72,9 +67,9 @@ def fetch_data():
 		ids.append(locations_dict['LocationData'][i]['LocationID'])
 		driver_hours.get('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
 		time.sleep(3)
-		#logger.info('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
+		#print('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
 		hours_dict=ast.literal_eval(driver_hours.find_element_by_tag_name('body').text)
-		#logger.info(hours_dict)
+		#print(hours_dict)
 		try:
 			days_count=str(hours_dict).split('"Name":"')[2].count('"DayName"')
 		except:
@@ -87,7 +82,7 @@ def fetch_data():
 			TimeOpen=str(hours_dict).split('"Name":"')[2].split('"TimeOpen":"')[i].split('"')[0]
 			TimeClose=str(hours_dict).split('"Name":"')[2].split('"TimeClose":"')[i].split('"')[0]
 			timing_location=timing_location+' '+days+' '+TimeOpen+' '+TimeClose
-			#logger.info(timing_location)
+			#print(timing_location)
 		if timing_location=='':
 			timing.append("<MISSING>")
 		else:
@@ -101,19 +96,19 @@ def fetch_data():
 			phones.append("<MISSING>")
 		else:
 			phones.append(phone)	
-		#logger.info(phone)
+		#print(phone)
 		lat=str(hours_dict).split('"Latitude":"')[1].split('"')[0]
 		if lat=='':
 			lats.append("<MISSING>")
 		else:
 			lats.append(lat)
-		#logger.info(lat)
+		#print(lat)
 		long=str(hours_dict).split('"Longitude":"')[1].split('"')[0]
 		if long=='':
 			longs.append("<MISSING>")
 		else:
 			longs.append(long)
-		#logger.info(long)
+		#print(long)
 		
 		
 	

@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thriftway_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	table = base.find('table')
 	items = table.findAll("tr")
@@ -41,7 +36,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "thriftway.com"		
 		location_name = item.find('td').text.split('\n')[2].strip()
-		logger.info(location_name)
+		print (location_name)
 		street_address = item.findAll('td')[1].text.strip()
 		city = item.find('strong').text.strip()
 		state = "<MISSING>"

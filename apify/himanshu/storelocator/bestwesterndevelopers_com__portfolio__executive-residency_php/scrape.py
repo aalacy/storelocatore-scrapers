@@ -6,11 +6,6 @@ import json
 import time
 import sgzip
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bestwesterndevelopers_com__portfolio__executive-residency_php')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -63,7 +58,7 @@ def fetch_data():
             store.append(store_data["longitude"])
             store.append("<MISSING>")
             store.append("https://www.bestwestern.com/bin/bestwestern/proxy?gwServiceURL=HOTEL_SEARCH&distance=250&latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]))
-            # logger.info(store)
+            # print(store)
             yield store
 
 def scrape():

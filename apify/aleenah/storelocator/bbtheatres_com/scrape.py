@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bbtheatres_com')
-
-
 
 
 def write_output(data):
@@ -27,10 +22,10 @@ def fetch_data():
     # Your scraper here
 
     res=session.get("https://www.bbtheatres.com/theatres/") # not using because phone is not available in itt
-    #logger.info(res.text)
-    #logger.info(re.findall(r'"CinemaList":(\[.*\]),"experiences"',res.text.replace('\\',''),re.DOTALL)[0])
+    #print(res.text)
+    #print(re.findall(r'"CinemaList":(\[.*\]),"experiences"',res.text.replace('\\',''),re.DOTALL)[0])
     jso = json.loads(re.findall(r'"CinemaList":(\[.*\]),"experiences"',res.text.replace('\\',''))[0])
-    logger.info(len(jso))
+    print(len(jso))
 
     for js in jso:
         zip = js["CinemaInfo"]["ZipCode"]

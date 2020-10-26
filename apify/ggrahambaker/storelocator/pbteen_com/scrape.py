@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 import sgzip 
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pbteen_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,10 +28,10 @@ def fetch_data():
     dup_tracker = []
 
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.potterybarnkids.com/search/stores.json?brands=PT&lat=' + str(x) + '&lng=' + str(y) + '&radius=' + str(MAX_DISTANCE)
         r = session.get(url, headers=HEADERS)
         
@@ -75,7 +70,7 @@ def fetch_data():
             
             page_url = '<MISSING>'
             #'https://www.potterybarn.com/stores/' + country_code.lower() + '/' + state.lower() + '/' + city.lower().replace(' ', '-') + '-' + location_name.strip().lower().replace(' ', '-')
-            #logger.info(page_url)
+            #print(page_url)
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]

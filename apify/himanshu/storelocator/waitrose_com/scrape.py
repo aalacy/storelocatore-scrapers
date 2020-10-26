@@ -5,11 +5,6 @@ import re
 import json
 # import unicodedata
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('waitrose_com')
-
-
 session = SgRequests()
 
 
@@ -38,9 +33,9 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        # logger.info(search.current_zip)
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print(search.current_zip)
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         base_url = "https://www.waitrose.com/"
         headers = {
@@ -64,7 +59,7 @@ def fetch_data():
             latitude = data['latitude']
             longitude = data['longitude']
             page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(store_number)+".html"
-            # logger.info(page_url)
+            # print(page_url)
             r1 = session.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             # addr = soup1.find("div",{"class":"col branch-details"}).text.replace(street_address,"").replace(city,"").replace(zipp,"").replace(phone,"").strip()
@@ -99,12 +94,12 @@ def fetch_data():
             # store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-            # logger.info(store)
+            # print(store)
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gbyguess_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -86,7 +81,7 @@ def fetch_data():
                     continue
                 adressessess.append(str(store[2]+store[-1]))
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # logger.info("store:-------- ",store)
+                # print("store:-------- ",store)
                 yield store
 
 

@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('multi-specialty_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,8 +28,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -43,7 +38,7 @@ def fetch_data():
 
 	for item in items:
 		location_name = item.h3.text.strip()
-		logger.info(location_name)
+		print(location_name)
 		start_num = 8
 
 		street_address = item.find_all("p")[start_num-7].text.strip()
@@ -72,8 +67,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

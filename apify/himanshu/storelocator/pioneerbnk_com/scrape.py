@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pioneerbnk_com')
-
-
 
 session = SgRequests()
 
@@ -33,7 +28,7 @@ def fetch_data():
 
     for i in links:
         link = i["href"]
-        # logger.info(link)
+        # print(link)
 
         r = session.get(link,headers=headers)
         location = BeautifulSoup(r.text,"lxml")

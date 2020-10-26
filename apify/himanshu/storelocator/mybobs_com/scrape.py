@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mybobs_com')
-
-
 
 
 session = SgRequests()
@@ -32,16 +27,16 @@ def fetch_data():
     a = soup.find_all("div",{"id":"locationType0"})
     for i in a:
         k = (i.find_all("a",{"class":"bobs-store-list__flist_result_ltype_pname_ename_esplace_atag"}))
-        # logger.info(k['href'])
+        # print(k['href'])
         for j in k:
             link1 = ("https://www.mybobs.com"+str(j['href']))
-            # logger.info(link1)
+            # print(link1)
             r1 = session.get(link1)
             soup1 = BeautifulSoup(r1.text,"lxml")
             data = json.loads(soup1.find(lambda tag: (tag.name == "script") and "@context" in tag.text).text)[1]
             phone = (data['telephone'])
             # add = data['address']['streetAddress']
-            # logger.info(data)
+            # print(data)
             street_address1  =data['address']['addressLocality']
             if street_address1!='':
                 street_address_tmp = data['address']['addressLocality'].split(' ')
@@ -91,8 +86,8 @@ def fetch_data():
                 k  = data['openingHoursSpecification'][0]['opens']+" - "+data['openingHoursSpecification'][0]['closes']
                 hours_of_operation = ("Mon-Sat"+' '+str(k))
                 # # fail = data
-                # # logger.info(hours_of_operation)
-                # logger.info(hours_of_operation)
+                # # print(hours_of_operation)
+                # print(hours_of_operation)
                 # exit()
                 # hours_of_operation = "<MISSING>"   
             store = []

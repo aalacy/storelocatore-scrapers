@@ -4,11 +4,6 @@ import requests as r
 import os
 import re
 import urllib.request
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('redapplemarkets_com')
-
-
 
 # Location URL
 location_url = 'https://www.redapplemarkets.com/locations'
@@ -35,7 +30,7 @@ def pull_info(content):
     store_list = soup.find('table').tbody.find_all('tr')
 
     for item in store_list:
-        logger.info("nth cell is working^^^^^^^^^^^^^^^^^^^^^" + str(store_list.index(item)) )
+        print("nth cell is working^^^^^^^^^^^^^^^^^^^^^" + str(store_list.index(item)) )
         cells = item.find_all('td')
         for cell in cells:
             
@@ -49,9 +44,9 @@ def pull_info(content):
             elif cells.index(cell) == 2:
                 phone = cell.text
             elif cells.index(cell) == 3:
-                logger.info(cell.a['href'])
+                print(cell.a['href'])
                 if cell.a['href'] == '':
-                    logger.info('@@@@@@@@@@@@@@@@@@@@@@@@@link is none____' + location_name)
+                    print('@@@@@@@@@@@@@@@@@@@@@@@@@link is none____' + location_name)
                     locator_domain = "<MISSING>"
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
@@ -101,27 +96,27 @@ def pull_info(content):
                     locator_domain_first = cell.a['href'].replace('//','//www.')
                     
                     
-                    logger.info("@@@@@@@@@@@@@@@@@@@@@@at first page there is link+++++++")
-                    logger.info('@@@@@@' + location_name)
+                    print("@@@@@@@@@@@@@@@@@@@@@@at first page there is link+++++++")
+                    print('@@@@@@' + location_name)
                     try:
                         test_network = urllib.request.urlopen(locator_domain_first).getcode()
                         if test_network == 200:
                             locator_data = pull_content(locator_domain_first)
-                            logger.info("&&&&&&&this link works well")
-                            logger.info(test_network)
+                            print("&&&&&&&this link works well")
+                            print(test_network)
                             
                             store_infos = locator_data.find_all('li',{'class':'hidden-xs'})
                             for item_store_info_url in store_infos:
                                 if item_store_info_url.a.text.strip() == 'Store Info':
                                     
                                     locator_domain_second = item_store_info_url.a['href']
-                            logger.info('link is__________' + locator_domain_second)
+                            print('link is__________' + locator_domain_second)
                             data_of_store = pull_content(locator_domain_second)
 
                             test_multi = data_of_store.find('div',{'id':'StoreLocator'})
 
                             if test_multi is not None:
-                                logger.info('$$$$$$$$$$$$$$$$$$$this link has more than one stores-----')
+                                print('$$$$$$$$$$$$$$$$$$$this link has more than one stores-----')
                                 tr_stores = test_multi.find('table').find_all('tr')
                                 for item_tr_stores in tr_stores:
                                     
@@ -142,7 +137,7 @@ def pull_info(content):
                                             elif tds.index(item_td) == 3:
                                                 locator_domain = item_td.a['href']
                                         
-                                        logger.info('url is______' + locator_domain)       
+                                        print('url is______' + locator_domain)       
                                         data_of_store_second = pull_content(locator_domain)
                                         if data_of_store_second is not None:
                                             
@@ -191,8 +186,8 @@ def pull_info(content):
                                         store_data = store_data + [temp_data]
                             else:
                                 locator_domain = locator_domain_second
-                                logger.info('$$$$$$$$$$$$$This link has only one store******************')
-                                logger.info('url is_________' + locator_domain)
+                                print('$$$$$$$$$$$$$This link has only one store******************')
+                                print('url is_________' + locator_domain)
                                 data_of_store_second = pull_content(locator_domain)
                                 if data_of_store_second is not None:
                                     full_street_address = data_of_store_second.find('p',{'class':'Address'}).text
@@ -244,8 +239,8 @@ def pull_info(content):
                                 store_data = store_data + [temp_data]
                         
                     except:
-                        logger.info("&&&&&&&this link does not work well")
-                        logger.info(test_network)
+                        print("&&&&&&&this link does not work well")
+                        print(test_network)
                         locator_domain = locator_domain_first
                         latitude = "<MISSING>"
                         longitude = "<MISSING>"

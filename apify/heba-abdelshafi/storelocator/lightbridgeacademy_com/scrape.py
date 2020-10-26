@@ -4,11 +4,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lightbridgeacademy_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -41,10 +36,10 @@ def fetch_data():
             coordlist.append(temp)   
     
     page = 0
-    #logger.info(coordlist)
+    #print(coordlist)
     while True:
         url = 'https://lightbridgeacademy.com/center-locator/?page='+str(page)+'&ajax=1'
-        #logger.info(url)
+        #print(url)
         #input()
         r = session.get(url, headers=headers, verify=False)
         if r.text.find('No additional results found') > -1:
@@ -55,13 +50,13 @@ def fetch_data():
             for div in divlist:
                 title = div.find('h3').text.lstrip()
                 link = 'https://lightbridgeacademy.com'+div.find('a')['href']
-                #logger.info(link)                
+                #print(link)                
                 det = div.find('div',{'class':'info'}).findAll('div')                
                 address = det[0].findAll('span')        
                 street = address[0].text.lstrip().replace('\t\t\t\t\t\t\t','')
                 city=address[1].text.lstrip().replace(',','').replace('\n','')
                 state, pcode = address[2].text.lstrip().split(' ',1)
-                #logger.info(title,page,link)
+                #print(title,page,link)
                 try:
                     
                     try:
@@ -81,13 +76,13 @@ def fetch_data():
                     
                     if title.find(',') > -1:
                         check = title.lstrip().lower().split(',')[0]
-                        #logger.info(check)
+                        #print(check)
                     else:
-                        #logger.info("ERROR")
+                        #print("ERROR")
                         check = title.lstrip().lower().split(' ',1)[0]
                         flag = 1
                         
-                    #logger.info(title,check,flag)  
+                    #print(title,check,flag)  
                     for i in range(0,len(coordlist)):                
                        
                         if coordlist[i][0].strip().lower()== check:
@@ -95,8 +90,8 @@ def fetch_data():
                                 lat = coordlist[i][2]
                                 longt = coordlist[i][3]
                             elif flag == 1:
-                                #logger.info(check,coordlist[i][0])
-                                logger.info(coordlist[i][0])
+                                #print(check,coordlist[i][0])
+                                print(coordlist[i][0])
                                 lat = coordlist[i][1]
                                 longt = coordlist[i][2]
                                 
@@ -109,7 +104,7 @@ def fetch_data():
                                  'US','<MISSING>',phone,'<MISSING>',
                                  lat,longt,hours])
                     
-                    #logger.info(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     #input("NEXT")
                 except Exception as e:                    
@@ -123,9 +118,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

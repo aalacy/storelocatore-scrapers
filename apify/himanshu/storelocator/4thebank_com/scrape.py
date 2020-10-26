@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('4thebank_com')
-
-
 
 
 session = SgRequests()
@@ -39,10 +34,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = session.get("https://www.busey.com/_/api/branches/" + str(x) + "/" + str(y) + "/500",headers=headers)
         data = r.json()["branches"]
         for store_data in data:
@@ -75,10 +70,10 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
         if len(data) < MAX_RESULTS:
-            #logger.info("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            #logger.info("max count update")
+            #print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

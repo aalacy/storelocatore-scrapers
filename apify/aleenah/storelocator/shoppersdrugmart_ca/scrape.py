@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shoppersdrugmart_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,18 +22,18 @@ def fetch_data():
     res=session.get("https://stores.shoppersdrugmart.ca/en/listing/")
     soup = BeautifulSoup(res.text, 'html.parser')
     sa = soup.find_all('a', {'class': 'strloc-allstr-store-link'})
-    logger.info(len(sa))
+    print(len(sa))
     for a in sa:
         url=a.get('href')
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         #jso = soup.find_all('script', {'type': 'application/ld+json'})[1].text
-        logger.info(url)
-        #logger.info(jso.text)
+        print(url)
+        #print(jso.text)
         #jso=json.loads(jso.text)
 
         loc=soup.find('h1').text
-        #logger.info(loc)
+        #print(loc)
         addr=soup.find('p', {'class': 'store-details__address'}).text.strip().split("\n")
         street=addr[0].strip()
         addr=addr[1].strip().split(",")
@@ -54,7 +49,7 @@ def fetch_data():
             tim.append("Saturday Closed")
             tim.append("Sunday Closed")
         elif len(tim)<5:
-            logger.info("errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrfrrrrrrrrrrrrrrrrrrrrrrrrrr")
+            print("errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrfrrrrrrrrrrrrrrrrrrrrrrrrrr")
         
         tim=" ".join(tim).replace("Mo","Monday").replace("Tu","Tuesday").replace("We","Wednesday").replace("Th","Thursday").replace("Fr","Friday").replace("Sa","Saturday").replace("Su","Sunday")
 
@@ -64,7 +59,7 @@ def fetch_data():
         tim=""
         for td in tds:
             tim+=td.text.strip()+" "
-        #logger.info(tim)
+        #print(tim)
         phone=soup.find('a', {'class': 'phone'}).text
         """phone=re.findall(r'"telephone": "([^"]+)',jso)[0]
         street=re.findall(r'"streetAddress": "([^"]+)',jso)[0]

@@ -6,11 +6,6 @@ import http.client
 import sgzip
 import json
 import pprint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hallmark_com')
-
-
 
 
 
@@ -60,7 +55,7 @@ def fetch_data():
         longitude = ""
         hours_of_operation = ""
         page_url = ''
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             r = session.get("https://maps.hallmark.com/api/getAsyncLocations?template=searchResultsMap&level=search&radius=" + str(MAX_DISTANCE) + "&search=" + str(search.current_zip),
                              headers).json()
@@ -78,9 +73,9 @@ def fetch_data():
                 city = div_data[2].text.strip().split(',')[0]
                 state = div_data[2].text.strip().split(
                     ',')[1].strip().split(' ')[0].strip()
-                # logger.info(div_data[1])
+                # print(div_data[1])
                 # zip  =  div_data[2].text.strip().split(',')[1].strip().split(' ')[1].strip()
-                # logger.info(div_data[2].text)
+                # print(div_data[2].text)
                 ca_zip_list = re.findall(
                     r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(div_data[2].text))
                 us_zip_list = re.findall(re.compile(
@@ -108,14 +103,14 @@ def fetch_data():
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 location_name = soup1.find(
                     'div', {'class': 'rio-locationName is-bold gutter-bottom-tiny'}).text.strip()
-                # logger.info("==============",)
+                # print("==============",)
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(
                     soup1.find("div", {"class": "rio-phone"}).find("a").text))
                 if phone_list:
                     phone = phone_list[-1]
                 else:
                     phone = ''
-                # logger.info(phone)
+                # print(phone)
 
                 hours_of_operation = ''
                 if soup1.find('div', {'class': 'hours'}) != None:
@@ -146,14 +141,14 @@ def fetch_data():
                 store.append(
                     hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                # logger.info("data=====", str(store))
+                # print("data=====", str(store))
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

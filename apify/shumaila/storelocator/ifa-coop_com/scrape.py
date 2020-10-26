@@ -5,11 +5,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ifa-coop_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,7 +32,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     divlist = soup.findAll('div', {'class': 'store-entry'})
-    logger.info(len(divlist))
+    print(len(divlist))
     det = str(soup)
     start = 0
     for div in divlist:
@@ -51,7 +46,7 @@ def fetch_data():
         address = maindiv[0:maindiv.find('Store Hours:')].replace('\n','').replace('\r','')
         hours = maindiv[maindiv.find('Store Hours:'):maindiv.find('Phone Number:')]
         phone = maindiv[maindiv.find('Phone Number:'): len(maindiv)]        
-        #logger.info(address)
+        #print(address)
         address = usaddress.parse(address)
         i = 0
         street = ""
@@ -71,7 +66,7 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
-        logger.info('>>')
+        print('>>')
         soup = str(soup)
         start = soup.find('data-lat=')
         start = soup.find('"',start) + 1
@@ -87,7 +82,7 @@ def fetch_data():
         if pcode == '':
             pcode = '<MISSING>'
         tempcity = title[0:title.find(' IFA')]
-        logger.info(tempcity,city.replace(',',''))
+        print(tempcity,city.replace(',',''))
         if tempcity.strip() != city.replace(',','').strip() and city.find('North') == -1:
             street = street + ' ' + city
             city = tempcity
@@ -105,7 +100,7 @@ def fetch_data():
                         longt,
                         hours.replace('Store Hours: ','').replace('\t','')
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                 
 
@@ -117,9 +112,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

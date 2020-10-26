@@ -4,11 +4,6 @@ import string
 import re
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rentacenter_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,11 +30,11 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     mainul = soup.find('div',{'id':'contains-place'})
     statelinks = mainul.findAll('a')
-    #logger.info(statelinks)
+    #print(statelinks)
     cleanr = re.compile(r'<[^>]+>')
     for states in statelinks:
         statelink = 'https://locations.rentacenter.com'+ states['href']+'#contains-place-toggle'
-        #logger.info(statelink)
+        #print(statelink)
         if True :           
             page1 = session.get(statelink, headers=headers, verify=False)
             soup1 = BeautifulSoup(page1.text, "html.parser")
@@ -47,17 +42,17 @@ def fetch_data():
             citylinks = mainul1.findAll('a')
             for cities in citylinks:
                 citylink = 'https://locations.rentacenter.com'+ cities['href']
-                #logger.info(citylink)
+                #print(citylink)
                 page2 = session.get(citylink, headers=headers, verify=False)
                 soup2 = BeautifulSoup(page2.text, "html.parser")
                 #mainul2 = soup2.find('ul', {'class': 'list-group'})
                 mainul2 = soup2.find('div', {'id': 'nearby-locations'})
                 branchlinks = mainul2.findAll('div',{'class':'location-nearby'})
-                #logger.info(len(branchlinks))              
+                #print(len(branchlinks))              
                 if len(branchlinks) > 0:
                     for branch in branchlinks:
                         link = 'https://locations.rentacenter.com'+ branch.find('a',{'class':'location-nearby-name'})['href']
-                        #logger.info(link)
+                        #print(link)
                         phone = '<MISSING>'
                         lat =  '<MISSING>'
                         longt =  '<MISSING>'
@@ -114,7 +109,7 @@ def fetch_data():
                             pcode =  '<MISSING>'
                         
                         data.append(['https://www.rentacenter.com/', link, title, street, city, state, pcode,'US', '<MISSING>', phone.lstrip(), '<MISSING>', lat ,longt, hours])
-                        #logger.info(p,data[p])
+                        #print(p,data[p])
                         #input()
                         p += 1
 

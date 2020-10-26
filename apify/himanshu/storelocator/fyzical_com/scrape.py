@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fyzical_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -49,17 +44,17 @@ def fetch_data():
         page_url = data['Long_description_url']
         
         hours=''
-        # logger.info(page_url)
+        # print(page_url)
         # data1 = bs(session.get(page_url).text,'lxml')
         # data_id = (data1.find("div",{"class":"psll-listfull"})['data-id'])
         # data1 = bs(session.get("https://www.fyzical.com/kenai/getwidget.php?wtype=locationslist&uid="+str(data_id)+"&wraw=").text,'lxml')
-        # logger.info(data1.find("div",{"class":"psl-text-cell psl-text-hours"}))
+        # print(data1.find("div",{"class":"psl-text-cell psl-text-hours"}))
         for hour in data['Workhours']:
             if data['Workhours'][hour]['Always_closed']=="yes":
                 hours = hours+ ' ' +data['Workhours'][hour]['Weekday'] + ' Closed '
             else:
                 hours =hours+' '+ data['Workhours'][hour]['Weekday']+ ' '+data['Workhours'][hour]['Opening_time']+' '+data['Workhours'][hour]['Closing_time']
-        # logger.info(hours)
+        # print(hours)
         store_number = "<MISSING>"
         store = []
         store.append("https://www.fyzical.com")
@@ -80,7 +75,7 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
      

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('carespot_com')
-
-
 
 
 session = SgRequests()
@@ -64,7 +59,7 @@ def fetch_data():
         store.append(location_hours if location_hours != "" else "<MISSING>")
         store.append(page_url)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # logger.info(store)
+        # print(store)
         return_main_object.append(store)
     return return_main_object
 

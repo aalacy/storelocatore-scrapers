@@ -5,11 +5,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('freddysusa_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,7 +32,7 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     store_list = soup.findAll('div', {'class': 'locationSearchResult'})
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     for store in store_list:
         street = ""
@@ -46,7 +41,7 @@ def fetch_data():
         pcode = ""       
         store = store.find('a')
         if store.text.find("COMING SOON") == -1:
-        #logger.info(states.text.strip())
+        #print(states.text.strip())
             link= 'https://freddysusa.com/store/'+store['href']
             r = session.get(link, headers=headers, verify=False)
             ccode = 'US'
@@ -60,7 +55,7 @@ def fetch_data():
             if flag == 0:
                 title = soup.find('p',{'class':'storeName'}).text
                 address = str(soup.find('p',{'class':'storeAddress'}))
-                #logger.info(address)
+                #print(address)
                 start = address.find('>')+ 1
                 end = address.find('<',start)
                 street = address[start:end]
@@ -71,7 +66,7 @@ def fetch_data():
                 address = address.lstrip()
                 state,pcode = address.split(' ',1)
                 
-                #logger.info(city,state,pcode)   
+                #print(city,state,pcode)   
                 try:
                     phone = soup.find('p',{'class':'storePhone'}).text
                 except:
@@ -99,7 +94,7 @@ def fetch_data():
                     hours = '<MISSING>'
                 street = street.replace('&amp;','&')
                 data.append(['https://freddysusa.com/',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>","<MISSING>","<MISSING>",hours])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 #input()
                 p += 1
                 
@@ -112,9 +107,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -8,11 +8,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lawlersbarbecue_com')
-
-
 session = SgRequests()
 
 
@@ -45,10 +40,10 @@ def fetch_data():
                 h[phone_data]=" ".join(store_data["openingHours"])          
 
     for data in json_data:
-        # logger.info(data)
+        # print(data)
         store = []
         store.append("https://www.lawlersbarbecue.com")
-        # logger.info()
+        # print()
         store.append(" ".join(data["Name"].replace("#",'').strip().split( )[1:]))
         phone_data = data['Phone'].replace("+1(","").replace(")","").replace("-","").replace(" ","")
         store.append(data['Address'])

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('plainscapital_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +27,7 @@ def fetch_data():
                     lng = item.split('lng="')[1].split('"')[0]
                     locs.append('https://www.plainscapital.com/location/' + item.split('"')[0] + '|' + lat + '|' + lng)
     for loc in locs:
-        logger.info('Pulling Location %s...' % loc.split('|')[0])
+        print('Pulling Location %s...' % loc.split('|')[0])
         r2 = session.get(loc.split('|')[0], headers=headers)
         website = 'plainscapital.com'
         typ = 'Branch'

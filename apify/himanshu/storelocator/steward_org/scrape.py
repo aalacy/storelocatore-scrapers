@@ -4,11 +4,6 @@ import re
 from sgrequests import SgRequests
 import json
 import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('steward_org')
-
-
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -35,7 +30,7 @@ def fetch_data():
     state_list = soup.find("div",class_="state-list-column").find("div",class_="c-directory-list")
     for link in state_list.find_all("a",class_="c-directory-list-content-item-link"):
         a = "https://locations.steward.org/"+link["href"]
-        # logger.info(a)
+        # print(a)
         r1 = session.get(a,headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         try:
@@ -63,11 +58,11 @@ def fetch_data():
                     try:
                         hours_of_operation = " ".join(list(soup3.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
                     except:
-                        # logger.info("page_url == ",page_url)
+                        # print("page_url == ",page_url)
                         hours_of_operation = "<MISSING>"
                     latitude = soup3.find("meta",{"itemprop":"latitude"})["content"]
                     longitude   = soup3.find("meta",{"itemprop":"longitude"})["content"]
-                    # logger.info(city)
+                    # print(city)
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     store = [x if x else "<MISSING>" for x in store]
@@ -75,8 +70,8 @@ def fetch_data():
                     if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
                         continue
                     addresses.append(store[1]+" "+store[2]+" "+store[-3])
-                    #logger.info("data = " + str(store))
-                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
                     
 
@@ -103,11 +98,11 @@ def fetch_data():
                     try:
                         hours_of_operation = " ".join(list(soup3.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
                     except:
-                        # logger.info("page_url == ",page_url)
+                        # print("page_url == ",page_url)
                         hours_of_operation = "<MISSING>"
                     latitude = soup3.find("meta",{"itemprop":"latitude"})["content"]
                     longitude   = soup3.find("meta",{"itemprop":"longitude"})["content"]
-                    # logger.info(city)
+                    # print(city)
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     store = [x if x else "<MISSING>" for x in store]
@@ -116,8 +111,8 @@ def fetch_data():
                         continue
                     addresses.append(store[1]+" "+store[2]+" "+store[-3])
 
-                    # logger.info("data = " + str(store))
-                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
             else:
                 page_url = a
@@ -140,9 +135,9 @@ def fetch_data():
                 if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
                         continue
                 addresses.append(store[1]+" "+store[2]+" "+store[-3])
-                # logger.info(street_address)
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print(street_address)
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
                 
     r = session.get("https://www.steward.org/network/our-hospitals",headers=headers)

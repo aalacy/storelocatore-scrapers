@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lincoln_com')
-
-
 
 
 
@@ -74,8 +69,8 @@ def fetch_data():
         # lat = coord[0]
         # lng = coord[1]
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         # lat = -42.225
         # lng = -42.225
@@ -83,7 +78,7 @@ def fetch_data():
         # zip_code = 11576
         get_u = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
         # location_url = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
-        # logger.info('location_url ==' +location_url))
+        # print('location_url ==' +location_url))
         try:
             k = session.get(get_u, headers=headers).json()
         except:
@@ -137,7 +132,7 @@ def fetch_data():
                     tem_var1.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
                     tem_var1.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
                     store_detail.append(tem_var1)
-                    # logger.info(tem_var1)
+                    # print(tem_var1)
           
 
         if "Response" in k and "Dealer" in k['Response']:
@@ -149,7 +144,7 @@ def fetch_data():
                 else:
                     street_address = "<MISSING>"
 
-                # logger.info(street_address)
+                # print(street_address)
 
                 if k['Response']["Dealer"]['ldlrcalltrk_lad']:
                     phone =  k['Response']["Dealer"]['ldlrcalltrk_lad']
@@ -197,22 +192,22 @@ def fetch_data():
                 tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
                 tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
                 store_detail.append(tem_var)            
-                # logger.info(tem_var)
+                # print(tem_var)
      
         result_coords.append((latitude, longitude))
         if x+y < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif x+y == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         # coord = search.next_coord()   # zip_code = search.next_zip()  
         zip_code = search.next_zip()  
     
-    # logger.info(len(store_name))
-    # logger.info(len(store_detail))
+    # print(len(store_name))
+    # print(len(store_detail))
 
     for i in range(len(store_name)):
         store = list()

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pier49_com')
-
-
 
 
 
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -57,9 +52,9 @@ def fetch_data():
 
     for script in soup.find_all('div', {'class': re.compile('row_inner col_align_middle gutter-none')}):
         # coords = soup.find(lambda tag: (tag.name == "a" and "Google Maps" in tag.text))
-        # logger.info(coords)
+        # print(coords)
         list_store_data = list(script.stripped_strings)
-        # logger.info(str(len(list_store_data))+' == list_store_data === '+str(list_store_data))
+        # print(str(len(list_store_data))+' == list_store_data === '+str(list_store_data))
         if len(list_store_data) > 0 :
             if 'ORDER ONLINE' in list_store_data:
                 list_store_data.remove('ORDER ONLINE')
@@ -79,7 +74,7 @@ def fetch_data():
             if 'Google Maps' in list_store_data:
                 list_store_data.remove('Google Maps')
 
-            # logger.info(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
+            # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
 
             location_name = list_store_data[0]
             phone = list_store_data[1]
@@ -90,7 +85,7 @@ def fetch_data():
                 zipp = list_store_data[3].split(',')[1].strip().split(' ')[-1]
                 state = list_store_data[3].split(',')[1].strip().split(' ')[-2]
                 hours_of_operation= ",".join(list_store_data[4:]).replace('ORDER ONLINE (NEW!)','').strip()
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
 
             except:
                 street_address = '<MISSING>'
@@ -98,7 +93,7 @@ def fetch_data():
                 zipp = '<MISSING>'
                 state = '<MISSING>'
                 hours_of_operation = ",".join(list_store_data[2:])
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
 
             country_code = 'US'
             store_number = '<MISSING>'
@@ -109,8 +104,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             store = ["<MISSING>" if x == None or x == '' else x for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             if street_address != '<MISSING>':
                 return_main_object.append(store)

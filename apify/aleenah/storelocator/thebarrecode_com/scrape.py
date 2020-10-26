@@ -2,11 +2,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thebarrecode_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -39,9 +34,9 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     divs = soup.find_all('div', {'class': 'studio-box studio-box-toprow studio-column'})
     divs+= soup.find_all('div', {'class': 'studio-box studio-column'})
-    logger.info(len(divs))
+    print(len(divs))
     sa = soup.find_all('a',{'class':'hoveranchor'})
-    logger.info(len(sa))
+    print(len(sa))
     for a in sa:
         url="https://www.thebarrecode.com/studios/"+a.get("href")
         page_url.append(url)
@@ -64,12 +59,12 @@ def fetch_data():
         except:
             k=9
         if len(tex)<6:
-            logger.info(tex)
+            print(tex)
         ids.append(tex[0].strip())
         locs.append(tex[2].strip())
         street.append(tex[3].strip())
         addr=tex[4].strip().split(",")
-        logger.info(addr)
+        print(addr)
         cities.append(addr[0])
         addr=addr[1].strip().split(" ")
         states.append(addr[0])

@@ -6,11 +6,6 @@ import json
 import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('marriott_com')
-
-
 session = SgRequests()
 base_url = 'https://www.marriott.com/'
 
@@ -74,7 +69,7 @@ def fetch_data():
                             longitude = (g['longitude'])
                             key = (g['marsha_code'])
                             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-                            # logger.info(page_url)
+                            # print(page_url)
                             output = []
                             output.append(base_url) # url
                             output.append(location_name) #location name
@@ -92,10 +87,10 @@ def fetch_data():
                             output.append(page_url)#opening hours            
                             yield output
     for i1 in data_8:
-        # logger.info(i1)
+        # print(i1)
         for j1 in i1['region_countries']:
             for k1 in j1['country_states']:
-                # logger.info(k1)
+                # print(k1)
                 for h1 in k1['state_cities']:
                     for g1 in (h1['city_properties']):
                         if "CA" in (g1['country_code']):
@@ -110,7 +105,7 @@ def fetch_data():
                             longitude = (g1['longitude'])
                             key = (g1['marsha_code'])
                             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
-                            # logger.info(page_url)
+                            # print(page_url)
                             output = []
                             output.append(base_url) # url
                             output.append(location_name) #location name

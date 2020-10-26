@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 # import html5lib
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('iga_com')
-
-
 
 
 
@@ -63,12 +58,12 @@ def fetch_data():
         r = session.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
                          "&locationLat=38.65818091399883&locationLng=-115.09908940607174", headers=headers);
         # r1 = "https://www.iga.com/find-a-store?page=" + str(page_no) +"&locationLat=38.65818091399883&locationLng=-115.09908940607174"
-        # logger.info(r1)
+        # print(r1)
 
         soup = BeautifulSoup(r.text, "html.parser")
 
         if soup.find('div', class_="store-card") == None:
-            # logger.info("None")
+            # print("None")
             isFinish = True
         else:
             # details = "page_no==" + str(page_no) + "==store_card==" +  str(soup.find_all('div', class_="store-card"))
@@ -94,8 +89,8 @@ def fetch_data():
                 if len(zipp) == 4:
                     zipp = "0" + zipp
                 # if "42106" == zipp or "42113" == zipp or "17328" == zipp:
-                #     logger.info(tag_address)
-                #     logger.info('~~~~~~~~~~~~~~~~~~~~~`')
+                #     print(tag_address)
+                #     print('~~~~~~~~~~~~~~~~~~~~~`')
                 latitude = tag_address['data-lat']
                 longitude = tag_address['data-long']
                 phone = tag_address.find(
@@ -103,8 +98,8 @@ def fetch_data():
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info(
+                # print("data = " + str(store))
+                # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)

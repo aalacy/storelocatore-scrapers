@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bluemartinilounge_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -17,7 +12,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -65,8 +60,8 @@ def fetch_data():
             if hours != None:
                 list_hours = list(hours.stripped_strings)
                 hours_of_operation = " ".join(" ".join(list_hours).strip().split(':')[1:]).strip()
-                # logger.info(hours_of_operation)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                # print(hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
             else:
                 hours = cont.find('p',class_='f25')
                 list_hours = list(hours.stripped_strings)
@@ -83,10 +78,10 @@ def fetch_data():
                 city =address[-2].strip()
                 state = address[-1].split()[0].strip()
                 zipp = address[-1].split()[-1].strip()
-                # logger.info(street_address + " | "+city+ " | "+state+" | "+zipp)
+                # print(street_address + " | "+city+ " | "+state+" | "+zipp)
             else:
                 details = cont.find_all('p',class_='f30')[2]
-                # logger.info(details)
+                # print(details)
                 if "Event Manager" not in details.text:
                     zipp = "34108"
                     list_details= list(details.stripped_strings)
@@ -112,8 +107,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        #logger.info("data = " + str(store))
-        #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        #print("data = " + str(store))
+        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 def scrape():

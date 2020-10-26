@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('deere_com')
-
-
 session = SgRequests()
 
 
@@ -40,7 +35,7 @@ def fetch_data():
 
     while coord:
         result_coords =[]
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         filterElement=[
 				{
 					"id":7,

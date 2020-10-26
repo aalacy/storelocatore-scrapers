@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('buddyspizza_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -54,7 +49,7 @@ def fetch_data():
     all_store_data = []
     for link in link_list:
         response = session.get(link, headers = HEADERS)
-        logger.info(link)
+        print(link)
         time.sleep(2)
         soup = BeautifulSoup(response.content, 'html.parser')
         main = soup.find('div', {'id': 'content'})
@@ -99,7 +94,7 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-        logger.info('-----')
+        print('-----')
         
     return all_store_data
 

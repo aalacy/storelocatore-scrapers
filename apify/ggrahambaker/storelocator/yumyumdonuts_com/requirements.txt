@@ -3,4 +3,3 @@ sgrequests
 usaddress==0.5.10
 # uncomment if you use selenium
 # selenium==3.141.0
-sglogging

@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import shapely
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('astonmartin_com')
-
-
 
 
 session = SgRequests()
@@ -30,7 +25,7 @@ def fetch_data():
     return_main_object=[]
     output=[]
     for cd in cord:
-        logger.info(cd)
+        print(cd)
         try:
             r = session.get("https://www.astonmartin.com/api/enquire/findDealers?latitude="+cd[0]+"&longitude="+cd[1]+"&cultureName=en-US&take=15000").json()
             for loc in r:

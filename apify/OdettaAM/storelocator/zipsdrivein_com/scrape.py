@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zipsdrivein_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -45,11 +40,11 @@ def fetch_data():
     stores2 = driver.find_elements_by_css_selector('table > tbody > tr > td > div > table:nth-child(3) > tbody > tr > td:nth-child(2) > p')
     stores3 = driver.find_elements_by_css_selector('table > tbody > tr > td > div > table:nth-child(3) > tbody > tr > td:nth-child(3) > p')
     stores = stores1 + stores2 + stores3
-    logger.info(len(stores))
+    print(len(stores))
     for store in stores:
         info = store.text
         #if "Airway" in info:
-         #logger.info(info)
+         #print(info)
         li = info.splitlines()
         if len(li) ==4:
             location_name = li[0]

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('crazy8_com')
-
-
 
 
 session = SgRequests()
@@ -23,13 +18,13 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    logger.info("started")
+    print("started")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     return_main_object = []
     r = session.get("https://www.childrensplace.com/us/stores",headers=headers)
-    # logger.info(r)
+    # print(r)
     store_id = r.text.split("storeId=")[1].split("&")[0]
     base_url = "https://crazy8.com"
     for country in ["united states","canada"]:
@@ -43,7 +38,7 @@ def fetch_data():
         data = r.json()["PhysicalStore"]
         for store_data in data:
             page_url = "https://www.childrensplace.com/us/store/" + store_data['uniqueID']
-            # logger.info(page_url)
+            # print(page_url)
             while True:
                 try:
                     location_request = session.get(page_url,headers=headers)
@@ -71,7 +66,7 @@ def fetch_data():
                     hours = " ".join(list(location_soup.find("ul",{'class':"store-day-and-time"}).stripped_strings))
                     store.append(hours if hours else "<MISSING>")
                     store.append(page_url)
-                    # logger.info(store)
+                    # print(store)
                     yield store
             
 def scrape():

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('franchise-biguine_com')
-
-
 
 
 session = SgRequests()
@@ -34,13 +29,13 @@ def fetch_data():
     exists = soup.find('div', {'class', 'pagination'}).findAll('li')[-2].findAll('span')[-1].get_text()
     for pages in range(1, int(exists)+1):
         data_url = "https://www.franchise-biguine.com/trouver-mon-salon/sort:distance/direction:asc/page:" + str(pages)
-        logger.info(data_url)
+        print(data_url)
         detail_url = session.get(data_url, headers=headers)
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
         if detail_soup.find('div', {'class', 'appartment-listing'}):
             for values in detail_soup.find('div', {'class', 'appartment-listing'}).findAll('div', {'class', 'item'}):
                 location_name = values.find('h2').get_text().strip()
-                logger.info(location_name)
+                print(location_name)
                 address = re.sub(' +', ' ', values.find('p', {'class', 'street'}).get_text().strip().replace('\r\n', ' ').strip()).split(',')
                 street_address = ' '.join(address[:-1])
                 city = location_name

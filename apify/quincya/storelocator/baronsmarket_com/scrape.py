@@ -5,11 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('baronsmarket_com')
-
-
 
 def get_driver():
     options = Options() 
@@ -41,8 +36,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'accordion_title'})
 
@@ -52,7 +47,7 @@ def fetch_data():
 		if "Opening" not in item.text:
 			locator_domain = "baronsmarket.com"
 			location_name = item.find('h2').text.strip()
-			logger.info(location_name)
+			print (location_name)
 			raw_data = str(item.find('a').text).replace("  ",";")
 			street_address = raw_data[:raw_data.rfind(';')].strip()
 			city = raw_data[raw_data.rfind(';')+1:raw_data.find(',')].strip()

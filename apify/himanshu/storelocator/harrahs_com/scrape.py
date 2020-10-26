@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('harrahs_com')
-
-
 
 
 
@@ -38,12 +33,12 @@ def fetch_data():
     lat = []
     lng = []
     for location in soup.find_all("option", {'data-type': "PROPERTY"}):
-        # logger.info(location.prettify())
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print(location.prettify())
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         try:
             location_request = session.get(
                 "https://www.caesars.com/api/v1/properties/" + location["data-propcode"], headers=headers)
-            # logger.info("https://www.caesars.com/api/v1/properties/" +
+            # print("https://www.caesars.com/api/v1/properties/" +
             #       location["data-propcode"])
             store_data = location_request.json()
         except:
@@ -78,8 +73,8 @@ def fetch_data():
     #     hours = "<MISSING>"
     #     store.append(hours if hours else "<MISSING>")
     #     store.append("<MISSING>")
-    #     logger.info("data == " + str(store))
-    #     logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+    #     print("data == " + str(store))
+    #     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
     #     yield store
     r = session.get(
         "https://www.caesars.com/myrewards/casino-directory", headers=headers)
@@ -90,7 +85,7 @@ def fetch_data():
         if "https:" not in a["href"]:
             if "harrahs-cherokee" in a["href"]:
                 page_url = "https:" + a["href"]
-                # logger.info(page_url)
+                # print(page_url)
                 # https://www.caesars.com/harrahs-cherokee
             elif "caesars-southern-indiana" in a["href"]:
                 page_url = "https://www.caesars.com/" + a["href"]
@@ -99,11 +94,11 @@ def fetch_data():
         if page_url in p:
             continue
         p.append(page_url)
-        # logger.info(page_url)
+        # print(page_url)
         try:
             r_loc = session.get(page_url, headers=headers)
 
-            # logger.info(page_url)
+            # print(page_url)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             locator_domain = "https://www.harrahs.com"
             store_number = "<MISSING>"
@@ -121,8 +116,8 @@ def fetch_data():
                     latitude = lat[i]
                     longitude = lng[i]
 
-                # logger.info(street_address + " " + add[i])
-                # logger.info("~~~~~~~~~~~~~~~~~`")
+                # print(street_address + " " + add[i])
+                # print("~~~~~~~~~~~~~~~~~`")
             city = address[1].strip().split(",")[0].strip()
             state = address[1].strip().split(",")[1].split()[0].strip()
             zipp_tag = address[1].strip()
@@ -148,7 +143,7 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
         except Exception as e:
-            # logger.info(page_url)
+            # print(page_url)
             # https://www.caesars.com//content/cet-global/caesars-com/caesars-southern-indiana---> this can't br reached
             pass
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -160,13 +155,13 @@ def fetch_data():
         # if street_address in addresses:
         #     continue
         # addresses.append(street_address)
-        # logger.info(state)
-        # logger.info("data = " + str(store))
-        # logger.info(
+        # print(state)
+        # print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
-        # logger.info(page_url)
+        # print(page_url)
 
 
 def scrape():

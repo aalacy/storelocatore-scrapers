@@ -6,11 +6,6 @@ import json
 import certifi # This should be already installed as a dependency of 'requests'
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pauldavis_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', 'w', newline='') as output_file:
@@ -19,7 +14,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():  
@@ -97,7 +92,7 @@ def fetch_data():
                 page_url = url
             else:
                 page_url = "https://" + url
-            #logger.info("Page url is",page_url)
+            #print("Page url is",page_url)
             if page_url == "https://pauldavis.com":
                 continue
             if page_url in links:
@@ -172,7 +167,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info(store)
+            # print(store)
             yield store
 
 def scrape():

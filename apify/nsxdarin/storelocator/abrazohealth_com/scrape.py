@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abrazohealth_com')
-
-
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +37,7 @@ def fetch_data():
                     hours = ''
                     typ = '<MISSING>'
                     if 'coming-soon' not in loc:
-                        logger.info('Pulling Location %s...' % loc)
+                        print('Pulling Location %s...' % loc)
                         r2 = session.get(loc, headers=headers)
                         Found = False
                         for line2 in r2.iter_lines():

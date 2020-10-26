@@ -6,11 +6,6 @@ import re
 import json
 import urllib3
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cinemark_com')
-
-
 session = SgRequests()
 requests.packages.urllib3.disable_warnings()
 def write_output(data):
@@ -46,7 +41,7 @@ def fetch_data():
         #     continue
 
         page_url = "https://centurytheatres.com"+link['href']
-        #logger.info(page_url)
+        #print(page_url)
         r1 = session.get(page_url, headers=headers, verify=False)
         soup1 = BeautifulSoup(r1.text, "lxml")
         info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text
@@ -82,8 +77,8 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
-        # logger.info("data =="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
         
        

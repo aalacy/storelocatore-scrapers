@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('grifolsplasma_com___hash_tpr')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +35,7 @@ def fetch_data():
     link_list = []
     for loc in locs:
         loc_type = loc.find('h5').text
-        # logger.info(loc_type)
+        # print(loc_type)
         if 'Talecris Plasma Resources' not in loc_type:
             continue
 
@@ -51,7 +46,7 @@ def fetch_data():
             continue
     all_store_data = []
     for link in link_list:
-        # logger.info(link[0])
+        # print(link[0])
         if 'https://www.grifolsplasma.com/en/-/topeka-ks' == link[0]:
             continue
         r = session.get(link[0], headers = HEADERS)

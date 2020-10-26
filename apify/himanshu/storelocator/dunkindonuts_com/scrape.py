@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dunkindonuts_com')
-
-
 
 
 
@@ -55,7 +50,7 @@ def fetch_data():
 
         ck = soup.text.split('jQuery22408729727990432037_1568814338463(')[1].split(');')[0]
         data_json = json.loads(ck)
-        # logger.info(data_json)
+        # print(data_json)
         if "searchResults" in data_json:
             current_results_len = len(data_json['searchResults'])
             for x in data_json['searchResults']:
@@ -108,17 +103,17 @@ def fetch_data():
                     hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else "<MISSING>")
 
-                # logger.info("data == " + str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data == " + str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
             
 
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

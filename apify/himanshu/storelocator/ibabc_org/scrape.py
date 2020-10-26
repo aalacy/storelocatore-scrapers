@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup, Comment
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ibabc_org')
-
-
 
 
 
@@ -76,7 +71,7 @@ def fetch_data():
         state_list = state_tag.split()
         if len(state_list) == 1:
             state = state_list[0]
-            # logger.info(state)
+            # print(state)
             if "Burnaby" == state:
                 state = "<MISSING>"
         elif len(state_list) == 2:
@@ -97,14 +92,14 @@ def fetch_data():
         else:
             pass
 
-        # logger.info(state_tag)
+        # print(state_tag)
         # if hasNumbers(state_tag):
         #     state_list = re.findall(r' ([A-Z]{2}) ', str(state_tag))
         #     if state_list != []:
         #         state = state_list[0].strip().replace(
         #             'Vancouver', '').replace('Richmond', '').strip()
         #     else:
-        #         # logger.info(address_list)
+        #         # print(address_list)
         #         state = "<MISSING>"
         # else:
 
@@ -116,10 +111,10 @@ def fetch_data():
             city = "".join(c_list)
         if len(c_list) == 2 and ("BC" != c_list[-1] and "0B5" != c_list[-1]):
             city = " ".join(c_list)
-            # logger.info(city)
+            # print(city)
         if len(c_list) == 2 and ("BC" == c_list[-1]):
             city = "".join(c_list[0])
-            # logger.info(city)
+            # print(city)
         if "0B5" == c_list[-1]:
             city = "North Vancouver"
 
@@ -135,8 +130,8 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
     return return_main_object

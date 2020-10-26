@@ -6,11 +6,6 @@ import http.client
 import sgzip
 import json
 import  pprint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('suzukicycles_com')
-
-
 
 
 
@@ -48,7 +43,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "lxml")
         kk = soup.find_all('dealerinfo')
         for val in kk:
-                # logger.info("data====",val)
+                # print("data====",val)
                 locator_domain = base_url
 
                 location_name = val.find('name').text
@@ -89,19 +84,19 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                # logger.info("===", str(store))
+                # print("===", str(store))
                 # return_main_object.append(store)
                 yield store
         if len(kk) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(kk) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
 
-        # logger.info('hii')
+        # print('hii')
         coords = search.next_zip()
         # break
 

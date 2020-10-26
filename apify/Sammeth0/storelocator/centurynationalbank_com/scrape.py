@@ -3,11 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('centurynationalbank_com')
-
-
 
 
 def write_output(data):
@@ -50,25 +45,25 @@ def fetch_data():
         driver = get_driver()
         driver.get("https://centurynationalbank.com/locations/page/" + str(i)+"/?place&latitude&longitude&type=location")
         time.sleep(4)
-        logger.info("https://centurynationalbank.com/locations/page/" + str(i)+"/?place&latitude&longitude&type=location")
+        print("https://centurynationalbank.com/locations/page/" + str(i)+"/?place&latitude&longitude&type=location")
         stores = driver.find_elements_by_xpath('/html/body/section[2]/section/div/div/div[1]/div')[1:]
         for s in stores:
             if "centurynationalbank.com" not in s.find_element_by_tag_name('a').get_attribute('href'):
                 continue
             pages_url.append(s.find_element_by_tag_name('a').get_attribute('href'))
-            logger.info(s.find_element_by_tag_name('a').get_attribute('href'))
+            print(s.find_element_by_tag_name('a').get_attribute('href'))
             driver_page = get_driver()
             driver_page.get(s.find_element_by_tag_name('a').get_attribute('href'))
             time.sleep(4)
             location_name.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[1]/h1').text+" "+driver_page.find_element_by_xpath("/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[1]").text)
-            #logger.info(location_name)
+            #print(location_name)
             try:
                 street_address.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[0])
             except:
                 street_address.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[0])
-            #logger.info(street_address)
+            #print(street_address)
             try:
                 city.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[
@@ -77,7 +72,7 @@ def fetch_data():
                 city.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(
                     ',')[0])
-            #logger.info(city)
+            #print(city)
             try:
                 state.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[
@@ -86,7 +81,7 @@ def fetch_data():
                 state.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(
                     ' ')[-2])
-            #logger.info(state)
+            #print(state)
             try:
                 zipcode.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[
@@ -95,27 +90,27 @@ def fetch_data():
                 zipcode.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(
                     ' ')[-1])
-            #logger.info(zipcode)
+            #print(zipcode)
             ids.append(driver_page.find_element_by_xpath(
                 '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[2]/div/a[2]').get_attribute(
                 'data-locationid'))
-            #logger.info(ids)
+            #print(ids)
             try:
                 phone.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[2])
             except:
                 phone.append(driver_page.find_element_by_xpath(
                     '/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[2])
-            #logger.info(phone)
+            #print(phone)
             types = driver_page.find_elements_by_xpath('/html/body/section/section/div[1]/div[3]/div[2]/div[1]/p/span')
             types_t = ''
             for t in types:
                 types_t = types_t + ' ' + t.text
             type.append(types_t)
-            #logger.info(type)
+            #print(type)
             hours_of_operation.append(driver_page.find_element_by_xpath(
                 '/html/body/section/section/div[1]/div[3]/div[1]/div[3]/div[1]/p').text.replace('\n', ' '))
-            #logger.info(hours_of_operation)
+            #print(hours_of_operation)
             lats_lngs = driver_page.find_element_by_xpath(
                 "/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[2]/div/a[1]").get_attribute('href')
             driver_lat_lng = get_driver()
@@ -124,11 +119,11 @@ def fetch_data():
             latitude.append(
                 str(driver_lat_lng.find_element_by_xpath("/html/head/meta[8]").get_attribute("content")).split('=')[
                     1].split('%2C')[0])
-            #logger.info(latitude)
+            #print(latitude)
             longitude.append(
                 str(driver_lat_lng.find_element_by_xpath("/html/head/meta[8]").get_attribute("content")).split('%2C')[
                     1].split('&zoom')[0])
-            #logger.info(longitude)
+            #print(longitude)
 
     data = []
     for i in range(0, len(street_address)):

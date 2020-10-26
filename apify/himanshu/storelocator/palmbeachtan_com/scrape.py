@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('palmbeachtan_com')
-
-
 
 
 session = SgRequests()
@@ -32,7 +27,7 @@ def fetch_data():
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('section',{"id":"content"}).find('div',{'class':"copy"}).find_all('a')
         for atag1 in main1:
-            logger.info(atag['href'])
+            print(atag['href'])
             r2 = session.get(base_url+atag['href']+atag1['href'])
             soup2=BeautifulSoup(r2.text,'lxml')
             address=''

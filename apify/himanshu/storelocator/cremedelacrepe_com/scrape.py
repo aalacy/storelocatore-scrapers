@@ -6,11 +6,6 @@ import re
 # import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cremedelacrepe_com')
-
-
 
 
 
@@ -69,7 +64,7 @@ def fetch_data():
         s_loc = BeautifulSoup(r_loc.text,'lxml')
 
         detail = s_loc.find('div',class_='vc_col-sm-3')
-        # logger.info(detail.prettify())
+        # print(detail.prettify())
 
         info = detail.find('div',class_='wpb_text_column')
         list_info = list(info.stripped_strings)
@@ -105,8 +100,8 @@ def fetch_data():
             if type(store[i]) == str:
                 if store[i] != "<MISSING>":
                     store[i] = store[i].lower()
-        logger.info("data = " + str(store))
-        # logger.info(
+        print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

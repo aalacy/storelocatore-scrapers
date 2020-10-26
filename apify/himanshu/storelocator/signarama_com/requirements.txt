@@ -1,4 +1,4 @@
 sgselenium
 lxml==4.3.4
 beautifulsoup4==4.7.1
-requests==2.11.1sglogging
+requests==2.11.1

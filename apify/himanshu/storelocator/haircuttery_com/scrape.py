@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('haircuttery_com')
-
-
 
 
 
@@ -54,7 +49,7 @@ def fetch_data():
     page_url = "<MISSING>"
     # skip = 0
     # while True:
-    #     logger.info(skip)
+    #     print(skip)
     r = session.get("https://locations.haircuttery.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for li in soup.find_all("li", class_="c-directory-list-content-item"):
@@ -67,7 +62,7 @@ def fetch_data():
                 if len(link2) < 3:
                     link2 = "https://locations.haircuttery.com/" + \
                         li.a["href"]
-                    # logger.info(link2)
+                    # print(link2)
                     r_loc1 = session.get(link2, headers=headers)
                     soup_loc1 = BeautifulSoup(r_loc1.text, "lxml")
                     if soup_loc1.find_all(
@@ -75,7 +70,7 @@ def fetch_data():
                         for h5 in soup_loc1.find_all("h5", class_="c-location-grid-item-title"):
                             page_url = "https://locations.haircuttery.com" + \
                                 h5.a["href"].replace("..", "").strip()
-                            # logger.info(page_url)
+                            # print(page_url)
                             details_r = session.get(page_url, headers=headers)
                             details_soup = BeautifulSoup(
                                 details_r.text, "lxml")
@@ -127,15 +122,15 @@ def fetch_data():
                                     "table", class_="c-location-hours-details").stripped_strings)).replace("Day of the Week", "").replace("Hours", "").strip()
                             except:
                                 hours_of_operation = "<MISSING>"
-                            # logger.info(phone)
+                            # print(phone)
                             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                             store = ["<MISSING>" if x ==
                                      "" else x for x in store]
                             store = [str(x).encode('ascii', 'ignore').decode(
                                 'ascii').strip() if x else "<MISSING>" for x in store]
-                            # logger.info("data = " + str(store))
-                            # logger.info(
+                            # print("data = " + str(store))
+                            # print(
                             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                             yield store
 
@@ -143,7 +138,7 @@ def fetch_data():
                     # pass
                     page_url = "https://locations.haircuttery.com/" + \
                         li.a["href"]
-                    # logger.info(link2)
+                    # print(link2)
                     r_loc2 = session.get(page_url, headers=headers)
                     soup_loc2 = BeautifulSoup(r_loc2.text, "lxml")
 
@@ -195,18 +190,18 @@ def fetch_data():
                             "table", class_="c-location-hours-details").stripped_strings)).replace("Day of the Week", "").replace("Hours", "").strip()
                     except:
                         hours_of_operation = "<MISSING>"
-                    # logger.info(phone)
+                    # print(phone)
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     store = ["<MISSING>" if x ==
                              "" else x for x in store]
                     store = [str(x).encode('ascii', 'ignore').decode(
                         'ascii').strip() if x else "<MISSING>" for x in store]
-                    # logger.info("data = " + str(store))
-                    # logger.info(
+                    # print("data = " + str(store))
+                    # print(
                     #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
-                    # logger.info(link2)
+                    # print(link2)
         else:
             pass
             page_url = "https://locations.haircuttery.com/" + li.a["href"]
@@ -262,15 +257,15 @@ def fetch_data():
                     "table", class_="c-location-hours-details").stripped_strings)).replace("Day of the Week", "").replace("Hours", "").strip()
             except:
                 hours_of_operation = "<MISSING>"
-            # logger.info(phone)
+            # print(phone)
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x ==
                      "" else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 

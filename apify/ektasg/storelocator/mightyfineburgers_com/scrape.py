@@ -8,11 +8,6 @@ import re
 import usaddress
 import json
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mightyfineburgers_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -68,7 +63,7 @@ def fetch_data():
     lng=[]
     loc=[]
     for i in range(3,8):
-        logger.info(i)
+        print(i)
         k=m[str(i)]['lat']
         j=m[str(i)]['lng']
         s=m[str(i)]['address'].split(',')[2].split(" ")[2]
@@ -88,7 +83,7 @@ def fetch_data():
         else:
             op_hrs='<MISSING>'
         
-        #logger.info(raw_address)
+        #print(raw_address)
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
             alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
@@ -107,7 +102,7 @@ def fetch_data():
             raw_address = fullcontent[store]
         try:
             tagged = usaddress.tag(raw_address)[0]
-            #logger.info("position is:",store)
+            #print("position is:",store)
         except:
             pass
         try:

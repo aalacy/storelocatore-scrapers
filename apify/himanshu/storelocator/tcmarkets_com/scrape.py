@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tcmarkets_com')
-
-
 
 
 session = SgRequests()
@@ -107,14 +102,14 @@ def fetch_data():
             country="US"
             lat=''
             lng=''
-            # logger.info(name)
-            # logger.info(soup1.find('p', {'style': 'text-align: center;'}).text)
+            # print(name)
+            # print(soup1.find('p', {'style': 'text-align: center;'}).text)
             phone = soup1.find('p', {'style': 'text-align: center;'}).text.replace('Phone: ', '').split('~')[0].replace('Phone:', '').strip().strip()
             if '&' in phone:
                 phone  = phone.split('&')[0].strip()
                 
             page_url = base_url+'/store-finder/'
-            # logger.info('~~~~~~~~~~~~~~~~~~')
+            # print('~~~~~~~~~~~~~~~~~~')
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")

@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mandarinoriental_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +37,7 @@ def fetch_data():
         phone = item['phone']
         r2 = session.get(hurl, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
-        logger.info(('Pulling Location %s...' % hurl))
+        print(('Pulling Location %s...' % hurl))
         for line in r2.iter_lines(decode_unicode=True):
             if '"addressRegion">' in line:
                 state = line.split('"addressRegion">')[1].split('<')[0]

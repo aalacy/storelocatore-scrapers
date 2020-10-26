@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 import json
 import re
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lotuscars_com')
-
-
 
 
 
@@ -82,7 +77,7 @@ def fetch_data():
                 zipcode = us_zip_list[-1].strip()
             if ca_zip_list:
                 zipcode = ca_zip_list[-1].strip()
-            # logger.info(zipcode)
+            # print(zipcode)
 
             if len(add) == 4:
                 street_address = add[0].strip()
@@ -130,7 +125,7 @@ def fetch_data():
             longitude_list.append(dealer['location']['lng'])
 
             # Hour
-            # logger.info(dealer["opening_times"])
+            # print(dealer["opening_times"])
             try:
                 for value in dealer["opening_times"]:
                     hours.append(" ".join(list(BeautifulSoup(

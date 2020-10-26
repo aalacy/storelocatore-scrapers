@@ -3,11 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('masseyspizza_com')
-
-
 
 
 def write_output(data):
@@ -27,7 +22,7 @@ def fetch_data():
     url = 'https://www.masseyspizza.com/locations/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    # logger.info(soup)
+    # print(soup)
     repo_list = soup.findAll('div', {'class': 'et_pb_text_inner'})
     cleanr = re.compile('<.*?>')
     state = ""
@@ -38,7 +33,7 @@ def fetch_data():
             detail = detail.replace("\n","|")
             detail = detail[1:len(detail)]
             detail = detail.replace("||","|")
-            #logger.info(detail)
+            #print(detail)
 
             start = detail.find("|")
             if start == len(detail)-1:
@@ -105,15 +100,15 @@ def fetch_data():
                     lat = "<MISSING>"
                     longt = "<MISSING>"
 
-                logger.info(p)
-                logger.info(title)
-                logger.info(street)
-                logger.info(city)
-                logger.info(state)
-                logger.info(phone)
-                logger.info(hours)
-                logger.info(lat)
-                logger.info(longt)
+                print(p)
+                print(title)
+                print(street)
+                print(city)
+                print(state)
+                print(phone)
+                print(hours)
+                print(lat)
+                print(longt)
                 data.append([
                     url,
                     title,
@@ -131,10 +126,10 @@ def fetch_data():
                 ])
 
                 p += 1
-                logger.info("..............")
+                print("..............")
 
         except:
-            logger.info("Empty div")
+            print("Empty div")
         # title = re.sub(cleanr, '', title)
 
     return data

@@ -4,11 +4,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kadlec_org')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -97,7 +92,7 @@ def fetch_data():
             
     all_store_data = []
     for link in link_list:
-        logger.info(link[0])
+        print(link[0])
         driver.get(link[0])
         
         driver.implicitly_wait(5)
@@ -151,10 +146,10 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        logger.info(store_data)
+        print(store_data)
         all_store_data.append(store_data)
-        logger.info()
-        logger.info()
+        print()
+        print()
         
     driver.quit()
     return all_store_data

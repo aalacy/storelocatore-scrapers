@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('justacutsalons_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,7 +54,7 @@ def fetch_data():
                 location_type = '<MISSING>'
                 location_name = '<MISSING>'
                 if "Cesar Chavez" in hours and bad_fixed == False:
-                    logger.info("fixing")
+                    print("fixing")
                     hours = "Temporarily Closed"
                     store_data = [locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code,
                                   store_number, phone_number, location_type, lat, longit, hours]

@@ -3,11 +3,6 @@ from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('phycare_net')
-
-
 
 
 driver = SgSelenium().chrome()
@@ -31,7 +26,7 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores=soup.find_all('circle')
     #stores=driver.find_elements_by_tag_name('circle')
-    logger.info(len(stores))
+    print(len(stores))
 
 
     all = []
@@ -47,9 +42,9 @@ def fetch_data():
         state=' '.join(addr)
         tim=tims[stores.index(store)].text.replace('M-F','Mon-Friday')
         driver.get(store.get('url'))
-        logger.info(store.get('url'))
+        print(store.get('url'))
         soup= BeautifulSoup(driver.page_source, 'html.parser')
-        #logger.info(soup)
+        #print(soup)
         lat,long=re.findall(r'"latitude":(.*),"longitude":([^}]+)',str(soup))[0]
 
 

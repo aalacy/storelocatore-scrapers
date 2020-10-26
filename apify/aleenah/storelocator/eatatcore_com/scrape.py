@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('eatatcore_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -51,7 +46,7 @@ def fetch_data():
         lat = re.findall(r'!3d(-?[\d\.]*)', coord)[0].replace("?", "")
 
         p=soup.find('p', {'style': 'text-align: center;'}).text.split("\n")[-1].replace("Phone:","").strip()
-        #logger.info(p)
+        #print(p)
         if p=="":
             p="<MISSING>"
 

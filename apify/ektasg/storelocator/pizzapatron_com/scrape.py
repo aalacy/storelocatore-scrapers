@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options 
 import re
 import pandas as pd
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzapatron_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -118,7 +113,7 @@ def fetch_data():
               main_df.iloc[i]['hours_of_operation']
             ])
         count=count+1
-        logger.info(count)
+        print(count)
     return data
     
 

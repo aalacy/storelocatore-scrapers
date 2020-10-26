@@ -4,11 +4,6 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bobaguys_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,26 +30,26 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
    
     soup = BeautifulSoup(r.text, 'html.parser')
-    #logger.info(soup.find('li', {'class': 'folder'}))
+    #print(soup.find('li', {'class': 'folder'}))
     urls = soup.find('li', {'class': 'folder'}).find_all('a')
     del urls[0]
 
     for url in urls:
         url = "https://www.bobaguys.com"+url['href']
         res = session.get(url)
-        #logger.info(url)
+        #print(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         divs = soup.find_all('div', {'class': 'col sqs-col-4 span-4'})
         if len(divs)==0:
             divs = soup.find_all('div', {'class': 'col sqs-col-6 span-6'})
-        #logger.info(url)
+        #print(url)
         for div in divs:
             try:
                 ps=div.find('div',{'class':'sqs-block html-block sqs-block-html'}).find_all('p')
             except:
                 continue
-            #logger.info(len(ps))
-            #logger.info(ps[0])
+            #print(len(ps))
+            #print(ps[0])
             content = re.sub(cleanr,'\n',str(div))
             content = re.sub(pattern,'\n',content).lstrip()
             title = content.split('\n',1)[0]
@@ -70,7 +65,7 @@ def fetch_data():
                     hours = 'Temp'+content.split('Temp')[1]
 
             address = address.replace('\n',' ')
-           # logger.info(address)
+           # print(address)
             address = usaddress.parse(address)
             i = 0
             street = ""
@@ -116,7 +111,7 @@ def fetch_data():
                 "<MISSING>",  # long
                 hours  # timing
                 ])
-            #logger.info(p,all[p])
+            #print(p,all[p])
             p += 1
             
 
@@ -125,9 +120,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

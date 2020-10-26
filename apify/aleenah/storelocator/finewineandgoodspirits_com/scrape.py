@@ -2,11 +2,6 @@ import csv
 import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('finewineandgoodspirits_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,8 +54,8 @@ def fetch_data():
             phones.append(ph)
         addr=div.find('input', {'name': 'displayAddress'}).get('value').split("<br>")
         z=re.findall(r'([0-9]{5})',addr[-3])
-        #logger.info(addr[-3])
-        #logger.info(z)
+        #print(addr[-3])
+        #print(z)
         if z==[]:
             zips.append("<MISSING>")
         else:

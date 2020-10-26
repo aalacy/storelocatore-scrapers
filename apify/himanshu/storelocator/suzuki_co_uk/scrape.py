@@ -12,11 +12,6 @@ import sgzip
 import requests
 session = SgRequests()
 import platform
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('suzuki_co_uk')
-
-
 system = platform.system()
 
 def write_output(data):
@@ -119,15 +114,15 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            # logger.info(store)
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print(store)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
             
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

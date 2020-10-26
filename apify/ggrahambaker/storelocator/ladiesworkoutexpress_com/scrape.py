@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ladiesworkoutexpress_com')
-
-
 
 session = SgRequests()
 
@@ -25,7 +20,7 @@ def fetch_data():
     ext = 'findAClub.asp'
 
     to_scrape = locator_domain + ext
-    logger.info(to_scrape)
+    print(to_scrape)
     page = session.get(to_scrape)
     assert page.status_code == 200
 

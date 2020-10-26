@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from lxml import etree
 import json
 import ast
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zultimate_com')
-
-
 
 base_url = 'http://zultimate.com'
 
@@ -59,7 +54,7 @@ def fetch_data():
     list_data = response.xpath('//div[@class="wpseo-location"]')
     
     for i, link in enumerate(link_list):
-        logger.info(link)
+        print(link)
         store_num = link.split("=")[-1]
         if not store_num.isnumeric():
             store_num = '<MISSING>'

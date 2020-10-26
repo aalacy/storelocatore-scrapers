@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('goloco_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'col-md-3 info locations-padding'})
 
@@ -39,7 +34,7 @@ def fetch_data():
 	for item in items:
 		locator_domain = "goloco.com"
 		location_type = item.find('h3').text.strip()
-		logger.info(location_type)
+		print (location_type)
 		
 		raw_data = str(item.find('address')).replace('</p>',"").replace("\t","").split('<br/>')
 		street_address = raw_data[0][raw_data[0].rfind('>')+1:].strip()
@@ -61,8 +56,8 @@ def fetch_data():
 		try:
 			new_base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 		
 		raw_name = new_base.find('div', attrs={'class': 'side vertical-divider-left'})
 		raw_name = str(raw_name.findAll('li')[1]).replace('</p>',"").replace("\t","").split('<br/>')

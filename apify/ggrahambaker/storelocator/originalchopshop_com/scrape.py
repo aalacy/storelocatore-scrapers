@@ -1,11 +1,6 @@
 import csv
 import os
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('originalchopshop_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +35,7 @@ def fetch_data():
         location_name = content[0]
         phone_number = content[1]
         street_address = content[2]
-        #logger.info(content[3])
+        #print(content[3])
         try:
             city, state, zip_code = addy_ext(content[3])
         except:

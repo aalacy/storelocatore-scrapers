@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('serioustexasbbq_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,8 +28,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -49,7 +44,7 @@ def fetch_data():
 
 		street_address = raw_data[0].strip()
 		street_address = (re.sub(' +', ' ', street_address)).strip()
-		# logger.info(street_address)
+		# print(street_address)
 		city_line = raw_data[1].strip().split(",")
 		city = city_line[0].strip()
 		state = city_line[1][:-6].strip()

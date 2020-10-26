@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('keyfood_com__foodemporium')
-
-
 session = SgRequests()
 
 
@@ -63,7 +58,7 @@ def fetch_data():
             store.append(q['longitude'] if q['longitude'] else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append("https://www.keyfood.com/store"+q['url'] if q['url']  else '<MISSING>')
-            # logger.info("===", str(store))
+            # print("===", str(store))
             if store[2] in addresses:
                 continue
             addresses.append(store[2])

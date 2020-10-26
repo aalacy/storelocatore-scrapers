@@ -6,11 +6,6 @@ from lxml import etree
 import json
 import usaddress
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('omahasteaks_com')
-
-
 
 base_url = 'https://www.omahasteaks.com'
 
@@ -80,7 +75,7 @@ def fetch_data():
     response = etree.HTML(source)
     store_list = response.xpath('//a[@class="citylink"]/@href')
     for store_link in store_list:
-        logger.info(store_link)
+        print(store_link)
         store = etree.HTML(session.get(store_link, headers=headers).text)
         details = eliminate_space(store.xpath('.//div[@style="line-height: 120%"]//text()'))
         address = ''

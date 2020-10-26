@@ -9,11 +9,6 @@ from random import randint
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('99only_com')
-
-
 
 
 def get_driver():
@@ -73,16 +68,16 @@ def fetch_data():
 	data = []
 	total_links = len(all_links)
 	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 		time.sleep(randint(1,2))
 		req = session.get(link, headers = HEADERS)
 
 		try:
 			item = BeautifulSoup(req.text,"lxml")
-			logger.info(link)
+			print(link)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		script_str = str(item.find('script', attrs={'type': 'application/ld+json'}))
 		script = script_str[script_str.find("["):script_str.rfind("]")+1]
@@ -90,7 +85,7 @@ def fetch_data():
 
 		locator_domain = "99only.com"
 		location_name = item.find('h1').text.strip()
-		# logger.info(location_name)
+		# print(location_name)
 
 		street_address = js['address']['streetAddress']
 		city = js['address']['addressLocality']

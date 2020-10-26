@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('flightfitnfun_com')
-
-
 
 
 def write_output(data):
@@ -32,13 +27,13 @@ def fetch_data():
     li_list = mainul.findAll('li')
 
     cleanr = re.compile('<.*?>')
-    logger.info(len(li_list))
+    print(len(li_list))
     for divs in li_list:
         link = divs.find('a')
         link = link['href']
-        #logger.info(link)
+        #print(link)
         if link.find("flightfitnfun") > -1:
-            #logger.info('1')
+            #print('1')
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
             detail = soup.findAll('script', {'type': 'application/ld+json'})
@@ -92,13 +87,13 @@ def fetch_data():
 
 
         else:
-            #logger.info('2')
+            #print('2')
             link1 = link + "directions/"
             page = requests.get(link1)
             soup = BeautifulSoup(page.text, "html.parser")
             detail = soup.findAll('iframe')
             maplink = detail[1]['src']
-            #logger.info(maplink)
+            #print(maplink)
             start = maplink.find("!2d")
             if start == -1:
                 lat = "<MISSING>"
@@ -169,9 +164,9 @@ def fetch_data():
             longt,
             hours
         ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
-        #logger.info('..................')
+        #print('..................')
         
     return data
 

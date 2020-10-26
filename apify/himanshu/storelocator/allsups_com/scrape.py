@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('allsups_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -36,7 +31,7 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         json_data = session.get("https://allsups.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=100&search_radius=500").json()
         current_results_len = len(json_data)
         for data in json_data:

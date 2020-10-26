@@ -5,11 +5,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jgumbos_com')
-
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -83,7 +78,7 @@ def fetch_data():
                     continue
                 store_links.append(link)
             except NoSuchElementException:
-                logger.info('no a tag')
+                print('no a tag')
 
     all_store_data = []
     for link in store_links:

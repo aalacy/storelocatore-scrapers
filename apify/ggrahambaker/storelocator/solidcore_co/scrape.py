@@ -8,11 +8,6 @@ import json
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('solidcore_co')
-
-
 
 def get_driver():
     options = Options() 
@@ -57,8 +52,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     hrefs = base.find(class_='list-locations').find_all("ul")
 
@@ -79,15 +74,15 @@ def fetch_data():
 
     total_links = len(link_list)
     for i, link in enumerate(link_list):
-        logger.info("Link %s of %s" %(i+1,total_links))
-        logger.info(link)
+        print("Link %s of %s" %(i+1,total_links))
+        print(link)
         req = session.get(link, headers = HEADERS)
         time.sleep(randint(2,4))
         try:
             item = BeautifulSoup(req.text,"lxml")
         except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            print('[!] Error Occured. ')
+            print('[?] Check whether system is Online.')
 
         if "/locations/" not in link:
 
@@ -101,8 +96,8 @@ def fetch_data():
                 try:
                     item = BeautifulSoup(req.text,"lxml")
                 except (BaseException):
-                    logger.info('[!] Error Occured. ')
-                    logger.info('[?] Check whether system is Online.')
+                    print('[!] Error Occured. ')
+                    print('[?] Check whether system is Online.')
                 addy = item.find(class_='studio-address').text.replace("  ", " ").split('\n')
 
             street_address = addy[0]

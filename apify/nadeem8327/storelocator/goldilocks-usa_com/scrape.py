@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 import csv
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('goldilocks-usa_com')
-
-
 
 
 html = requests.get("http://www.goldilocks-usa.com/location/")
@@ -26,7 +21,7 @@ with open("data.csv",mode="w") as file:
     urls = mr.find_all("li")
 
     for url in urls:
-        #logger.info(url.find("a")["href"])
+        #print(url.find("a")["href"])
         new_html = requests.get(url.find("a")["href"])
         soup2 = BeautifulSoup(new_html.text,"html.parser")
         rc = soup2.find("div",attrs={"class":"width_50"})
@@ -40,7 +35,7 @@ with open("data.csv",mode="w") as file:
                 all_rec = rd.split("\n")
                 hours_of_operation=""
                 for rec in all_rec:
-                    #logger.info("00000",rec,"00000")
+                    #print("00000",rec,"00000")
                     if "Fax:" in rec:
                         contact_number = rec.split("Fax")
                         contact_number = contact_number[0]
@@ -62,7 +57,7 @@ with open("data.csv",mode="w") as file:
                         city = city_zp[5:]
                         state = address[2]
                     if "PM" in rec and ":" in rec:
-                        #logger.info("FOUDN TIME")
+                        #print("FOUDN TIME")
                         hours_of_operation =hours_of_operation+rec+" "
             if city == "City": #special scenario
                 city = "City Daly"
@@ -82,7 +77,7 @@ with open("data.csv",mode="w") as file:
                 hours_of_operation = "<MISSING>"
             data=["www_goldilocks-usa_com",location_name,street_address,city,state,zip_code,
             "US","<MISSING>",contact_number,"<MISSING>","<MISSING>","<MISSING>",hours_of_operation]
-             #logger.info(data)
+             #print(data)
             fl_writer.writerow(data)
         else:
             ps = soup2.find_all("p")
@@ -110,7 +105,7 @@ with open("data.csv",mode="w") as file:
                     city = city_zp[5:]
                     state = address[2]
                 if "PM" in rec and ":" in rec:
-                    #logger.info("FOUDN TIME")
+                    #print("FOUDN TIME")
                     hours_of_operation =hours_of_operation+rec+" "
             street_address = street_address.replace(",","'")
             city = city.replace(",","'")
@@ -125,7 +120,7 @@ with open("data.csv",mode="w") as file:
                 hours_of_operation = "<MISSING>"
             data=["www_goldilocks-usa_com",location_name,street_address,city,state,zip_code,
             "US","<MISSING>",contact_number,"<MISSING>","<MISSING>","<MISSING>",hours_of_operation]
-             #logger.info(data)
+             #print(data)
             fl_writer.writerow(data)
 
             del soup2

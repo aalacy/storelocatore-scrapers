@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('benjerry_com')
-
-
 
 
 session = SgRequests()
@@ -41,7 +36,7 @@ def fetch_data():
                 elif location_exists == '':
                     location_name = values.find('a').get_text()
                     location_exists = location_name
-                    logger.info(location_name)
+                    print(location_name)
                     if "Dulles" in location_name:
                         street_address = values.find_next('span').get_text()
                         city_st_pin = values.find_next('span').find_next('span').get_text().strip().split(',')
@@ -97,7 +92,7 @@ def fetch_data():
                 else:
                     location_name = values.find('a').get_text()
                     location_exists = location_name
-                    logger.info(location_name)
+                    print(location_name)
                     if "Dulles" in location_name:
                         street_address = values.find_next('span').get_text()
                         city_st_pin = values.find_next('span').find_next('span').get_text().strip().split(',')

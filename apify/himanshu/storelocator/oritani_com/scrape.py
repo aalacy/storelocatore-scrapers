@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('oritani_com')
-
-
 
 
 # def request_wrapper(url,method,headers,data=None):
@@ -69,11 +64,11 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         url = "https://www.valley.com/siteAPI/Branch/Branches"
 
         payload = "{\"Location\":\"'"+str(zip_code)+"'\"}"
-        # logger.info(payload)
+        # print(payload)
         headers = {
         'Accept': 'application/json, text/plain, */*',
         'Connection': 'keep-alive',
@@ -89,7 +84,7 @@ def fetch_data():
             continue
         # if "Branches" in json_data:
         #     json_data = len(json_data['Branches'])
-        # logger.info(json_data)
+        # print(json_data)
         if type(json_data)==str:
             data = json.loads(json_data)
             if 'Branches' in data:
@@ -118,7 +113,7 @@ def fetch_data():
                     for index,i in enumerate(store_soup.find_all("div",{"id":"panel1"})):
                         if i['id']==names_hours[index]['href'].replace("#",''):
                             hours = hours + ' '+names_hours[index].text.strip().replace("Lobby","") + ' '+" ".join(list(i.stripped_strings))
-                    # logger.info(hours)
+                    # print(hours)
                     # hours = " ".join(list(store_soup.find("div",{"class":"tabs-content","class":"small-9"}).stripped_strings))
                     # try:
                     # store_soup = request_wrapper(page_url,"get",headers=headers)
@@ -145,13 +140,13 @@ def fetch_data():
                     adressess.append(store[2]) 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                     yield store
-                    #logger.info(store)
+                    #print(store)
              
         if (result_len) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif (result_len) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

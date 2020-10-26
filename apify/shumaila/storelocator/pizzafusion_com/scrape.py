@@ -4,11 +4,6 @@ import csv
 import string
 import re, time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzafusion_com')
-
-
 
 
 def write_output(data):
@@ -33,7 +28,7 @@ def fetch_data():
 
     maindiv = soup.find('div', {'id': 'usa3'})
     divs = maindiv.findAll('div')
-    logger.info("ENTER")
+    print("ENTER")
     n = 2
     for div in divs:
         dets = div.findAll('div')
@@ -53,8 +48,8 @@ def fetch_data():
         link = links[n]
         try:
             page = requests.get(link)
-            #logger.info(page)
-            logger.info(link)
+            #print(page)
+            print(link)
             soup = BeautifulSoup(page.text, "html.parser")
             td = soup.find("td")
             td = str(td)
@@ -64,7 +59,7 @@ def fetch_data():
             td = td.replace("\r", "|")
             td = td.replace("||", "|")
         except:
-            logger.info(link)
+            print(link)
             page = requests.get(url)
             soup = BeautifulSoup(page.text, "html.parser")
             maindiv = soup.find('div', {'id': '117'})
@@ -76,7 +71,7 @@ def fetch_data():
             flag = 1
         try:
             mainframe = soup.findAll('iframe')
-                #logger.info(mainframe[1])
+                #print(mainframe[1])
             maplink = str(mainframe[1])
             start = maplink.find("sll") +5
             start = maplink.find("ll",start)+3
@@ -90,10 +85,10 @@ def fetch_data():
             longt = "<MISSING>"
 
 
-            # logger.info(maplink)
+            # print(maplink)
         p = n + 1
 
-        logger.info(td)
+        print(td)
         if flag == 1:
             start = td.find("|", 3)
             title = td[1:start]
@@ -116,7 +111,7 @@ def fetch_data():
             address = address.replace("|", " ")
 
         address = usaddress.parse(address)
-        #logger.info(address)
+        #print(address)
         i = 0
         street = ""
         city = ""
@@ -167,19 +162,19 @@ def fetch_data():
 
         store = store.lstrip()
         flag =0
-        logger.info(p)
-        logger.info(store)
-        logger.info(title)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
+        print(p)
+        print(store)
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
 
-        logger.info(phone)
-        logger.info(hours)
-        logger.info(lat)
-        logger.info(longt)
-        logger.info("...................................")
+        print(phone)
+        print(hours)
+        print(lat)
+        print(longt)
+        print("...................................")
         data.append([
             url,
             title,

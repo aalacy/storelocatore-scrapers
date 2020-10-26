@@ -5,11 +5,6 @@ from bs4 import BeautifulSoup
 import time
 from random import randint
 from unidecode import unidecode
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('stellabarra_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +36,7 @@ def fetch_data():
 
         locator_domain = "stellabarra.com"
         location_name = "Stella Barra " + item.find('h1').text.strip()
-        logger.info(location_name)
+        print(location_name)
 
         raw_address = item.find("footer").div.find_all("div")[3].a.text.replace("\r\n",",").split(",")
         street_address = raw_address[0].strip()

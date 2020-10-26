@@ -4,11 +4,6 @@ import string
 import re, time,json,usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rodiziogrill_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,12 +30,12 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     loclist = soup.find('div',{'class':'locationsList'}).findAll('a')
-   # logger.info("states = ",len(state_list))
+   # print("states = ",len(state_list))
     p = 0
     for loc in loclist:
         if loc.text.lower().find('soon') == -1:
             link = loc['href']
-            #logger.info(link)
+            #print(link)
             r = session.get(link, headers=headers, verify=False)          
             
             lat,longt = r.text.split('LatLng(',1)[1].split(')',1)[0].split(',')
@@ -54,16 +49,16 @@ def fetch_data():
                 except:
                     phone = '<MISSING>'
             address = soup.find('div',{'class':'Column4'}).findAll('div')[1].text.replace('\n',' ')
-            #logger.info(address)
+            #print(address)
             if address.find('Located inside') > -1 or address.find('between') > -1:
-                #logger.info('1')
+                #print('1')
                 address  = soup.find('div',{'class':'Column4'}).findAll('div')[2].text.replace('\n',' ')
             try:
                 if len(address.rstrip().split(' ')[-1]) == 5:
                     pass
                 else:
                     address= address + ' '+soup.find('div',{'class':'Column4'}).find('p').text
-                    #logger.info('yes')
+                    #print('yes')
             except:
                 pass
             address = usaddress.parse(address)
@@ -89,7 +84,7 @@ def fetch_data():
             state = state.lstrip().replace(',','')
             pcode = pcode.lstrip().replace(',','')
             hours = soup.find('div',{'class':'Column2'}).text.replace('\n',' ').lstrip().replace('Hours ','')
-            #logger.info(hours)
+            #print(hours)
             try:
                 hours = hours.split('*',1)[0]
             except:
@@ -120,7 +115,7 @@ def fetch_data():
                         longt.strip(),
                         hours.replace('\r','').strip().replace('day','day ').replace('  ',' ')
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
 
             #input()
@@ -129,9 +124,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

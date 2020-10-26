@@ -4,11 +4,6 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mariaempanada_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,13 +31,13 @@ def fetch_data():
     soup =BeautifulSoup(r.text, "html.parser")
    
     divlist = soup.findAll('div', {'class': "sqs-block html-block sqs-block-html"})
-    logger.info("states = ",len(divlist))
+    print("states = ",len(divlist))
     #input()
     for div in divlist:
         try:
            
             title = div.find('strong').text
-            #logger.info(title)
+            #print(title)
             if div.text.find('TEMPORARILY CLOSED') > -1:
                 title = title + '( TEMPORARILY CLOSED )'
             if title.find('@mariaempanada') > -1:
@@ -100,7 +95,7 @@ def fetch_data():
                         '<MISSING>',
                         hours.replace('\xa0','')
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
                 
             
@@ -115,9 +110,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('marmaladecafe_com')
-
-
 
 
 options = Options()
@@ -69,7 +64,7 @@ def fetch_data():
                 hours_of_op
             ])
         count = count + 1
-        logger.info(count)
+        print(count)
 
     geomaps = store.find_elements_by_xpath("//a[contains(@href,'https://goo.gl/maps')]")
     geo_url = [geomaps[i].get_attribute('href') for i in range(0,len(geomaps))]

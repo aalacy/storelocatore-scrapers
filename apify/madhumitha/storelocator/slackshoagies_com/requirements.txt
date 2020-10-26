@@ -2,4 +2,3 @@ bs4==0.0.1
 requests==2.21.0
 unicodecsv==0.14.1
 regex==2019.8.19
-sglogging

@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('flyairu_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -68,7 +63,7 @@ def fetch_data():
             soup = BeautifulSoup(res.text, 'html.parser')
             timl = soup.find_all('div', {'class': 'wpb_wrapper'})[2].text.split("\n")
 
-        logger.info(url)
+        print(url)
         tim=""
         for t in timl:
 

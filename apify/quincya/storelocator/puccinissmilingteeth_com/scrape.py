@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('puccinissmilingteeth_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	content = base.find('div', attrs={'class': 'entry-content clearfix'})
 	sections = content.findAll('p')[1:]
@@ -55,11 +50,11 @@ def fetch_data():
 				try:
 					base = BeautifulSoup(req.text,"lxml")
 				except (BaseException):
-					logger.info('[!] Error Occured. ')
-					logger.info('[?] Check whether system is Online.')
+					print ('[!] Error Occured. ')
+					print ('[?] Check whether system is Online.')
 				header = base.find('div', attrs={'class': 'entry-content clearfix'})
 				location_name = header.find('h4').text.strip()
-				logger.info(location_name)
+				print (location_name)
 				street_address = header.find('p').strong.text.strip()
 				if "765-746-5000" in street_address:
 					street_address = street_address.replace("765-746-5000","").strip()

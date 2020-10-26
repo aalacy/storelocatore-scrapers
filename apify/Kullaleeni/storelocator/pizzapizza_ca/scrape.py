@@ -4,11 +4,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzapizza_ca')
-
-
 session2 = SgRequests()
 session1 = SgRequests()
 session = SgRequests()
@@ -38,30 +33,30 @@ def fetch_data():
     p = 0
     url = 'https://www.pizzapizza.ca/ajax/store/api/v1/province_cities'
     r = session.get(url, headers=headers, verify=False).json()
-    logger.info(r)
+    print(r)
     for states in r:
         province = states['province_slug']
-        # logger.info(province)
+        # print(province)
         cities = states['cities']
         for city in cities:
-            # logger.info(city['city_slug'])
+            # print(city['city_slug'])
             mlink = 'https://www.pizzapizza.ca/restaurant-locator/'+province + '/'+city['city_slug']
             branchlink = 'https://www.pizzapizza.ca/ajax/store/api/v1/search/store_locator?province='+province+'&city='+city['city_slug']
-            # logger.info(branchlink)
+            # print(branchlink)
             try:
                 r1 = session.get(branchlink, headers=headers, verify=False).json()
                 r = r1['stores']
             except:
                 try:
-                    # logger.info("Next session use")
+                    # print("Next session use")
                     r1 = session1.get(branchlink, headers=headers1, verify=False).json()
                     r = r1['stores']
                 except:
-                    # logger.info("Final session use")
+                    # print("Final session use")
                     r1 = session2.get(branchlink, headers=headers, verify=False).json()
                     r = r1['stores']
             for branch in r:
-                # logger.info(branch)
+                # print(branch)
                 title = branch['name']
                 street = branch['address'].lstrip()
                 city = branch['city']
@@ -92,16 +87,16 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                #logger.info(p,data[p])
+                #print(p,data[p])
                 p += 1
         
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

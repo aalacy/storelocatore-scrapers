@@ -3,11 +3,6 @@ import os, re
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('massageheights_com')
-
-
 
 session = SgRequests()
 
@@ -47,7 +42,7 @@ def fetch_data():
         
         
         page_url = locator_domain + a['Path']
-        #logger.info(page_url)
+        #print(page_url)
         page = session.get(page_url)
         soup = BeautifulSoup(page.text,'html.parser')
         flag = 0 

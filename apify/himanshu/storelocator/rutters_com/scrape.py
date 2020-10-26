@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rutters_com')
-
-
 
 
 session = SgRequests()
@@ -64,7 +59,7 @@ def fetch_data():
                 store.append(loc[i]['store_meta']['latitude'])
                 store.append(loc[i]['store_meta']['longitude'])
                 store.append(hour)
-                logger.info(store)
+                print(store)
                 return_main_object.append(store)
     return return_main_object
 

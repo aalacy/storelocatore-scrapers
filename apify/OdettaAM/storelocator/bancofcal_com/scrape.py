@@ -4,11 +4,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bancofcal_com')
-
-
 
 
 options = Options()
@@ -104,7 +99,7 @@ def fetch_data():
                   lon,
                   hours_of_op
                 ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
         except:
             pass

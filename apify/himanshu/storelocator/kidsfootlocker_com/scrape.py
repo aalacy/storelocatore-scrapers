@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kidsfootlocker_com')
-
-
 
 
 
@@ -38,7 +33,7 @@ def fetch_data():
    
     for i in k:
         r = session.get("https://stores.kidsfootlocker.com/"+i['href'])
-        logger.info("============",i.text)
+        print("============",i.text)
         soup1= BeautifulSoup(r.text,"lxml")
 
         link = soup1.find_all("a",{"class":"Directory-listLink"})
@@ -52,7 +47,7 @@ def fetch_data():
                 data_count = j.attrs['data-count'].replace("(","").replace(")","")
                 if data_count == "1":
                     # if "https://stores.kidsfootlocker.com/pr/pr/bayamon.html" in new_link:
-                        # logger.info("+++++++++++++++++++",new_link)
+                        # print("+++++++++++++++++++",new_link)
                     r = session.get(new_link)
                     soup2= BeautifulSoup(r.text,"lxml")
                     name = soup2.find("span",{"class":"LocationName-brand"}).text
@@ -91,14 +86,14 @@ def fetch_data():
                     tem_var.append("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
                     store_detail.append(tem_var)
                 else:
-                    # logger.info(new_link)
+                    # print(new_link)
                     r = session.get(new_link)
                     soup3= BeautifulSoup(r.text,"lxml")
                     link2 = soup3.find_all("a",{"class":"Teaser-titleLink"})
 
                     for j in link2:
                         tem_var=[]
-                        # logger.info(j['href'].replace("..",""))
+                        # print(j['href'].replace("..",""))
                         r = session.get("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
                         soup4= BeautifulSoup(r.text,"lxml")
                         name = soup4.find("span",{"class":"LocationName-brand"}).text
@@ -135,7 +130,7 @@ def fetch_data():
                         tem_var.append(lng)
                         tem_var.append(hours)
                         tem_var.append("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
-                        # logger.info("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
+                        # print("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
                         store_detail.append(tem_var)
                         
         else:
@@ -179,7 +174,7 @@ def fetch_data():
             tem_var.append(hours)
             tem_var.append("https://stores.kidsfootlocker.com"+i['href'])
             store_detail.append(tem_var)
-            # logger.info("=====",tem_var)
+            # print("=====",tem_var)
 
                 
     for i in range(len(store_name)):

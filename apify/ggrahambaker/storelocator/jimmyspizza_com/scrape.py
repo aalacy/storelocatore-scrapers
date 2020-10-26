@@ -5,11 +5,6 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jimmyspizza_com')
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -99,7 +94,7 @@ def fetch_data():
         
     all_store_data = []
     for link in link_list:
-        logger.info(link)
+        print(link)
         if '/hawley/' in link[0]:
             driver.get('https://www.jimmyspizzahawley.com/')
         else:
@@ -112,7 +107,7 @@ def fetch_data():
         if '1115 HWY7' in addy:
             addy = '1115 Hwy 7 W Hutchinson, MN'
         street_address, city, state, zip_code = parse_address(addy)
-        logger.info(street_address, city, state, zip_code)
+        print(street_address, city, state, zip_code)
         
         phone_number = link[2]
         

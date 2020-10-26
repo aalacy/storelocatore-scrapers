@@ -8,11 +8,6 @@ from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
 import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('circlek_com')
-
-
                     
 
 
@@ -35,8 +30,8 @@ def getplace(lat, lon):
         point = Point(float(lon), float(lat))
     else:
         point = Point(0, 0)
-        # logger.info("lat == ",lat,"lng == ",lon)
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("lat == ",lat,"lng == ",lon)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     
     for country, geom in countries.items():
         if geom.contains(point):
@@ -82,7 +77,7 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    # logger.info("start")
+    # print("start")
     location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
     r = session.get(location_url, headers=headers).json()
     for key, value in r["stores"].items():
@@ -90,8 +85,8 @@ def fetch_data():
         longitude = value["longitude"]
         country_name = getplace(latitude, longitude)
 
-        # logger.info("lat == ",latitude,"lng == ", longitude,"country =======  ",country_name)
-        # logger.info(type(latitude),type(longitude))
+        # print("lat == ",latitude,"lng == ", longitude,"country =======  ",country_name)
+        # print(type(latitude),type(longitude))
         if country_name in ["unknown", "United States of America","Canada"]:
             if "unknown" == country_name and str(value["country"]) not in ["US","CA","Canada"]:
                 continue
@@ -103,22 +98,22 @@ def fetch_data():
             location_name = city
             location_type = value["display_brand"]
             page_url = "https://www.circlek.com" + value["url"]
-            # logger.info(page_url)
-            # logger.info(value["country"])
+            # print(page_url)
+            # print(value["country"])
             r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 csz = list(soup_loc.find(
                     "h2", class_="heading-small").stripped_strings)
                 csz = [el.replace('\n', '') for el in csz]
-                # logger.info(csz)
+                # print(csz)
                 if len(csz) < 4:
                     state = "<MISSING>"
                 else:
                     state = csz[-3].strip()
                 zipp = csz[-1].strip()
-                # logger.info(zipp)
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~")
+                # print(zipp)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~")
                 # if len(zipp) == 6 or len(zipp) ==7:
 
 
@@ -128,7 +123,7 @@ def fetch_data():
                 us_zip_list = re.findall(re.compile(
                     r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
 
-                # logger.info("~us_zip_list~~~~~~~~~~~~~~~~~~~~~~",us_zip_list,"~~~~~~~~~~~~~~~ca_zip_list~~~~~~~",ca_zip_list)
+                # print("~us_zip_list~~~~~~~~~~~~~~~~~~~~~~",us_zip_list,"~~~~~~~~~~~~~~~ca_zip_list~~~~~~~",ca_zip_list)
                 if ca_zip_list:
                     zipp = ca_zip_list[-1]
                     country_code = "CA"
@@ -143,7 +138,7 @@ def fetch_data():
                         country_code = "CA"
                     else:
                         country_code = "US"
-                # logger.info(zipp,country_code)
+                # print(zipp,country_code)
             
                 phone_tag = soup_loc.find(
                     "a", {"itemprop": "telephone"}).text.strip()
@@ -151,7 +146,7 @@ def fetch_data():
                 if phone_list:
                     phone = phone_list[0]
                     phone = phonenumbers.format_number(phonenumbers.parse(phone, 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                    # logger.info(phone)
+                    # print(phone)
                 else:
                     phone = "<MISSING>"
                
@@ -162,7 +157,7 @@ def fetch_data():
                 state = "<MISSING>"
                 hours_of_operation = "<MISSING>"
                 phone = "<MISSING>"
-            # logger.info(phone)
+            # print(phone)
             if "."==street_address.strip():
                 street_address = "<MISSING>"
             if "PEI" in state:
@@ -173,8 +168,8 @@ def fetch_data():
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]))
                 store = [x if x else "<MISSING>" for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

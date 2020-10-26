@@ -4,11 +4,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('snb_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,11 +31,11 @@ def fetch_data():
     divlist = soup.find('table',{'id':'locations'}).findAll('tr')
     loclist = r.text.split('locations=',1)[1].split('];',1)[0]
     loclist = json.loads(loclist+']')
-    logger.info(len(divlist))    
+    print(len(divlist))    
     for i in range(1,len(divlist)):
         div = divlist[i]
         address =div.findAll('td')[0].text.splitlines()
-        #logger.info(address)
+        #print(address)
         title = address[1]
         street = address[2].replace('\t','')
         try:
@@ -57,7 +52,7 @@ def fetch_data():
             phone = '<MISSING>'
         try:
             hours = re.sub(cleanr,'\n',str(div.findAll('td')[2])).replace('\n',' ').lstrip()
-            #logger.info(hours)
+            #print(hours)
             #input()
         except:
             hours = '<MISSING>'
@@ -105,7 +100,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
             
         
@@ -117,10 +112,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

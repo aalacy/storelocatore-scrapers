@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('josbank_com')
-
-
 
 
 session = SgRequests()
@@ -43,7 +38,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #logger.info("zip_code === "+zip_code)
+        #print("zip_code === "+zip_code)
 
         location_url = "https://www.josbank.com/sr/search/resources/store/13452/storelocator/byProximity?catalogId=14052&langId=-24&radius=50&zip="+str(zip_code)+"&city=&state=&brand=JAB&profileName=X_findStoreLocatorWithExtraFields"
         try:
@@ -91,10 +86,10 @@ def fetch_data():
                         yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -3,11 +3,6 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('monoprix_fr')
-
-
 
 MAX_DISTANCE = 20
 
@@ -62,7 +57,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         lat, lng = coord[0], coord[1] 
         response = session.post(URL, json=get_payload(lat, lng), headers=HEADERS).json()
         stores = response["data"]['viewer']['storesInRadius']['source']
@@ -90,10 +85,10 @@ def fetch_data():
             hours_of_operation = parse_hours(store)
             locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         if len(stores) > 0:
-            logger.info("max count update")
+            print("max count update")
             search.max_count_update(result_coords)
         else:
-            logger.info("max distance update")
+            print("max distance update")
             search.max_distance_update(km_to_miles(MAX_DISTANCE))
         coord = search.next_coord()
     return locations

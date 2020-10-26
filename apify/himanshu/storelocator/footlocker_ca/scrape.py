@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('footlocker_ca')
-
-
 
 
 session = SgRequests()
@@ -76,30 +71,30 @@ def fetch_data():
     for states in soup.find_all("a",{'class':"Directory-listLink"}):
         if states["href"].count("/") == 3:
             page_url = "https://stores.footlocker.ca/" + states["href"].replace("../","")
-            #logger.info("https://stores.footlocker.ca/" + states["href"].replace("../",""))
+            #print("https://stores.footlocker.ca/" + states["href"].replace("../",""))
             location_request = session.get("https://stores.footlocker.ca/" + states["href"].replace("../",""),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup,page_url)
             yield store_data
         else:
-            #logger.info("https://stores.footlocker.ca/" + states["href"])
+            #print("https://stores.footlocker.ca/" + states["href"])
             state_request = session.get("https://stores.footlocker.ca/" + states["href"],headers=headers)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
                 if city["href"].count("/") == 4:
                     page_url = "https://stores.footlocker.ca/" + city["href"].replace("../","")
-                    #logger.info("https://stores.footlocker.ca/" + city["href"].replace("../",""))
+                    #print("https://stores.footlocker.ca/" + city["href"].replace("../",""))
                     location_request = session.get("https://stores.footlocker.ca/" + city["href"].replace("../",""),headers=headers)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,page_url)
                     yield store_data
                 else:
-                    #logger.info("https://stores.footlocker.ca/" + city["href"].replace("../",""))
+                    #print("https://stores.footlocker.ca/" + city["href"].replace("../",""))
                     city_request = session.get("https://stores.footlocker.ca/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
                         page_url = "https://stores.footlocker.ca/" + location["href"].replace("../","")
-                        #logger.info("https://stores.footlocker.ca/" + location["href"].replace("../",""))
+                        #print("https://stores.footlocker.ca/" + location["href"].replace("../",""))
                         location_request = session.get("https://stores.footlocker.ca/" + location["href"].replace("../",""),headers=headers)
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,page_url)

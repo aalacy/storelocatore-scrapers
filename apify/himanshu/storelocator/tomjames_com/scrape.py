@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tomjames_com')
-
-
 
 
 
@@ -41,9 +36,9 @@ def fetch_data():
     location_type = "<MISSING>"
     hours_of_operation = "<MISSING>"
     for location in usa_part.find_all("a"):
-        # logger.info(location["href"])
+        # print(location["href"])
         page_url = location["href"].strip()
-        #logger.info(page_url)
+        #print(page_url)
         location_request = session.get(
             location["href"].strip(), headers=headers)
         location_soup = BeautifulSoup(location_request.text, "lxml")
@@ -59,9 +54,9 @@ def fetch_data():
                 sc_string.remove("null")
             latitude = sc_string[0]
             longitude = sc_string[1].replace(']', '').strip()
-            # logger.info([list((i, sc_string[i])) for i in range(len(sc_string))])
-            # logger.info(latitude, longitude)
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print ([list((i, sc_string[i])) for i in range(len(sc_string))])
+            # print(latitude, longitude)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -78,7 +73,7 @@ def fetch_data():
         zipp = address[-1].split(",")[-1].split(" ")[-1]
         if "972015848" == zipp or "212081393" == zipp:
             zipp = "".join(zipp[:5]) + "-" + "".join(zipp[5:])
-            #logger.info(zipp)
+            #print(zipp)
         phone = location_soup.find("span", {"itemprop": "telephone"}).text
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -89,8 +84,8 @@ def fetch_data():
         #     x for x in store
         store = ["<MISSING>" if x == "" else x for x in store]
 
-        # logger.info("data == " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data == " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     for location in soup.find_all("div", {"class": "button-link-white white middle"}):
         if "Canada" in location.find("h6").text:
@@ -109,9 +104,9 @@ def fetch_data():
                     sc_string.remove("null")
                 latitude = sc_string[0]
                 longitude = sc_string[1].replace(']', '').strip()
-                # logger.info([list((i, sc_string[i])) for i in range(len(sc_string))])
-                # logger.info(latitude, longitude)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print ([list((i, sc_string[i])) for i in range(len(sc_string))])
+                # print(latitude, longitude)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
@@ -127,7 +122,7 @@ def fetch_data():
             state = address[-1].split(",")[-1].split(" ")[1]
             zipp = " ".join(address[-1].split(",")[-1].split(" ")[2:])
             page_url = location.find("a")["href"].strip()
-            # logger.info(page_url)
+            # print(page_url)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -138,8 +133,8 @@ def fetch_data():
             #     x for x in store
             store = ["<MISSING>" if x == "" else x for x in store]
 
-            # logger.info("data == " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data == " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
     return return_main_object

@@ -10,11 +10,6 @@ from datetime import datetime
 # import pprint
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aesop_com')
-
-
 
 session = SgRequests()
 
@@ -97,8 +92,8 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
 
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         # lat = -42.225
         # lng = -42.225
         # zip_code = 11576
@@ -106,7 +101,7 @@ def fetch_data():
 
         location_url = "https://www.aesop.com/graphql"
 
-        # logger.info(location_url)
+        # print(location_url)
         r = session.post(location_url, headers=headers,data=payload)
         json_data = r.json()['data']['stores']
         current_results_len = len(json_data)
@@ -150,8 +145,8 @@ def fetch_data():
                     temp_add = value['formattedAddress']
     
                     if value['country'] == "CA":
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
+                        # print(location_name)
+                        # print(temp_add)
                         if location_name == "Aesop Gastown":
                             street_address = "19 Water St."
                             city = "Vancouver"
@@ -199,7 +194,7 @@ def fetch_data():
                             elif len(tem_state_zip) == 2:
                                 zipper = []
                                 zipper[:] = tem_state_zip[-1]
-                                # logger.info(zipper)
+                                # print(zipper)
                                 if len(zipper) == 7:
                                     state = tem_state_zip[0]
                                     zipp = tem_state_zip[-1]
@@ -209,12 +204,12 @@ def fetch_data():
                                 # state = "<MISSING>"
                                 # zipp = "-".join(tem_state_zip)
                         country_code = "CA"
-                        # logger.info(ca_add)
-                        # logger.info(tem_state_zip)
-                        # logger.info("==============================")
+                        # print(ca_add)
+                        # print(tem_state_zip)
+                        # print("==============================")
                     elif value['country'] == "US":
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
+                        # print(location_name)
+                        # print(temp_add)
                         if location_name == "Madison Hall":
                             street_address = "CAA Hotel/ 12 S Michigan Ave"
                             city = value['city']
@@ -264,11 +259,11 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                         country_code = "US"
-                        # logger.info("=======================")
+                        # print("=======================")
                  
                     elif value['country'] == None:
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
+                        # print(location_name)
+                        # print(temp_add)
                         if location_name == "Aesop UTC":
                             street_address = "Space 2118, Westfield, 4545 La Jolla Village Drive"
                             city = "San Diego"
@@ -288,7 +283,7 @@ def fetch_data():
                             elif len(tem_state_zip) == 2:
                                 zipper = []
                                 zipper[:] = tem_state_zip[-1]
-                                # logger.info(zipper)
+                                # print(zipper)
                                 if len(zipper) == 7:
                                     state = tem_state_zip[0]
                                     zipp = tem_state_zip[-1]
@@ -312,7 +307,7 @@ def fetch_data():
                                 zipp = "<MISSING>"
                             country_code = "US"
                             
-                        #logger.info("=======================")
+                        #print("=======================")
                     
                     else:
                         continue
@@ -368,17 +363,17 @@ def fetch_data():
                             sunday = h['sunday']['openingTimeHour'] + ":" + h['sunday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['sunday']['closingTimeHour'])-12) + ":" + h['sunday']['closingTimeMinute'].replace("0","00") + "PM"
                         
                         hours_of_operation = "monday-"+monday+", tuesday-"+tuesday+", wednesday-"+wednesday+", thursday-"+thursday+", friday-"+friday+", saturday-"+saturday+", sunday-" +sunday
-                        # logger.info(hours_of_operation)
+                        # print(hours_of_operation)
                     except:
                         hours_of_operation = "<MISSING>"
                     
-                    # logger.info(hours_of_operation)
+                    # print(hours_of_operation)
 
                     if location_type == "Signature Store":
                         page_url = "https://www.aesop.com/hk/en/r/" + value['id']
                     else:
                         page_url = "<MISSING>"
-                    # logger.info(page_url)
+                    # print(page_url)
 
                     result_coords.append((lat,lng))
                     store = []
@@ -403,10 +398,10 @@ def fetch_data():
                     yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

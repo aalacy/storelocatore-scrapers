@@ -4,11 +4,6 @@ import time
 import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('minuteclinic_com')
-
-
 
 
 thread_local = threading.local()
@@ -67,7 +62,7 @@ def get_cities_in_state(state_url):
   cities = []
   session = get_session()
 
-  # logger.info('Pulling State %s ...' % state_url)
+  # print('Pulling State %s ...' % state_url)
   random_sleep()
   r = session.get(state_url, headers=headers)
 
@@ -95,7 +90,7 @@ def get_locations_in_city(city_url):
   locs = []
   session = get_session()
 
-  # logger.info('Pulling City %s ...' % city_url)
+  # print('Pulling City %s ...' % city_url)
   random_sleep()
   r = session.get(city_url, headers=headers)
 
@@ -124,7 +119,7 @@ def get_location(url):
 
     session = get_session()
 
-    # logger.info('Pulling Location %s ...' % url)
+    # print('Pulling Location %s ...' % url)
 
     website = 'minuteclinic.com'
     typ = '<MISSING>'

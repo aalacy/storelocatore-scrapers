@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('belletire_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -33,10 +28,10 @@ def fetch_data():
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 		
 	stores = base.find_all(class_="store-details__info")
 
@@ -55,7 +50,7 @@ def fetch_data():
 
 		if location in found_poi:
 			continue
-		logger.info(location_name)
+		print(location_name)
 
 		
 		city = item['City']

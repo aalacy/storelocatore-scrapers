@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('searshomeservices_com')
-
-
 session = SgRequests()
 
 
@@ -81,7 +76,7 @@ def fetch_data():
 
             else:
                 page_url = loc_link['href'].lower()
-                # logger.info(page_url)
+                # print(page_url)
 
                 r3 = session.get(page_url, headers=headers)
             
@@ -92,7 +87,7 @@ def fetch_data():
                     city = head.find('span',{'itemprop':'addressLocality'}).text.strip()
                     state = head.find('span',{'itemprop':'addressRegion'}).text.strip()
                     phone = head.find('nav',{'class':'navCallout'}).find('a')['href'].replace('tel:','').strip()
-                    # logger.info(phone)
+                    # print(phone)
                     location_name = city
                     street_address = "<MISSING>"
                     zipp = "<MISSING>"
@@ -109,7 +104,7 @@ def fetch_data():
                         city = soup3.find("label",{"id":"currentUrl"}).text.split(',')[0].strip()
                         state = soup3.find("label",{"id":"currentUrl"}).text.split(',')[1].strip()
                         phone = soup3.find("div", {"itemprop":"telephone"}).text
-                        # logger.info(phone)
+                        # print(phone)
                         location_name = city
                         info = soup3.find("div", {"class":"subcontainer rightside"})
                         if info != None:
@@ -168,8 +163,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data ==== "+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data ==== "+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 def scrape():

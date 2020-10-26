@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('philsbbq_net')
-
-
 
 session = SgRequests()
 
@@ -48,9 +43,9 @@ def fetch_data():
     ## basic case
     for store in stores:
         location_name = store.find('h2').text.strip()
-        #logger.info(store.find('h3').findNext('p').text)
+        #print(store.find('h3').findNext('p').text)
         hours = store.find('h3').findNext('p').text
-        #logger.info(store.find_all('img'))
+        #print(store.find_all('img'))
         img = store.find_all('a')
         
         brs = img[1].find('br')

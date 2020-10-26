@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('eggspectation_com')
-
-
 
 
 
@@ -37,7 +32,7 @@ def fetch_data():
 
     data = soup.find("ul",{"class":"dropdown"})
     for d in data:
-        # logger.info(d.find("a")['href'])
+        # print(d.find("a")['href'])
         r1 = session.get(d.find("a")['href'])
         soup1= BeautifulSoup(r1.text,"lxml")
         st = soup1.find("span",{'class':'address-1'}).text
@@ -51,7 +46,7 @@ def fetch_data():
             phone = ''
 
         name  = soup1.find("div",{'class':'column column-2'}).find("h2").text
-        # logger.info(name.strip())
+        # print(name.strip())
         try:
             hours =  " ".join(list(soup1.find("div",{'class':'hours-wrapper'}).stripped_strings))
         except:
@@ -72,7 +67,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(hours if hours else "<MISSING>")
         tem_var.append(d.find("a")['href'])
-        # logger.info(tem_var)
+        # print(tem_var)
         return_main_object.append(tem_var)
         
 

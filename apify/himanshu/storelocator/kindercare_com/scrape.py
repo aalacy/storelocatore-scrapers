@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kindercare_com')
-
-
 
 
 
@@ -21,7 +16,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -56,17 +51,17 @@ def fetch_data():
     for zip_code in zips:
         r = session.get(
             "https://www.kindercare.com/data/center-search?location=" + str(zip_code) + "&distance=100&edpId=", headers=headers)
-        # logger.info("json==" + r.text)
+        # print("json==" + r.text)
         try:
             json_data = r.json()
         except:
             continue
-        # logger.info(json_data)
+        # print(json_data)
         if json_data['centers'] == []:
             continue
         else:
             for address_list in json_data['centers']:
-                # logger.info(address_list)
+                # print(address_list)
                 location_name = address_list['name']
                 street_address = address_list['address']
                 city = address_list['city']

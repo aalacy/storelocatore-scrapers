@@ -5,11 +5,6 @@ import time
 from random import randint
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fitnesspremierclubs_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,10 +28,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
+		print("Got today page")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	data = []
 
@@ -51,8 +46,8 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")			
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 		
 		location_name = base.h1.text.strip()
 
@@ -60,7 +55,7 @@ def fetch_data():
 			club_number = re.findall(r'clubNumber=(\d+)', str(base))[0]
 		except:
 			continue
-		logger.info(link)
+		print(link)
 		club_url = 'https://mico.myiclubonline.com/iclub/club/getClubExternal.htm?club=%s&_=1564200271209' % club_number
 		add_req = session.get(club_url, headers = HEADERS)
 		address_base = str(BeautifulSoup(add_req.text,"lxml"))

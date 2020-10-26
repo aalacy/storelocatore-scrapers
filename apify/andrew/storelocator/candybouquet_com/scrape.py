@@ -3,11 +3,6 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('candybouquet_com')
-
-
 
 BASE_URL = 'http://candybouquet.com/where-to-order/default.asp?Zip=&Abbr=&Country={}'
 
@@ -69,7 +64,7 @@ def fetch_data():
             try:
                 city, state, zipcode = parse_address(address[1])
             except:
-                logger.info(address[1])
+                print(address[1])
             country_code = 'US' if idx == 0 else 'CA'
             phone, hours_of_operation = fetch_phone_hours(store_data)
             location_type = 'Candy Bouquet Retail' if 'Retail' in location_name else 'Candy Bouquet Store'

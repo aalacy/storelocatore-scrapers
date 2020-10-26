@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('graulsmarket_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('td', attrs={'class': 'wsite-multicol-col'})
 	
@@ -40,7 +35,7 @@ def fetch_data():
 		locator_domain = "graulsmarket.com"
 		try:
 			location_name = item.find('h2').text.replace('​',"").strip()
-			logger.info(location_name)
+			print (location_name)
 		except:
 			continue
 		raw_data = str(item.div).replace('<div>',"").replace('</div>',"").replace('\n',"").replace('​',"").strip().split('<br/>')

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hueymagoos_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     }
 
-    # logger.info("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.hueymagoos.com"
     page_url = "https://hueymagoos.com/locations/"
@@ -38,7 +33,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -56,12 +51,12 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    # logger.info("data ====== "+str(soup))
+    # print("data ====== "+str(soup))
     for script in soup.find_all("div", {"class": "vc_row wpb_row vc_inner vc_row-fluid mkdf-section vc_custom_1502476441129 mkdf-content-aligment-left mkdf-grid-section"}):
 
         script_location = script.find_all("div", {"class": "mkdf-icon-list-item"})
         location_name = script.h2.text.strip()
-        # logger.info(location_name)
+        # print(location_name)
         
         try:
             map_link = script.iframe["src"]
@@ -78,7 +73,7 @@ def fetch_data():
             address_list = list(script_location[1].stripped_strings)
             hours_of_operation = "".join(list(script_location[2].stripped_strings)) +","+ "".join(list(script_location[3].stripped_strings))
             
-            # logger.info("address_list ==== "+ str(address_list))
+            # print("address_list ==== "+ str(address_list))
             address_list[0] = address_list[0].replace(".,",".")
             if len(address_list[0].split(',')) > 2:
                 street_address = address_list[0].split(',')[0].strip()
@@ -100,14 +95,14 @@ def fetch_data():
             store = [locator_domain, page_url, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 
         else:
             if "Coming Soon" != "".join(list(script_location[0].stripped_strings)):
-                # logger.info("else =================== "+ str(list(script_location[0].stripped_strings)))
+                # print("else =================== "+ str(list(script_location[0].stripped_strings)))
                 address_list = list(script_location[0].stripped_strings)
                 try:
                     hours_of_operation = "".join(list(script_location[1].stripped_strings))
@@ -133,8 +128,8 @@ def fetch_data():
                 store = [locator_domain, page_url, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
             else:

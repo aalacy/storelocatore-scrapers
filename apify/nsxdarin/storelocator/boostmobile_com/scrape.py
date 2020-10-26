@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 import sgzip
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('boostmobile_com')
-
-
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -30,8 +25,8 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #logger.info('%s...' % coord)
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print('%s...' % coord)
         url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + coord + '&page=1'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -68,7 +63,7 @@ def fetch_data():
                 ids.append(store)
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            #logger.info("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

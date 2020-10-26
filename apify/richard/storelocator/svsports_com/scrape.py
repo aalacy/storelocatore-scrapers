@@ -3,11 +3,6 @@ import re
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('svsports_com')
-
-
 
 
 URL = "https://www.svsports.com/"
@@ -45,7 +40,7 @@ class Scraper(Scrape):
 
         for store in stores:
             if store != 'https://www.svsports.com/':
-                logger.info(f'Scraping {store}')
+                print(f'Scraping {store}')
 
                 driver.get(store)
 

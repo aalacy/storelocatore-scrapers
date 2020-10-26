@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thecabocantina_com')
-
-
 
 
 
@@ -92,14 +87,14 @@ def fetch_data():
                 tag.name == "script") and "initEmbed" in tag.text)
             sc_string = script.text.split(
                 'initEmbed(')[1].split(');')[0].split(',')[55:57]
-            # logger.info([list((i, sc_string[i])) for i in range(len(sc_string))])
+            # print([list((i, sc_string[i])) for i in range(len(sc_string))])
             latitude = sc_string[0].strip()
             longitude = sc_string[1].replace(']', '').strip()
-            # logger.info(latitude, longitude)
-            # logger.info('~~~~~~~~~~~~~~~~~~`')
+            # print(latitude, longitude)
+            # print('~~~~~~~~~~~~~~~~~~`')
 
         except:
-            # logger.info('error')
+            # print('error')
             pass
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -110,8 +105,8 @@ def fetch_data():
         if store[1] + " " + store[2] in addresses:
             continue
         addresses.append(store[1] + " " + store[2])
-        # logger.info("data = " + str(store))
-        # logger.info(
+        # print("data = " + str(store))
+        # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 

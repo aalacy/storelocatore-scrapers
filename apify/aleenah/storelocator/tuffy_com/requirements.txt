@@ -1,3 +1,2 @@
 sgselenium
 pyzipcode3==2.2
-sglogging

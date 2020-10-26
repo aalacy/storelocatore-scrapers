@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('centralbankonline_com')
-
-
 
 
 
@@ -20,7 +15,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        # logger.info("data::" + str(data))
+        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -44,7 +39,7 @@ def fetch_data():
         location_name = i.find('h3', {'class': 'location-name'}).text
         address_tmp2 = i.find_all('div', {'class': 'threecol'})[1].find('p')
         hour = i.find_all('div', {'class': 'threecol'})[2].text.replace('\r','').replace('\n','')
-        logger.info(hour)
+        print(hour)
         address = list(address_tmp2.stripped_strings)[0]
         city_tmp = list(address_tmp2.stripped_strings)[1].split(',')
         city = city_tmp[0]

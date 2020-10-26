@@ -4,11 +4,6 @@ import pdb
 from sgrequests import SgRequests
 from lxml import etree
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ifratellipizza_com')
-
-
 
 base_url = 'https://www.ifratellipizza.com'
 
@@ -50,7 +45,7 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_list = response.xpath('//a[@class="action-link-2"]/@href')
     for store_link in store_list:
-        logger.info(store_link)
+        print(store_link)
         store = etree.HTML(session.get(store_link).text)
         output = []
         output.append(base_url) # url

@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('popeyeschicken_ca')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -24,7 +19,7 @@ def fetch_data():
     for item in canada:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        #logger.info('Pulling Coordinates %s-%s...' % (lat, lng))
+        #print('Pulling Coordinates %s-%s...' % (lat, lng))
         url = 'https://hosted.where2getit.com/popeyes/ajax?&xml_request=<request><appkey>17DA36EB-B7DF-3E53-B01F-391651032194<%2Fappkey><formdata+id%3D"locatorsearch"><dataview>store_default<%2Fdataview><limit>100<%2Flimit><geolocs><geoloc><addressline><%2Faddressline><longitude>' + lng + '<%2Flongitude><latitude>' + lat + '<%2Flatitude><country>CA<%2Fcountry><%2Fgeoloc><%2Fgeolocs><where><operatingstatus><or><eq>Operating<%2Feq><eq>Reopenings<%2Feq><%2For><%2Foperatingstatus><%2Fwhere><searchradius>250<%2Fsearchradius><%2Fformdata><%2Frequest>'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

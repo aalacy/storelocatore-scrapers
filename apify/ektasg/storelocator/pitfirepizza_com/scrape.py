@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pitfirepizza_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -50,10 +45,10 @@ def fetch_data():
     l1 = l1.split('MAP + DIRECTIONS')
     l1 = [k.strip() for k in l1]
     name = [j.split("\n") for j in l1]
-    #logger.info(len(name) )
+    #print(len(name) )
     name[5].remove('SUITE 3')
     for i in range(len(name) - 1):
-        #logger.info(name[i])
+        #print(name[i])
         location_name = name[i][0]
         street_address = name[i][1]
         state = name[i][2].split(" ")[len(name[i][2].split(" ")) - 2]

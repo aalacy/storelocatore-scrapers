@@ -6,11 +6,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mendes_com')
-
-
 options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_experimental_option("prefs",prefs)
@@ -31,7 +26,7 @@ with open("data.csv",mode="w") as file:
         street_address=city=state=zip_code=country_code=store_number=contact_number=location_type=phone = ""
         data=[]
         ul = rec.find(name="ul")
-        #logger.info(ul)
+        #print(ul)
         li = ul.find_all("li")
         for l in li:
             store_number = l["data-store-id"]

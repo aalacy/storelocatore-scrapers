@@ -5,11 +5,6 @@ import re
 # import json
 # import sgzip
 # import calendar
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('worldcasinodirectory_com')
-
-
 
 
 def write_output(data):
@@ -108,8 +103,8 @@ def fetch_data():
                 continue
             addresses.append(store[-1])
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
     # CA location
@@ -173,8 +168,8 @@ def fetch_data():
                 continue
             addresses.append(store[-1])
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
 

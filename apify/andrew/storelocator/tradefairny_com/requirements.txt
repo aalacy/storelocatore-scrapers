@@ -1,2 +1,2 @@
 selenium==3.141.0
-usaddress==0.5.10sglogging
+usaddress==0.5.10

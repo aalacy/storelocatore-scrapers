@@ -4,11 +4,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ho-chunkgaming_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -39,12 +34,12 @@ def fetch_data():
     linklist = mainul.findAll('a')
     for link in linklist:
         link = link['href']
-        #logger.info(link)
+        #print(link)
         r= session.get(link, headers=headers, verify=False)
         soup =  BeautifulSoup(r.text,'html.parser')
         maindiv = soup.find('div',{'class':'footer-addr'}).text
         maindiv = re.sub(pattern,'\n',maindiv).lstrip().splitlines()
-        #logger.info(maindiv)
+        #print(maindiv)
         title = maindiv[0]
         street = maindiv[1]
         city ,state= maindiv[2].split(', ')
@@ -72,7 +67,7 @@ def fetch_data():
             hours =  '<MISSING>'
         else:
             hours = hours.replace('â\x80\x93','-').replace('\n','')
-        #logger.info(hours)
+        #print(hours)
         data.append([
                 'https://www.ho-chunkgaming.com/',
                 link,                   
@@ -89,7 +84,7 @@ def fetch_data():
                 '<MISSING>',
                 hours
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
         
@@ -97,10 +92,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hibbett_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,14 +24,14 @@ def fetch_data():
             states.append('https://www.hibbett.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         cities = []
-        logger.info(('Pulling State %s...' % state))
+        print(('Pulling State %s...' % state))
         r2 = session.get(state.replace('&amp;','&'), headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
             if '/storedirectory?city=' in line2:
                 cities.append('https://www.hibbett.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
-            logger.info(('Pulling City %s...' % city))
+            print(('Pulling City %s...' % city))
             locs = []
             r3 = session.get(city.replace('&amp;','&'), headers=headers)
             if r3.encoding is None: r3.encoding = 'utf-8'
@@ -55,7 +50,7 @@ def fetch_data():
                 country = 'US'
                 zc = ''
                 phone = ''
-                logger.info(('Pulling Location %s...' % loc))
+                print(('Pulling Location %s...' % loc))
                 website = 'hibbett.com'
                 typ = 'Store'
                 r4 = session.get(loc, headers=headers)

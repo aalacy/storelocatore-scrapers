@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import os
 import re, time
 import requests
@@ -8,11 +8,6 @@ import json
 import lxml.html
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('marcheami_ca')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,7 +54,7 @@ def fetch_data():
         phones2 =  driver.find_elements_by_xpath('//div[@class="store alone"]/ul/li[3]')
         for m in range(0,len(address)):
             if "1040 C, ROUTE 195" == address[m].text:
-                logger.info("here")
+                print("here")
                 c+=1
                 if c>1:
                     continue
@@ -101,7 +96,7 @@ def fetch_data():
             page_url.append(store[n])
         
     for n in range(0,len(location_name)): 
-        logger.info(page_url[n])
+        print(page_url[n])
         data.append([
             'https://marcheami.ca/',
             page_url[n],

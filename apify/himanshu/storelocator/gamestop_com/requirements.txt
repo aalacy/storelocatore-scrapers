@@ -4,4 +4,4 @@ sgrequests
 sgzip
 certifi
 urllib3
-pyopensslsglogging
+pyopenssl

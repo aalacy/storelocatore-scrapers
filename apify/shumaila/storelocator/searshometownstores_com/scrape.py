@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('searshometownstores_com')
-
-
 
 
 
@@ -37,12 +32,12 @@ def fetch_data():
         soup1 = BeautifulSoup(page1.text, "html.parser")
         #maindiv = soup1.find('div', {'class': 'col-xs-12'})
         branchlink = soup1.findAll('div', {'class': 'store-list-divider'})
-        #logger.info("state= ",state)
-        #logger.info(len(branchlink))
+        #print("state= ",state)
+        #print(len(branchlink))
         for branch in branchlink:
             link = branch.find('a')
             link = link['href']
-            #logger.info("link = ",link)
+            #print("link = ",link)
             title = branch.find('strong').text
             start = len(link) - 1
             while True:
@@ -54,14 +49,14 @@ def fetch_data():
                 else:
                     start = start - 1
             street = branch.find('div',{'class':'text-nowrap'}).text
-            #logger.info(branch.text)
+            #print(branch.text)
 
             hoursd = branch.find('a',{'data-original-title':'Store Hours'})
             hoursd = hoursd['data-content']
             hours = re.sub(cleanr," ",hoursd)
             hours = hours.replace("  ", " ")
             hours = hours.lstrip()
-            #logger.info(hoursd)
+            #print(hoursd)
             city,state = title.split(",")
             state = state.lstrip()
             branchtext = branch.text
@@ -84,14 +79,14 @@ def fetch_data():
 
             pcode = pcode.strip()
 
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(phone)
-            #logger.info(hours)
+            #print(title)
+            #print(store)
+            #print(street)
+            #print(city)
+            #print(state)
+            #print(pcode)
+            #print(phone)
+            #print(hours)
             if len(phone)<3:
                 phone = "<MISSING>"
             if len(hours)< 3:

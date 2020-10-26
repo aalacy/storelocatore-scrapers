@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 import usaddress
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('myrosatis_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -90,7 +85,7 @@ def fetch_data():
         phone_number = content[2].replace('Phone:', '').strip()
         addy = content[3].replace('(map it)', '').strip()
         parsed_add = usaddress.tag(addy)[0]
-        # logger.info(parsed_add)
+        # print(parsed_add)
         street_address = ''
         if 'AddressNumber' in parsed_add:
             street_address += parsed_add['AddressNumber'] + ' '

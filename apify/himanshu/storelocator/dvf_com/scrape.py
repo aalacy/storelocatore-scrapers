@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dvf_com')
-
-
 
 
 
@@ -79,8 +74,8 @@ def fetch_data():
     result_coords = []
     # x = coord[0]
     # y = coord[1]
-    #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-    # logger.info("zipcode == " + str(zip_code))
+    #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+    # print("zipcode == " + str(zip_code))
     time.sleep(1)
     r = request_wrapper("https://www.dvf.com/on/demandware.store/Sites-DvF_US-Site/default/Stores-FinderJSON?lat=" +
                         str(coord[0]) + "&lng=" + str(coord[1]) + "&showRP=true&showOutlet=false", "get", headers=headers)
@@ -97,7 +92,7 @@ def fetch_data():
         addresses.append(store[-1])
         store.append(store_data["city"])
         store.append(store_data["stateCode"])
-        #logger.info(store_data["postalCode"])
+        #print(store_data["postalCode"])
         store.append(store_data["postalCode"])
         store.append(store_data["countryCode"])
         store.append(store_data["id"])
@@ -113,15 +108,15 @@ def fetch_data():
         store.append(hours if hours != "" else "<MISSING>")
         store.append("<MISSING>")
         return_main_object.append(store)
-        #logger.info("data==" + str(store))
-        #logger.info('~~~~~~~~~~~~~~~~~~~~~`')
+        #print("data==" + str(store))
+        #print('~~~~~~~~~~~~~~~~~~~~~`')
         yield store
 
     if len(data['results']) < MAX_RESULTS:
-      # logger.info("max distance update")
+      # print("max distance update")
       search.max_distance_update(MAX_DISTANCE)
     # if len(data['results']) == MAX_RESULTS:
-    #   # logger.info("max count update")
+    #   # print("max count update")
     #   search.max_count_update(result_coords)
     # else:
     #   raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('microsoft_com')
-
-
 
 
 
@@ -30,7 +25,7 @@ def fetch_data():
         'accept': 'application/json'
     }
 
-    # logger.info("soup ===  first")
+    # print("soup ===  first")
     addresses = []
     base_url = "https://www.microsoft.com"
 
@@ -55,7 +50,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
 
-    # logger.info("soup ==== " + str(soup))
+    # print("soup ==== " + str(soup))
 
     total_result = 0
     page_result = 0
@@ -66,7 +61,7 @@ def fetch_data():
 
         if "/en-us/store/locations" in script['href'] and script['href'][0] == "/":
             location_url = base_url + script["href"]
-            # logger.info("Location URL === " + str(location_url))
+            # print("Location URL === " + str(location_url))
 
             r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -85,7 +80,7 @@ def fetch_data():
             if len(zipp.split(" ")) > 1:
                 country_code = "CA"
 
-            # logger.info("hours_of_operation === "+ str(hours_of_operation))
+            # print("hours_of_operation === "+ str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
@@ -94,8 +89,8 @@ def fetch_data():
 
                 store = [x if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
             # break
 

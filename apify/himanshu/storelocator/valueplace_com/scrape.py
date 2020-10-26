@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import unicodedata
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('valueplace_com')
-
-
 
 
 session = SgRequests()
@@ -37,10 +32,10 @@ def fetch_data():
     while coord:
         
         result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         }
@@ -50,13 +45,13 @@ def fetch_data():
             coord = search.next_coord()
             continue
         data = r.json()["searchResults"]
-        # logger.info(data)
+        # print(data)
         for store_data in data:
             result_coords.append((store_data["geographicLocation"]["latitude"], store_data["geographicLocation"]["longitude"]))
             if store_data["address"]["countryCode"] != "US" and store_data["address"]["countryCode"] != "CA":
                 continue
             location_name = store_data["hotelName"]
-            # logger.info("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones")
+            # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones")
             location_request = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities,contacts,occupancy,policies,rooms",headers=headers)
             location_data = location_request.json()
             if "hotelStatus" in location_data["hotelInfo"]["hotelSummary"]:
@@ -86,8 +81,8 @@ def fetch_data():
             try:
                 hours_of_operation = location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip()
             except:
-                # logger.info("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
-                # logger.info("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities,contacts,occupancy,policies,rooms")
+                # print("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
+                # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities,contacts,occupancy,policies,rooms")
                 if "hoursOfOperation" in location_data["hotelInfo"]["hotelSummary"]["hotelAmenities"][-1]:
                     hourslist = location_data["hotelInfo"]["hotelSummary"]["hotelAmenities"][-1]["hoursOfOperation"]
                     h_list =[]
@@ -101,14 +96,14 @@ def fetch_data():
 
                             hours = str(key)+": "+datetime.strptime(str(value[0]["startTime"]), "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(str(value[0]["endTime"]), "%H:%M").strftime("%I:%M %p")
                             h_list.append(hours)
-                        #     logger.info(value[0][""])
+                        #     print(value[0][""])
                     
                     if "Daily 24 Hours" in " ".join(h_list):
                         hours_of_operation = "Daily 24 Hours"
                     else:
                         hours_of_operation = " ".join(h_list)
-                    # logger.info("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
-                    # logger.info(hours_of_operation)
+                    # print("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
+                    # print(hours_of_operation)
                 else:
                     hours_of_operation = "<MISSING>"
                 
@@ -129,13 +124,13 @@ def fetch_data():
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            #logger.info(store)
+            #print(store)
 
         if len(data) < MAX_RESULTS:
-            #logger.info("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            #logger.info("max count update")
+            #print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

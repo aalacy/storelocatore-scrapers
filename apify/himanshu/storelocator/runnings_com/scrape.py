@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('runnings_com')
-
-
 
 
 
@@ -91,7 +86,7 @@ def fetch_data():
 
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
-        #logger.info('------',str(store))
+        #print('------',str(store))
         yield store
         i+=1
 

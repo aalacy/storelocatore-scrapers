@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import math
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pacificapizza_com')
-
-
 
 session = SgRequests()
 
@@ -61,7 +56,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(base_url)
         tem_var = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
-        # logger.info(tem_var)
+        # print(tem_var)
         yield tem_var
 
 

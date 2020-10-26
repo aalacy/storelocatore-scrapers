@@ -3,4 +3,3 @@ sgrequests
 beautifulsoup4==4.7.1
 sgzip
 requests==2.11.1
-sglogging

@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('independent-bank_com')
-
-
 
 
 session = SgRequests()
@@ -31,10 +26,10 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     ck = soup.find('ul',{'id':'locList'}).find_all('div',{'class':'branchName'})
     for target_list in ck:
-        # logger.info('https://www.independent-bank.com'+target_list.find('a')['href'])
+        # print('https://www.independent-bank.com'+target_list.find('a')['href'])
         page_url='https://www.independent-bank.com'+target_list.find('a')['href']
         store_number = page_url.split('=')[1].split('&')[0]
-        # logger.info(store_number)
+        # print(store_number)
         k = session.get('https://www.independent-bank.com'+target_list.find('a')['href'],headers = header)
         soup = BeautifulSoup(k.text,"lxml")
         locator_domain = base_url
@@ -64,8 +59,8 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
         location_type = "Branch"
         # loc_type = ul.find('div',class_="hours").nextSibling
-        # logger.info(loc_type.prettify())
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(loc_type.prettify())
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
@@ -74,8 +69,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
                 
         

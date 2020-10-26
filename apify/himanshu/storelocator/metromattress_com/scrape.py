@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('metromattress_com')
-
-
 
 
 
@@ -36,7 +31,7 @@ def fetch_data():
         base_url= "https://www.metromattress.com/locationsmain/"+str(q)+"/"
         r = session.get(base_url,headers=headers)
         soup= BeautifulSoup(r.text,"lxml")
-        # logger.info("=================================",q)
+        # print("=================================",q)
         loc = (soup.find_all("h2",{"class":"wppl-h2"}))
         # k = soup.find("ul",{"id":"hiddenRegions"}).find_all('li')
         
@@ -77,7 +72,7 @@ def fetch_data():
             tem_var.append(lng)
             tem_var.append(hours.replace("HOURS","").encode('ascii', 'ignore').decode('ascii').strip())
             tem_var.append(i.a['href'])
-            # logger.info(tem_var)
+            # print(tem_var)
             if tem_var[2] in addressess:
                 continue
             addressess.append(tem_var[2])

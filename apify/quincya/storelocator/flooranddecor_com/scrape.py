@@ -11,11 +11,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('flooranddecor_com')
-
-
 
 
 def get_driver():
@@ -57,7 +52,7 @@ def fetch_data():
 	found_links = []
 
 	for state in states:
-		logger.info("State: " + state)
+		print("State: " + state)
 		search_element = driver.find_element_by_id("dwfrm_storelocator_searchTerm")
 		search_element.clear()
 		time.sleep(randint(1,2))
@@ -86,12 +81,12 @@ def fetch_data():
 						found_links.append(link)
 						all_links.append([link, location_type])
 				except:
-					logger.info("Skipping Upcoming store!")
+					print("Skipping Upcoming store!")
 
 	data = []
 	total_links = len(all_links)
 	for i, raw_link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+		print("Link %s of %s" %(i+1,total_links))
 		link = raw_link[0]
 
 		driver.get(link)
@@ -105,7 +100,7 @@ def fetch_data():
 			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
 			longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
 		except:
-			logger.info('Timeout...')
+			print('Timeout...')
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
 
@@ -113,7 +108,7 @@ def fetch_data():
 
 		locator_domain = "flooranddecor.com"
 		location_name = "Floor & Decor " + item.find('h1').text.strip()
-		logger.info(location_name)
+		print(location_name)
 
 		street_address = item.find('span', attrs={'itemprop': 'streetAddress'}).text.strip()
 		city = item.find('span', attrs={'itemprop': 'addressLocality'}).text.replace(",","").strip()

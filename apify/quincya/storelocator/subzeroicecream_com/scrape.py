@@ -6,11 +6,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 import csv
 import re
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('subzeroicecream_com')
-
-
 
 
 
@@ -52,7 +47,7 @@ def fetch_data():
 	time.sleep(5)
 	items = driver.find_elements_by_tag_name("gb-map-item-cell")
 
-	logger.info(str(len(items)) + " links loaded..processing")
+	print(str(len(items)) + " links loaded..processing")
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	headers = {'User-Agent' : user_agent}
@@ -71,8 +66,8 @@ def fetch_data():
 			base = BeautifulSoup(req.text,"lxml")
 			time.sleep(3)
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		section = base.find('div', attrs={'class': 'content-container'})
 					
@@ -81,7 +76,7 @@ def fetch_data():
 			location_name = section.find('h1').text.strip()
 		except:
 			location_name = base.title.text
-		logger.info(location_name)
+		print (location_name)
 
 		raw_address = section.find('h3', attrs={'class': 'address ng-star-inserted'}).text.strip()
 		street_address = "<INACCESSIBLE>"

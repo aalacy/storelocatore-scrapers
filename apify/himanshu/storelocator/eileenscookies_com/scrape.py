@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('eileenscookies_com')
-
-
 
 
 
@@ -29,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    logger.info("soup ===  first")
+    print("soup ===  first")
 
     base_url = "https://www.eileenscookies.com"
     r = session.get("https://www.eileenscookies.com/locations/", headers=headers)
@@ -37,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -76,22 +71,22 @@ def fetch_data():
         longitude = "<MISSING>"
         hours_of_operation = ",".join(list(soup_store.find('div', {'id': 'store-hours'}).stripped_strings))
 
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ "+address)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ "+address)
         #
-        # logger.info("locator_domain = " + locator_domain)
-        # logger.info("location_name = " + location_name)
-        # logger.info("street_address = " + street_address)
-        # logger.info("city = " + city)
-        # logger.info("state = " + state)
-        # logger.info("zipp = " + zipp)
-        # logger.info("location_name = " + location_name)
-        # logger.info("country_code = " + country_code)
-        # logger.info("store_number = " + store_number)
-        # logger.info("phone = " + phone)
-        # logger.info("location_type = " + location_type)
-        # logger.info("latitude = " + latitude)
-        # logger.info("longitude = " + longitude)
-        # logger.info("hours_of_operation = " + hours_of_operation)
+        # print("locator_domain = " + locator_domain)
+        # print("location_name = " + location_name)
+        # print("street_address = " + street_address)
+        # print("city = " + city)
+        # print("state = " + state)
+        # print("zipp = " + zipp)
+        # print("location_name = " + location_name)
+        # print("country_code = " + country_code)
+        # print("store_number = " + store_number)
+        # print("phone = " + phone)
+        # print("location_type = " + location_type)
+        # print("latitude = " + latitude)
+        # print("longitude = " + longitude)
+        # print("hours_of_operation = " + hours_of_operation)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]

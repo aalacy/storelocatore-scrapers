@@ -9,11 +9,6 @@ import asyncio
 import aiohttp
 from urllib.parse import urljoin
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('staples_com')
-
-
 base_url = "https://stores.staples.com/index.html"
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -27,7 +22,7 @@ class Scrape(base.Spider):
             i = base.Item(res_sel)
             i.add_value('locator_domain', base_url)
             i.add_value('page_url', url)
-            logger.info(url)
+            print(url)
             i.add_xpath('location_name', '//h1[@class="Core-title"]/text()', base.get_first)
             i.add_xpath('store_number', '//div[@class="Core-storeId"]/text()', base.get_first, lambda x: x.replace('Store #', ''))
             i.add_xpath('phone', '//div[@id="phone-main"]/text()',

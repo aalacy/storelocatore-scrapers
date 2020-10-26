@@ -4,11 +4,6 @@ import sgzip
 import requests
 from pyzipcode import ZipCodeDatabase
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kwikkaronline_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,7 +48,7 @@ def fetch_data():
     key_set = set([])
     for zip in zip_codes:
         #zip= 77001
-        logger.info(zip)
+        print(zip)
         try:
             zall= zcdb[zip]
         except:
@@ -61,7 +56,7 @@ def fetch_data():
         res = requests.post("https://kwikkaronline.com/wp-admin/admin-ajax.php",
                        headers=headers,
                        data='action=locate&address='+str(zip)+'&formatted_address=Addison%2C+TX+75001%2C+USA&locatorNonce=a1c3d6f397&distance=50&latitude='+str(zall.latitude)+'&longitude='+str(zall.longitude)+'&unit=miles&geolocation=false&allow_empty_address=false')
-        logger.info(res)
+        print(res)
         results=res.json()['results']
         if results != None:
             for result in results:
@@ -98,11 +93,11 @@ def fetch_data():
                             phones.append(ph)
 
     for url in page_url:
-        logger.info(url)
+        print(url)
         res= requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         tim = soup.find('div', {'class': 'store-hours'}).text.replace('\n',"").strip()
-        logger.info("tim",tim)
+        print("tim",tim)
         if tim =="":
             timing.append("<MISSING>")
         else:

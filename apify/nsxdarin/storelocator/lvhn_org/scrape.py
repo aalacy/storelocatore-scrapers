@@ -1,11 +1,6 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lvhn_org')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,7 +37,7 @@ def fetch_data():
         while Found:
             urlloc = url2 + '&page=' + str(pagenum)
             pagenum = pagenum + 1
-            logger.info(('Pulling Category %s, %s...' % (catname, str(pagenum))))
+            print(('Pulling Category %s, %s...' % (catname, str(pagenum))))
             Found = False
             r2 = session.get(urlloc, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
@@ -61,7 +56,7 @@ def fetch_data():
         urlnew = 'https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002&keys=&location_types=All&physician_practice=All&services=All&page=' + str(pagenum)
         pagenum = pagenum + 1
         PFound = False
-        logger.info(('Pulling Full List Page %s...' % str(pagenum)))
+        print(('Pulling Full List Page %s...' % str(pagenum)))
         r2 = session.get(urlnew, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -72,11 +67,11 @@ def fetch_data():
                 if lurl not in alllocs:
                     alllocs.append(lurl)
                     locs.append('https://www.lvhn.org' + line2.split('<a href="')[1].split('"')[0] + '|<MISSING>')
-        logger.info(('%s Locations Found...' % str(len(locs))))
+        print(('%s Locations Found...' % str(len(locs))))
     for loc in locs:
         lurl = loc.split('|')[0]
         typ = loc.split('|')[1]
-        logger.info(('Pulling Location %s...' % lurl))
+        print(('Pulling Location %s...' % lurl))
         website = 'lvhn.org'
         hours = ''
         name = ''

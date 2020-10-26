@@ -2,11 +2,6 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lifechurch_tv')
-
-
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -60,7 +55,7 @@ def fetch_data():
     for div in soup.find("section",{"id":"map"}).find_all("div",{"class":"location-state"}):
         for d in div.find_all("a",{"class":"campus-link"}):
             page_url = "https://www.life.church"+d['href']
-            # logger.info("vivek~~~~~~~~~~~~~~~~ ",)
+            # print("vivek~~~~~~~~~~~~~~~~ ",)
             if "/contact" in d['href']:
                 continue
             r1 = requests.get("https://www.life.church"+ d['href'])
@@ -68,7 +63,7 @@ def fetch_data():
             if "/coloradosprings" in d['href']:
                 location_name ="Tony Doland"
                 full = list(soup1.find("div",{'class':"columns small-12 large-5 large-push-1"}).stripped_strings)
-                # logger.info(full)
+                # print(full)
                 city  = full[3].split(",")[0]
                 state = full[3].split(",")[1].strip().split( )[0]
                 zipp  = full[3].split(",")[1].strip().split( )[1]
@@ -93,18 +88,18 @@ def fetch_data():
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # logger.info("----------------------",store)
+                # print("----------------------",store)
                 yield store
-                # logger.info(list(soup1.find("div",{'class':"columns small-12 large-5 large-push-1"}).stripped_strings)[1])
+                # print(list(soup1.find("div",{'class':"columns small-12 large-5 large-push-1"}).stripped_strings)[1])
             else: 
-                # logger.info(soup1)
+                # print(soup1)
                 store=[]           
                 location_name = soup1.find("span",{"class":"campus-name"}).text.strip()
                 full = list(soup1.find("a",{"class":"campus-address"}).stripped_strings)
                 if full[0]=="Meets at South Valley Middle School" or full[0]=="Meets at Millard West High School" or full[0]=='Meets at Legacy High School!':
                     del full[0]
                 street_address  = full[0]
-                # logger.info(list(soup1.find("a",{"class":"campus-address"}).stripped_strings))
+                # print(list(soup1.find("a",{"class":"campus-address"}).stripped_strings))
                 city  = full[1].split(",")[0]
                 state = full[1].split(",")[1].strip().split( )[0]
                 zipp  = full[1].split(",")[1].strip().split( )[1]
@@ -130,7 +125,7 @@ def fetch_data():
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # logger.info("----------------------",store)
+                # print("----------------------",store)
                 yield store
 
 def scrape():

@@ -2,11 +2,6 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('joescrabshack_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +32,7 @@ def fetch_data():
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'loc-results-box'})
     divs=divs[45:]
-    logger.info(len(divs))
+    print(len(divs))
     for div in divs:
         a = div.find("h4").find('a')
         ids.append(a.get('href').split("/")[-1])

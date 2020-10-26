@@ -8,11 +8,6 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('r2o_com')
-
-
 crawled = []
 class Scrape(base.Spider):
 
@@ -36,7 +31,7 @@ class Scrape(base.Spider):
             i.add_value('store_number', result.get('Store_ID',''))
             sel_ = base.selector(i.as_dict()['page_url'])
             i.add_value('hours_of_operation', sel_['tree'].xpath('(//div[@class="storehours"])[1]/p/text()'), lambda x: '; '.join(x))
-            logger.info(i)
+            print(i)
             yield i
 
 

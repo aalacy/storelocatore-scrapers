@@ -4,11 +4,6 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mexicaninncafe_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,7 +32,7 @@ def fetch_data():
     maindiv = soup.find('section',{'class':'Main-content'})
     divlist = maindiv.findAll('div',{'class':'col sqs-col-12 span-12'})
     maplist = soup.findAll('div',{'class':'map-block'})
-    logger.info(len(maplist))
+    print(len(maplist))
     for i in range(0,1):
         mainlist = str(divlist[i])   
         start =0
@@ -57,7 +52,7 @@ def fetch_data():
             start = end + 3
             
  
-    logger.info(len(hourlist))
+    print(len(hourlist))
     flag = 0
     for divn in maplist:        
         div = json.loads(divn['data-block-json'])        
@@ -81,7 +76,7 @@ def fetch_data():
             if det.find('p').text.find(pcode) > -1:
                 if pcode == '76107':
                     flag = flag + 1
-                #logger.info(pcode)
+                #print(pcode)
                 title = det.find('h2').text
                 if flag == 2:
                     title = 'HENDERSON STREET'
@@ -111,7 +106,7 @@ def fetch_data():
                         longt,
                         re.sub(pattern,' ',hours)
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
    
         
@@ -119,9 +114,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

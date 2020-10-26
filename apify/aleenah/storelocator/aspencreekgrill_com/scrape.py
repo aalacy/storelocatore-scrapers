@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('aspencreekgrill_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +23,7 @@ def fetch_data():
     res=session.get("https://aspencreekgrill.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
     urls = soup.find('ul', {'class': 'sub-menu'}).find_all('a')
-    logger.info(len(urls))
+    print(len(urls))
 
     for url in urls:
         url=url.get('href')

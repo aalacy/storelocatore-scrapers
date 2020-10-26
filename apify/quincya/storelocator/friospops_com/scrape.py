@@ -9,11 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('friospops_com')
-
-
 
 
 def write_output(data):
@@ -49,8 +44,8 @@ def fetch_data():
 
 	data = []
 	for i, final_link in enumerate(final_links):
-		logger.info("Link %s of %s" %(i+1,len(final_links)))
-		logger.info(final_link)
+		print("Link %s of %s" %(i+1,len(final_links)))
+		print(final_link)
 
 		driver.get(final_link)
 		time.sleep(randint(2,3))
@@ -63,7 +58,7 @@ def fetch_data():
 
 		locator_domain = "friospops.com"
 		location_name = "Frios Gourmet Pops - " + base.find_all(class_="elementor-text-editor elementor-clearfix")[0].text
-		# logger.info(location_name)
+		# print(location_name)
 		
 		try:
 			raw_address = base.find_all(class_="elementor-text-editor elementor-clearfix")[1].p.text.split("\n")

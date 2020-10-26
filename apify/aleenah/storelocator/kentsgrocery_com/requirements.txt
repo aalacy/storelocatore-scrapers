@@ -2,4 +2,3 @@ sgselenium
 bs4==0.0.1
 sgrequests
 usaddress
-sglogging

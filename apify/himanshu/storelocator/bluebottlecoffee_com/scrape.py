@@ -5,11 +5,6 @@ import re
 import json
 import requests
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bluebottlecoffee_com')
-
-
 
 
 session = SgRequests()
@@ -58,7 +53,7 @@ def fetch_data():
                     hours = hours + ' '+" ".join(list(h.stripped_strings))
                 hours_of_operation =  hours.split("We’ve reopened")[0].split("To help slow the")[0]
                 hours_of_operation= re.sub(r"\s+", " ",hours_of_operation)
-                # logger.info(hours_of_operation)
+                # print(hours_of_operation)
                 store = []
                 store.append("https://bluebottlecoffee.com/")
                 store.append(name)
@@ -74,7 +69,7 @@ def fetch_data():
                 store.append(longitude)
                 store.append(hours_of_operation.strip() if hours_of_operation else "<MISSING>")
                 store.append(page_url)
-                # logger.info(store)
+                # print(store)
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 yield store
         

@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('stokesstores_com')
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -31,7 +26,7 @@ def fetch_data():
     base_url = "https://www.stokesstores.com/en/"
    
     soup = bs(session.get("https://www.stokesstores.com/en/storelocator/").text, "lxml")
-    # logger.info(soup)
+    # print(soup)
     json_data = json.loads(str(soup).split("stores      :")[1].split("countLabel")[0].replace("}],","}]"))
     for data in json_data:
 

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('valentinos_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +30,7 @@ def fetch_data():
         phone = (i['post_meta_fields']['phone'][0])
         hours_of_operation  =" ".join( list(BeautifulSoup(i['post_meta_fields']['hours'][0],'lxml').stripped_strings)).replace("\r\n"," ").split("Dining Room")[0].split("Buffet")[0].split('Party Rooms')[0]
         page_url = i['link']
-        # logger.info(page_url)
+        # print(page_url)
         # "https://valentinos-omaha-la-vista-72nd-giles-rd.securebrygid.com/zgrid/themes/843/intro/index.jsp"
         # "https://valentinos-omaha-south-132nd-center-st.securebrygid.com/zgrid/themes/843/intro/index.jsp"
         store_number = i['id']

@@ -8,11 +8,6 @@ import json
 # import pprint
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gabesstores_com')
-
-
 
 
 
@@ -62,16 +57,16 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         # lat = -42.225
         # lng = -42.225
 
         # zip_code = 11576
         
-        # logger.info('location_url ==' +location_url))
-        # logger.info("===============================================",zip_code)
+        # print('location_url ==' +location_url))
+        # print("===============================================",zip_code)
         
         location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
         k = session.get(location_url, headers=headers).json()
@@ -88,7 +83,7 @@ def fetch_data():
             #     if "openIntervals" in i["hours"][j]: 
             #         time = time +' ' + (j + ' ' +i["hours"][j]['openIntervals'][-1]["start"]+ ' ' + i["hours"][j]['openIntervals'][-1]["end"])
           
-            # logger.info("=============================",i["hours"])
+            # print("=============================",i["hours"])
             # hours_of_operation =time
             latitude = i['yextDisplayCoordinate']['latitude']
             longitude = i['yextDisplayCoordinate']['longitude']
@@ -107,15 +102,15 @@ def fetch_data():
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))                   
                 store = [x if x else "<MISSING>" for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

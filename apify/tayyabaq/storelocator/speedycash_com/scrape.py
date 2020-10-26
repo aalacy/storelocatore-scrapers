@@ -5,11 +5,6 @@ from selenium.webdriver.chrome.options import Options
 import re
 import requests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('speedycash_com')
-
-
 
 def get_driver():
     options = Options() 
@@ -45,20 +40,20 @@ def fetch_data():
             script.append(line)
     stores = driver.execute_script('\n'.join(script) + "\n return stores2;")
     lat = re.findall(r'addr=(.*?)\%2C', str(stores))
-    logger.info((len(lat)))
+    print((len(lat)))
     lon = re.findall(r"%2C(.*?)\',", str(stores))
-    logger.info((len(lon)))
+    print((len(lon)))
     street_address = re.findall(r"address': u'(.*?)\',", str(stores))
-    logger.info((len(street_address)))
+    print((len(street_address)))
     #street_address = [lat_lon[n].replace("': u'","").split(",")[0] for n in range(1,len(lat_lon))]
     city = re.findall(r"city': u'(.*?)\',", str(stores))
-    logger.info((len(city)))
+    print((len(city)))
     state = re.findall(r"state': u'(.*?)\',", str(stores))
-    logger.info((len(state)))
+    print((len(state)))
     zipcode = re.findall(r"zip': u'(.*?)\',", str(stores))
-    logger.info((len(zipcode)))
+    print((len(zipcode)))
     phone = re.findall(r"phone': u'(.*?)\',", str(stores))
-    logger.info((len(phone)))
+    print((len(phone)))
     page_url = re.findall(r"url': u'(.*?)\',", str(stores))
     page_url = [('https://www.speedycash.com' + url) for url in page_url]
     HOO = []

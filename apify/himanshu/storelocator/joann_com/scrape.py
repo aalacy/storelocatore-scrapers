@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('joann_com')
-
-
 
 
 session = SgRequests()
@@ -44,7 +39,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # logger.info("zip_code === "+zip_code)
+        # print("zip_code === "+zip_code)
 
         location_url = 'https://hosted.where2getit.com/joann/mystore/ajax?&xml_request=<request><appkey>53EDE5D6-8FC1-11E6-9240-35EF0C516365</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>250</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><longitude></longitude><latitude></latitude></geoloc></geolocs><searchradius>30|50|100|250</searchradius><where><new_in_store_meet_up><eq></eq></new_in_store_meet_up><or><customframing><eq></eq></customframing><edu_demos><eq></eq></edu_demos><busykids><eq></eq></busykids><buyonline><eq></eq></buyonline><vikingsewinggallery><eq></eq></vikingsewinggallery><project_linus><eq></eq></project_linus><sewing_studio><eq></eq></sewing_studio><store_features><eq></eq></store_features><petfriendly><eq></eq></petfriendly><glowforge><eq></eq></glowforge><custom_shop><eq></eq></custom_shop></or></where></formdata></request>'
         try:
@@ -52,7 +47,7 @@ def fetch_data():
         except:
             continue
         soup = BeautifulSoup(r.text, "lxml")
-        # logger.info("location_url ==== ",soup)
+        # print("location_url ==== ",soup)
         # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
         current_results_len = len(soup.find_all("poi"))    # it always need to set total len of record.
         locator_domain = base_url
@@ -69,7 +64,7 @@ def fetch_data():
         longitude = ""
         raw_address = ""
         hours_of_operation = ""
-        # logger.info(soup.find_all("poi"))
+        # print(soup.find_all("poi"))
         for poi in soup.find_all("poi"):
           
             location_name1 = poi.find("address2").text
@@ -96,17 +91,17 @@ def fetch_data():
                 continue
             addresses.append(store[2] + store[-3])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
             # return_main_object.append(store)
 
         # yield store
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -7,11 +7,6 @@ from bs4 import BeautifulSoup
 import re
 # import unicodedata
 # import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('centurypa_com')
-
-
 
 
 session = SgRequests()
@@ -38,7 +33,7 @@ def fetch_data():
     r = session.get("https://www.centurypa.com/communities/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for statelinks in soup.find("div",{"id":"stateListContain"}).find_all("a"):
-        # logger.info(statelinks.text)
+        # print(statelinks.text)
         r1 = session.get("https://www.centurypa.com"+statelinks["href"],headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         for loc_contain in soup1.find("div",{"id":"locationContain"}).find_all("div",class_="locationDeets"):
@@ -50,7 +45,7 @@ def fetch_data():
             city = address[-1].split(",")[0].strip()
             state = address[-1].split(",")[-1].split()[0].strip()
             zipp = address[-1].split(",")[-1].split()[-1].strip()
-            # logger.info(street_address+" | "+city+" | "+state+" | "+zipp)
+            # print(street_address+" | "+city+" | "+state+" | "+zipp)
             r3 = session.get(page_url,headers=headers)
             soup3 = BeautifulSoup(r3.text,"lxml")
             contact_link = "https://www.centurypa.com"+soup3.find("div",class_="contactContain").find("a",class_="ghostBtn")["href"]
@@ -67,8 +62,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-           # logger.info("data = " + str(store))
-           # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+           # print("data = " + str(store))
+           # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

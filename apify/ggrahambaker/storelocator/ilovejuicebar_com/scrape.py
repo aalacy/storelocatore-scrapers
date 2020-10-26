@@ -9,11 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ilovejuicebar_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,7 +54,7 @@ def fetch_data():
     for row in link_list:
         link = row[0]
         driver.get(link)
-        logger.info(link)
+        print(link)
         time.sleep(2)
 
         raw_address = row[1]

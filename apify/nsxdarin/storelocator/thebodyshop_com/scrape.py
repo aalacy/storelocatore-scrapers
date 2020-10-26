@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thebodyshop_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -22,7 +17,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(0, 15):
-        logger.info('Page %s...' % str(x))
+        print('Page %s...' % str(x))
         website = 'thebodyshop.com'
         country = 'CA'
         state = '<MISSING>'
@@ -81,7 +76,7 @@ def fetch_data():
                 yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     for x in range(0, 15):
-        logger.info('Page %s...' % str(x))
+        print('Page %s...' % str(x))
         website = 'thebodyshop.com'
         country = 'US'
         state = '<MISSING>'

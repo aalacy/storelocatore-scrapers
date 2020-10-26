@@ -4,11 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fallasstores_net')
-
-
 
 
 
@@ -76,7 +71,7 @@ def fetch_data():
             zip = location["postcode"]
         else:
             sz = location['address'].split(',')[2].split()
-            # logger.info(sz)
+            # print(sz)
             if len(sz) ==2:
                 state = sz[0].strip()
                 zip = sz[-1].strip()
@@ -89,7 +84,7 @@ def fetch_data():
         else:
             zipp = zip
 
-        # logger.info(street_address +"|"+city+"|"+state+"|"+zipp)
+        # print(street_address +"|"+city+"|"+state+"|"+zipp)
 
 
         latitude = location["lat"]
@@ -97,7 +92,7 @@ def fetch_data():
         phone = location["phone"]
         hours_of_operation = str(location["hours"]).replace("{","").replace("}","").replace("'","").replace(",","")
 
-        # logger.info("hours_of_operation == " + hours_of_operation)
+        # print("hours_of_operation == " + hours_of_operation)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -107,8 +102,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

@@ -8,11 +8,6 @@ import json
 import usaddress
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('americinn_com')
-
-
 
 base_url = 'https://www.wyndhamhotels.com'
 
@@ -91,7 +86,7 @@ def fetch_data():
     for detail_url in store_list:
         detail_url = validate(detail_url.xpath('.//a')[0].xpath('./@href'))
         link = 'https://www.wyndhamhotels.com' + detail_url
-        logger.info(link)
+        print(link)
         detail_request = session.get(link, headers = HEADERS)
         time.sleep(randint(1,2))
         detail = etree.HTML(detail_request.text)

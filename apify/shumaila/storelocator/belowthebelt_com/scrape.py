@@ -5,11 +5,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('belowthebelt_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,10 +32,10 @@ def fetch_data():
    
     state_list = soup.findAll('div', {'class': 'store-box'})
    
-    logger.info(len(state_list))   
+    print(len(state_list))   
     for i in range(1,len(state_list)):
         det = state_list[i]
-        #logger.info(det)
+        #print(det)
         try:
             title = det.find('h3').text
             li = det.findAll('li')
@@ -65,7 +60,7 @@ def fetch_data():
             if len(pcode.rstrip().lstrip()) > 8:
                 street = street + ' ' + city.lstrip()
                 city,pcode = pcode.lstrip().split(' ',1)
-            #logger.info(street)
+            #print(street)
             #input()
                 
             
@@ -85,7 +80,7 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>'
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
         except:
             pass
@@ -97,9 +92,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

@@ -13,11 +13,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('barlouie_com')
-
-
 
 
 def get_driver():
@@ -54,7 +49,7 @@ def fetch_data():
 			(By.ID, "address-input")))
 		time.sleep(randint(1,2))
 	except:
-		logger.info("Timeout waiting on page to load!")
+		print("Timeout waiting on page to load!")
 
 	all_links = set()
 
@@ -64,7 +59,7 @@ def fetch_data():
 				'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'VI', 'WA', 'WV', 'WI', 'WY']
 
 	for us_state in us_list:
-		logger.info("Searching " + us_state)
+		print("Searching " + us_state)
 		search_element = driver.find_element_by_id("address-input")
 		search_element.clear()
 		time.sleep(randint(1,2))
@@ -79,7 +74,7 @@ def fetch_data():
 				(By.ID, "locations-target")))
 			time.sleep(randint(1,2))
 		except:
-			logger.info("Timeout waiting on results..skipping")
+			print("Timeout waiting on results..skipping")
 			continue
 
 		while True:
@@ -91,7 +86,7 @@ def fetch_data():
 
 		base = BeautifulSoup(driver.page_source,"lxml")
 		items = base.find_all(class_="location-card")
-		logger.info("Found %s items" %(len(items)))
+		print("Found %s items" %(len(items)))
 		for item in items:
 			all_links.add(item['id'] + "_https://www.barlouie.com" + item.find_all('a')[-1]['href'])
 
@@ -105,17 +100,17 @@ def fetch_data():
 	final_links = list(all_links)
 	final_links.sort()
 	for i, final_link in enumerate(final_links):
-		logger.info("Link %s of %s" %(i+1,len(final_links)))
+		print("Link %s of %s" %(i+1,len(final_links)))
 		store_id = final_link.split("_")[0]
 		final_link = final_link.split("_")[1]
 		req = session.get(final_link, headers = HEADERS)
-		logger.info(final_link)
+		print(final_link)
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print('[!] Error Occured. ')
+			print('[?] Check whether system is Online.')
 
 		script = base.find('script', attrs={'type': "application/ld+json"}).text.strip()
 		store_data = json.loads(script)

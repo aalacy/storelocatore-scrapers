@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thaibbqla_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,7 +60,7 @@ def fetch_data():
             tim,  # timing
             "https://thaibbqla.com/"])
 
-    logger.info(all)
+    print(all)
     return all
 
 def scrape():

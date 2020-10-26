@@ -8,11 +8,6 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('worldwidegolfshops_com__golfers-warehouse_aspx')
-
-
 crawled = []
 class Scrape(base.Spider):
 
@@ -41,7 +36,7 @@ class Scrape(base.Spider):
                 i.add_value('longitude', re.findall(r'LatLng\((.+?),\s(.+?)\)', js)[0][1])
             except:
                 pass
-            logger.info(i)
+            print(i)
             yield i
 
 

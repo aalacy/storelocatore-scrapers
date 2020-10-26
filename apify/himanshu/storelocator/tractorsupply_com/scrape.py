@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tractorsupply_com')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -38,7 +33,7 @@ def fetch_data():
     base_url = "https://www.tractorsupply.com/"
 
     while zip_code:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         json_data = session.get("https://www.tractorsupply.com/wcs/resources/store/10151/zipcode/fetchstoredetails?zipCode="+str(zip_code)+"&isOverlay=Y&lpStoreId=&storeId=&catalogId=&langId=&responseFormat=json&_=1591770815402", headers=headers).json()['storesList']
         
@@ -82,10 +77,10 @@ def fetch_data():
             yield store
 
         if len(json_data) < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(json_data) == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

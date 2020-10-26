@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mnbbank_com')
-
-
 
 
 
@@ -64,7 +59,7 @@ def fetch_data():
         country_code = "US"
         page_url = "https://mnbbank.com/about/locations?zipcode=&city="
 
-        # logger.info(hours_of_operation)
+        # print(hours_of_operation)
         store = []
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -80,8 +75,8 @@ def fetch_data():
         store.append(longitude if latitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
-        # logger.info("data == " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data == " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
 
     return return_main_object

@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 import json
 session = SgRequests()
 import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('coral_co_uk')
-
-
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -85,7 +80,7 @@ def fetch_data():
             continue
         addressess.append(store[2])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # logger.info(store)
+        # print(store)
         yield store
 
 

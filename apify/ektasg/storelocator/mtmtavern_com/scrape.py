@@ -4,11 +4,6 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mtmtavern_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -34,12 +29,12 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False) 
     soup =BeautifulSoup(r.text, "html.parser")   
     divlist = soup.find('div',{'id':'LocationsList'}).findAll('div',{'class':'location-detail'})
-    logger.info("states = ",len(divlist))
+    print("states = ",len(divlist))
     p = 0
     for div in divlist:
         try:
             link = div.find('div',{'class':'h3'}).find('a')['href']
-            #logger.info(link)
+            #print(link)
             title = div.find('div',{'class':'h3'}).find('a').text            
             address = div.find('div',{'class':'location-address'}).find('p').text.replace('\n','')
             phone = div.find('div',{'class':'location-address'}).find('a').text
@@ -94,13 +89,13 @@ def fetch_data():
                         '<MISSING>',
                         hours.replace('\n','')
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
                 
             
             
         except Exception as e:
-            logger.info(e)
+            print(e)
             pass
         
            
@@ -109,9 +104,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

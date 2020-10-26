@@ -5,11 +5,6 @@ import string
 import re, time
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bankwithunited_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -38,7 +33,7 @@ def fetch_data():
 
     divlist = soup.findAll('div',{'class':'adrs'})
 
-        #logger.info(len(divlist))
+        #print(len(divlist))
     hours = "<MISSING>"
     flag = 0
     for div in divlist:
@@ -62,7 +57,7 @@ def fetch_data():
         ltype =''
         try:
             loc = div.find('div',{'class':'views-field-field-location-amenities'})
-            #logger.info(loc)
+            #print(loc)
             loc = str(loc)
             if loc.find('brnch') > -1:
                 ltype = ltype + 'Branch'
@@ -77,7 +72,7 @@ def fetch_data():
         except:
             try:
                 loc = div.find('div',{'class':'field--name-field-location-amenities'}).text
-            #logger.info(loc)
+            #print(loc)
                 loc = str(loc)
                 if loc.find('Branch') > -1:
                     ltype = ltype + 'Branch'
@@ -143,7 +138,7 @@ def fetch_data():
             hours = "<MISSING>"
         try:
             coord = str(div.find('div',{'class':'views-field-field-get-location-link'}).find('a')['href'])
-            #logger.info(coord)
+            #print(coord)
             #input()
             start =coord.find('@')
             if start > -1 :
@@ -178,7 +173,7 @@ def fetch_data():
         hours = hours.rstrip()
         if len(hours) < 3:
             hours = "<MISSING>"
-        #logger.info(hours)
+        #print(hours)
         hours = hours.replace('Lobby: ','')        
         hours = hours.lstrip()
         title = title.replace('\n','')
@@ -226,7 +221,7 @@ def fetch_data():
                         longt,
                         hours
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
                 
 
@@ -238,9 +233,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

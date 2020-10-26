@@ -3,11 +3,6 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('becn_com')
-
-
 
 
 session = SgRequests()
@@ -26,7 +21,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://site.becn.com/api-man/StoreLocation?facets=&lat=' + str(x) + '&long=' + str(y) + '&range=100'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

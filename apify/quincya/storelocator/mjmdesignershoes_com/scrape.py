@@ -2,11 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mjmdesignershoes_com')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,8 +25,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
 
 	items = base.findAll('td', attrs={'class': 'findastore'})
 
@@ -40,7 +35,7 @@ def fetch_data():
 		locator_domain = "mjmdesignershoes.com"		
 		raw_data = str(item).split('<br/>')
 		location_name =  item.find('b').text + " " + raw_data[0][raw_data[0].rfind('>')+1:].strip()
-		logger.info(location_name)
+		print (location_name)
 		if len(raw_data) == 5:		
 			street_address = raw_data[1].replace('\n','').strip()
 		elif len(raw_data) == 6:
@@ -63,8 +58,8 @@ def fetch_data():
 		try:
 			map_base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
 
 		latitude = map_base.find('meta', attrs={'property': 'place:location:latitude'})['content']
 		longitude = map_base.find('meta', attrs={'property': 'place:location:longitude'})['content']

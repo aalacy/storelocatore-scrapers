@@ -4,11 +4,6 @@ import csv
 import time
 from random import randint
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('magnusonhotels_com__brand__magnuson__magnuson-grand')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -36,8 +31,8 @@ def fetch_data():
 	try:
 		main_base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 	
 	items = main_base.find_all(class_="hoteltop")
 	
@@ -55,8 +50,8 @@ def fetch_data():
 			try:
 				main_base = BeautifulSoup(req.text,"lxml")
 			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+				print('[!] Error Occured. ')
+				print('[?] Check whether system is Online.')
 	
 			items = main_base.find_all(class_="hoteltop")
 			

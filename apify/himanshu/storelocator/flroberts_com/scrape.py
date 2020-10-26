@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('flroberts_com')
-
-
 
 
 session = SgRequests()
@@ -33,7 +28,7 @@ def fetch_data():
         geo=list(main.text.split("var "+val)[1].split('(')[1].split(')')[0].split(', '))
         location=list(data.stripped_strings)
         store=[]
-        logger.info(location)
+        print(location)
         store.append("https://www.flroberts.com")
         store.append(location[0])
         del location[0]

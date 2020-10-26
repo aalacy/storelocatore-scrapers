@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('brunellocucinelli_com')
-
-
 
 
 session = SgRequests()
@@ -29,9 +24,9 @@ def get_store(country_code):
     }
     base_url = "http://www.brunellocucinelli.com"
     usa_request = session.get("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=",headers=headers)
-    # logger.info("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=")
+    # print("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=")
     usa_soup = BeautifulSoup(usa_request.text,"lxml")
-    # logger.info(usa_soup.prettify())
+    # print(usa_soup.prettify())
     country_data = []
     location_data = json.loads(usa_soup.find("script").text.split("locations = ")[2].split("];")[0].replace("\n","").replace("'",'"')[:-2] + "]]")
     store = usa_soup.find('ul',class_='store-items')
@@ -47,7 +42,7 @@ def get_store(country_code):
             page_url = p.pop(0)
         else:
             page_url = "<MISSING>"
-            # logger.info(location['data-id'],page_url)
+            # print(location['data-id'],page_url)
         store = []
         store.append("http://www.brunellocucinelli.com")
         store.append(location["data-storename"])
@@ -71,8 +66,8 @@ def get_store(country_code):
             continue
         addresses.append(store[2])
         country_data.append(store)
-        # logger.info("data == "+str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data == "+str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return country_data
 
 def fetch_data():

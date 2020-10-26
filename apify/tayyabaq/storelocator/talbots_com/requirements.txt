@@ -1,4 +1,3 @@
 requests==2.7.0
 usaddress
 bs4==0.0.1
-sglogging

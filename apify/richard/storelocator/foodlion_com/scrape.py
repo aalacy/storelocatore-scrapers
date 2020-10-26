@@ -3,11 +3,6 @@ import json
 import sgzip
 
 from Scraper import Scrape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('foodlion_com')
-
-
 
 URL = "https://www.foodlion.com/"
 
@@ -82,7 +77,7 @@ class Scraper(Scrape):
             )
             data = json.loads(requests.get('https://www.foodlion.com/bin/foodlion/search/storelocator.json', headers=headers, params=params).json()['result'])
             stores.extend(data)
-            logger.info(f"{len(data)} locations scraped for {zipsearch}.")
+            print(f"{len(data)} locations scraped for {zipsearch}.")
 
         for store in stores:
             if store['id'] not in self.seen:

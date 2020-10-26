@@ -1,10 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('deli-delicious_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -46,7 +41,7 @@ def fetch_data():
                 if "onmouseout='hoverStop(" in item:
                     locs.append(item.split(')')[0])
     for loc in locs:
-        logger.info(loc)
+        print(loc)
         for coord in coords:
             if coord.split('|')[0] == loc:
                 lat = coord.split('|')[1]

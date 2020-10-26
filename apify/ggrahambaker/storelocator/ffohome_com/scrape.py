@@ -1,11 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ffohome_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +34,7 @@ def fetch_data():
     all_store_data = []
     for raw_loc in locs:
         page_url = raw_loc.a['href']
-        logger.info(page_url)
+        print(page_url)
         req = session.get(page_url, headers = HEADERS)
         loc = BeautifulSoup(req.content, 'html.parser')
         location_name = loc.h1.text.strip()

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('myaroundtheclockfitness_com')
-
-
 
 
 
@@ -46,7 +41,7 @@ def fetch_data():
             soup1= BeautifulSoup(r1.text,"lxml")
             
             page_url1 = link['href']
-            #logger.info(page_url1)
+            #print(page_url1)
             # store_name = soup.find_all('div', {'class': 'fusion-title'}).text
             store_name = (soup1.find('div', {'class': 'fusion-title'}).text)
             phone =list(soup1.find_all('div', {'class':'fusion-text'})[1].stripped_strings)[-1]
@@ -64,7 +59,7 @@ def fetch_data():
             tem_var.append(city)
             tem_var.append(state)
             tem_var.append(zip1)
-            # logger.info(tem_var)
+            # print(tem_var)
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append(phone)
@@ -73,7 +68,7 @@ def fetch_data():
             tem_var.append(longitude)
             tem_var.append("<MISSING>")
             tem_var.append(page_url1)
-           # logger.info(tem_var)
+           # print(tem_var)
             yield tem_var
             # return_main_object.append(tem_var)
         

@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('doctorsonduty_com')
-
-
 
 
 # Location URL
@@ -40,7 +35,7 @@ def pull_info(content):
         store_name = store.h2.text
 
         store_type = '<MISSING>'
-        logger.info(store_name)
+        print (store_name)
         add_phone_hour_split = [x for x in store.find_all('div',{'class':'elementor-text-editor elementor-clearfix'})[0].text.replace('<br>','\n').replace('Blvd','Blvd\n').replace('Ave','Ave\n').replace(' St',' St\n').split('\n')
                                 if (x != '')&(x!=', St')&(x!='e A')]
 

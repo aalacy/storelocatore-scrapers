@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('krispykrunchy_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -73,7 +68,7 @@ def fetch_data():
         if len(stores)>0:
             for store in stores:
                 info = store.find_element_by_css_selector('div:nth-child(2)').text.splitlines()
-                #logger.info(info)
+                #print(info)
                 location_name = info[0]
                 if location_name in loc_names:
                     pass
@@ -120,7 +115,7 @@ def fetch_data():
                           '<MISSING>'
                         ])
                     count=count+1
-                    logger.info(count)
+                    print(count)
         else:
             pass
 

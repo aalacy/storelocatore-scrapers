@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 from datetime import datetime
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('hancockwhitney_com')
-
-
 
 
 session = SgRequests()
@@ -32,7 +27,7 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        # logger.info("https://hancockwhitney-api-production.herokuapp.com/location?latitude=" + str(cord[0]) + "&locationTypes=atm,branch,business&longitude=" + str(cord[1]) + "&pageSize=100&radius=200&searchByState=&sort=distance&sortDir=-1")
+        # print("https://hancockwhitney-api-production.herokuapp.com/location?latitude=" + str(cord[0]) + "&locationTypes=atm,branch,business&longitude=" + str(cord[1]) + "&pageSize=100&radius=200&searchByState=&sort=distance&sortDir=-1")
         r = session.get("https://hancockwhitney-api-production.herokuapp.com/location?latitude=" + str(cord[0]) + "&locationTypes=atm,branch,business&longitude=" + str(cord[1]) + "&pageSize=100&radius=200&searchByState=&sort=distance&sortDir=-1",headers=headers)
         data = r.json()["data"]
         for store_data in data:

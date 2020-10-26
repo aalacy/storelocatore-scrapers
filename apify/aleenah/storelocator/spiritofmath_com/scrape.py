@@ -4,11 +4,6 @@ import re
 
 # import reverse_geocoder
 # from slimit.parser import Parser
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('spiritofmath_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -89,9 +84,9 @@ def fetch_data():
                 states.append(e[0].strip().strip(","))
             else:
                 states.append("<MISSING>")
-        logger.info(tex)
+        print(tex)
         addr = addr.strip().strip(",")
-        logger.info(addr)
+        print(addr)
         if ',' in addr:
 
             o = addr.split(",")[-1].strip()
@@ -123,7 +118,7 @@ def fetch_data():
         links.append(li.find_element_by_tag_name("a").get_attribute("href"))
 
     for link in links:
-        logger.info(link)
+        print(link)
         driver.get(link)
         try:
             news = driver.find_element_by_xpath('//div[@class="news-text"]').text
@@ -139,7 +134,7 @@ def fetch_data():
                         '<li style="text-align: left">', ' ').replace('</li>', '').replace('</b></span></p>','').replace('<ul>', '')
                 else:
                     news = ''
-        # logger.info(news)
+        # print(news)
         try:
             tim = re.findall(r'(Hours.*pm|HOURS.*pm|Hours.*PM|HOURS.*PM).*(Open)*(OPEN)*', news, re.DOTALL)[0][
                 0].replace("\n", " ")
@@ -147,7 +142,7 @@ def fetch_data():
                 tim = tim.replace(re.findall(r'pm|PM(.*Open.*)', tim, re.DOTALL)[0], "")
             except:
                 tim = tim
-            logger.info(tim)
+            print(tim)
             if 'Campus Hours:' in tim:
                 tim = tim.split('Campus Hours:')[1]
             timing.append(tim.replace('Hours: ', '').replace('HOURS OF OPERATION ', '').replace('HOURS ', '').replace('Campus Hours:','').replace(' ‚Äì',' -'))

@@ -6,11 +6,6 @@ import http.client
 import json
 import  pprint
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('cityvet_com')
-
-
 
 
 session = SgRequests()

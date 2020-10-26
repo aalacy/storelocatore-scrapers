@@ -5,11 +5,6 @@ import re
 # import json
 # import sgzip
 # import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lotsa_com')
-
-
 
 
 
@@ -65,16 +60,16 @@ def fetch_data():
     # tag_address = soup_location.find(
     #             lambda tag: (tag.name == "a" ) and "View Location" in tag.text)
     for a in soup.find_all('a',class_='et_pb_custom_button_icon'):
-        # logger.info(a['href'])
+        # print(a['href'])
         r_loc = session.get(base_url + a['href'],headers = headers)
         soup_loc= BeautifulSoup(r_loc.text,'lxml')
         page_url = base_url + a['href']
         div = soup_loc.find('div',class_="et_pb_row_3").find('div',class_='et_pb_text_inner')
 
         list_div = list(div.stripped_strings)
-        # logger.info(list_div)
-        # logger.info(len(list_div))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print(list_div)
+        # print(len(list_div))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~')
         if len(list_div) != 3:
             phone = list_div[0]
             street_address = list_div[1]
@@ -86,21 +81,21 @@ def fetch_data():
 
             coords = div.find(
                 lambda tag: (tag.name == "a") and "Get Directions" in tag.text)['href'].split('=')
-            # logger.info(coords)
-            # logger.info(len(coords))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~')
+            # print(coords)
+            # print(len(coords))
+            # print('~~~~~~~~~~~~~~~~~~~~~')
             if len(coords) ==8:
                 latitude = coords[1].split(',')[0]
                 longitude = coords[1].split(',')[-1].split('&')[0]
             else:
                 latitude = coords[0].split('@')[1].split(',')[0]
                 longitude =coords[0].split('@')[1].split(',')[1].split(',')[0]
-            # logger.info(latitude,longitude)
+            # print(latitude,longitude)
         else:
             div = soup_loc.find('div',class_="et_pb_row_4").find('div',class_='et_pb_text_inner')
-            # logger.info(div.prettify())
+            # print(div.prettify())
             list_add=list(div.stripped_strings)
-            # logger.info(list_add)
+            # print(list_add)
             phone = "".join(list_add[0:2])
             street_address = list_add[2]
             city = list_add[3].split(',')[0]
@@ -116,8 +111,8 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
 
-        logger.info("data = " + str(store))
-        logger.info(
+        print("data = " + str(store))
+        print(
             '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)

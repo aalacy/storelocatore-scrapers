@@ -4,11 +4,6 @@ import string
 import re, time
 from sgrequests import SgRequests
 import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('petescorp_com')
-
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
     'content-type': 'application/x-www-form-urlencoded'
@@ -104,7 +99,7 @@ def fetch_data():
                             longt,
                             hours
                         ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
        
     
@@ -113,9 +108,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

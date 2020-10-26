@@ -4,4 +4,3 @@ beautifulsoup4==4.7.1
 
 # uncomment if you use selenium
 sgselenium
-sglogging

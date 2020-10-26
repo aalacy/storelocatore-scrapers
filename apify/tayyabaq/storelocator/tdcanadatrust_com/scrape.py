@@ -2,11 +2,6 @@ import csv
 import re
 import requests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('tdcanadatrust_com')
-
-
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
 
@@ -108,7 +103,7 @@ def fetch_data():
         return data_list
 
     except Exception as e:
-        logger.info(str(e))
+        print(str(e))
 
 def scrape():
     data=fetch_data()

@@ -5,11 +5,6 @@ import re
 import json 
 import requests
 from random import choice
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('partplus_com')
-
-
 
 
 def write_output(data):
@@ -34,7 +29,7 @@ def proxy_request(request_type, url, **kwargs):
     while 1:
         try:
             proxy = get_proxy()
-            # logger.info("Using Proxy {}".format(proxy))
+            # print("Using Proxy {}".format(proxy))
             r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
             break
         except:
@@ -46,7 +41,7 @@ def fetch_data():
     base_url = "https://www.partsplus.com/"
     region = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
     for state_id in region:
-        #logger.info(state_id)
+        #print(state_id)
         data = {"ScriptManager1": "ScriptManager1|btnFindLocations",
                 "__EVENTTARGET": "",
                 "__EVENTARGUMENT": "",
@@ -114,7 +109,7 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            # logger.info(store)
+            # print(store)
             yield store
     
 def scrape():

@@ -5,11 +5,6 @@ import string
 import re, time
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('beefsteakveggies_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -37,20 +32,20 @@ def fetch_data():
     linklist = soup.findAll('a',{'class':'card__btn'})
     for link in linklist:
         link = 'https://www.beefsteakveggies.com'+ link['href']
-        #logger.info(link)
+        #print(link)
         r = session.get(link, headers=headers, verify=False)
   
         soup =BeautifulSoup(r.text, "html.parser")
         maindiv = soup.find('section',{'id':'intro'})
         title = maindiv.find('h2').text
-        #logger.info(title)
+        #print(title)
         address = maindiv.find('a',{'data-bb-track-category':'Address'}).text
         address = address.lstrip()
         address = address.replace('\n','')
-        #logger.info(address)
+        #print(address)
         address = address.replace(',',' ')
         address = usaddress.parse(address)
-        #logger.info(address)
+        #print(address)
         i = 0
         street = ""
         city = ""
@@ -69,7 +64,7 @@ def fetch_data():
                 pcode = pcode + " " + temp[0]
             i += 1
 
-        #logger.info(city)
+        #print(city)
         street = street.lstrip()
         street = street.replace(',','')
         city = city.lstrip()
@@ -80,7 +75,7 @@ def fetch_data():
         pcode = pcode.replace(',','')
        
 
-        #logger.info(street)
+        #print(street)
         try:
             phone = maindiv.find('a',{'data-bb-track-category':'Phone Number'}).text
         except:
@@ -88,13 +83,13 @@ def fetch_data():
         coords = soup.find('div',{'class':'gmaps'})
         lat = coords['data-gmaps-lat']
         longt = coords['data-gmaps-lng']
-        #logger.info(lat)
+        #print(lat)
         hours = soup.find('div',{'class':'col-md-6'})
         hours = hours.findAll('p')
         hours = hours[1].find('strong').text
-        #logger.info(hours)
+        #print(hours)
         data.append(['http://beefsteakveggies.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
 
     return data

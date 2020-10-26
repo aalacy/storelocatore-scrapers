@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bn_com')
-
-
 
 
 
@@ -45,7 +40,7 @@ def fetch_data():
     addresses = []
 
     for zip_code in zips:
-        # logger.info(zip_code)
+        # print(zip_code)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
         }
@@ -80,7 +75,7 @@ def fetch_data():
             location_url = "https://stores.barnesandnoble.com" + \
                 script.find('a')['href']
             page_url = location_url
-            # logger.info("location_url === " + str(location_url))
+            # print("location_url === " + str(location_url))
 
             r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -90,7 +85,7 @@ def fetch_data():
                 location_name = address_list.find("h4").text.strip()
             except:
                 location_name = "<MISSING>"
-            # logger.info(location_name)
+            # print(location_name)
             try:
                 street_address = list(soup_location.find(
                     "span", {"itemprop": "streetAddress"}).stripped_strings)
@@ -98,7 +93,7 @@ def fetch_data():
                     street_address = street_address[-1]
                 else:
                     street_address = " ".join(street_address)
-                #logger.info(street_address)
+                #print(street_address)
             except:
                 street_address = "<MISSING>"
             try:
@@ -137,8 +132,8 @@ def fetch_data():
 
             store = ["<MISSING>" if x == "" else x for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info(
+            # print("data = " + str(store))
+            # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 

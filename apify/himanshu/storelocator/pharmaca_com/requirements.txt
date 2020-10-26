@@ -4,4 +4,4 @@ beautifulsoup4==4.7.1
 sgrequests
 sgzip
 sgselenium
-bs4sglogging
+bs4

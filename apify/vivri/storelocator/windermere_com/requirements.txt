@@ -1,1 +1,1 @@
-sgscrape>=0.0.1sglogging
+sgscrape>=0.0.1

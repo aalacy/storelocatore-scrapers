@@ -3,4 +3,4 @@ requests==2.11.1
 w3lib
 sgvalidator==0.0.19
 lxml
-usaddress==0.5.10sglogging
+usaddress==0.5.10

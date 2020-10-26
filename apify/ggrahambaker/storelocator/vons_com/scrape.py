@@ -2,11 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('vons_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -63,7 +58,7 @@ def fetch_data():
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         
-        logger.info(link)
+        print(link)
 
         lat = soup.find('meta', {'itemprop': 'latitude'})['content']
         longit = soup.find('meta', {'itemprop': 'longitude'})['content']

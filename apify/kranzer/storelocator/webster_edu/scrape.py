@@ -7,18 +7,13 @@ from lxml import etree
 import base
 import requests, json
 from urllib.parse import urljoin
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('webster_edu')
-
-
 
 
 class Scrape(base.Spider):
     def crawl(self):
         crawled = []
         base_url = "http://www.webster.edu/locations/"
-        # logger.info(requests.get('http://www.webster.edu/locations/index.xml').content)
+        # print(requests.get('http://www.webster.edu/locations/index.xml').content)
         for result in etree.fromstring(requests.get('http://www.webster.edu/locations/index.xml').content).xpath('//x:Folder/x:Placemark/x:Placemark/x:Placemark', namespaces={"x":"http://www.opengis.net/kml/2.2"}):
             loc = result.xpath('.//x:description', namespaces={"x": "http://www.opengis.net/kml/2.2"})[0].text.strip().replace('<br/>', ', ').replace(' ,', ',').replace(',,', ',').replace('\xa0', ' ')
             loc_sp = loc.split(',')
@@ -28,8 +23,8 @@ class Scrape(base.Spider):
                 if "StateName" in state_zip[0]:
                     i = base.Item(result)
                     url = result.xpath('.//x:ExtendedData/x:Data/x:value', namespaces={"x":"http://www.opengis.net/kml/2.2"})
-                    # logger.info([u.text for u in url])
-                    # logger.info(url[1])
+                    # print([u.text for u in url])
+                    # print(url[1])
                     i.add_value('locator_domain', urljoin(base_url, url[1].text))
                     coords = result.xpath('.//x:Point/x:coordinates', namespaces={"x":"http://www.opengis.net/kml/2.2"})[0].text.split(',')
                     i.add_value('location_name', result.xpath('./x:name', namespaces={"x":"http://www.opengis.net/kml/2.2"})[0].text)

@@ -11,11 +11,6 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jimmychoo_com')
-
-
 
 def get_driver():
     options = Options()
@@ -41,7 +36,7 @@ def fetch_data():
     locator_domain = url
     
     for sl in range(len(store_info)):
-        logger.info(sl)
+        print(sl)
         location_name = store_info[sl].find("div",attrs={"class":"store-name"}).text.replace("\n","")
         
         page_link = "https://row.jimmychoo.com"+store_info[sl].find("div",attrs={"class":"store-name"}).find("a").get("href")

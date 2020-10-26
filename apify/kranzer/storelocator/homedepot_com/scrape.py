@@ -9,11 +9,6 @@ import base
 import lxml.html
 import sgrequests
 from lxml import etree
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('homedepot_com')
-
-
 crawled = set()
 class Scrape(base.Spider):
     async def _fetch_store(self, session, url):

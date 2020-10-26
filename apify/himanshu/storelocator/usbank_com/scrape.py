@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('usbank_com')
-
-
 session = SgRequests()
 # requests.packages.urllib3.disable_warnings()
 def write_output(data):
@@ -32,7 +27,7 @@ def fetch_data():
             for states in data['areaServed']:
                 link = "https://schema.milestoneinternet.com/schema/locations.usbank.com/index/"+states.lower().replace(" ",'-')+".html"+"/schema.json"
                 try:
-                    # logger.info('-link----',link)
+                    # print('-link----',link)
                     all_state = session.get(link).json()
                 except:
                     pass
@@ -41,7 +36,7 @@ def fetch_data():
                         for loc1 in st['areaServed']:
                             store_link ="https://schema.milestoneinternet.com/schema/locations.usbank.com/index/"+str(states.lower().replace(" ",'-'))+"/"+str(loc1.lower().replace(" ",'-'))+".html/schema.json"
                             try:
-                                # logger.info('-----store_link------',store_link)
+                                # print('-----store_link------',store_link)
                                 new_request = session.get(store_link).json()
                             except:
                                 pass
@@ -49,7 +44,7 @@ def fetch_data():
                                 if "" in q:
                                     for add in q[""]:
                                         # loc1 = session.get()
-                                        # logger.info(add['url'],"==============================")
+                                        # print(add['url'],"==============================")
                                         page_url = add['url']
                                         new_request1 = session.get(add['url'],verify=False)
                                         soup1= BeautifulSoup(new_request1.text,"lxml")
@@ -85,7 +80,7 @@ def fetch_data():
                                         elif "ATM" in location_name:
                                             location_type = "ATM"
                                         
-                                        # logger.info(location_type)
+                                        # print(location_type)
 
                                         store.append(locator_domain if locator_domain else '<MISSING>')
                                         store.append(location_name.strip().lstrip() if location_name else '<MISSING>')
@@ -104,7 +99,7 @@ def fetch_data():
                                         if store[2] in addressess:
                                             continue
                                         addressess.append(store[2])
-                                        # logger.info("====================",store)
+                                        # print("====================",store)
                                         yield store                    
 def scrape():
     data = fetch_data()

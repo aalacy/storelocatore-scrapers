@@ -2,11 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('umamiburger_com')
-
-
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -35,12 +30,12 @@ def fetch_data():
         r2 = session.get(city, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         lines2 = r2.iter_lines(decode_unicode=True)
-        logger.info(('Pulling Region %s...' % city))
+        print(('Pulling Region %s...' % city))
         for line2 in lines2:
             if '<div class="col-xs-12 col-x-sm-6 col-sm-6 col-md-4">' in line2:
                 locs.append(next(lines2).split('href="')[1].split('"')[0])
     for loc in locs:
-        logger.info(('Pulling Location %s...' % loc))
+        print(('Pulling Location %s...' % loc))
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         website = 'www.umamiburger.com'

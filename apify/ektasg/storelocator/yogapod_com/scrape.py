@@ -4,11 +4,6 @@ import string
 import re, time, usaddress, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('yogapod_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -40,7 +35,7 @@ def fetch_data():
         if link.text.find('LOCATION') > -1 and link['href'] != 'https://www.starbuds.us/locations':
             #title = link.text
             mlink = link['href']
-            #logger.info(mlink)
+            #print(mlink)
             r = session.get(mlink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
             newlist = soup.findAll('a')            
@@ -56,7 +51,7 @@ def fetch_data():
                 
     for city in citylist:
         nowlink = city['href']
-        #logger.info(nowlink)
+        #print(nowlink)
                          
         r = session.get(nowlink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text,'html.parser')
@@ -79,7 +74,7 @@ def fetch_data():
             lat  = content["areaServed"]["geoMidpoint"]['latitude']
             longt = content["areaServed"]["geoMidpoint"]['longitude']
             phone = content["telephone"].replace('+','').replace('+1','')
-            #logger.info(phone)
+            #print(phone)
             if phone[0] == '1':
                 phone = phone[1:4]+'-'+phone[4:7]+'-'+phone[7:11]
             else:   
@@ -150,7 +145,7 @@ def fetch_data():
                     longt,
                     hours.replace("\xa0",' ')
                 ])
-        ##logger.info(p,data[p])
+        ##print(p,data[p])
         p += 1
             
         

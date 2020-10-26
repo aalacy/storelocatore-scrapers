@@ -3,11 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import time
 from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nandosperiperi_com')
-
-
 
 
 def write_output(data):
@@ -32,10 +27,10 @@ def fetch_data():
     time.sleep(randint(1,2))
     try:
         base = BeautifulSoup(req.text,"lxml")
-        logger.info("Got today page")
+        print("Got today page")
     except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
+        print('[!] Error Occured. ')
+        print('[?] Check whether system is Online.')
 
     data = []
 
@@ -45,7 +40,7 @@ def fetch_data():
         items = state_item.find_all(class_="city-info")
         for item in items:
             location_name = item.h3.text
-            logger.info(location_name)
+            print(location_name)
 
             raw_address = item.p.text.replace("\t","").replace("\n","").split(",")
             street_address = raw_address[0].strip()

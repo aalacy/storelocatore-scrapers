@@ -4,11 +4,6 @@ import string
 import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('medmen_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -33,18 +28,18 @@ def fetch_data():
     r = session.get('https://www.medmen.com/stores', headers=headers)
     soup = BeautifulSoup(r.text,'html.parser')
     linklist = soup.findAll('a',{'class':'c-stores-list__link'})
-    logger.info(len(linklist))
+    print(len(linklist))
     for link in linklist:
         if link.text.find("Coming Soon") == -1:
             link = 'https://www.medmen.com' + link['href']
-            #logger.info(link)
+            #print(link)
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text,'html.parser')
             title = soup.find('h1').text
             address =str(soup.find('address'))
             address = re.sub(cleanr,'\n',address).lstrip().splitlines()
             street = '<MISSING>'
-            #logger.info(address)
+            #print(address)
             for adr in address:
                 if adr == '':
                     pass
@@ -66,7 +61,7 @@ def fetch_data():
             try:
                 text = street.split(' ')[0]
             except:
-                #logger.info("HER")
+                #print("HER")
                 street = '<MISSING>'
                 
             phone = soup.findAll('div',{'class':'c-icon-bullet'})[1].text
@@ -106,16 +101,16 @@ def fetch_data():
                         longt,
                         hours
                     ])
-            #logger.info(p,data[p])
+            #print(p,data[p])
             p += 1
 
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

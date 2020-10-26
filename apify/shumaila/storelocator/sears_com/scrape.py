@@ -5,11 +5,6 @@ import csv
 import string
 import re, time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sears_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -42,31 +37,31 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     mainul = soup.find('ul',{'class':'shc-search-by-state__list'})
     statelist = mainul.findAll('a')
-    #logger.info("LEN+",len(statelist))
+    #print("LEN+",len(statelist))
     for state in statelist:
         if state['href'].find('404') == -1:
             statelink = "https://www.sears.com" + state['href']
-            #logger.info(statelink)
+            #print(statelink)
             state1 = state.text
             flag1 = True
             while flag1:
                 try:
                     #page1 = requests.get(statelink)
                     page1 = session.get(statelink, headers=headers, verify=False)
-                    #logger.info("ENTER:")
+                    #print("ENTER:")
                     soup1 = BeautifulSoup(page1.text, "html.parser")
                     maindiv = soup1.find('div', {'class': 'shc-quick-links'})
                     linklist = soup1.findAll('li',{'class':'shc-quick-links--store-details__list--stores'})
                     #linklist = maindiv.findAll('a',{'itemprop':'url'})
-                    #logger.info(len(linklist))
+                    #print(len(linklist))
                     for blinks in linklist:
                         link = blinks.find('a')['href']
                         state1 = blinks.find('a').text.split(',')[1].split('\n',1)[0]
                         
                         if link.find("http") == -1 and blinks.text.find("Sears Store") > -1 :
-                            #logger.info("enter")
+                            #print("enter")
                             link = "https://www.sears.com" + link
-                            #logger.info(link)
+                            #print(link)
                             flag = True
                             while flag:
                                 try:
@@ -75,40 +70,40 @@ def fetch_data():
                                     #page2 = requests.get(link)
                                     page2 = session.get(link,headers= headers,verify=False)
                                     time.sleep(2)
-                                    #logger.info(page2.url)
+                                    #print(page2.url)
                                     if page2.url.find('closed') > -1:
-                                        #logger.info('closed',link,page2.url)
+                                        #print('closed',link,page2.url)
                                         break
                                     else:
                                         #page2 = requests.get(link)
                                         soup2 = BeautifulSoup(page2.text, "html.parser")
-                                        #logger.info(soup2.text)
+                                        #print(soup2.text)
                                         try:
                                             title = soup2.find('h1',{'class':'shc-save-store__title'})['data-store-title']+soup2.find('h1',{'class':'shc-save-store__title'})['data-unit-number']
                                         except:
-                                            #logger.info("HERE")
+                                            #print("HERE")
                                             title = soup2.find('small', {'itemprop': 'name'}).text
 
                                         title = title.replace('\n',' ').replace('000',' # ')
                                         
                                         title = re.sub(pattern, " ", title)
-                                        #logger.info(title)
+                                        #print(title)
                                         start = title.find("#")
                                         if start != -1:
                                            
                                             store = title.split('#',1)[1].lstrip()
                                         else:
                                             store = "<MISSING>"
-                                        #logger.info(store)
+                                        #print(store)
                                         mainp = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')
-                                        #logger.info(len(mainp))
+                                        #print(len(mainp))
                                         try:
                                             street = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')[0].text
                                             street = street.lstrip()
                                         except Exception as e:
-                                            #logger.info(e)
+                                            #print(e)
                                             street = "<MISSING>"
-                                        #logger.info(street)
+                                        #print(street)
                                         try:
                                             city = soup2.find('p',{'class':'shc-store-location__details--address'}).findAll('span')[1].text.split(', ')[0]
                                             city = city.lstrip()
@@ -150,9 +145,9 @@ def fetch_data():
                                         title = title.replace('  ',' ')
                                         flag = True
                                         for i in range(0,len(data)):                                        
-                                            #logger.info(i, pcode,data[i][6])
+                                            #print(i, pcode,data[i][6])
                                             if link == data[i][1] and title == data[i][2]:
-                                                #logger.info("exist")
+                                                #print("exist")
                                                 flag = False
                                                 break
                                         if flag and title.lower().find('find your next closest Store') == -1:
@@ -172,19 +167,19 @@ def fetch_data():
                                             longt,
                                             hours
                                         ])
-                                            #logger.info(k,data[k])
+                                            #print(k,data[k])
                                             k += 1
                                             flag = False
                                 except Exception as e:
-                                    #logger.info(link)
-                                    #logger.info("error",e)
+                                    #print(link)
+                                    #print("error",e)
                                     pass
 
                     flag1 = False
 
                 except Exception as e:
-                    #logger.info(statelink)
-                    #logger.info("error",e)
+                    #print(statelink)
+                    #print("error",e)
                     pass
 
 

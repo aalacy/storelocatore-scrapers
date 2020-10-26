@@ -5,11 +5,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('knightsinn_com')
-
-
 
 
 
@@ -41,7 +36,7 @@ def fetch_data():
     soup_state = BeautifulSoup(r.text, "lxml")
     json_str_ids = r.text.replace("var hotelsData = ", "").replace(";", "")
     json_hotel_data = json.loads(json_str_ids)
-    # logger.info("var hotelsData =  === " + str(json_hotel_data))
+    # print("var hotelsData =  === " + str(json_hotel_data))
 
     str_id_arry = ""
     # id[1]=6596&id[2]=6111&id[0]=186
@@ -57,12 +52,12 @@ def fetch_data():
 
     for param in list_str_id_data:
         location_url = "https://www.redlion.com/api/hotels?_format=json" + param
-        # logger.info("location_url === " + location_url)
+        # print("location_url === " + location_url)
         r_locations = session.get(location_url, headers=headers)
         json_locations = r_locations.json()
 
         for location in json_locations:
-            # logger.info("json data === " + str(location))
+            # print("json data === " + str(location))
 
             locator_domain = base_url
             location_name = ""
@@ -108,8 +103,8 @@ def fetch_data():
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

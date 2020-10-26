@@ -2,11 +2,6 @@ import requests
 import json
 
 from Scraper import Scrape
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('acehotel_com')
-
-
 
 URL = "https://www.acehotel.com"
 
@@ -55,7 +50,7 @@ class Scraper(Scrape):
         stores = [item['meta']['detail_url'] for item in json.loads(response.content)['items']]
 
         for store in stores:
-            logger.info(store)
+            print(store)
             r = json.loads((requests.get(store)).content)
             if r['construct_title'] not in self.block:
                 # Store ID

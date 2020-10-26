@@ -7,11 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('rockyrococo_com')
-
-
 
 driver = SgSelenium().chrome()
 
@@ -53,9 +48,9 @@ def fetch_data():
     time.sleep(15)
     driver.switch_to.frame(driver.find_element_by_id("bullseye_iframe"))
 
-    #logger.info("here")
+    #print("here")
     for us in US_states:
-        logger.info(us)
+        print(us)
         driver.find_element_by_id('txtCityStateZip').clear()
         driver.find_element_by_id('txtCityStateZip').send_keys(us)
         driver.find_element_by_id("ContentPlaceHolder1_searchButton").click()
@@ -81,20 +76,20 @@ def fetch_data():
             long.append(metas[1].get("content"))
             page_url.append(ul.find('ul',{'class':'resultsDetailLinks'}).find('a').get('href'))
 
-    #logger.info(len(page_url))
-    #logger.info(page_url)
-    #logger.info("here")
+    #print(len(page_url))
+    #print(page_url)
+    #print("here")
 
     for url in page_url:  #for timing
         if url.startswith('//'):
             url = 'http:' + url
-        # logger.info(url)
+        # print(url)
         driver.get(url)
         try:
             element = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]')))
         except:
             timing.append("<MISSING>")
-            #logger.info("passed")
+            #print("passed")
             continue
         #tex=driver.find_element_by_xpath('/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]').text
         time.sleep(1)

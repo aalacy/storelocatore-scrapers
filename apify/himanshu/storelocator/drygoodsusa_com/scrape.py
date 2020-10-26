@@ -5,11 +5,6 @@ from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('drygoodsusa_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -52,13 +47,13 @@ def fetch_data():
 
     driver.get('https://www.drygoodsusa.com/Stores.aspx')
     soup = BeautifulSoup(driver.page_source,"lxml")
-    # logger.info("soup === "+str(soup))
+    # print("soup === "+str(soup))
 
     for script in soup.find_all("div", {"class": "divStoresListStore"}):
         page_url = base_url+"/"+script.find("a")["href"]
-        # logger.info("liunk ==== "+ page_url)
+        # print("liunk ==== "+ page_url)
         driver.get(page_url)
-        # logger.info("driver.page_source ==== " + str(driver.page_source))
+        # print("driver.page_source ==== " + str(driver.page_source))
         soup_location = BeautifulSoup(driver.page_source, "lxml")
         location_name = soup_location.find("div",{"class":"divStoresTitle"}).text
         full_address = list(soup_location.find("div",{"class":"divStoreInfoBox"}).stripped_strings)
@@ -92,7 +87,7 @@ def fetch_data():
         latitude = soup_location.text.split("new google.maps.LatLng(")[1].split(",")[0]
         longitude = soup_location.text.split("new google.maps.LatLng(")[1].split(",")[1].split(")")[0]
 
-        # logger.info("soup_location -==== "+ str(full_address))
+        # print("soup_location -==== "+ str(full_address))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -102,8 +97,8 @@ def fetch_data():
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 def scrape():

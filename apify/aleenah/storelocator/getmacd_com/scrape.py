@@ -2,11 +2,6 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('getmacd_com')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,11 +31,11 @@ def fetch_data():
 
     res =  requests.get("https://getmacd.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    #logger.info(soup)
+    #print(soup)
     div = soup.find('div', {'id': 'location-section'})
     #for div in divs:
     divs=div.find_all('div', {'class': 'col sqs-col-4 span-4'})
-    logger.info(len(divs))
+    print(len(divs))
     for div in divs:
         page_url.append("https://getmacd.com"+div.find('a').get('href'))
 

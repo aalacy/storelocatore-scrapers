@@ -5,11 +5,6 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('gulfoil_com')
-
-
 session = SgRequests()
 
 
@@ -84,7 +79,7 @@ def fetch_data():
             # if store[2] in addressess:
             #     continue
             # addressess.append(store[2])
-            # logger.info('---store--'+str(store))
+            # print('---store--'+str(store))
             yield store
         page+= 1     
         

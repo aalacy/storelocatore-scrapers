@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nicksrestaurants_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -92,7 +87,7 @@ def fetch_data():
                 hours_of_op
             ])
             count+=1
-            logger.info(count)
+            print(count)
         except:
             try:
                 page_url = name[i]
@@ -131,7 +126,7 @@ def fetch_data():
                     hours_of_op
                 ])
                 count += 1
-                logger.info(count)
+                print(count)
             except:
                 pass
 

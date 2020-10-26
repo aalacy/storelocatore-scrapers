@@ -9,11 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('wirelessm_net')
-
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,7 +44,7 @@ def fetch_data():
 
 	for item in items:
 		location_name = item.h5.text.strip()
-		logger.info(location_name)
+		print(location_name)
 		raw_address = item.find(class_="col-12").text.replace(", Dallas 75252",", Dallas, TX 75252").replace(". Dallas TX",", Dallas, TX")\
 		.replace("Mansfield TX","Mansfield, TX").replace(". Sunrise",", Sunrise,").replace(". Tamarac",", Tamarac")\
 		.replace("Lauderdale","Lauderdale,").replace("Worth TX","Worth, TX").replace("Lewisville","Lewisville,").split(",")

@@ -4,11 +4,6 @@ import string,usaddress
 import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('shakeshack_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -36,27 +31,27 @@ def fetch_data():
     for div in divlist:
         link = 'https://www.shakeshack.com' + div.find('div',{'class':'title'}).find('a')['href']
         #link = 'https://www.shakeshack.com/location/empire-outlets-staten-island-ny/'
-        #logger.info(link)
+        #print(link)
         
         r = session.get(link, headers=headers, verify=False)  
         soup =BeautifulSoup(r.text, "html.parser")
         title = soup.find('title').text.split(' - ')[0]
         hours = soup.find('div',{'class':'hours-and-transportation'}).find('p').text.replace('Hours:','').replace('\n','')
         det = soup.find('div',{'class':'address'}).text.lstrip().rstrip().split('\n')
-        #logger.info(det)
+        #print(det)
         
         flag = 0
         count = 0
         phone = ''
         address = ''
-        #logger.info(dt)
+        #print(dt)
         #input()
         for dt in det :
             temp = dt.replace('.','').replace('-','').replace(')','').replace('(','').replace(' ','').lstrip().rstrip()
             temp = temp.replace('–','')
             temp = temp.replace('Main','')
             if temp.isdigit() and len(temp) == 10:
-                #logger.info('1')
+                #print('1')
                 phone = dt
                 break
             elif dt.find('Direction') > -1:          
@@ -64,16 +59,16 @@ def fetch_data():
             elif dt.find('Email') > -1 or dt.find('Office') > -1 or dt.find('Just off') > -1:
                 pass
             else:
-                #logger.info('4')
+                #print('4')
                 count += 1
-        #logger.info(temp)
+        #print(temp)
         
         address = ''
         for i in range(0,count):
             address = address + det[i]+ ' '
             
         #
-        #logger.info(address)
+        #print(address)
         check = ''
         try:
             check = address.split('(')[1].split(')')[0]
@@ -83,7 +78,7 @@ def fetch_data():
         except:
             pass
         address = usaddress.parse(address)
-        #logger.info(address)
+        #print(address)
         i = 0
         street = ""
         city = ""
@@ -177,7 +172,7 @@ def fetch_data():
                         longt,
                         hours.replace('\n',' ').lstrip().rstrip().replace("\xa0",' ')
                     ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         #input()
   
@@ -186,9 +181,9 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

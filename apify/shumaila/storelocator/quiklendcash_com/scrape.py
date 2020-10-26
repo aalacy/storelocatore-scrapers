@@ -5,11 +5,6 @@ import re, time
 import json
 import usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('quiklendcash_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -40,10 +35,10 @@ def fetch_data():
     loclist = loclist.replace(', } );','},').replace('location_data.push( ','')
     loclist = '[' + loclist +']'
     loclist = loclist.replace(', ]',']').replace("'",'"')
-    #logger.info("temp",loclist)          
+    #print("temp",loclist)          
    
     loclist = json.loads(loclist)
-    #logger.info("json",loclist)  
+    #print("json",loclist)  
     for loc in loclist:
         title = loc['name']
         address = loc['address']
@@ -80,7 +75,7 @@ def fetch_data():
             for i in range(0,len(daylist)):
                 hours = hours + daylist[i].text + ' : ' + timelist[i] .text+ ' '
         except Exception as e:
-            logger.info(e)
+            print(e)
             hours = '<MISSING>'
         data.append([
                 'https://quiklendcash.com/',
@@ -98,7 +93,7 @@ def fetch_data():
                 longt,
                 hours,
             ])
-        #logger.info(p,data[p])
+        #print(p,data[p])
         p += 1
         
         
@@ -106,10 +101,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

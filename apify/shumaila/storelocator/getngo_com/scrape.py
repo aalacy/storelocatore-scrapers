@@ -6,11 +6,6 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('getngo_com')
-
-
 
 
 def write_output(data):
@@ -34,7 +29,7 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     maind = soup.find('div',{'class':'ccm-block-styles'})
     link_list = maind.findAll('a')
-    logger.info(len(link_list))
+    print(len(link_list))
     for alink in link_list:
 
         link = "https://www.getngo.com/" + alink['href']
@@ -102,18 +97,18 @@ def fetch_data():
 
 
         city = city.replace(",","")
-        logger.info(link)
-        logger.info(store)
-        logger.info(title)
-        logger.info(address1)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
-        logger.info(phone)
-        logger.info(hours)
-        logger.info(lat)
-        logger.info(longt)
+        print(link)
+        print(store)
+        print(title)
+        print(address1)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+        print(phone)
+        print(hours)
+        print(lat)
+        print(longt)
         data.append([
             'https://www.getngo.com/',
             link,

@@ -3,11 +3,6 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('honeybaked_com')
-
-
 
 options = Options()
 options.add_argument('--headless')
@@ -52,7 +47,7 @@ def fetch_data():
     for i in range(0,len(name)):
             driver2.get(name[i])
             page_url = name[i]
-            logger.info(page_url)
+            print(page_url)
             time.sleep(5)
             locations = driver2.find_elements_by_css_selector('div.srchResultRow.row')
             i=2
@@ -148,7 +143,7 @@ def fetch_data():
                             hours_of_op
                 ])
                 count = count + 1
-                logger.info(count)
+                print(count)
                 i=i+2
 
 

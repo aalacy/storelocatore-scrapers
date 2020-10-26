@@ -1,2 +1,2 @@
 sgrequests
-bs4sglogging
+bs4

@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('vitalitybowls_com')
-
-
 
 
 session = SgRequests()
@@ -33,7 +28,7 @@ def fetch_data():
     location_links = []
     for states in soup.find_all("div",{"class":'et_pb_text_inner'}):
         for link in states.find_all("a"):
-            logger.info(link["href"])
+            print(link["href"])
             if link["href"] in location_links:
                 continue
             location_links.append(link["href"])

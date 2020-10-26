@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('drmartens_com')
-
-
 
 
 
@@ -43,7 +38,7 @@ def fetch_data():
     base_url = "https://www.drmartens.com/"
     while zip_code:
         result_coords = []
-        # logger.info("zips === " + str(zip_code))
+        # print("zips === " + str(zip_code))
         try:
             r = session.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
         except:
@@ -107,8 +102,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield  store
 
             else:
@@ -118,10 +113,10 @@ def fetch_data():
                
             
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

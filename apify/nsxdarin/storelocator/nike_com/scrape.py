@@ -3,11 +3,6 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nike_com')
-
-
 
 
 session = SgRequests()
@@ -26,7 +21,7 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://nike.brickworksoftware.com/locations_search?hitsPerPage=50&page=1&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:nike.brickworksoftware.com+AND+publishedAt%3C%3D1578345837793&esSearch=%7B%22page%22:0,%22storesPerPage%22:50,%22domain%22:%22nike.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[%7B%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:%7B%22lte%22:1578345837793%7D%7D],%22filters%22:[],%22aroundLatLng%22:%7B%22lat%22:' + str(x) + ',%22lon%22:' + str(y) + '%7D%7D'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

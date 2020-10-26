@@ -6,11 +6,6 @@ import requests
 from lxml import etree
 import json
 from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sharkeyscutsforkids_com')
-
-
 
 base_urls = 'https://sharkeyscutsforkids.com/'
 
@@ -32,7 +27,7 @@ def fetch_data():
     for q in soup1.find_all("h2",class_="geodir-entry-title"):
         page_url =q.find("a")['href']
         name =q.find("a").text.strip()
-        # logger.info(page_url)
+        # print(page_url)
         soup1 = bs(requests.get(q.find("a")['href']).text,'lxml')
         address = soup1.find("span",{"itemprop":"streetAddress"}).text.strip().replace(",",'')
         try:
@@ -51,7 +46,7 @@ def fetch_data():
             phone = soup1.find("div",{"class":"geodir-i-contact","class":"geodir_contact"}).text.replace("Phone:",'').strip()
         except:
             phone="<MISSING>"
-        # logger.info( phone)
+        # print( phone)
         hours_of_operation="<MISSING>"
         try:
             hours_of_operation = " ".join(list(soup1.find("div",{"class":"geodir_timing"}).stripped_strings)).replace("Business Hours: ",'').replace("|",'')
@@ -93,8 +88,8 @@ def fetch_data():
         if "8 Topsfield Rd" in store or "Sderot Rothschild 9" in store:
             pass
         else:
-            # logger.info("data ===" + str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data ===" + str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 

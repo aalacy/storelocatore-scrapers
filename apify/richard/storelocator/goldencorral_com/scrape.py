@@ -1,11 +1,6 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('goldencorral_com')
-
-
 
 URL = "https://www.goldencorral.com/"
 
@@ -40,7 +35,7 @@ class Scraper(Scrape):
         store_links = [link.get_attribute('href') for link in driver.find_elements_by_css_selector('div.all-locations-item > a.primary-link')]
 
         for store_link in store_links:
-            logger.info(f'Getting info for store {store_link}')
+            print(f'Getting info for store {store_link}')
             driver.get(store_link)
 
             # Store ID

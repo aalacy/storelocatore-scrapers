@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ramtrucks_com')
-
-
 
 
 session = SgRequests()
@@ -59,7 +54,7 @@ def fetch_data():
                 store.append(str(store_data["dealerCode"]) + "-" + str(store_data["locationSeq"]))
                 store.append(store_data["phoneNumber"] if store_data["phoneNumber"] else "<MISSING>")
                 if store[-1] != "<MISSING>":
-                    # logger.info("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html")
+                    # print("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html")
                     phone_request = session.get("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html",headers=headers)
                     if '"ctn"' in phone_request.text:
                         phone = phone_request.text.split('"ctn"')[1].split("}")[0].replace(":","").replace('"','')
