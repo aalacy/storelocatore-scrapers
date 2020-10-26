@@ -28,8 +28,9 @@ def fetch_data():
 
 	for store in stores:
 		location_name = store['store'].encode("ascii", "replace").decode().replace("?","e").split(",")[0].replace("IL","").split("&#")[0].strip()
-		if "OPENING SOON" in location_name.upper():
+		if "OPENING SOON" in store['store'].upper():
 			continue
+		print(location_name)
 		street_address = (store['address'] + " " + store['address2']).strip()
 		city = store['city']
 		state = store['state']
