@@ -1,5 +1,6 @@
 const Apify = require('apify');
 const axios = require('axios');
+const cheerio = require('cheerio');
 
 function convertBlank(x) {
   if (!x || (typeof(x) == 'string' && !x.trim())) {
@@ -25,10 +26,35 @@ function parseHours(json) {
 	}
 }
 
-async function scrape() {
-	stores = []
+async function getAuthToken() {
+	const url = "https://www.7-eleven.com/locator";
 	const HEADERS = {
-		'Authorization': 'Bearer hIWHFeDpkoBaIxwB9wsaVD9SrxRSVU',
+		'Authority': 'www.7-eleven.com',
+		'Method': 'GET',
+		'Path': '/locator',
+		'Scheme': 'https',
+		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+		'Accept-Encoding': 'gzip, deflate, br',
+		'Accept-Language': 'en-US,en;q=0.9',
+		'Cache-Control': 'max-age=0',
+		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36'
+	}
+	const res = await axios.get(url, { headers: HEADERS });
+	const data = res.data;
+	const $ = cheerio.load(data);
+	const text = $('script[type="application/json"]').html()
+	const parsed = JSON.parse(text)
+	const token = parsed.props.initialState.authentication.rewardsTokens.access_token;
+	console.log(token)
+	return token;
+}
+
+async function scrape() {
+	const stores = [];
+	const authToken = await getAuthToken()
+
+	const HEADERS = {
+		'Authorization': `Bearer ${authToken}`,
 		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36',
 		'Host': 'api.7-eleven.com',
 		'Origin': 'https://www.7-eleven.com',
