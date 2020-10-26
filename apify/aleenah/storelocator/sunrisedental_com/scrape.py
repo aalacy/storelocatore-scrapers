@@ -3,6 +3,11 @@ import re
 from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 from pyzipcode import ZipCodeDatabase
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sunrisedental_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -48,16 +53,16 @@ def fetch_data():
         div=soup.find('div',{'class':'sabai-directory-listings sabai-directory-listings-list'})
         script=div.find('script',{'type':'text/javascript'}).text
 
-        #print(div.text)
+        #logger.info(div.text)
         #divs=div.fnd_all('div',{'class':'sabai-entity sabai-entity-type-content sabai-entity-bundle-name-directory-listing sabai-entity-bundle-type-directory-listing sabai-entity-mode-summary sabai-clearfix sabai-directory-no-image'})
-        #print(len(divs))
+        #logger.info(len(divs))
 
         lat += re.findall(r'"lat":(-?[\d\.]*)', script)
         long += re.findall(r'"lng":(-?[\d\.]*)', script)
         lids = re.findall(r'"#sabai-entity-content-([0-9]+) .sabai-directory-title', script)
         ids+=lids
 
-        print(len(lids))
+        logger.info(len(lids))
         for id in lids:
 
             div = driver.find_element_by_id('sabai-entity-content-'+id)

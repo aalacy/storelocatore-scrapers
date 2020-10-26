@@ -8,6 +8,11 @@ import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('arhaus_com')
+
+
 
 driver = SgSelenium().chrome()
 session = SgRequests()
@@ -40,13 +45,13 @@ def fetch_data():
     res=session.get("https://www.arhaus.com/store/")
     soup = BeautifulSoup(res.text, 'html.parser')
     statel=re.findall(r'<a class="store-directory__link" href="([^"]+)"',str(soup))
-    print(len(statel))
+    logger.info(len(statel))
 
     for sl in statel:
         page_url.append("https://www.arhaus.com"+sl)
 
     for url in page_url:
-        print(url)
+        logger.info(url)
         try:
             driver.get(url)
         except:
@@ -61,7 +66,7 @@ def fetch_data():
         states.append(soup.find('span', {'class': 'store-details__street-state'}).text.strip())
         zips.append(soup.find('span', {'class': 'store-details__street-zip'}).text.strip())
         timing.append(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
-        #print(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
+        #logger.info(soup.find_all('div', {'class': 'store-details__info-section'})[1].text.strip().replace("\n"," ").replace('Instagram Icon       Follow us on Instagram','').replace('Location Hours ','').strip())
         phones.append(soup.find('div', {'class': 'store-details__phone'}).text.strip())
         lat.append(re.findall(r'"latitude": (-?[\d\.]+)',str(soup))[0])
         long.append(re.findall(r'"longitude": (-?[\d\.]+)',str(soup))[0])

@@ -3,6 +3,11 @@ import re
 import requests
 import time
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bankatfirst_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -119,10 +124,10 @@ def fetch_data():
                 states.append("<MISSING>")
         
         if len(branches) == 0:
-            print("max distance update")
+            logger.info("max distance update")
             search.max_distance_update(50)
         elif len(branches) > 0:
-            print("max count update")
+            logger.info("max count update")
             search.max_count_update(result_coords)
         coord = search.next_coord()
         

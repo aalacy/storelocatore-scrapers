@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('batterygiant_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,22 +31,22 @@ def fetch_data():
 
     res=session.get("https://www.batterygiant.com/sitemap.htm")
     soup = BeautifulSoup(res.text, 'html.parser')
-#    print(soup)
+#    logger.info(soup)
     sa = soup.find_all('td', {'class': 'storeLink'})
     tims=soup.find_all('td', {'width': '206'})
-    print(len(sa))
+    logger.info(len(sa))
     for a in sa:
         url = "https://www.batterygiant.com"+a.find('a').get('href')
 
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
-        #print(soup)
-        #print(re.findall('Hour.*',str(soup))[0])
+        #logger.info(soup)
+        #logger.info(re.findall('Hour.*',str(soup))[0])
 
 
         loc=soup.find('div', {'class': 'grid_92'}).find('h1').text
         divs = soup.find_all('div', {'style': 'width:200px; float:left;'})
-        #print(len(divs))
+        #logger.info(len(divs))
         addr=divs[0].text.replace('Address:','').replace('\r','').strip().split('\n')
         csz=addr[-1]
         del addr[-1]

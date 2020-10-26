@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sbe_com__hotels__brands__ciel-spa')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +31,7 @@ def fetch_data():
     for div in divlist:
         if div.text.find('Soon') == -1:
             statelink = 'https://www.sbe.com' + div['href']
-            #print("state=",statelink)
+            #logger.info("state=",statelink)
             r=session.get(statelink)
             soup = BeautifulSoup(r.text,'html.parser')
             hotellist = soup.findAll('div',{'class':'card__body'})[1].findAll('a')
@@ -45,7 +50,7 @@ def fetch_data():
                             else:
                                 continue
                          
-                        #print("hotel",hotel)
+                        #logger.info("hotel",hotel)
                         r=session.get(hotel)
                         soup = BeautifulSoup(r.text,'html.parser')
                         
@@ -53,7 +58,7 @@ def fetch_data():
                     for spa in spacheck:
                         if spa.text.find('Spa') > -1 and spa['href'].find('ciel') > -1:
                             link = 'https://www.sbe.com' + spa['href']
-                            #print('link',link)
+                            #logger.info('link',link)
                             r=session.get(link)
                             res = r.text.split('<script type="application/ld+json">')[2].split('</script>',1)[0]    
                             res = json.loads(res)    
@@ -83,7 +88,7 @@ def fetch_data():
                                     longt,  # long
                                     hours,  # timing
                                    ])
-                            #print(p,all[p])
+                            #logger.info(p,all[p])
                             p += 1
 
       

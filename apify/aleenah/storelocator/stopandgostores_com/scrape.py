@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('stopandgostores_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +44,7 @@ def fetch_data():
         locs.append(strong.text.strip())
 
     del tex[0]
-    #print(tex)
+    #logger.info(tex)
     for t in tex:
         t=t.replace("xxx-xxxx","").replace("xxx-xxx-xxxx","").replace("xxx-","")
         id=re.findall(r'Phone([\d]+)@',t)
@@ -59,7 +64,7 @@ def fetch_data():
         ids.append(id)
         te=t.split("Phone")[0]
         te=re.sub("#"+id,"",te).strip()
-        #print(te)
+        #logger.info(te)
         num=re.findall(r'[0-9\-]+',te)[-1]
         if num == "-":
             num=re.findall(r'[0-9\-]+',te)[-2]
@@ -80,11 +85,11 @@ def fetch_data():
         s=te.split(" ")[-1]
         states.append(s.strip())
         cities.append(c.replace(",","").strip())
-        #print(te)
+        #logger.info(te)
         street.append(re.sub(r"(\w)([A-Z][a-z]+)", r"\1 \2",te.replace(c,"").replace(s,"")).strip().strip(","))
 
         #break
-    print(len(tex))
+    logger.info(len(tex))
     all = []
     for i in range(0, len(locs)):
         row = []

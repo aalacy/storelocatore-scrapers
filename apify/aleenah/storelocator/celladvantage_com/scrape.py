@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('celladvantage_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +37,7 @@ def fetch_data():
             continue
         else:
             url = "https://stores.uscellular.com"+ a
-            #print(url)
+            #logger.info(url)
             if url not in urls:
                 urls.append(url)
             else:
@@ -50,15 +55,15 @@ def fetch_data():
             zip=csz[1]
             phone= soup.find('a', {'class': 'mobile-click'}).text
             timings = soup.find_all('div', {'class': 'timings'})
-            #print(timings)
+            #logger.info(timings)
             days = soup.find_all('div', {'class': 'day'})
-            #print(days)
+            #logger.info(days)
             tim=""
             for t in range(len(timings)):
                 tim+= days[t].text.strip()+": "+timings[t].text.strip()+" "
             if tim=="":
                 tim="<MISSING>"
-            #print(tim)
+            #logger.info(tim)
 
 
 

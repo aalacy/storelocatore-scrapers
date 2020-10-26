@@ -2,6 +2,11 @@ import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('smashburger_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,13 +43,13 @@ def fetch_data():
         stores=dic[country]
         for store in stores:
             url= store.get('href')
-            print(url)
+            logger.info(url)
             res = session.get(url,headers=headers)
             soup = BeautifulSoup(res.text, 'html.parser')
             jso = soup.find('script', {'type': 'application/ld+json'}).text
             jso = json.loads(jso)
             jso=jso[0]
-            print(jso)
+            logger.info(jso)
 
             loc = jso['name']
             id=jso['branchCode']
@@ -69,7 +74,7 @@ def fetch_data():
             tim=""
             for day in days:
                 tim+=day['dayOfWeek']+": "+day['opens']+" - "+day['closes']+" "
-            print(tim)
+            logger.info(tim)
             all.append([
                 "https://smashburger.com",
                 loc,

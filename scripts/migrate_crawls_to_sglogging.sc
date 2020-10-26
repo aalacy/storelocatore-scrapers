@@ -55,10 +55,20 @@ lazy val full_program = scrapers_without_sglogging.zipWithIndex map { case (dir,
     process_scraper(dir)
 }
 
-lazy val test_dir = sg_dir / 'apify / 'himanshu / 'storelocator / 'lotsa_com
+lazy val aleenahs_scrapers = all_scrapers_from_author(sg_dir / 'apify / 'aleenah) filter { scraper_dir =>
+    (requirements_txt_in_dir(scraper_dir) map is_sglogging_not_in_reqs) getOrElse false
+}
+
+lazy val migrate_aleenah = aleenahs_scrapers.zipWithIndex map { case (dir, idx) => 
+    println(s"[${idx} / ${aleenahs_scrapers.length}] Processing $dir ...")
+    process_scraper(dir)
+}
+
+// Migrate Aleenah's scrapers
+migrate_aleenah.toList
 
 // Executes the program
-full_program.toList
+// full_program.toList
 
 // println(all_scrapers.size, all_scrapers.toSet.size)
 

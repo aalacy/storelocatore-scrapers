@@ -2,6 +2,11 @@ import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pavilions_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,8 +55,8 @@ def fetch_data():
                         end=str(day['intervals'][0]['end'])[:-2]+":"+str(day['intervals'][0]['end'])[-2:]
                         tim+=day['day']+": "+start+" - "+end+" "
 
-                    #print(tim)
-                    print(type)
+                    #logger.info(tim)
+                    logger.info(type)
                     all.append([
                         "https://pavilions.com",
                         loc,
@@ -97,8 +102,8 @@ def fetch_data():
                             end = str(day['intervals'][0]['end'])[:-2] + ":" + str(day['intervals'][0]['end'])[-2:]
                             tim += day['day'] + ": " + start + " - " + end + " "
 
-                        # print(tim)
-                        print(type)
+                        # logger.info(tim)
+                        logger.info(type)
                         all.append([
                             "https://pavilions.com",
                             loc,
