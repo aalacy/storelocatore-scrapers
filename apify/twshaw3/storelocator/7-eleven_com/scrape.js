@@ -1,6 +1,5 @@
 const Apify = require('apify');
 const axios = require('axios');
-const cheerio = require('cheerio');
 
 function convertBlank(x) {
   if (!x || (typeof(x) == 'string' && !x.trim())) {
@@ -39,13 +38,17 @@ async function getAuthToken() {
 		'Cache-Control': 'max-age=0',
 		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36'
 	}
-	const res = await axios.get(url, { headers: HEADERS });
-	const data = res.data;
-	const $ = cheerio.load(data);
-	const text = $('script[type="application/json"]').html()
-	const parsed = JSON.parse(text)
-	const token = parsed.props.initialState.authentication.rewardsTokens.access_token;
-	return token;
+	const initialPage = await axios.get(url, { headers: HEADERS });
+	const found = initialPage.data.match(/"access_token":"(\w+?)"/);
+  let accessToken = null;
+  if (found) {
+    accessToken = found[1];
+  }
+  if (!accessToken) {
+    console.log('Could not get auth token. Cannot proceed.')
+    process.exit(1);
+  }
+	return accessToken;
 }
 
 async function scrape() {
