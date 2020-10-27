@@ -4,4 +4,4 @@ beautifulsoup4==4.7.1
 sgzip
 sgrequests
 html5lib
-sglogging
+

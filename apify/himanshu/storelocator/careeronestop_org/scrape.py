@@ -4,21 +4,12 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-import csv
-import re
-import json
 import unicodedata
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('careeronestop_org')
-
-
 
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
@@ -40,12 +31,11 @@ def fetch_data():
     }
     while zip_code:
         result_coords =[]
-        addressess = []
         headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
         }
         base_url = "https://www.careeronestop.org/"
-        location_url = "https://www.careeronestop.org/Localhelp/AmericanJobCenters/find-american-job-centers.aspx?&location="+str(zip_code)+"&radius=100&pagesize=500"
+        location_url = "https://www.careeronestop.org/Localhelp/AmericanJobCenters/find-american-job-centers.aspx?&location="+str(zip_code)+"&radius=100&pagesize=100"
         try:
             r = session.get(location_url,headers=headers)
             soup = BeautifulSoup(r.text,"lxml")
@@ -55,6 +45,10 @@ def fetch_data():
         for tr in table:
             location_name = tr.find("a",{"class":"notranslate"}).text
             page_url = tr.find("a",{"class":"notranslate"})['href']
+            raw_data = list(tr.find_all("td")[2].stripped_strings)
+            hoo = raw_data[2].replace("Hours:","").strip()
+            temp_phone = raw_data[1].replace("WIOA Office","").replace("Public Phone:","").replace("WIOA","").replace("(","").replace(")","-").replace("=","-").replace(" ","").lstrip("1-").strip()
+            phone = temp_phone[:12].replace("800-285-WORK","<MISSING>")
             try:
                 data_link = ("https://www.careeronestop.org/"+page_url)
                 r1 = session.get(data_link,headers=headers)
@@ -70,30 +64,16 @@ def fetch_data():
             zipp = json_data['ZIP']
             latitude = json_data['LAT']
             longitude = json_data['LON']
+            result_coords.append((latitude,longitude))
             location_name = soup.find("div",{"id":"detailsheading"}).text
-            try:
-                phone = soup.find("a",{"class":"notranslate"}).text.lstrip("1-")
-            except:
-                phone = soup.find_all("span",{"class":"notranslate"})[3].text.lstrip("1-").replace("=","-")[:12]
-            st_data = soup.find_all("span",{"class":"notranslate"})[2].text.split(",")[0].replace(city,"").replace(street_address1,"")
-            street_address = street_address1 +" "+ st_data
-            try:
-                hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[3].text
-                if "Hours" in hs: 
-                    data_hs = (hs)
-                else:
-                    hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[4].text
-                    if "Hours" in hs: 
-                        data_hs = hs
-                    else:
-                        hs = soup.find("tbody",{"id":"ctl22_tbAJCDetail"}).find_all("tr")[2].text
-                        if "Hours" in hs: 
-                            data_hs = hs
-            except:
-                data_hs = "<MISSING>" 
+            st_data = soup.find_all("span",{"class":"notranslate"})[2].text.split(",")[0].replace(street_address1,"")
+            street_address = street_address1+" "+st_data.replace("  Square Shopping Center","").replace("Due to tornado using Columbia center address. No new location at this time","").replace("An Illinois workNet Center","").replace("An Illinois workNet Partner","")
+            street_address = street_address.replace("(Bob Hope Patriotic Hall)","").replace(", Los Angeles CA 90011 (Primary Site) 1006 E 28th","").replace("(Zip Code 72957)","").replace("(71914)","").replace("105 East  Avenue","").replace("(Parking deck)","").replace("(Butte Co. Dept. of Employment & Social Services)","")
+            street_address = street_address.replace("Valley Corporate DriveBldg. A","").replace("Valley Corporate Drive County Health and Human Services Agency Building","").replace("(25330)","").replace("(Mailing Address)","").replace(" 584 Northwest University Boulevard","").replace(", East 1112 Manatee Avenue","").replace(" 3050 Horseshoe Drive North","")
+            street_address = street_address.replace("  Market Plaza"," ").replace(" 24025  Freeway"," ").replace("(Mondawmin Mall)","").replace("(Hamilton Street Entrance)","").replace("(basement of  City Hall)","").replace("(Mailing)","").replace(" - (Satellite of the Employment Office)","").replace("; Chesapeake Square Shopping Center","").replace("(45422)","")
+            street_address = street_address.replace(" 313 W. Jefferson  Street","").replace("(Mail Stop 4RS79)","").replace("(No Delivery to Physical Address)","").replace("Free Parking off East 19th","").replace(" Department of Human Resources"," Room 101").replace(" 6401  BlvdPO "," ").replace(" 55 Makaena Street","").replace(" 1505 Dillingham Blvd","")
+            street_address = street_address.replace(" 10 Calle Ramon E. Betances","").replace(" Calle Palma","").replace(", Bayamon, PR 00961 #10 Palmer St esq. Dr. Veve St","").replace("(Civic Center)","").replace(" 344  Street"," ").replace(", 2325 East 12th Street","")
 
-            if phone =="711":
-                phone = "740-652-7856"
             store = []
             store.append("https://www.careeronestop.org/")
             store.append(location_name)
@@ -107,7 +87,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(latitude)
             store.append(longitude)
-            store.append(data_hs.replace("Hours","").replace("     "," ") if data_hs else "<MISSING>" )
+            store.append(hoo if hoo else "<MISSING>" )
             store.append(data_link)
             for i in range(len(store)):
                 if type(store[i]) == str:
@@ -117,7 +97,6 @@ def fetch_data():
             if store[2] in address :
                 continue
             address.append(store[2])
-            #logger.info(store)
             yield store
         if len(json_data) < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
@@ -130,4 +109,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
 

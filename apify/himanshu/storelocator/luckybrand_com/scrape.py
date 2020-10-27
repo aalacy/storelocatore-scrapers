@@ -27,7 +27,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["US","CA"])
     MAX_RESULTS = 50
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 100
     coord = search.next_coord()
     base_url = "https://www.luckybrand.com"
     coord = search.next_coord()
@@ -52,7 +52,6 @@ def fetch_data():
             if 'line2' in data['address']:
                 street_address += " "+ str(data['address']['line2']).strip()
             city = data['address']['city']
-           
             state = data['address']['region']
             zipp = data['address']['postalCode']
             store_number = data['meta']['id']
@@ -69,6 +68,8 @@ def fetch_data():
                 r = session.get(page_url)
                 soup = BeautifulSoup(r.text, "html5lib")
                 location_name = soup.find("title").text
+                if "Closed" in location_name:
+                    continue
                 info = json.loads(soup.find(lambda tag:(tag.name == "script") and "latitude" in tag.text).text)
                 latitude = info['geo']['latitude']
                 longitude = info['geo']['longitude']
@@ -76,7 +77,10 @@ def fetch_data():
                 phone = info['telephone']
                 if hours == '<MISSING>' or not hours:
                     hours = " ".join(list(soup.find(class_="hours-body").stripped_strings))
-            if "Closed" in location_name:
+
+            if "4400 Ashford Dunwoody" in street_address:
+                continue
+            if "2492 East Sunrise" in street_address:
                 continue
             store = []
             store.append(base_url)            
@@ -109,3 +113,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

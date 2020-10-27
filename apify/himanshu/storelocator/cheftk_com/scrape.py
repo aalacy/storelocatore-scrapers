@@ -4,12 +4,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-
-
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',  encoding="utf-8") as output_file:
+    with open('cheftk_com.csv', mode='w',  encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -20,10 +18,9 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     base_url ="http://www.cheftk.com/"
-    return_main_object=[]
+    
     output=[]
-    r=session.get(base_url+"/home.html")
-    soup=BeautifulSoup(r.text,'lxml')
+    soup = BeautifulSoup(session.get("http://www.cheftk.com/home.html", verify=False).text,'lxml')
     a = soup.find_all('li',{'style':'width: auto'})
     for i in a:
         location_name=""
@@ -104,7 +101,7 @@ def fetch_data():
              yield store
 
     base_url ="http://www.cheftk.com"
-    return_main_object=[]
+    
     output=[]
     r=session.get(base_url+"/contact-us.html")
     soup=BeautifulSoup(r.text,'lxml')
