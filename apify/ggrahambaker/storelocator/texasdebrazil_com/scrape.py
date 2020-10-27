@@ -73,15 +73,17 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        # print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
-        location_name = soup.find('h1', {'class': 'location-info__title'}).text.replace('\n', '').strip()
+        location_name = soup.find('h1', {'class': 'location-info__title'}).text.replace('\n', '').strip().encode("ascii", "replace").decode().replace("?","-")
         if 'Coming Soon' in location_name:
             continue
 
         addy = soup.find('div', {'class': 'location-info__address'}).text.strip()
 
         street_address, city, state, zip_code = parse_address(addy)
+        state = state.split(",")[0]
         
         glink = soup.find('a', {'class': 'location-info__link'})['href']
         
@@ -93,10 +95,10 @@ def fetch_data():
         phone_number = soup.find('span', {'class': 'number-phone-desktop'}).text.strip()
         
         hours = ''
-        for h in soup.find_all('span', {'class': 'info-block__time'}):
+        for h in soup.find(class_="info-block__schedule").find_all('span', {'class': 'info-block__time'}):
             hours += h.text + ' '
             
-        hours = hours.strip()
+        hours = hours.encode("ascii", "replace").decode().replace("?","-").strip()
 
         country_code = 'US'
         store_number = '<MISSING>'
