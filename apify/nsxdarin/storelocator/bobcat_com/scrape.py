@@ -8,8 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('bobcat_com')
 
-
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -115,11 +113,15 @@ def fetch_data():
                 else:
                     if ' ' in state:
                         state = state.split(' ')[0]
+            if '<div class="kw-result-link-container">' in line:
+                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
+                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                else:
+                    purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     name = name.replace('"',"'")
                     add = add.replace('"',"'")
-                    purl = '<MISSING>'
                     name = name.replace('"',"'")
                     if '12 Street West & Joanne' in add:
                         city = 'Brooks'
