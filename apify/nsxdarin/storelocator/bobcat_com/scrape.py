@@ -58,6 +58,11 @@ def fetch_data():
                     add = raw_address.strip().split(',')[0].split(' ')[0]
                 country = 'US'
                 hours = '<MISSING>'
+            if '<div class="kw-result-link-container">' in line:
+                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
+                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                else:
+                    purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     purl = '<MISSING>'
