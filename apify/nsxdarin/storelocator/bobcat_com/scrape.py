@@ -42,8 +42,8 @@ def fetch_data():
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
-                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
-                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                if 'website-icon.png"> <a class="kw-result-link" href="' in tel_line:
+                    purl = tel_line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
                 else:
                     purl = '<MISSING>'
                 try:
@@ -91,8 +91,8 @@ def fetch_data():
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
-                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
-                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                if 'website-icon.png"> <a class="kw-result-link" href="' in tel_line:
+                    purl = tel_line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
                 else:
                     purl = '<MISSING>'
                 try:
