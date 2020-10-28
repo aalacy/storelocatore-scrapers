@@ -23,7 +23,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(1, 5):
-        #logger.info(('Pulling Sitemap %s...' % str(x)))
+        logger.info(('Pulling Sitemap %s...' % str(x)))
         smurl = 'http://locations.westernunion.com/sitemap-' + str(x) + '.xml.gz'
         with open('branches.xml.gz','wb') as f:
             f.write(urllib.request.urlopen(smurl).read())
@@ -32,8 +32,9 @@ def fetch_data():
                 for line in f:
                     if '<loc>http://locations.westernunion.com/ca/' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
-        #logger.info((str(len(locs)) + ' Locations Found...'))
+        logger.info((str(len(locs)) + ' Locations Found...'))
     for loc in locs:
+        logger.info(loc)
         website = 'westernunion.ca'
         typ = '<MISSING>'
         store = '<MISSING>'
