@@ -66,11 +66,12 @@ def fetch_data():
                             lat = line2.split('&#34;,&#34;latitude&#34;:&#34;')[1].split('&#34')[0]
                             lng = line2.split('&#34;longitude&#34;:&#34;')[1].split('&#34')[0]
                             name = line2.split('&#34;name&#34;:&#34;')[1].split('&#34')[0].replace('\\u0026','&')
-                            zc = zc[:5]
                             if 'United States' in country:
                                 country = 'US'
                             if 'Canada' in country:
                                 country = 'CA'
+                            if country == 'US':
+                                zc = zc[:5]                      
                     if country == 'US' or country == 'CA':
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 except:
