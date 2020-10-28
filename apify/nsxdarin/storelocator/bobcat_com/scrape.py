@@ -42,6 +42,10 @@ def fetch_data():
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
+                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
+                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                else:
+                    purl = '<MISSING>'
                 try:
                     tagged = usaddress.tag(raw_address)[0]
                     city = tagged.get('PlaceName', '<MISSING>')
@@ -58,11 +62,6 @@ def fetch_data():
                     add = raw_address.strip().split(',')[0].split(' ')[0]
                 country = 'US'
                 hours = '<MISSING>'
-            if '<div class="kw-result-link-container">' in line:
-                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
-                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
-                else:
-                    purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     name = name.replace('"',"'")
@@ -92,6 +91,10 @@ def fetch_data():
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
+                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
+                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                else:
+                    purl = '<MISSING>'
                 try:
                     tagged = usaddress.tag(raw_address)[0]
                     city = tagged.get('PlaceName', '<MISSING>')
@@ -117,11 +120,6 @@ def fetch_data():
                 else:
                     if ' ' in state:
                         state = state.split(' ')[0]
-            if '<div class="kw-result-link-container">' in line:
-                if 'website-icon.png"> <a class="kw-result-link" href="' in line:
-                    purl = line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
-                else:
-                    purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     name = name.replace('"',"'")
