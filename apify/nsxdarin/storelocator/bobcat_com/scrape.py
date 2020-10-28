@@ -65,7 +65,6 @@ def fetch_data():
                     purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
-                    purl = '<MISSING>'
                     name = name.replace('"',"'")
                     add = add.replace('"',"'")
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
