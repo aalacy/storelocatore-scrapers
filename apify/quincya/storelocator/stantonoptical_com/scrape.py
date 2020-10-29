@@ -129,6 +129,7 @@ def fetch_data():
 				(By.TAG_NAME, "body")))
 			time.sleep(wait)
 			if len(driver.page_source) > 200 and "bbB3q6Lt5ZQnwlTH1tZY0" in driver.page_source:
+				time.sleep(5)
 				base = BeautifulSoup(driver.page_source,"lxml")
 
 				script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
