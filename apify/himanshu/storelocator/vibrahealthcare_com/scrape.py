@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('vibrahealthcare_com')
+
+
 
 
 
@@ -33,7 +38,7 @@ def fetch_data():
 	r = session.get("https://www.vibrahealthcare.com/locations/",headers=headers)
 	soup= BeautifulSoup(r.text,"lxml")
 	for link  in soup.find_all("li",class_="item"):
-		# print(list(link.find("span",{"class":"address"}).stripped_strings)[0])
+		# logger.info(list(link.find("span",{"class":"address"}).stripped_strings)[0])
 		try:
 			location_type = link['data-locationclass']
 		except:
@@ -79,8 +84,8 @@ def fetch_data():
 			continue
 		addressesess.append(store[2])
 		yield store
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# logger.info("data = " + str(store))
+		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		
 
 	

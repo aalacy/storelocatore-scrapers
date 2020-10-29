@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('monarchdental_com')
+
+
 
 
 session = SgRequests()
@@ -47,7 +52,7 @@ def fetch_data():
                 store.append("monarch dental")
                 store.append(store_data["latitude"])
                 store.append(store_data["longitude"])
-                print(store_data["id"])
+                logger.info(store_data["id"])
                 location_request = session.get("https://api.smilebrands.com/public/facility/id/" + str(store_data["id"]),headers=headers)
                 if location_request.json()["success"] == False:
                     continue
@@ -68,7 +73,7 @@ def fetch_data():
                 if "saturdayHours" in store_hours and store_hours["saturdayHours"] != None:
                     hours = hours + " saturdayHours " + store_hours["saturdayHours"]
                 store.append(hours if hours != "" else "<MISSING>")
-                print(store)
+                logger.info(store)
                 return_main_object.append(store)
     return return_main_object
 

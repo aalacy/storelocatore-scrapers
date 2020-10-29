@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 # import json
 # import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('la-mesa_com')
+
+
 
 session = SgRequests()
 
@@ -14,7 +19,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 def fetch_data():
@@ -105,8 +110,8 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 def scrape():

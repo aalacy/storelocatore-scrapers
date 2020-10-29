@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('flemingssteakhouse_com')
+
+
 
 URL = "https://www.flemingssteakhouse.com/"
 
@@ -36,7 +41,7 @@ class Scraper(Scrape):
         stores = [url.get_attribute('href') for url in driver.find_elements_by_css_selector('div.card-body > ul.locations > li > a')]
 
         for store in stores:
-            print(f'Getting result for {store}')
+            logger.info(f'Getting result for {store}')
             driver.get(store)
 
             address_info = driver.find_element_by_css_selector('div.col-lg-4 > p:nth-of-type(2)').get_attribute('textContent').split('\n')[1:-1]

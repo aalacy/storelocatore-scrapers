@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wellnow_com')
+
+
 
 
 
@@ -44,7 +49,7 @@ def fetch_data():
             r2 = session.get(link, headers=headers)
             soup = BeautifulSoup(r2.text,"lxml")
             hours = list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)[1]
-            # print(hours)
+            # logger.info(hours)
             # hours = (" ".join(list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)).split("We are open")[0].replace("Hours","").replace("Holiday","").strip())
             if us_zip_list:
                 zipp = us_zip_list[-1]
@@ -55,8 +60,8 @@ def fetch_data():
 
             city = data1['address'].split(",")[1]
             street_address = data1['address'].split(",")[0]
-            # print(name1)
-            # print(street_address)
+            # logger.info(name1)
+            # logger.info(street_address)
             store = []
             store.append("https://wellnow.com")
             store.append(name1)
@@ -76,8 +81,8 @@ def fetch_data():
             #          str else x for x in store]
             # store = [x.encode('ascii', 'ignore').decode(
             #     'ascii').strip() if type(x) == str else x for x in store]
-            # print("data ===" + str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data ===" + str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 

@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('saintlukeshealthsystem_org')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -63,7 +68,7 @@ def fetch_data():
                 longit = loc.get_attribute('data-lng')
                 
                 location_name = loc.find_element_by_css_selector('h4').text
-                print(location_name)
+                logger.info(location_name)
                 addy = loc.find_element_by_css_selector('p.address').text
             
                 street_address, city, state, zip_code = parse_addy(addy)

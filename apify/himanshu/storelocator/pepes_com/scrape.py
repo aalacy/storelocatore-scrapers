@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pepes_com')
+
+
 
 
 
@@ -15,7 +20,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -29,7 +34,7 @@ def fetch_data():
     r = session.get(
         "https://pepes.com/locations-pepes-mexican-restaurants-food-chicago.php", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # print(soup.prettify())
+    # logger.info(soup.prettify())
 
     return_main_object = []
 
@@ -54,13 +59,13 @@ def fetch_data():
         link = "https://pepes.com/locations-pepes-mexican-restaurants-food-chicago.php"
         r_location = session.get(link + links['href'], headers=headers)
         soup_location = BeautifulSoup(r_location.text, 'lxml')
-        # print(soup_location.prettify())
+        # logger.info(soup_location.prettify())
         for location_result in soup_location.find('div', {'id': 'location-results'}).find('ul').find_all('a'):
             loc_res = base_url + location_result['href']
             page_url = loc_res
             result_location = session.get(loc_res, headers=headers)
             result_soup = BeautifulSoup(result_location.text, 'lxml')
-            # print(result_soup.prettify())
+            # logger.info(result_soup.prettify())
             location_content = result_soup.find(
                 'div', {'id': 'location-content'}).find('div', {'id': 'location-desc'})
             location_name = location_content.find('h1').text
@@ -72,21 +77,21 @@ def fetch_data():
             city = "".join(address[0].split(',')[0])
             state = address[0].split(',')[1].split(' ')[1].strip()
             zipp = address[0].split(',')[1].split(' ')[-1].strip()
-            # print(street_address+" \ "+city+" \ "+state+" \ " +
+            # logger.info(street_address+" \ "+city+" \ "+state+" \ " +
             #       zipp)
             tag_phone = location_content.find(
                 'ul').find('li').nextSibling.nextSibling
             ph = list(tag_phone.stripped_strings)
             phone = "".join(ph[0].split(':')[1]).split('or')[0].strip()
-            # print(phone)
+            # logger.info(phone)
 
             hours_content = result_soup.find(
                 'div', {'id': 'location-content'}).find('div', {'id': 'location-hours'})
             hours = list(hours_content.stripped_strings)
             hours_of_operation = "  ".join(hours).replace('Click on Coupons below for a FREE Dinner', '').replace(
                 'Patio Is Now Open', '').replace('Now Accepting Credit Cards  Exclusive Savings Text 36000PEPE', '').replace('Prices Subject To Change', '').replace('No one under 21 allowed to Dine in due to Indiana Smoking Law.', '').replace('Carry outs are available.', '').strip()
-            # print(hours_of_operation)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+            # logger.info(hours_of_operation)
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
             location_map = result_soup.find(
                 'div', {'id': 'location-map'}).find('iframe')
             if location_map != None:
@@ -119,8 +124,8 @@ def fetch_data():
 
             store = ["<MISSING>" if x == "" else x for x in store]
             return_main_object.append(store)
-            # print("data = " + str(store))
-            # print(
+            # logger.info("data = " + str(store))
+            # logger.info(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 

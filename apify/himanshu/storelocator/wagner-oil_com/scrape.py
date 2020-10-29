@@ -5,6 +5,11 @@ import re
 import json
 import time
 import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wagner-oil_com')
+
+
 
 session = SgRequests()
 
@@ -24,8 +29,8 @@ def fetch_data():
     # pass
     r = session.get("http://www.wagner-oil.com/store-locator/")
     soup = BeautifulSoup(r.text, "lxml")
-    # print(soup.prettify())
-    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+    # logger.info(soup.prettify())
+    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
     phone_tag = []
     city_tag = []
     st = []
@@ -33,7 +38,7 @@ def fetch_data():
     k = soup.find('table').find_all("div",{"align":"center"})[1]
     for i in k.find_all('tr'):
         data = (list(i.stripped_strings))
-        # print(data)
+        # logger.info(data)
         if len(data) == 4:
             name_ran.append(data[1])
             st.append(data[2])

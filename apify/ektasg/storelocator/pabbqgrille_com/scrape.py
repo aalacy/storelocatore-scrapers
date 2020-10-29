@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pabbqgrille_com')
+
+
 
 
 options = Options()
@@ -76,7 +81,7 @@ def fetch_data():
               lon,
               hours_of_op
             ])
-        print(count)
+        logger.info(count)
         count+=1
 
     time.sleep(3)

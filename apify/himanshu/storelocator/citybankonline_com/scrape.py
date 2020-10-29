@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('citybankonline_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -23,7 +28,7 @@ def fetch_data():
     base_url = "https://www.city.bank"
     r = session.get("https://www.city.bank/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # print()
+    # logger.info()
     for dt in str(soup.find_all("div",{"style":"float: left; width: 25%; min-width: 200px;"})[-2]).split("Additional ATM Locations")[-1].split("ATM"):
         soup1 = BeautifulSoup(dt,"html5lib")
         addr = list(soup1.stripped_strings)
@@ -60,7 +65,7 @@ def fetch_data():
 
 
     for location in soup.find("div",{'class':"sf_cols"}).find_all("a",{"href":re.compile("/locations/")}):
-        # print(base_url + location["href"])
+        # logger.info(base_url + location["href"])
         page1= base_url + location["href"]
        
         try:
@@ -124,7 +129,7 @@ def fetch_data():
         
         
         hours = " ".join(list(location_soup.find("div",{'class':"sf_colsOut col-left"}).stripped_strings))
-        # print(phone)
+        # logger.info(phone)
         geo_location = location_soup.find_all("iframe")[-1]["src"]
         store = []
         store.append("https://citybankonline.com")
@@ -146,7 +151,7 @@ def fetch_data():
         if store[2] in adressessess :
             continue
         adressessess.append(store[2])
-        # print(store)
+        # logger.info(store)
         yield store
 
 def scrape():

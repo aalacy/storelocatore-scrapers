@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('earthbar_com')
+
+
 
 
 session = SgRequests()
@@ -56,8 +61,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
-        #print(str(store))
-        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        #logger.info(str(store))
+        #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 

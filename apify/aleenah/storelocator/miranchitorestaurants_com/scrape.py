@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('miranchitorestaurants_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +35,7 @@ def fetch_data():
         tim=' '.join(jso['openingHours']).replace('Mo','Monday').replace('Tu','Tuesday').replace('We','Wednesday').replace('Th','Thursday').replace('Fr','Friday').replace('Sa','Saturday').replace('Su','Sunday').strip()
         loc=jso['address']['addressLocality']
         lat,long=re.findall(r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+),"menuLandingPageUrl":null,"name":"'+loc.strip(),str(soup))[0]
-        print(lat,long,loc)
+        logger.info(lat,long,loc)
         all.append([
             "https://www.miranchitorestaurants.com/",
             loc,    #name

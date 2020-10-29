@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('niftyafterfifty_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -61,12 +66,12 @@ def fetch_data():
             flg = False
         if flg == True:
             location_name = data.get_text().capitalize()
-            # print(location_name)
+            # logger.info(location_name)
             city = location_name.replace('(fitness only)','').replace('(pt only)','').replace("Brook road","Richmond").replace("Jahnke","Richmond").replace("Robious","Richmond").replace("Corporate office","Fullerton").replace("Cheyenne","Las Vegas").replace("East","").replace("West","").replace("Dt","").replace("- n. stone","").replace("- speedway","").replace("- irvington","")       
             if "," in data.find_next('p').find_next('p').get_text().strip():
                 st_address = data.find_next('p').get_text().strip() + ", " + data.find_next('p').find_next('p').get_text().strip().split(',')[0]
                 street_address=" ".join(st_address.split(',')[:-1])
-                # print(street_address)
+                # logger.info(street_address)
 
                 state = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[0].strip()
                 zip = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[1].strip()
@@ -84,17 +89,17 @@ def fetch_data():
                 hours_of_operation = hours.split('Hours:')[-1].strip()
             else:
                 # for h in data.find_all(lambda tag: (tag.name == 'span')):
-                #     print(h)
-                #     print('~~~~~~~~~~~~~~~~~~~~~~')
+                #     logger.info(h)
+                #     logger.info('~~~~~~~~~~~~~~~~~~~~~~')
                 h   =   data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling
                 list_h = list(h.stripped_strings)
 
                 if "Nifty People" in "".join(list_h):
                     list_h.remove("Nifty People® Group Ex Calendar")
-                # print(street_address )
-                # print(list_h)
-                # print(len(list_h))
-                # print('~~~~~~~~~~~~~~~~~~~')
+                # logger.info(street_address )
+                # logger.info(list_h)
+                # logger.info(len(list_h))
+                # logger.info('~~~~~~~~~~~~~~~~~~~')
                 if "Fitness Hours:" in "".join(list_h):
                     fitness_hours = "Fitness Hours : "+data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
                     PT_hours1 = "PT Hours : " +data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
@@ -106,7 +111,7 @@ def fetch_data():
 
                     hours_of_operation = fitness_hours + "  "+ PT_hours1 +"  "+ PT_hours2
                 elif "16405 Whittier Blvd." in street_address:
-                    # print(list_h)
+                    # logger.info(list_h)
                     h1 =  data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.text.strip()
                     h2 = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
                     h3 = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
@@ -115,7 +120,7 @@ def fetch_data():
                 elif "1801 H Street" in street_address or "23595 Moulton Parkway" in street_address or "380 W. Central Avenue" in street_address:
                     hours = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.text.strip() + ","+data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
                     hours_of_operation = ' '.join(hours.split()).replace('Hours:','').replace('Nifty People® Group Ex Calendar','').strip()
-                    # print(hours_of_operation)
+                    # logger.info(hours_of_operation)
                 elif "\u200b"  == "".join(list_h) or "_______" in "".join(list_h) or list_h == []:
                     hours_of_operation = "<MISSING>"
                 else:

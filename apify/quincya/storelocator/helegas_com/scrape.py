@@ -3,6 +3,11 @@ import time
 from random import randint
 import re
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('helegas_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -38,7 +43,7 @@ def fetch_data():
 	locator_domain = "helegas.com"
 
 	for item in items:
-		print(item.text)
+		logger.info(item.text)
 		item.click()
 		time.sleep(1)
 		location_name = item.text.strip()

@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chopard_com')
+
+
 
 
 
@@ -72,7 +77,7 @@ def fetch_data():
                     street_address = x['address_1'] +" "+ x['address_2'] +" "+ x['address_3']
                 city = x['city']
                 zipp = x['zipcode']
-                # print(zipp)
+                # logger.info(zipp)
                 latitude = x['lat']
                 longitude = x['lng']
                 if x['phone'] != None:
@@ -89,18 +94,18 @@ def fetch_data():
                     h = hours.nextSibling.nextSibling
                     h_list = list(h.stripped_strings)
                     hours_of_operation = " ".join(h_list)
-                    # print(hours_of_operation)
+                    # logger.info(hours_of_operation)
 
                 else:
-                    # print(page_url)
+                    # logger.info(page_url)
                     hours_of_operation = "<MISSING>"
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                 store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
 
-               # print("data = " + str(store))
-               # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+               # logger.info("data = " + str(store))
+               # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
         except:

@@ -3,6 +3,11 @@ from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('studiobarre_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -81,12 +86,12 @@ def fetch_data():
 
 
     for url in page_url:
-        print(url)
+        logger.info(url)
 
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         addr=soup.find('ul',{'class':'elementor-icon-list-items'}).find_all('li')[0].text.strip().split('\n')[0]
-        #print(addr)
+        #logger.info(addr)
         parsed_address = parse_address(addr)
 
         cities.append(parsed_address['city'])
@@ -110,7 +115,7 @@ def fetch_data():
                 tim="<MISSING>"
 
         tim=tim.split('Raising')[0]
-        print(tim)
+        logger.info(tim)
         timing.append(tim.strip())
 
     all = []

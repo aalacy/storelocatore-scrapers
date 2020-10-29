@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('renault_co_uk')
+
+
 session = SgRequests()
 
 
@@ -33,7 +38,7 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         url = "https://dealerlocator.renault.co.uk/data/GetDealersList"
         payload = 'postcode='+str(zip_code)
@@ -67,7 +72,7 @@ def fetch_data():
                 hours=""
                 if data['OpeningHours'] != None:
                     for h in data['OpeningHours']:
-                        # print(h)
+                        # logger.info(h)
                         if h["Value"] != None:
                             if h["Value"]:
                                 hours = hours+ ' '+h["Label"]+ ' '+h["Value"]
@@ -93,14 +98,14 @@ def fetch_data():
                 if store[2] in adressess:
                     continue
                 adressess.append(store[2])
-                #print(store)
+                #logger.info(store)
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

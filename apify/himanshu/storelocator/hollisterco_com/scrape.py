@@ -5,6 +5,11 @@ import re
 import json
 import time
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hollisterco_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -80,8 +85,8 @@ def fetch_data():
             # if store[2] in addresses:
             #     continue
             # addresses.append(store[2])
-            # print("data =="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # logger.info("data =="+str(store))
+            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         else:
             pass # another country location

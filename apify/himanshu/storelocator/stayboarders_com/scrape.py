@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('stayboarders_com')
+
+
 
 
 
@@ -30,7 +35,7 @@ def fetch_data():
     data = "action=get_properties_for_map"
     base_url = "https://www.stayboarders.com"
     r = session.post("https://www.staycobblestone.com/wp-admin/admin-ajax.php", headers=headers, data = data)
-    print(r)
+    logger.info(r)
     soup = BeautifulSoup(r.text, "lxml")
     data = json.loads(soup.text)
     for r in data:

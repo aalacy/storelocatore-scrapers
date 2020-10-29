@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 import requests
 import json
 from sgzip import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sallybeauty_com')
+
+
 
 
 session = requests.Session()
@@ -27,7 +32,7 @@ def fetch_data():
                   ]
     for curl in canadaurls:
         url = curl
-        print(('Pulling Canada URL %s...' % curl))
+        logger.info(('Pulling Canada URL %s...' % curl))
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
         for line in r.iter_lines(decode_unicode=True):
@@ -69,13 +74,13 @@ def fetch_data():
                     country = 'CA'
                 if store not in ids and country == 'CA':
                     ids.append(store)
-                    print(('Pulling Store ID #%s...' % store))
+                    logger.info(('Pulling Store ID #%s...' % store))
                     hours = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat=' + str(x) + '&long=' + str(y)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -117,7 +122,7 @@ def fetch_data():
                 state = line.split('"stateCode": "')[1].split('"')[0]
                 if store not in ids and ' ' not in zc:
                     ids.append(store)
-                    print(('Pulling Store ID #%s...' % store))
+                    logger.info(('Pulling Store ID #%s...' % store))
                     hours = '<MISSING>'
                     country = 'US'
                     if zc == '':
@@ -127,7 +132,7 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         x = float(float(coord[0]) - 0.25)
         y = float(float(coord[1]) - 0.25)
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat=' + str(x) + '&long=' + str(y)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -169,7 +174,7 @@ def fetch_data():
                 state = line.split('"stateCode": "')[1].split('"')[0]
                 if store not in ids and ' ' not in zc:
                     ids.append(store)
-                    print(('Pulling Store ID #%s...' % store))
+                    logger.info(('Pulling Store ID #%s...' % store))
                     hours = '<MISSING>'
                     country = 'US'
                     if zc == '':
@@ -179,7 +184,7 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         x = float(float(coord[0]) + 0.25)
         y = float(float(coord[1]) + 0.25)
-        print(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
+        logger.info(('Pulling Lat-Long %s,%s...' % (str(x), str(y))))
         url = 'https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=50&lat=' + str(x) + '&long=' + str(y)
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
@@ -221,7 +226,7 @@ def fetch_data():
                 state = line.split('"stateCode": "')[1].split('"')[0]
                 if store not in ids and ' ' not in zc:
                     ids.append(store)
-                    print(('Pulling Store ID #%s...' % store))
+                    logger.info(('Pulling Store ID #%s...' % store))
                     hours = '<MISSING>'
                     country = 'US'
                     if zc == '':

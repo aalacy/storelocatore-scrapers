@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('selectspecialtyhospitals_com')
+
+
 
 
 
@@ -117,8 +122,8 @@ def fetch_data():
             addresses.append(str(store[2]))
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-           # print("data = " + str(store))
-            #print(
+           # logger.info("data = " + str(store))
+            #logger.info(
                 #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         page+=1              

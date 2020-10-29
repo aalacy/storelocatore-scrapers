@@ -3,6 +3,11 @@ import os
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('costa_co_uk')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +33,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print(("remaining zipcodes: " + str(search.zipcodes_remaining())))
+        logger.info(("remaining zipcodes: " + str(search.zipcodes_remaining())))
         x, y = coord[0], coord[1]
         url = 'https://www.costa.co.uk/api/locations/stores?latitude=' + str(x) + '&longitude=' + str(y) + '&maxrec=500'
         r = session.get(url, headers=headers)
@@ -75,7 +80,7 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
-        print("max count update")
+        logger.info("max count update")
         search.max_count_update(result_coords)
         coord = search.next_coord()
 

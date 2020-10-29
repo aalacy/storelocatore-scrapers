@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('amazinglashstudio_com')
+
+
 
 
 def write_output(data):
@@ -26,24 +31,24 @@ def fetch_data():
 
     res = session.get("https://www.amazinglashstudio.com/find-a-studio?searchVal=54000")
     soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
+    #logger.info(soup)
 
     data = re.findall('(studioArray.*)"};', str(soup), re.DOTALL)[0]
     urls = data.split('"};')
-    # print(urls)
+    # logger.info(urls)
     ids = re.findall('\["([\d]+)"\]', data)
 
     all = []
     for yrl in urls:
 
         url = "https://www.amazinglashstudio.com" + re.findall('(/studios/.*)', yrl)[0]
-        print(url)
+        logger.info(url)
         if url == 'https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont': #redirects
             continue
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         if 'coming soon' in str(soup).lower():
-            print('coming soon')
+            logger.info('coming soon')
             continue
         
         jss = soup.find_all('script', {"type": "application/ld+json"})
@@ -52,7 +57,7 @@ def fetch_data():
         elif len(jss) == 2:
             jss = jss[1]
         else:
-            print("lllllllllllllllllllllllllllllllllllllllllllllllll")
+            logger.info("lllllllllllllllllllllllllllllllllllllllllllllllll")
         # break
         js = jss.contents
         js = json.loads("".join(js), strict=False)

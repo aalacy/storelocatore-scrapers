@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('gussbbq_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,10 +32,10 @@ def fetch_data():
 	time.sleep(randint(1,2))
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -43,16 +48,16 @@ def fetch_data():
 		time.sleep(randint(1,2))
 		try:
 			base = BeautifulSoup(req.text,"lxml")
-			print(link)
+			logger.info(link)
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		if "southpasadena" in link:
 			location_name = base.find_all(class_='clearfix grpelem shared_content')[4].text.strip()
 		else:
 			location_name = base.find_all(class_='clearfix colelem shared_content')[0].text.strip()
-		# print(location_name)
+		# logger.info(location_name)
 		
 		try:
 			raw_address = base.find_all(class_='clearfix grpelem shared_content')[5].find_all('p')

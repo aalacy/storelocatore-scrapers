@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('usa2goquickstore_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +38,7 @@ def fetch_data():
     for store in stores:
         loc= store.find('h2').text.strip()
         data=store.find_all('div', {'class': 'fusion-text'})[1].text.replace('click here for directions','').strip().split("\n")
-        print(data)
+        logger.info(data)
 
         street=data[0].strip()
         try:

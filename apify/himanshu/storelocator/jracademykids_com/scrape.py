@@ -4,6 +4,11 @@ import re
 import ast
 import json
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jracademykids_com')
+
+
 
 
 
@@ -72,10 +77,10 @@ def fetch_data():
             city = st[1]
         elif len(st) == 2:
             st1 = st[0].split(".")
-            # print(st1)
+            # logger.info(st1)
             if len(st1) > 1:
                 street_address = " ".join(st1[:-1])
-                # print(street_address)
+                # logger.info(street_address)
                 city = st1[-1]
             else:
                 street_address = " ".join(" ".join(st1).split()[:-1])
@@ -110,8 +115,8 @@ def fetch_data():
             continue
         addresses.append(store[2])
 
-        # print("data = " + str(store))
-        # print(
+        # logger.info("data = " + str(store))
+        # logger.info(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 

@@ -25,6 +25,11 @@ def override_retries():
     # monkey patch sgrequests in order to set max retries ...
     # we will control retries in this script in order to reset the session and get a new IP each time
     import requests  # ignore_check
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('7-eleven_com')
+
+
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()
@@ -40,8 +45,8 @@ show_logs = False
 
 def log(*args, **kwargs):
     if show_logs == True:
-        print(" ".join(map(str, args)), **kwargs)
-        print("")
+        logger.info(" ".join(map(str, args)), **kwargs)
+        logger.info("")
 
 
 def write_output(data):
@@ -76,7 +81,7 @@ def get(url, headers, attempts=0):
 
     max_attempts = 10
     if attempts > max_attempts:
-        print(f"Exceeded max attempts ({max_attempts}) for URL: {url}")
+        logger.info(f"Exceeded max attempts ({max_attempts}) for URL: {url}")
 
     try:
         r = session.get(url, headers=headers)

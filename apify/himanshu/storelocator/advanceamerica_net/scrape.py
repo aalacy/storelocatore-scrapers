@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('advanceamerica_net')
+
+
 
 
 session = SgRequests()
@@ -26,7 +31,7 @@ def fetch_data():
         'Host': 'www.advanceamerica.net',
         'Referer': 'https://www.advanceamerica.net/store-locations/alabama'
     }
-    # print(base_url + "/api/posts/filter")
+    # logger.info(base_url + "/api/posts/filter")
     # exit()
     r = session.post(base_url + "/api/posts/filter",data=data,headers=headers)
     data = r.json()['posts']

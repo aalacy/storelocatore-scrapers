@@ -8,6 +8,11 @@ session = SgRequests()
 
 session = SgRequests()
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('hollywoodtans_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,7 +44,7 @@ def fetch_data():
             continue
         location_name = data['title'].replace("Hollywood Tans Fairfax VA","Hollywood Tans Fairfax , VA")
         street_address = data['address'].split(',')[0]
-        # print(street_address)
+        # logger.info(street_address)
         city = data['location']['city'].replace("11","Nottingham").replace("3","Severna Park").replace("7","Westminster").split(",")[-1].strip() 
         state = location_name.split(",")[-1].strip()
         zipp = data['location']['postal_code']
@@ -52,7 +57,7 @@ def fetch_data():
         location_type = "Salon"
         store_number = data['id']   
         page_url = data['location']['redirect_custom_link']
-        # print(page_url)
+        # logger.info(page_url)
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text , "lxml")
         hours = soup1.find_all("div",{"class":"gdlr-item gdlr-content-item"})[-2].find_all("p")
@@ -83,8 +88,8 @@ def fetch_data():
         store.append(longitude )
         store.append(hours)
         store.append(page_url)
-        # print("data==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # logger.info("data==="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         yield store
     

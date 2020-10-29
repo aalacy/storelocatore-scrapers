@@ -1,6 +1,11 @@
 import requests
 
 from Scraper import Scrape
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mortensondental_com')
+
+
 
 
 URL = "https://mortensondental.com"
@@ -54,7 +59,7 @@ class Scraper(Scrape):
         )
         data = requests.get('https://mortensondental.com/wp-content/plugins/mdp-locations/data/mdpLocations_site1.json', headers=headers, params=params, cookies=cookies).json()
         stores.extend(data)
-        print(f"{len(data)} locations scraped")
+        logger.info(f"{len(data)} locations scraped")
 
 
         for store in stores:

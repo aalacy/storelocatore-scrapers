@@ -1,6 +1,11 @@
 import csv
 import re
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('eaglestopstores_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,9 +47,9 @@ def fetch_data():
     res=requests.post("https://eaglestopstores.com/wp-admin/admin-ajax.php",headers=headers,data="action=store_wpress_listener&method=display_list&page_number=1&lat=&lng=&category_id=&max_distance=&nb_display=100")
     stores=res.json()["stores"].split("More information<")
     del stores[-1]
-    #print(stores[0])
+    #logger.info(stores[0])
     for store in stores:
-        print(store)
+        logger.info(store)
         ll=re.findall(r'<img src=".*center=([\d\.]+),(-?[\d\.]+)&',store)[0]
         lat.append(ll[0])
         long.append(ll[1])

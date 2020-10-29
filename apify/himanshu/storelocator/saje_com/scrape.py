@@ -3,6 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('saje_com')
+
+
 
 
 def write_output(data):
@@ -66,7 +71,7 @@ def fetch_data():
         store.append( log.replace("46.5","-80.9667"))
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
-        # print("~~~~~~~~~~~~~~~~ ",store)
+        # logger.info("~~~~~~~~~~~~~~~~ ",store)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
     
@@ -115,7 +120,7 @@ def fetch_data():
         store.append( log.replace("46.5","-80.9667"))
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
-        # print("~~~~~~~~~~~~~~~~ ",store)
+        # logger.info("~~~~~~~~~~~~~~~~ ",store)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         
         yield store

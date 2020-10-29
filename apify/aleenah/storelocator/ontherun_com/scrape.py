@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ontherun_com')
+
+
 
 
 def write_output(data):
@@ -33,14 +38,14 @@ def fetch_data():
     tag=driver.find_element_by_tag_name('body').find_elements_by_tag_name('script')[1]
     stores=re.findall(r'locations = (\[[^;]+)',tag.get_attribute('text').replace('\n','').replace('            ','').replace('        ','').replace('    ','').replace('\'','').replace(',},','},').replace(',]',']'))[0].split('},{')
 
-    print(len(stores))
+    logger.info(len(stores))
 
     for store in stores:
         id,lat,long,url=re.findall(r'store_number: (.*),lat: (.*),lon: (.*),status:.*<a href="([^"]+)">',store)[0]
-        #print(id, lat, long, url)
+        #logger.info(id, lat, long, url)
 
         url='https://www.ontherun.com/store-locator/'+url
-        print(url)
+        logger.info(url)
 
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -51,10 +56,10 @@ def fetch_data():
         else:
             phone=phone[0]
 
-        print(street,city,state,zip,phone)
+        logger.info(street,city,state,zip,phone)
         tim=soup.find('div',{'class':'weekdays columns small-20'}).text.strip().replace('\n\n',',').replace('\n',' ')
 
-        print(tim)
+        logger.info(tim)
 
         all.append([
 

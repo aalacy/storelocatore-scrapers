@@ -5,6 +5,11 @@ import re
 from sgrequests import SgRequests
 import sgzip
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('paddypower_com')
+
+
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -33,7 +38,7 @@ def fetch_data():
     returnres=[]
     base_url="https://www.paddypower.com/"
     while coord:
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         result_coords = []
         if coord != None:
             lat = coord[0]
@@ -78,13 +83,13 @@ def fetch_data():
                     continue
                 addressess.append(store[2])
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                # print("----------------------",store)
+                # logger.info("----------------------",store)
                 yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('claires_com')
+
+
 
 search = sgzip.ClosestNSearch()
 search.initialize(country_codes=["us", "ca"])
@@ -55,7 +60,7 @@ def fetch_data():
             "lat": str(x),
             "lng": str(y),
         }
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         website = "claires.com"
         r = session.post(url, headers=headers, data=payload)
         if '"id":"' in r.content.decode("utf-8"):

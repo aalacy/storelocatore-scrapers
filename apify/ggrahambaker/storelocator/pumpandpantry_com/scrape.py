@@ -1,6 +1,11 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pumpandpantry_com')
+
+
 
 session = SgRequests()
 
@@ -72,7 +77,7 @@ def fetch_data():
          
     to_del = 100000
     for i, store in enumerate(all_store_data):
-        #print(store[7])
+        #logger.info(store[7])
         if store[7] in id_arr:
             to_del = i
         else:

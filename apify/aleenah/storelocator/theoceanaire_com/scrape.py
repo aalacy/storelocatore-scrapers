@@ -2,6 +2,11 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('theoceanaire_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +44,7 @@ def fetch_data():
 
     for url in urls:
         url="https://www.theoceanaire.com/Locations/"+url+"/Locations.aspx"
-        print(url)
+        logger.info(url)
         page_url.append(url)
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -52,7 +57,7 @@ def fetch_data():
         locs.append(tex[0])
         street.append( tex[1].strip()+" "+tex[2].strip())
         addr=tex[3].split(",")
-        print(addr)
+        logger.info(addr)
         cities.append(addr[0].strip())
         addr=addr[1].strip().split(" ")
         states.append(addr[0])
@@ -68,7 +73,7 @@ def fetch_data():
         timing.append(tim)
 
         a = soup.find('div', {'id': "googleMap"}).find("iframe").get("src")
-        print(a,"************")
+        logger.info(a,"************")
         long.append(re.findall(r'!2d(-?[\d\.]*)',a)[0])
         lat.append(re.findall(r'!3d(-?[\d\.]*)',a)[0])
 

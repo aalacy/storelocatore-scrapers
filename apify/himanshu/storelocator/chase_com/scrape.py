@@ -6,6 +6,11 @@ import json
 # import sgzip
 import time
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chase_com')
+
+
 
 
 session = SgRequests()
@@ -35,11 +40,11 @@ def fetch_data():
     offset = []
     for data in range(553):
         
-        # print(data)
+        # logger.info(data)
         offset.append(data*10)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
         location_url = "https://locator.chase.com/search?offset="+str(offset[data])
-        # print(location_url)
+        # logger.info(location_url)
     
         r = session.get(location_url, headers=headers).json()
         for i in r['response']['entities']:
@@ -125,8 +130,8 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # print("data =="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # logger.info("data =="+str(store))
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 yield store
 
        

@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('onehourheatandair_com')
+
+
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
@@ -28,7 +33,7 @@ def fetch_data():
                 if '"ExternalDomain":' in item:
                     locs.append('https://www.onehourheatandair.com' + item.split('"')[0])
     for loc in locs:
-        print(('Pulling Location %s...' % loc))
+        logger.info(('Pulling Location %s...' % loc))
         website = 'onehourheatandair.com'
         name = ''
         country = 'US'

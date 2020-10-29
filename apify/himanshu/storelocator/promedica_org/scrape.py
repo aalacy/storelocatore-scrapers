@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('promedica_org')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -61,7 +66,7 @@ def fetch_data():
             page_url = loc_detail["href"]
             # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=823'
             # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=1120'
-            # print("page_url = ",page_url)
+            # logger.info("page_url = ",page_url)
             r_location = requests.get(page_url, headers=headers)
             try:
                 soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -70,7 +75,7 @@ def fetch_data():
             if soup_location.find("h1",{"class":"loc-top-image"}):
                 # store_number = loc_detail.find("OrganizationID").next
                 full_address = list(soup_location.find("div",{"class":"address-block xs-mbm"}).find("a").stripped_strings)
-                # print("full_address == ", full_address)
+                # logger.info("full_address == ", full_address)
                 if len(full_address) > 1:
                     location_name = soup_location.find("h1",{"class":"loc-top-image"}).text
                     phone = soup_location.find("a",{"class":"phone"}).text
@@ -91,9 +96,9 @@ def fetch_data():
                     try:
                         start_index = re.search(r"\d", street_address).start()
                         if start_index:
-                            # print("Street Address : "+ street_address)
+                            # logger.info("Street Address : "+ street_address)
                             if not street_address[start_index:].isnumeric():
-                                # print("Success Street Address : "+ street_address)
+                                # logger.info("Success Street Address : "+ street_address)
                                 street_address = street_address[start_index:]
                     except:
                         pass
@@ -126,8 +131,8 @@ def fetch_data():
 
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                        #print("data = " + str(store))
-                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        #logger.info("data = " + str(store))
+                        #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
 
         if soup.find("input",{"class":"rdpPageNext","onclick":True}):

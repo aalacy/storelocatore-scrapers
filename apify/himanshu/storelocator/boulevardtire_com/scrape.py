@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('boulevardtire_com')
+
+
 session = SgRequests()
 
 
@@ -55,9 +60,9 @@ def fetch_data():
             if phone_list:
                 if phone == phone_list[0]:
                     location_type = "Retail"
-                    # print(phone)
-                    # print(street_address)
-                    # print(retail_loc_url)
+                    # logger.info(phone)
+                    # logger.info(street_address)
+                    # logger.info(retail_loc_url)
             else:
                 location_type = "Commercial"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -68,8 +73,8 @@ def fetch_data():
             addresses.append(str(store[1])+str(store[2])+str(store[-5]))
 
             
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
                     
             

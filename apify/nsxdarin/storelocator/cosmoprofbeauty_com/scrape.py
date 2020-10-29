@@ -3,6 +3,11 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
 import os
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cosmoprofbeauty_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -19,7 +24,7 @@ def fetch_data():
     locs = []
     canada = ['AB','BC','MB','NB','NL','NS','ON','PE','SK','QC']
     for x in range(1, 5):
-        #print(('Pulling Sitemap %s...' % str(x)))
+        logger.info(('Pulling Sitemap %s...' % str(x)))
         smurl = 'https://stores.cosmoprofbeauty.com/sitemap/sitemap' + str(x) + '.xml.gz'
         with open('branches.xml.gz','wb') as f:
             f.write(urllib.request.urlopen(smurl).read())
@@ -28,7 +33,7 @@ def fetch_data():
                 for line in f:
                     if '<loc>https://stores.cosmoprofbeauty.com/' in line and '.html' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
-        #print((str(len(locs)) + ' Locations Found...'))
+        logger.info((str(len(locs)) + ' Locations Found...'))
     for loc in locs:
         website = 'cosmoprofbeauty.com'
         typ = '<MISSING>'
@@ -58,7 +63,6 @@ def fetch_data():
                 zc = line.split('"post_code\\": \\"')[1].split('\\')[0]
                 lat = line.split('"lat\\": \\"')[1].split('\\')[0]
                 lng = line.split('"lng\\": \\"')[1].split('\\')[0]
-                loc = line.split('"url\\": \\"')[1].split('\\')[0]
             if '"telephone": "' in line:
                 phone = line.split('"telephone": "')[1].split('"')[0]
             if '"openingHours": "' in line:

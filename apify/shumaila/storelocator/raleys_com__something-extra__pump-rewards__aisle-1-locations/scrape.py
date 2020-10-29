@@ -4,6 +4,11 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('raleys_com__something-extra__pump-rewards__aisle-1-locations')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'
@@ -30,7 +35,7 @@ def fetch_data():
     
     soup =BeautifulSoup(r.text, "html.parser")
     divlist = soup.find('div',{'class':'entry-content'}).findAll('div', {'class': "col-sm-4"})
-    #print(len(divlist))    
+    #logger.info(len(divlist))    
     p = 0
     for div in divlist:
         try:
@@ -81,7 +86,7 @@ def fetch_data():
                         longt,
                         '<MISSING>'
                     ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p += 1
                 
             

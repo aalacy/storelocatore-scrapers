@@ -4,6 +4,11 @@ import string
 import re, time, usaddress
 
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('imxpilates_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,7 +32,7 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)  
     soup =BeautifulSoup(r.text, "html.parser")   
     divlist = soup.findAll('div', {'class': 'studionewcol'})
-    #print("states = ",len(divlist))
+    #logger.info("states = ",len(divlist))
     p = 0
     titles = []
     titles.append('None')
@@ -41,10 +46,10 @@ def fetch_data():
                     link = link['href']
                     if len(title) < 2:
                         title = link.split('imxpilates',1)[1].split('.',1)[0]
-                    #print(title,link)
+                    #logger.info(title,link)
                     if (link.find('branch') > -1 or link.find('imx') > -1 )and title.find('Coming Soon') == -1 and title not in titles:
                         titles.append(title)
-                        #print(p,link)                       
+                        #logger.info(p,link)                       
                         r = session.get(link, headers=headers, verify=False)                    
                         soup =BeautifulSoup(r.text, "html.parser")                        
                         det = soup.find('div',{'class':'header-left'}).text                        
@@ -52,14 +57,14 @@ def fetch_data():
                         count = len(det)
                         phone = det[count - 1].lstrip()                        
                         address = ' '.join(det[0:count-1]).lstrip()
-                        #print(address)
+                        #logger.info(address)
                         check = ''
                         try:
                             check = address.split('(')[1].split(')')[0]
                             
                             check = ' ('+ check +')'
                             address =address.replace(check,'')
-                            #print(address)
+                            #logger.info(address)
                         except :
                             pass
                         try:
@@ -84,7 +89,7 @@ def fetch_data():
                                 pcode = pcode + " " + temp[0]
                             i += 1
                             
-                        #print(address)
+                        #logger.info(address)
                         
                         street = street + ' ' + str(check)               
                         store = str(soup).split('?studioid',1)[1].split('&',1)[0]
@@ -117,12 +122,12 @@ def fetch_data():
                         '<MISSING>',
                         '<MISSING>'
                         ])
-                        #print(p,data[p])
+                        #logger.info(p,data[p])
                         p += 1
                     #input()
                         
                 except Exception as e:
-                    #print(e)
+                    #logger.info(e)
                     pass
             
          
@@ -132,9 +137,9 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()

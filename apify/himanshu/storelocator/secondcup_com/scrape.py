@@ -7,6 +7,11 @@ import time
 from sgrequests import SgRequests
 import unicodedata
 from requests.exceptions import RequestException
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('secondcup_com')
+
+
 
 
 def write_output(data):
@@ -36,8 +41,8 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        #print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #print('zip: ', zip_code)
+        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        #logger.info('zip: ', zip_code)
         headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'content-type': 'application/x-www-form-urlencoded',
@@ -56,17 +61,17 @@ def fetch_data():
         try:
             r = session.post(location_url, data=data, headers=headers)
         except RequestException as ex:
-            #print("--- RequestException-->", ex, 'resetting session')
+            #logger.info("--- RequestException-->", ex, 'resetting session')
             # reset the session and try again
             session = SgRequests()
             r = session.post(location_url, data=data, headers=headers)
 
-        #print('search status: ', r.status_code)
+        #logger.info('search status: ', r.status_code)
         soup = BeautifulSoup(r.text, "lxml")
         # current_results_len = len(soup.find_all("a",{"class":"a-link"}))
         current_results_len = len(soup.select(
             "div.o-location-details__full-details a.a-link"))
-        #print('current_results_len: ', current_results_len)
+        #logger.info('current_results_len: ', current_results_len)
         for link in soup.select("div.o-location-details__full-details a.a-link"):
             if "google" in link['href']:
                 continue
@@ -77,9 +82,9 @@ def fetch_data():
                 continue
 
             page_url = base_url+link['href']
-            #print(page_url)
+            #logger.info(page_url)
             r1 = session.get(page_url)
-            #print(f'{page_url} : {r1.status_code}')
+            #logger.info(f'{page_url} : {r1.status_code}')
 
             # some locations are apparently closed permanently and return status 403, but don't follow the same pattern mentioned above (having 'closed' in the URL)
             #   example: https://secondcup.com/location/shawnessy-town-centre
@@ -88,11 +93,11 @@ def fetch_data():
 
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("div", {"class": "l-location__title"}).text.strip()
-            #print(location_name)
-            #print()
+            #logger.info(location_name)
+            #logger.info()
             
             addr = list(soup1.find("div", {"class": "m-location-features__address"}).stripped_strings)
-            #print(addr)
+            #logger.info(addr)
             if addr:
                 street_address = addr[0]
                 city = addr[1].split(",")[0]
@@ -120,7 +125,7 @@ def fetch_data():
                 hours = closed_message[0].get_text()
             else:
                 hours = " ".join(list(soup1.find("ul", {"class": "m-location-hours__list"}).stripped_strings))
-            #print('hours: ', hours)
+            #logger.info('hours: ', hours)
 
             result_coords.append((0, 0))
             store = []
@@ -154,10 +159,10 @@ def fetch_data():
 
             yield store
 
-            #print("data == " + str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            #logger.info("data == " + str(store))
+            #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            #logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
 
         zip_code = search.next_zip()

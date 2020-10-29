@@ -6,6 +6,11 @@ import json
 import time
 import sgzip
 import pprint
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cibc_com')
+
+
 
 
 
@@ -30,7 +35,7 @@ def fetch_data():
     addressess = []
     search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas = True)
-    # print("====")
+    # logger.info("====")
 
     MAX_RESULTS = 51
     MAX_DISTANCE = 50
@@ -58,7 +63,7 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
         page_url = ''
-        # print("==============",str(search.current_zip))
+        # logger.info("==============",str(search.current_zip))
         # "N4W"
         # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"search.current_zip
         count = 1
@@ -83,7 +88,7 @@ def fetch_data():
                 for i in range(len(name)):
                     location_name = name[i].text.strip()
                     title = a_tage[i].attrs['title']
-                    # print(a_tage[i]['href'])
+                    # logger.info(a_tage[i]['href'])
                     r1 = session.get("https://locations.cibc.com"+a_tage[i]['href'], headers=headers)
                     soup1=BeautifulSoup(r1.text,'lxml')
                     hours_of_operation = soup1.find("div",{"class":"locationHours bankHours"})
@@ -111,9 +116,9 @@ def fetch_data():
                     except:
                         hours_of_operation3 =''
 
-                    # print(hours_of_operation1+ ' '+hours_of_operation3)
+                    # logger.info(hours_of_operation1+ ' '+hours_of_operation3)
                     all_hours = hours_of_operation1 + ' '+hours_of_operation3
-                    # print(all_hours)
+                    # logger.info(all_hours)
                     try:
                         phone = phone1[i].text.strip()
                     except:
@@ -141,7 +146,7 @@ def fetch_data():
                     except:
                         location_type=''
     
-                    # print("=============-------------------------",location_type)
+                    # logger.info("=============-------------------------",location_type)
                     store = []
                     result_coords.append((latitude, longitude))
                     store.append(locator_domain if locator_domain else '<MISSING>')
@@ -161,16 +166,16 @@ def fetch_data():
                     if store[2] in addressess:
                         continue
                     addressess.append(store[2])
-                    # print("====================",store)
+                    # logger.info("====================",store)
                     yield store
             else:
                 break
             count +=1
                 
                   
-        # print("==================================",current_results_len)
+        # logger.info("==================================",current_results_len)
         if current_results_len < MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

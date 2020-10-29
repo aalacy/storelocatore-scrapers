@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petsmart_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +41,7 @@ def fetch_data():
         for j in store:
 
             ul=u+j['href']
-            #print(ul)
+            #logger.info(ul)
             page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             div = soup.find('div',class_='store-page-details')
@@ -48,7 +53,7 @@ def fetch_data():
                continue
             ph=div.find('p',class_='store-page-details-phone').text.strip()
             addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
-            #print(addr)
+            #logger.info(addr)
             if len(addr) ==2:
                 street=addr[0]
                 addr=addr[1].strip().split(',')
@@ -72,13 +77,13 @@ def fetch_data():
                 if day not in hours:
                     hours=hours.replace('TODAY',day)
             lat,long=re.findall(r'center=([\d\.]+),([\-\d\.]+)',soup.find('div',class_='store-page-map mapViewstoredetail').find('img').get('src'))[0]
-            #print(lat,long)
+            #logger.info(lat,long)
             
             
             """try:
                 loc=soup.find('h1', class_ ='store-name').text
             except:
-                print("closed")
+                logger.info("closed")
             else:
                 street = soup.find('div', itemprop='streetAddress').text
                 city = soup.find('span',itemprop='addressLocality')
@@ -102,7 +107,7 @@ def fetch_data():
                     hours+=cl[k]['content']+" "
                 hours=hours.replace("TODAY",DY[0])
                 hours=hours.replace("-null","")
-                print(hours)"""
+                logger.info(hours)"""
             data.append([
                     'https://www.petsmart.ca/',
                      ul.replace(u'\u2019',''),

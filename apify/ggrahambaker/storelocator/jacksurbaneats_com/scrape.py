@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from random import randint
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('jacksurbaneats_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,8 +41,8 @@ def fetch_data():
     try:
         base = BeautifulSoup(req.text,"lxml")
     except (BaseException):
-        print ('[!] Error Occured. ')
-        print ('[?] Check whether system is Online.')
+        logger.info('[!] Error Occured. ')
+        logger.info('[?] Check whether system is Online.')
 
     locator_domain = 'jacksurbaneats.com'
     locs = base.find_all(class_="et_pb_text_inner")[1:-1]
@@ -50,7 +55,7 @@ def fetch_data():
             street_address = loc.a.text.strip()
         except:
             continue
-        print(location_name)
+        logger.info(location_name)
         city, state, zip_code = addy_ext(raw_data[-1][:-4].replace("\n","").replace("\xa0", " "))
         phone_number = raw_data[-2].strip()
 
@@ -72,8 +77,8 @@ def fetch_data():
             try:
                 maps = BeautifulSoup(req.text,"lxml")
             except (BaseException):
-                print('[!] Error Occured. ')
-                print('[?] Check whether system is Online.')
+                logger.info('[!] Error Occured. ')
+                logger.info('[?] Check whether system is Online.')
 
             try:
                 raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

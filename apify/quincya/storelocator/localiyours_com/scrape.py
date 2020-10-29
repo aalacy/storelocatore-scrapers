@@ -6,6 +6,11 @@ import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('localiyours_com')
+
+
 
 def get_driver():
     options = Options() 
@@ -37,10 +42,10 @@ def fetch_data():
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
-		print("Got today page")
+		logger.info("Got today page")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	content = base.find('div', attrs={'class': 'pm-map-wrap pm-location-search-list'})
 	items = content.findAll('div', attrs={'class': 'col-xs-12'})

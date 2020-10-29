@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('costulessdirect_com')
+
+
 
 
 
@@ -108,7 +113,7 @@ def fetch_data():
        store.append(longitude[i])
        store.append(hours1[i])
        store.append("https://www.costulessdirect.com/resources/locations")
-       #print(store)
+       #logger.info(store)
 
        return_main_object.append(store)
    

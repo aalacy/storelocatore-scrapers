@@ -4,6 +4,11 @@ import csv
 import string
 import re
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('independentbank_com')
+
+
 
 
 def write_output(data):
@@ -31,17 +36,17 @@ def fetch_data():
         title = repo.find('h4').text
         start = title.find("|")
         title = title[0:start-1]
-        print(title)
+        logger.info(title)
         ltype = repo.find('strong').text
         start = ltype.find(" ")
         ltype = ltype[0:start]
-        print(ltype)
+        logger.info(ltype)
         address = repo.find('p').text
         address = re.sub(pattern, "", address)
         address = re.sub("\n", "|", address)
         start = address.find("|")
         phone = address[start+4:len(address)-1]
-        print(phone)
+        logger.info(phone)
         address = address[3:start]
 
         address = usaddress.parse(address)
@@ -70,11 +75,11 @@ def fetch_data():
         except:
             hours = "<MISSING>"
 
-        print(hours)
+        logger.info(hours)
         ltemp = repo.find('div', {'class': 'item-links'})
         id = ltemp.find('span')
         id = id['data-location']
-        print(id)
+        logger.info(id)
         alink = ltemp.find('a')
         alink = alink['href']
 
@@ -111,12 +116,12 @@ def fetch_data():
         if len(id) < 5:
             id = "<MISSING>"
 
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(lat)
-        print(longt)
+        logger.info(street)
+        logger.info(city)
+        logger.info(state)
+        logger.info(pcode)
+        logger.info(lat)
+        logger.info(longt)
         data.append([
             url,
             title,

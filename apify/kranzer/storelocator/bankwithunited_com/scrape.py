@@ -2,6 +2,11 @@ import re
 
 import base
 from urllib.parse import urljoin
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bankwithunited_com')
+
+
 
 class Scrape(base.Spider):
     def crawl(self):
@@ -25,7 +30,7 @@ class Scrape(base.Spider):
 
             i.add_xpath('longitude', './span/meta[@property="longitude"]/@content', base.get_first)
             i.add_xpath('latitude', './span/meta[@property="latitude"]/@content', base.get_first)
-            print(i)
+            logger.info(i)
             yield i
 
 

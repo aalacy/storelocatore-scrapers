@@ -3,6 +3,11 @@ import re
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('minutemanpress_com')
+
+
 
 
 URL = "https://www.minutemanpress.com/"
@@ -141,19 +146,19 @@ class Scraper(Scrape):
         for search_country in ['ca', 'us']:
             stores = []
             prov_state = 'provinces' if search_country == 'ca' else 'states'
-            print(f"Getting {prov_state} for {search_country.upper()}")
+            logger.info(f"Getting {prov_state} for {search_country.upper()}")
             driver.get(f'https://www.minutemanpress.com/locations/locations.html/{search_country}')
             states = [url.get_attribute('action') for url in driver.find_elements_by_css_selector('div.mmp-corp-store-search-filter-options > form')]
             for state in states:
-                print(f"Getting stores for state website: {state}")
+                logger.info(f"Getting stores for state website: {state}")
                 driver.get(state)
                 stores.extend([store_url.get_attribute('href') for store_url in driver.find_elements_by_css_selector('a.visit-website.button')])
 
-            print("\n Preparing for scrape each store. \n")
+            logger.info("\n Preparing for scrape each store. \n")
 
             for store in stores:
                 if store not in self.seen:
-                    print(f"Getting url for {store}")
+                    logger.info(f"Getting url for {store}")
                     driver.get(store)
 
                     try:
@@ -216,10 +221,10 @@ class Scraper(Scrape):
                         location_types.append(location_type)
                         page_urls.append(page_url)
                     except:
-                        print(f"{store} is not scrapable")
+                        logger.info(f"{store} is not scrapable")
                         pass
 
-            print(f"Done scraping stores for {search_country.upper()}")
+            logger.info(f"Done scraping stores for {search_country.upper()}")
 
         for (
                 locations_title,

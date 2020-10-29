@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('exhalespa_com')
+
+
  
 
 session = SgRequests()
@@ -51,7 +56,7 @@ def fetch_data():
             page_url = ""
 
             page_url = base_url + location_url["href"]
-            # print("page_url = " + page_url)
+            # logger.info("page_url = " + page_url)
 
             r_location = session.get(page_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -102,7 +107,7 @@ def fetch_data():
                     hours_of_operation = hours_of_operation.replace("Exhale at 45PROVINCE is a private facility for residents only. Hours vary and are based on appointment requests and class times.","<MISSING>")
                     hours_of_operation = hours_of_operation.replace("Hours vary. Please see this week's class schedule for times.","<MISSING>")
                     hours_of_operation = hours_of_operation.replace("Hours vary and are based on appointment requests and class times.","<MISSING>")
-                # print("hours_of_operation === "+ str(hours_of_operation))
+                # logger.info("hours_of_operation === "+ str(hours_of_operation))
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -112,8 +117,8 @@ def fetch_data():
 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # logger.info("data = " + str(store))
+                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
 
 

@@ -2,17 +2,12 @@
 
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
+from bs4 import BeautifulSoup as bs
 import json
-import sgzip
-
-
-
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('roostersmgc_com.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -24,126 +19,59 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 50
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()
     
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
     base_url = "https://www.roostersmgc.com"
+    soup = bs(session.get("https://www.roostersmgc.com/book-appointment.html").text, "lxml")
 
-    while coord:
-        result_coords = []
-
-        lat = coord[0]
-        lng = coord[1]
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-        try:
-            get_url ="https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/0.8/0.5/true"
-           
-            # location_url = "https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/90/180/true"
-            r = session.get(get_url, headers=headers)
-        except:
-            continue
-        # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
-        # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
-
-        json_data = r.json()
+    for state_link in soup.find("div",{"class":"state-buttons"}).find_all("a"):
         
-        
-        # json_data = json.loads(r_utf)
-        # print("json_Data === " + str(json_data))
-        current_results_len = int(len(json_data['stores']))
-        # print(json_data)
-        # print(current_results_len) # it always need to set total len of record.
-        # print("current_results_len === " + str(current_results_len))
+        state_soup = bs(session.get(state_link['href']).text, "lxml")
 
-        locator_domain = base_url
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        raw_address = ""
-        hours_of_operation = ""
-        
-        for location in json_data['stores']:
-            street_address = location['subtitle']
+        if state_soup.find("table"):
+            for url in state_soup.find("table").find_all("a"):
+                
+                page_url = base_url + url['href']
+
+                location_soup = bs(session.get(page_url).text, "lxml")
             
-            longitude = location['longitude']
-            latitude = location['latitude']
-            location_name = location['title']
-            store_hours = location['store_hours']
-            if "phonenumber" in location:
-                phone = location['phonenumber'].replace("(0) 0-0","<MISSING>")
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(street_address))
+                location_name = url.text.split(",")[0].strip()
+                street_address = location_soup.find("span",{"itemprop":"streetAddress"}).text.strip()
+                city = location_soup.find("span",{"itemprop":"addressLocality"}).text.strip()
+                state = location_soup.find("span",{"itemprop":"addressRegion"}).text.strip()
+                zipp = location_soup.find("span",{"itemprop":"postalCode"}).text.strip()
+                phone = location_soup.find("span",{"itemprop":"telephone"}).text.strip()
+                coords = location_soup.find(lambda tag : (tag.name == "script") and "salonDetailLat" in tag.text).text
+                
+                store_number = coords.split("salonDetailSalonID =")[1].split(";")[0].replace('"',"")
+                lat = coords.split("salonDetailLat =")[1].split(";")[0].replace('"',"")
+                lng = coords.split("salonDetailLng =")[1].split(";")[0].replace('"',"")
+                hours = " ".join(list(location_soup.find("div",{"class":"salon-timings"}).stripped_strings)).replace("Hours:","")
 
-            state_list = re.findall(r' ([A-Z]{2}) ', str(street_address))
-
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-
-            if state_list:
-                state = state_list[-1]
-
-            hours_of_operation = ''
-            for i in store_hours:
-                hours_of_operation = hours_of_operation +' '+ i['days'] + ' ' +i['hours']['open']+' '+ i['hours']['close']
-
-            
-            
-            street_address1 = street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[0]
-            
-            city =  " ".join(street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[1:]).replace(",","")
-            #print("street_address1",city)
-            
-            street_address2 = street_address1.split("  ")[0]
-            # print("|================",street_address2.split("  "))
-            page_url = "<MISSING>"
-            result_coords.append((latitude, longitude))
-            store = [locator_domain, location_name, street_address2, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,get_url]
-
-            if store[2] in addresses:
-                continue
-        
-            addresses.append(store[2])
-
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
-        # break
-
+                
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append("US")
+                store.append(store_number) 
+                store.append(phone)
+                store.append("Salon")
+                store.append(lat)
+                store.append(lng)
+                store.append(hours)
+                store.append(page_url)
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                yield store
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

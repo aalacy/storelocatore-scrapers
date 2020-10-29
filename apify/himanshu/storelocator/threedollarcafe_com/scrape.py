@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('threedollarcafe_com')
+
+
 
 
 
@@ -33,7 +38,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -52,7 +57,7 @@ def fetch_data():
 
     for script in soup.find_all('div', {'class': 'location-detail'}):
         list_address = list(script.find('p', {'class', 'address'}).stripped_strings)
-        # print("list_address = " + str(list_address))
+        # logger.info("list_address = " + str(list_address))
 
         location_name = list_address[0]
         street_address = list_address[1].split(',')[0]
@@ -72,8 +77,8 @@ def fetch_data():
 
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

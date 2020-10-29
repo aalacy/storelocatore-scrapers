@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('ppwpet_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 	
 	items = base.findAll('div', attrs={'class': 'row sqs-row'})
 	
@@ -48,7 +53,7 @@ def fetch_data():
 			locations.append(location_name)
 		except:
 			continue
-		print (location_name)
+		logger.info(location_name)
 
 		raw_data = str(item.find('p')).split("<br/>")
 		street_address = raw_data[0][raw_data[0].rfind(">")+1:]
@@ -88,7 +93,7 @@ def fetch_data():
 	else:
 		location_type = "<MISSING>"
 		locations.append(location_name)
-	print (location_name)
+	logger.info(location_name)
 
 	raw_data = str(item.find('p')).split("<br/>")
 	street_address = raw_data[0][raw_data[0].rfind(">")+1:]

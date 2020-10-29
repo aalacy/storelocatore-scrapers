@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('boomerjacks_com')
+
+
 
 
 
@@ -50,7 +55,7 @@ def fetch_data():
     page_url =''
     city1 =''
     for location in json_data['meta']:
-        # print(location['address'])
+        # logger.info(location['address'])
 
 
         # phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(str_data))
@@ -99,8 +104,8 @@ def fetch_data():
             addresses.append(str(store[2]) + str(store[-3]))
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         
             yield store
 

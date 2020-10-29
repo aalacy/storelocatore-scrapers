@@ -5,6 +5,11 @@ import re
 import json
 import phonenumbers
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('oreck_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +37,7 @@ def fetch_data():
     r = session.get("https://www.oreck.com/stores/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for value in soup.find_all("option",{"class":"select-option"}):
-        # print(value['value'].isdigit())
+        # logger.info(value['value'].isdigit())
         if len(value['value']) != 2 or value['value'].isdigit():
             continue
         data = {"dwfrm_storelocator_state":str(value['value']),
@@ -64,8 +69,8 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
-                # print("data ==="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                # logger.info("data ==="+str(store))
+                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 yield store
         except:
@@ -91,7 +96,7 @@ def fetch_data():
         page_url = "https://www.oreck.com/stores-details/?StoreID="+str(data['id'])
         r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
-        # print(page_url)
+        # logger.info(page_url)
         try:
             hours = " ".join(list(soup1.find("div",{"class":"store-hours"}).stripped_strings)).replace("|"," ").replace("/td>","").replace(">","").strip()
         except:
@@ -113,8 +118,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        # logger.info("data ==="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
 

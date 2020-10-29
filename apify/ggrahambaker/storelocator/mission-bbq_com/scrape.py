@@ -7,6 +7,11 @@ from selenium.webdriver.support.ui import Select
 import time
 from random import randint
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mission-bbq_com')
+
+
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -73,7 +78,7 @@ def fetch_data():
 
     all_store_data = []
     for state in states:
-        print(state)
+        logger.info(state)
         driver.get(locator_domain + ext)
         driver.implicitly_wait(10)
         drop_down = driver.find_element_by_id('categories-1')
@@ -118,8 +123,8 @@ def fetch_data():
                 try:
                     maps = BeautifulSoup(req.text,"lxml")
                 except (BaseException):
-                    print('[!] Error Occured. ')
-                    print('[?] Check whether system is Online.')
+                    logger.info('[!] Error Occured. ')
+                    logger.info('[?] Check whether system is Online.')
 
                 try:
                     raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

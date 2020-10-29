@@ -2,6 +2,11 @@ import csv
 from sgselenium import SgSelenium
 import re
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('miracle-ear_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -53,10 +58,10 @@ def fetch_data():
         for div in divss:
             url=div.find_element_by_tag_name("a").get_attribute("href")
             page_url.append(url)
-    print(len(page_url))
+    logger.info(len(page_url))
     i=1
     for url in page_url:
-            print(i)
+            logger.info(i)
             i+=1
             driver.get(url)
             divs=driver.find_element_by_tag_name("main")

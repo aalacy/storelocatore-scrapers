@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bluesushisakegrill_com')
+
+
 
 
 
@@ -60,7 +65,7 @@ def fetch_data():
         elif(len(cords)==1):
             lat = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('=')[-1].split('+')[0]
             lng = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('=')[-1].split('+')[1]
-            # print(lat)
+            # logger.info(lat)
 
 
         store=list()

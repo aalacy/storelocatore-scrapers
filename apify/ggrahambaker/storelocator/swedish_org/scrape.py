@@ -6,6 +6,11 @@ import json
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('swedish_org')
+
+
 
 session = SgRequests()
 headers = {
@@ -156,7 +161,7 @@ def populate_loc_type(loctype_url, location_map):
                 location_map[key]['location_type'] = loctype_url.get(
                     'loctype').replace('swedish', '')
             else:
-                print(f"location missing in map: {key}")
+                logger.info(f"location missing in map: {key}")
 
 
 def fetch_json_data(content):

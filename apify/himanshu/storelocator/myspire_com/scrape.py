@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('myspire_com')
+
+
 
 
 
@@ -67,7 +72,7 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             
             store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-            print("====",str(store))
+            logger.info("====",str(store))
             return_main_object.append(store)  
     return return_main_object
 

@@ -1,6 +1,11 @@
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('apple_com')
+
+
 
 URL = "https://www.apple.com/"
 
@@ -63,7 +68,7 @@ class Scraper(Scrape):
         stores = [url.get_attribute('value') for url in driver.find_elements_by_css_selector('div.select-style.select > select > option')[1:]]
 
         for store in stores:
-            print(f'Getting result for {store}')
+            logger.info(f'Getting result for {store}')
             driver.get(store)
 
             # Store ID
@@ -124,7 +129,7 @@ class Scraper(Scrape):
         stores = [url.get_attribute('href') for url in driver.find_element_by_css_selector('div.column.large-4.medium-12').find_elements_by_css_selector('a')]
 
         for store in stores:
-            print(f'Getting result for {store}')
+            logger.info(f'Getting result for {store}')
             driver.get(store)
 
             # Store ID

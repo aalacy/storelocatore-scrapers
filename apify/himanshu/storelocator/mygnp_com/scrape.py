@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mygnp_com')
+
+
 
 
 
@@ -42,13 +47,13 @@ def fetch_data():
                     r = session.get(j.a['href'])
                 except:
                     continue
-                # print(j.a['href'])
+                # logger.info(j.a['href'])
                 soup2= BeautifulSoup(r.text,"lxml")
                 j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
-                # print(j2)
-                # print("=============================")
+                # logger.info(j2)
+                # logger.info("=============================")
                 store_name.append(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
-                #print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
+                #logger.info(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
                 tem_var.append(j2['address']['streetAddress'])
                 tem_var.append(j2['address']['addressLocality'])
                 tem_var.append(j2['address']['addressRegion'])
@@ -59,14 +64,14 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(j2['geo']['latitude'])
                 tem_var.append(j2['geo']['longitude'])
-                # print(tem_var)
+                # logger.info(tem_var)
                 if "openingHours" in j2:
                     tem_var.append( j2['openingHours'])
                 else:
                     tem_var.append("<MISSING>")
                 tem_var.append(j.a['href'])    
                 store_detail.append(tem_var)
-                # print(tem_var)
+                # logger.info(tem_var)
 
     for i in range(len(store_name)):
        store = list()

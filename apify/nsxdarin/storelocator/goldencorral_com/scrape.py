@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('goldencorral_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -22,7 +27,7 @@ def fetch_data():
             lat2 = y + 5
             lng1 = x
             lng2 = x + 5
-            print((str(lat1) + ',' + str(lng1)))
+            logger.info((str(lat1) + ',' + str(lng1)))
             url = 'https://www.goldencorral.com/locations/wp-json/locator/v1/search/0/0/' + str(lat1) + '/' + str(lng1) + '/' + str(lat2) + '/' + str(lng2)
             r = session.get(url, headers=headers)
             if r.encoding is None: r.encoding = 'utf-8'

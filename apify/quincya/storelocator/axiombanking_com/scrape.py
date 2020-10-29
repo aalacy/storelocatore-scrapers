@@ -2,6 +2,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('axiombanking_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -41,7 +46,7 @@ def fetch_data():
 
 	for i in range(len(coords)):
 		location_name = titles[i]['title']
-		# print(location_name)
+		# logger.info(location_name)
 		item = BeautifulSoup(details[i]['info'],"lxml")		
 		if "," in item.p.text:
 			raw_address = item.p.text.split('\n')

@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('multicare_org')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,11 +29,11 @@ def fetch_data():
     soup = BeautifulSoup(res.text, 'html.parser')
     div= soup.find('div', {'class': 'rtecontent location_list clearfix'})
     lis = div.find_all('li')
-    print(len(lis))
+    logger.info(len(lis))
     for li in lis:
         id=li.find('div', {'class': 'location_item linky'}).get('data-location_id')
         loc= li.find('h2', {'class': 'title'}).text.strip()
-        print(loc)
+        logger.info(loc)
         div=li.find('div', {'class': 'text'})
         ps=div.find_all('p')
         tim="<MISSING>"
@@ -36,11 +41,11 @@ def fetch_data():
         for p in ps:
             data= p.text
             if "Address" in data:
-                #print(p)
+                #logger.info(p)
                 addr=str(p).split('<a')[0].split('</b><br/>')[1].replace('<br>','\n').replace('<br/>','\n')
                 addr=addr.replace('Address','').replace(',,',',').strip().split('\n')
 
-                #print(addr)
+                #logger.info(addr)
                 sz=addr[-1].strip().split(',')
                 city=sz[0]
                 sz=sz[1].strip().split(' ')

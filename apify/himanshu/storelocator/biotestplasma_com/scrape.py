@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('biotestplasma_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +32,7 @@ def fetch_data():
         d = (l.find_all("a"))
         for g in d:
             link = (g['href'])
-            # print(link)
+            # logger.info(link)
             r1 = session.get(link)
             soup1 = BeautifulSoup(r1.text,"lxml")
             if "https://www.grifolsplasma.com/en/-/sanantonio-tx" in link:
@@ -42,7 +47,7 @@ def fetch_data():
             phone = soup1.find("div",{"class":"center-address"}).find_all("p")[-1].text.replace("\n","").replace("\r","").replace("\t","").strip()
             hours_of_operation = soup1.find("div",{"class":"center-column-2"}).text.strip().replace("PM","PM ").replace("Hours","").strip().replace("Closed","Closed ").split(" Labor Day")[0].split(" Thanks")[0]
             location_type = location_name.split(" ")[0]
-            # print(location_type)
+            # logger.info(location_type)
             store = []
             store.append("https://www.biotestplasma.com/")
             store.append(location_name if location_name else "<MISSING>") 

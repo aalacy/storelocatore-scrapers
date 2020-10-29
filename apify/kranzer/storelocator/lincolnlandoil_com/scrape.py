@@ -11,6 +11,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from w3lib.html import remove_tags
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lincolnlandoil_com')
+
+
 crawled = []
 class Scrape(base.Spider):
     def get_driver(self):

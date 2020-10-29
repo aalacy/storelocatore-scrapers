@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pfchangs_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -105,10 +110,10 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        print(store_data)
-        print()
-        print()
-        print()
+        logger.info(store_data)
+        logger.info()
+        logger.info()
+        logger.info()
         all_store_data.append(store_data)
 
     return all_store_data

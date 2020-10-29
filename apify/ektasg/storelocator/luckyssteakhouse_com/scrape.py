@@ -4,6 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('luckyssteakhouse_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -50,7 +55,7 @@ def fetch_data():
     for i in range(len(li_url2)):
         driver.get(li_url2[i])
         time.sleep(10)
-        print(i)
+        logger.info(i)
         hours_of_op = driver.find_element_by_xpath("//p[strong[not(contains(text(),'Keep'))]]").get_attribute("textContent").replace('\t','').replace('\n','')
         try:
             phone_no = driver.find_element_by_xpath("(//h2//a)").get_attribute("textContent")

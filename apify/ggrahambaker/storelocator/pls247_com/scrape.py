@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 import time
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pls247_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -64,7 +69,7 @@ def fetch_data():
         driver.implicitly_wait(15)
         
         page_inc = 0
-        print(link)
+        logger.info(link)
         while True:
             page_inc += 1
             all_locs_collected = False

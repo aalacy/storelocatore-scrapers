@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('elixirjuice_com')
+
+
 
 
 
@@ -73,7 +78,7 @@ def fetch_data():
             
             phone = (list(p1.stripped_strings)[2].replace("now open!",""))
  
-            # print(phone)
+            # logger.info(phone)
             store_name.append(st)
             tem_var.append(st)
             tem_var.append("<MISSING>")
@@ -112,7 +117,7 @@ def fetch_data():
     tem_var.append("<MISSING>")
     tem_var.append(h1)
     store_detail.append(tem_var)
-    # print(list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[2].replace("Phone: ",""))
+    # logger.info(list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[2].replace("Phone: ",""))
     for i in range(len(store_name)):
         store = list()
         store.append("http://elixirjuice.com")

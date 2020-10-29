@@ -7,6 +7,11 @@ import json
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bevmo_com')
+
+
 
 def get_driver():
 	options = Options() 
@@ -59,22 +64,22 @@ def fetch_data():
 	for i, raw_link in enumerate(all_links):
 		link = raw_link[0]
 		hours = raw_link[1]
-		print("Link %s of %s" %(i+1,total_links))
+		logger.info("Link %s of %s" %(i+1,total_links))
 
 		req = session.get(link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
 			item = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "bevmo.com"
 
 		location_name = item.find(class_='store-name').text.strip()
 		if "(" in location_name and len(location_name) > 40:
 			location_name = location_name[:location_name.find("(")].strip()
-		print(link)
+		logger.info(link)
 
 		script = item.find_all('script', attrs={'type': "application/ld+json"})[1].text.strip()
 		store = json.loads(script)

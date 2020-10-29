@@ -2,6 +2,11 @@ import csv
 import re, time
 from sgrequests import SgRequests
 from lxml import etree
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thenomadhotel_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +27,7 @@ def fetch_data():
     for i in range(len(locations)):
         location = locations[i]
         name = location.xpath(".//h2/text()")[0].strip()
-        print(name)
+        logger.info(name)
         phone = location.xpath(".//p/a[contains(@href, 'tel:')]/@href")[0].strip().split("tel:")[1]
         street_1 = location.xpath(".//address//a/text()")
         street_2 = location.xpath(".//div//a/text()")

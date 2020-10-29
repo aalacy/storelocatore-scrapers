@@ -11,6 +11,11 @@ from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
 from lxml import etree
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mavistire_com')
+
+
 crawled = set()
 class Scrape(base.Spider):
     async def _fetch_store(self, session, url):
@@ -36,7 +41,7 @@ class Scrape(base.Spider):
                 coords = (i.as_dict()['latitude'], i.as_dict()['longitude'])
                 if coords not in crawled:
                     crawled.add(coords)
-                    print(i)
+                    logger.info(i)
                     return i
 
     async def _fetch_stores(self, urls, loop):

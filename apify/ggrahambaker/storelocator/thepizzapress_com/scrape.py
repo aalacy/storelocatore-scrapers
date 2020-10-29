@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('thepizzapress_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,8 +49,8 @@ def fetch_data():
     for link in link_list:
         driver.implicitly_wait(10)
         driver.get(link)
-        print('--top--')
-        print(driver.find_element_by_css_selector('section.company-info').text.split('\n'))
+        logger.info('--top--')
+        logger.info(driver.find_element_by_css_selector('section.company-info').text.split('\n'))
         details = driver.find_element_by_css_selector('section.company-info').text.split('\n')
         if 'WEST HOLLYWOOD' in details[0]:
             location_name = details[0]
@@ -91,9 +96,9 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print(store_data)
+        logger.info(store_data)
 
-        print('--bottom--')
+        logger.info('--bottom--')
         all_store_data.append(store_data)
 
     driver.quit()

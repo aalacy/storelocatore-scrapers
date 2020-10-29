@@ -1,6 +1,11 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bananarepublic_ca')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,7 +33,7 @@ def fetch_data():
                 states.append(lurl)
     for state in states:
         if '/' in state:
-            print(('Pulling Province %s...' % state))
+            logger.info(('Pulling Province %s...' % state))
             r2 = session.get(state, headers=headers)
             if r2.encoding is None: r2.encoding = 'utf-8'
             for line2 in r2.iter_lines(decode_unicode=True):
@@ -37,7 +42,7 @@ def fetch_data():
                     if lurl not in cities:
                         cities.append(lurl)
     for city in cities:
-        print(('Pulling City %s...' % city))
+        logger.info(('Pulling City %s...' % city))
         r2 = session.get(city, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
         for line2 in r2.iter_lines(decode_unicode=True):
@@ -47,7 +52,7 @@ def fetch_data():
                     locs.append(lurl)
     for loc in locs:
         loc = loc.replace('ca//stores','ca/stores')
-        #print('Pulling Location %s...' % loc)
+        #logger.info('Pulling Location %s...' % loc)
         website = 'bananarepublic.ca'
         typ = ''
         hours = ''

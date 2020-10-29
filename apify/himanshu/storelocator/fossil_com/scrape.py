@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('fossil_com')
+
+
 
 
 
@@ -39,7 +44,7 @@ def fetch_data():
     addresses = []
 
     for zip_code in zips:
-        # print(zip_code)
+        # logger.info(zip_code)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
         }
@@ -67,7 +72,7 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = "<MISSING>"
 
-        # print("data ==== "+str(soup))
+        # logger.info("data ==== "+str(soup))
 
         for script in soup.find_all("poi"):
 
@@ -129,7 +134,7 @@ def fetch_data():
             else:
                 hours_of_operation = "<MISSING>"
 
-            # print("address_list === "+str(hours_of_operation))
+            # logger.info("address_list === "+str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
@@ -139,8 +144,8 @@ def fetch_data():
 
             addresses.append(store[2])
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # logger.info("data = " + str(store))
+            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

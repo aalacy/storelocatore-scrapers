@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 import json
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('scppool_com')
+
+
 session = SgRequests()
 
 
@@ -34,13 +39,13 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-        # print(f"zip code: {zip_code}")
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info(f"zip code: {zip_code}")
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         try:
             json_data = session.get(
                 "http://scppool.com/map_api/?z="+str(zip_code), headers=headers).json()
         except Exception as ex:
-            print(f'Exception getting {zip_code}', ex)
+            logger.info(f'Exception getting {zip_code}', ex)
             continue
 
         for store in json_data['locations']:
@@ -56,7 +61,7 @@ def fetch_data():
             lat = store['latlon'].split(",")[0]
             lng = store['latlon'].split(",")[1]
             store_number = store['sitenumber']
-            # print(f'store number: {store_number}')
+            # logger.info(f'store number: {store_number}')
             page_url = "<MISSING>"
             hours = "<MISSING>"
             result_coords.append((lat, lng))
@@ -76,7 +81,7 @@ def fetch_data():
             store.append(hours if hours else "<MISSING>")
             store.append(page_url)
             if store[2] in adressess:
-                # print(f'>>> already have store at {store[2]} <<<')
+                # logger.info(f'>>> already have store at {store[2]} <<<')
                 continue
             adressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode(
@@ -85,7 +90,7 @@ def fetch_data():
                 pass
             else:
                 yield store
-            # print(store)
+            # logger.info(store)
 
         search.max_count_update(result_coords)
         zip_code = search.next_zip()

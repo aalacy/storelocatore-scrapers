@@ -1,6 +1,11 @@
 import csv
 import sgzip
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('crocs_ca')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,20 +34,20 @@ def fetch_data():
     driver.get("https://www.crocs.ca/store-locator/stores,en_CA,pg.html")
     time.sleep(20)
     driver.switch_to.frame(driver.find_element_by_class_name('w-100'))
-    #print(driver.page_source)
+    #logger.info(driver.page_source)
     #WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'country6')))
     driver.find_element_by_id('searchradiusBtn').click()
     driver.find_element_by_id('radius100').click()
     driver.find_element_by_id('searchcountry').click()
     driver.find_element_by_id('country6').click() #canada
     while postcode:
-        print(postcode)
+        logger.info(postcode)
         driver.find_element_by_id('inputaddress').send_keys(postcode)
         driver.find_element_by_id('search_button').click()
         try:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'storeResults')))
         except:
-            print("none")
+            logger.info("none")
             postcode = search.next_zip()
             driver.find_element_by_id('inputaddress').clear()
             continue
@@ -71,9 +76,9 @@ def fetch_data():
 
         res=requests.post("https://stores.crocs.com/rest/locatorsearch",data=data)
 
-        #print(res)
-        #print(postcode)
-        #print(res.json())
+        #logger.info(res)
+        #logger.info(postcode)
+        #logger.info(res.json())
         try:
             jso=res.json()["response"]["collection"]
         except:
@@ -104,7 +109,7 @@ def fetch_data():
             if zip==None:
                 zip="<MISSING>"
             city=js["city"]
-            #print(city,zip,state)
+            #logger.info(city,zip,state)
 
             key=loc+city+zip+state
 
@@ -113,7 +118,7 @@ def fetch_data():
             key_set.add(key)
             count += 1
 
-            #print(js)
+            #logger.info(js)
             try:
                 tim=js["storehours"]
             except:
@@ -152,7 +157,7 @@ def fetch_data():
 
         search.max_distance_update(MAX_DISTANCE_UPDATE)
         postcode = search.next_zip()
-    print(count)
+    logger.info(count)
     return all
 
 def scrape():

@@ -5,6 +5,11 @@ import json
 from sgselenium import SgSelenium
 import time
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('carpetmart_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -31,13 +36,13 @@ def fetch_data():
     time.sleep(10)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores = soup.find_all('div', {'class': 'storelocator-store'})
-    print(len(stores))
+    logger.info(len(stores))
     all = []
     for store in stores:
-        #print("here")
+        #logger.info("here")
         url = store.find_all('a')[2].get('href')
         driver.get(url)
-        #print(url)
+        #logger.info(url)
         time.sleep(2)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
@@ -51,10 +56,10 @@ def fetch_data():
         for i in range(len(left)):
             tim += left[i].text.strip() + " " + right[i].text.strip() + " "
         coord = soup.find('div', {'class', 'sp-directions'}).find('a').get('href')
-        # print(coord)
+        # logger.info(coord)
         lat = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?", "")
         long = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?", "")
-        # print(lat,long)
+        # logger.info(lat,long)
         """tim=""
         for t in js["openingHours"]:
             tim+= t+" "

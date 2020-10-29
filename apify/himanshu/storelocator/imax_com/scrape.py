@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('imax_com')
+
+
 
 
 
@@ -62,8 +67,8 @@ def fetch_data():
         result_coords = []
         country_code =''
         # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
-        # print("zips === " + str(zip_code))
-        #print(coord)
+        # logger.info("zips === " + str(zip_code))
+        #logger.info(coord)
         try:
             r = session.get(
                 'https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+str(coord[0])+'&lon='+str(coord[1]),
@@ -156,7 +161,7 @@ def fetch_data():
                     zip1 = "<MISSING>"
                 # zip1 = v2[2].strip().split( )[1]
                 
-                # print("33333333333   ",zip1)
+                # logger.info("33333333333   ",zip1)
             elif len(v2)==4:
                 if "Canada" in  v2[-1].strip():
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(v2[-2:])))
@@ -176,27 +181,27 @@ def fetch_data():
                     city = v2[-2].strip()
                     st = " ".join(v2[:2])
                 
-                # print(v2)
+                # logger.info(v2)
                 
                 # st = v2[0]
                 # city  = v2[1].strip()
                 # state1 = v2[2].strip()
                 # zip1 = v2[3].strip().replace("Canada","")
-                # print("4444444444   ",zip1)
+                # logger.info("4444444444   ",zip1)
             elif len(v2)==6:
                 st = " ".join(v2[0:3])
                 city  = v2[4].strip()
                 state1 = v2[5].strip().split( )[0]
                 zip1 = v2[5].strip().split( )[-1]
-                # print("6666666666   ",zip1)
+                # logger.info("6666666666   ",zip1)
             else:
-                # print(v1)
-                # print('https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+zip_code[0]+'&lon='+zip_code[1])
+                # logger.info(v1)
+                # logger.info('https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+zip_code[0]+'&lon='+zip_code[1])
                 st = "<MISSING>"
                 city  = v2[0].strip().split(',')[0]
                 state1 = v2[1].strip().split( )[0]
                 zip1 = v2[1].strip().split( )[1]
-                # print("other ===",zip1)
+                # logger.info("other ===",zip1)
 
             ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip1))
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip1))
@@ -214,7 +219,7 @@ def fetch_data():
             #     c = "CA"
             # else:
             #     c = "US"
-            # print(state1)
+            # logger.info(state1)
             
             tem_var.append("https://www.imax.com/")
             tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip() if name.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
@@ -230,7 +235,7 @@ def fetch_data():
             tem_var.append(lon if lon else "<MISSING>" ) 
             tem_var.append(time2.encode('ascii', 'ignore').decode('ascii').strip() if time2.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
             tem_var.append("<MISSING>" )
-            # print("----------------------------------",tem_var)
+            # logger.info("----------------------------------",tem_var)
             
             if tem_var[2] in addresses:
                 continue
@@ -241,10 +246,10 @@ def fetch_data():
                 yield tem_var
 
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

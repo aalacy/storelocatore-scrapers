@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('rmcf_com')
+
+
 
 # Location URL
 location_url = 'https://www.rmcf.com/locations'
@@ -111,7 +116,7 @@ def pull_info(content):
                 store_data = store_data + [temp_data]
 
         except:
-            print('Bad HREF: %s' % href)
+            logger.info('Bad HREF: %s' % href)
 
     final_columns = [
 

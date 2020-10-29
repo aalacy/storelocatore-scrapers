@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('snappysalads_com')
+
+
 
 
 session = SgRequests()
@@ -58,8 +63,8 @@ def fetch_data():
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
         return_main_object.append(store)
-        # print(str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info(str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object       
             
 

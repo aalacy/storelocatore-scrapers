@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('sombreromex_com')
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -27,7 +32,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -87,12 +92,12 @@ def fetch_data():
             if 'Online Ordering Coming Soon, Please Call Location for Takeout' in list_store_data:
                 list_store_data.remove("Online Ordering Coming Soon, Please Call Location for Takeout")
 
-            # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
-            # print('~~~~~~~~~~~~~~~~')
+            # logger.info(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+            # logger.info('~~~~~~~~~~~~~~~~')
             if len(list_store_data) > 3:
-                # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
-                # print(list_store_data[1].split(','))
-                # print('~~~~~~~~~~~~~~~~')
+                # logger.info(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+                # logger.info(list_store_data[1].split(','))
+                # logger.info('~~~~~~~~~~~~~~~~')
                 location_name = list_store_data[0]
                 phone = list_store_data[-2].replace(".","-")
                 hours_of_operation = list_store_data[-1]
@@ -100,20 +105,20 @@ def fetch_data():
 
                 if len(list_store_data[1].split(',')) > 1:
                     st_address = list_store_data[1].split(',')[0].split()
-                    # print(st_address)
-                    # print(len(st_address))
-                    # print(('~~~~~~~~~~~~~~~~`'))
+                    # logger.info(st_address)
+                    # logger.info(len(st_address))
+                    # logger.info(('~~~~~~~~~~~~~~~~`'))
                     if len(st_address) >4:
                         street_address = " ".join(st_address[:-2])
                         city = " ".join(st_address[-2:]).replace('Ave','').strip()
-                        # print(street_address +"/"+city)
+                        # logger.info(street_address +"/"+city)
                     else:
                         street_address = " ".join(st_address).strip()
                         city = " ".join(list_store_data[1].split(',')[1].split()[:2])
 
                     zipp = list_store_data[1].split(',')[1].split(' ')[-1]
                     state = list_store_data[1].split(',')[1].split(' ')[-2]
-                    # print(zipp,state)
+                    # logger.info(zipp,state)
                 else:
                     street_address = " ".join(list_store_data[1].split()[:-4])
                     city =  " ".join(list_store_data[1].split()[-4:-2])
@@ -122,9 +127,9 @@ def fetch_data():
 
 
             else:
-                # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
-                # # print(list_store_data[1].split(','))
-                # print('~~~~~~~~~~~~~~~~')
+                # logger.info(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+                # # logger.info(list_store_data[1].split(','))
+                # logger.info('~~~~~~~~~~~~~~~~')
                 hours_of_operation = list_store_data[-1]
                 phone = list_store_data[-2].replace(".","-")
 

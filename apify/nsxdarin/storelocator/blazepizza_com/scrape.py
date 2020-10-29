@@ -2,6 +2,11 @@ import csv
 from sgrequests import SgRequests
 import json
 from sgzip import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('blazepizza_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -37,7 +42,7 @@ def fetch_data():
             x = coord[0]
             y = coord[1]
             url = 'https://nomnom-prod-api.blazepizza.com/restaurants/near?lat=' + str(x) + '&long=' + str(y) + '&radius=500&limit=20&nomnom=calendars&nomnom_calendars_from=20201020&nomnom_calendars_to=20201028&nomnom_exclude_extref=999'
-            #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+            logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 line = str(line.decode('utf-8'))
@@ -65,23 +70,34 @@ def fetch_data():
                             phone = item.split('"telephone":"')[1].split('"')[0]
                             zc = item.split('"zip":"')[1].split('"')[0]
                             city = item.split('"city":"')[1].split('"')[0]
-                            loc = 'https://www.blazepizza.com/locations/' + state + '/' + city
-                            loc = loc.replace(' ','-').replace('.','')
+                            loc = 'https://www.blazepizza.com/locations/' + state.replace('.','') + '/' + city.replace('.','')
+                            loc = loc.replace(' ','-')
                             typ = '<MISSING>'
                             website = 'blazepizza.com'
                             country = item.split(',"country":"')[1].split('"')[0]
-                            days = item.split('"label":null,"ranges":[')[1].split(']')[0].split('"end":"')
-                            for day in days:
-                                if '"start":"' in day:
-                                    hrs = day.split('"weekday":"')[1].split('"')[0] + ': ' + day.split('"start":"')[1].split('"')[0].rsplit(' ',1)[1] + '-' + day.split('"')[0].rsplit(' ',1)[1]
-                                    if hours == '':
-                                        hours = hrs
-                                    else:
-                                        hours = hours + '; ' + hrs
+                            try:
+                                days = item.split('"label":null,"ranges":[')[1].split(']')[0].split('"end":"')
+                                for day in days:
+                                    if '"start":"' in day:
+                                        hrs = day.split('"weekday":"')[1].split('"')[0] + ': ' + day.split('"start":"')[1].split('"')[0].rsplit(' ',1)[1] + '-' + day.split('"')[0].rsplit(' ',1)[1]
+                                        if hours == '':
+                                            hours = hrs
+                                        else:
+                                            if 'Tue:' in hrs and 'Tue:' in hours:
+                                                hours = hours
+                                            else:
+                                                if 'Wed:' in hrs and 'Wed:' in hours:
+                                                    hours = hours
+                                                else:
+                                                    hours = hours + '; ' + hrs
+                            except:
+                                pass
                             if phone ==  '':
                                 phone = '<MISSING>'
                             if hours ==  '':
                                 hours = '<MISSING>'
+                            if ' (' in add:
+                                add = add.split(' (')[0]
                             if store not in ids:
                                 ids.append(store)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

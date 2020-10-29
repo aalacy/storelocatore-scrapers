@@ -5,6 +5,11 @@ import re
 import json
 import sgzip
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cinnabon_com')
+
+
 
 
 # def request_wrapper(url, method, headers, data=None):
@@ -50,7 +55,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
-        # print("data::" + str(data))
+        # logger.info("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -92,8 +97,8 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         # time.sleep(5)
         try:
             r = session.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd', headers=headers)
@@ -134,16 +139,16 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # print("data = " + str(store))
-                # print(
+                # logger.info("data = " + str(store))
+                # logger.info(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
                
         if len(current_results_len) < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         if len(current_results_len) == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         # else:
         #     raise Exception("expected at most " +

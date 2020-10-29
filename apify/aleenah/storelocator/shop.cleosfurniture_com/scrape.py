@@ -2,6 +2,11 @@ import time
 import csv
 from sgselenium import SgSelenium
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('shop.cleosfurniture_com')
+
+
 
 driver = SgSelenium().chrome()
 
@@ -46,7 +51,7 @@ def fetch_data():
         timing.append(data[4]+" "+data[5]+" "+data[6])
     for loc in locs:
         loc=loc.lower()
-        print(loc)
+        logger.info(loc)
         s = loc.split(" ")
         if len(s)==2:
             loc=s[0]+"-"+s[1]
@@ -66,16 +71,16 @@ def fetch_data():
             zips.append("<MISSING>")
         """     to access location
         geomap = driver.find_elements_by_class_name('google-maps-link')
-        print(str(info.text))
+        logger.info(str(info.text))
         link=""
         for a in geomap:
-            print(a.get_attribute("href"))
+            logger.info(a.get_attribute("href"))
             if "maps?ll=" in a.get_attribute("href"):
                 link =a.get_attribute("href")
 
-        #print(link)
+        #logger.info(link)
         #lat, lon = parse_geo(str(geomap))
-        #print(str(geomap))
+        #logger.info(str(geomap))
         #link = driver.find_elements_by_xpath("//div[@class='google-maps-link']")
         #link2 = driver.find_element_by_css_selector('a').get_attribute('href')
         

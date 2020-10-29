@@ -5,6 +5,11 @@ import csv
 import string
 import re, time
 import requests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('searsoutlet_com')
+
+
 
 
 def write_output(data):
@@ -120,7 +125,7 @@ def fetch_data():
               longt,
               hours
             ])
-            #print(data[i])
+            #logger.info(data[i])
             i += 1
             start = end
             

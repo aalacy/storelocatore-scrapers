@@ -97,6 +97,8 @@ def fetch_data():
         state = addy[1][addy[1].find(zip_code)-3:addy[1].find(zip_code)].strip()
         if state.upper() in ["SL","GJ","MX","PU","QE","CM","DF"]:
             continue
+        if "MX" in zip_code:
+            continue
 
         city = addy[1][:addy[1].rfind(state)].strip()
 

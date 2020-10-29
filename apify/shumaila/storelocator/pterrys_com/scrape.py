@@ -6,6 +6,11 @@ import string
 import re, time, usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('pterrys_com')
+
+
 
 
 def get_driver():
@@ -63,9 +68,9 @@ def fetch_data():
         state = li_list[1].text
         address = street + " " + state
         address = address.replace('Get Directions','')
-        print(address)
+        logger.info(address)
         address = usaddress.parse(address)
-        print(address)
+        logger.info(address)
         
         i = 0
         street = ""
@@ -112,14 +117,14 @@ def fetch_data():
 
         #hours = hours[3:len(hours)]
         hours = hours.lstrip().replace('am',' am ').replace('pm',' pm ').replace('Break',' Break').replace('  ',' ')
-        #print(hours)
+        #logger.info(hours)
        
         detail = div_list[2]
         phone = detail.find('li').text
         start = phone.find(' ')
         if start != -1:
             phone = phone[0:start]
-        #print(phone)
+        #logger.info(phone)
         if len(phone)< 3:
             phone = "<MISSING>"
         if len(street)< 3:
@@ -131,7 +136,7 @@ def fetch_data():
         if len(pcode) < 3:
             pcode = "<MISSING>"
         
-        #print("...........................")
+        #logger.info("...........................")
 
         data.append([
             'https://pterrys.com',
@@ -149,7 +154,7 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
-        #print(p,data[p])
+        #logger.info(p,data[p])
         p = p + 1
 
     return data         

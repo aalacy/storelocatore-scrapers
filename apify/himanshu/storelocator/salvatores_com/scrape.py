@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('salvatores_com')
+
+
 
 
 
@@ -24,7 +29,7 @@ def fetch_data():
     base_url = "https://www.salvatores.com/locations"
     r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-    # print(soup)
+    # logger.info(soup)
     # exit()
     return_main_object =[]
     store_detail =[]
@@ -34,20 +39,20 @@ def fetch_data():
     page_url1=[]
     main_hours=[]
     for i in k:
-        # print(i)
+        # logger.info(i)
         data =i.find_all("div",{"class":"location-address"})
-        # print(i)
+        # logger.info(i)
         phone1 = i.find_all('div',{"class":"location-phone"})
         names= i.find_all('h3')
         for link in names:
             time = ''
             page_url = "https://www.salvatores.com"+link.a['href']
             page_url1.append(page_url)
-            # print(link.a['href'])
+            # logger.info(link.a['href'])
             r = session.get(page_url)
             min_soup= BeautifulSoup(r.text,"lxml")
             hours = min_soup.find("div",{"class":"location-hours"})
-            # print(hours)
+            # logger.info(hours)
             h1 = list(hours.stripped_strings)
             for h in h1:
                 if "Location Hours:" in h:
@@ -80,7 +85,7 @@ def fetch_data():
             tem_var.append(hours_of_operation)
             tem_var.append(page_url1[index])
             store_detail.append(tem_var) 
-            # print(store_detail)
+            # logger.info(store_detail)
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.salvatores.com")

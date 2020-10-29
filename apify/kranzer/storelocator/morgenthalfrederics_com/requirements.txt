@@ -4,3 +4,4 @@ w3lib
 sgvalidator==0.0.19
 lxml
 usaddress
+sglogging

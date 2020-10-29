@@ -1,6 +1,11 @@
 import csv
 import os
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('mini-mart_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +36,7 @@ def fetch_data():
     rows = table.find_elements_by_css_selector('tr')
     all_store_data = []
     for row in rows[1:]:
-        print(':)')
+        logger.info(':)')
         cols = row.find_elements_by_css_selector('td')
         cont = cols[1].text.split('\n')
         location_name = cont[0]

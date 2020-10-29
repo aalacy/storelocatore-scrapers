@@ -5,6 +5,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('securityself-storage_com')
+
+
 
 
 
@@ -57,7 +62,7 @@ def fetch_data():
         phone = (g['phone_number'])
         location_name = (g['name'])
         # page_url1 = (g['location_url'])
-        # print(page_url1)
+        # logger.info(page_url1)
         store = []
         store.append("https://www.securityself-storage.com/")
         store.append(location_name if location_name else "<MISSING>") 
@@ -73,7 +78,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append("https://www.securityself-storage.com/locations#/locations?page=1&wildcard=89025")
-        # print(store)
+        # logger.info(store)
         yield store
         if store[2] in addresses:
             continue

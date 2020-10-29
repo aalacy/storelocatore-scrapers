@@ -9,6 +9,11 @@ import random
 import time
 import os
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tacobell_com')
+
+
 
 
 show_logs = False
@@ -22,8 +27,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
   if (show_logs == True):
-    print(" ".join(map(str, args)), **kwargs)
-    print("")
+    logger.info(" ".join(map(str, args)), **kwargs)
+    logger.info("")
 
 
 def get_session(reset=False):
@@ -77,7 +82,7 @@ def get(url, attempts=1):
     }
 
     if attempts == 10:
-        print(f'could not get {url} after {attempts} tries... giving up')
+        logger.info(f'could not get {url} after {attempts} tries... giving up')
         raise SystemExit
 
     try:
@@ -90,8 +95,8 @@ def get(url, attempts=1):
         return r
 
     except Exception as ex:
-        print(f'>>> exception getting {url} on thread {threading.current_thread().ident}: {ex}')
-        print(f'>>> reset session and try again')
+        logger.info(f'>>> exception getting {url} on thread {threading.current_thread().ident}: {ex}')
+        logger.info(f'>>> reset session and try again')
         session = get_session(reset=True)
         return get(url, attempts+1)
 

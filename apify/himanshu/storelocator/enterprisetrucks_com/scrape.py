@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('enterprisetrucks_com')
+
+
 
 
 session = SgRequests()
@@ -30,7 +35,7 @@ def fetch_data():
             try:
                 address=soup1.find('form',{'id':'getDirectionForm'}).find('input',{"id":"addressLine"})['value'].strip()
             except Exception as e:
-                print(e)
+                logger.info(e)
             city=soup1.find('form',{'id':'getDirectionForm'}).find('input',{"id":"cityName"})['value'].strip()
             name=city+' Truck Rental'
             state=soup1.find('form',{'id':'getDirectionForm'}).find('input',{"id":"stateProvCode"})['value'].strip()

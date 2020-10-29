@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('abbys_com')
+
+
 session = SgRequests()
 
 
@@ -62,7 +67,7 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            # print("===", str(store))
+            # logger.info("===", str(store))
             if store[2] in addresses:
                 continue
             addresses.append(store[2])

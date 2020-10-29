@@ -45,7 +45,7 @@ def fetch_data():
 	script = base.find('script', attrs={'type': "application/json"}).text.replace('\n', '').strip()
 	stores = json.loads(script)["props"]['stores']
 
-	log.info("Filtering " + str(len(stores)) + " potential POIs..Could take an hour..")
+	log.info("Filtering " + str(len(stores)) + " potential POIs..Could take a couple hours..")
 	for store in stores:
 		location_name = store["WebDescription"].strip()
 		street_address = (store["AddressLine1"] + " " + store["AddressLine2"] + " " + store["AddressLine3"]).strip()
@@ -66,7 +66,7 @@ def fetch_data():
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
 
-		location_type = store['PosDescription']
+		location_type = store['PosDescription'].split("-")[0]
 
 		try:
 			if "eye" in location_type.lower():
@@ -75,37 +75,77 @@ def fetch_data():
 				link = "https://www.stantonoptical.com/locations/" + store["webPath"]
 		except:
 			continue
-		
-		driver.get(link)
+
+		phone = store['phoneNumbers']["spd"]
+
 		try:
-			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-				(By.CLASS_NAME, "bbB3q6Lt5ZQnwlTH1tZY0")))
-			time.sleep(2)
+			mon = "Monday " + store["MondayStart"].split(".")[0] + "-" + store["MondayEnd"].split(".")[0]
 		except:
-			continue
-		base = BeautifulSoup(driver.page_source,"lxml")
+			mon = "Monday Closed"
 
-		phone = base.find(class_="bbB3q6Lt5ZQnwlTH1tZY0").text
-		hr = json.loads(base.find('script', {'class': re.compile(r'.+-schema')}).text)
+		try:
+			tue = " Tuesday " + store["TuesdayStart"].split(".")[0] + "-" + store["TuesdayEnd"].split(".")[0]
+		except:
+			tue = " Tuesday Closed"
 
-		hours_of_operation = ""
-		raw_hours = hr['openingHoursSpecification']
-		for hours in raw_hours:
-			day = hours['dayOfWeek']
-			if len(day[0]) != 1:
-				day = ' '.join(hours['dayOfWeek'])
-			opens = hours['opens']
-			closes = hours['closes']
-			if opens != "" and closes != "":
-				clean_hours = (day + " " + opens + "-" + closes).replace("Closed-Closed","Closed")
-				hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
-				hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+		try:
+			wed = " Wednesday " + store["WednesdayStart"].split(".")[0] + "-" + store["WednesdayEnd"].split(".")[0]
+		except:
+			wed = " Wednesday Closed"
 
-		if "Temporarily Closed" in base.text:
-			hours_of_operation = "Temporarily Closed"
+		try:
+			thu = " Thursday " + store["ThursdayStart"].split(".")[0] + "-" + store["ThursdayEnd"].split(".")[0]
+		except:
+			thu = " Thursday Closed"
+
+		try:
+			fri = " Friday " + store["FridayStart"].split(".")[0] + "-" + store["FridayEnd"].split(".")[0]
+		except:
+			fru = " Friday Closed"
+
+		try:
+			sat = " Saturday " + store["SaturdayStart"].split(".")[0] + "-" + store["SaturdayEnd"].split(".")[0]
+		except:
+			sat = " Saturday Closed"
+
+		try:
+			sun = " Sunday " + store["SundayStart"].split(".")[0] + "-" + store["SundayEnd"].split(".")[0]
+		except:
+			sun = " Sunday Closed"
+
+		hours_of_operation = mon + tue + wed + thu + fri + sat + sun
+
+		# try:
+		# log.info(link)
+		
+		phone = "<INACCESSIBLE>"
+		wait = 5
+
+		for i in range(5):
+
+			driver.get(link)
+
+			element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+				(By.TAG_NAME, "body")))
+			time.sleep(wait)
+			if len(driver.page_source) > 200 and "bbB3q6Lt5ZQnwlTH1tZY0" in driver.page_source:
+				base = BeautifulSoup(driver.page_source,"lxml")
+
+				script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
+				phone = json.loads(script)['telephone']
+
+				if "Temporarily Closed" in base.text:
+					hours_of_operation = "Temporarily Closed"
+
+				break
+			else:
+				# log.info("Retrying ..")
+				wait = wait + 5
 
 		# Store data
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
+	driver.close()
 	return data
 
 def scrape():

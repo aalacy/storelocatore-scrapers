@@ -3,6 +3,11 @@ import re
 from bs4 import BeautifulSoup
 import requests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('carewellurgentcare_com')
+
+
 
 headers={"user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36"}
 
@@ -34,16 +39,16 @@ def fetch_data():
     res = requests.get("https://www.carewellurgentcare.com/centers/",headers=headers)
     time.sleep(0.1)
     soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
+    #logger.info(soup)
     divs = soup.find_all('div', {'class': 'centers-list'})
     latlng= soup.find('div', {'id': 'et-main-area'}).find("script").text
-    #print(latlng)
+    #logger.info(latlng)
     for div in divs:
 
         locs.append(div.find('div', {'class': 'center-name'}).text)
         addr=div.find('div', {'class': 'center-address'}).text
         timing.append(div.find('div', {'class': 'center-hours'}).text.replace("\n"," ").replace("\r"," "))
-        #print(div.find('div', {'class': 'center-hours'}).text.replace("\n"," ").replace("\r"," "))
+        #logger.info(div.find('div', {'class': 'center-hours'}).text.replace("\n"," ").replace("\r"," "))
         addr=addr.split("\n")
         street.append(addr[0].strip())
         addr=addr[1].split(",")

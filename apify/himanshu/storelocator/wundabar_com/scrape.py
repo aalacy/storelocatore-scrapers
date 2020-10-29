@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wundabar_com')
+
+
 
 
 
@@ -79,7 +84,7 @@ def fetch_data():
         store.extend(store_detail[i])
         return_main_object.append(store)
 
-    print(len(return_main_object))
+    logger.info(len(return_main_object))
     return return_main_object
 
 

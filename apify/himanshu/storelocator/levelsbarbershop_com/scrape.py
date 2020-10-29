@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('levelsbarbershop_com')
+
+
 
 
 
@@ -82,7 +87,7 @@ def fetch_data():
                 tem_var.append(longitude)
                 tem_var.append("<MISSING>")
                 tem_var.append("https://www.levelsbarbershop.com/locations.html")
-                # print("data== ", str(tem_var))
+                # logger.info("data== ", str(tem_var))
 
                 yield tem_var
             i += 1
@@ -120,7 +125,7 @@ def fetch_data():
             pass
         else:
             yield tem_var
-            # print(tem_var)
+            # logger.info(tem_var)
 
 
 

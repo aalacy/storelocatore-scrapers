@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('metropolitan-market_com')
+
+
 
 
 def write_output(data):
@@ -30,8 +35,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 	
 	items = base.findAll('div', attrs={'class': 'feature_box'})
 
@@ -47,12 +52,12 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "metropolitan-market.com"
 		location_name = base.find('h3').text.strip() + " - " + base.find('h2').text.strip()
-		print (location_name)
+		logger.info(location_name)
 		section = base.find('div', attrs={'class': 'section_col_content'}).p
 		raw_data = str(section).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
 		street_address = raw_data[0].strip()
@@ -73,8 +78,8 @@ def fetch_data():
 		try:
 			maps = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print('[!] Error Occured. ')
-			print('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		try:
 			raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']

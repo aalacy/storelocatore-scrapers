@@ -4,6 +4,11 @@ import string
 import re, time, usaddress
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('eggsupgrill_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -32,7 +37,7 @@ def fetch_data():
     
     for link in linklist:
         link = link['href']
-        #print(link)
+        #logger.info(link)
         if link.find('new-stores-opening') > -1:
             break
         m = session.get(link, headers=headers, verify=False)
@@ -40,7 +45,7 @@ def fetch_data():
         
         divlist = soup.findAll('div',{'class':'location-container'})        
         coordlist = soup.find('div',{'class':"marker"})
-        #print(len(coordlist))
+        #logger.info(len(coordlist))
         for div in divlist:           
             title = div.find('h3').text.lstrip().rstrip()
             address = div.findAll('p',{'class':'address'})[1]
@@ -121,7 +126,7 @@ def fetch_data():
                 longt,
                 hours.replace('AM',' AM ').replace('PM',' PM ').replace(', MEETING ROOM AVAILABLE','')
             ])
-            #print(p,data[p])
+            #logger.info(p,data[p])
             p += 1
         
 
@@ -133,10 +138,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

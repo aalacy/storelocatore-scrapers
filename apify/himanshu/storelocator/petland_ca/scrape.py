@@ -8,6 +8,11 @@ session = SgRequests()
 
 session = SgRequests()
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('petland_ca')
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -66,8 +71,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("data ==="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
     
 

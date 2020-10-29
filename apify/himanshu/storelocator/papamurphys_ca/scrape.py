@@ -6,6 +6,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import http.client
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('papamurphys_ca')
+
+
 session = SgRequests()
 http.client._MAXHEADERS = 1000
 
@@ -63,7 +68,7 @@ def fetch_data():
         store.append(hours_of_operation)
         store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # print(store)
+        # logger.info(store)
         yield store
             
 

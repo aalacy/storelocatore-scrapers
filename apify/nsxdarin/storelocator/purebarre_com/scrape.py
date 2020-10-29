@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('purebarre_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -39,7 +44,7 @@ def fetch_data():
         store = item['clubready_id']
         DFound = False
         if lurl is not None:
-            print(('Pulling Hours For %s...' % lurl))
+            logger.info(('Pulling Hours For %s...' % lurl))
             r2 = session.get(lurl, headers=headers)
             lines = r2.iter_lines(decode_unicode=True)
             for line2 in lines:

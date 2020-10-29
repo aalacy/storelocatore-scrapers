@@ -16,6 +16,11 @@ from sgrequests import SgRequests
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests  # ignore_check
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kroger_com__fuel')
+
+
     def new_init(self): 
         requests.packages.urllib3.disable_warnings()
         self.session = self.requests_retry_session(retries=0)
@@ -57,8 +62,8 @@ def sleep(min=0.5, max=2.5):
 
 def log(*args, **kwargs):
     if (show_logs == True):
-        print(" ".join(map(str, args)), **kwargs)
-        print("")
+        logger.info(" ".join(map(str, args)), **kwargs)
+        logger.info("")
 
 
 def get_time():
@@ -92,7 +97,7 @@ def get_session_with_unbanned_ip():
             thread_ips[threading.current_thread().ident] = new_ip
             break
     if not new_ip:
-        print(f'Could not get an unbanned IP from proxy after {max_attempts} tries.')
+        logger.info(f'Could not get an unbanned IP from proxy after {max_attempts} tries.')
     return new_ip
 
 
@@ -253,7 +258,7 @@ def scrape_location(url):
         return store
     
     except Exception as ex:
-        print(f'Error at {url}: {ex}')
+        logger.info(f'Error at {url}: {ex}')
         return None
 
 
@@ -283,7 +288,7 @@ def fetch_data():
                         unique_locs.append(store_key)
                         yield store
             except Exception as ex: 
-                print(f'>>> exception getting result from scrape_usa_location future: {ex}')
+                logger.info(f'>>> exception getting result from scrape_usa_location future: {ex}')
         
         
    

@@ -1,6 +1,11 @@
 import sys
 import subprocess
 import sgvalidator
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('circlek_com__qualityguaranteed')
+
+
 
 # force an install/upgrade of the sgvalidator package
 subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade",  "sgvalidator"])
@@ -9,7 +14,7 @@ data_location = None
 try:
     data_location = sys.argv[1]
 except IndexError:
-    print("Please include a data location!")
+    logger.info("Please include a data location!")
     exit(0)
 
 debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"

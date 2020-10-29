@@ -1,8 +1,10 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
-import os
-from sgselenium import SgSelenium
-from selenium.common.exceptions import NoAlertPresentException
-import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('xsportfitness_com')
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,93 +16,51 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    address = addy.split(',')
-    if len(address) == 1:
-        addy = address[0].split(' ')
-        city = addy[0]
-        state = addy[1]
-        zip_code = addy[2]
-    else:
-        city = address[0]
-        state_zip = address[1].strip().split(' ')
-        state = state_zip[0]
-        zip_code = state_zip[1]
-    return city, state, zip_code
-
 def fetch_data():
     locator_domain = 'https://www.xsportfitness.com/'
-    ext = 'locations/index.aspx'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    driver.implicitly_wait(30)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    while True:
-        try:
-            alert_obj = driver.switch_to.alert
-            alert_obj.accept()
-            break
+    session = SgRequests()
 
-        except NoAlertPresentException:
-            time.sleep(5)
+    base_link = 'https://www.xsportfitness.com/locations/data/locations3-lead.xml?formattedAddress=&boundsNorthEast=&boundsSouthWest='
 
-    locs = driver.find_element_by_css_selector('ul.list').find_elements_by_css_selector('li')
-    link_list = []
-    for l in locs:
-        loc_link = l.find_element_by_css_selector('a').get_attribute('href')
-        link_list.append(loc_link)
+    req = session.get(base_link, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
 
     all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        main = driver.find_element_by_css_selector('main#maincontent')
 
-        sub_main = main.find_element_by_css_selector('div.callout.large.row')
+    locs = base.find_all("marker")
+    link_list = []
+    for l in locs:
+        item = str(l)
 
-        cont = sub_main.find_element_by_css_selector('div.large-3.columns')
-        location_name = cont.find_element_by_css_selector('h1').text.split('\n')[0]
-
-        addy_and_phone = cont.find_elements_by_css_selector('p')
-
-        addy = addy_and_phone[0].text.split('\n')
-
-        if len(addy) == 3:
-            if 'In the' in addy[0]:
-                street_address = addy[1]
-            else:
-                street_address = addy[0] + ' ' + addy[1]
-            city, state, zip_code = addy_ext(addy[2])
-
-        else:
-            street_address = addy[0]
-            city, state, zip_code = addy_ext(addy[1])
-
-        phone_number = addy_and_phone[1].text
-
-        hours = cont.find_element_by_css_selector('h5').text
-
-        if 'OPEN 24/7' not in hours:
-            hours = addy_and_phone[2].text.replace('\n', ' ')
+        location_name = item.split('name="')[1].split('phone')[0].replace('"',"").strip()
+        street_address = item.split('address="')[1].split('button')[0].replace('"',"").replace("address2=","").strip()
+        city = item.split('city="')[1].split('display')[0].replace('"',"").strip()
+        state = item.split('state="')[1].split('type')[0].replace('"',"").strip()
+        zip_code = item.split('postal="')[1].split('state')[0].replace('"',"").strip()
+        phone_number = item.split('phone="')[1].split('postal')[0].replace('"',"").strip()
+        longit = item.split('lng="')[1].split('name')[0].replace('"',"").strip()
+        lat = item.split('lat="')[1].split('lng')[0].replace('"',"").strip()
 
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        longit = '<MISSING>'
-        lat = '<MISSING>'
 
-        page_url = link
+        page_url = "https://" + item.split('web="')[1].split('>')[0].replace('"',"").strip()
+        logger.info(page_url)
+
+        req = session.get(page_url, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+        hours = " ".join(list(base.find(class_="callout large row").find(class_="large-3 columns").find_all("p")[2].stripped_strings)).replace("HOURS:","").replace("–","-").strip()
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        print()
-        print(store_data)
-        print()
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():

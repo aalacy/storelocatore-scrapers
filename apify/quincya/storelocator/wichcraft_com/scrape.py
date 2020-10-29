@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wichcraft_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 	
 	items = base.findAll('a', attrs={'class': 'card__btn'})
 	
@@ -38,12 +43,12 @@ def fetch_data():
 		try:
 			base = BeautifulSoup(req.text,"lxml")
 		except (BaseException):
-			print ('[!] Error Occured. ')
-			print ('[?] Check whether system is Online.')
+			logger.info('[!] Error Occured. ')
+			logger.info('[?] Check whether system is Online.')
 
 		locator_domain = "wichcraft.com"		
 		location_name = base.find('h2').text.strip()
-		print (location_name)
+		logger.info(location_name)
 		
 		raw_data = str(base.find('a', attrs={'data-bb-track-category': 'Address'}).text).replace('<p>',"").replace('\t',"").replace('\n',"")
 		street_address = raw_data[:raw_data.find(',')].strip()

@@ -5,6 +5,11 @@ import requests
 from lxml import etree
 import json
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('penn__station_com')
+
+
 
 
 base_url = 'https://www.penn-station.com'
@@ -87,7 +92,7 @@ def fetch_data():
         data = json.loads(validate(request.text))
         if 'stores' in data:
             store_list = data['stores']
-            print(city)
+            logger.info(city)
             for store in store_list:
                 output = []
                 uni = get_value(store['name'] + store['address'])

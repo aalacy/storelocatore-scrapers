@@ -2,6 +2,11 @@ import subprocess
 import sys
 
 import sgvalidator
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('suddenserviceonline_com')
+
+
 
 
 # force an install/upgrade of the sgvalidator package
@@ -22,7 +27,7 @@ data_location = None
 try:
     data_location = sys.argv[1]
 except IndexError:
-    print("Please include a data location!")
+    logger.info("Please include a data location!")
     exit(0)
 
 debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"

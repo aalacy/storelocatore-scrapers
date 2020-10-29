@@ -5,6 +5,11 @@ import base
 import requests, json
 from urllib.parse import urljoin
 from lxml import html
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('livwell_com')
+
+
 crawled = []
 class Scrape(base.Spider):
 
@@ -29,7 +34,7 @@ class Scrape(base.Spider):
             i.add_xpath('zip', './p[3]/text()[2]', base.get_first, lambda x: x.split(',')[1].strip().split(' ')[1])
             i.add_value('country_code', 'US')
             i.add_xpath('hours_of_operation', './p[strong[contains(text(), "Hours")]]/text()', base.get_first)
-            print(i)
+            logger.info(i)
             yield i
 
 

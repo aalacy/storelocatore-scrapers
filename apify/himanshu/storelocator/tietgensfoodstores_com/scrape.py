@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('tietgensfoodstores_com')
+
+
 
 
 
@@ -55,7 +60,7 @@ def fetch_data():
 
     r = session.get('https://tietgensfoodstores.com/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
-    # print(soup.prettify())
+    # logger.info(soup.prettify())
 
     for loc_data in soup.find_all('div',class_='location-data'):
         latitude = loc_data['data-lat']
@@ -74,7 +79,7 @@ def fetch_data():
         else:
             phone = "<MISSING>"
         hours_of_operation = loc_data.find('div',class_='site-loc-hours').text.replace('Hours:','').strip()
-        # print(location_name,street_address,city,state,zipp,phone,hours_of_operation)
+        # logger.info(location_name,street_address,city,state,zipp,phone,hours_of_operation)
 
 
         # if store_number in addresses:
@@ -98,8 +103,8 @@ def fetch_data():
 
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
-        # print("data===="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # logger.info("data===="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
         return_main_object.append(store)
 

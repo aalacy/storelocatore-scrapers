@@ -5,6 +5,11 @@ import re
 import csv
 import requests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('lesliespool_com')
+
+
 
 def parse_geo(url):
     lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
@@ -133,7 +138,7 @@ def fetch_data():
 
                 except Exception as e:
                     hour = "<MISSING>"
-#                 print(hour)
+#                 logger.info(hour)
 
                 try:
                     lc = soup.find('h1', class_="top_heading")
@@ -174,7 +179,7 @@ def fetch_data():
         return data_list
 
     except Exception as e:
-        print(str(e))
+        logger.info(str(e))
 
 def scrape():
     data = fetch_data()

@@ -4,6 +4,11 @@ import csv
 import time
 from random import randint
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('johnnywas_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,8 +33,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print('[!] Error Occured. ')
-		print('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 
 	data = []
 
@@ -41,7 +46,7 @@ def fetch_data():
 			continue
 
 		link = "https://www.johnnywas.com" + item["href"]
-		print(link)
+		logger.info(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 

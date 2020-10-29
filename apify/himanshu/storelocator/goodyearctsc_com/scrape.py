@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('goodyearctsc_com')
+
+
 
 
 
@@ -59,14 +64,14 @@ def fetch_data():
             'https://gyfleethqservices.com/api/Dealer/DealerSearch?dealerSearchParameters.milesRadius='+str(MAX_DISTANCE)+'&dealerSearchParameters.latitude='+str(lat)+'&dealerSearchParameters.longitude='+str(lng)+'&api_key=vdUHnhNUY95w3OiVgugndw7Z2VGwBkUgTaQuLozc35gj2alKoaKbk3yKWFm5Edjy8tTJSYXO94K+9UnjaJBUnw==',
             headers=headers,
         )
-        # print( 'https://gyfleethqservices.com/api/Dealer/DealerSearch?dealerSearchParameters.milesRadius=250&dealerSearchParameters.latitude='+str(lat)+'&dealerSearchParameters.longitude='+str(lng)+'&api_key=vdUHnhNUY95w3OiVgugndw7Z2VGwBkUgTaQuLozc35gj2alKoaKbk3yKWFm5Edjy8tTJSYXO94K+9UnjaJBUnw==')
+        # logger.info( 'https://gyfleethqservices.com/api/Dealer/DealerSearch?dealerSearchParameters.milesRadius=250&dealerSearchParameters.latitude='+str(lat)+'&dealerSearchParameters.longitude='+str(lng)+'&api_key=vdUHnhNUY95w3OiVgugndw7Z2VGwBkUgTaQuLozc35gj2alKoaKbk3yKWFm5Edjy8tTJSYXO94K+9UnjaJBUnw==')
         soup= BeautifulSoup(r.text,"lxml")
         k = json.loads(soup.text)
         time =''
         if k != None and k !=[]:
-            # print("=============================")
+            # logger.info("=============================")
             current_results_len = len(k)
-            # print()
+            # logger.info()
             for i in k:
                 tem_var=[]
                 if 'hours' in i and i['hours'] !=None:
@@ -103,12 +108,12 @@ def fetch_data():
                 addresses.append(tem_var[2])
 
                 yield tem_var
-            # print("===================================================")
+            # logger.info("===================================================")
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
+            # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
+            # logger.info("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

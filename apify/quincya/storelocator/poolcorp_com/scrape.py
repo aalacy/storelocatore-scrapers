@@ -1,26 +1,21 @@
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import json
 import csv
 import time
 import re
 import sgzip
 
 from random import randint
+from sgselenium import SgSelenium
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from sglogging import SgLogSetup
 
-
-def get_driver():
-	options = Options() 
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
+logger = SgLogSetup().get_logger('poolcorp_com')
 
 
 def write_output(data):
@@ -34,10 +29,22 @@ def write_output(data):
 			writer.writerow(row)
 
 def fetch_data():
-	
+
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	HEADERS = {'User-Agent' : user_agent}
+
+	base_link = "https://www.poolcorp.com/map_api/map.php"
+
+	session = SgRequests()
+	req = session.get(base_link, headers = HEADERS)
+
+	base = BeautifulSoup(req.text,"lxml")
+	js = base.text.split("var LocsAB =")[-1][:-1]
+	stores = json.loads(js)
+
 	base_link = "https://www.poolcorp.com/sales-centers/index.html?z="
 
-	driver = get_driver()
+	driver = SgSelenium().chrome()
 	time.sleep(2)
 
 	all_links = []
@@ -45,9 +52,9 @@ def fetch_data():
 
 	zips = sgzip.for_radius(175)
 	for zip_code in zips:
+		logger.info(zip_code)
 		link = base_link+zip_code
 		driver.get(link)
-		print(zip_code)
 		time.sleep(randint(2,4))
 
 		try:
@@ -65,42 +72,41 @@ def fetch_data():
 			if name not in found_poi:
 				if "colombia" in name.lower() or "puerto rico"  in name.lower():
 					continue
-				print(name)
+				# logger.info(name)
 				all_links.append([name,item,link])
 				found_poi.append(name)
 
-	can_zips = ["T9S", "A0C", "L7J", "Y0B", "V3G", "X0E", "C0A", "R0K", "B1Y", "J0Y",
-				"E8L", "X0B", "S2V"]
+	# can_zips = ["T9S", "A0C", "L7J", "Y0B", "V3G", "X0E", "C0A", "R0K", "B1Y", "J0Y",
+	# 			"E8L", "X0B", "S2V"]
 
-	for can_zip in can_zips:
-		link = base_link+can_zip
-		driver.get(link)
-		time.sleep(randint(2,4))
-		print(can_zip)
+	# for can_zip in can_zips:
+	# 	link = base_link+can_zip
+	# 	driver.get(link)
+	# 	time.sleep(randint(2,4))
+	# 	logger.info(can_zip)
 
-		try:
-			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-				(By.CSS_SELECTOR, ".container.mt-3.mb-5")))
-			time.sleep(randint(3,5))
-		except:
-			continue
+	# 	try:
+	# 		element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
+	# 			(By.CSS_SELECTOR, ".container.mt-3.mb-5")))
+	# 		time.sleep(randint(3,5))
+	# 	except:
+	# 		continue
 
-		base = BeautifulSoup(driver.page_source,"lxml")
-		items = base.find_all(class_="row dealer_row")
+	# 	base = BeautifulSoup(driver.page_source,"lxml")
+	# 	items = base.find_all(class_="row dealer_row")
 
-		for item in items:
-			name = item.h3.text.strip()
-			if name not in found_poi:
-				if "colombia" in name.lower() or "puerto rico"  in name.lower():
-					continue
-				print(name)
-				all_links.append([name,item,link])
-				found_poi.append(name)
+	# 	for item in items:
+	# 		name = item.h3.text.strip()
+	# 		if name not in found_poi:
+	# 			if "colombia" in name.lower() or "puerto rico"  in name.lower():
+	# 				continue
+	# 			logger.info(name)
+	# 			all_links.append([name,item,link])
+	# 			found_poi.append(name)
 
 	data = []
 	total_links = len(all_links)
 	for i, raw_link in enumerate(all_links):
-		print("Link %s of %s" %(i+1,total_links))
 		location_name = raw_link[0]
 		item = raw_link[1]
 		link = raw_link[2]
@@ -114,7 +120,7 @@ def fetch_data():
 		city = raw_address[1][:comma_pos].strip()
 		state =  raw_address[1][comma_pos+2:raw_address[1].find(" ", comma_pos+3)].strip()
 		if "-" in state:
-			state = "<MISSING>"
+			state = location_name.split(",")[1].split("-")[0].strip()
 
 		if state == "QLD" or state == "NSW":
 			continue
@@ -146,35 +152,25 @@ def fetch_data():
 			location_type = "Horizon Distributors Inc"
 		elif "npt" in logo:
 			location_type = "NPT"
+		elif "jetline" in logo:
+			location_type = "Jet Line"
 		else:
 			location_type = logo
 
 		hours_of_operation = "<MISSING>"
 
-		try:
-			gmaps_link = item.find_all('a')[-1]['href']
-			if "maps" in gmaps_link:
-				driver.get(gmaps_link)
-				time.sleep(randint(8,10))
+		latitude = "<MISSING>"
+		longitude = "<MISSING>"
 
-				map_link = driver.current_url
-				at_pos = map_link.rfind("@")
+		if store_number != "<MISSING>":
+			for store in stores:
+				store_id = store["title"].split("-")[0].strip()
+				if store_id == store_number:
+					latitude = store["lat"]
+					longitude = store["lon"]
+					break
 
-				if at_pos < 0:
-					time.sleep(randint(6,8))
-
-				map_link = driver.current_url
-				at_pos = map_link.rfind("@")
-
-				latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
-				longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
-
-			else:
-				latitude = "<MISSING>"
-				longitude = "<MISSING>"
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+		location_name = "POOLCORP - " + location_name.split(",")[0].strip()
 
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	

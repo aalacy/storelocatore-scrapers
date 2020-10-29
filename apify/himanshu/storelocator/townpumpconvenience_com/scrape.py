@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('townpumpconvenience_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -63,7 +68,7 @@ def fetch_data():
             else:
                 state = "<MISSING>"
                 street_address = " ".join(address[:2]).strip()
-                #print(street_address)
+                #logger.info(street_address)
                 city = address[-1].strip()
         elif len(address) == 2:
             state= re.findall(r'([A-Z]{2})', str("".join(address[-1].split()[-1])))[0]

@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import time
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('bestwestern_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -26,11 +31,11 @@ def fetch_data():
         if '<loc>https://www.bestwestern.com/en_US/book/' in line and 'https://www.bestwestern.com/en_US/book/hotels-in-' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
-    print(('Found %s Locations...' % str(len(locs))))
+    logger.info(('Found %s Locations...' % str(len(locs))))
     for loc in locs:
         PageFound = True
         time.sleep(1)
-        print('Pulling Location %s...' % loc)
+        logger.info('Pulling Location %s...' % loc)
         website = 'bestwestern.com'
         typ = '<MISSING>'
         hours = '<MISSING>'
@@ -61,11 +66,12 @@ def fetch_data():
                             lat = line2.split('&#34;,&#34;latitude&#34;:&#34;')[1].split('&#34')[0]
                             lng = line2.split('&#34;longitude&#34;:&#34;')[1].split('&#34')[0]
                             name = line2.split('&#34;name&#34;:&#34;')[1].split('&#34')[0].replace('\\u0026','&')
-                            zc = zc[:5]
                             if 'United States' in country:
                                 country = 'US'
                             if 'Canada' in country:
                                 country = 'CA'
+                            if country == 'US':
+                                zc = zc[:5]                      
                     if country == 'US' or country == 'CA':
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 except:

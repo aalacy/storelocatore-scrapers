@@ -1,9 +1,12 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
-import unicodedata
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('metrobyt-mobile_com')
+
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline= '') as output_file:
@@ -38,7 +41,7 @@ def fetch_data():
             zipp = "0"+zipp
         if "Corporate Store" in location_type:
             continue
-        # print(location_type)
+        # logger.info(location_type)
         store = []
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')

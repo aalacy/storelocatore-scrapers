@@ -4,6 +4,11 @@ import pdb
 from lxml import etree
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('paparazzitrattoria_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -47,7 +52,7 @@ def fetch_data():
     request = session.get(url, headers=headers, verify=False)   
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="location"]')
-    print(len(store_list))
+    logger.info(len(store_list))
     for store in store_list:
         link = validate(store.xpath('./a/@href'))
         store = eliminate_space(store.xpath('.//text()'))
@@ -73,7 +78,7 @@ def fetch_data():
         #store_hours = ' '.join(eliminate_space(detail.xpath('.//div[@id="hours"]//p//text()')))
          #opening hours
         output.append('<INACCESSIBLE>')
-        #print(output)
+        #logger.info(output)
         output_list.append(output)
     return output_list
 

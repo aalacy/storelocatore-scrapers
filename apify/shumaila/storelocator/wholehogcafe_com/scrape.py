@@ -6,6 +6,11 @@ import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('wholehogcafe_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,12 +58,12 @@ def fetch_data():
         try:
             if True:#option_list[m]['value'].find('dada') == -1:
                 link = 'https://www.wholehogcafe.com/locations/' + option_list[m]['value']
-                #print(link)
+                #logger.info(link)
                 driver.get(link)
                 time.sleep(2)
                 maindiv = driver.find_element_by_xpath('/html/body/app-root/div/div/app-locations/div/div/div')
                 div_list = maindiv.find_elements_by_tag_name('div')
-                #print(len(div_list))
+                #logger.info(len(div_list))
                 for j in range(0,len(div_list)):
                     try:
                         if div_list[j].find_element_by_tag_name('h3'):
@@ -71,8 +76,8 @@ def fetch_data():
                             for tr in hourd:
                                 td = tr.findAll('td')
                                 hours = hours +" " + td[0].text + " " + td[1].text 
-                            #print(hours)
-                            #print(div)
+                            #logger.info(hours)
+                            #logger.info(div)
                             maindiv= str(div)
                             div = div.text
                             #div = div.replace(title,'')
@@ -87,25 +92,25 @@ def fetch_data():
                             start = maindiv.find('>',start)+1
                             end =maindiv.find('<br',start)
                             street = maindiv[start:end]
-                            #print(street)
+                            #logger.info(street)
 
                             start = maindiv.find('br/>',end)
                             start = maindiv.find('>',start)+1
                             end =maindiv.find('<br',start)
                             maindiv = maindiv[start:end]
                             maindiv = maindiv.lstrip()
-                            #print(maindiv)
+                            #logger.info(maindiv)
                             city = maindiv[0:maindiv.find(' ')]
                             state = maindiv[maindiv.find(' ')+1:maindiv.find(',')]
                             pcode = maindiv[maindiv.find(',')+1:len(maindiv)]
-                            #print(pcode)
+                            #logger.info(pcode)
                             if len(state) > 2:
-                                #print("YES")
+                                #logger.info("YES")
                                 state = state.lstrip()
                                 city = city + ' '+state[0:state.find(' ')]
-                                #print(state)
+                                #logger.info(state)
                                 state = state[state.find(' ')+1:len(state)]
-                                #print(state)
+                                #logger.info(state)
                                 if len(state) > 2:
                                     state = state.lstrip()
                                     city = city + ' '+state[0:state.find(' ')]
@@ -146,14 +151,14 @@ def fetch_data():
                             "<MISSING>",
                             hours
                         ])
-                        #print(p,data[p])
+                        #logger.info(p,data[p])
                         p += 1
                     except Exception as e:
-                        #print(e)
+                        #logger.info(e)
                         pass
             
         except Exception as e:
-            print(e)
+            logger.info(e)
             pass
        
 
@@ -165,10 +170,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 #

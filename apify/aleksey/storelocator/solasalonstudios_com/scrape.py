@@ -3,6 +3,11 @@ import re
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('solasalonstudios_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
     HEADERS = {'User-Agent' : user_agent}
 
     session = SgRequests()
@@ -26,11 +31,17 @@ def fetch_data():
     main_urls = ['https://www.solasalonstudios.com/locations', 'https://www.solasalonstudios.ca/locations']
     i = 0
     for main_url in main_urls:
-        req = session.get(main_url, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
 
-        # Fetch store urls from location menu
-        store_els = base.find(class_="container location-grid").find_all(class_="link")
+        for num in range(5):            
+            req = session.get(main_url, headers = HEADERS)
+            base = BeautifulSoup(req.text,"lxml")
+
+            # Fetch store urls from location menu
+            store_els = base.find(class_="container location-grid").find_all(class_="link")
+
+            if len(store_els) != 0:
+                break
+
         if country_codes[i] == "US":
             domain = "https://www.solasalonstudios.com"
         else:
@@ -39,7 +50,7 @@ def fetch_data():
 
         # Fetch data for each store url
         for store_url in store_urls:
-            # print(store_url)
+            # logger.info(store_url)
             req = session.get(store_url, headers = HEADERS)
             base = BeautifulSoup(req.text,"lxml")
 

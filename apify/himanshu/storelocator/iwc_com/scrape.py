@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('iwc_com')
+
+
 
 
 
@@ -25,14 +30,14 @@ def fetch_data():
         'accept': 'application/json'
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
     addresses = []
     base_url = "https://www.iwc.com"
 
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -51,7 +56,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = "<MISSING>"
 
-    # print("soup ==== " + str(soup))
+    # logger.info("soup ==== " + str(soup))
 
     total_result = 0
     page_result = 0
@@ -66,9 +71,9 @@ def fetch_data():
         current_offset += page_result
 
 
-        # print("json_data === " + str(json_data["response"]["count"]))
-        # print("entities === " + str(page_result))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("json_data === " + str(json_data["response"]["count"]))
+        # logger.info("entities === " + str(page_result))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         for location in json_data["response"]["entities"]:
 
@@ -86,14 +91,14 @@ def fetch_data():
                 latitude = location["profile"]["displayCoordinate"]["lat"]
                 longitude = location["profile"]["displayCoordinate"]["long"]
             except:
-                # print("https://stores.iwc.com/search?country=US&offset=" + str(current_offset))
+                # logger.info("https://stores.iwc.com/search?country=US&offset=" + str(current_offset))
                 latitude = location['profile']['yextDisplayCoordinate']['lat']
                 longitude = location['profile']['yextDisplayCoordinate']['long']
 
             hours_of_operation = ""
             if "hours" in location["profile"]:
                 for days_hours in location["profile"]["hours"]["normalHours"]:
-                    # print("days_hours === "+ str(days_hours))
+                    # logger.info("days_hours === "+ str(days_hours))
 
                     if days_hours["isClosed"] is False:
                         hours_of_operation += days_hours["day"] +" " +  str(days_hours["intervals"][0]["start"]/100).replace(".",":") + "0 - "+ str(days_hours["intervals"][0]["end"]/100).replace(".",":")+"0"
@@ -106,7 +111,7 @@ def fetch_data():
 
 
 
-            # print("s === "+ str(latitude))
+            # logger.info("s === "+ str(latitude))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
@@ -117,8 +122,8 @@ def fetch_data():
                 store = [x if x else "<MISSING>" for x in store]
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # logger.info("data = " + str(store))
+                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if page_result == 0:

@@ -4,6 +4,11 @@ from selenium.webdriver.chrome.options import Options
 import time
 import pandas as pd
 import csv
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('zoundshearing_com')
+
+
 
 
 def write_output(data):
@@ -54,7 +59,7 @@ def fetch_data():
 	locs_results = driver.find_elements_by_xpath(".//span[@class='location_name']")
 	for r in locs_results:
 		locs.append(r.text)
-	print(len(locs_results))
+	logger.info(len(locs_results))
 	streets_results = driver.find_elements_by_xpath(".//div[@class='results_row_center_column location_secondary']")
 	for r in streets_results:
 		streets.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street']").text+" "+r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street2']").text.strip())

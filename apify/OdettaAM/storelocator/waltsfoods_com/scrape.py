@@ -1,87 +1,104 @@
-import time
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import usaddress
-import re
+import string
+import re, time, usaddress
 
+from sgrequests import SgRequests
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+        }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r'2d{1}(-?\d*.{1}\d*)!{1}', url)[0]
-    lat = re.findall(r'3d{1}(-?\d*.{1}\d*)!{1}', url)[0]
-    return lat, lon
-
-
 def fetch_data():
     # Your scraper here
-    data=[]
-    driver.get("https://www.waltsfoods.com/locations")
-    hours_of_operation = driver.find_element_by_css_selector('div.et_pb_module.et_pb_text.et_pb_text_2.et_pb_bg_layout_light.et_pb_text_align_left > div.et_pb_text_inner > p').get_attribute('innerHTML')
-    hours_of_operation = hours_of_operation.split('<br>\n')[0]+hours_of_operation.split('<br>\n')[1]
-    stores = driver.find_elements_by_id('red')
-    for store in stores:
-        location_name = store.find_element_by_css_selector('div.et_pb_text_inner > h4').text
-        if location_name != (""):
-            tagged = usaddress.tag(store.find_element_by_css_selector('div.et_pb_text_inner > p').text)[0]
-            try:
-                street_address = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
-            except:
-                try:
-                    street_address = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
-                except:
-                    street_address = tagged['AddressNumber'] + " " + tagged['StreetNamePostType'].split('\n')[0]
-            city = tagged['PlaceName']
-            state = tagged['StateName']
-            zipcode = tagged['ZipCode'].split('\n')[0]
-            phone = tagged['OccupancyIdentifier']
-            data.append([
-             'https://www.waltsfoods.com/',
-              location_name,
-              street_address,
-              city,
-              state,
-              zipcode,
-              'US',
-              '<MISSING>',
-              phone,
-              '<MISSING>',
-              '<INACCESSIBLE>',
-              '<INACCESSIBLE>',
-              hours_of_operation
-            ])
-    # Retrieve latitude and longitude for all locations
-    geomaps = driver.find_elements_by_css_selector('div.et_pb_text_inner > p > iframe')
-    i = 0
-    while i < len(data):
-        lat, lon = parse_geo(geomaps[i].get_attribute('src'))
-        data[i][10] = lat
-        data[i][11] = lon
-        i += 1
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.waltsfoods.com/locations'
+    r = session.get(url, headers=headers, verify=False)    
+    soup =BeautifulSoup(r.text, "html.parser")
+    hours = soup.text.split('Hours',1)[1].split('We',1)[0]
+    hours = hours.replace('\n',' ').strip()
+    divlist = soup.findAll('div', {'class': "et_pb_column"})   
+    titlelist = []
+   # print("states = ",len(state_list))
+    p = 0
+    for div in divlist:
+        try:
+            title = div.find('h4').text
+            if title in titlelist:
+                break
+            titlelist.append(title)
+            #print(title)
+            content = div.text
+            content = re.sub(pattern,'\n',content).strip().split('\n',1)[1]
+            address = content.split(' (',1)[0]
+            phone = content.split(' (',1)[1]
+            phone = '('+phone
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
 
-    time.sleep(3)
-    driver.quit()
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+
+            longt, lat = div.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d')  
+            data.append([
+                        'https://www.waltsfoods.com/',
+                        'https://www.waltsfoods.com/locations',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        hours
+                    ])
+            #print(p,data[p])
+            p += 1
+                
+        except:
+            continue
+        
+       
+        
     return data
 
-def scrape():
+
+def scrape():  
     data = fetch_data()
     write_output(data)
-
+   
 scrape()

@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('unikwax_com')
+
+
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -25,8 +30,8 @@ def fetch_data():
 	try:
 		base = BeautifulSoup(req.text,"lxml")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		logger.info('[!] Error Occured. ')
+		logger.info('[?] Check whether system is Online.')
 	
 	sections = base.findAll('div', attrs={'class': 'card'})
 	data = []
@@ -39,7 +44,7 @@ def fetch_data():
 			for item in items:
 				locator_domain = "unikwax.com"		
 				location_name = item.find('span', attrs={'class': 'location__title'}).text.strip()
-				print (location_name)				
+				logger.info(location_name)				
 				city = "<MISSING>"
 				zip_code = "<MISSING>"
 				country_code = "US"
@@ -52,8 +57,8 @@ def fetch_data():
 				try:
 					new_base = BeautifulSoup(req.text,"lxml")
 				except (BaseException):
-					print ('[!] Error Occured. ')
-					print ('[?] Check whether system is Online.')
+					logger.info('[!] Error Occured. ')
+					logger.info('[?] Check whether system is Online.')
 				street_address = new_base.find('p', attrs={'class': 'address'}).text.strip()
 				raw_gps = str(new_base)
 				start_point = raw_gps.find('lat":')+5

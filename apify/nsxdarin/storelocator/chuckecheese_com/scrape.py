@@ -2,6 +2,11 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('chuckecheese_com')
+
+
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -22,7 +27,7 @@ def fetch_data():
     for xy in coord:
         x = xy.split(',')[0]
         y = xy.split(',')[1]
-        print(('%s-%s...' % (x, y)))
+        logger.info(('%s-%s...' % (x, y)))
         url = 'https://z1-prod-cec-services-location.azurewebsites.net/api/cec/locations/search'
         payload = {"latitude":x,"longitude":y,"radius":"500"}
         r = session.post(url, headers=headers, data=json.dumps(payload))
@@ -61,7 +66,7 @@ def fetch_data():
                                 hours = '<MISSING>'
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
-        print(('Found %s Locations...' % str(len(locs))))
+        logger.info(('Found %s Locations...' % str(len(locs))))
 
 def scrape():
     data = fetch_data()

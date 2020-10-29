@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('athletico_com')
+
+
 
 session = SgRequests()
 
@@ -19,7 +24,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.athletico.com"
     r = session.get(base_url + "/locations")
-    print("1")
+    logger.info("1")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("div",{"class": "four columns serviceCard"}):
@@ -29,11 +34,11 @@ def fetch_data():
         for table in state_soup.find_all("tbody"):
             for link in table.find_all("a"):
                 if link["href"][0] == "/":
-                    print(base_url + link["href"])
+                    logger.info(base_url + link["href"])
                     location_request = session.get(base_url + link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 else:
-                    print(link["href"])
+                    logger.info(link["href"])
                     location_request = session.get(link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 contact_information = list(location_soup.find("div",{"id": "contactInfo"}).stripped_strings)

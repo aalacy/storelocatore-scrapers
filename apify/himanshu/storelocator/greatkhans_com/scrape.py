@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('greatkhans_com')
+
+
 
 
 
@@ -26,7 +31,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
+    # logger.info("soup ===  first")
 
     base_url = "https://www.greatkhans.com"
     r = session.get("http://www.greatkhans.com/menu", headers=headers)
@@ -34,7 +39,7 @@ def fetch_data():
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
     # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
+    #     logger.info(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -53,18 +58,18 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "http://www.greatkhans.com/menu"
 
-    # print("data ====== "+str(soup))
+    # logger.info("data ====== "+str(soup))
     for script in soup.find_all("div", {"class": "menu-item"})[1:]:
         list_location = list(script.stripped_strings)
 
         location_name = list_location[0]
         raw_address = list_location[1].replace(',', "")[:-9]
         country_code = "US"
-        # print(list_location)
+        # logger.info(list_location)
         address = list_location[1].split()
         street_address = " ".join(
             address[:-3]).replace("Santa", "").replace("San", "").replace("Thousand", "").replace("Sherman", "").replace("ta", "").strip()
-        # print(street_address)
+        # logger.info(street_address)
         city = " ".join(address[-4:-2]).replace("FC1",
                                                 "").replace("Center.", "").replace(",", "").strip()
         if "3rd Floor" == city:
@@ -83,15 +88,15 @@ def fetch_data():
             state = state_list[0].strip()
         else:
             state = list_location[1].split(",")[0].split()[-1].strip()
-            #print(state)
+            #logger.info(state)
 
-        # print("list_location ===== "+str(list_location))
+        # logger.info("list_location ===== "+str(list_location))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # logger.info("data = " + str(store))
+        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return_main_object.append(store)
 

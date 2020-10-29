@@ -5,6 +5,11 @@ import re
 import json
 import requests
 from datetime import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('waxingthecity_com')
+
+
 
 
 session = SgRequests()
@@ -65,7 +70,7 @@ def fetch_data():
         store.append(log)
         store.append(hours)
         store.append(page_url)
-        # print(store)
+        # logger.info(store)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
    

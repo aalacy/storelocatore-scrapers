@@ -3,6 +3,11 @@ import os
 from sgselenium import SgSelenium
 from selenium.webdriver.common.action_chains import ActionChains
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('cobbtheatres_com')
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -99,8 +104,8 @@ def fetch_data():
 
             content = driver.find_element_by_css_selector('div.vcard')
             lines = content.text.split('\n')
-            # print(len(lines))
-            # print(lines)
+            # logger.info(len(lines))
+            # logger.info(lines)
             if len(lines) == 4:
                 street_address = lines[0]
                 city, state, zip_code = addy_extractor(lines[1])

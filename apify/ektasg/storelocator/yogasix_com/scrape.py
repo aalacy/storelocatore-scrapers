@@ -3,6 +3,11 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('yogasix_com')
+
+
 
 options = Options()
 options.add_argument('--headless')
@@ -65,15 +70,15 @@ def fetch_data():
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        print(names[i])
-        #print(driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText"))
+        logger.info(names[i])
+        #logger.info(driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText"))
         if "coming soon" in driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText").lower():
 
-            print("coming soon")
+            logger.info("coming soon")
             continue
         else:
             store_name=driver2.find_element_by_tag_name('title').get_attribute('textContent').strip()
-            #print(store_name)
+            #logger.info(store_name)
             try:
                 hours_elems =driver2.find_elements_by_css_selector('div.map__days')
                 if hours_elems == []:
@@ -92,7 +97,7 @@ def fetch_data():
             #geomap = elem.get_attribute('href')
             #store_address = elem.get_attribute("innerHTML")
             store_address = elem.get_attribute("text").strip()
-            #print(store_address)
+            #logger.info(store_address)
             street_addr= store_address.split("\n")[0].strip()
             state= store_address.split("\n")[1].split(",")[1].split(" ")[-2]
             city= store_address.split("\n")[1].split(",")[0].strip()
@@ -100,7 +105,7 @@ def fetch_data():
             coords=driver2.find_element_by_id("map").get_attribute("data-location").replace("[","").replace("]","").split(",")
             lon=coords[0].strip()
             lat=coords[1].strip()
-            #print(lat,lon)
+            #logger.info(lat,lon)
             #geomap = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]").get_attribute('href')
             #driver3.get(geomap)
             #time.sleep(5)
@@ -122,7 +127,7 @@ def fetch_data():
                   store_opening_hours
                 ])
             count+=1
-            #print(count)
+            #logger.info(count)
 
 
     time.sleep(3)

@@ -4,6 +4,11 @@ import string
 import re, time
 import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('papemachinery_com')
+
+
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -29,7 +34,7 @@ def fetch_data():
     loclist = session.get(url, headers=headers, verify=False).json()['Locations']
    
     for loc in loclist:
-        #print(loc['categories'][0])
+        #logger.info(loc['categories'][0])
         category = loc["operatingCompanyName"]
         if category.find('Agriculture & Turf') > -1 or category.find('Construction & Forestry') > -1:
             ltype = category.replace('Papé Machinery ','')
@@ -49,9 +54,9 @@ def fetch_data():
             link = loc['fullUrl']
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text,'html.parser')
-            print(link)
+            logger.info(link)
             hours = soup.find('table',{'class':'simple'}).text.strip().replace('\n',' ').split('Hours')[1].lstrip()
-            #print(hours)
+            #logger.info(hours)
             data.append([
                 'https://papemachinery.com/',
                 link,                   
@@ -68,7 +73,7 @@ def fetch_data():
                 longt,
                 hours
             ])
-            print(p,data[p])
+            logger.info(p,data[p])
             p += 1
             #input()
             
@@ -78,10 +83,10 @@ def fetch_data():
 
 
 def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
 

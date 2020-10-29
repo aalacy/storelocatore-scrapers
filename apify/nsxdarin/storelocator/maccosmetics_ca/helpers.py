@@ -5,6 +5,11 @@ import datetime
 hasPout = True
 try: 
   import pout
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maccosmetics_ca')
+
+
 except ImportError: 
   hasPout = False
 
@@ -12,40 +17,40 @@ def prettyPrint(d):
   if hasPout:
     pout.v(d)
   else: 
-    print(d)
+    logger.info(d)
 
 
 def printRequestInfo(r, s):
-  print('-------------')
-  print('-------------')
+  logger.info('-------------')
+  logger.info('-------------')
 
-  print('request headers')
+  logger.info('request headers')
   prettyPrint(r.request.headers)
-  print('-------------')
+  logger.info('-------------')
 
-  print('response status code')
+  logger.info('response status code')
   prettyPrint(r.status_code)
-  print('-------------')
+  logger.info('-------------')
 
-  print('response headers')
+  logger.info('response headers')
   prettyPrint(r.headers)
-  print('-------------')
+  logger.info('-------------')
   
-  print('response content')
+  logger.info('response content')
   try:
     prettyPrint(r.json())
   except ValueError:
-    print('  showing first 200 characters')
+    logger.info('  showing first 200 characters')
     prettyPrint(r.text[0:200])
   except:
     raise
-  print('-------------')
+  logger.info('-------------')
 
-  print('session cookies')
+  logger.info('session cookies')
   prettyPrint(s.cookies.get_dict())
 
-  print('-------------')
-  print('-------------')
+  logger.info('-------------')
+  logger.info('-------------')
 
 
 def getFormattedDateTime():

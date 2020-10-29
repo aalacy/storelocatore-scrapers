@@ -1,6 +1,11 @@
 
 from bs4 import BeautifulSoup
 import pandas as pd
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('onewestbank_com')
+
+
 
 
 URL ='https://www.onewestbank.com/handlers/StoreLocationsHandler.ashx?BranchLocationsId=23622321295'
@@ -23,4 +28,4 @@ df = df.rename(columns={'BranchName': 'location_name', 'Street': 'street_address
 df['street_address']=df['street_address'].str.replace("&amp;",'')
 df = df[["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"]]
 df.to_csv('data.csv',index=None)
-# print(df)
+# logger.info(df)
