@@ -1,98 +1,70 @@
 const Apify = require('apify');
-const MISSING = '<MISSING>';
+const axios = require('axios');
 
 Apify.main(async () => {
-  const requestList = await Apify.openRequestList('locations', [
-    {
-      url: 'https://www.amegybank.com/',
-    },
-  ]);
-
-  const launchPuppeteerOptions = {
-    useChrome: true,
-    stealth: true,
-    headless: true,
-  };
-
-  const crawler = new Apify.PuppeteerCrawler({
-    requestList,
-    launchPuppeteerOptions,
-    maxRequestRetries: 1,
-    maxRequestPerCrawl: 1,
-    handlePageTimeoutSecs: 10 * 60,
-    async handlePageFunction({ page }) {
-      const data = await page.evaluate(async (body) => {
-        const response = await fetch(
-          'https://www.amegybank.com/locationservices/searchwithfilter',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body,
-          }
-        );
-        return await response.json();
-      }, JSON.stringify(getRequestData()));
-
-      const locations = data.location.map(getLocation);
-      await Apify.pushData(locations);
-    },
-  });
-
-  await crawler.run();
+  const data = await scrape();
+  await Apify.pushData(data);
 });
 
-function getLocation(location) {
+async function scrape() {  
+  return await axios({
+    method: "POST",
+    url: "https://www.amegybank.com/locationservices/searchwithfilter",
+    data: getRequestData()
+  }).then((resp) => {
+    returnData = []
+    for (let entry of resp.data.location){
+      returnData.push(mapData(entry));
+    }
+    return returnData
+  }).catch((e) => {
+    console.log("Error: ", e)
+  });
+}
+
+function mapData(e){
   return {
     locator_domain: 'amegybank.com',
-    location_name: get(location, 'locationName'),
-    street_address: get(location, 'address'),
-    city: get(location, 'city'),
-    state: get(location, 'stateProvince'),
-    zip: get(location, 'postalCode'),
-    country_code: get(location, 'country'),
-    latitude: get(location, 'lat'),
-    longitude: get(location, 'long'),
-    store_number: get(location, 'locationId'),
-    phone: get(location, 'phoneNumber'),
-    location_type: getAttribute(location.locationAttributes, 'Other Services'),
-    hours_of_operation: getAttribute(location.locationAttributes, 'Location Hours'),
-  };
+    location_name: e.locationName,
+    street_address: e.address,
+    city: e.city,
+    state: e.stateProvince,
+    zip: e.postalCode,
+    country_code: e.country,
+    store_number: e.locationId,
+    phone: e.phoneNumber,
+    location_type: getAttribute(e.locationAttributes, "Other Services"),
+    latitude: e.lat,
+    longitude: e.long,
+    hours_of_operation: getAttribute(e.locationAttributes, "Location Hours"),
+  }
 }
 
-function getRequestData() {
-  return {
-    channel: 'Online',
-    schemaVersion: '1.0',
-    transactionId: 'txId',
-    affiliate: '0175',
-    clientUserId: 'ZIONPUBLICSITE',
-    clientApplication: 'ZIONPUBLICSITE',
+function getRequestData(){
+  return { 
+    channel: 'Online', 
+    schemaVersion: '1.0', 
+    transactionId: 'txId', 
+    affiliate: '0175', 
+    clientUserId: 'ZIONPUBLICSITE', 
+    clientApplication: 'ZIONPUBLICSITE', 
     username: 'ZIONPUBLICSITE',
-    searchAddress: {
-      address: 'Texas',
-      city: null,
-      stateProvince: null,
-      postalCode: null,
-      country: null,
-    },
-    searchFilters: [{ fieldId: '1', domainId: '175', displayOrder: 1, groupNumber: 1 }],
-    distance: '5000',
-    searchResults: '2000',
-  };
+    searchAddress:{ address: 'Texas', city: null,stateProvince: null,postalCode: null,country: null },       
+    searchFilters: [ { fieldId: '1', domainId: '175', displayOrder: 1, groupNumber: 1 } ],
+    distance: '5000', 
+    searchResults: '2000'
+  }
 }
 
-function get(entity, key) {
-  return entity[key] || MISSING;
-}
 
-function getAttribute(attributes, key) {
-  returnVal = '<MISSING>';
-  for (let a of attributes) {
-    if (a['name'] == key) {
-      returnVal = get(a, 'value');
-    }
+function getAttribute(attributes, key){
+  returnVal = '<MISSING>'
+  for (let a of attributes){
+    if (a['name'] == key){returnVal = a['value']}
   }
   return returnVal;
+}
+
+function handleError(e){
+  console.error("Error retrieving data for Amegy Bank", e)
 }
