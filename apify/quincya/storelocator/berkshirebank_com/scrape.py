@@ -29,7 +29,8 @@ def fetch_data():
 	locator_domain = "berkshirebank.com"
 
 	for item in items:
-
+		if item.find("atm").text == "1":
+			continue
 		location_name = item.find("name").text.strip()
 		street_address = (item.find("address1").text.strip() + " " + item.find("address2").text).strip()
 		if "Corporate Headquarters" in street_address:
