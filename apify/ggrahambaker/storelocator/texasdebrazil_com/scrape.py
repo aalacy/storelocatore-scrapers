@@ -76,7 +76,7 @@ def fetch_data():
         # print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
-        location_name = soup.find('h1', {'class': 'location-info__title'}).text.replace('\n', '').strip().encode("ascii", "replace").decode().replace("?","-")
+        location_name = "Texas de Brazil - " + soup.find('h1', {'class': 'location-info__title'}).text.strip().split('\n')[0].strip().encode("ascii", "replace").decode().replace("?","-")
         if 'Coming Soon' in location_name:
             continue
 
