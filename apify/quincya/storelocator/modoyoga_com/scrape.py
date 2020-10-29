@@ -162,7 +162,7 @@ def fetch_data():
 				hours_of_operation = "Temporarily Closed"
 			else:
 				hours_of_operation = loc.find_all("p")[-1].text.replace("PM","pm").replace("AM","am").replace("a.m.","am").replace("p.m.","pm").replace("\r\n","").replace("pm","pm ").split("\n")[0]
-				if "pm" not in hours_of_operation and "Monday" not in hours_of_operation or "parking" in hours_of_operation.lower():
+				if "pm" not in hours_of_operation and "Monday" not in hours_of_operation or "parking" in hours_of_operation.lower() or "between" in hours_of_operation.lower():
 					hours_of_operation = loc.find_all("p")[-2].text.replace("PM","pm").replace("AM","am").replace("a.m.","am").replace("p.m.","pm").replace("\r\n","").replace("pm","pm ").split("\n")[0]
 					if "pm" not in hours_of_operation:
 						hours_of_operation = loc.find_all("p")[-2].text.replace("PM","pm").replace("AM","am").replace("a.m.","am").replace("p.m.","pm").replace("\r\n","").replace("pm","pm ")
