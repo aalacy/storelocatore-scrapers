@@ -35,15 +35,16 @@ def fetch_data():
             if '<h4 style="margin: 0; color: black; font-size: 18px">' in line:
                 name = line.split('<h4 style="margin: 0; color: black; font-size: 18px">')[1].split('<')[0]
                 typ = 'Dealer'
-            if '<span onclick="KW.bobcat.toggleDetail' in line:
-                store = line.split("toggleDetail('")[1].split("'")[0]
+            if "onclick=\"KW.bobcat.toggleDetail('" in line:
+                store = line.split("onclick=\"KW.bobcat.toggleDetail('")[1].split("'")[0]
+            if '<span onclick="">' in line:
                 raw_address = next(lines).split('<div>')[1].split('</div>')[0]
                 tel_line = next(lines)
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
-                if 'website-icon.png"> <a class="kw-result-link" href="' in tel_line:
-                    purl = tel_line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                if 'website-icon.png"' in tel_line:
+                    purl = tel_line.split('website-icon.png">')[1].split("this.href='")[1].split("'")[0]
                 else:
                     purl = '<MISSING>'
                 try:
@@ -84,15 +85,15 @@ def fetch_data():
             if '<h4 style="margin: 0; color: black; font-size: 18px">' in line:
                 name = line.split('<h4 style="margin: 0; color: black; font-size: 18px">')[1].split('<')[0]
                 typ = 'Dealer'
-            if '<span onclick="KW.bobcat.toggleDetail' in line:
+            if '<span onclick="">' in line:
                 store = line.split("toggleDetail('")[1].split("'")[0]
                 raw_address = next(lines).split('<div>')[1].split('</div>')[0]
                 tel_line = next(lines)
                 while 'tel:' not in tel_line:
                     tel_line = next(lines)
                 phone = tel_line.split('tel:1')[1].split('"')[0]
-                if 'website-icon.png"> <a class="kw-result-link" href="' in tel_line:
-                    purl = tel_line.split('website-icon.png"> <a class="kw-result-link" href="')[1].split('"')[0]
+                if 'website-icon.png"' in tel_line:
+                    purl = tel_line.split('website-icon.png">')[1].split("this.href='")[1].split("'")[0]
                 else:
                     purl = '<MISSING>'
                 try:
