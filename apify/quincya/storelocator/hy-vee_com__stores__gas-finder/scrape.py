@@ -83,7 +83,8 @@ def fetch_data():
 		next_page = driver.find_element_by_id("ctl00_cph_main_content_spuGasFinderResults_gvStores_ctl10_btnNext")
 		driver.execute_script('arguments[0].click();', next_page)
 		time.sleep(randint(5,7))
-
+		
+	driver.close()
 	return data
 
 def scrape():
