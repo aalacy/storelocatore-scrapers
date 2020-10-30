@@ -52,8 +52,11 @@ def fetch_data():
                 now=tag.find('a', class_="cta link_style cta_angle_rt cta_hover pine_bkd")['href']
                 stores['page_url']=now#.append(now)
                 stores['location_name']=tag.find('a', class_="cta link_style cta_angle_rt cta_hover pine_bkd").get_text().split("for")[1].lstrip().rstrip()#.append(tag.find('a', class_="cta link_style cta_angle_rt cta_hover pine_bkd").get_text().split("for")[1].lstrip().rstrip())
-                stores['phone']=tag.find('a', href=lambda href: href and "tel:" in href).get_text()#.append(tag.find('a', href=lambda href: href and "tel:" in href))
-                stores['latitude']=tag['data-lat']#.append(tag['data-lat'])
+                try:
+                    stores['phone']=tag.find('a', href=lambda href: href and "tel:" in href).get_text()#.append(tag.find('a', href=lambda href: href and "tel:" in href))
+                except:
+                    stores['phone']="<MISSING>"
+                stores['latitude']=tag['data-lat']  #.append(tag['data-lat'])
                 stores['longitude']=tag['data-long']#.append(tag['data-long'])
                 stores['store_number']=tag['class'][1].rsplit('_')[1]#.append(tag['class'][1].rsplit('_')[1])
                 stores['state']=state['id']#.append(state['id'])
