@@ -1,0 +1,11 @@
+{
+  "name": "amegybank_com_scraper",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "apify": "^0.21.8"
+  },
+  "scripts": {
+    "start": "node scrape.js"
+  }
+}
