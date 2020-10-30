@@ -116,7 +116,7 @@ def fetch_data():
                 "https://www.fastsigns.com",
                 loc,
                 street,
-                city,
+                city.strip(),
                 state,
                 zip,
                 country,
