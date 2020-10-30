@@ -71,10 +71,10 @@ def fetch_data():
                 h = next(lines)
                 if '<' in g:
                     city = g.strip().replace('\t','').split('  ')[0]
-                    zc = g.strip().replace('\t','').split('  ')[0].split('<')[0]
+                    zc = g.strip().replace('\t','').split('  ')[1].split('<')[0].strip()
                 else:
                     city = h.strip().replace('\t','').split('  ')[0]
-                    zc = h.strip().replace('\t','').split('  ')[0].split('<')[0]
+                    zc = h.strip().replace('\t','').split('  ')[1].split('<')[0].strip()
                 state = 'Quebec'
             if 'hollow_btn phone" href="tel:' in line2:
                 phone = line2.split('hollow_btn phone" href="tel:')[1].split('"')[0]
