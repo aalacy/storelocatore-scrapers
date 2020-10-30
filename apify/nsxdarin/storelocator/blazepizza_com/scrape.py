@@ -6,8 +6,8 @@ from sglogging import SgLogSetup
 from datetime import datetime
 from datetime import timedelta
 
-startdate = datetime.today().strftime('%Y%m%d')
-enddate = (datetime.now() + timedelta(days=8) ).strftime('%Y%m%d')
+startdate = (datetime.now() + timedelta(days=-1) ).strftime('%Y%m%d')
+enddate = (datetime.now() + timedelta(days=7) ).strftime('%Y%m%d')
 
 logger = SgLogSetup().get_logger('blazepizza_com')
 
@@ -96,9 +96,9 @@ def fetch_data():
                                             else:
                                                 if dc <= 7:
                                                     hours = hours + '; ' + hrs
-                            if phone ==  '':
+                            if phone == '':
                                 phone = '<MISSING>'
-                            if hours ==  '':
+                            if hours == '':
                                 hours = 'Closed'
                             if ' (' in add:
                                 add = add.split(' (')[0]
