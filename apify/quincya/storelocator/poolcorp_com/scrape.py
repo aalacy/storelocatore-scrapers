@@ -114,7 +114,7 @@ def fetch_data():
 		locator_domain = "poolcorp.com"
 
 		raw_address = str(item.p)[3:str(item.p).find("<a")-5].split("<br/>")
-		street_address = raw_address[0].strip()
+		street_address = raw_address[0].replace("amp;","").strip()
 
 		comma_pos = raw_address[1].find(",")
 		city = raw_address[1][:comma_pos].strip()
