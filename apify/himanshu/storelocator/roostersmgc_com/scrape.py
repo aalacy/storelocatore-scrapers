@@ -7,7 +7,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('roostersmgc_com.csv', mode='w', encoding="utf-8", newline='') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -75,3 +75,4 @@ def scrape():
     write_output(data)
 
 scrape()
+
