@@ -57,7 +57,7 @@ def fetch_data():
 
 		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
 		try:
-			street_address = street_address + " " + item.find(class_="c-address-street c-address-street-2").text.replace("\u200b","").strip()
+			street_address = street_address + " " + item.find(class_="c-address-street-2").text.replace("\u200b","").strip()
 			street_address = street_address.strip()
 		except:
 			pass
