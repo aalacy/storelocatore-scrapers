@@ -1,4 +1,5 @@
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import re
 
