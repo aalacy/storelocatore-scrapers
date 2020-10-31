@@ -32,7 +32,7 @@ def fetch_data():
 	for item in items:
 		location_name = "<MISSING>"
 		street_address = item.a.text.split(",")[1].strip()[2:]
-		city = item.b.text.split(",")[0].strip()
+		city = item.b.text.split(",")[0].strip().split("-")[0]
 		state = item.b.text.split(",")[1].strip()
 		zip_code = item.a.text.split(",")[-2].split()[-1]
 		country_code = "US"
