@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import ast
+import time
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,10 +24,9 @@ def fetch_data():
     r = session.get("https://www.newfoundlandgrocerystores.ca/api/pickup-locations?bannerIds=dominion",headers=headers).json()
     for val in r:
         store_number = val['id'].replace("CT","").replace("0096SD1179","0096SD1268")
-        
+        time.sleep(2)
         jd = session.get("https://www.newfoundlandgrocerystores.ca/api/pickup-locations/"+store_number,headers=headers).json()
         location_name = jd['name']
-        
         if val['address']['line2']!=None:
             street_address = jd['address']['line1']+" "+jd['address']['line2']
         else:
@@ -43,7 +42,6 @@ def fetch_data():
         latitude = jd['geoPoint']['latitude']
         longitude = jd['geoPoint']['longitude']
         page_url = "https://www.newfoundlandgrocerystores.ca/store-locator/details/"+store_number
-       
         if 'storeDetails' in jd:
             phone = jd['storeDetails']['phoneNumber']
             hoo = []
@@ -54,7 +52,6 @@ def fetch_data():
         else:
             phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
-    
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
