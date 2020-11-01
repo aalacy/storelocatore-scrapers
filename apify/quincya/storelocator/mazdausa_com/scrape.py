@@ -1,7 +1,5 @@
 from sgrequests import SgRequests
 import csv
-import sgzip
-
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,19 +22,13 @@ def fetch_data():
 	data = []
 	found_poi = []
 
-	search = sgzip.ClosestNSearch()
-	# Initialize the search for the US only
-	search.initialize(country_codes = ['us'])
-
-	coord = search.next_zip()
-
-	while coord:
+	for i in range(50):
+		base_link = "https://www.mazdausa.com/handlers/dealer.ajax?dealerName=%&p=" + str(i)
 		
-		result_coords = []
-
-		base_link = "https://www.mazdausa.com/handlers/dealer.ajax?zip=" + coord + "&maxDistance=300"
-
 		stores = session.get(base_link,headers=HEADERS).json()["body"]["results"]
+
+		if len(stores) == 0:
+			break
 
 		for store in stores:
 
@@ -72,19 +64,12 @@ def fetch_data():
 
 			latitude = store['lat']
 			longitude = store['long']
-			result_coords.append((latitude, longitude))
 
 			link = store["webUrl"]
 			if not link:
 				link = "<MISSING>"
 
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-		if len(result_coords) > 0:
-			search.max_count_update(result_coords)
-		else:
-			search.max_distance_update(100)
-		coord = search.next_zip()
 
 	return data
 
