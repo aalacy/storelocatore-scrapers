@@ -6,7 +6,6 @@ import re
 import json
 from sgrequests import SgRequests
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
     base_url= "https://restaurants.subway.com/canada"
     r = session.get(base_url)
@@ -35,10 +33,10 @@ def fetch_data():
                 page_url = j['href'].replace("..","https://restaurants.subway.com/")
                 r2 = session.get(page_url)
                 soup2 = BeautifulSoup(r2.text,'lxml')
+                location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ")
                 jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                location_name = jd['altTagText']
                 street_address = jd['profile']['address']['line1']
-                city = jd['profile']['address']['city']
+                city = jd['profile']['address']['city'].replace("Montréal","Montreal")
                 state = jd['profile']['address']['region']
                 zipp = jd['profile']['address']['postalCode']
                 try:
@@ -80,10 +78,10 @@ def fetch_data():
                     page_url = i['href'].replace("../../","https://restaurants.subway.com/")
                     r2 = session.get(page_url)
                     soup2 = BeautifulSoup(r2.text,'lxml')
+                    location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ")
                     jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                    location_name = jd['altTagText']
                     street_address = jd['profile']['address']['line1']
-                    city = jd['profile']['address']['city']
+                    city = jd['profile']['address']['city'].replace("Montréal","Montreal")
                     state = jd['profile']['address']['region']
                     zipp = jd['profile']['address']['postalCode']
                     try:
@@ -121,3 +119,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

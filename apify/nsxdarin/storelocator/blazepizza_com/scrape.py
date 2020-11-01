@@ -3,6 +3,11 @@ from sgrequests import SgRequests
 import json
 from sgzip import sgzip
 from sglogging import SgLogSetup
+from datetime import datetime
+from datetime import timedelta
+
+startdate = (datetime.now() + timedelta(days=-1) ).strftime('%Y%m%d')
+enddate = (datetime.now() + timedelta(days=7) ).strftime('%Y%m%d')
 
 logger = SgLogSetup().get_logger('blazepizza_com')
 
@@ -75,27 +80,26 @@ def fetch_data():
                             typ = '<MISSING>'
                             website = 'blazepizza.com'
                             country = item.split(',"country":"')[1].split('"')[0]
-                            try:
-                                days = item.split('"label":null,"ranges":[')[1].split(']')[0].split('"end":"')
-                                for day in days:
-                                    if '"start":"' in day:
-                                        hrs = day.split('"weekday":"')[1].split('"')[0] + ': ' + day.split('"start":"')[1].split('"')[0].rsplit(' ',1)[1] + '-' + day.split('"')[0].rsplit(' ',1)[1]
-                                        if hours == '':
-                                            hours = hrs
-                                        else:
-                                            if 'Tue:' in hrs and 'Tue:' in hours:
-                                                hours = hours
+                            durl = 'https://nomnom-prod-api.blazepizza.com/restaurants/' + store + '?nomnom=calendars&nomnom_calendars_from=' + startdate + '&nomnom_calendars_to=' + enddate
+                            r2 = session.get(durl, headers=headers)
+                            for line2 in r2.iter_lines():
+                                line2 = str(line2.decode('utf-8'))
+                                if '{"calendar":[{"label":null,"ranges":[' in line2:
+                                    days = line2.split('{"calendar":[{"label":null,"ranges":[')[1].split(']')[0].split('"end":"')
+                                    dc = 0
+                                    for day in days:
+                                        if '"start":"' in day:
+                                            dc = dc + 1
+                                            hrs = day.split('"weekday":"')[1].split('"')[0] + ': ' + day.split('"start":"')[1].split('"')[0].rsplit(' ',1)[1] + '-' + day.split('"')[0].rsplit(' ',1)[1]
+                                            if hours == '':
+                                                hours = hrs
                                             else:
-                                                if 'Wed:' in hrs and 'Wed:' in hours:
-                                                    hours = hours
-                                                else:
+                                                if dc <= 7:
                                                     hours = hours + '; ' + hrs
-                            except:
-                                pass
-                            if phone ==  '':
+                            if phone == '':
                                 phone = '<MISSING>'
-                            if hours ==  '':
-                                hours = '<MISSING>'
+                            if hours == '':
+                                hours = 'Closed'
                             if ' (' in add:
                                 add = add.split(' (')[0]
                             if store not in ids:

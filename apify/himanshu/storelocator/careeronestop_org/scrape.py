@@ -54,9 +54,9 @@ def fetch_data():
                 r1 = session.get(data_link,headers=headers)
                 soup = BeautifulSoup(r1.text,"lxml")
                 addr = soup.find_all("script",{"type":"text/javascript"})[11]
+                data_main = (str(addr).split("locinfo = ")[1].split("var mapapi =")[0].replace(";",""))
             except:
                 continue
-            data_main = (str(addr).split("locinfo = ")[1].split("var mapapi =")[0].replace(";",""))
             json_data = json.loads(data_main)
             street_address1 = json_data['ADDRESS1']
             city = json_data['CITY']

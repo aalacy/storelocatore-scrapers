@@ -57,8 +57,8 @@ def fetch_data():
         if r2.encoding is None: r2.encoding = 'utf-8'
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
-            if '<p class="text text--pink text--bold">' in line2:
-                add = line2.split('<p class="text text--pink text--bold">')[1].split('<')[0]
+            if '<h1 class="store-location-title">' in line2:
+                add = line2.split('<h1 class="store-location-title">')[1].split('<')[0]
                 g = next(lines)
                 csz = g.split('>')[1].split('<')[0]
                 city = csz.split(',')[0]
@@ -66,7 +66,7 @@ def fetch_data():
                 zc = '<MISSING>'
                 g = next(lines)
                 phone = g.split('>')[1].split('<')[0]
-            if 'day</span>' in line2:
+            if 'day</td>' in line2:
                 g = next(lines)
                 h = next(lines)
                 hrs = line2.split('>')[1].split('<')[0] + ': ' + g.split('>')[1].split('<')[0] + '-' + h.split('>')[1].split('<')[0]

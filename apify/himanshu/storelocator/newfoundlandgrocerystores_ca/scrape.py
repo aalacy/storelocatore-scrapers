@@ -3,116 +3,76 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('newfoundlandgrocerystores_ca')
-
-
-
-
-
+import time
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         for row in data:
             writer.writerow(row)
-
-def getDecodedPhoneNo(encoded_phone_no):
-        _dict = {}
-        _dict["2"] = "ABC"
-        _dict["3"] = "DEF"
-        _dict["4"] = "GHI"
-        _dict["5"] = "JKL"
-        _dict["6"] = "MNO"
-        _dict["7"] = "PQRS"
-        _dict["8"] = "TUV"
-        _dict["9"] = "WXYZ"
-
-        _real_phone = ""
-        for _dg in encoded_phone_no:
-            for key in _dict:
-                if _dg in _dict[key]:
-                    _dg = key
-            _real_phone += _dg
-        return _real_phone
-
-
-    # logger.info("phone ==== " + getDecodedPhoneNo(_phone))
 def fetch_data():
-    return_main_object =[]
+    addressess = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+        'site-banner': 'fortinos',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36',
+        'Cookie': 'ak_bmsc=18B950B5D2AF67482FD6D7D942F177E617417C34E17A0000649C9A5FBB2E1644~plQlKD7ApWOKJJDRFcfVclw0p/Ke7WRPaT4kDTJKFSVqjsjynXMXw5bL7XaiAI7UUYw4JnPHSaVRx1df4D+ziBqaWLn7nWjwmwN8DXqgZtpXCjoL0eaJtf5DjHye1TiGGzXGiKo2xBmuq2jJiUEN9CrfIRDVo2rXnatxP6WNXghL05r2EV9B89xgtbW1ee4T+CtopCgW99JmZWXYOMbC8mG0PP0Wi/eP9/eNdIYuH7WWU=; ADRUM_BTa=R:0|g:d3f2323f-44a8-4af5-9d1b-f0ee26aa6a34|n:lblw_afe7f4d6-4637-4e11-95bb-0a169ff97498; ADRUM_BT1=R:0|i:352462|e:99; bm_sv=EA63D9ED91118F2C13887BFF56449650~UbAdYJMOlOAEBRv2ajLNck5f2RbU1GQh5CNEYD5u/2BGavRlr0YgAwxglQftqvsd0tJFaf00ipTiUagAkjZfdIk95IMJnUlrCExJ9Wp1WWiGT2J5/dsDXVBL1aOOgVRjRd1egMz5IKWL/iAy3mbQRfy5jNGSb4v6IIZJ5lN7Kkw='
         }
-    base_url= "https://www.newfoundlandgrocerystores.ca/store-locator/v2/locations/all?_=1571920909554"
-    locations = session.get(base_url,headers=headers).json()
-    
-    # soup= BeautifulSoup(r.text,"lxml")
-    for loc in locations['searchResult']:
-        tem_var=[]
-        phone =''
-        hours=''
-        zip1 = ''
-        address = loc['details']['streetAddress']
-        city = loc['details']['city']
-        zip1 = loc['details']['postalCode']
-        locationType = loc['details']['locationType']
-        store = loc['details']['storeID']
-        name = loc['details']['storeName']
-        state = loc["details"]['province']
-        lat = loc["lat"]
-        lng = loc['lng']
-        
-        # locations1 = session.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
-        locations1 = session.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
-
-        soup1= BeautifulSoup(locations1.text,"lxml")
-        phone1 = soup1.find("div",{"class":"store-information__title-content"})
-        hors1 = soup1.find("div",{"class":"hours-section__weekly-hours-group hours-section__weekly-hours-group--store"})
-       
-        if phone1 != None:
-            phone = (list(phone1.stripped_strings)[-1])
-       
-
-        if hors1 != None:
-            hours = (" ".join(list(hors1.stripped_strings)))
-  
-        if len(zip1)== 6 or len(zip1)== 7:
-            country = "CA"
+    base_url = "https://www.newfoundlandgrocerystores.ca/"
+    r = session.get("https://www.newfoundlandgrocerystores.ca/api/pickup-locations?bannerIds=dominion",headers=headers).json()
+    for val in r:
+        store_number = val['id'].replace("CT","").replace("0096SD1179","0096SD1268")
+        time.sleep(2)
+        jd = session.get("https://www.newfoundlandgrocerystores.ca/api/pickup-locations/"+store_number,headers=headers).json()
+        location_name = jd['name']
+        if val['address']['line2']!=None:
+            street_address = jd['address']['line1']+" "+jd['address']['line2']
         else:
-            country = "CA"
-        tem_var.append("https://www.newfoundlandgrocerystores.ca")
-        tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8211;",""))
-        tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(state.strip().encode('ascii', 'ignore').decode('ascii') if state.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
-        tem_var.append(zip1.encode('ascii', 'ignore').decode('ascii').strip() if zip1  else "<MISSING>" )
-        tem_var.append(country)
-        tem_var.append(store)
-        tem_var.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
-        tem_var.append("<MISSING>")
-        tem_var.append(lat)
-        tem_var.append(lng)
-        tem_var.append(hours if hours else "<MISSING>")
-        tem_var.append("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'])
-        # logger.info(tem_var)
-        return_main_object.append(tem_var)
-    
-
-    return return_main_object
-
-
+            street_address = jd['address']['line1']
+        
+        city = jd['address']['town']
+        state = jd['address']['region']
+        if jd['address']['postalCode']!=None:
+            zipp = jd['address']['postalCode']
+        else:
+            zipp = "<MISSING>"
+        location_type = jd['locationType']
+        latitude = jd['geoPoint']['latitude']
+        longitude = jd['geoPoint']['longitude']
+        page_url = "https://www.newfoundlandgrocerystores.ca/store-locator/details/"+store_number
+        if 'storeDetails' in jd:
+            phone = jd['storeDetails']['phoneNumber']
+            hoo = []
+            for h in jd['storeDetails']['storeHours']:
+                frame = h['day']+"-"+h['hours']
+                hoo.append(frame)
+            hours_of_operation = ", ".join(hoo)
+        else:
+            phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+        store = []
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append("CA")
+        store.append(store_number)
+        store.append(phone if phone else '<MISSING>')
+        store.append(location_type)
+        store.append(latitude if latitude else '<MISSING>')
+        store.append(longitude if longitude else '<MISSING>')
+        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-
-

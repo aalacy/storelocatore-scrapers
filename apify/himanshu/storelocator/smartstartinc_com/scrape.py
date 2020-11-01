@@ -4,18 +4,13 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('smartstartinc_com')
-
-
 
 
 
 session = SgRequests()
 
 def write_output(data):
-    with open('smartstartinc_com.csv', mode='w', newline='') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -114,7 +109,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
 
         locations_url = "https://webapi.smartstartinc.com/api/Shared/StoreLocations/LookupByZip" \
                         "?companyId=" + str(company_id) + "&countryISOCode=US&zipCode=" + \
@@ -160,7 +155,7 @@ def fetch_data():
             result_coords.append((latitude, longitude))
             if state in states:
                 zipp = script['PostalCode']     
-                page_url = "https://www.smartstartinc.com/locations/" + states[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + street_address.replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
+                page_url = "https://www.smartstartinc.com/locations/" + states[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + script["AddressLine1"].replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
                 country_code = "US"      
             else:
                 continue
@@ -181,17 +176,10 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
-   
-
-
-
-
-
-       
-
 def scrape():
     data = fetch_data()
     write_output(data)
 
 
 scrape()
+
