@@ -48,6 +48,8 @@ def fetch_data():
 
         hours_of_operation = ""
         raw_hours = store["lobbyHours"]
+        if "temporarily closed" in str(raw_hours):
+            raw_hours = store["driveThruHours"]
         for day in raw_hours:
             if day == "overrideText":
                 continue
@@ -56,6 +58,13 @@ def fetch_data():
             except:
                 day_line = day.title() + " Closed"
             hours_of_operation = (hours_of_operation + " " + day_line).strip()
+
+        if location_type == "ATM":
+            hours_of_operation = "Open 24 Hours"
+
+        if hours_of_operation.count("Closed") == 7:
+            if "temporarily closed" in str(store["lobbyHours"]):
+                hours_of_operation = "Temporarily Closed"
 
         latitude = store['geocode']['latitude']
         longitude = store['geocode']['longitude']
