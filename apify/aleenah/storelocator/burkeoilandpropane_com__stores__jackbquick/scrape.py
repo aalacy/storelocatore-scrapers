@@ -28,7 +28,6 @@ def fetch_data():
     for div in divs:
 
         data=div.text.replace('\xa0',' ').strip().split('\n')
-        print(data)
         if 'office' in data[0].lower():
             continue
 
