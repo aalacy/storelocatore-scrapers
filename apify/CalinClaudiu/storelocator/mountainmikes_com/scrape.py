@@ -52,7 +52,7 @@ def scrape():
         state=MappingField(['json','address','addressRegion']),
         zipcode=MappingField(['json','address','postalCode']),
         country_code=MappingField(['json','address','addressCountry']),
-        phone=MappingField(['json','telephone']),
+        phone=MappingField(['json','telephone'], is_required = False),
         store_number=MappingField(['tag','class'], raw_value_transform = lambda x : x[1].rsplit('_')[1]),
         hours_of_operation=MappingField(['json','openingHours'], raw_value_transform = lambda x : x[0].replace('[','').replace(']','').replace("'",'')),
         location_type=MappingField(['json','@type'])
