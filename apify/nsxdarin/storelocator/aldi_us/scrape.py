@@ -28,13 +28,14 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         website = 'aldi.us'
+        print(coord)
         url = 'https://www.aldi.us/stores/en-us/Search?SingleSlotGeo=' + coord + '&Mode=None'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'
         locations_this_url = []
         purl = '<MISSING>'
         typ = 'Store'
-
+        phone = '<MISSING>'
         for line in r.iter_lines(decode_unicode=True):
             if '<li tabindex="' in line:
                 try:
@@ -49,6 +50,8 @@ def fetch_data():
             if '"streetAddress" class="resultItem-Street">' in line:
                 add = line.split(
                     '"streetAddress" class="resultItem-Street">')[1].split('<')[0]
+            if 'itemprop="telephone" href="tel:' in line:
+                phone = line.split('itemprop="telephone" href="tel:')[1].split('"')[0]
             if 'class="resultItem-City" data-city="' in line:
                 try:
                     city = line.split(
@@ -59,21 +62,17 @@ def fetch_data():
                         '<')[0].strip().rsplit(' ', 1)[1]
                     country = 'US'
                     store = '<MISSING>'
-                    phone = '<MISSING>'
                 except:
                     state = '<MISSING>'
             if '<td class="open">' in line:
                 if hours == '':
-                    hours = line.split('<td class="open">')[
-                        1].split('<')[0] + ': '
+                    hours = line.split('<td class="open">')[1].split('<')[0] + ': '
                 else:
                     hours = hours + '; ' + \
-                        line.split('<td class="open">')[
-                            1].split('<')[0] + ': '
+                        line.split('<td class="open">')[1].split('<')[0] + ': '
             if '<td class="open openingTime">' in line:
                 hours = hours + \
-                    line.split('<td class="open openingTime">')[
-                        1].split('<')[0]
+                    line.split('<td class="open openingTime">')[1].split('<')[0]
             if '<div class="onlyMobile resultItem-Arrow">' in line:
 
                 location_info = {'address': add, 'city': city, 'state': state, 'lat': lat, 'lng': lng}
