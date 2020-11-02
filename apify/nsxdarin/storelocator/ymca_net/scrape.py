@@ -1,6 +1,10 @@
 import csv
 import urllib.request
 
+PROXY_URL = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+
+PROXY_PASSWORD = "HKT2ZAHSvokX3hLibngLgo5nT"
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +18,7 @@ def fetch_data():
         print(str(x))
         try:
             url = 'https://www.ymca.net/y-profile/?id=' + str(x)
-            x = urllib.request.urlopen(url)
+            page_text = urllib.request.urlopen(url)
             name = ''
             add = ''
             city = ''
@@ -30,18 +34,18 @@ def fetch_data():
             lat = '<MISSING>'
             lng = '<MISSING>'
             AFound = False
-            for line in x:
+            for line in page_text:
                 line = str(line.decode('utf-8'))
                 if '<h1>' in line and name == '':
                     name = line.split('<h1>')[1].split('</h1>')[0]
                 if "Set as default Y" in line:
                     while AFound is False:
-                        g = next(x)
+                        g = next(page_text)
                         g = str(g.decode('utf-8'))
                         if '<br />' in g:
                             AFound = True
                             add = g.split('<')[0].strip().replace('\t','')
-                            g = next(x)
+                            g = next(page_text)
                             g = str(g.decode('utf-8'))
                             if g.count('<br />') == 2:
                                 add = add + ' ' + g.split('<br />')[0].strip().replace('\t','')
