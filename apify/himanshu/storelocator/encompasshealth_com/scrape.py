@@ -3,16 +3,14 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+from sglogging import SgLogSetup
 
+
+logger = SgLogSetup().get_logger('encompasshealth_com')
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('encompasshealth_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()
