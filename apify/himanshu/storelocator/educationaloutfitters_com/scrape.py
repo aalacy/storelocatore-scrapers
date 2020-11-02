@@ -5,6 +5,9 @@ import json
 from sgrequests import SgRequests
 from requests.exceptions import RequestException  # ignore_check
 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('educationaloutfitters_com')
 
 def log(*args, **kwargs):
     if show_logs == True:
@@ -15,11 +18,6 @@ def log(*args, **kwargs):
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests  # ignore_check
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('educationaloutfitters_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()
