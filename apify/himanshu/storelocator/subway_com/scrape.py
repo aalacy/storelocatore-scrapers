@@ -9,7 +9,7 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('subway_com1.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -25,16 +25,24 @@ def fetch_data():
     k = soup.find_all("a",{"class":"Directory-listLink","href":re.compile("united-states/")})
     for i in k[:26]:
         state_url = "https://restaurants.subway.com/"+i['href']
-        r1 = session.get(state_url)
+        try:
+            r1 = session.get(state_url)
+        except:
+            continue
         soup1 = BeautifulSoup(r1.text,'lxml')
         city_data = soup1.find_all("a",{"class":"Directory-listLink"})
         for j in city_data:
             if j['data-count']=="(1)":
                 page_url = j['href'].replace("..","https://restaurants.subway.com/")
-                r2 = session.get(page_url)
+                # print(page_url)
+                try:
+                    r2 = session.get(page_url)
+                except:
+                    continue
                 soup2 = BeautifulSoup(r2.text,'lxml')
                 jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                location_name = jd['altTagText']
+                location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ").strip()
+                # location_name = jd['altTagText']
                 street_address = jd['profile']['address']['line1']
                 city = jd['profile']['address']['city']
                 state = jd['profile']['address']['region']
@@ -75,14 +83,21 @@ def fetch_data():
                 yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
-                city_r = session.get(city_link)
+                try:
+                    city_r = session.get(city_link)
+                except:
+                    continue
                 city_soup = BeautifulSoup(city_r.text,'lxml')
                 for i in city_soup.find_all("a",{"class":"Teaser-title"}):
                     page_url = i['href'].replace("../../","https://restaurants.subway.com/")
-                    r2 = session.get(page_url)
+                    try:
+                        r2 = session.get(page_url)
+                    except:
+                        continue
                     soup2 = BeautifulSoup(r2.text,'lxml')
                     jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                    location_name = jd['altTagText']
+                    location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ").strip()
+                    # location_name = jd['altTagText']
                     street_address = jd['profile']['address']['line1']
                     city = jd['profile']['address']['city']
                     state = jd['profile']['address']['region']
@@ -129,16 +144,23 @@ def fetch_data():
     time.sleep(20)
     for i in k[26:-1]:
         state_url = "https://restaurants.subway.com/"+i['href']
-        r1 = session.get(state_url)
+        try:
+            r1 = session.get(state_url)
+        except:
+            continue
         soup1 = BeautifulSoup(r1.text,'lxml')
         city_data = soup1.find_all("a",{"class":"Directory-listLink"})
         for j in city_data:
             if j['data-count']=="(1)":
                 page_url = j['href'].replace("..","https://restaurants.subway.com/")
-                r2 = session.get(page_url)
+                try:
+                    r2 = session.get(page_url)
+                except:
+                    continue
                 soup2 = BeautifulSoup(r2.text,'lxml')
+                location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ")
                 jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                location_name = jd['altTagText']
+                # location_name = jd['altTagText']
                 street_address = jd['profile']['address']['line1']
                 city = jd['profile']['address']['city']
                 state = jd['profile']['address']['region']
@@ -179,14 +201,21 @@ def fetch_data():
                 yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
-                city_r = session.get(city_link)
+                try:
+                    city_r = session.get(city_link)
+                except:
+                    continue
                 city_soup = BeautifulSoup(city_r.text,'lxml')
                 for i in city_soup.find_all("a",{"class":"Teaser-title"}):
                     page_url = i['href'].replace("../../","https://restaurants.subway.com/")
-                    r2 = session.get(page_url)
+                    try:
+                        r2 = session.get(page_url)
+                    except:
+                        continue
                     soup2 = BeautifulSoup(r2.text,'lxml')
+                    location_name = soup2.find("h1",{"itemprop":"name"}).text.replace("Subway","Subway at").replace("  "," ")
                     jd = json.loads(str(soup2).split('"entities": ')[1].split(', "nearbyLocs":')[0])[0]
-                    location_name = jd['altTagText']
+                    # location_name = jd['altTagText']
                     street_address = jd['profile']['address']['line1']
                     city = jd['profile']['address']['city']
                     state = jd['profile']['address']['region']
@@ -232,6 +261,7 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
 
 
 

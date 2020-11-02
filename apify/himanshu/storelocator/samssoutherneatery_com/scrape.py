@@ -136,7 +136,6 @@ def fetch_data():
             yield store
     r2 = session.get("https://samssoutherneatery.com/locations-list", headers=headers)
     soup2 = BeautifulSoup(r2.text, "lxml")
-
     for link2 in soup2.find_all("div",{"class":"sqs-block-content"})[2:]:
         try:
             if "http" not in link2.find("a")['href']:
@@ -145,24 +144,34 @@ def fetch_data():
             continue
         page_r = session.get(page_url, headers=headers)
         page_soup = BeautifulSoup(page_r.text, "lxml")
-        try:
-            block = page_soup.find("a",{"class":"sqs-block-button-element--medium sqs-block-button-element"}).text
-        except:
+        if "https://samssoutherneatery.com/vivian-la" in page_url:
             continue
-        # if "Coming soon!" in block:
-        addr = list(page_soup.find("div",{"class":"sqs-block-content"}).stripped_strings)
-        location_name = addr[0]
-        street_address = addr[1]
-        city = addr[2].split(",")[0]
-        state = addr[2].split(",")[1].strip().split(" ")[0]
-        try:
-            zipp = addr[2].split(",")[1].strip().split(" ")[1].replace("7129","71291").replace("7680","76801")
-        except:
-            zipp = "<MISSING>"
-        try:
-            phone = addr[3]
-        except:
-            phone = "<MISSING>"
+        if "https://samssoutherneatery.com/mississippi" in page_url:
+            addr = list(page_soup.find_all("div",{"class":"sqs-block-content"})[1].stripped_strings)
+            location_name = addr[1]
+            street_address = addr[2]
+            city = addr[3].split(",")[0]
+            state = addr[3].split(",")[1].strip().split(" ")[0]
+            zipp = addr[3].split(",")[1].strip().split(" ")[1]
+            phone = addr[4]
+        else:
+            addr = list(page_soup.find("div",{"class":"sqs-block-content"}).stripped_strings)
+            location_name = addr[0]
+            street_address = addr[1]
+            city = addr[2].split(",")[0]
+            state = addr[2].split(",")[1].strip().split(" ")[0]
+            try:
+                zipp = addr[2].split(",")[1].strip().split(" ")[1].replace("7129","71291").replace("7680","76801")
+            except:
+                zipp = "<MISSING>"
+            if "Laplace" in city:
+                zipp = "70068"
+            try:
+                phone = addr[3].replace("Online Ordering Coming Soon!","<MISSING>")
+            except:
+                phone = "<MISSING>"
+        if "OPENING SOON!" in phone:
+            continue
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -187,3 +196,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+ 

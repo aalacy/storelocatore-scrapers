@@ -8,12 +8,7 @@ import sgzip
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('woodspring_com')
-
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,18 +26,18 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas=True)
     MAX_RESULTS = 200
-    MAX_DISTANCE = 150
+    MAX_DISTANCE = 80
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
         x = coord[0]
         y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         }
-        r = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150",headers=headers)
+        r = session.get("https://www-api.woodspring.com/v2/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=200")
         if "searchResults" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
@@ -56,7 +51,7 @@ def fetch_data():
             store = []
             store.append(main_url)
             store.append(store_data["hotelName"])
-            location_request = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones",headers=headers)
+            location_request = session.get("https://www-api.woodspring.com/v2/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities",headers=headers)
             location_data = location_request.json()
             if "hotelStatus" in location_data["hotelInfo"]["hotelSummary"]:
                 if location_data["hotelInfo"]["hotelSummary"]['hotelStatus'] == "Closed":
@@ -81,11 +76,19 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(store_data["geographicLocation"]["latitude"])
             store.append(store_data["geographicLocation"]["longitude"])
-            try:
-                store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip().replace("&","-").replace("a week with staff on property",'').replace('Open from ',''))
-            except:
-                store.append("<MISSING>")
-                
+            try:    
+                mon = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['mon'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['mon'][0]['endTime']
+                tue = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['tue'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['tue'][0]['endTime']
+                wed = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['wed'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['wed'][0]['endTime']
+                thu = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['thu'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['thu'][0]['endTime']
+                fri = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['fri'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['fri'][0]['endTime']
+                sat = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['sat'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['sat'][0]['endTime']
+                sun = location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['sun'][0]['startTime']+"-"+location_data["hotelInfo"]["hotelSummary"]['hotelAmenities'][-1]['hoursOfOperation']['sun'][0]['endTime']
+                hoo = "mon "+mon+", tue "+tue+", wed "+wed+", thu "+thu+", fri "+fri+", sat "+sat+", sun "+sun
+            except KeyError:
+                hoo = "<MISSING>"
+          
+            store.append(hoo)
             store.append(main_url+str(store_data["hotelUri"]))
             for i in range(len(store)):
                 if type(store[i]) == str:
