@@ -6,7 +6,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("craft_co")
 user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
 
-driver = SgSelenium().chrome(executable_path="./chromedriver", user_agent=user_agent)
+driver = SgSelenium().chrome(user_agent=user_agent)
 driver.set_page_load_timeout(2 * 60 * 60)
 driver.set_script_timeout(60)
 
@@ -146,7 +146,7 @@ def extract(company, location, name):
         "longitude": get(location, "longitude"),
         "location_type": "HQ" if location.get("hq") else "Office",
         "location_name": name,
-        "store_number": company.get("id"),
+        "store_number": location.get("id"),
         "phone": MISSING,
         "hours_of_operation": MISSING,
     }
