@@ -1,10 +1,12 @@
 import csv
 from time import sleep
 from sgselenium import SgSelenium
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("craft_co")
 user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
 
-driver = SgSelenium().chrome(user_agent=user_agent)
+driver = SgSelenium().chrome(executable_path="./chromedriver", user_agent=user_agent)
 driver.set_page_load_timeout(2 * 60 * 60)
 driver.set_script_timeout(60)
 
@@ -32,8 +34,8 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
         writer.writerow(fields)
-        for row in data:
-            writer.writerow(row)
+        for rows in data:
+            writer.writerows(rows)
 
 
 def get_fortune_100_companies():
@@ -68,7 +70,18 @@ def fetch_company(slug):
     return query.get("data").get("company")
 
 
-def fetch_hq(company):
+def get_country_code(location, company):
+    return next(
+        (
+            loc.get("countryCode")
+            for loc in company.get("locationsWithCityCountryAddress")
+            if loc.get("id") == location.get("id")
+        ),
+        None,
+    )
+
+
+def fetch_company_locations(company):
     slug = company.get("slug")
     hq_id = company.get("hqLocation").get("id")
     # bypassing same origin constraints
@@ -83,9 +96,9 @@ def fetch_hq(company):
             body: JSON.stringify({{
               "operationName": "getCompanyLocations",
               "variables":{{
-                    "countryCodes":[],
+                    "countryCodes":["CA", "US"],
                     "page":1,
-                    "per":32,
+                    "per":1000,   
                     "slug":"{slug}"
                   }}  
             }})
@@ -96,50 +109,50 @@ def fetch_hq(company):
     )
 
     locations = query.get("data").get("company").get("locationsPage").get("locations")
-    hq = next(location for location in locations if location.get("id") == hq_id)
-    hq_location = next(
-        (
-            location
-            for location in company.get("locationsWithCityCountryAddress")
-            if location.get("id") == hq_id
-        )
-    )
-    hq["countryCode"] = hq_location["countryCode"]
 
-    return hq
+    for location in locations:
+        location["countryCode"] = get_country_code(location, company)
+
+    return locations
 
 
 MISSING = "<MISSING>"
 
 
-def extract(company, hq, name):
+def get(location, key):
+    return location.get(key, MISSING) or MISSING
+
+
+def extract(company, location, name):
     slug = company.get("slug")
-    return {
+    record = {
         "locator_domain": "craft.co",
         "page_url": f"https://craft.co/{slug}",
-        "street_address": hq.get("address", MISSING).replace("\r\n", " "),
-        "city": hq.get("city", MISSING),
-        "state": hq.get("state", MISSING),
-        "zip": MISSING,
-        "country_code": hq.get("countryCode", MISSING),
-        "latitude": hq.get("latitude"),
-        "longitude": hq.get("longitude"),
-        "location_type": "HQ",
+        "street_address": get(location, "address").replace("\r\n", " "),
+        "city": get(location, "city"),
+        "state": get(location, "state"),
+        "zip": get(location, "zipCode"),
+        "country_code": get(location, "countryCode"),
+        "latitude": get(location, "latitude"),
+        "longitude": get(location, "longitude"),
+        "location_type": "HQ" if location.get("hq") else "Office",
         "location_name": name,
-        "store_number": company.get("id", MISSING),
+        "store_number": company.get("id"),
         "phone": MISSING,
         "hours_of_operation": MISSING,
     }
 
+    return [record[field] for field in fields]
 
-def fetch_location(slug, name):
+
+def fetch_locations(slug, name):
     try:
         company = fetch_company(slug)
-        hq = fetch_hq(company)
-        location = extract(company, hq, name)
-        return location
-    except:
-        return fetch_location(slug)
+        locations = fetch_company_locations(company)
+        return [extract(company, location, name) for location in locations]
+    except Exception as ex:
+        logger.info(f"retrying: {slug}")
+        return fetch_locations(slug, name)
 
 
 def fetch_data():
@@ -149,11 +162,7 @@ def fetch_data():
     slugs = [company[0] for company in fortune_100_companies]
 
     for slug, url, name, rank in fortune_100_companies:
-        try:
-            location = fetch_location(slug, name)
-            yield [location.get(field, MISSING) for field in fields]
-        except Exception as ex:
-            failed.append(slug)
+        yield fetch_locations(slug, name)
 
 
 def scrape():
