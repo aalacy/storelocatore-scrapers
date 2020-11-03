@@ -57,12 +57,12 @@ def fetch_data():
 
 		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
 		try:
-			street_address = street_address + " " + item.find(class_="c-address-street-2").text.replace("\u200b","").strip()
+			street_address = street_address + " " + item.find(class_="Core-address").find(class_="c-address-street-2").text.replace("\u200b","").strip()
 			street_address = street_address.strip()
 		except:
 			pass
 		street_address = street_address.replace("  "," ").strip()
-
+		
 		city = item.find(class_="c-address-city").text.strip()
 		state = item.find(class_="c-address-state").text.strip()
 		zip_code = item.find(class_="c-address-postal-code").text.strip()

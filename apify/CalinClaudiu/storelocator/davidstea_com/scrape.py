@@ -35,8 +35,8 @@ def fetch_data():
         if not a['properties']['isPermanentlyClosed'] and country == "CANADA":
             yield a
 
-def extract_hours(values: list) -> str:
-    hours = values[0]
+def extract_hours(values) -> str:
+    hours = values
     return str(hours).replace('[', '').replace(']', '').replace('{', '').replace('}', '').replace("'", '')
 
 
@@ -45,8 +45,8 @@ def scrape():
         locator_domain= ConstantField(url),
         page_url=MappingField(mapping=['properties', 'slug'], raw_value_transform= lambda s: url + s[0]),
         location_name=MappingField(['properties', 'name']),
-        latitude=MappingField(mapping=['geometry', 'coordinates'], raw_value_transform=lambda values: values[0][1]),
-        longitude=MappingField(mapping=['geometry', 'coordinates'], raw_value_transform=lambda values: values[0][0]),
+        latitude=MappingField(mapping=['geometry', 'coordinates'], raw_value_transform=lambda values: values[1]),
+        longitude=MappingField(mapping=['geometry', 'coordinates'], raw_value_transform=lambda values: values[0]),
         street_address=MultiMappingField(mapping=[['properties', 'addressLine1'], ['properties', 'addressLine2']], multi_mapping_concat_with=', '),
         city=MappingField(['properties', 'city']),
         state=MappingField(['properties', 'province']),
@@ -55,7 +55,7 @@ def scrape():
         phone=MappingField(['properties', 'phoneNumber']),
         store_number=MappingField(['properties', 'branch']),
         hours_of_operation=MappingField(['properties', 'hoursOfOperation'], raw_value_transform=extract_hours),
-        location_type=MappingField(['properties', 'categories'], raw_value_transform= lambda x: ": ".join(x[0]))
+        location_type=MappingField(['properties', 'categories'], raw_value_transform=extract_hours)
     )
 
     pipeline = SimpleScraperPipeline(scraper_name='davidstea.com',

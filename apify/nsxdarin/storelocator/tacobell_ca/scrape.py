@@ -65,7 +65,10 @@ def fetch_data():
                 state = csz.split(',')[1].strip()
                 zc = '<MISSING>'
                 g = next(lines)
-                phone = g.split('>')[1].split('<')[0]
+                try:
+                    phone = g.split('>')[1].split('<')[0]
+                except:
+                    phone = '<MISSING>'
             if 'day</td>' in line2:
                 g = next(lines)
                 h = next(lines)
