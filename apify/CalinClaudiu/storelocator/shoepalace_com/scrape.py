@@ -36,7 +36,7 @@ def scrape():
         location_name=MappingField(mapping=['name']),
         latitude=MappingField(mapping=['latitude']),
         longitude=MappingField(mapping=['longitude']),
-        street_address=MultiMappingField(mapping=[['parsed','AddressNumberPrefix'],['parsed','AddressNumber'],['parsed','AddressNumberSuffix'],['parsed','StreetNamePreDirectional'],['parsed','StreetNamePreModifier'],['parsed','StreetNamePreType'],['parsed','StreetName'],['parsed','StreetNamePostDirectional'],['parsed','StreetNamePostModifier'],['parsed','StreetNamePostType'],['parsed','OccupancyType'],['parsed','OccupancyIdentifier']], multi_mapping_concat_with=' ', part_of_record_identity = True),
+        street_address=MultiMappingField(mapping=[['parsed','AddressNumberPrefix'],['parsed','AddressNumber'],['parsed','AddressNumberSuffix'],['parsed','StreetNamePreDirectional'],['parsed','StreetNamePreModifier'],['parsed','StreetNamePreType'],['parsed','StreetName'],['parsed','StreetNamePostDirectional'],['parsed','StreetNamePostModifier'],['parsed','StreetNamePostType'],['parsed','OccupancyType'],['parsed','OccupancyIdentifier'],['parsed','SubaddressType'],['parsed','SubaddressIdentifier']], multi_mapping_concat_with=' ', part_of_record_identity = True),
         city=MappingField(mapping=['parsed','PlaceName']),
         state=MappingField(mapping=['parsed','StateName']),
         zipcode=MappingField(mapping=['parsed','ZipCode'],is_required = False),
