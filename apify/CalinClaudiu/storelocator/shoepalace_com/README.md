@@ -2,6 +2,13 @@
 
 Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
 
+Validator:
+--ignore StreetAddressHasNumber
+Parsing done using usaddress, some addresses are funky.
+
+--ignore LatLngDuplicationValidator
+Data grabbed from API, they have some odd lat/lon pairs.
+
 Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 
 Remember to update `requirements.txt` with all dependencies needed to run your scraper. 

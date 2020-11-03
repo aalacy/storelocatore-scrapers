@@ -36,14 +36,14 @@ def scrape():
         location_name=MappingField(mapping=['name']),
         latitude=MappingField(mapping=['latitude']),
         longitude=MappingField(mapping=['longitude']),
-        street_address=MultiMappingField(mapping=[['parsed','AddressNumberPrefix'],['parsed','AddressNumber'],['parsed','AddressNumberSuffix'],['parsed','StreetNamePreDirectional'],['parsed','StreetNamePreModifier'],['parsed','StreetNamePreType'],['parsed','StreetName'],['parsed','StreetNamePostDirectional'],['parsed','StreetNamePostModifier'],['parsed','StreetNamePostType'],['parsed','OccupancyType'],['parsed','OccupancyIdentifier']], multi_mapping_concat_with=' '),
+        street_address=MultiMappingField(mapping=[['parsed','AddressNumberPrefix'],['parsed','AddressNumber'],['parsed','AddressNumberSuffix'],['parsed','StreetNamePreDirectional'],['parsed','StreetNamePreModifier'],['parsed','StreetNamePreType'],['parsed','StreetName'],['parsed','StreetNamePostDirectional'],['parsed','StreetNamePostModifier'],['parsed','StreetNamePostType'],['parsed','OccupancyType'],['parsed','OccupancyIdentifier']], multi_mapping_concat_with=' ', part_of_record_identity = True),
         city=MappingField(mapping=['parsed','PlaceName']),
         state=MappingField(mapping=['parsed','StateName']),
         zipcode=MappingField(mapping=['parsed','ZipCode'],is_required = False),
         country_code=ConstantField("US"),
         phone=MappingField(mapping=['phone']),
         store_number=MappingField(mapping=['id']),
-        hours_of_operation=MultiMappingField(mapping=[['custom_field_1'], ['custom_field_2'], ['custom_field_3']], multi_mapping_concat_with=', '),#currently all stores are 24/7 from what I've noticed. I would need to make a request per store to just grab the '24/7' data
+        hours_of_operation=MultiMappingField(mapping=[['custom_field_1'], ['custom_field_2'], ['custom_field_3']], multi_mapping_concat_with=', '),
         location_type=MappingField(mapping=['category'])
     )
 
