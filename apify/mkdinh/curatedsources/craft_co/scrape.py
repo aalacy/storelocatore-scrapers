@@ -70,15 +70,24 @@ def fetch_company(slug):
     return query.get("data").get("company")
 
 
+def resolve_country_code(country):
+    if country == "United States":
+        return "US"
+    elif country == "Canada":
+        return "CA"
+    else:
+        return None
+
+
 def get_country_code(location, company):
-    return next(
-        (
-            loc.get("countryCode")
-            for loc in company.get("locationsWithCityCountryAddress")
-            if loc.get("id") == location.get("id")
-        ),
-        None,
-    )
+    country = location.get("country")
+    locations = company.get("locationsWithCityCountryAddress")
+    loc = next((loc for loc in locations if loc.get("id") == location.get("id")), None)
+
+    if not loc:
+        return resolve_country_code(country)
+
+    return loc.get("countryCode") or resolve_country_code(country)
 
 
 def fetch_company_locations(company):
