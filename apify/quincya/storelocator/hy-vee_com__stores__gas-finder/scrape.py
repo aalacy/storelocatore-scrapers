@@ -113,8 +113,6 @@ def fetch_data():
 						'__VIEWSTATEENCRYPTED':'',
 						'__ASYNCPOST':'true'}
 
-		print(script_man)
-
 		response = session.post(base_link,headers=HEADERS,data=payload)
 		base = BeautifulSoup(response.text,"lxml")
 		
