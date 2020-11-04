@@ -69,7 +69,7 @@ def fetch_data():
             if store[2] in adressess:
                 continue
             adressess.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         if len(soup.find_all("div",{"class":"infoCardDealer infoCard"})) < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)

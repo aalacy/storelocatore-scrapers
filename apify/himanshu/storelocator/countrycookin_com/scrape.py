@@ -91,7 +91,7 @@ def fetch_data():
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" or x == None  else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
+        store = ["<MISSING>" if x == "" or x == None  else x.strip() for x in store]
 
         logger.info("data = " + str(store))
         logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

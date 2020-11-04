@@ -50,7 +50,7 @@ def fetch_data():
             store.append(lng)
             store.append("<MISSING>")
             store.append(base_url + location["href"])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
         else:
             store_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text, strict=False)
@@ -71,7 +71,7 @@ def fetch_data():
             store.append(store_data["hasMap"].split("q=")[1].split(",")[1])
             store.append("<MISSING>")
             store.append(base_url + location["href"])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
 
 def scrape():

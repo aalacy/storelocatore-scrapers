@@ -66,7 +66,7 @@ def fetch_data():
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
         store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         if store[2] in addressess:
             continue
         addressess.append(store[2])

@@ -68,13 +68,13 @@ def fetch_data():
             r_soup = session.get(page_url,headers = headers)
             soup_loc = BeautifulSoup(r_soup.text,'lxml')
             # logger.info(page_url)
-            location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip().capitalize()
+            location_name = soup_loc.h1.text.strip().capitalize()
 
             adds = soup_loc.find_all('p',class_='font_7')
             for add in adds:
                 if "Address:" in add.text:
                     break
-            phone= add.find(lambda tag: (tag.name == "span") and "Phone:" in tag.text).nextSibling.encode('ascii', 'ignore').decode('ascii').strip()
+            phone= add.find(lambda tag: (tag.name == "span") and "Phone:" in tag.text).nextSibling.strip()
             hours_of_operation = add.find(lambda tag: (tag.name == "span") and "Hours:" in tag.text).nextSibling.replace('\xa0','').replace('|','')
             if "(" in hours_of_operation:
                 hours_of_operation = hours_of_operation[:hours_of_operation.find("(")].strip()
@@ -82,16 +82,16 @@ def fetch_data():
             address = span.split(',')
             if len(address) == 2:
 
-                street_address = " ".join(address[0].split()[:-1]).encode('ascii', 'ignore').decode('ascii').strip()
-                city = "".join(address[0].split()[-1].encode('ascii', 'ignore').decode('ascii').strip())
-                state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
-                zipp= address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
+                street_address = " ".join(address[0].split()[:-1]).strip()
+                city = "".join(address[0].split()[-1].strip())
+                state = address[-1].split()[0].strip()
+                zipp= address[-1].split()[-1].strip()
 
             else:
-                street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
-                city = address[-2].encode('ascii', 'ignore').decode('ascii').strip()
-                state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
-                zipp = address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
+                street_address = " ".join(address[:-2]).strip()
+                city = address[-2].strip()
+                state = address[-1].split()[0].strip()
+                zipp = address[-1].split()[-1].strip()
                 # logger.info(city)
         else:
             page_url = i.a['href']

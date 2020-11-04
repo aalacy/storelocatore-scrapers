@@ -87,7 +87,7 @@ def fetch_data():
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 #logger.info("data = " + str(store))
                 #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
@@ -108,7 +108,7 @@ def fetch_data():
                      store_number, phone, location_type, str(location1['lat']), str(location1['long']), hours_of_operation,"<MISSING>"]
             if str(store1[2]) + str(store1[-3]) not in addresses1:
                 addresses1.append(str(store1[2]) + str(store1[-3]))
-                store1 = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
+                store1 = [x.strip() if x else "<MISSING>" for x in store1]
                 #logger.info("data = " + str(store))
                 #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store1

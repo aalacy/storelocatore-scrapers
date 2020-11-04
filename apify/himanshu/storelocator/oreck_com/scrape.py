@@ -71,7 +71,7 @@ def fetch_data():
                 store.append("<MISSING>")
                 # logger.info("data ==="+str(store))
                 # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
         except:
             pass
@@ -120,7 +120,7 @@ def fetch_data():
         store.append(page_url)
         # logger.info("data ==="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
 
 def scrape():

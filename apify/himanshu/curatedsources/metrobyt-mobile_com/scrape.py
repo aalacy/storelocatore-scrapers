@@ -99,7 +99,7 @@ def fetch_data():
             store.append(dt['name'] if dt['name'] else '<MISSING>')
             store.append(page_url)
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             if str(store[2]+str(store[-7])+store[-1]) in addressess:
                 continue
             addressess.append(str(store[2]+str(store[-7])+store[-1]))

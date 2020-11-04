@@ -76,7 +76,7 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url if page_url else "<MISSING>")     
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip().replace("0.000000","<MISSING>").replace("(248) 865-4148 / 4444",'(248) 865-4148') if x else "<MISSING>" for x in store]
+        store = [str(x).strip().replace("0.000000","<MISSING>").replace("(248) 865-4148 / 4444",'(248) 865-4148') if x else "<MISSING>" for x in store]
         if store[2] in addresses:
             continue
         addresses.append(store[2])

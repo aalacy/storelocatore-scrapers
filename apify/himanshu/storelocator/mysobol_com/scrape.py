@@ -60,7 +60,7 @@ def fetch_data():
         store.append('<MISSING>')
         store.append(lat)
         store.append(lng)
-        store.append(hour.encode('ascii', 'ignore').decode('ascii') )
+        store.append(hour )
         store.append(get_url)
         return_main_object.append(store)
 

@@ -91,7 +91,7 @@ def fetch_data():
             store.append(hours.strip() if hours != "" else "<MISSING>")
             
             store.append("https://locations.capitalone.com/bank/"+str(store_data["address"]["stateCode"].lower())+"/"+str(store_data['slug']))
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         
         if len(json_data) < MAX_RESULTS:

@@ -99,7 +99,7 @@ def fetch_data():
             store.append(lng if lng else "<MISSING>")
             store.append(hours if hours.strip() else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             ads = address + ' ' + city + ' ' + state + ' ' + zipp
             if ads not in output:
                 output.append(ads)

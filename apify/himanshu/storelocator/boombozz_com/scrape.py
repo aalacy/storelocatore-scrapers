@@ -45,7 +45,7 @@ def fetch_data():
         store.append(i['lng'] if i['lng'] else "<MISSING>")
         store.append(hours.replace("Bar Opens One Hour Later","") if hours else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [x.strip() if x else "<MISSING>" for x in store]
         if store[2] in address :
             continue
         address.append(store[2])

@@ -93,8 +93,8 @@ def fetch_data():
                             if type(store[i]) == str:
                                 store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
                         store = [x.replace("–","-") if type(x) == str else x for x in store]
-                        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                        # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        store = [x.strip() if type(x) == str else x for x in store]
+                        # store = [str(x).strip() if x else "<MISSING>" for x in store]
                         if store[2] in address :
                             continue
                         address.append(store[2])

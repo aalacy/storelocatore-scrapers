@@ -66,13 +66,13 @@ def fetch_data():
                 city = street_address.split()[-1]
                 street_address = " ".join(street_address.split()[:-1])
             else:
-                v = street_address.encode('ascii', 'ignore').decode('ascii')
+                v = street_address
                 location_name = re.split(r'[0-9]', v)[0]
                 city = (" ".join(
-                    street_address.encode('ascii', 'ignore').decode('ascii').replace(location_name, "").split()[
+                    street_address.replace(location_name, "").split()[
                     -2:]).replace("135 ", "").replace("Road ", "").replace("Street ", ""))
                 street_address = (
-                    street_address.encode('ascii', 'ignore').decode('ascii').replace(location_name, "").replace(city,
+                    street_address.replace(location_name, "").replace(city,
                                                                                                                 ""))
 
             if len(bn.strip().split(',')[1].strip().split('Store Hours:')[0].strip().split(' ')) == 3:

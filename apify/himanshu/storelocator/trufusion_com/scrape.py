@@ -79,7 +79,7 @@ def fetch_data():
         store.append(hour if hour else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
         store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         return_main_object.append(store)                
     return return_main_object
 def scrape():

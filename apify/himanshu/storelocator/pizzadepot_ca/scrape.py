@@ -76,7 +76,7 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours.replace('- - - - - - - -','<MISSING>'))
             store.append(page_url if page_url else "<MISSING>")
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.strip() if x else "<MISSING>" for x in store]
             yield store 
     ### Alberta location
 
@@ -120,7 +120,7 @@ def fetch_data():
     store.append(longitude if longitude else "<MISSING>")
     store.append(hours.replace('- - - - - - - -','<MISSING>'))
     store.append(page_url if page_url else "<MISSING>")
-    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    store = [x.strip() if x else "<MISSING>" for x in store]
     yield store 
 def scrape():
     data = fetch_data()

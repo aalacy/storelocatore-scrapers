@@ -133,7 +133,7 @@ def fetch_data():
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == "Blank" else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
+            store = ["<MISSING>" if x == "" or x == "Blank" else x.strip() for x in store]
             # if store_number in addresses:
             #     continue
             # addresses.append(store_number)

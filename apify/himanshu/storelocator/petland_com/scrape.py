@@ -70,7 +70,7 @@ def fetch_data():
         store.append(location_type)
         store.append(latitude)
         store.append(longitude)
-        store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.strip())
         store.append(page_url)
         # logger.info("data ==="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")

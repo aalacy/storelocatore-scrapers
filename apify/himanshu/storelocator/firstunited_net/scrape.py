@@ -94,7 +94,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(hour.replace("Motor Bank Hours:",' Motor Bank Hours: '))
         tem_var.append(link)
-        tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
+        tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         yield tem_var
 
         # return_main_object.append(tem_var)

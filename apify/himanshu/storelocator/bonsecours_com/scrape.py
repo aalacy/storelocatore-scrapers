@@ -74,7 +74,7 @@ def fetch_data():
                 street_address = street_address.strip()[1:]
             store = ["https://www.bonsecours.com/", location_name, street_address, city, state, zipp, country_code,
                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             if str(store[2]+store[-5])  in addressess123:
                 continue
             addressess123.append(str(store[2]+store[-5]))

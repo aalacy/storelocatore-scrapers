@@ -83,7 +83,7 @@ def fetch_data():
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
         store.append("https://www.rosesdiscountstores.com/store-locator-index")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         # logger.info(store)
         yield store
 

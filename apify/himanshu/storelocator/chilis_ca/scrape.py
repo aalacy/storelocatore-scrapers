@@ -124,12 +124,12 @@ def fetch_data():
 
                 # logger.info("fffffffffffffffff",hours_of_operation.replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace(".*Breakfast Served at ALL airport locations",'').replace("PM"," PM "))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip().replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace("*Breakfast Served at ALL airport locations",'').replace("PM"," PM ").replace("AM",' AM '), page_url]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation.strip().replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace("*Breakfast Served at ALL airport locations",'').replace("PM"," PM ").replace("AM",' AM '), page_url]
 
                 if str(store[1]) + str(store[2]) not in addresses:
                     addresses.append(str(store[1]) + str(store[2]))
 
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [x.strip() if x else "<MISSING>" for x in store]
 
                     if "(780) 890-7766" in store or "(403) 760-8502" in store or "(403) 250-2072" in store:
                         # logger.info("data = " + str(store))

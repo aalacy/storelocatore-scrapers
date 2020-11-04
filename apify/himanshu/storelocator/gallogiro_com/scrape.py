@@ -69,7 +69,7 @@ def fetch_data():
             hours_of_operation = "Sunday : 7:00–21:00   Monday : 7:00–21:00    Tuesday : 7:00–21:00    Wednesday : 7:00–21:00    Thursday : 7:00–21:00   Friday : 7:00–21:00   Saturday : 7:00–21:00"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 						store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("–","-"), page_url]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
         # logger.info(store)
 

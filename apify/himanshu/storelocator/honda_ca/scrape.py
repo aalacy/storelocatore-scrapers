@@ -59,7 +59,7 @@ def fetch_data():
 
         # logger.info("location_url ==== " + location_url)
 
-        # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
+        # r_utf = r.text
 
         # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
         json_data = r.json()

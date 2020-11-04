@@ -100,7 +100,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
     # canada location
     canada_r = session.get("https://www.yankeecandle.com/stores/ontario", headers=headers)
@@ -149,7 +149,7 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url)
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
 
 def scrape():
