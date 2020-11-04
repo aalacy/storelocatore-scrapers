@@ -1,13 +1,13 @@
 import requests
 import re
 import datetime
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('maccosmetics_ca')
 
 hasPout = True
 try: 
   import pout
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('maccosmetics_ca')
 
 
 except ImportError: 

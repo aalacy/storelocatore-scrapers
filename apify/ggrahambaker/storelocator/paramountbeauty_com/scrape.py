@@ -59,7 +59,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         logger.info(store_data)
-        logger.info()
         all_store_data.append(store_data)
 
     driver.quit()

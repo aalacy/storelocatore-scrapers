@@ -8,10 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('balladhealth_org')
 
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -38,7 +34,6 @@ def fetch_data():
 	soup= BeautifulSoup(r.text,"lxml")
 	
 	for link1  in soup.find_all("div",{"class":"view-id-locations"}):
-		# logger.info()
 		for link in link1.find_all("div",{"class":"views-row"}):
 			location_type = link1['class'][3].replace("view-display-id-",'').replace("_",' ')
 			street_address = list(link.find("div",{"class":"views-field views-field-address"}).stripped_strings)[0].split("Suite")[0].split("Floor")[0].replace(",",'')

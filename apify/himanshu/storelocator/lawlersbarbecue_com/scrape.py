@@ -48,7 +48,6 @@ def fetch_data():
         # logger.info(data)
         store = []
         store.append("https://www.lawlersbarbecue.com")
-        # logger.info()
         store.append(" ".join(data["Name"].replace("#",'').strip().split( )[1:]))
         phone_data = data['Phone'].replace("+1(","").replace(")","").replace("-","").replace(" ","")
         store.append(data['Address'])

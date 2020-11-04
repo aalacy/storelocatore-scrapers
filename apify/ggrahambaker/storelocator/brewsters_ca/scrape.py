@@ -46,7 +46,6 @@ def fetch_data():
         driver.get(link)
         main = driver.find_element_by_css_selector('main#main')
         # main.find_element_by_css_selector
-        logger.info()
         logger.info(main.text.split('\n'))
         content = main.text.split('\n')
         logger.info(len(content))
@@ -65,7 +64,6 @@ def fetch_data():
                 hours += h + ' '
             hours = hours.strip()
             logger.info(hours)
-            logger.info()
         else:
             location_name = content[1]
             street_address = content[5]
@@ -91,8 +89,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
-        logger.info()
 
     driver.quit()
     return all_store_data

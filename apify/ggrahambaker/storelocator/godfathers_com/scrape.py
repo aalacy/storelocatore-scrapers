@@ -132,12 +132,7 @@ def fetch_data():
 
             if hours == '':
                 logger.info(store)
-                logger.info()
-                logger.info()
-                logger.info()
-                logger.info()
-                logger.info()
-                
+
             location_type = location_type.strip()
             hours = hours.strip()
             

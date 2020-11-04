@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
+from sglogging import SgLogSetup
+logger = SgLogSetup().get_logger('thenaturalcafe_com')
 
 session = SgRequests()
 
@@ -51,9 +53,6 @@ def fetch_data():
  
     import warnings
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thenaturalcafe_com')
 
 
 

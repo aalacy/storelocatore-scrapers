@@ -76,7 +76,6 @@ def fetch_data():
         store.append(lat)
         store.append(lng)
         store.append(hour.replace('Hours: ',''))
-        # logger.info()
         store.append("https://capmat.com/"+lat_and_log[name]['aboutUrl'] if lat_and_log[name]['aboutUrl'] != None else "<NISSING>" )
         store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         return_main_object.append(store)

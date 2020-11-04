@@ -45,7 +45,6 @@ def fetch_data():
             else:
                 latitude =link.find("a",{"href":re.compile("https://www.google")})['href'].split("sll=")[1].split(",")[0]
                 lon = link.find("a",{"href":re.compile("https://www.google")})['href'].split("sll=")[1].split(",")[1].split("&")[0]
-            # logger.info()
         street_address = add[4]
         h = ''
         for index,i in enumerate(add):

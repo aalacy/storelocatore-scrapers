@@ -2,7 +2,9 @@ import csv
 from sgrequests import SgRequests
 import requests_random_user_agent  # ignore_check
 import collections
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger('7-eleven_com')
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -25,11 +27,6 @@ def override_retries():
     # monkey patch sgrequests in order to set max retries ...
     # we will control retries in this script in order to reset the session and get a new IP each time
     import requests  # ignore_check
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('7-eleven_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()

@@ -64,7 +64,6 @@ def fetch_data():
     data = (soup.find("script",{"type":"text/javascript"}).text.split(',"dealers":')[1].split("};")[0])
     json_data = json.loads(data)
     for i in json_data:
-        # logger.info()
             page5 = ((i['id']).replace("gb_nissan_05","").replace("51894","1894").replace("1780","1932").replace("1700","1931").replace("1004","51004").replace("1807","1943").replace("1071","1942"))
             # logger.info(page5 ,"----------------------------------------------------------------------------------")
             link = "https://www.nissan.co.uk/dealer-homepage."+str(page5)+".html"
