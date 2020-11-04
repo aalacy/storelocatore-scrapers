@@ -98,8 +98,6 @@ def fetch_data():
         logger.info('----------')
         logger.info(data[0])
         logger.info(str(i) + '/' + str(len(link_list)))
-        logger.info()
-
         addy_a = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com/?daddr')]")
         map_href = addy_a.get_attribute('href')
         map_link_start = map_href.find('?daddr=')

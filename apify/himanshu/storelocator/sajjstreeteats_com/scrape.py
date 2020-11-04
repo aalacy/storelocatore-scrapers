@@ -8,9 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('sajjstreeteats_com')
 
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -37,11 +34,6 @@ def fetch_data():
     return_main_object=[]
     phone = []
 
-   
-
-
-
-
     time = soup.find_all("div",{"class":"col-7 col-md-7 claro"})
 
     data = (soup.find("script",{"type":"application/ld+json"}))
@@ -53,7 +45,6 @@ def fetch_data():
         if "false" in target_list["hasMap"]:
             pass
         else:
-            # logger.info()
             base_url= target_list["hasMap"]
             r = session.get(base_url,headers=headers)
             soup1= BeautifulSoup(r.text,"lxml").find("section",{"class":"content c-intro container-sm revealable"})

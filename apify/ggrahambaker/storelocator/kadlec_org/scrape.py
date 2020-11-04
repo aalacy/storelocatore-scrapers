@@ -153,9 +153,7 @@ def fetch_data():
 
         logger.info(store_data)
         all_store_data.append(store_data)
-        logger.info()
-        logger.info()
-        
+
     driver.quit()
     return all_store_data
 

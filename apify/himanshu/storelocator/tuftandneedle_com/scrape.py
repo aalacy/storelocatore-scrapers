@@ -8,9 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('tuftandneedle_com')
 
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -81,7 +78,6 @@ def fetch_data():
         raw_address = ""
         hours_of_operation = ""
         page_url = "<MISSING>"
-        # logger.info()
         # if json_data['data']['getStores']["results"]['retailStores']
         
         # logger.info("===============================",current_results_len)

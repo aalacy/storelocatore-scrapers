@@ -1,6 +1,9 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('creamistry_com')
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -45,9 +48,6 @@ def fetch_data():
         for line2 in lines:
             if '<h2 class="section-title" style="padding-left:0px !important;">' in line2:
                 name = line2.split('<h2 class="section-title" style="padding-left:0px !important;">')[1].split('<')[0]
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('creamistry_com')
 
 
             if '<h4>Address & Phone</h4>' in line2:

@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger('weigels_com')
 
 session = SgRequests()
 
@@ -22,11 +24,6 @@ def fetch_data():
     #import certifi # This should be already installed as a dependency of 'requests'
     import warnings
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('weigels_com')
-
-
 
     warnings.simplefilter('ignore',InsecureRequestWarning)
     base_url = "https://weigels.com"

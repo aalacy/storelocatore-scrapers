@@ -61,7 +61,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         logger.info(store_data)
-        logger.info()
 
     return all_store_data
 

@@ -8,8 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('instyprints_com')
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -61,7 +59,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         # logger.info(store_data)
-        # logger.info()
         all_store_data.append(store_data)
     return all_store_data
 
