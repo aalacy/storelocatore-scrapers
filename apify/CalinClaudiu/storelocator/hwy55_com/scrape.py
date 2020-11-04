@@ -15,13 +15,22 @@ def fetch_data():
         headers=headers)
     for j in r:
         yield j
-
+def cleanup(x):
+    try:
+        x=x.split(' (')[0]
+    except:
+        pass
+    try:
+        x=x.split(' -')[0]
+    except:
+        pass
+    return x
 def scrape():
     url="https://www.hwy55.com"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(mapping=['div class=[views-field, views-field-path]','span class=[field-content]'], value_transform = lambda x : url+x.split('a href=')[1].split(' class=[button]')[0]),
-        location_name=MappingField(mapping=['div class=[views-field, views-field-name]','h2 class=[field-content]','h2 class=[field-content]']),
+        location_name=MappingField(mapping=['div class=[views-field, views-field-name]','h2 class=[field-content]','h2 class=[field-content]'], value_transform = cleanup),
         latitude=MissingField(),
         longitude=MissingField(),
         street_address=MappingField(mapping=['div class=[views-field, views-field-address]','div class=[field-content]','div class=[location, vcard]','div class=[adr]','div class=[street-address]','div class=[street-address]']),
