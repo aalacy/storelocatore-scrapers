@@ -26,6 +26,10 @@ def fetch_data():
     for i in son['stores']:
         i['parsed'] = dict(usaddress.parse(i['address']))
         i['parsed'] = {value : key for (key, value) in i['parsed'].items()}
+        if i['id'] == 16973819:
+            i['parsed']['StateName'] = 'FL'
+            i['parsed']['OccupancyType'] = ''
+            #fixing odd case with usaddress
         yield i
 
 def scrape():
@@ -37,9 +41,9 @@ def scrape():
         latitude=MappingField(mapping=['latitude']),
         longitude=MappingField(mapping=['longitude']),
         street_address=MultiMappingField(mapping=[['parsed','AddressNumberPrefix'],['parsed','AddressNumber'],['parsed','AddressNumberSuffix'],['parsed','StreetNamePreDirectional'],['parsed','StreetNamePreModifier'],['parsed','StreetNamePreType'],['parsed','StreetName'],['parsed','StreetNamePostDirectional'],['parsed','StreetNamePostModifier'],['parsed','StreetNamePostType'],['parsed','OccupancyType'],['parsed','OccupancyIdentifier'],['parsed','SubaddressType'],['parsed','SubaddressIdentifier']], multi_mapping_concat_with=' ', part_of_record_identity = True),
-        city=MappingField(mapping=['parsed','PlaceName']),
-        state=MappingField(mapping=['parsed','StateName']),
-        zipcode=MappingField(mapping=['parsed','ZipCode'],is_required = False),
+        city=MappingField(mapping=['parsed','PlaceName'], is_required = False),
+        state=MappingField(mapping=['parsed','StateName'], is_required = False),
+        zipcode=MappingField(mapping=['parsed','ZipCode'], is_required = False),
         country_code=ConstantField("US"),
         phone=MappingField(mapping=['phone']),
         store_number=MappingField(mapping=['id']),
