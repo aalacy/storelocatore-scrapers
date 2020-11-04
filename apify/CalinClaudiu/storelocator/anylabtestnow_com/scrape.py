@@ -2,7 +2,7 @@ from sgscrape.simple_scraper_pipeline import *
 from sgscrape import simple_network_utils as net_utils
 import json
 import re
-                  
+
 def fetch_data():
     data={}
     url="https://www.anylabtestnow.com/locations/"
