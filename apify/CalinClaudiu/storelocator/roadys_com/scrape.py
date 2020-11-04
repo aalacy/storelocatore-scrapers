@@ -52,7 +52,6 @@ def fetch_data():
             data['subpage']=soup.find('div',class_='rloc_address')
             yield data
 
-print()
 def scrape():
     url="https://roadys.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
