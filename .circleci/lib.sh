@@ -4,7 +4,7 @@ crawler_subdir_regex='apify(\/[^/]+){3}'
 
 list_updated_files() {
 	target_branch="${TARGET_BRANCH:-master}"
-	git diff --no-pager --name-only "$(git merge-base --fork-point "$target_branch")"
+	git --no-pager diff --name-only "$(git merge-base --fork-point "$target_branch")"
 }
 
 list_updated_crawlers() {
