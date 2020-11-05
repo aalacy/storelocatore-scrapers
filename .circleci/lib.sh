@@ -6,11 +6,11 @@ list_updated_files() {
 }
 
 get_updated_python_files() {
-	list_updated_files | grep -E '[^.]+\.py$' || true | tr '\n' ' '
+	list_updated_files | grep -E '[^.]+\.py$' || true
 }
 
 get_updated_node_files() {
-	list_updated_files | grep -E '[^.]+\.jsx?$' || true | tr '\n' ' '
+	list_updated_files | grep -E '[^.]+\.jsx?$' || true
 }
 
 check_update_scope() {
