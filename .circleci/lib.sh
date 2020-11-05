@@ -26,13 +26,13 @@ check_update_scope() {
 
 	status_code=0
 	if [ -n "$updated_non_crawler_files" ]; then
-		echo "FAIL: Ordinary PRs must not change files outside of a crawler subdirectory, but found changes to the following files:"
+		echo "FAIL: Ordinary PRs should not change files outside of a crawler subdirectory, but found changes to the following files:"
 		echo "$updated_non_crawler_files"
 		echo
 		status_code=$((status_code + 1))
 	fi
 	if [ "$(echo "$updated_crawlers" | wc -l)" -gt 1 ]; then
-		echo "FAIL: Ordinary PRs must change files in exactly one crawler subdirectory, but found changes in the following crawler subdirectories:"
+		echo "FAIL: Ordinary PRs should change files in exactly one crawler subdirectory, but found changes in the following crawler subdirectories:"
 		echo "$updated_crawlers"
 		echo
 		status_code=$((status_code + 2))
