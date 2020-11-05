@@ -49,7 +49,7 @@ jobs:
             UPDATED_CRAWLER="$(get_updated_crawler)"
             if [ -n "$UPDATED_CRAWLER" ]; then
                 cd $UPDATED_CRAWLER
-                flake8 .
+                flake8 --ignore=E .
             fi
       - run:
           name: Lint files outside crawler subdirectory with flake8
