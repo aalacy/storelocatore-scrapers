@@ -3,8 +3,9 @@
 crawler_subdir_regex='apify(\/[^/]+){3}'
 
 list_updated_files() {
-	target_branch="${TARGET_BRANCH:-master}"
-	git --no-pager diff --name-only "$(git merge-base --fork-point "$target_branch")"
+	current_branch=$(git rev-parse --abbrev-ref HEAD)
+	target_branch="${TARGET_BRANCH:-origin/master}"
+	git --no-pager diff --name-only "$(git merge-base "$current_branch" "$target_branch")"
 }
 
 list_updated_crawlers() {
@@ -34,7 +35,7 @@ filter_node_files() {
 
 check_update_scope() {
 	mapfile -t updated_subdirs < <(list_updated_crawlers)
-	updated_files_outside_crawler_subdir="$(list_updated_files | filter_files_outside_crawler_subdir)"
+	updated_files_outside_crawler_subdir=$(list_updated_files | filter_files_outside_crawler_subdir)
 
 	exit_status=0
 	if [ -n "$updated_files_outside_crawler_subdir" ]; then
