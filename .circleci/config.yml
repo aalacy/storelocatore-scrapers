@@ -80,3 +80,4 @@ workflows:
     jobs:
       - check-update-scope
       - python-lint
+      - node-lint
