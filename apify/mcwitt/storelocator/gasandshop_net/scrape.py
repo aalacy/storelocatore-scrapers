@@ -114,10 +114,9 @@ def fetch_data():
 
 
 def scrape():
-    print(baz)
     data = fetch_data()
     write_output(data)
 
 
 if __name__ == "__main__":
-     scrape()
+    scrape()
