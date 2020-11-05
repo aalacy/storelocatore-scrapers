@@ -8,11 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('goodyearctsc_com')
 
-
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -71,7 +66,6 @@ def fetch_data():
         if k != None and k !=[]:
             # logger.info("=============================")
             current_results_len = len(k)
-            # logger.info()
             for i in k:
                 tem_var=[]
                 if 'hours' in i and i['hours'] !=None:

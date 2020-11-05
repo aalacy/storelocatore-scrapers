@@ -96,9 +96,6 @@ class Scraper(Scrape):
         for store in stores:
             if store["unitNumber"] not in seen:
                 logger.info(store)
-                logger.info()
-                logger.info()
-                logger.info()
                 # Store ID
                 location_id = store["unitNumber"]
 

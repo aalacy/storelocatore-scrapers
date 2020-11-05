@@ -11,15 +11,14 @@ from bs4 import BeautifulSoup as bs
 import json
 from datetime import datetime
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('kroger_com__fuel')
 
 
 def override_retries():
     # monkey patch sgrequests in order to set max retries
     import requests  # ignore_check
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kroger_com__fuel')
-
 
     def new_init(self): 
         requests.packages.urllib3.disable_warnings()

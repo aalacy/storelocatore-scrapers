@@ -50,10 +50,8 @@ def fetch_data():
                 data={'lid':data['id']})
             soup = BeautifulSoup(r2.text, 'lxml')
             data['subpage']=soup.find('div',class_='rloc_address')
-            #print(soup.find_all('div', id_="locations_display"))
             yield data
-#url+x.split('a href=')[0].split('style=')[0].rstrip()
-print()
+
 def scrape():
     url="https://roadys.com/"
     field_defs = SimpleScraperPipeline.field_definitions(

@@ -50,9 +50,6 @@ class Scraper(Scrape):
             #Page Url
             page_url = store.find_element_by_css_selector('a.read-more').get_attribute('href')
             logger.info(page_url)
-            logger.info()
-            logger.info()
-
             # Type
             location_type = 'Mattress Retail'
 

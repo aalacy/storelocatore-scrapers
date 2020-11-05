@@ -48,7 +48,6 @@ def fetch_data():
 
 	final_links = []
 	for main_link in main_links:
-		logger.info()
 		logger.info("Processing State: " + main_link)
 		req = session.get(main_link, headers = HEADERS)
 		time.sleep(randint(1,2))

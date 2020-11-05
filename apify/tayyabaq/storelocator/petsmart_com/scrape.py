@@ -75,7 +75,6 @@ def fetch_data():
         for j in store:
 
             ul=u+j['href']
-            logger.info()
             logger.info(ul)
 
             driver.get(ul)

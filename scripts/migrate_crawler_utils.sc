@@ -1,9 +1,10 @@
-import ammonite.ops._
 import $ivy.`com.github.pathikrit::better-files:3.9.1`
 import better.files._
 import File._
 import java.io.{File => JFile}
 import scala.util.Try
+import scala.util.matching.Regex
+import ammonite.ops._
 
 def all_authors(sgBasePath: os.Path): Stream[os.Path] = 
     ls(sgBasePath / 'apify).toStream.filter(_.isDir)
@@ -65,6 +66,14 @@ def delete_from_reqs(reqs_file: os.Path, requirement_fragment: String): Unit = {
     val new_reqs = reqfile.lines.filterNot(_.contains(requirement_fragment)).reduce(_ + "\n" + _)
     reqfile.overwrite(new_reqs)
 }
+
+def is_in_file(path: os.Path, re: Regex): Boolean =
+    re.findFirstIn(File(path.toString()).contentAsString).nonEmpty
+
+def delete_all_from(str: String, things: Seq[String]): String =
+    things.foldLeft(str){ (accum, nxt) =>
+        accum.replaceAll(nxt, "")
+    }
 
 lazy val sg_dir = pwd / up
 

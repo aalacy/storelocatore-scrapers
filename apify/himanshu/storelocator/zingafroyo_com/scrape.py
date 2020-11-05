@@ -8,10 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('zingafroyo_com')
 
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -69,8 +65,6 @@ def fetch_data():
             if street_address.split()[0].isdigit():
                 city = street_address.split()[-1]
                 street_address = " ".join(street_address.split()[:-1])
-                # logger.info()
-
             else:
                 v = street_address.encode('ascii', 'ignore').decode('ascii')
                 location_name = re.split(r'[0-9]', v)[0]
