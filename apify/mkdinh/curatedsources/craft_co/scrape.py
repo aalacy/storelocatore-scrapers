@@ -1,3 +1,4 @@
+import re
 import csv
 from time import sleep
 from sgselenium import SgSelenium
@@ -125,6 +126,41 @@ def fetch_company_locations(company):
     return locations
 
 
+def get_address(location, name):
+    address = location.get("address")
+    if not address:
+        return name
+
+    city = location.get("city")
+    state = location.get("state")
+    # cases where city names are joined with the rest of the address
+    address = re.sub(f"\d{city}", "", address, re.IGNORECASE)
+
+    components = address.split(", ")
+    length = len(components)
+    # cases where the address has the format of "City, State, Country" ex: Albany, NY, USA
+
+    components = list(
+        filter(
+            lambda x: not re.match(f"USA|CANADA|{city}|{state}", x, re.IGNORECASE),
+            components,
+        )
+    )
+
+    if not len(components):
+        return name
+
+    # cases where the address may have city information
+    last_component = components[-1]
+    if re.match(last_component, city, re.IGNORECASE) or re.match(
+        city, last_component, re.IGNORECASE
+    ):
+        components.pop()
+
+    cleaned_address = ", ".join(components)
+    return cleaned_address.replace("\r\n", " ") or name
+
+
 MISSING = "<MISSING>"
 
 
@@ -137,7 +173,7 @@ def extract(company, location, name):
     record = {
         "locator_domain": "craft.co",
         "page_url": f"https://craft.co/{slug}",
-        "street_address": get(location, "address").replace("\r\n", " "),
+        "street_address": get_address(location, name),
         "city": get(location, "city"),
         "state": get(location, "state"),
         "zip": get(location, "zipCode"),
