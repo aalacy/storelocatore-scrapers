@@ -3,7 +3,7 @@
 crawler_subdir_regex='apify(\/[^/]+){3}'
 
 list_updated_files() {
-	target_branch="${TARGET_BRANCH:-remotes/origin/master}"
+	target_branch="${TARGET_BRANCH:-master}"
 	git diff --name-only "$(git merge-base --fork-point "$target_branch")"
 }
 
