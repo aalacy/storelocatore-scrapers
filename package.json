@@ -1,0 +1,29 @@
+{
+  "name": "crawl-service",
+  "version": "1.0.0",
+  "description": "Safegraph crawl service files from contractors",
+  "main": "index.js",
+  "dependencies": {
+    "prettier": "^2.1.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.12.1",
+    "eslint-config-standard": "^16.0.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SafeGraphInc/crawl-service.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SafeGraphInc/crawl-service/issues"
+  },
+  "homepage": "https://github.com/SafeGraphInc/crawl-service#readme"
+}
