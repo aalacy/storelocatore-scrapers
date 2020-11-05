@@ -37,25 +37,31 @@ jobs:
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(get_updated_python_files)
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
                 black --check $UPDATED_PYTHON_FILES
             fi
       - run:
-          name: Lint with flake8
+          name: Lint crawler with flake8
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(get_updated_python_files)
+            flake8 $(get_updated_crawler)
+      - run:
+          name: Lint files outside crawler subdirectory with flake8
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_files_outside_crawler_subdir | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
-                flake8 $UPDATED_PYTHON_FILES
+                flake8 --ignore=I $UPDATED_PYTHON_FILES
             fi
       - run:
           name: Check with mypy
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(get_updated_python_files)
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
                 mypy $UPDATED_PYTHON_FILES
             fi
@@ -69,7 +75,7 @@ jobs:
           name: Check formatting
           command: |
             source ./.circleci/lib.sh
-            UPDATED_NODE_FILES=$(get_updated_node_files)
+            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
             if [ -n "$UPDATED_NODE_FILES" ]; then
                 npx prettier --check $UPDATED_NODE_FILES
             fi
@@ -77,7 +83,7 @@ jobs:
           name: Lint with eslint
           command: |
             source ./.circleci/lib.sh
-            UPDATED_NODE_FILES=$(get_updated_node_files)
+            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
             if [ -n "$UPDATED_NODE_FILES" ]; then
                 npx eslint $UPDATED_NODE_FILES
             fi

@@ -1,41 +1,55 @@
-#!/bin/sh
+#!/bin/bash
+
+crawler_subdir_regex='apify(\/[^/]+){3}'
 
 list_updated_files() {
 	target_branch="${TARGET_BRANCH:-remotes/origin/master}"
 	git diff --name-only "$(git merge-base --fork-point "$target_branch")"
 }
 
-get_updated_python_files() {
-	list_updated_files | grep -E '[^.]+\.py$' || true
-}
-
-get_updated_node_files() {
-	list_updated_files | grep -E '[^.]+\.jsx?$' || true
-}
-
-check_update_scope() {
-	crawler_regex='apify(\/[^/]+){3}'
-
-	updated_crawlers=$(list_updated_files |
+list_updated_crawlers() {
+	list_updated_files |
 		xargs -I{} dirname {} |
 		sort |
 		uniq |
-		grep -E "$crawler_regex" || true)
+		grep -E "$crawler_subdir_regex" || true
+}
 
-	updated_non_crawler_files=$(list_updated_files | grep -E -v "$crawler_regex" || true)
+get_updated_crawler() {
+	mapfile -t updated_subdirs < <(list_updated_crawlers)
+	echo "${updated_subdirs[0]}"
+}
 
-	status_code=0
-	if [ -n "$updated_non_crawler_files" ]; then
+filter_files_outside_crawler_subdir() {
+	grep -E -v "$crawler_subdir_regex" || true
+}
+
+filter_python_files() {
+	grep -E '[^.]+\.py$' || true
+}
+
+filter_node_files() {
+	grep -E '[^.]+\.jsx?$' || true
+}
+
+check_update_scope() {
+	mapfile -t updated_subdirs < <(list_updated_crawlers)
+	updated_files_outside_crawler_subdir="$(list_updated_files | filter_files_outside_crawler_subdir)"
+
+	exit_status=0
+	if [ -n "$updated_files_outside_crawler_subdir" ]; then
 		echo "FAIL: Changes should be confined to a crawler subdirectory, but found changes to the following files:"
-		echo "$updated_non_crawler_files"
+		echo "$updated_files_outside_crawler_subdir"
 		echo
-		status_code=$((status_code + 1))
+		exit_status=$((exit_status + 1))
 	fi
-	if [ "$(echo "$updated_crawlers" | wc -l)" -gt 1 ]; then
-		echo "FAIL: Changes should be confined to a single crawler subdirectory, but found changes in the following crawler subdirectories:"
-		echo "$updated_crawlers"
+
+	if [ "${#updated_subdirs[@]}" -ne 1 ]; then
+		echo "FAIL: Changes should be contained in a single crawler subdirectory, but found changes in the following crawler subdirectories:"
+		printf '%s\n' "${updated_subdirs[@]}"
 		echo
-		status_code=$((status_code + 2))
+		exit_status=$((exit_status + 2))
 	fi
-	return $status_code
+
+	return $exit_status
 }
