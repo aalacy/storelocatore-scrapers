@@ -1,3 +1,5 @@
+/apify/*/*/*/validate.py
+
 # Logs
 logs
 *.log
