@@ -38,21 +38,21 @@ jobs:
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             UPDATED_PYTHON_FILES=$(get_updated_python_files)
-            [ -n "$UPDATED_PYTHON_FILES" ] && black --check "$UPDATED_PYTHON_FILES"
+            [ -n "$UPDATED_PYTHON_FILES" ] && black --check $UPDATED_PYTHON_FILES
       - run:
           name: Lint with flake8
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             UPDATED_PYTHON_FILES=$(get_updated_python_files)
-            [ -n "$UPDATED_PYTHON_FILES" ] && flake8 "$UPDATED_PYTHON_FILES"
+            [ -n "$UPDATED_PYTHON_FILES" ] && flake8 $UPDATED_PYTHON_FILES
       - run:
           name: Check with mypy
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             UPDATED_PYTHON_FILES=$(get_updated_python_files)
-            [ -n "$UPDATED_PYTHON_FILES" ] && mypy "$UPDATED_PYTHON_FILES"
+            [ -n "$UPDATED_PYTHON_FILES" ] && mypy $UPDATED_PYTHON_FILES
 
   node-lint:
     executor: node/default
@@ -64,13 +64,13 @@ jobs:
           command: |
             source ./.circleci/lib.sh
             UPDATED_NODE_FILES=$(get_updated_node_files)
-            [ -n "$UPDATED_NODE_FILES" ] && npx prettier --check "$UPDATED_NODE_FILES"
+            [ -n "$UPDATED_NODE_FILES" ] && npx prettier --check $UPDATED_NODE_FILES
       - run:
           name: Lint with eslint
           command: |
             source ./.circleci/lib.sh
             UPDATED_NODE_FILES=$(get_updated_node_files)
-            [ -n "$UPDATED_NODE_FILES" ] && npx eslint "$UPDATED_NODE_FILES"
+            [ -n "$UPDATED_NODE_FILES" ] && npx eslint $UPDATED_NODE_FILES
 
 orbs:
   node: circleci/node@4.1.0
