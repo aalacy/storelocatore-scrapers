@@ -7,7 +7,6 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('patelbros_com')
 
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -83,9 +82,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
             
-            # logger.info()
             #logger.info(store_data)
-            #logger.info()
             all_store_data.append(store_data)
 
         if done:

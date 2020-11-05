@@ -75,7 +75,6 @@ def fetch_data():
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
         tem_var.append(i["description"].replace("ATM available during business hours"," ").replace("Hours:","").strip().replace("."," ").replace("Drive-Thru Mon"," Drive-Thru Mon").replace("24 Hour ATM"," 24 Hour ATM"))
-        # logger.info()
         store_detail.append(tem_var)
      
         

@@ -9,10 +9,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('dostoros_com')
 
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -63,7 +59,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text,'lxml')
     a = soup.find('div',class_='locations').find('div',class_='columns').find_all('a')
     for i in a:
-        # logger.info()
         r = session.get('https://www.dostoros.com'+i['href'],headers = headers)
         soup = BeautifulSoup(r.text,'lxml')
         info = soup.find('div',class_= 'locations').find('div',class_='columns').find('div',class_='list').find('div',class_='copy og')

@@ -5,8 +5,9 @@ import re
 import sgzip
 import json
 
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger('frysfood_com')
 
 show_logs = False
 
@@ -32,11 +33,6 @@ def override_retries():
     # monkey patch sgrequests in order to set max retries ...
     # we will control retries in this script in order to reset the session and get a new IP each time
     import requests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('frysfood_com')
-
-
 
     def new_init(self):
         requests.packages.urllib3.disable_warnings()

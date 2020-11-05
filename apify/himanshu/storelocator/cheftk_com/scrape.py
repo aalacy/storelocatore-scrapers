@@ -4,10 +4,11 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+import html5lib
 session = SgRequests()
 
 def write_output(data):
-    with open('cheftk_com.csv', mode='w',  encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',  encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -20,7 +21,7 @@ def fetch_data():
     base_url ="http://www.cheftk.com/"
     
     output=[]
-    soup = BeautifulSoup(session.get("http://www.cheftk.com/home.html", verify=False).text,'lxml')
+    soup = BeautifulSoup(session.get("http://www.cheftk.com/home.html", verify=False).text,'html5lib')
     a = soup.find_all('li',{'style':'width: auto'})
     for i in a:
         location_name=""
@@ -37,7 +38,7 @@ def fetch_data():
         page_url=""
         if "chef-tk-catering-kona.html" in  i.find('a')['href'] :
             r1=session.get(base_url+"/chef-tk-catering-kona.html")
-            soup1=BeautifulSoup(r1.text,'lxml')
+            soup1=BeautifulSoup(r1.text,'html5lib')
             b = soup1.find_all('div',{'class':'editor_color_green'})
             location_name = b[0].text
             street_address = " ".join(b[1].text.encode('ascii', 'ignore').decode('ascii').split(" ")[0:6])
@@ -49,7 +50,7 @@ def fetch_data():
             page_url = base_url+"/chef-tk-catering-kona.html"
         if "snow-factory-tk-kona.html" in  i.find('a')['href']:
             r2 = session.get(base_url+"/snow-factory-tk-kona.html")
-            soup2=BeautifulSoup(r2.text,'lxml')
+            soup2=BeautifulSoup(r2.text,'html5lib')
             c = soup2.find_all('div',{'id':'wsb-element-a976612f-12fc-4516-b514-9f303f2c12d3'})
             street_address = " ".join(c[0].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[0:3])
             city = (c[0].text.split( )[3])
@@ -59,7 +60,7 @@ def fetch_data():
             page_url = base_url+"/snow-factory-tk-kona.html"
         if "gal-bi-808-bbq-mixed-plate.html" in  i.find('a')['href'] :
             r3=session.get(base_url+"/gal-bi-808-bbq-mixed-plate.html")
-            soup3=BeautifulSoup(r3.text,'lxml')
+            soup3=BeautifulSoup(r3.text,'html5lib')
             d = soup3.find_all('div',{'id':'wsb-element-57392ce1-dbea-4e87-93bf-eea49952ba45'})
             for h in d:
                 zipp = (h.text.split()[-2].split("(")[0])
@@ -71,7 +72,7 @@ def fetch_data():
                 page_url = base_url+"/gal-bi-808-bbq-mixed-plate.html"
         if "tk-noodle-house-kainaliu.html" in  i.find('a')['href'] :
             r3=session.get(base_url+"/tk-noodle-house-kainaliu.html")
-            soup3=BeautifulSoup(r3.text,'lxml')
+            soup3=BeautifulSoup(r3.text,'html5lib')
             d = soup3.find_all('span',{'style':'font-family:jacques francois shadow;'})
             location_name =(d[0].text)
             street_address = (d[1].text)+" "+(d[2].text)
@@ -100,11 +101,11 @@ def fetch_data():
         else:
              yield store
 
-    base_url ="http://www.cheftk.com"
+    base_url ="http://www.cheftk.com/"
     
     output=[]
     r=session.get(base_url+"/contact-us.html")
-    soup=BeautifulSoup(r.text,'lxml')
+    soup=BeautifulSoup(r.text,'html5lib')
     bk = []
 
     for x in soup.find_all('a',{'class':'larger-map-link'}):

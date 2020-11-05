@@ -147,8 +147,6 @@ def fetch_data():
         lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
         logger.info(longit, lat)
-        logger.info()
-
         store_number = '<MISSING>'
         location_type = '<MISSING>'
 

@@ -3,7 +3,7 @@ import subprocess
 import sgvalidator
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('cheftk_com')
+logger = SgLogSetup().get_logger('carenow_com')
 
 
 

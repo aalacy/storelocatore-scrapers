@@ -36,7 +36,6 @@ def fetch_data():
     all_store_data = []
     for link in link_list:
         logger.info(locator_domain + link)
-        logger.info()
         r = session.get(locator_domain + link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h2').text.split(',')[0]

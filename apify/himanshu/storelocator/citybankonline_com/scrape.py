@@ -28,7 +28,6 @@ def fetch_data():
     base_url = "https://www.city.bank"
     r = session.get("https://www.city.bank/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # logger.info()
     for dt in str(soup.find_all("div",{"style":"float: left; width: 25%; min-width: 200px;"})[-2]).split("Additional ATM Locations")[-1].split("ATM"):
         soup1 = BeautifulSoup(dt,"html5lib")
         addr = list(soup1.stripped_strings)
