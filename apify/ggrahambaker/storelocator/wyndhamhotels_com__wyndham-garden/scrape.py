@@ -1,79 +1,102 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import re
 import json
-
+import unicodedata
+session = SgRequests()
+# import sgzip
+import time 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.wyndhamhotels.com/'
-    ext = 'wyndham-garden/locations'
-
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-
-    main = driver.find_element_by_css_selector('div.aem-rendered-content')
-    hrefs = main.find_elements_by_xpath("//a[contains(@href, '/overview')]")
-    link_list = []
-    for h in hrefs:
-        link = h.get_attribute('href')
-        if 'mexico' in link:
-            break
-
-        link_list.append(link)
-
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(30)
-        loc_j = driver.find_element_by_xpath('//script[@type="application/ld+json"]')
-        loc_json = json.loads(loc_j.get_attribute('innerHTML'))
-
-        lat = loc_json['geo']['latitude']
-        longit = loc_json['geo']['longitude']
-
-        location_name = loc_json['name']
-        zip_code = loc_json['address']['postalCode']
-
-        city = loc_json['address']['addressLocality']
-
-        street_address = loc_json['address']['streetAddress']
-
-        state = loc_json['address']['addressRegion']
-
-        country_name = loc_json['address']['addressCountry']
-        if 'United States' in country_name:
-            country_code = 'US'
-        else:
-            country_code = 'CA'
-
-        phone_number = loc_json['telephone']
-
-        page_url = link
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        hours = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
-
+    addresses = []
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'Connection': 'keep-alive',
+    }
+    base_url = "https://www.wyndhamhotels.com"
+    location_url1 = "https://www.wyndhamhotels.com/wyndham-garden/locations"
+    try:
+        r = session.get(location_url1, headers=headers,  allow_redirects=False)
+    except Exception as e :
+        pass
+    soup= BeautifulSoup(r.text,"lxml")
+    a = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[0:25]
+    for y in a:
+        e = (y.find_all("li",{"class":"property"}))
+        for b in e:
+            k = (b.find('a')['href'])
+            location_url = base_url+k
+            # print(location_url)
+            try:
+                r1 = session.get(location_url, headers=headers,  allow_redirects=False)
+            except Exception as e:
+                pass
+            soup1= BeautifulSoup(r1.text,"html5lib")
+            # application/ld+json
+            b = soup1.find("script",{"type":"application/ld+json"})
+            # data = json.loads(b)
+            # print(b.text)
+            if b != [] :
+                h  = json.loads(b.text)  
+                # print(h)
+                location_name = (h['name'])
+                street_address = h['address']["streetAddress"]              
+                latitude = h['geo']["latitude"]      
+                longitude = h['geo']["longitude"]                 
+                city = h['address']["addressLocality"]   
+                if "postalCode" in  h['address'] :   
+                    zipp = h['address']["postalCode"]
+                else:
+                    zipp = "<MISSING>"
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+                if ca_zip_list:
+                    zipp = ca_zip_list[-1]
+                    country_code = "CA"
+                if us_zip_list:
+                    zipp = us_zip_list[-1]
+                    country_code = "US"
+                if len(zipp)==6 or len(zipp)==7:
+                    country_code = "CA"
+                else:
+                    country_code = "US"
+                if  "addressRegion" in h['address']:
+                    state = h['address']["addressRegion"]
+                else:
+                    state = "<MISSING>"
+                phone = h['telephone']              
+                store = []
+                store.append("https://www.wyndhamhotels.com/wyndham-garden")
+                store.append(location_name if location_name else "<MISSING>") 
+                # print(location_name)
+                store.append(street_address if street_address else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code)
+                store.append("<MISSING>") 
+                store.append(phone if phone else "<MISSING>" )
+                store.append("Wyndham Garden")
+                store.append( latitude if latitude else "<MISSING>")
+                store.append( longitude if longitude else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(location_url)
+                if store[2] in addresses :
+                    continue
+                addresses.append(store[2])
+                yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
