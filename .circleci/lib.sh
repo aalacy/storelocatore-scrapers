@@ -44,7 +44,7 @@ check_update_scope() {
 		exit_status=$((exit_status + 1))
 	fi
 
-	if [ "${#updated_subdirs[@]}" -ne 1 ]; then
+	if [ "${#updated_subdirs[@]}" -gt 1 ]; then
 		echo "FAIL: Changes should be contained in a single crawler subdirectory, but found changes in the following crawler subdirectories:"
 		printf '%s\n' "${updated_subdirs[@]}"
 		echo
