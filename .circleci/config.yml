@@ -52,7 +52,7 @@ jobs:
                 flake8 --ignore=E .
             fi
       - run:
-          name: Lint updated Python files flake8
+          name: Lint updated Python files with flake8
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
