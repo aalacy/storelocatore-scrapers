@@ -56,7 +56,7 @@ jobs:
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(list_updated_files | filter_files_outside_crawler_subdir | filter_python_files)
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
                 flake8 --ignore=I $UPDATED_PYTHON_FILES
             fi
