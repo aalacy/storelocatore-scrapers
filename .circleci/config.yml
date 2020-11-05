@@ -42,7 +42,7 @@ jobs:
                 black --check $UPDATED_PYTHON_FILES
             fi
       - run:
-          name: Lint crawler with flake8
+          name: Lint updated crawler with flake8
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
@@ -52,7 +52,7 @@ jobs:
                 flake8 --ignore=E .
             fi
       - run:
-          name: Lint files outside crawler subdirectory with flake8
+          name: Lint updated Python files flake8
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
@@ -61,7 +61,7 @@ jobs:
                 flake8 --ignore=I $UPDATED_PYTHON_FILES
             fi
       - run:
-          name: Check with mypy
+          name: Check updated Python files with mypy
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
