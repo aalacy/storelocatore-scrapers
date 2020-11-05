@@ -46,7 +46,11 @@ jobs:
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            flake8 $(get_updated_crawler)
+            UPDATED_CRAWLER="$(get_updated_crawler)"
+            if [ -n "$UPDATED_CRAWLER" ]; then
+                set -x
+                flake8 $(get_updated_crawler)
+            fi
       - run:
           name: Lint files outside crawler subdirectory with flake8
           command: |
@@ -54,6 +58,7 @@ jobs:
             source ./.circleci/lib.sh
             UPDATED_PYTHON_FILES=$(list_updated_files | filter_files_outside_crawler_subdir | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
+                set -x
                 flake8 --ignore=I $UPDATED_PYTHON_FILES
             fi
       - run:
@@ -63,6 +68,7 @@ jobs:
             source ./.circleci/lib.sh
             UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
             if [ -n "$UPDATED_PYTHON_FILES" ]; then
+                set -x
                 mypy $UPDATED_PYTHON_FILES
             fi
 
