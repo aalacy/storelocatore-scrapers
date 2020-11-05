@@ -30,7 +30,7 @@ def parsephn(bad):
     bad = good.sub('',bad)
     good = bad
     return good
-    
+
 def scrape():
     url="https://www.anylabtestnow.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
@@ -39,7 +39,7 @@ def scrape():
         location_name=MappingField(mapping=['title']),
         latitude=MappingField(mapping=['latitude']),
         longitude=MappingField(mapping=['longitude']),
-        street_address=MappingField(mapping=['address']),
+        street_address=MappingField(mapping=['address'], value_transform = lambda x : re.sub("^\\D+(\\d)", "\\1", x)),
         city=MappingField(mapping=['city']),
         state=MappingField(mapping=['state']),
         zipcode=MappingField(mapping=['zip']),
