@@ -1,18 +1,15 @@
-
-#
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+import json
+from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger('cubesmart_com')
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'x-requested-with': 'XMLHttpRequest'
 
-
-
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,144 +21,83 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    #options.add_argument("--start-maximized")
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome('chromedriver',chrome_options=options)
-
 
 def fetch_data():
     # Your scraper here
-
     data = []
-    statelinks = []
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.cubesmart.com/storage-locations/'
-    p = 1
-    driver = get_driver()
-    driver.get(url)
-    time.sleep(1)
-
-
-    #soup = BeautifulSoup(page.text, "html.parser")
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-
-    state_list = soup.findAll('div',{'class':'bodySeo'})
-    logger.info(len(state_list))
-    #driver.quit()
-    for li in state_list:
-        city = li.find('a')
-        link = "https://www.cubesmart.com" + city['href']
-        start = link.find("ib.adnx")
-        if start != - 1:
-            start = link.find("http", start)
-            end = len(link)
-            link = link[start:end]
-            link = link.replace("%2F", "/")
-            link = link.replace("%3A", ":")
-
-        #logger.info(link)
-        #driver = get_driver()
-        driver.get(link)
-        #time.sleep(1)
-
-        soup2 = BeautifulSoup(driver.page_source, "html.parser")
+    states = {'AL':"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado",
+    "CT":"Connecticut","DC":"DC","DE":"Delaware","FL":"Florida","GA":"Georgia",
+    "HI":"Hawaii","ID":"Idaho","IL":"Illinois","IN":"Indiana","IA":"Iowa","KS":"Kansas",
+    "KY":"Kentucky","LA":"Louisiana","ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan",
+    "MN":"Minnesota","MS":"Mississippi","MO":"Missouri","MT":"Montana", "NE":"Nebraska","NV":"Nevada",
+    "NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NY":"New York", "NC":"North Carolina","ND":"North Dakota",
+    "OH":"Ohio","OK":"Oklahoma","OR":"Oregon","PA":"Pennsylvania", "RI":"Rhode Island","SC":"South Carolina",
+    "SD":"South Dakota","TN":"Tennessee","TX":"Texas","UT":"Utah",  "VT":"Vermont","VA":"Virginia"
+    ,"WA":"Washington","WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming"}
+                 
+    cleanr = re.compile(r'<[^>]+>')    
+    url = 'https://www.cubesmart.com/facilities/query/GetSiteGeoLocations'
+    p = 0
+    storelist = []
+    loclist = session.post(url,headers=headers).json()
+    for loc in loclist:
+        
+        store = str(loc['Id'])
+        street = loc['Address']
+        title = 'Self Storage of '+ loc['City']
+        city = loc['City'].lower().strip().replace(' ','-')
+        nowstate = loc['State']
+        state = states[nowstate].lower().strip().replace(' ','-')
+        lat = loc['Latitude']
+        longt = loc['Longitude']        
+        link = 'https://www.cubesmart.com/'+state+'-self-storage/'+city+'-self-storage/'+store+'.html'
+        if street in storelist:
+            continue
+        #print(link)
+        storelist.append(street)
+        r = session.get(link,headers=headers).text
         try:
-            
-            phone = soup2.find('span', {'class': 'tel'}).text
-            phone = ""
-            title = soup2.find('h1').text
-            street = soup2.find('span', {'itemprop': 'streetAddress'}).text
-            city = soup2.find('span', {'itemprop': 'addressLocality'}).text
-            state = soup2.find('span', {'itemprop': 'addressRegion'}).text
-            pcode = soup2.find('span', {'itemprop': 'postalCode'}).text
-            lat = soup2.find('meta', {'itemprop': 'latitude'})
-            lat = lat['content']
-            longt = soup2.find('meta', {'itemprop': 'longitude'})
-            longt = longt['content']
-           
-            hdetail = soup2.findAll('h3', {'class': 'csHoursTitle'})
-            htimes = soup2.findAll('p', {'class': 'csHoursList'})
-            hours = ""
-            for n in range(0, len(htimes)):
-                hours = hours + hdetail[n].text + " " + htimes[n].text + " "
-            hours = hours.replace("PM"," PM ")
-            hours = hours.replace("AM", " AM ")
-            hours = hours.replace("-","- ")
-            hours = hours.replace("  ", " ")
-            #hours = re.sub(pattern," ",hours)
-            if len(hours) < 3:
-                hours = "<MISSING>"
-            if len(phone) <3:
-                phonelist = soup2.find('div', {'class': 'csFacilityPhone'})
-                phonelist = phonelist.findAll('p')
-                phone = phonelist[1].text
-                if len(phone) <3:
-                    phone = phonelist[0].find('span').text
-                    if len(phone) <3:
-                        phone = "<MISSING>"
-
-
-            phone = phone.replace('Current Customers:','')
-            phone = phone.replace('New Customers:','')
-            phone = phone.lstrip()
-            start = link.find("storage") + 4
-            start =  link.find("storage", start)
-            start =  link.find("/",start) + 1
-            end = link.find(".",start)
-            store = link[start:end]
-
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(phone)
-            #logger.info(hours)
-            #logger.info(lat)
-            #logger.info(longt)
-            #logger.info(p)
-            flag = True
-            # logger.info(len(data))
-
-
-
-            if flag:
-                data.append([
-                    'https://www.cubesmart.com',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    'US',
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                    ])
-
+            pcode = r.split(',"postalCode":"',1)[1].split('"',1)[0]
         except:
-            pass
+            continue
+        phone = r.split('},"telephone":"',1)[1].split('"',1)[0]
+        try:
+            hours = r.split('<p class="csHoursList">',1)[1].split('</p>',1)[0].replace('&ndash;',' - ').replace('<br>',' ').lstrip()
+        except:
+            hours = '<MISSING>'
+        if pcode == '75072':
+            pcode ='75070'
+   
+        if str(loc['OpenSoon']) == 'False':
+            data.append([
+                'https://www.cubesmart.com/',
+                link,                   
+                title,
+                street,
+                str(loc['City']),
+                str(loc['State']),
+                pcode,
+                'US',
+                store,
+                phone,
+                '<MISSING>',
+                lat,
+                longt,
+                hours
+            ])
+            #print(p,data[p])
+            p += 1
+        
 
-        p += 1
 
+    
 
-    driver.quit()
-
+                
+        
     return data
 
 
-def scrape():
+def scrape(): 
     data = fetch_data()
     write_output(data)
 
