@@ -42,16 +42,20 @@ def fetch_data():
                     lng = item.split('"longitude":')[1].split(',')[0]
                     r2 = session.get(loc, headers=headers)
                     hours = ''
+                    dc = 0
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode('utf-8'))
                         if '<span class="C_DD-display">' in line2:
                             day = line2.split('<span class="C_DD-display">')[1].split('<')[0]
                         if 'data-opening-hours="' in line2:
                             hrs = day + ': ' + line2.split('data-opening-hours="')[1].split('"')[0]
-                            if hours == '' and 'Sun.' not in hours:
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
+                            if dc <= 6:
+                                if hours == '' and 'Sun.' not in hours:
+                                    hours = hrs
+                                    dc = dc + 1
+                                else:
+                                    dc = dc + 1
+                                    hours = hours + '; ' + hrs
                     typ = 'Dealer'
                     if hours == '':
                         hours = '<MISSING>'

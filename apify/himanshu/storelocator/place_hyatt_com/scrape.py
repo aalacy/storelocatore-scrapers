@@ -8,7 +8,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('place_hyatt_com')
 def write_output(data):
-    with open('data', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -21,7 +21,7 @@ def fetch_data():
              'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36',    
     }
     session = SgRequests()
-    base_url = "https://www.hyatt.com/"     
+    base_url = "http://place.hyatt.com/"     
     r = session.get("https://www.hyatt.com/explore-hotels/partial?regionGroup=1-NorthAmerica&categories=&brands=", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     links = soup.find_all("a",{"class":"b-text_copy-3"})
