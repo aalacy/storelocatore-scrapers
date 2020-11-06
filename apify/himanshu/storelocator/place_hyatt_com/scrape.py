@@ -8,7 +8,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('place_hyatt_com')
 def write_output(data):
-    with open('data', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
