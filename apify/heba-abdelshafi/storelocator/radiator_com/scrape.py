@@ -1,67 +1,137 @@
-from selenium import webdriver
-from time import sleep
-import pandas as pd
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
 
+from sgrequests import SgRequests
 
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
-    
-def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    driver.get('https://www.radiator.com/Locations')
-    location_data=[i.text for i in driver.find_elements_by_xpath('//div[@class="locationLinkContainer"]')]
-    
-    for i in location_data:
-        data['locator_domain'].append('https://www.radiator.com/')
-        data['location_name'].append(i.split('|')[0])
-        data['phone'].append(i.split('|')[-1])
-        #data['zip'].append(i.split('|')[1].split(',')[-1].split()[-1])
-        #data['street_address'].append(i.split('|')[1].split(',')[:-1])
-        #data['country_code'].append('US')
-        data['store_number'].append('<MISSING>')
-        data['location_type'].append('<MISSING>')
-        data['hours_of_operation'].append('<MISSING>')
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
+def fetch_data():
+    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.radiator.com/SiteMap'
+    r = session.get(url, headers=headers, verify=False)   
+    soup =BeautifulSoup(r.text, "html.parser")
+    titlelist = []
+    divlist = soup.select("a[href*=locations]")
+    states = {
+    'alabama': 'AL','alaska': 'AK','arizona': 'AZ','arkansas': 'AR','california': 'CA',
+    'colorado': 'CO','connecticut': 'CT','delaware': 'DE',
+    'district of columbia': 'DC','florida': 'FL','georgia': 'GA','hawaii': 'HI',
+    'idaho': 'ID','illinois': 'IL','indiana': 'IN','iowa': 'IA','kansas': 'KS',
+    'kentucky': 'KY','louisiana': 'LA','maine': 'ME','maryland': 'MD','massachusetts': 'MA',
+    'michigan': 'MI','minnesota': 'MN','mississippi': 'MS',
+    'missouri': 'MO',
+    'montana': 'MT',
+    'nebraska': 'NE',
+    'nevada': 'NV',
+    'new hampshire': 'NH',
+    'new jersey': 'NJ',
+    'new mexico': 'NM',
+    'new york': 'NY',
+    'north carolina': 'NC',
+    'north Dakota': 'ND',
+    'northern Mariana Islands':'MP',
+    'ohio': 'OH',
+    'oklahoma': 'OK',
+    'oregon': 'OR',
+    'pennsylvania': 'PA',
+    'puerto rico': 'PR',
+    'rhode island': 'RI',
+    'south carolina': 'SC',
+    'south dakota': 'SD',
+    'tennessee': 'TN',
+    'texas': 'TX',
+    'utah': 'UT',
+    'vermont': 'VT',
+    'virgin islands': 'VI',
+    'virginia': 'VA',
+    'washington': 'WA',
+    'west virginia': 'WV',
+    'wisconsin': 'WI',
+    'wyoming': 'WY'
+}
+
+   # print("states = ",len(state_list))
+    p = 0
+    for div in divlist:
+        #print(div['href'])
+        if div['href'].find('locations/') == -1:
+            continue
         
-           
-    urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="locationLinkContainer"]/a')]
-    for url in urls:
-        driver.get(url)
-        data['latitude'].append(driver.find_element_by_xpath('//input[@class="address-latitude"]').get_attribute('value'))
-        data['longitude'].append(driver.find_element_by_xpath('//input[@class="address-longitude"]').get_attribute('value'))
-        data['state'].append(driver.find_element_by_xpath('//span[@class="address-state"]').text)
-        data['city'].append(driver.find_element_by_xpath('//span[@class="address-city"]').text)
-        data['street_address'].append(driver.find_element_by_xpath('//span[@class="address-address"]').text)
-        data['zip'].append(driver.find_element_by_xpath('//span[@class="address-zip"]').text)
+        link = div['href']
+        r = session.get(link, headers=headers, verify=False)  
+        soup = BeautifulSoup(r.text,'html.parser')
+        title = soup.find('div',{'class':'locationContent'}).text.lstrip().split('\n',1)[0]
         
-    us_status=['alabama', 'alaska', 'arizona', 'arkansas', 'armed forces america', 'armed forces europe', 'armed forces pacific', 'california', 'colorado', 'connecticut', 'delaware', 'district of columbia', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming']
-    can_status=['province', 'alberta', 'british columbia', 'manitoba', 'new brunswick', 'newfoundland and labrador', 'northwest territories', 'nova scotia', 'nunavut', 'ontario', 'prince edward island', 'quebec', 'saskatchewan', 'yukon']
-    
-    for ind,i in enumerate(data['state']):
-        i=i.lower()
-        if i in can_status:
-            data['country_code'].append('CAN')
-        elif i in us_status:
-            data['country_code'].append('US')
-        else:
-            data['country_code'].append('US')
-            
-   
-    driver.close()
+        content = soup.find('div',{'class':'locationContent'})
+        street = content.find('span',{'class':'address-address'}).text
+        city = content.find('span',{'class':'address-city'}).text
+        state =content.find('span',{'class':'address-state'}).text
+        ccode = content.find('span',{'class':'address-country'}).text
+        pcode = content.find('span',{'class':'address-zip'}).text
+        try:
+            phone = content.select_one('span:contains("Phone")').text.split(': ')[1]
+        except:
+            phone = '<MISSING>'
+        lat = content.find('input',{'class':"address-latitude"})['value']
+        longt = content.find('input',{'class':"address-longitude"})['value']
+        
+        if ccode == 'US':
+            if state == 'OAKLAHOMA':
+                state = 'OKLAHOMA'
+            if state.find(' OR') > -1:
+                state = 'OREGON'
+            state=states[state.lower()]
+
+        if street in titlelist:
+            continue
+        if state == 'TORONTO':
+            state = 'ON'
+        titlelist.append(street)
+        data.append([
+            'https://www.radiator.com/',
+            link,                   
+            title,
+            street,
+            city,
+            state,
+            pcode,
+            ccode,
+            '<MISSING>',
+            phone,
+            '<MISSING>',
+            lat,
+            longt,
+            '<MISSING>'
+        ])
+        #print(p,data[p])
+        p += 1
+
+        
     return data
 
 
 def scrape():
+   
     data = fetch_data()
     write_output(data)
+   
+
 scrape()
