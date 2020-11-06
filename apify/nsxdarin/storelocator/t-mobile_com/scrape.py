@@ -87,15 +87,7 @@ def compute_location_type(store):
     ):
         return "T-Mobile Store (Sprint Repair Center)"
     else:
-        print("************************************")
-        print("type: " + store["type"])
-        print("statusDefinition: " + store["storeDefinition"])
-        print("streetAddress: " + store["location"]["address"]["streetAddress"])
-        print("zip: " + store["location"]["address"]["postalCode"])
-        print("storeDistance: " + str(store["storeDistance"]))
-        print("deviceRepair: " + str(store["deviceRepair"]))
-        print("hasSprintStack: " + str(store["hasSprintStack"]))
-        print("hasTmobileStack: " + str(store["hasTmobileStack"]))
+        raise Exception("unable to determine location_type")
 
 
 def handle_missing(x):
