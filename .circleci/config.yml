@@ -2,34 +2,102 @@
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
-version: 2
+version: 2.1
 jobs:
-  build:
+  check-update-scope:
     docker:
-      # specify the version you desire here
-      - image: circleci/node:10.16.0
-
-    working_directory: ~/repo
-
+      - image: cimg/base:2020.01
     steps:
       - checkout
+      - run:
+          name: Check scope of updates
+          command: |
+            source ./.circleci/lib.sh
+            check_update_scope
 
-      # Download and cache dependencies
+  python-lint:
+    executor: python/default
+    steps:
+      - checkout
       - restore_cache:
           keys:
-            - dependencies-{{ .Branch }}-{{ checksum "package.json" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      # Install according to package-lock
-      - run: npm ci
-
+            - venv-{{ .Branch }}
+      - run:
+          name: Install dependencies
+          command: |
+            python -m venv venv
+            source ./venv/bin/activate
+            pip install .[dev]
       - save_cache:
           paths:
-            - node_modules
-          key: dependencies-{{ .Branch }}-{{ checksum "package.json" }}
-
-      # Lint Code
+            - venv
+          key: venv-{{ .Branch }}
       - run:
-          name: Lint Code
-          command: npm run lint
+          name: Check formatting
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
+            if [ -n "$UPDATED_PYTHON_FILES" ]; then
+                black --check $UPDATED_PYTHON_FILES
+            fi
+      - run:
+          name: Lint updated crawler with flake8
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            UPDATED_CRAWLER="$(get_updated_crawler)"
+            if [ -n "$UPDATED_CRAWLER" ]; then
+                cd $UPDATED_CRAWLER
+                flake8 --ignore=E .
+            fi
+      - run:
+          name: Lint updated Python files with flake8
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
+            if [ -n "$UPDATED_PYTHON_FILES" ]; then
+                flake8 --ignore=I $UPDATED_PYTHON_FILES
+            fi
+      - run:
+          name: Check updated Python files with mypy
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
+            if [ -n "$UPDATED_PYTHON_FILES" ]; then
+                mypy $UPDATED_PYTHON_FILES
+            fi
+
+  node-lint:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          name: Check formatting
+          command: |
+            source ./.circleci/lib.sh
+            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
+            if [ -n "$UPDATED_NODE_FILES" ]; then
+                npx prettier --check $UPDATED_NODE_FILES
+            fi
+      - run:
+          name: Lint with eslint
+          command: |
+            source ./.circleci/lib.sh
+            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
+            if [ -n "$UPDATED_NODE_FILES" ]; then
+                npx eslint $UPDATED_NODE_FILES
+            fi
+
+orbs:
+  node: circleci/node@4.1.0
+  python: circleci/python@1.2.1
+workflows:
+  check:
+    jobs:
+      - check-update-scope
+      - python-lint
+      - node-lint

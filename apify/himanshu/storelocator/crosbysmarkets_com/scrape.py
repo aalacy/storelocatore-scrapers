@@ -14,12 +14,12 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     url = [
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJT36uAoYU44kRAWehb-73w8M&17m1&2e1&callback=_xdc_._xm63mn&client=google-maps-pro&token=56695",
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJkVtpuAcV44kRUVt_osaK9_U&17m1&2e1&callback=_xdc_._lmgq2d&client=google-maps-pro&token=36335",
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJuY3XjgM944kR1EjqU7q3A9U&17m1&2e1&callback=_xdc_._w8otc2&client=google-maps-pro&token=42287",
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJ55Y_F0Ka44kRdWTtD-CB_Dc&17m1&2e1&callback=_xdc_._v41rea&client=google-maps-pro&token=128765",
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJw1u3bW4X44kRwFCjPQKr4k0&17m1&2e1&callback=_xdc_._avx2ze&client=google-maps-pro&token=32904",
-        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJAVU6xlcb44kRLlh7dFe9y8o&17m1&2e1&callback=_xdc_._66lalk&client=google-maps-pro&token=75631"]
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJT36uAoYU44kRAWehb-73w8M&17m1&2e1&callback=_xdc_._xm63mn&client=google-maps-pro&token=86890",
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJkVtpuAcV44kRUVt_osaK9_U&17m1&2e1&callback=_xdc_._lmgq2d&client=google-maps-pro&token=66530",
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJuY3XjgM944kR1EjqU7q3A9U&17m1&2e1&callback=_xdc_._w8otc2&client=google-maps-pro&token=72482",
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJ55Y_F0Ka44kRdWTtD-CB_Dc&17m1&2e1&callback=_xdc_._v41rea&client=google-maps-pro&token=27889",
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJw1u3bW4X44kRwFCjPQKr4k0&17m1&2e1&callback=_xdc_._avx2ze&client=google-maps-pro&token=63099",
+        "https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails?2sen&6e13&10e3&12sIN&14m1&1sChIJAVU6xlcb44kRLlh7dFe9y8o&17m1&2e1&callback=_xdc_._66lalk&client=google-maps-pro&token=105826"]
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'

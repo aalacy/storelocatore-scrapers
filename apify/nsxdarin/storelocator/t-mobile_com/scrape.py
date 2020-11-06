@@ -1,13 +1,11 @@
 import csv
-import sgzip
+from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('t-mobile_com')
 
-
-
-search = sgzip.ClosestNSearch()
+search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 search.initialize()
 
 session = SgRequests()
@@ -19,9 +17,6 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            'locale': 'en_US'
            }
 
-MAX_RESULTS = 50
-MAX_DISTANCE = 25
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -29,75 +24,61 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def parse_hours(store):
+    if 'standardHours' not in store or not store['standardHours']:
+        return '<MISSING>'
+    hours = []
+    days = store['standardHours'] 
+    for day in days:
+        if "opens" in day:
+            hours.append('{}: {}-{}'.format(day['day'], day['opens'], day['closes']))
+    return ', '.join(hours)
+
+def compute_location_type(store):
+    return 'T-MOBILE STORE'
+    print('type: ' + store['type'])
+    print('statusDefinition: ' + store['storeDefinition'])
+    print('streetAddress: ' + store['location']['address']['streetAddress'])
+    print('storeDistance: ' + str(store['storeDistance']))
+    print('deviceRepair: ' + str(store['deviceRepair']))
+    print('hasSprintStack: ' + str(store['hasSprintStack']))
+    print('hasTmobileStack: ' + str(store['hasTmobileStack']))
+
 def fetch_data():
-    sids = []
-    ids = []
-    locations = []
-    coord = search.next_coord()
+    keys = set()
+    coord = search.next()
     while coord:
-        llat = coord[0]
-        llng = coord[1]
-        #logger.info("remaining zipcodes: " + str(len(search.zipcodes)))
-        #logger.info('%s-%s...' % (llat, llng))
+        llat, llng = coord
         url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
-        r = session.get(url, headers=headers)
+        stores = session.get(url, headers=headers).json()
         result_coords = []
         array = []
         website = 't-mobile.com'
-        for line in r.iter_lines():
-            line = str(line.decode('utf-8'))
-            if '{"id":"' in line:
-                items = line.split('{"id":"')
-                for item in items:
-                    if '"type":"' in item:
-                        try:
-                            name = item.split('"name":"')[1].split('"')[0]
-                            store = item.split('"')[0]
-                            typ = item.split('"storeDefinition":"')[1].split('"')[0]
-                            loc = item.split('"url":"')[1].split('"')[0]
-                            phone = item.split('"telephone":"')[1].split('"')[0]
-                            add = item.split('"streetAddress":"')[1].split('"')[0]
-                            city = item.split('"addressLocality":"')[1].split('"')[0]
-                            state = item.split('"addressRegion":"')[1].split('"')[0]
-                            zc = item.split(',"postalCode":"')[1].split('"')[0]
-                            country = 'US'
-                            lat = item.split('"latitude":')[1].split(',')[0]
-                            hours = ''
-                            lng = item.split('"longitude":')[1].split(',')[0]
-                            days = item.split('"standardHours":[')[1].split(']')[0].split('"day":"')
-                            for day in days:
-                                if '"opens":"' in day:
-                                    hrs = day.split('"')[0] + ': ' + day.split('"opens":"')[1].split('"')[0] + '-' + day.split('"closes":"')[1].split('"')[0]
-                                    if hours == '':
-                                        hours = hrs
-                                    else:
-                                        hours = hours + '; ' + hrs
-                            array.append(store)
-                            if hours == '':
-                                hours = '<MISSING>'
-                            if store not in sids:
-                                sids.append(store)
-                                #logger.info(store)
-                                if '"hasSprintStack":true' in item and '"deviceRepair":true' in item:
-                                    typ = 'T-MOBILE STORE (SPRINT REPAIR CENTER)'
-                                if '"type":"National Retail"' in item:
-                                    typ = 'T-MOBILE AUTHORIZED DEALER'
-                                if '"type":"National Retail"' not in item and '"deviceRepair":false' in item:
-                                    typ = 'T-MOBILE STORE'
-                                if '"storeDefinition":"(TPR)Third Party Retail"' in item:
-                                    typ = 'T-MOBILE AUTHORIZED RETAILER'
-                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                        except:
-                            pass
-        if len(array) <= MAX_RESULTS:
-                    logger.info("max distance update")
-                    search.max_distance_update(MAX_DISTANCE)
-        ##        elif len(array) == MAX_RESULTS:
-        ##            logger.info("max count update")
-        ##            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()        
+        for store in stores:
+            name = store['name'] 
+            store_id = store['id'] 
+            location_type = compute_location_type(store) 
+            loc = store['url'] 
+            phone = store['telephone']
+            location = store['location']
+            address = location['address']
+            add = address['streetAddress']
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            zc = address["postalCode"]
+            country = 'US'
+            lat = location["latitude"]
+            lng = location["longitude"]
+            result_coords.append((lat, lng))
+            hours = parse_hours(store)
+            array.append(store)
+            if store_id not in keys:
+                keys.add(store_id)
+                yield [website, loc, name, add, city, state, zc, country, store_id, phone, location_type, lat, lng, hours]
+        search.update_with(result_coords)
+        coord = search.next()
+        return
+
 def scrape():
     data = fetch_data()
     write_output(data)

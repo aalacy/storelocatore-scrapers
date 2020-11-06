@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 import datetime
-import requests
 import unicodedata
 import pgeocode
 from sglogging import SgLogSetup
@@ -24,13 +23,14 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 def fetch_data():
-    r = requests.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
+    r = session.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
     key = r.text.split("&key=")[1].split('");')[0]
     page = 1
     while True:
-       
-        location_request = requests.request("GET","http://find.cashamerica.us/api/stores?p="+str(page)+"&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
-       
+        try:
+            location_request = session.get("http://find.cashamerica.us/api/stores?p="+str(page)+"&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
+        except:
+            break
         data = location_request.json()
         if "message" in data:
             break
@@ -66,7 +66,7 @@ def fetch_data():
             store.append(store_data['latitude'] if store_data['latitude'] else "<MISSING>")
             store.append(store_data['longitude'] if store_data['longitude'] else "<MISSING>")
             try:
-                hours_request = requests.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
+                hours_request = session.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
                 hours_details = hours_request.json()["weeklyHours"]
                 hours = ""
                 for k in range(len(hours_details)):
