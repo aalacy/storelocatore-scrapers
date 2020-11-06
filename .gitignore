@@ -1,3 +1,5 @@
+# Config files in crawler subdirs
+/apify/*/*/*/.eslintrc.json
 /apify/*/*/*/validate.py
 
 # Logs
