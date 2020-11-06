@@ -76,7 +76,6 @@ def fetch_data():
         url = 'https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude=' + str(llat) + '&longitude=' + str(llng) + '&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false'
         stores = session.get(url, headers=headers).json()
         result_coords = []
-        array = []
         website = 't-mobile.com'
         if 'code' not in stores:
             for store in stores:
@@ -102,7 +101,6 @@ def fetch_data():
                 lng = location["longitude"]
                 result_coords.append((lat, lng))
                 hours = parse_hours(store)
-                array.append(store)
                 if store_id not in keys:
                     keys.add(store_id)
                     yield [website, loc, name, add, city, state, zc, country, store_id, phone, location_type, lat, lng, hours]
