@@ -61,7 +61,7 @@ async function scrape({ $, request }) {
       zip,
       country_code,
       store_number,
-      phone: phone.length > 0 ? phone : '<MISSING>',
+      phone: phone || '<MISSING>',
       location_type,
       latitude: latitude || '<MISSING>',
       longitude: longitude || '<MISSING>',
@@ -81,14 +81,8 @@ Apify.main(async () => {
     },
   });
 
-  const proxyConfiguration = await Apify.createProxyConfiguration({
-    groups: ['BUYPROXIES94952'],
-    countryCode: 'US',
-  });
-
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
-    proxyConfiguration,
     ignoreSslErrors: true,
     async handlePageFunction({ request, $ }) {
       switch (request.userData.pageType) {
