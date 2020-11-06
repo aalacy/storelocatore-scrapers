@@ -98,6 +98,15 @@ orbs:
 workflows:
   check:
     jobs:
-      - check-update-scope
-      - python-lint
-      - node-lint
+      - check-update-scope:
+          filters:
+            branches:
+              ignore: master
+      - python-lint:
+          filters:
+            branches:
+              ignore: master
+      - node-lint:
+          filters:
+            branches:
+              ignore: master
