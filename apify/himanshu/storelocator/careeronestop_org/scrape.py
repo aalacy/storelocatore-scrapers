@@ -78,7 +78,7 @@ def fetch_data():
             street_address = street_address.replace("  Market Plaza"," ").replace(" 24025  Freeway"," ").replace("(Mondawmin Mall)","").replace("(Hamilton Street Entrance)","").replace("(basement of  City Hall)","").replace("(Mailing)","").replace(" - (Satellite of the Employment Office)","").replace("; Chesapeake Square Shopping Center","").replace("(45422)","")
             street_address = street_address.replace(" 313 W. Jefferson  Street","").replace("(Mail Stop 4RS79)","").replace("(No Delivery to Physical Address)","").replace("Free Parking off East 19th","").replace(" Department of Human Resources"," Room 101").replace(" 6401  BlvdPO "," ").replace(" 55 Makaena Street","").replace(" 1505 Dillingham Blvd","")
             street_address = street_address.replace(" 10 Calle Ramon E. Betances","").replace(" Calle Palma","").replace(", Bayamon, PR 00961 #10 Palmer St esq. Dr. Veve St","").replace("(Civic Center)","").replace(" 344  Street"," ").replace(", 2325 East 12th Street","")
-            
+           
             store = []
             store.append("https://www.careeronestop.org/")
             store.append(location_name)
