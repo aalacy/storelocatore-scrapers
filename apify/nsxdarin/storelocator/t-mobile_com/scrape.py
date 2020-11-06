@@ -5,7 +5,7 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('t-mobile_com')
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_radius_miles=50)
 search.initialize()
 
 session = SgRequests()
@@ -35,14 +35,38 @@ def parse_hours(store):
     return ', '.join(hours)
 
 def compute_location_type(store):
-    return 'T-MOBILE STORE'
-    print('type: ' + store['type'])
-    print('statusDefinition: ' + store['storeDefinition'])
-    print('streetAddress: ' + store['location']['address']['streetAddress'])
-    print('storeDistance: ' + str(store['storeDistance']))
-    print('deviceRepair: ' + str(store['deviceRepair']))
-    print('hasSprintStack: ' + str(store['hasSprintStack']))
-    print('hasTmobileStack: ' + str(store['hasTmobileStack']))
+    statusDefinition = store['storeDefinition']
+    deviceRepair = store['deviceRepair']
+    hasSprintStack = store['hasSprintStack']
+    hasTmobileStack = store['hasTmobileStack']
+    tags = store['storeTag']
+    if statusDefinition == None and hasSprintStack is False and hasTmobileStack is False:
+        return 'T-Mobile Authorized Dealer'
+    elif 'signature' in tags:
+        return 'T-Mobile Signature Store'
+    elif hasSprintStack is True and hasTmobileStack is False:
+        return 'Sprint Store'
+    elif deviceRepair is False and hasTmobileStack is True and 'FPR' in statusDefinition:
+        return 'T-Mobile Store'
+    elif deviceRepair is False and 'TPR' in statusDefinition:
+        return 'T-Mobile Authorized Retailer'
+    elif deviceRepair is True and hasSprintStack is True and hasTmobileStack is True and 'FPR' in statusDefinition:
+        return 'T-Mobile Store (Sprint Repair Center)'
+    else:
+        print("************************************")
+        print('type: ' + store['type'])
+        print('statusDefinition: ' + store['storeDefinition'])
+        print('streetAddress: ' + store['location']['address']['streetAddress'])
+        print('zip: ' + store['location']['address']['postalCode'])
+        print('storeDistance: ' + str(store['storeDistance']))
+        print('deviceRepair: ' + str(store['deviceRepair']))
+        print('hasSprintStack: ' + str(store['hasSprintStack']))
+        print('hasTmobileStack: ' + str(store['hasTmobileStack']))
+
+def handle_missing(x):
+    if not x or not x.strip():
+        return '<MISSING>'
+    return x
 
 def fetch_data():
     keys = set()
@@ -54,30 +78,36 @@ def fetch_data():
         result_coords = []
         array = []
         website = 't-mobile.com'
-        for store in stores:
-            name = store['name'] 
-            store_id = store['id'] 
-            location_type = compute_location_type(store) 
-            loc = store['url'] 
-            phone = store['telephone']
-            location = store['location']
-            address = location['address']
-            add = address['streetAddress']
-            city = address["addressLocality"]
-            state = address["addressRegion"]
-            zc = address["postalCode"]
-            country = 'US'
-            lat = location["latitude"]
-            lng = location["longitude"]
-            result_coords.append((lat, lng))
-            hours = parse_hours(store)
-            array.append(store)
-            if store_id not in keys:
-                keys.add(store_id)
-                yield [website, loc, name, add, city, state, zc, country, store_id, phone, location_type, lat, lng, hours]
+        if 'code' not in stores:
+            for store in stores:
+                if 'name' in store:
+                    name = store['name'] 
+                else:
+                    name = '<MISSING>'
+                store_id = store['id'] 
+                location_type = compute_location_type(store) 
+                if 'url' in store:
+                    loc = store['url'] 
+                else:
+                    loc = '<MISSING>'
+                phone = handle_missing(store['telephone'])
+                location = store['location']
+                address = location['address']
+                add = handle_missing(address['streetAddress'])
+                city = handle_missing(address["addressLocality"])
+                state = handle_missing(address["addressRegion"])
+                zc = handle_missing(address["postalCode"])
+                country = 'US'
+                lat = location["latitude"]
+                lng = location["longitude"]
+                result_coords.append((lat, lng))
+                hours = parse_hours(store)
+                array.append(store)
+                if store_id not in keys:
+                    keys.add(store_id)
+                    yield [website, loc, name, add, city, state, zc, country, store_id, phone, location_type, lat, lng, hours]
         search.update_with(result_coords)
         coord = search.next()
-        return
 
 def scrape():
     data = fetch_data()
