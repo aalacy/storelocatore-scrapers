@@ -60,7 +60,10 @@ def fetch_data():
                         hours = hours + '; Wed:' + item.split('"salesWednesdayOpen":"')[1].split('00"')[0] + '-' + item.split('"salesWednesdayClose":"')[1].split('00"')[0]
                         hours = hours + '; Thu:' + item.split('"salesThursdayOpen":"')[1].split('00"')[0] + '-' + item.split('"salesThursdayClose":"')[1].split('00"')[0]
                         hours = hours + '; Fri:' + item.split('"salesFridayOpen":"')[1].split('00"')[0] + '-' + item.split('"salesFridayClose":"')[1].split('00"')[0]
-                        hours = hours + '; Sat:' + item.split('"salesSaturdayOpen":"')[1].split('00"')[0] + '-' + item.split('"salesSaturdayClose":"')[1].split('00"')[0]
+                        try:
+                            hours = hours + '; Sat:' + item.split('"salesSaturdayOpen":"')[1].split('00"')[0] + '-' + item.split('"salesSaturdayClose":"')[1].split('00"')[0]
+                        except:
+                            hours = hours + '; Sat: Closed'
                         if store not in ids:
                             ids.append(store)
                             logger.info('Pulling Store ID #%s...' % store)
