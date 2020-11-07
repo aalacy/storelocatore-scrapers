@@ -1,4 +1,3 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
@@ -59,13 +58,11 @@ def fetch_data():
         store.append(store_data['longitude'])
         hours_of_operation=''
         h = BeautifulSoup(store_data["description"],'lxml')
-        hours_of_operation =  (" ".join(list(h.stripped_strings)).replace("Open. Contactless ",''))
+        hours_of_operation =  " ".join(list(h.stripped_strings)).replace("Open. Contactless ",'').replace("Pick Up & Same-Day Delivery also available.",'').replace("Open for Contactless Pickup & Same-Day Delivery also available.",'').split(".")[-1].strip()
         store.append(hours_of_operation if hours_of_operation != "" else "<MISSING>")
         store.append(store_data["url"])
         yield store
 
-    #     return_main_object.append(store)
-    # return return_main_object
 
 def scrape():
     data = fetch_data()

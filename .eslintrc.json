@@ -1,69 +1,14 @@
 {
   "env": {
     "commonjs": true,
-    "es6": true,
+    "es2021": true,
     "node": true
   },
-  "globals": {
-    "Atomics": "readonly",
-    "SharedArrayBuffer": "readonly",
-    "document": "readonly"
-  },
+  "extends": "eslint:recommended",
   "parserOptions": {
-    "ecmaVersion": 2018
+    "ecmaVersion": 12
   },
-  "settings": {
-    "import/resolver": {
-      "node": {
-        "moduleDirectory": ["./node_modules"],
-        "extensions": [".js"]
-      }
-    }
-  },
-  "extends": ["airbnb-base", "prettier"],
-  "plugins": ["prettier"],
   "rules": {
-    "prettier/prettier": [
-      "warn",
-      {
-        "printWidth": 100,
-        "singleQuote": true,
-        "trailingComma": "es5",
-        "bracketSpacing": true,
-        "semi": true,
-        "tabWidth": 2
-      }
-    ],
-    "import/no-extraneous-dependencies": [
-      "error",
-      {
-        "devDependencies": ["**/*.test.js"]
-      }
-    ],
-    "import/extensions": ["warn", "never", { "packages": "always" }],
-    "import/first": "warn",
-    "import/no-named-as-default": "warn",
-    "import/no-unresolved": ["warn"],
-    "import/prefer-default-export": "warn",
-    "camelcase": "off",
-    "class-methods-use-this": "warn",
-    "default-case": "warn",
-    "global-require": "warn",
-    "no-await-in-loop": "warn",
-    "no-class-assign": "warn",
-    "no-console": "off",
-    "no-lone-blocks": "warn",
-    "no-loop-func": "warn",
-    "no-param-reassign": "warn",
-    "no-plusplus": "off",
-    "no-restricted-syntax": "off",
-    "no-return-assign": "warn",
-    "no-shadow": "warn",
-    "no-undef": "error",
-    "no-underscore-dangle": "warn",
-    "no-unused-expressions": "warn",
-    "no-unused-vars": "warn",
-    "no-use-before-define": ["warn", { "variables": false }],
-    "prefer-destructuring": "warn"
+    "no-unused-vars": ["error", { "varsIgnorePattern": "^_" }]
   }
 }

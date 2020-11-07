@@ -6,7 +6,7 @@ session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
-logger = SgLogSetup().get_logger('chrysler_ca')
+logger = SgLogSetup().get_logger('jeep_ca')
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,9 +17,9 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.chrysler.ca/data/dealers/expandable-radius?brand=chrysler&longitude=-81.86942829543213&latitude=43.050732742209725&radius=9999'
+    url = 'https://www.jeep.ca/data/dealers/expandable-radius?brand=jeep&longitude=-78.79747430144536&latitude=43.61861884931869&radius=9999'
     r = session.get(url, headers=headers)
-    website = 'chrysler.ca'
+    website = 'jeep.ca'
     typ = 'Dealer'
     country = 'CA'
     logger.info('Pulling Dealers...')
@@ -33,7 +33,7 @@ def fetch_data():
                     store = item.split('"')[0]
                     logger.info('Pulling Dealer %s...' % store)
                     add = item.split('"address":"')[1].split('"')[0]
-                    loc = 'https://www.chrysler.ca/en/dealers/' + store
+                    loc = 'https://www.jeep.ca/en/dealers/' + store
                     city = item.split('"city":"')[1].split('"')[0]
                     zc = item.split('"zipPostal":"')[1].split('"')[0]
                     phone = item.split('"contactNumber":"')[1].split('"')[0]
