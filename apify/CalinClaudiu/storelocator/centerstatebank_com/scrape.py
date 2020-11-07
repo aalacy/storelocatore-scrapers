@@ -75,6 +75,7 @@ def parse_features(x):
 
     s.pop(0)
     s = ', '.join(s)
+    s = s.replace(')',' ')
     return s
             
          
