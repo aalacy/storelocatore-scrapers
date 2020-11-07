@@ -34,16 +34,17 @@ def fetch_data():
 		location_type = raw_type.text.replace("  "," ")
 		link_id = raw_type["value"]
 
-		page_num = 1
-
-		for i in range(10):
+		for page_num in range(1,10):
 			link = "https://www.facey.com/location-directory/search-results?type=" + link_id + "&page=%s" %page_num
 
 			req = session.get(link, headers = HEADERS)
 			base = BeautifulSoup(req.text,"lxml")
 
 			items = base.find_all(class_="col-sm-12")
-	
+			
+			if len(items) == 0:
+				break
+
 			for item in items:
 
 				location_name = item.a.text.encode("ascii", "replace").decode().replace("?","n").strip()
@@ -72,20 +73,21 @@ def fetch_data():
 				base = BeautifulSoup(req.text,"lxml")
 
 				try:
-					hours_of_operation = " ".join(list(base.find(id="psjh_body_2_psjh_twocol_cellone_0_locationHoursContainer").stripped_strings)).replace("\r\n"," ").replace("Hours:","").strip()
-					hours_of_operation = hours_of_operation.split("PLEASE")[0].split("Website")[0].split("Special")[0].split("Lab")[0].strip()
+					hours_of_operation = " ".join(list(base.find(id="psjh_body_2_psjh_twocol_cellone_0_locationHoursContainer").stripped_strings)).replace("\r\n"," ").replace("Hours:","").strip()					
 				except:
+					try:
+						hours_of_operation = " ".join(list(base.find(id="psjh_body_2_psjh_twocol_celltwo_0_locationHoursContainer").stripped_strings)).replace("\r\n"," ").replace("Hours:","").strip()
+					except:
+						try:
+							hours_of_operation = str(base.find(class_="col-xs-12 col-md-8").p).split("/>")[-1].strip().replace("\xa0","").split("\n")[0]
+						except:
+							hours_of_operation = "<MISSING>"
+				hours_of_operation = hours_of_operation.split("PLEASE")[0].split("Website")[0].split("Special")[0].split("Lab")[0].strip()
+				
+				if "<p>" in hours_of_operation:
 					hours_of_operation = "<MISSING>"
 
 				data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-			try:
-				if "Next" in base.find(class_="locations-listing-paging").find_all("a")[-1].text:
-					page_num = page_num + 1
-				else:
-					break
-			except:
-				break
 
 	return data
 
