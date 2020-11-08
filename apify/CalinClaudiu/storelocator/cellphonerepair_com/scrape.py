@@ -72,10 +72,12 @@ def fetch_data():
                           print_stats_interval = 12)
     for i in j:
         for h in i:
-            link = list(h)[0].split('a href=')[1]
-            link = url + link
-            stores['store'].append(link)
-    #building final store list
+            if 'Coming Soon' in str(json.dumps(h)):
+                pass
+            else:
+                link = list(h)[0].split('a href=')[1]
+                link = url + link
+                stores['store'].append(link)
 
     
     j = utils.parallelize(
