@@ -7,7 +7,7 @@ from sgzip import SearchableCountries
 def fetch_data():
     url = "https://www.pearlevision.ca/webapp/wcs/stores/servlet/AjaxStoreLocatorResultsView?resultSize=5000&latitude="
     headers = {
-'Host': 'www.pearlevision.com',
+'Host': 'www.pearlevision.ca',
 'Connection': 'keep-alive',
 'Cache-Control': 'max-age=0',
 'Upgrade-Insecure-Requests': '1',
@@ -27,9 +27,9 @@ def fetch_data():
            #'WC_SESSION_ESTABLISHED=true;',
            #'WC_PERSISTENT=FuRG%2BXqQLjxhaFi0hUDD3QKQ9mQtEZwjdNLZIoSS6fE%3D%3B2020-11-07+16%3A08%3A02.225_1604765260114-168850_12002_-1002%2C-1%2CUSD%2C2020-11-07+16%3A08%3A02.225_12002;',
            'WC_AUTHENTICATION_-1002=-1002%2CCgQ64D1HPFU01Yzxj60dChBZ%2BEti%2B5IrxEDLfbZmZ4s%3D;',
-           'WC_ACTIVEPOINTER=-1%2C12002;',
-           'WC_USERACTIVITY_-1002=-1002%2C12002%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C1026820673%2CupR%2F4d1swhtdePOXYAL14xfJz2FMjxPwIivkT1LpqHUmxYQ1NyGn7OPm4il0%2BlkqR6s6P50fCyTr1yUvRoOQo%2BcAzmwGRtW9GJkB%2BNGHO%2BnAX6SpC7xmi7jt2NDP3A0a0sCQHWgNgtQIaWBrKt1VFxEhIDnavGFpRYfo8k6XyjrlG1qjwutW34keK6DY0De0imDFIkHJar9DCzZy%2BWev9NSuO%2BaM0b1BlpjaGMklTyhaLVs8C1twGN1DwPo3uQnw;',
-           'WC_GENERIC_ACTIVITYDATA=[7703325384%3Atrue%3Afalse%3A0%3AsQ6BPvrKRCa%2FPm5rt4ZdE1AJRXht7u%2FSR5NmKPccIlg%3D][com.ibm.commerce.context.ExternalCartContext|null][com.ibm.commerce.context.entitlement.EntitlementContext|4000000000000001506%264000000000000001506%26null%26-2000%26null%26null%26null][com.ibm.commerce.store.facade.server.context.StoreGeoCodeContext|null%26null%26null%26null%26null%26null][com.ibm.commerce.catalog.businesscontext.CatalogContext|15951%26null%26false%26false%26false][CTXSETNAME|Store][com.ibm.commerce.context.base.BaseContext|12002%26-1002%26-1002%26-1][com.ibm.commerce.context.audit.AuditContext|1604765260114-168850][com.ibm.commerce.context.experiment.ExperimentContext|null][com.ibm.commerce.giftcenter.context.GiftCenterContext|null%26null%26null][com.ibm.commerce.context.globalization.GlobalizationContext|-1%26USD%26-1%26USD];',
+           'WC_ACTIVEPOINTER=-1%2C12551;',
+           'WC_USERACTIVITY_-1002=-1002%2C12551%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C1252615054%2CP8ZiPiAGNf1HQz74rFOoc7d7nJYHURPPuEe2QNFLN8jTC6IpNr%2Fwb51RHEuFQqbIeuKjKHPBHz4nKAoC%2FdKwi8Sn4nlb3xaiDddPNobq7LiDlDkowoWRwVvmESfxev86KUU8YlMATARtzFdAh7ZyW3ZAhrTx84Q04d3cwsGQqUJcSSnTnImvRhIHw3Q2ni5niEBYUcgxd5%2B1p5zXT4XsFgWZ9Kpr1UXFO93EjZ3or646NwmDeVPlwnolIVhtlnx%2F;',
+           'WC_GENERIC_ACTIVITYDATA=[7704303882%3Atrue%3Afalse%3A0%3A7jwOQd%2FuSznXc6UokPIn1G6P02WEZo1S7V3sRnNKtp4%3D][com.ibm.commerce.context.ExternalCartContext|null][com.ibm.commerce.context.entitlement.EntitlementContext|4000000000000002002%264000000000000002002%26null%26-2000%26null%26null%26null][com.ibm.commerce.store.facade.server.context.StoreGeoCodeContext|null%26null%26null%26null%26null%26null][com.ibm.commerce.catalog.businesscontext.CatalogContext|15952%26null%26false%26false%26false][CTXSETNAME|Store][com.ibm.commerce.context.base.BaseContext|12551%26-1002%26-1002%26-1][com.ibm.commerce.context.audit.AuditContext|1604840324929-222938][com.ibm.commerce.context.experiment.ExperimentContext|null][com.ibm.commerce.giftcenter.context.GiftCenterContext|null%26null%26null][com.ibm.commerce.context.globalization.GlobalizationContext|-1%26CAD%26-1%26CAD];',
            #'_ga=GA1.2.20649102.1604765920;',
            #'_gid=GA1.2.855605919.1604765920;',
            #'city=dallas;',
