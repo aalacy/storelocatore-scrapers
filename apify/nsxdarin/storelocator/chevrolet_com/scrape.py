@@ -64,9 +64,9 @@ days = {
 
 def get_hours(location):
     hours = (
-        location.get("generalOpeningHour") or
-        location.get("serviceOpeningHour") or
-        location.get("partsOpeningHour")
+        location.get("generalOpeningHour")
+        or location.get("serviceOpeningHour")
+        or location.get("partsOpeningHour")
     )
     if not hours:
         return MISSING
