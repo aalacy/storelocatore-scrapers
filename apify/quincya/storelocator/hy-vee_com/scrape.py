@@ -183,9 +183,10 @@ def fetch_data():
 
 			hours_of_operation = base.find(id="page_content").find_all("p")[1].text.replace("\n"," ").replace("\r"," ").encode("ascii", "replace").decode().replace("?","-").strip()
 			if not hours_of_operation:
-				hours_of_operation = base.find(class_="storeHours table").find_all("td")[1].text.replace("\n","").replace("\r"," ").strip()
+				hours_of_operation = base.find(class_="storeHours table").find_all("td")[1].text.replace("\n","").replace("\r"," ").encode("ascii", "replace").decode().replace("?","-").strip()
 			hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-
+			hours_of_operation = hours_of_operation.replace("for the general public.","").replace("(midnight)","").split("If need")[0].strip()
+			
 			try:
 				map_link = base.find(id="ctl00_cph_main_content_aMapItWithGoogle")["href"]
 				req = session.get(map_link, headers = HEADERS)

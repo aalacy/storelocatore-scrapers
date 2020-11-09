@@ -1,111 +1,115 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import sgzip
 import json
 import time
-from sgrequests import SgRequests
+import html5lib
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = session.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = session.post(url,headers=headers,data=data)
+               else:
+                   r = session.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 def fetch_data():
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes= ["CA"])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
-    current_results_len = 0  
-    zip_code = search.next_zip()
-    base_url = "https://secondcup.com"
-
-    while zip_code:
-        result_coords = []
-        headers = {
-            'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'content-type':'application/x-www-form-urlencoded',
-            'origin':'https://secondcup.com',
-            'referer':'https://secondcup.com/find-a-cafe',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
-        }
-        data = {
-            "postal_code":str(zip_code),
-            "honeypot_time":"viegTrhkehQSrGlaqGAgzZGcR6WJLSOxDTtG5kyd_6g",
-            "form_build_id":"form-H8r7uTh1e7geGjlHdIpghXc5QTE0-kzVD4of7xjSjw8",
-            "form_id": "postal_code_form"
-        }
-        location_url = "https://secondcup.com/find-a-cafe"
-
-        soup = BeautifulSoup(session.post(location_url, data=data, headers=headers).text, "lxml")
-        current_results_len = len(soup.find_all("a",{"class":"a-link"}))
-        for link in soup.find_all("a",{"class":"a-link"}):
-            if "google" in link['href']:
-                continue
-            page_url = base_url+link['href']
-            if "closed" in link['href']:
-                continue
-            soup1 = BeautifulSoup(session.get(page_url).text, "lxml")
+    address = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
+    base_url = "https://www.chezcora.com"
+    location_url = "https://www.chezcora.com/en/breakfast-restaurants"
+    r = request_wrapper(location_url,"get",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    data = soup.find("select",{"id":"provinces"}).find_all("option")
+    for i in data:
+        k = (i['value'][1:].lstrip().rstrip().strip())
+        link = "https://www.chezcora.com/"+str(k)
+        r1 = request_wrapper(link,"get",headers=headers)
+        soup1 = BeautifulSoup(r1.text,"lxml")
+        data1 = soup1.find_all("div",{"class":"col-1-2 resto-contact"})
+        for i in data1:
+            location_name = (i.find("h2").text.replace("é","e").replace("è","e").replace("â","a").replace("ô","o"))
+            url = i.find("h2").find("a")['href']
+            street_address = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[1].replace("é","e").replace("è","e").replace("â","a").replace("ô","o").encode('ascii', 'ignore').decode('ascii')
             try:
-                addr = list(soup1.find("div",{"class":"m-location-features__address"}).stripped_strings)
-                location_name = soup1.find("div",{"class":"l-location__title"}).text.strip()
-                street_address = addr[0]
-                city = addr[1].split(",")[0]
-                state = addr[1].split(",")[1]
-                zipp = addr[1].split(",")[2].strip()
-                phone = re.sub(r'\s+'," ",soup1.find("div",{"class":"m-location-features__phone"}).text.replace("ext. 21079","").split("/")[0].replace("TBD","<MISSING>").replace("No Phone","<MISSING>"))
-                if phone == " ":
-                    phone = "<MISSING>"
-                else:
-                    phone = phone
-                try:
-                    hours = " ".join(list(soup1.find("ul",{"class":"m-location-hours__list"}).stripped_strings))
-                except:
-                    hours = "CLOSED"
+                city =  " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[0].replace("é","e").replace("è","e").replace("â","a").replace("ô","o")
+                state = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[1].strip().rstrip().lstrip()
+                zipp = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[2:][0].strip().rstrip().lstrip()
+                phone = i.find_all("p")[1].text.replace("      ","")
+                hours = (i.find("div",{"class":"tabHoraire"}).text.strip().lstrip().rstrip().replace("\n","").split(" "))
+                hours_of_operation = " ".join(hours).replace("\n","").replace("\t","").replace("\r","").encode('ascii', 'ignore').decode('ascii').strip().replace("p.m.Saturday","p.m. Saturday").replace("p.m.Sunday","p.m. Sunday")
+                page_url = ("https://www.chezcora.com"+str(url))
             except:
-                continue
-            result_coords.append((0, 0))
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                phone = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                page_url = "<MISSING>"
+            try:
+                r2 = request_wrapper(page_url,"get",headers=headers)
+                soup2 = BeautifulSoup(r2.text,"html5lib")
+                data2 = soup2.find_all("script")[8]
+                latitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[0].split("lat: ")[1])
+                longitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[1].split("lon: ")[1])
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
             store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(location_name if location_name else "<MISSING>") 
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
             store.append("CA")
             store.append("<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("Cafe")
             store.append("<MISSING>")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else"<MISSING>")
             store.append("<MISSING>")
-            store.append(hours)
-            store.append(page_url)
-            if store[2] in addresses:
+            store.append(page_url if page_url else "<MISSING>")
+            if store[2] in address :
                 continue
-            addresses.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            yield store
-        if current_results_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
+            address.append(store[2])
+            yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-
-
 

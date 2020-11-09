@@ -38,7 +38,7 @@ def fetch_data():
         store.append(h['StoreName'])
         store.append(h['Latitude'])
         store.append(h['Longitude'] )
-        store.append(hours_of_operation)
+        store.append(hours_of_operation.replace("Tuesday: 10:00 - 10:00","Tuesday: 10:00 - 22:00").replace("Tuesday: 09:00 - 09:00","Tuesday: 09:00 - 21:00").replace("Tuesday: 12:00 - 12:00","Tuesday: 12:00 - 00:00"))
         store.append("<MISSING>")
         yield store
 def scrape():

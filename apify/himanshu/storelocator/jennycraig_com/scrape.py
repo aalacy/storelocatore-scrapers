@@ -24,7 +24,7 @@ def write_output(data):
             writer.writerow(row)
 
 def parser(location_soup,url):
-    name = " ".join(list(location_soup.find("div",{'id':"rls_loc_name"}).stripped_strings))
+    name = " ".join(list(location_soup.find("div",{'class':"location-name"}).stripped_strings))
     street_address = location_soup.find("meta",{'property':re.compile("street-address")})["content"].replace(","," ").replace("  ","")
     city = location_soup.find("meta",{'property':re.compile("locality")})["content"]
     state = location_soup.find("meta",{'property':re.compile("region")})["content"]
@@ -36,7 +36,7 @@ def parser(location_soup,url):
     country = location_soup.find("meta",{'property':re.compile("country-name")})["content"]
     if country == "PR":
         country = "US"
-    hours = " ".join(list(location_soup.find("div",{'id':"rls_loc_hours"}).stripped_strings)).split("if(typeof")[0]
+    hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).split("if(typeof")[0]
     lat = location_soup.find("meta",{'property':re.compile("latitude")})["content"]
     lng = location_soup.find("meta",{'property':re.compile("longitude")})["content"]
     store = []
@@ -65,16 +65,20 @@ def fetch_data():
     r = session.get("https://locations.jennycraig.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for states in soup.find_all("a",{'class':"regionlist gaq-link"}):
-        # logger.info(states["href"])
+    for states in soup.find_all("a",{'class':"ga-link"}):
+        if "Puerto Rico" in states.text:
+            continue
         state_request = session.get(states["href"],headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
-        for city in state_soup.find_all("a",{'class':"citylist gaq-link"}):
-            # logger.info(city["href"])
+       
+        for city in state_soup.find_all("a",{'class':"ga-link"}):
+            if "https://locations.jennycraig.com/" == city["href"]:
+                continue
             city_request = session.get(city["href"],headers=headers)
             city_soup = BeautifulSoup(city_request.text,"lxml")
-            for location in city_soup.find("div",{"class":'tlsmap_list'}).find_all("div",recursive=False):
-                location_url = location.find("a")['href']
+            # .find_all("div",recursive=False)
+            for location in city_soup.find_all("li",{"class":'map-list-item-wrap mb-10'}):
+                location_url = location.find("a",{"class":"center-info info ga-link"})['href']
                 location_request = session.get(location_url,headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 store_data = parser(location_soup,location_url)

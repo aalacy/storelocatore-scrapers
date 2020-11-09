@@ -52,6 +52,9 @@ def fetch_data():
             hoo = hoo.replace("(uninterrupted service","").replace("Virtually (Phone, computer, email, appointments for program participants)","").replace("Thur (By Appointment)","").replace(", excluding weekends and holidays","")
             if hoo=="":
                 hoo = "<MISSING>"
+            if "Business Rep: No" ==hoo or "by appointment only" == hoo or "Appointment Only"== hoo or "Closed to the public"== hoo or "By appointment only" ==hoo or "Call for hours" == hoo or "Currently closed due to COVID crisis, some programs available." == hoo or ", call summer hrs" == hoo or "As Needed" ==hoo or "The Douglas CRC is closed to the public until further notice"== hoo or "COVID Hours of Operation " == hoo or "N/A" == hoo:
+                hoo = "<MISSING>"
+            hoo = hoo.replace("*Operating hours may be different due to COVID-19/Pandemic",'').replace("since (COVID-19) AJCC Appointment Only, hours of operation:  ",'').replace("Virtual services provided during these hours.  Not open to the public.",'').replace("COVID Hours of Operation ",'').replace(", Walk-in and appointments available",'').replace("COVID Hours of Operations: Hours of Operation: ",'').replace("Call 940-322-1801 ",'').replace(" call for summer hours",'').replace("Virtually (Phone, computer, email, appointments for program participants) ",'')
             temp_phone = raw_data[1].replace("WIOA Office","").replace("Public Phone:","").replace("WIOA","").replace("(","").replace(")","-").replace("=","-").replace(" ","").lstrip("1-").strip()
             phone = temp_phone[:12].replace("800-285-WORK","<MISSING>")
             try:

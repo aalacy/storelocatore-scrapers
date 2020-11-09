@@ -5,18 +5,10 @@ import re
 import json
 import sgzip
 import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lequipeur_com')
-
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
-    with open('lequipeur_com.csv', mode='w', encoding="utf-8", newline='') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -63,13 +55,11 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-
         url = "https://api.lequipeur.com/hy/v1/lequipeur/storelocators/near"
-
+        
         querystring = {"location":str(zip_code),"pageSize":"20"}
-        json_data = session.get(url, headers=headers, params=querystring).json()
-
         try:
+            json_data = session.get(url, headers=headers, params=querystring).json()
             current_results_len = len(json_data['storeLocatorPageData']['results'])
             for z in json_data['storeLocatorPageData']['results']:
                 store_number = z['name']
@@ -86,13 +76,10 @@ def fetch_data():
                 page_url = "https://www.lequipeur.com/en/stores/" + z['urlLocalized'][0]['value'].split("/")[-1]
                 hours_of_operation = z['workingHours']
                 country_code = z['address']['country']['isocode']
-
                 result_coords.append((latitude, longitude))
                 if street_address in addresses:
                     continue
-
                 addresses.append(street_address)
-
                 store = []
                 store.append(locator_domain if locator_domain else '<MISSING>')
                 store.append(location_name if location_name else '<MISSING>')
@@ -108,27 +95,20 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(re.sub(r'\s+'," ",hours_of_operation) if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-
                 yield store
         except:
             pass
 
         if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-   
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-

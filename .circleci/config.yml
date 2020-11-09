@@ -1,26 +1,23 @@
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
 version: 2.1
 jobs:
-  check-update-scope:
+  check-diffs:
     docker:
       - image: cimg/base:2020.01
     steps:
       - checkout
       - run:
-          name: Check scope of updates
+          name: Check files in diff
           command: |
             source ./.circleci/lib.sh
-            check_update_scope
+            check_diffs
 
-  python-lint:
+  python-lint-updates:
     executor: python/default
     steps:
       - checkout
       - restore_cache:
           keys:
+            - venv-{{ .Branch }}-{{ checksum "setup.py" }}
             - venv-{{ .Branch }}
       - run:
           name: Install dependencies
@@ -31,15 +28,21 @@ jobs:
       - save_cache:
           paths:
             - venv
-          key: venv-{{ .Branch }}
+          key: venv-{{ .Branch }}-{{ checksum "setup.py" }}
       - run:
           name: Check formatting
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
-            if [ -n "$UPDATED_PYTHON_FILES" ]; then
-                black --check $UPDATED_PYTHON_FILES
+            mapfile -t UPDATED_PYTHON_FILES < <(list_updated_files | filter_python_files)
+            if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
+                black --check "${UPDATED_PYTHON_FILES[@]}" || {
+                    echo "FAIL: Please run from the repo root directory:"
+                    echo
+                    echo "  black" "${UPDATED_PYTHON_FILES[@]}"
+                    echo
+                    exit 1
+                }
             fi
       - run:
           name: Lint updated crawler with flake8
@@ -48,7 +51,8 @@ jobs:
             source ./.circleci/lib.sh
             UPDATED_CRAWLER="$(get_updated_crawler)"
             if [ -n "$UPDATED_CRAWLER" ]; then
-                cd $UPDATED_CRAWLER
+                echo "Linting $UPDATED_CRAWLER"
+                cd "$UPDATED_CRAWLER" || exit 1
                 flake8 --ignore=E .
             fi
       - run:
@@ -56,21 +60,21 @@ jobs:
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
-            if [ -n "$UPDATED_PYTHON_FILES" ]; then
-                flake8 --ignore=I $UPDATED_PYTHON_FILES
+            mapfile -t UPDATED_PYTHON_FILES < <(list_updated_files | filter_python_files)
+            if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
+                flake8 --ignore=I "${UPDATED_PYTHON_FILES[@]}"
             fi
       - run:
           name: Check updated Python files with mypy
           command: |
             source ./venv/bin/activate
             source ./.circleci/lib.sh
-            UPDATED_PYTHON_FILES=$(list_updated_files | filter_python_files)
-            if [ -n "$UPDATED_PYTHON_FILES" ]; then
-                mypy $UPDATED_PYTHON_FILES
+            mapfile -t UPDATED_PYTHON_FILES < <(list_updated_files | filter_python_files)
+            if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
+                mypy "${UPDATED_PYTHON_FILES[@]}"
             fi
 
-  node-lint:
+  node-lint-updates:
     executor: node/default
     steps:
       - checkout
@@ -79,25 +83,40 @@ jobs:
           name: Check formatting
           command: |
             source ./.circleci/lib.sh
-            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
-            if [ -n "$UPDATED_NODE_FILES" ]; then
-                npx prettier --check $UPDATED_NODE_FILES
+            mapfile -t UPDATED_NODE_FILES < <(list_updated_files | filter_node_files)
+            if [ "${#UPDATED_NODE_FILES[@]}" -gt 0 ]; then
+                npx prettier --check "${UPDATED_NODE_FILES[@]}" || {
+                    echo "FAIL: Please run from the repo root directory:"
+                    echo
+                    echo "  npx prettier --write" "${UPDATED_NODE_FILES[@]}"
+                    echo
+                    exit 1
+                }
             fi
       - run:
           name: Lint with eslint
           command: |
             source ./.circleci/lib.sh
-            UPDATED_NODE_FILES=$(list_updated_files | filter_node_files)
-            if [ -n "$UPDATED_NODE_FILES" ]; then
-                npx eslint $UPDATED_NODE_FILES
+            mapfile -t UPDATED_NODE_FILES < <(list_updated_files | filter_node_files)
+            if [ "${#UPDATED_NODE_FILES[@]}" -gt 0 ]; then
+                npx eslint "${UPDATED_NODE_FILES[@]}"
             fi
 
 orbs:
   node: circleci/node@4.1.0
   python: circleci/python@1.2.1
 workflows:
-  check:
+  check-updates:
     jobs:
-      - check-update-scope
-      - python-lint
-      - node-lint
+      - check-diffs:
+          filters:
+            branches:
+              ignore: master
+      - python-lint-updates:
+          filters:
+            branches:
+              ignore: master
+      - node-lint-updates:
+          filters:
+            branches:
+              ignore: master
