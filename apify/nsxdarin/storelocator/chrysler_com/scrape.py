@@ -78,6 +78,8 @@ def fetch_data():
                 h = str(h.decode('utf-8'))
                 hours = hours + '-' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
             if '"service"' in line:
+                if len(zc) == 9:
+                    zc = zc[:5] + '-' + zc[-4:]
                 if purl == '':
                     purl = '<MISSING>'
                 if store not in ids:

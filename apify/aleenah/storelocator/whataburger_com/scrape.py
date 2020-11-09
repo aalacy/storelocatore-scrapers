@@ -60,7 +60,7 @@ def fetch_data():
         log.info(url)
 
         driver.get(url)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.c-bread-crumbs-name')))
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.c-bread-crumbs-name')))
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         div = soup.find('div', {'class': 'NAP-main'})

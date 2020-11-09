@@ -32,6 +32,7 @@ def fetch_data():
     for coord in coords:
         #logger.info(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
+        print(url)
         res = session.get(url)
         try:
             jso=res.json()
@@ -45,8 +46,11 @@ def fetch_data():
             key_set.add(data)
             res = session.get(js['permalink'])
             soup = BeautifulSoup(res.text, 'html.parser')
-            tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
-            logger.info(tim)
+            try:
+                tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
+            except:
+                tim='<MISSING>'
+            logger.info(url)
             name=js["name"].replace(";s ","; ").replace( u'\u200b','')
             if ";" in name:
                 name=name.split(';')[-1]

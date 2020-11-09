@@ -28,8 +28,14 @@ def fetch_data():
         i['parsed'] = {value : key for (key, value) in i['parsed'].items()}
         if i['id'] == 16973819:
             i['parsed']['StateName'] = 'FL'
+            i['parsed']['PlaceName'] = 'Miami'
             i['parsed']['OccupancyType'] = ''
             #fixing odd case with usaddress
+        if i['id'] == 16973848:
+            i['parsed']['AddressNumberPrefix'] = 'GLENDALE GALLERIA'
+        if i['id'] == 16973741:
+            i['parsed']['AddressNumberPrefix'] = '500 LAKEWOOD CENTER MALL SPACE '
+            
         yield i
 
 def scrape():

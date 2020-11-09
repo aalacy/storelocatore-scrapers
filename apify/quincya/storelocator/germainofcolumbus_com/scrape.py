@@ -1,7 +1,9 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
+from sgselenium import SgChrome
 import json
+import time
 
 
 def write_output(data):
@@ -25,6 +27,9 @@ def fetch_data():
 	req = session.get(base_link, headers = HEADERS)
 	base = BeautifulSoup(req.text,"lxml")
 
+	driver = SgChrome().chrome()
+	time.sleep(2)
+
 	data = []
 
 	items = base.find(id="proximity-dealer-list").find_all(class_="vcard")
@@ -41,14 +46,17 @@ def fetch_data():
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
-		phone = item.find(class_="tel phone1").text.split(":")[1].strip()
 		latitude = item.find(class_="latitude").text.strip()
 		longitude = item.find(class_="longitude").text.strip()
 
 		link = item.a["href"]
 		if link:
-			req = session.get(link, headers = HEADERS)
-			base = BeautifulSoup(req.text,"lxml")
+			driver.get(link)
+			time.sleep(5)
+
+			base = BeautifulSoup(driver.page_source,"lxml")
+
+			phone = base.find(class_="tel phone1 collapsed-show")["data-click-to-call-phone"]
 
 			fin_script = ""
 			all_scripts = base.find_all('script')
@@ -62,6 +70,9 @@ def fetch_data():
 			for day in days:
 				hours_of_operation = (hours_of_operation + " " + day.title() + " " + days[day]["value"]).strip()
 		else:
+			phone = "<MISSING>"
+			if location_name == "Toyota West":
+				phone = "8004211512"
 			link = "<MISSING>"
 			hours_of_operation = "<MISSING>"
 
