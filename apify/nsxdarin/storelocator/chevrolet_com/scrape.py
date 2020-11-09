@@ -81,16 +81,6 @@ def get_hours(location):
     return ",".join(hours_of_operation)
 
 
-def get_location_type(location):
-    services = location.get("services")
-    if not services:
-        return MISSING
-
-    service_names = [service.get("name") for service in services]
-
-    return ",".join(service_names)
-
-
 def extract(location):
     locator_domain = "chevrolet.com"
     page_url = get(location, "dealerUrl")
@@ -112,7 +102,7 @@ def extract(location):
     longitude = get(geolocation, "longitude")
 
     hours_of_operation = get_hours(location)
-    location_type = get_location_type(location)
+    location_type = MISSING
 
     return {
         "locator_domain": locator_domain,
