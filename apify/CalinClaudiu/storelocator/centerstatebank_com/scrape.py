@@ -33,38 +33,22 @@ def fetch_data():
         for i in son['stores']:
             suburl = i['properties']['permalink']
             r = net_utils.fetch_xml(
-                root_node_name='body',
-                location_node_name='div',
-                location_node_properties={'class': lambda x : x and x.startswith("location__hours-day location__hours-day--")},
+                root_node_name='head',
+                location_node_name='script',
+                location_node_properties={'type':'application/ld+json'},
                 request_url=suburl,
                 headers=headers)
             i['hours']=[]
             for j in r:
-                if j[list(j)[0]]!='Appointment Only':
-                    i['hours'].append(j['strong']['strong'])
-                    i['hours'].append(': '+j[list(j)[0]]+'; ')
-                    #almost fixexs this case: https://www.centerstatebank.com/location/osprey-branch/154/
-            if len(i['hours'])>0:
-                if i['hours'][0]=='Saturday':
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'] = ''.join(i['hours'][0:14])
-                    #cleanup for case above + "today" schedule
-                else:
-                    i['hours'].pop(0)
-                    i['hours'].pop(0)
-                    i['hours'] = ''.join(i['hours'][0:14])
-                    #cleanup for "today schedule
-                #cleanup for case where two sets of hours are displayed, lobby and drive-thru
-                #example: https://www.centerstatebank.com/location/indiantown-branch/158/
-                #Takes lobby hours if available,else drive-thru hours.
-            else:
-                i['hours']="<MISSING>"
-            #cleanup when hours missing entirely              
+                k = '{"data":'+j['script type=application/ld+json']+'}'
+                k = json.loads(k)
+                i['more']=k
+                for h in k['data']['openingHoursSpecification']:
+                    i['hours'].append(h['dayOfWeek'][0]+': '+h['opens']+' - '+h['closes'])
+            try:
+                i['hours']=', '.join(i['hours'])
+            except:
+                pass
             yield i
 
 
@@ -84,17 +68,17 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(mapping=['properties','permalink']),
-        location_name=MappingField(mapping=['properties','name']),
+        location_name=MappingField(mapping=['properties','name'], value_transform = lambda x : x.replace('&amp; ','')),
         latitude=MappingField(mapping=['geometry','coordinates',1]),
         longitude=MappingField(mapping=['geometry','coordinates',0]),
-        street_address=MultiMappingField(mapping=[['properties','address','line1'],['properties','address','line2']], multi_mapping_concat_with = ', '),
+        street_address=MappingField(mapping=['more','data','address','streetAddress']),
         city=MappingField(mapping=['properties','address','city']),
         state=MappingField(mapping=['properties','address','region']),
         zipcode=MappingField(mapping=['properties','address','postalCode']),
         country_code=MappingField(mapping=['properties','address','countryCode']),
         phone=MappingField(mapping=['properties','phone']),
         store_number=MappingField(mapping=['id']),
-        hours_of_operation=MappingField(mapping=['hours']),
+        hours_of_operation=MappingField(mapping=['hours'], is_required = False),
         location_type=MappingField(mapping=['properties','features'], value_transform = parse_features, is_required = False)
     )
 
