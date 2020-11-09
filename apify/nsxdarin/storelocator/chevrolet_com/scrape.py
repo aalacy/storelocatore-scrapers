@@ -1,9 +1,6 @@
 import csv
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("chevrolet_com")
 
 session = SgRequests()
 headers = {
