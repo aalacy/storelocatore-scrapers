@@ -2,7 +2,6 @@ import csv
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from datetime import datetime
 
 logger = SgLogSetup().get_logger("chevrolet_com")
 
