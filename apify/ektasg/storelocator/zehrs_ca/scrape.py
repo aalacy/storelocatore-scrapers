@@ -1,116 +1,102 @@
-import time
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zehrs_ca')
-
-
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument('--window-size=1920,1080')
-options.add_argument(
-    "user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver2 = webdriver.Chrome("chromedriver", options=options)
-#driver3 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver3 = webdriver.Chrome("chromedriver", options=options)
-
-
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    if len(state_zip) == 4:
-        logger.info('four!!')
-    else:
-        state = state_zip[0]
-        zip_code = state_zip[1] + ' ' + state_zip[2]
-    return city, state, zip_code
-
-
+import json
+import time
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
-                         "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-
-    data = []
-    driver.get("https://www.zehrs.ca/store-locator?icta=store-locator")
-    time.sleep(15)
-    buttons = driver.find_elements_by_xpath("//button[@title='Zoom out']")
-    for i in range(20):
-        driver.execute_script("arguments[0].click();", buttons[0])
-        time.sleep(1)
-        buttons = driver.find_elements_by_xpath("//button[@title='Zoom out']")
-
-    time.sleep(15)
-
-    stores = driver.find_elements_by_css_selector(
-        'a.location-list-item-actions__view-details__link')
-
-    names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
-
-    for i in range(0, len(names)):
-        driver2.get(names[i])
-        time.sleep(5)
-        page_url = names[i]
-        store_opening_hours = driver2.find_element_by_css_selector(
-            'ul.location-details-hours-content__list').text.replace('\n', ' ')
-
-        phone_no = driver2.find_element_by_css_selector(
-            'span.location-details-contact__contacts__item__value').text
-        store_id = names[i].split("details/")[1]
-        store_name = driver2.find_element_by_css_selector(
-            'div.location-details-map__infobox__label').text
-
-        street_address = driver2.find_element_by_css_selector(
-            'div.location-address__line.location-address__line--line-1').text
-        city, state, zip_code = addy_ext(driver2.find_element_by_css_selector(
-            'div.location-address__line.location-address__line--region').text)
-        data.append([
-            'https://www.zehrs.ca/',
-            page_url,
-            store_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            'CA',
-            store_id,
-            phone_no,
-            '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
-            store_opening_hours
-        ])
-
-    time.sleep(3)
-    driver.quit()
-    driver2.quit()
-    return data
-
-
+    addressess = []
+    headers = {
+        'site-banner': 'fortinos',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36',
+        }
+    base_url = "https://www.zehrs.ca/"
+    
+    r = session.get("https://www.zehrs.ca/api/pickup-locations?bannerIds=zehrs",headers=headers).json()
+    for val in r:
+        store_number = val['id'].replace("CT","").replace("0096SD1179","0096SD1268")
+        time.sleep(2)
+        jd = session.get("https://www.zehrs.ca/api/pickup-locations/"+store_number,headers=headers).json()
+        city=''
+        state =''
+        zipp =''
+        street_address=''
+        location_name=''
+        hours_of_operation =''
+        if "name" in jd:
+            
+            location_name = jd['name']
+            
+            if val['address']['line2']!=None:
+                if "address" in jd:
+                    street_address = jd['address']['line1']+" "+jd['address']['line2']
+            else:
+                street_address = jd['address']['line1']
+            if "address" in jd:
+                city = jd['address']['town']
+                state = jd['address']['region']
+                if jd['address']['postalCode']!=None:
+                    zipp = jd['address']['postalCode']
+                else:
+                    zipp = "<MISSING>"
+            location_type=''
+            latitude=''
+            longitude=''
+            if "location_type" in jd:
+                location_type = jd['locationType']
+                latitude = jd['geoPoint']['latitude']
+                longitude = jd['geoPoint']['longitude']
+                
+            page_url = "https://www.zehrs.ca/api/pickup-locations/"+store_number
+            if 'storeDetails' in jd:
+                phone = jd['storeDetails']['phoneNumber']
+                hoo = []
+                
+                # print(jd['storeDetails']['storeHours'])
+                for h in jd['storeDetails']['storeHours']:
+                    if h['day'] == None or h['hours']== None:
+                        frame=""
+                    else:
+                        frame = h['day']+"-"+h['hours']
+                    hoo.append(frame)
+                hours_of_operation = ", ".join(hoo)
+            else:
+                phone = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+            store = []
+            store.append(base_url if base_url else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append("CA")
+            store.append(store_number)
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type)
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(page_url)
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2]=="<MISSING>" and store[3]=="<MISSING>" and store[4]=="<MISSING>" and store[5]=="<MISSING>":
+                continue
+            # print(store)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
