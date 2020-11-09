@@ -53,7 +53,7 @@ jobs:
             if [ -n "$UPDATED_CRAWLER" ]; then
                 echo "Linting $UPDATED_CRAWLER"
                 cd "$UPDATED_CRAWLER" || exit 1
-                flake8 --ignore=E .
+                flake8 --extend-ignore=E .
             fi
       - run:
           name: Lint updated Python files with flake8
@@ -62,7 +62,7 @@ jobs:
             source ./.circleci/lib.sh
             mapfile -t UPDATED_PYTHON_FILES < <(list_updated_files | filter_python_files)
             if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
-                flake8 --ignore=I "${UPDATED_PYTHON_FILES[@]}"
+                flake8 --extend-ignore=I "${UPDATED_PYTHON_FILES[@]}"
             fi
       - run:
           name: Check updated Python files with mypy
