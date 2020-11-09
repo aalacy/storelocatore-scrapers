@@ -64,9 +64,9 @@ days = {
 
 def get_hours(location):
     hours = (
-        location.get("generalOpeningHour")
-        or location.get("serviceOpeningHour")
-        or location.get("partsOpeningHour")
+        location.get("generalOpeningHour") or
+        location.get("serviceOpeningHour") or
+        location.get("partsOpeningHour")
     )
     if not hours:
         return MISSING
@@ -172,7 +172,6 @@ def fetch_data():
 
 
 def scrape():
-    start = datetime.now()
     data = fetch_data()
     write_output(data)
 
