@@ -47,8 +47,8 @@ def write_output(data):
 MISSING = "<MISSING>"
 
 
-def get(location, key):
-    return location.get(key, MISSING) or MISSING
+def get(data, key):
+    return data.get(key, MISSING) or MISSING
 
 
 days = {
@@ -63,7 +63,11 @@ days = {
 
 
 def get_hours(location):
-    hours = location.get("generalOpeningHour")
+    hours = (
+        location.get("generalOpeningHour")
+        or location.get("serviceOpeningHour")
+        or location.get("partsOpeningHour")
+    )
     if not hours:
         return MISSING
 
@@ -78,12 +82,21 @@ def get_hours(location):
     return ",".join(hours_of_operation)
 
 
+def get_location_type(location):
+    services = location.get("services")
+    if not services:
+        return MISSING
+
+    service_names = [service.get("name") for service in services]
+
+    return ",".join(service_names)
+
+
 def extract(location):
     locator_domain = "chevrolet.com"
     page_url = get(location, "dealerUrl")
     store_number = get(location, "id")
     location_name = get(location, "dealerName")
-    location_type = MISSING
 
     contact = location.get("generalContact")
     phone = get(contact, "phone1")
@@ -100,6 +113,7 @@ def extract(location):
     longitude = get(geolocation, "longitude")
 
     hours_of_operation = get_hours(location)
+    location_type = get_location_type(location)
 
     return {
         "locator_domain": locator_domain,
@@ -144,7 +158,6 @@ def fetch_data():
 
         for dealer in dealers:
             store_number = dealer.get("id")
-
             if store_number in locations:
                 continue
 
@@ -156,15 +169,12 @@ def fetch_data():
 
         search.update_with(coords)
         coord = search.next()
-        logger.info(f"remaining: {search.zipcodes_remaining()}")
 
 
 def scrape():
     start = datetime.now()
     data = fetch_data()
     write_output(data)
-
-    logger.info(f"duration: ${datetime.now() - start}")
 
 
 scrape()
