@@ -1,9 +1,22 @@
 import re
 import csv
 import json
+import time
 
 from sgrequests import SgRequests
 from sgselenium import SgFirefox, SgSelenium
+
+
+class SgSeleniumDelay(SgSelenium):
+    '''
+    Added delay to get token.
+    Returns list of dictionaries
+    '''
+
+    def get_default_headers_for(driver, request_url: str) -> dict:
+        driver.get(request_url)
+        time.sleep(3)
+        return driver.get_cookies()
 
 
 def write_output(data):
@@ -20,9 +33,11 @@ def write_output(data):
 def fetch_data():
     all_cookies = {}
     with SgFirefox() as driver:
-        headers = SgSelenium.get_default_headers_for(driver, 'https://www.musicgoround.com/locations')
-
-    token = re.findall('ordercloud.token=(.+)', headers['Cookie'])[0]
+        headers = SgSeleniumDelay.get_default_headers_for(driver, 'https://www.musicgoround.com/locations')
+        for elem in headers:
+            if elem['name'] == 'ordercloud.token':
+                token = elem['value']
+    
     hdr = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate, br',
