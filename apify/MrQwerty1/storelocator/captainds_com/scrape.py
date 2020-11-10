@@ -29,18 +29,20 @@ def fetch_data():
             j = j['store_info']
             locator_domain = url
             page_url = api_url
-            street_address = j.get('address') or '<MISSING>'
-            location_name = f"{j['name']} {street_address}"
-            city = j.get('locality') or '<MISSING>'
-            state = j.get('region') or '<MISSING>'
-            postal = j.get('postcode') or '<MISSING>'
-            country_code = j.get('country') or '<MISSING>'
+            street_address = j.get('address') if j.get('address') else '<MISSING>'
+            location_name = f"{j.get('name')} {street_address}".encode("ascii", "ignore").decode()
+            if location_name.lower().find('closed') != -1 or location_name.lower().find('coming') != -1:
+                continue
+            city = j.get('locality') if j.get('locality') else '<MISSING>'
+            state = j.get('region') if j.get('region') else '<MISSING>'
+            postal = j.get('postcode') if j.get('postcode') else '<MISSING>'
+            country_code = j.get('country') if j.get('country') else '<MISSING>'
             store_number = '<MISSING>'
-            phone = j.get('phone') or '<MISSING>'
-            latitude = j.get('latitude') or '<MISSING>'
-            longitude = j.get('longitude') or '<MISSING>'
+            phone = j.get('phone') if j.get('phone') else '<MISSING>'
+            latitude = j.get('latitude') if j.get('latitude') else '<MISSING>'
+            longitude = j.get('longitude') if j.get('longitude') else '<MISSING>'
             location_type = j.get('Type', '<MISSING>')
-            hours = j.get('hours') or '<MISSING>'
+            hours = j.get('hours') if j.get('hours') else '<MISSING>'
 
             if hours == '<MISSING>':
                 hours_of_operation = hours
