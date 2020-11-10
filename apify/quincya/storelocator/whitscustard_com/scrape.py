@@ -6,8 +6,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('whitscustard_com')
 
-
-
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,7 +30,9 @@ def fetch_data():
 	main_links = []
 	items = base.find(class_="sqs-gallery").find_all("a")
 	for i in items:
-		main_links.append("https://whitscustard.com" + i["href"])
+		main_link = "https://whitscustard.com" + i["href"]
+		if "opening-soon" not in main_link:
+			main_links.append(main_link)
 
 	final_links = []
 	for main_link in main_links:
@@ -44,7 +44,6 @@ def fetch_data():
 			if "Opening%2Bsoon" not in str(i):
 				final_links.append("https://whitscustard.com" + i.a["href"])
 
-
 	data = []
 	locator_domain = "whitscustard.com"
 
@@ -53,7 +52,7 @@ def fetch_data():
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
-		location_name = base.find(class_="entry-title").text.encode("ascii", "replace").decode().replace("?","-").strip()
+		location_name = base.find(class_="entry-title").text.encode("ascii", "replace").decode().replace("?","-").replace("  ","").strip()
 		
 		raw_address = str(base.address).replace("<address>","").replace("</address>","").replace("SUITE 101,","SUITE 101<br/>").replace("HWY HENDER","HWY<br/>HENDER").replace("\nSUITE"," SUITE").replace("RD.\n","RD. ").replace("WEST, \n","WEST, ").split("<br/>")
 		street_address = raw_address[0].strip()
@@ -92,9 +91,10 @@ def fetch_data():
 		if not phone:
 			phone = "<MISSING>"
 
-		hours_of_operation = base.find_all(class_="col sqs-col-3 span-3")[-1].text.replace("Hours","").replace("PM","PM ").replace("Drive-thru only","").replace("closed","closed ").strip()
+		hours_of_operation = base.find_all(class_="col sqs-col-3 span-3")[-1].text.replace("Hours","").replace("PM","PM ").replace("Drive-thru only","").replace("losed","losed ").replace("LOSED","LOSED ").strip()
 		hours_of_operation = hours_of_operation.encode("ascii", "replace").decode().replace("?","-")
-
+		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+		
 		if not hours_of_operation:
 			hours_of_operation = "<MISSING>"
 
