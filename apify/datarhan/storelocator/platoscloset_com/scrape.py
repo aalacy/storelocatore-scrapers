@@ -33,7 +33,7 @@ def fetch_data():
         'X-Requested-With': 'XMLHttpRequest'
     }
     session = SgRequests()
-    response = session.get('http://platoscloset.com/locations')
+    response = session.get('http://platoscloset.com/locations#us')
     dom = etree.HTML(response.text)
     all_states_urls = []
     for elem in dom.xpath('//div[@class="location-maps"]//a'):
@@ -45,6 +45,7 @@ def fetch_data():
         state_dom = etree.HTML(state_response.text)
         locations = state_dom.xpath('//div[@class="location-info-card"]')
         for location_dom in locations:
+            state_url = 'http://platoscloset.com' + location_dom.xpath('.//a[@class="ga-link-websiteUrl"]/@href')[0]
             location_name = location_dom.xpath('.//a[@class="location-name"]/text()')[0]
             if 'Coming Soon' in location_name:
                 continue
@@ -56,7 +57,7 @@ def fetch_data():
             store_number = location_dom.xpath('.//a/@data-storenum')[0]
             phone = location_dom.xpath('.//a[@class="ga-link-phone"]/text()')
             phone = phone[0] if phone else '<MISSING>'
-            location_type = location_dom.xpath('.//a[@class="location-name"]/text()')[0]
+            location_type = '<MISSING>'
             hours_of_operation_raw = location_dom.xpath('//div[@class="hours-table"]//tbody/tr')
             hours_of_operation = []
             for hours_dom in hours_of_operation_raw:
