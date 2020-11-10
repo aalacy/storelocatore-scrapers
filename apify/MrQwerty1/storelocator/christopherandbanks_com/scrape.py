@@ -43,7 +43,7 @@ def fetch_data():
         locator_domain = 'https://stores.christopherandbanks.com/index.html'
         page_url = url
         location_name = j.get('name') or '<MISSING>'
-        street_address = j.get('address1') or '<MISSING>'
+        street_address = f"{j.get('address1')} {j.get('address2')}".strip() or '<MISSING>'
         city = j.get('city') or '<MISSING>'
         state = j.get('state') or '<MISSING>'
         postal = j.get('postalCode') or '<MISSING>'
@@ -59,14 +59,14 @@ def fetch_data():
         else:
             _tmp = []
             for d in days:
-                day = d.get('day')[:3]
+                day = d.get('day')[:3].capitalize()
                 try:
                     interval = d.get('intervals')[0]
                     start = str(interval.get('start'))
                     end = str(interval.get('end'))
-                    line = f'{day}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}'
+                    line = f'{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}'
                 except IndexError:
-                    line = f'{day}: <MISSING>'
+                    line = f'{day}  Closed'
                 _tmp.append(line)
             hours_of_operation = ';'.join(_tmp)
 
