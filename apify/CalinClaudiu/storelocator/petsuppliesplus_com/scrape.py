@@ -5,7 +5,8 @@ import json
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sglogging import sglog
 
-log = sglog.SgLogSetup().get_logger(logger_name='petsuppliesplus.com')
+
+
 def para(tup):
     headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
     k = json.loads(str(next(net_utils.fetch_xml(root_node_name='body',
@@ -18,7 +19,7 @@ def para(tup):
     yield k
     
 def fetch_data():
-    
+    logzilla = sglog.SgLogSetup().get_logger(logger_name='sgzip')
     url = "https://petsuppliesplus.com"
     testur = "https://petsuppliesplus.com/api/sitecore/Store/Search?searchQuery=&pageSize=0&fromRowNumber=0"
     headerz = {
@@ -39,6 +40,7 @@ def fetch_data():
     search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
     search.initialize()
     coord = search.next()
+    identities = set()
     while coord:
         lat, long = coord
         headerz['Cookie'] = str(''.join(['SearchCityLat=',str(lat),';','SearchCityLng=',str(long),';']))
@@ -46,29 +48,37 @@ def fetch_data():
         result_lats = []
         result_longs = []
         result_coords = []
-        j = utils.parallelize(
-            search_space = [[counter,url+i['StorePageUrl']] for counter, i in enumerate(son[0]['NearbyStores'])],
-            fetch_results_for_rec = para,
-            max_threads = 10,
-            print_stats_interval = 10
-            )
-        for i in j:
-            for p in i:
-                kk = p['index']
-                son[0]['NearbyStores'][kk]['data'] = p
-                son[0]['NearbyStores'][kk]['hourz'] = []
-                result_lats.append(son[0]['NearbyStores'][kk]['LatPos'])
-                result_longs.append(son[0]['NearbyStores'][kk]['LngPos'])
-                for day in son[0]['NearbyStores'][kk]['data']['openingHoursSpecification']:
-                    son[0]['NearbyStores'][kk]['hourz'].append(str(day['dayOfWeek'][0]+'  '+day['opens']+'-'+day['closes']))
-                son[0]['NearbyStores'][kk]['hourz'] = ', '.join(son[0]['NearbyStores'][kk]['hourz'])
-                yield son[0]['NearbyStores'][kk]
+        topop = []
+        for idex ,i in enumerate(son[0]['NearbyStores']):
+            result_lats.append(i['LatPos'])
+            result_longs.append(i['LngPos'])
+            if i['StoreId'] in identities:
+                topop.append(idex)
+            else:
+                identities.add(i['StoreId'])
+        for idex in reversed(topop):
+            son[0]['NearbyStores'].pop(idex)
+        if len(son[0]['NearbyStores']) > 0:
+            j = utils.parallelize(
+                search_space = [[counter,url+i['StorePageUrl']] for counter, i in enumerate(son[0]['NearbyStores'])],
+                fetch_results_for_rec = para,
+                max_threads = 10,
+                print_stats_interval = 10
+                )
+            for i in j:
+                for p in i:
+                    kk = p['index']
+                    son[0]['NearbyStores'][kk]['data'] = p
+                    son[0]['NearbyStores'][kk]['hourz'] = []
+                    for day in son[0]['NearbyStores'][kk]['data']['openingHoursSpecification']:
+                        son[0]['NearbyStores'][kk]['hourz'].append(str(day['dayOfWeek'][0]+'  '+day['opens']+'-'+day['closes']))
+                    son[0]['NearbyStores'][kk]['hourz'] = ', '.join(son[0]['NearbyStores'][kk]['hourz'])
+                    yield son[0]['NearbyStores'][kk]
         result_coords = list(zip(result_lats,result_longs))
-        
-        log.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)} stores.')
+        logzilla.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-len(topop)} stores.')
         search.update_with(result_coords)
         coord = search.next()
-    log.info(f'Finished grabbing data!!')
+    logzilla.info(f'Finished grabbing data!!')
 
 
 
@@ -85,7 +95,7 @@ def scrape():
         state=MappingField(mapping=['StateCode']),
         zipcode=MappingField(mapping=['Zip']),
         country_code=MappingField(mapping=['data','address','addressCountry']),
-        phone=MappingField(mapping=['Phone'], part_of_record_identity = True),
+        phone=MappingField(mapping=['Phone'], is_required = False),
         store_number=MappingField(mapping=['StoreId'], part_of_record_identity = True),
         hours_of_operation=MappingField(mapping=['hourz']),
         location_type=MissingField()
