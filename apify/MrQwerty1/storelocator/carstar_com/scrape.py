@@ -28,17 +28,17 @@ def fetch_data():
         locator_domain = url
         page_url = api_url
         location_name = j.get('storeName')
-        street_address = j.get('streetAddress1') if j.get('streetAddress1') else '<MISSING>'
-        city = j.get('locationCity') if j.get('locationCity') else '<MISSING>'
-        state = j.get('locationState') if j.get('locationState') else '<MISSING>'
-        postal = j.get('locationPostalCode') if j.get('locationPostalCode') else '<MISSING>'
+        street_address = j.get('streetAddress1') or '<MISSING>'
+        city = j.get('locationCity') or '<MISSING>'
+        state = j.get('locationState') or '<MISSING>'
+        postal = j.get('locationPostalCode') or '<MISSING>'
         if len(postal) == 4:
             postal = f'0{postal}'
         country_code = 'US'
-        store_number = j.get('storeId') if j.get('storeId') else '<MISSING>'
-        phone = j.get('phone') if j.get('phone') else '<MISSING>'
-        latitude = j.get('latitude') if j.get('latitude') else '<MISSING>'
-        longitude = j.get('longitude') if j.get('longitude') else '<MISSING>'
+        store_number = j.get('storeId') or '<MISSING>'
+        phone = j.get('phone') or '<MISSING>'
+        latitude = j.get('latitude') or '<MISSING>'
+        longitude = j.get('longitude') or '<MISSING>'
         hours_of_operation = '<INACCESSIBLE>'
         location_type = j.get('Type', '<MISSING>')
 
