@@ -85,7 +85,7 @@ def fix_hours(x):
     x = x.replace('\u200b','').replace('<p>','').replace('</p>','').replace('&nbsp;',' ')
     if x=='None':
         x='<MISSING>'
-    return x.lstrip().rstrip()
+    return x.replace('\n',' ').lstrip().rstrip()
 
 def scrape():
     url="https://raisingcanes.com"
