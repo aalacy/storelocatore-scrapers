@@ -56,7 +56,7 @@ def fetch_data():
                 name=name.split(';')[-1]
             all.append([
                 "https://www.clarksoneyecare.com",
-                name.replace( u'\u202c',''),
+                name.replace( u'\u200b','').replace( u'\u202c',''),
                 js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b','').replace( u'\u202c',''),
                 js["city"].replace( u'\u200b','').replace( u'\u202c',''),
                 js["state"].replace( u'\u200b','').replace( u'\u202c',''),
