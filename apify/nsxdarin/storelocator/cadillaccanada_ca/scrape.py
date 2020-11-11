@@ -49,6 +49,11 @@ def fetch_data():
                             phone = item.split('"primaryPhone":"')[1].split('"')[0]
                         except:
                             phone = '<MISSING>'
+                        if phone == '<MISSING':
+                            try:
+                                phone = item.split('"salesPhone":"')[1].split('"')[0]
+                            except:
+                                phone = '<MISSING>'
                         typ = 'Dealer'
                         try:
                             purl = item.split('"websiteURL":"')[1].split('"')[0]
