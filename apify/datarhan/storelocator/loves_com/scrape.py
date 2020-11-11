@@ -5,7 +5,7 @@ from lxml import etree
 
 from sgrequests import SgRequests
 
-DOMAIN = 'onceuponachild.com'
+DOMAIN = 'loves.com'
 
 
 def write_output(data):
@@ -47,7 +47,7 @@ def fetch_data():
         store_number = point_data['FacilityId']
         phone = point_data['PhoneNumber']
         phone = phone if phone else '<MISSING>'
-        location_type = '<MISSING>'
+        location_type = point_data['Name'].split()[0]
         latitude = point_data['Latitude']
         latitude = latitude if latitude else '<MISSING>'
         longitude = point_data['Longitude']
