@@ -101,7 +101,7 @@ def fetch_data():
                 continue
             store.append("<MISSING>")
             store = [x.replace("–","-") for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
         if len(soup.find_all('dealerinfo')) < MAX_RESULTS:
             #logger.info("max distance update")

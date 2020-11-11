@@ -41,28 +41,28 @@ def fetch_data():
                 del v[0]
             if len(v)==2:
                 name = (v[0])
-                full_address1 = v[-1].split("Mon")[0].encode('ascii', 'ignore').decode('ascii').strip().replace("(","").replace(")"," ").replace("?","")
+                full_address1 = v[-1].split("Mon")[0].strip().replace("(","").replace(")"," ").replace("?","")
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address1))[-1]
                 zip1 = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address1))[-1]
                 state_list = re.findall(r' ([A-Z]{2}) ', str(full_address1))[-1]
                 address = full_address1.replace(phone_list,"").replace(zip1,"").replace(state_list,"").split("  ")[0].replace("Winnipeg","")
                 city = (full_address1.replace(phone_list,"").replace(zip1,"").replace(state_list,"").replace(address,"").strip()).strip()
-                hours = (" ".join(v[-1].split("Mon")[1:]).replace(".-","Mon-").replace(". - ","Mon-").replace("?","").replace("|"," ").encode('ascii', 'ignore').decode('ascii').strip())
+                hours = (" ".join(v[-1].split("Mon")[1:]).replace(".-","Mon-").replace(". - ","Mon-").replace("?","").replace("|"," ").strip())
             if len(v)==3:
                 name = (v[0])
-                full_address =(v[-1].split("Mon")[0].encode('ascii', 'ignore').decode('ascii').strip().replace("?","").replace("("," ").replace(")"," ").replace("BCV4M 0B3","BC  V4M 0B3"))
+                full_address =(v[-1].split("Mon")[0].strip().replace("?","").replace("("," ").replace(")"," ").replace("BCV4M 0B3","BC  V4M 0B3"))
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address))
                 state_list = re.findall(r' ([A-Z]{2}) ', str(full_address))
                 hours_list = (v[-1].split("Mon")[1:])
                 if hours_list:
-                    hours  =" ".join(hours_list).replace(". - ","Mon ").replace(".-","Mon").replace("-Wed","Mon-Wed").replace("|"," ").replace("?","").replace("  "," ").replace("/","").encode('ascii', 'ignore').decode('ascii').strip()
+                    hours  =" ".join(hours_list).replace(". - ","Mon ").replace(".-","Mon").replace("-Wed","Mon-Wed").replace("|"," ").replace("?","").replace("  "," ").replace("/","").strip()
                 
                 zip1 = (ca_zip_list[-1])
                 if state_list:
                     state = state_list[-1]
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[-1]
                 city = full_address.replace(phone_list,"").replace(state,"").replace(zip1,"").replace("Boulevard Laurier ","<MISSING>").replace("Sault Ste. ","").replace("BC","<MISSING>").strip()
-                address = (v[1:][0].replace("2700","2700, Boulevard Laurier").replace("293 Bay Street","293 Bay Street, Sault Ste").encode('ascii', 'ignore').decode('ascii').strip())
+                address = (v[1:][0].replace("2700","2700, Boulevard Laurier").replace("293 Bay Street","293 Bay Street, Sault Ste").strip())
  
   
             tem_var.append("http://thinkkitchen.ca")

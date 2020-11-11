@@ -58,7 +58,7 @@ def fetch_data():
             r = session.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
         except:
             continue
-        # r_ascii = r.text.encode('ascii', 'ignore').decode('ascii')
+        # r_ascii = r.text
 
         soup = BeautifulSoup(r.text, "lxml")
 

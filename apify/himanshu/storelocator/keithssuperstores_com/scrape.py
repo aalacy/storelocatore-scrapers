@@ -60,7 +60,7 @@ def fetch_data():
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc[0]))
         if len(loc) >= 4 and us_zip_list == []:
             
-            location_name = loc[0].encode('ascii', 'ignore').decode('ascii').strip()
+            location_name = loc[0].strip()
             address = loc[1].split(",")
             if len(address) > 2:
                 street_address = address[0]
@@ -85,7 +85,7 @@ def fetch_data():
             
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]) )
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
@@ -121,7 +121,7 @@ def fetch_data():
             location_type = "<MISSING>"
         country_code = "US"
         store = [locator_domain, location_name,street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         if str(store[2]) not in addresses:
             addresses.append(str(store[2]) )
             # logger.info("data = " + str(store))
@@ -148,7 +148,7 @@ def fetch_data():
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc[0]))
         if len(loc) >= 4 and us_zip_list == []:
             
-            location_name = loc[0].encode('ascii', 'ignore').decode('ascii').strip()
+            location_name = loc[0].strip()
             address = loc[1].split(",")
             if len(address) > 2:
                 street_address = address[0]
@@ -173,7 +173,7 @@ def fetch_data():
             
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]) )
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
@@ -209,7 +209,7 @@ def fetch_data():
             location_type = "<MISSING>"
         country_code = "US"
         store = [locator_domain, location_name,street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         if str(store[2]) not in addresses:
             addresses.append(str(store[2]) )
             # logger.info("data = " + str(store))

@@ -48,7 +48,7 @@ def fetch_data():
         store.append(store_data['longitude'])
         store.append(" ".join(list(BeautifulSoup(store_data["storeHours"],"lxml").stripped_strings)).replace("Temporarily Closed","<MISSING>").replace("Opened with Reduced Hours","") if store_data['storeHours'] != "" else "<MISSING>")
         store.append("https://shop.samsonite.com/on/demandware.store/Sites-samsonite-Site/default/Stores-Details?StoreID="+str(store_data["storeid"]))
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
 
         yield store
 

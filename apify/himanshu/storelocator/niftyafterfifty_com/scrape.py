@@ -35,16 +35,16 @@ def fetch_data():
     store.append(base_url)
     store.append("FLAMINGO".capitalize())
     store.append("3041 E Flamingo Rd., Suite B")
-    store.append("Las Vegas".encode('ascii', 'ignore').decode('ascii').strip())
-    store.append("NV".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("Las Vegas".strip())
+    store.append("NV".strip())
     store.append("89121-4308")
     store.append("US")
     store.append("<MISSING>")
-    store.append("(702) 473-6026".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("(702) 473-6026".strip())
     store.append("<MISSING>")
     store.append("<MISSING>")
     store.append("<MISSING>")
-    store.append("Hours: Monday - Friday 7:00am - 5:00pm".encode('ascii', 'ignore').decode('ascii').strip())
+    store.append("Hours: Monday - Friday 7:00am - 5:00pm".strip())
     store.append(page_url)
     yield store
     for data in exists:
@@ -129,10 +129,10 @@ def fetch_data():
             # location_name= 'FLAMINGO'
             store = []
             store.append(base_url)
-            store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(location_name.strip())
+            store.append(street_address.strip())
+            store.append(city.strip())
+            store.append(state.strip())
             store.append(zip)
             store.append("US")
             store.append("<MISSING>")
@@ -140,7 +140,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(hours_of_operation.strip())
             store.append(page_url)
             if "92831-5205" in zip:
                 continue

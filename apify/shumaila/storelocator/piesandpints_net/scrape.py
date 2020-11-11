@@ -77,7 +77,7 @@ def fetch_data():
 
         try:
             hours = driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][4]').text
-            hours = hours.encode('ascii', 'ignore').decode('ascii')
+            hours = hours
             hours = hours.replace("\n"," ")
             #logger.info(hours)
             data['hours_of_operation'].append(hours)

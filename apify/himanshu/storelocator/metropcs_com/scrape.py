@@ -145,7 +145,7 @@ def fetch_data():
             store1.append(zipp if zipp else '<MISSING>')
             store1.append(country_code if country_code else '<MISSING>')
             store1.append(store_number if store_number else '<MISSING>')
-            store1.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone.encode('ascii', 'ignore').decode('ascii').strip() else '<MISSING>')
+            store1.append(phone.strip() if phone.strip() else '<MISSING>')
             store1.append(location_type if location_type else '<MISSING>')
             store1.append(latitude if latitude else '<MISSING>')
             store1.append(longitude if longitude else '<MISSING>')

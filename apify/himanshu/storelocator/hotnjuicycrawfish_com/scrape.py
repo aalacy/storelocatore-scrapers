@@ -39,12 +39,12 @@ def fetch_data():
         except:
             phone = "702-489-3220"
         hours_of_operation = (base1.find('div',{"class":"update pad-bottom"}).text.replace("\n","").replace("\r","").replace("\t","").replace("day","day ").replace("Hours","").replace("pm","pm ").strip().replace("HOURS",""))
-        zipp = (street_address1.split(",")[-1].split(" ")[-1].encode('ascii', 'ignore').decode('ascii').replace("NY11354","11354").replace("NY10011","10011").replace("Nevada89109","89109"))
-        state = (street_address1.split(",")[-1].strip().split(" ")[0].encode('ascii', 'ignore').decode('ascii').replace("NY11354","NY").replace("NY10011","NY").replace("Nevada89109","Nevada"))
+        zipp = (street_address1.split(",")[-1].split(" ")[-1].replace("NY11354","11354").replace("NY10011","10011").replace("Nevada89109","89109"))
+        state = (street_address1.split(",")[-1].strip().split(" ")[0].replace("NY11354","NY").replace("NY10011","NY").replace("Nevada89109","Nevada"))
         city = (base1.find('title').text.split("|")[0].split(",")[0].replace("Manhattan","New York").replace("Orange County ","Fountain Valley").replace("Washington DC","Washington").strip())
-        location_name = (base1.find('h1',{"data-ix":"slide-in-inner-big-text-on-load"}).text.strip().encode('ascii', 'ignore').decode('ascii'))
+        location_name = (base1.find('h1',{"data-ix":"slide-in-inner-big-text-on-load"}).text.strip())
         location_type = "<MISSING>"
-        street_address = street_address1.replace(state,"").replace(city,"").replace(zipp,"").encode('ascii', 'ignore').decode('ascii').replace(phone,"").replace(",","").strip().replace("Las Vegas","").replace(" Fountain Valley","").replace(" NW Washington","")
+        street_address = street_address1.replace(state,"").replace(city,"").replace(zipp,"").replace(phone,"").replace(",","").strip().replace("Las Vegas","").replace(" Fountain Valley","").replace(" NW Washington","")
         try:
             latitude = (base1.find('div',{"class":"sub-text updates info _2-lines"}).find("a")["href"].split("Crawfish/@")[1].split(",")[0])
             longitude = (base1.find('div',{"class":"sub-text updates info _2-lines"}).find("a")["href"].split("Crawfish/@")[1].split(",")[1])
@@ -67,7 +67,7 @@ def fetch_data():
         store.append(location_type if location_type else "<MISSING>")
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
-        store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii') if hours_of_operation else "<MISSING>")
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_link if page_link else "<MISSING>")
         if store[2] in address :
             continue

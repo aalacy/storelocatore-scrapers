@@ -76,7 +76,7 @@ def fetch_data():
                                 if type(output[i]) == str:
                                     output[i] = ''.join((c for c in unicodedata.normalize('NFD', output[i]) if unicodedata.category(c) != 'Mn'))
                             output = [x.replace("–","-") if type(x) == str else x for x in output]
-                            output = [x.encode('ascii', 'ignore').decode('ascii') if type(x) == str else x for x in output]      
+                            output = [x if type(x) == str else x for x in output]
                             yield output
     for i1 in data_8:
         # logger.info(i1)
@@ -120,7 +120,7 @@ def fetch_data():
                                 if type(output[i]) == str:
                                     output[i] = ''.join((c for c in unicodedata.normalize('NFD', output[i]) if unicodedata.category(c) != 'Mn'))
                             output = [x.replace("–","-") if type(x) == str else x for x in output]
-                            output = [x.encode('ascii', 'ignore').decode('ascii') if type(x) == str else x for x in output]  
+                            output = [x if type(x) == str else x for x in output]
                             yield output
 def scrape():
     data = fetch_data()

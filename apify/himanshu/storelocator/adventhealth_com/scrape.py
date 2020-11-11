@@ -116,7 +116,7 @@ def fetch_data():
             store.append(hours2.replace("\n",' ').replace("Hours:  Hours:",'Hours:').replace(",",' ') if hours2 else "<MISSING>")
             store.append(page_url1 )
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             # if store[2] in addressesess:
             #     continue
             # addressesess.append(store[2])

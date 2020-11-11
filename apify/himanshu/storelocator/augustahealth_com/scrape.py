@@ -49,7 +49,7 @@ def fetch_data():
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 		# logger.info("data = " + str(store))
 		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+		store = [str(x).strip() if x else "<MISSING>" for x in store]
 		yield store
 	r = session.get("https://www.augustahealth.com/urgent-care",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
@@ -82,7 +82,7 @@ def fetch_data():
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 		# logger.info("data = " + str(store))
 		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+		store = [str(x).strip() if x else "<MISSING>" for x in store]
 		yield store
 	r = session.get("https://www.augustahealth.com/laboratory/locations",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
@@ -105,7 +105,7 @@ def fetch_data():
 			 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 	# logger.info("data = " + str(store))
 	# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-	store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+	store = [str(x).strip() if x else "<MISSING>" for x in store]
 	yield store
 	r = session.get("https://www.augustahealth.com/laboratory/locations",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
@@ -129,7 +129,7 @@ def fetch_data():
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 		# logger.info("data = " + str(store))
 		# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+		store = [str(x).strip() if x else "<MISSING>" for x in store]
 		yield store
 def scrape():
 	data = fetch_data()

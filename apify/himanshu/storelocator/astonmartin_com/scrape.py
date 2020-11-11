@@ -34,11 +34,11 @@ def fetch_data():
         try:
             r = session.get("https://www.astonmartin.com/api/enquire/findDealers?latitude="+cd[0]+"&longitude="+cd[1]+"&cultureName=en-US&take=15000").json()
             for loc in r:
-                name=loc['Name'].encode('ascii', 'ignore').decode('ascii').strip()
-                address=loc['Address']['Street'].encode('ascii', 'ignore').decode('ascii').strip()
-                city=loc['Address']['City'].encode('ascii', 'ignore').decode('ascii').strip()
-                state=loc['Address']['StateCode'].encode('ascii', 'ignore').decode('ascii').strip()
-                country=loc['Address']['CountryCode'].encode('ascii', 'ignore').decode('ascii').strip()
+                name=loc['Name'].strip()
+                address=loc['Address']['Street'].strip()
+                city=loc['Address']['City'].strip()
+                state=loc['Address']['StateCode'].strip()
+                country=loc['Address']['CountryCode'].strip()
                 zip=loc['Address']['Zip']
                 storeno=''
                 phone=loc['PhoneNumber'].strip()

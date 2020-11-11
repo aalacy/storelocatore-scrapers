@@ -63,8 +63,8 @@ def fetch_data():
     location_url = "https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000&services=gas&region=global"
     r = session.get(location_url, headers=headers).json()
     for key, value in r["stores"].items():
-        latitude = value["latitude"].encode('ascii', 'ignore').decode('ascii').strip()
-        longitude = value["longitude"].encode('ascii', 'ignore').decode('ascii').strip()
+        latitude = value["latitude"].strip()
+        longitude = value["longitude"].strip()
         country_name = getplace(latitude, longitude)
         if country_name in ["unknown", "United States of America","Canada"]:
             if "unknown" == country_name and str(value["country"]) not in ["US","CA","Canada"]:
@@ -131,8 +131,8 @@ def fetch_data():
                 street_address = "<MISSING>"
             if "PEI" in state:
                 state= "Prince Edward Island"
-            store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
-                        store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
+            store = [locator_domain, location_name.strip(), street_address.strip(), city.strip(), state.strip(), zipp.strip(), country_code,
+                        store_number, phone.strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").strip(), page_url]
 
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]))

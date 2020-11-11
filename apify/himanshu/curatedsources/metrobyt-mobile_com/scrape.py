@@ -57,8 +57,8 @@ def fetch_data():
         querystring1 = {"address": ""+str(search.current_zip)+"", "store-type": "All", "min-latitude": "19.50139",
                        "max-latitude": ""+str(lat)+"", "min-longitude": "-68.01197", "max-longitude": ""+str(lng)+""}
         
-       
-        
+
+
 
         headers = {
             'Content-type': "*/*,multipart/form-data; boundary=--------------------------773008355060723902209115",
@@ -163,7 +163,7 @@ def fetch_data():
             store1.append(zipp if zipp else '<MISSING>')
             store1.append(country_code if country_code else '<MISSING>')
             store1.append(store_number if store_number else '<MISSING>')
-            store1.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone.encode('ascii', 'ignore').decode('ascii').strip() else '<MISSING>')
+            store1.append(phone.strip() if phone.strip() else '<MISSING>')
             store1.append('<MISSING>')
             store1.append(latitude if latitude else '<MISSING>')
             store1.append(longitude if longitude else '<MISSING>')
@@ -176,7 +176,7 @@ def fetch_data():
             # print("store1=======", store1)
             yield store1
 
-       
+
 
         if current_results_len < MAX_RESULTS:
             # logger.info("max distance update")

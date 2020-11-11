@@ -80,7 +80,7 @@ def fetch_data():
 					addresses.append(street_address)
 					# logger.info("data = " + str(store))
 					# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+					store = [str(x).strip() if x else "<MISSING>" for x in store]
 					yield store
 				if page_no >= int(page):
 					break
@@ -122,7 +122,7 @@ def fetch_data():
 				addresses.append(street_address)
 				# logger.info("data = " + str(store))
 				# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-				store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+				store = [str(x).strip() if x else "<MISSING>" for x in store]
 				yield store
 
 	

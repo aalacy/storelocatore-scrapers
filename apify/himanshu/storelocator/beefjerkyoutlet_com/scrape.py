@@ -76,20 +76,20 @@ def fetch_data():
             result_coords.append((lat,lng))
             store=[]
             store.append(base_url)
-            store.append(name.encode('ascii', 'ignore').decode('ascii') if name else "<MISSING>")
-            store.append(address.encode('ascii', 'ignore').decode('ascii') if address else "<MISSING>")
-            store.append(city.encode('ascii', 'ignore').decode('ascii') if city else "<MISSING>")
-            store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
-            store.append(zipp.encode('ascii', 'ignore').decode('ascii') if zipp else "<MISSING>")
-            store.append(country_code.encode('ascii', 'ignore').decode('ascii') if country_code else "<MISSING>")
+            store.append(name if name else "<MISSING>")
+            store.append(address if address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
             store.append("beefjerkyoutlet")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
-            store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii') if hours_of_operation.strip() else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
                 continue
             addresses.append(store[2])

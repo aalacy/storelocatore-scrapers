@@ -67,7 +67,7 @@ def fetch_data():
                 location_type = "Commercial"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         
         if (str(store[1])+str(store[2])+str(store[-5])) not in addresses:
             addresses.append(str(store[1])+str(store[2])+str(store[-5]))

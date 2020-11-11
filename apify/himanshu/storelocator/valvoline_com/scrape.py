@@ -79,7 +79,7 @@ def fetch_data():
 				if str(store[2]+" "+store[-5]) not in addresses :
 					addresses.append(str(store[2]+" "+store[-5]))
 
-					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+					store = [str(x).strip() if x else "<MISSING>" for x in store]
 					yield store
 		if current_result_len < MAX_RESULTS:
 			search.max_distance_update(MAX_DISTANCE)

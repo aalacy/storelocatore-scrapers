@@ -101,7 +101,7 @@ def fetch_data():
                 store.append(lng[index])
                 store.append("<MISSING>")
                 store.append( "<MISSING>")     
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
 
 def scrape():

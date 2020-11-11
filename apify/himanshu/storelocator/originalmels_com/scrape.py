@@ -77,7 +77,7 @@ def fetch_data():
         store.append(lng)
         store.append(hours)
         store.append(page_url)     
-        store = [str(x).replace("\xa0"," ").replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).replace("\xa0"," ").replace("–","-").strip() if x else "<MISSING>" for x in store]
         yield store
 
 def scrape():

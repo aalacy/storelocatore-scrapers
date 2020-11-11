@@ -72,7 +72,7 @@ def fetch_data():
         
             try:
                 location_name = soup.find('span', {
-                                            'class': 'location-title'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                                            'class': 'location-title'}).text.strip()
             except:
                 location_name = "<MISSING>"
             try:
@@ -90,26 +90,26 @@ def fetch_data():
 
             if soup.find('div', {'class': 'field-address2'}) != None:
                 add2 = soup.find('div', {
-                                    'class': 'field-address2'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                                    'class': 'field-address2'}).text.strip()
             street_address = add1 + ',' + add2
             try:
                 city = soup.find('span', {
-                                    'class': 'field-city'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                                    'class': 'field-city'}).text.strip()
             except:
                 city = "<MISSING>"
             try:
                 state = soup.find('span', {
-                                    'class': 'field-state'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                                    'class': 'field-state'}).text.strip()
             except:
                 state = "<MISSING>"
             try:
                 zipp = soup.find('span', {
-                    'class': 'field-zip'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                    'class': 'field-zip'}).text.strip()
             except:
                 zipp = "<MISSING>"
             try:
                 phone = soup.find('div', {
-                    'class': 'phone-container'}).text.encode('ascii', 'ignore').decode('ascii').strip()
+                    'class': 'phone-container'}).text.strip()
             except:
                 phone = "<MISSING>"
             
@@ -120,7 +120,7 @@ def fetch_data():
             if str(store[2]) in addresses:
                 continue
             addresses.append(str(store[2]))
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
 
            # logger.info("data = " + str(store))
             #logger.info(
