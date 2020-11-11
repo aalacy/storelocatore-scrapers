@@ -18,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = 'https://www.blimpie.com/stores/'
+    url = 'https://www.saloncentric.com/storefinder'
 
     session = SgRequests()
     data = {"request": {
