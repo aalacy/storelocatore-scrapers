@@ -5,7 +5,7 @@ import re
 import json
 session = SgRequests()
 def write_output(data):
-    with open('thebeerstore.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -24,7 +24,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     for loc in soup.find("div",{"class":"new_all_stores_wrap"}).find_all("a",{"class":"site_default_btn"}):
         page_url = loc['href']
-        # print(page_url)
         r1 = session.get(page_url,headers=headers)
         soup1= BeautifulSoup(r1.text,'lxml')
         location_name = soup1.find("div",{"class":"top_sectionDiv"}).find("h2").text.strip()
@@ -41,10 +40,10 @@ def fetch_data():
         street_address = addr[0].replace(city,"").strip()
         zipp = addr[-1]
         phone = soup1.find("a",{"class":"tel-hl-tbs"}).text.replace("Warning:  preg_match() expects parameter 2 to be string, array given in /nas/content/live/tbsecomp/wp-content/themes/Beer-Store/functions.php on line 1306","").strip()
-        map_url = soup1.find("div",{"class":"store_map col-md-8 map_ex"}).find("img")['src'].split("|")[1].split("&")[0].split(",")
+        map_url = soup1.find("div",{"class":"store_map"}).find("img")['src'].split("|")[1].split("&")[0].split(",")
         latitude = map_url[0]
         longitude = map_url[1]
-        hours_of_operation = " ".join(list(soup1.find("div",{"class":"rite_col"}).stripped_strings)[3:]).replace("\n","").replace("                                           ","")
+        hours_of_operation = " ".join(list(soup1.find_all("div",{"class":"rite_col"})[-1].stripped_strings)).replace("\n","").replace("                                           ","")
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -58,7 +57,7 @@ def fetch_data():
         store.append("The Beer Store")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append(hours_of_operation.replace("Store Hours Day Hours ",'') if hours_of_operation else '<MISSING>')
         store.append(page_url)
         store = [x.replace("—","-") if type(x) == str else x for x in store] 
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]

@@ -26,7 +26,7 @@ def fetch_data():
         store = []
         store.append("https://opasouvlaki.ca")
         store.append(store_data['location'])
-        store.append(store_data["shortaddress"])
+        store.append(store_data["address"])
         store.append(store_data['city'])
         try:
             store.append(store_data['province'])
