@@ -45,6 +45,7 @@ def fetch_data():
             hour=''
             for hr in loc['hours']:
                 hour+=hr['weekDay']+":"+hr['openTime']+"-"+hr['closeTime']+", "
+            hour = hour.replace("07:30-07:30","07:30-18:30")
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")
@@ -75,4 +76,3 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-

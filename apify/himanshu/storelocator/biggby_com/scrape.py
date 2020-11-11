@@ -7,13 +7,7 @@ import time
 from datetime import datetime
 import phonenumbers
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('biggby_com')
-
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -27,7 +21,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     base_url = "https://www.biggby.com/"
     addresess = []
@@ -38,18 +31,25 @@ def fetch_data():
 
     r = session.get("https://www.biggby.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
+    key = str(soup).split('"bgcSecurity":"')[1].split('","ajax":')[0]
+    # print(key)
     data = soup.find_all("marker")
     for i in data:
         if i['coming-soon'] == "yes" :
             continue
         location_name = i['name']
+        # print(location_name)
         street_address = i['address-one'] +" "+ i['address-two']
         city = i['city']
         state = i['state']
         zipp = i['zip']
         store_number = i['id']
-        latitude = i['lat']
-        longitude = i['lng']
+        try:
+            latitude = i['lat']
+            longitude = i['lng']
+        except KeyError:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         country_code = i['country']
         hours = ''
         if i['mon-thurs-open-hour']:
@@ -133,15 +133,12 @@ def fetch_data():
             sun_close = "close"
         hours = "mon thurs open hour"+"-"+str(mon_open)+" "+"mon thurs close hour"+"-"+str(mon_close)+" "+"fri open hour"+"-"+str(fri_open)+" "+"fri close hour"+"-"+str(fri_close)+" "+"sat open hour"+"-"+str(sat_open)+" "+"sat close hour"+"-"+str(sat_close)+" "+"sun open hour"+"-"+str(sun_open)+" "+"sun close hour"+"-"+str(sun_close)
 
-        r1 = session.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security=42e14be750&post_id="+str(i['pid'])).json()
+        r1 = session.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security="+key+"&post_id="+str(i['pid'])).json()
         number = r1['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
         if number:
             phone = phonenumbers.format_number(phonenumbers.parse(str(number), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-            
         else:
             phone = "<MISSING>"
-           
-
         store = []
         store.append(base_url)
         store.append(location_name if location_name else '<MISSING>')

@@ -1,47 +1,45 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import html5lib
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('place_hyatt_com')
-
-
-
-
+logger = SgLogSetup().get_logger('http://place.hyatt.com/')
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     headers = {
              'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36',    
     }
     session = SgRequests()
-    base_url = "https://www.hyatt.com/"     
+    base_url = "http://place.hyatt.com/"  
     r = session.get("https://www.hyatt.com/explore-hotels/partial?regionGroup=1-NorthAmerica&categories=&brands=", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    links = soup.find_all("a",{"class":"b-text_copy-3"})
-
-    for link in links:
-        if "hyatt-place" in link['href']:
-            page_url = link['href']
+    data_coming = soup.find_all("li",{"class":"property b-mb2"})
+    for j in data_coming :
+        if "Opening Soon" in j.text :
+            continue
+        if "Coming Soon" in j.text:
+            continue
+        links = j.find("a",{"class":"b-text_copy-3"})
+        if "hyatt-place" in links['href'] :
+            page_url = links['href']
         else:
             continue
         r1 = session.get(page_url, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        json_data = json.loads(soup1.find("script", {"type":"application/ld+json"}).text)
-    
+        soup1 = BeautifulSoup(r1.text, "html5lib")
+        try:
+            json_data = json.loads(soup1.find("script", {"type":"application/ld+json"}).text)
+        except:
+            continue
         location_name = json_data['name']
         street_address = json_data['address']['streetAddress'].replace("\t","").strip()
         city = json_data['address']['addressLocality']
@@ -55,10 +53,7 @@ def fetch_data():
             phone = "<MISSING>"
         latitude = json_data['geo']['latitude']
         longitude = json_data['geo']['longitude']
-        
-    
         store = []
-        
         store.append(base_url)
         store.append(location_name)
         store.append(street_address)
@@ -73,18 +68,8 @@ def fetch_data():
         store.append(longitude )
         store.append("<MISSING>")
         store.append(page_url)
-        # logger.info("data==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
         yield store
-    
-
-        
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

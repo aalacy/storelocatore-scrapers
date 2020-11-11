@@ -1,0 +1,3 @@
+sgvalidator==0.0.70
+sgselenium==0.0.12
+sgrequests==0.0.15

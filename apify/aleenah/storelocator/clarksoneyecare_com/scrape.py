@@ -32,6 +32,7 @@ def fetch_data():
     for coord in coords:
         #logger.info(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
+        print(url)
         res = session.get(url)
         try:
             jso=res.json()
@@ -45,26 +46,29 @@ def fetch_data():
             key_set.add(data)
             res = session.get(js['permalink'])
             soup = BeautifulSoup(res.text, 'html.parser')
-            tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
-            logger.info(tim)
+            try:
+                tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
+            except:
+                tim='<MISSING>'
+            logger.info(url)
             name=js["name"].replace(";s ","; ").replace( u'\u200b','')
             if ";" in name:
                 name=name.split(';')[-1]
             all.append([
                 "https://www.clarksoneyecare.com",
-                name,
-                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b',''),
-                js["city"].replace( u'\u200b',''),
-                js["state"].replace( u'\u200b',''),
-                js["zip_code"].replace( u'\u200b',''),
+                name.replace( u'\u200b','').replace( u'\u202c',''),
+                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b','').replace( u'\u202c',''),
+                js["city"].replace( u'\u200b','').replace( u'\u202c',''),
+                js["state"].replace( u'\u200b','').replace( u'\u202c',''),
+                js["zip_code"].replace( u'\u200b','').replace( u'\u202c',''),
                 "US",
                 "<MISSING>",  # store #
-                js["phone_number"].replace( u'\u200b',''),  # phone
+                js["phone_number"].replace( u'\u200b','').replace( u'\u202c',''),  # phone
                 "<MISSING>",  # type
-                js["lat"].replace( u'\u200b',''),  # lat
-                js["lng"].replace( u'\u200b',''),  # long
-                tim.replace( u'\u200b',''),  # timing
-                url.replace( u'\u200b','')])
+                js["lat"].replace( u'\u200b','').replace( u'\u202c',''),  # lat
+                js["lng"].replace( u'\u200b','').replace( u'\u202c',''),  # long
+                tim.replace( u'\u200b','').replace( u'\u202c',''),  # timing
+                url.replace( u'\u200b','').replace( u'\u202c','')])
 
     return all
 

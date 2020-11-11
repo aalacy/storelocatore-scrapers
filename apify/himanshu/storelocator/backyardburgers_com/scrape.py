@@ -4,108 +4,70 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('backyardburgers_com')
-
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    base_url= "https://www.backyardburgers.com/locations"
+    addressess = []
+    base_url= "https://www.backyardburgers.com/store-locator/"
     r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-    store_detail=[]
-    return_main_object=[]
-    k = soup.find_all("a",{'class':"button -text-highlight"})
-    lat1 =[]
-    lng1=[]
-    hours1=[]
-    store_name=[]
-    for i in k:
-        tem_var=[]
-        if "View Details" in i.text:
-            r = session.get(i['href'])
-            soup1 = BeautifulSoup(r.text,"lxml")
-            v1 = list(soup1.find("article",{"class":"blog"}).stripped_strings)
-            adr = soup1.find("div",{"class":"adr"})
-            phone1 = soup1.find("div",{"class":"tel"})
-            phone =(list(phone1.stripped_strings)[0])
-            name = list(adr.stripped_strings)[0].split(",")[0]
-            store_name.append(name)
-            # logger.info(name)
-            st = list(adr.stripped_strings)[1]
-            city = list(adr.stripped_strings)[2]
-            zip1 = list(adr.stripped_strings)[5]
-            state = list(adr.stripped_strings)[4]
-            v1 = [p.replace("\xa0","") for p in v1]
-            hours1.append(" ".join(v1[1:8]))
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("backyardburgers")
-            logger.info(tem_var)
-            store_detail.append(tem_var)
+    jd = json.loads(str(soup).split("locations: ")[1].split('apiKey: ')[0].strip().rstrip(","))
+    for val in jd:
+        location_name = val['name']
+        street_address = val['street']
+        city = val['city']
+        state = val['state']
+        zipp = val['postal_code']
+        store_number = val['id']
+        phone = val['phone_number']
+        latitude = val['lat']
+        longitude = val['lng']
+        page_url = "https://www.backyardburgers.com"+val['url']
+        h_data = BeautifulSoup(val['hours'],'html5lib')
+        if page_url=="https://www.backyardburgers.com/location/back-yard-burgers-batesville/":
+            hours_of_operation = "temporarily closed"
         else:
-            lat = i['href'].split("@")[-1].split(",")[0]
-            lng = i['href'].split("@")[-1].split(",")[1]
-            lat1.append(lat)
-            lng1.append(lng)
+            hoo = list(h_data.find("p").stripped_strings)
+            hour = []
+            for h in hoo:
+                hour.append(" ".join(h.split()))
+            hours_of_operation = ", ".join(hour).replace(", *Dinning room closes at 7:00 pm","").replace("Now Open!","<MISSING>").replace("Closed for renovations","")
             
-        # tem_var.append("https://www.backyardburgers.com/")
-        # store_name.append(name)
-        # tem_var.append(st)
-        # tem_var.append(city)
-        # tem_var.append(state)
-        # tem_var.append(zip1)
-        # tem_var.append("US")
-        # tem_var.append("<MISSING>")
-        # tem_var.append(phone)
-        # tem_var.append("backyardburgers")
-       
         
-        # logger.info(tem_var)
+        store = []
+        store.append("https://www.backyardburgers.com")
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append("US")
+        store.append(store_number)
+        store.append(phone if phone else '<MISSING>')
+        store.append("Back Yard Burgers")
+        store.append(latitude if latitude else '<MISSING>')
+        store.append(longitude if longitude else '<MISSING>')
+        store.append(hours_of_operation.replace("Nov 11th (Remembrance Day) ",'') if hours_of_operation else '<MISSING>')
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        yield store
         
-    # logger.info(store_name)
-    # logger.info(store_detail)
-    for i in range(len(store_name)):
-       store = list()
-       store.append("https://www.backyardburgers.com")
-       store.append(store_name[i])
-       store.extend(store_detail[i])
-       
-       store.append(lat1[i])
-       store.append(lng1[i])
-       store.append(hours1[i])
-       logger.info(store)
-       return_main_object.append(store)
-
-    return return_main_object
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
 
 

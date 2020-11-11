@@ -6,10 +6,7 @@ import json
 import datetime
 import unicodedata
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('cashamerica_com__cashland')
-
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:

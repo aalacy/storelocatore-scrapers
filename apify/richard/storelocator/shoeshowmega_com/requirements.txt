@@ -1,4 +1,4 @@
-selenium==3.141.0
-requests
+lxml==4.3.3
+sgrequests
+beautifulsoup4==4.7.1
 sgzip
-sglogging

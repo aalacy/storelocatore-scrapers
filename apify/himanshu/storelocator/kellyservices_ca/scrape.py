@@ -67,7 +67,7 @@ def fetch_data():
     search.initialize()
     # search.initialize(include_canadian_fsas = True)   # with canada zip
     MAX_RESULTS = 10
-    MAX_DISTANCE = 25
+    MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
 
@@ -176,8 +176,8 @@ def fetch_data():
                 store = [str(x).strip() if x else "<MISSING>" for x in store]
                 if store[2] == store[4]:
                     store[2] = "<MISSING>"
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+#                logger.info("data = " + str(store))
+#                logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
