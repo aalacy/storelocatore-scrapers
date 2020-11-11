@@ -59,6 +59,8 @@ def fetch_data():
     data = json.loads(response.text)
 
     for location_data in data['Items']:
+        if location_data['xp']['status'] == 'ComingSoon':
+            continue
         location_details_url = 'https://api.ordercloud.io/v1/suppliers/{}/addresses/{}'.format(location_data['ID'], location_data['ID'])
         location_response = session.get(location_details_url, headers=hdr)
         location_full_data = json.loads(location_response.text)
