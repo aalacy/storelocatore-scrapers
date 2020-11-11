@@ -72,7 +72,7 @@ def fetch_data():
                     if check > 12:
                         endtime = check - 12
                     hours = hours + day + ' '+ start + ' AM - '+ str(endtime) + ':' + end.split(':',1)[1]+' PM '
-                    
+                hours = hours.replace('Mo','Monday').replace('Tu','Tuesday').replace('Th','Thursday').replace('We','Wednesday').replace('Fr','Friday').replace('Sa','Saturday').replace('Su','Sunday')     
                 
             else:
                 soup = BeautifulSoup(r.text,'html.parser')
