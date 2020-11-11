@@ -66,15 +66,14 @@ def fetch_data():
         if _tmp:
             hours_of_operation = ';'.join(_tmp)
 
-            # skip closed stores
             if hours_of_operation.count('CLOSED') == 7:
-                continue
+                hours_of_operation = 'CLOSED'
         else:
             hours_of_operation = '<MISSING>'
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        print(row)
+
         out.append(row)
 
     return out
