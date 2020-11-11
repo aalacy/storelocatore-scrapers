@@ -6,6 +6,7 @@ import json
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('backyardburgers_com')
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -56,7 +57,7 @@ def fetch_data():
         store.append("Back Yard Burgers")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append(hours_of_operation.replace("Nov 11th (Remembrance Day) ",'') if hours_of_operation else '<MISSING>')
         store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         if store[2] in addressess:
