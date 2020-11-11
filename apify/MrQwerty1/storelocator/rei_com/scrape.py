@@ -23,7 +23,6 @@ def get_json(url):
     tree = html.fromstring(r.text)
     j = ''.join(tree.xpath("//script[@id='modelData']/text()"))
     js_list = json.loads(j, encoding='utf8')
-    # js_list = eval(j)['pageData']['storeLocatorDirectoryModel']['storeDirectory']['storeLocatorFacetGroupModels']
     return js_list['pageData']['storeLocatorDirectoryModel']['storeDirectory']['storeLocatorFacetGroupModels']
 
 
@@ -39,7 +38,7 @@ def fetch_data():
             for d in data:
                 j = d.get('storeDataModel')
                 locator_domain = url
-                page_url = url
+                page_url = f"https://www.rei.com/{j['storePageUrl']}"
                 location_name = j.get('storeName')
                 street_address = j.get('address1') or '<MISSING>'
                 city = j.get('city') or '<MISSING>'
