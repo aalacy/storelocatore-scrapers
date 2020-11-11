@@ -6,7 +6,7 @@ from random import randint
 import re
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('30burgers_com')
+logger = SgLogSetup().get_logger('oldcountrybuffet_com')
 
 
 def write_output(data):
