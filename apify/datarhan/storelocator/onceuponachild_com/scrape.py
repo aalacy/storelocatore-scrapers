@@ -49,12 +49,16 @@ def fetch_data():
         for store_data_countries in state_data[0]['countries']:
             for store_data_regions in store_data_countries['regions']:
                 for store_data in store_data_regions['stores']:
+                    if store_data['statusText'] == 'Coming Soon':
+                        continue
                     store_url = 'https://onceuponachild.com/locations?query={}'.format(state)
                     location_name = store_data['storeName']
                     street_address = store_data['addressLine1']
                     if street_address:
                         if store_data['addressLine2']:
                             street_address += ' ' + store_data['addressLine2']
+                    if not street_address:
+                        street_address = store_data['addressLine2']
                     street_address = street_address if street_address else '<MISSING>'
                     city = store_data['city']
                     city = city if city else '<MISSING>'
