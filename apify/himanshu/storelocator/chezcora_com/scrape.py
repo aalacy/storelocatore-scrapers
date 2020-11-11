@@ -64,14 +64,14 @@ def fetch_data():
         for i in data1:
             location_name = (i.find("h2").text.replace("é","e").replace("è","e").replace("â","a").replace("ô","o"))
             url = i.find("h2").find("a")['href']
-            street_address = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[1].replace("é","e").replace("è","e").replace("â","a").replace("ô","o").encode('ascii', 'ignore').decode('ascii')
+            street_address = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[1].replace("é","e").replace("è","e").replace("â","a").replace("ô","o")
             try:
                 city =  " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[0].replace("é","e").replace("è","e").replace("â","a").replace("ô","o")
                 state = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[1].strip().rstrip().lstrip()
                 zipp = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[2:][0].strip().rstrip().lstrip()
                 phone = i.find_all("p")[1].text.replace("      ","")
                 hours = (i.find("div",{"class":"tabHoraire"}).text.strip().lstrip().rstrip().replace("\n","").split(" "))
-                hours_of_operation = " ".join(hours).replace("\n","").replace("\t","").replace("\r","").encode('ascii', 'ignore').decode('ascii').strip().replace("p.m.Saturday","p.m. Saturday").replace("p.m.Sunday","p.m. Sunday")
+                hours_of_operation = " ".join(hours).replace("\n","").replace("\t","").replace("\r","").strip().replace("p.m.Saturday","p.m. Saturday").replace("p.m.Sunday","p.m. Sunday")
                 page_url = ("https://www.chezcora.com"+str(url))
             except:
                 city = "<MISSING>"

@@ -96,7 +96,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.replace("é","e") if type(x) == str else x for x in store] 
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         if current_results_len < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
