@@ -32,12 +32,16 @@ def fetch_data():
         latitude = val['lat']
         longitude = val['lng']
         page_url = "https://www.backyardburgers.com"+val['url']
-        h_data = BeautifulSoup(val['hours'],'lxml')
-        hoo = list(h_data.find("p").stripped_strings)
-        hour = []
-        for h in hoo:
-            hour.append(" ".join(h.split()))
-        hours_of_operation = ", ".join(hour).replace(", *Dinning room closes at 7:00 pm","").replace("Now Open!","<MISSING>").replace("Closed for renovations","")
+        h_data = BeautifulSoup(val['hours'],'html5lib')
+        if page_url=="https://www.backyardburgers.com/location/back-yard-burgers-batesville/":
+            hours_of_operation = "temporarily closed"
+        else:
+            hoo = list(h_data.find("p").stripped_strings)
+            hour = []
+            for h in hoo:
+                hour.append(" ".join(h.split()))
+            hours_of_operation = ", ".join(hour).replace(", *Dinning room closes at 7:00 pm","").replace("Now Open!","<MISSING>").replace("Closed for renovations","")
+            
         
         store = []
         store.append("https://www.backyardburgers.com")
@@ -64,6 +68,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-
 
 
