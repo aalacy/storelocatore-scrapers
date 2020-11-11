@@ -7,7 +7,7 @@ import time
 import html5lib
 session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -81,14 +81,24 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
                 page_url = "<MISSING>"
             try:
-                r2 = request_wrapper(page_url,"get",headers=headers)
-                soup2 = BeautifulSoup(r2.text,"html5lib")
-                data2 = soup2.find_all("script")[8]
-                latitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[0].split("lat: ")[1])
-                longitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[1].split("lon: ")[1])
+                try:
+                    r2 = request_wrapper(page_url,"get",headers=headers)
+                    soup2 = BeautifulSoup(r2.text,"html5lib")
+                    data2 = soup2.find_all("script")[10]
+                    latitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[0].split("lat: ")[1])
+                    longitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[1].split("lon: ")[1])
+                except:
+                    r2 = request_wrapper(page_url,"get",headers=headers)
+                    soup2 = BeautifulSoup(r2.text,"html5lib")
+                    data2 = soup2.find_all("script")[9]
+                    latitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[0].split("lat: ")[1])
+                    longitude = (data2.text.strip().lstrip().rstrip().split("bounds.push({")[1].split("icon")[0].split(",")[1].split("lon: ")[1])
             except:
+
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+            if "Brentwood" in location_name:
+                continue
             store = []
             store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 
@@ -99,10 +109,10 @@ def fetch_data():
             store.append("CA")
             store.append("<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("Chezcora")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else"<MISSING>")
-            store.append("<MISSING>")
+            store.append(hours_of_operation.replace("*Diningroom temporarily closed.","").replace("Open for take-out and delivery.","").replace("*Dining room temporarily closed.","").replace("OPEN!Dining room, take-out and delivery.","").replace("We are open!Dining room, patio, take-out and delivery.","").replace('WE ARE OPEN!Dining room, take-out and delivery.',"").replace("WE ARE ", "").replace("Please note that this restaurant is now closed.We thank you for the privilege of being able to welcome you into our home and for making us part of your community.We hope you will continue to enjoy the Cora experience, and we invite you to visit us at another location.","<MISSING>").replace("WE ARE OPEN!Dining room, patio, take-out and delivery.","").replace("WE ARE OPEN!Dining room, take-out and delivery (Skip).","").replace('Open for take-out.',"").replace('Due to current circumstances, we must temporarily close our doors.We apologize for any inconvenience and look forward to welcoming you again soon.',"<MISSING>").replace("Open for take-out and delivery .","").replace("We are open!Dining room, take-out and delivery.","").replace("OPEN!Dining room, take-out and delivery (Skip).","").replace("OPEN!Dining room, patio and take-out.","").replace("OPEN!Dinin room,take-out and delivery.","").replace("OPEN!Dining room, patio, take-out and delivery.","").replace("OPEN!Dining-room, patio, take-out and delivery.","").replace("We are open!Dining room and take-out.","").replace("Note:Storefront access between Shoppers Drug Mart and The BayFrom inside the mall, located on the lower level (take access hallway beside The Bay)",""))
             store.append(page_url if page_url else "<MISSING>")
             if store[2] in address :
                 continue
@@ -112,4 +122,3 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-
