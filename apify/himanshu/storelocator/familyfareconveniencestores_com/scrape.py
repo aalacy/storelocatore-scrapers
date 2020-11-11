@@ -1,12 +1,9 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import urllib.parse
 from sgselenium import SgSelenium
 import time
-from selenium.webdriver.support.wait import WebDriverWait
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('familyfareconveniencestores_com')
