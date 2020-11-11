@@ -33,8 +33,11 @@ def fetch_data():
     divlist = soup.select("a[href*=locations]")
    # print("states = ",len(state_list))
     p = 0
-    for div in divlist:        
-        link = 'https://www.seasons52.com'+div['href']
+    for div in divlist:
+        if p == 0:
+            link = 'https://www.seasons52.com/locations/fl/sunrise/sunrise-sawgrass/4548'
+        else:
+            link = 'https://www.seasons52.com'+div['href']
         if link.find('all-locations') == -1:           
             r = session.get(link, headers=headers, verify=False)
             loc = r.text.split('<script type="application/ld+json">',1)[1].split('</script>',1)[0].replace('\n','')
