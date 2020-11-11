@@ -36,7 +36,7 @@ def fetch_data():
         store_number = '<MISSING>'
         phone = j.get('phone') or '<MISSING>'
         latitude = j.get('lat') or '<MISSING>'
-        longitude = j.get('lon') or '<MISSING>'
+        longitude = j.get('lng') or '<MISSING>'
         location_type = '<MISSING>'
 
         _tmp = []
