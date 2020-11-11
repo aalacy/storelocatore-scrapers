@@ -104,6 +104,11 @@ def fetch_data():
         longitude = location_data['xp']['longitude']
         longitude = longitude if longitude else '<MISSING>'
         hours_of_operation = location_full_data['xp']['hours']
+        if hours_of_operation:
+            hours_list = []
+            for key, value in hours_of_operation.items():
+                hours_list.append('{} - {}'.format(key, value))
+            hours_of_operation = ', '.join(hours_list)
         hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
         
         item = [
