@@ -51,7 +51,7 @@ def fetch_data():
         city = city if city else '<MISSING>'
         state = point_data['Address'].split('<br>')[-1].split(',')[-1].strip().split()[0]
         state = state if state else '<MISSING>'
-        zip_code = point_data['Address'].split('<br>')[-1].split(',')[-1].strip().split()[-1]
+        zip_code = ' '.join(point_data['Address'].split('<br>')[-1].split(',')[-1].strip().split()[-2:])
         zip_code = zip_code if zip_code else '<MISSING>'
         country_code = '<MISSING>'
         country_code = country_code if country_code else '<MISSING>'
