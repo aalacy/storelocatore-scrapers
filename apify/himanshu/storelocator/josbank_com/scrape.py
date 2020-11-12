@@ -7,10 +7,6 @@ import sgzip
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('josbank_com')
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -29,8 +25,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 50
+    MAX_RESULTS = 200
+    MAX_DISTANCE = 100
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
 
@@ -43,9 +39,9 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #logger.info("zip_code === "+zip_code)
+        # logger.info("zip_code === "+zip_code)
 
-        location_url = "https://www.josbank.com/sr/search/resources/store/13452/storelocator/byProximity?catalogId=14052&langId=-24&radius=50&zip="+str(zip_code)+"&city=&state=&brand=JAB&profileName=X_findStoreLocatorWithExtraFields"
+        location_url = "https://www.josbank.com/sr/search/resources/store/13452/storelocator/byProximity?catalogId=14052&langId=-24&radius=500&zip="+str(zip_code)+"&city=&state=&brand=JAB&profileName=X_findStoreLocatorWithExtraFields"
         try:
             r = session.get(location_url,headers=headers)
         except:
@@ -66,7 +62,8 @@ def fetch_data():
                         phone = i['phone_ntk']
                         latitude = i['latlong'].split(',')[0]
                         longitude = i['latlong'].split(',')[1]
-                        hours_of_operation = i['working_hours_ntk'].replace('<br>',' ')
+                        hours_of_operation = i['working_hours_ntk'].replace('<br>',', ')
+                        print(hours_of_operation)
                         page_url = "https://www.josbank.com/store-locator/"+str(city).lower()+"-"+str(state).lower()+"-"+str(store_number)+"?address="+str(zip_code)+"%20%2C"
 
                         result_coords.append((latitude, longitude))
@@ -83,7 +80,7 @@ def fetch_data():
                         store.append("<MISSING>")
                         store.append(latitude)
                         store.append(longitude)
-                        store.append(hours_of_operation)
+                        store.append(hours_of_operation.replace("SUN",'SUN ').replace("MON","MON ").replace("TUE",'TUE ').replace("THU","THU ").replace("FRI",'FRI ').replace("SAT","SAT ").replace("WED",'WED ').replace("SUN",'SUN ').replace("FRI",'FRI '))
                         store.append(page_url)
                         if store[2] in addresses:
                             continue
