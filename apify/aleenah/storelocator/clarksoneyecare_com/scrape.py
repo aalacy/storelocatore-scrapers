@@ -32,7 +32,7 @@ def fetch_data():
     for coord in coords:
         #logger.info(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
-        print(url)
+        
         res = session.get(url)
         try:
             jso=res.json()
