@@ -1,8 +1,5 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
+from sgrequests import SgRequests
 import json
 
 base_url = 'https://www.dogtopia.com'
@@ -17,7 +14,7 @@ def get_value(item):
         item = '<MISSING>'
     item = validate(item)
     if item == '':
-        item = '<MISSING>'    
+        item = '<MISSING>'
     return item
 
 def eliminate_space(items):
@@ -31,14 +28,17 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+
+    session = SgRequests()
+
     output_list = []
     url = "https://www.dogtopia.com/wp-json/store-locator/v1/locations.json"
-    request = requests.get(url)
+    request = session.get(url)
     store_list = json.loads(request.text)
     for store in store_list:
         if store['opening_soon']:
@@ -69,18 +69,21 @@ def fetch_data():
         if count == 0:
             continue
         store_hours += extra
-            
+        
+        store_hours = store_hours.replace("day","day ").replace("sunday -", "sunday Closed").replace("  ", " ").replace("Board","board").split("Sunday hours")[0].split("Saturday and")[0].split("Sunday board")[0].strip()
+
         output = []
         output.append(base_url) # url
+        output.append(store['link'])
         output.append(validate(store['title']['raw'])) #location name
-        output.append(validate(location_address_info['location_street_address'])) #address
+        output.append(validate(location_address_info['location_street_address'].replace("Suite C,","Suite C"))) #address
         output.append(validate(location_address_info['location_city'])) #city
-        output.append(validate(location_address_info['location_state_prov'])) #state
+        output.append(validate(location_address_info['location_state_prov'].replace("Washington","WA").replace("Wisconsin","WI").replace("Delaware","DE"))) #state
         output.append(validate(location_address_info['location_zip_postal'])) #zipcode
         output.append(validate(location_address_info['location_country'])) #country code
         output.append(get_value(location_address_info.get('location_id'))) #store_number
-        output.append(validate(location_address_info['location_phone'])) #phone
-        output.append("Dogtopia - The leading provider of dog daycare in North America") #location type
+        output.append(validate(location_address_info['location_phone'].replace("DOGS (3647)","3647"))) #phone
+        output.append('<MISSING>') #location type
         output.append(validate(location_address_info['location_coordinates']['latitude'])) #latitude
         output.append(validate(location_address_info['location_coordinates']['longitude'])) #longitude
         output.append(get_value(store_hours)) #opening hours
