@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 import phonenumbers
 from sglogging import SgLogSetup
+
+
 logger = SgLogSetup().get_logger('biggby_com')
 session = SgRequests()
 
