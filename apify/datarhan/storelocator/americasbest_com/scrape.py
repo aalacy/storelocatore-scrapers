@@ -35,7 +35,7 @@ def fetch_data():
 
     for state_code in states:
         url = 'https://maps.americasbest.com/ajax?'
-        parameter = '<request><appkey>112FD85A-20C7-11E9-9FDF-56218E89CD5A</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>25000</limit><geolocs><geoloc><addressline>{}</addressline><longitude></longitude><latitude></latitude></geoloc></geolocs><searchradius>50|100|250|500|750</searchradius><where><and><entityid><eq>9</eq></entityid><showinlocatoryn><eq>Y</eq></showinlocatoryn></and></where></formdata></request>'
+        parameter = '<request><appkey>112FD85A-20C7-11E9-9FDF-56218E89CD5A</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>5000</limit><geolocs><geoloc><addressline>{}</addressline><longitude></longitude><latitude></latitude></geoloc></geolocs><searchradius>50|100|250|500|5000</searchradius><where><and><entityid><eq>9</eq></entityid><showinlocatoryn><eq>Y</eq></showinlocatoryn></and></where></formdata></request>'
         url = add_or_replace_parameter(url, 'xml_request', parameter.format(state_code))
         response = session.get(url)
         dom = etree.XML(response.text.replace('<?xml version="1.0" encoding="UTF-8"?>', ''))
