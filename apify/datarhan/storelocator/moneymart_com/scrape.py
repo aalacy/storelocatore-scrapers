@@ -35,15 +35,13 @@ def fetch_data():
         'Referer': 'https://moneymart.com/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'
     }
-    proxy_url = 'http://lum-customer-s_lutchenko-zone-us-session-0.9410316166617995:2dzhrym8ln2a@zproxy.lum-superproxy.io:22225'
-    proxies = {'http': proxy_url, 'https': proxy_url}
+    
     body = '{"lat":33.9799999,"lng":-118.19,"startRcdNum":"0","radius":"100000","StoreNum":"","searchText":"90202"}'
     
     all_response = session.post(
         'https://www.moneymart.com/StoreDetails/GoogleAPIServiceCall',
         data=body,
-        headers=hdr,
-        proxies=proxies
+        headers=hdr
     )
     soup = BeautifulSoup(all_response.content, 'html.parser')
     all_stores = soup.find_all('store')
