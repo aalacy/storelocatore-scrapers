@@ -4,14 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('advanceamerica_net')
-
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +15,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
     base_url = "https://www.advanceamerica.net"
     data = {"postType":"location","postsPerPage":-1,"taxQuery":[{"taxonomy":"location_state","field":"slug","terms":"alabama"}]}
@@ -55,21 +48,22 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(store_data["fields"]['latitude'])
         store.append(store_data["fields"]['longitude'])
-        store_hours = store_data["fields"]["hours"]
-        hours = ""
-        for k in range(len(store_hours)):
-            if store_hours[k]['open_time']:
-                hours = hours + store_hours[k]["day"] + " open_time " + store_hours[k]['open_time'] + " close_time " + store_hours[k]['close_time'] + " "
-        if hours == "":
+        try:
+            store_hours = store_data["fields"]["hours"]
+            hours = ""
+            for k in range(len(store_hours)):
+                if store_hours[k]['open_time']:
+                    hours = hours + store_hours[k]["day"] + " open_time " + store_hours[k]['open_time'] + " close_time " + store_hours[k]['close_time'] + " "
+            if hours == "":
+                hours = "<MISSING>"
+        except:
             hours = "<MISSING>"
+            # print(page_url)
         store.append(hours)
         store.append(page_url)
-
         return_main_object.append(store)
     return return_main_object
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
