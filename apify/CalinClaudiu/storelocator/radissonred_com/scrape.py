@@ -86,7 +86,7 @@ def validatorsux(x):
     return x
 
 def scrape():
-    url="https://countryinns.com"
+    url="https://radissonred.com"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain = ConstantField(url),
         page_url=MappingField(mapping=['sub','requrl']),
@@ -104,7 +104,7 @@ def scrape():
         location_type=MappingField(mapping=['sub','mainEntity','@type'])
     )
 
-    pipeline = SimpleScraperPipeline(scraper_name='countryinns.com',
+    pipeline = SimpleScraperPipeline(scraper_name='radissonred.com',
                                      data_fetcher=fetch_data,
                                      field_definitions=field_defs,
                                      log_stats_interval=15)
