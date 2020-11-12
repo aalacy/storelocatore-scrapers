@@ -5,22 +5,15 @@ import re
 import json
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('vitalitybowls_com')
-
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
@@ -68,15 +61,12 @@ def fetch_data():
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(news))
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(news))
                 state_list = re.findall(r' ([A-Z]{2}) ', str(news))
-
                 if ca_zip_list:
                     zipp = ca_zip_list[-1]
                     country_code = "CA"
-
                 if us_zip_list:
                     zipp = us_zip_list[-1]
                     country_code = "US"
-
                 if state_list:
                     state = state_list[-1]
                 city = link["href"].split("ns/")[-1].replace("/",'').replace("-",' ')
@@ -88,8 +78,6 @@ def fetch_data():
                 zipp = adr[-1].replace("Pleasant Hill CA 94523",'Pleasant Hill, CA 94523').split(",")[1].strip().split( )[1]
                 adr = list(map(lambda s: s.strip(), adr[:-1] ))
                 street_address = " ".join(adr).replace("STORE INFO ",'').strip()
-
-
             try:
                 hours = " ".join(list(location_soup.find("h2",text="HOURS").parent.stripped_strings)).replace("HOURS",'').strip()
             except:
@@ -120,8 +108,7 @@ def fetch_data():
                 phone = "719-639-7150"
 
             if "Trail" in street_address:
-                street_address = "8226 Tamiami Trail"
-                
+                street_address = "8226 Tamiami Trail"   
             if "3569 28th st.  the shops at centerpointe mall grand rapids michigan" in street_address:
                 street_address = "3569 28th St. SE"
                 zipp = "49512"
@@ -131,7 +118,7 @@ def fetch_data():
             store.append("https://vitalitybowls.com")
             store.append(loc_name)
             store.append(street_address.replace("8226Tamiami Trail",'8226 Tamiami Trail').replace("westridge square shopping center ",'').replace("city creek center space #",'').replace("persimmon place ",'') if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
+            store.append(city.replace("frisco eldorado","frisco").replace("omaha legacy","omaha").replace("orlando ocoee","orlando").replace("orlando dr phillips","orlando") if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
             store.append(zipp if zipp else "<MISSING>")
             store.append("US")
@@ -144,8 +131,7 @@ def fetch_data():
             else:
                 store.append("<INACCESSIBLE>")
                 store.append("<INACCESSIBLE>")
-        
-            store.append(hours.replace("Re-opening April 28th!",'') if hours.strip() else "<MISSING>")
+            store.append(hours.replace("Re-opening April 28th!",'').replace("\n","").replace("\r","").replace("\t","") if hours.strip() else "<MISSING>")
             store.append(page_url)
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.strip() if type(x) == str else x for x in store]
@@ -153,10 +139,7 @@ def fetch_data():
             #     continue
             # addressess.append(str(store[2]+store[-1]))
             yield store
-
-  
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
