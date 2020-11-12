@@ -54,7 +54,6 @@ def fetch_data():
         k = json.loads(i)
         if len(k['hotels'])!= 0:
             if k['hotels'][0]['brand'] == brand:
-                print(k['hotels'][0]['overviewPath'])
                 par = utils.parallelize(
                     search_space = [[counter,z['overviewPath']] for counter, z in enumerate(k['hotels'])],
                     fetch_results_for_rec = para,
