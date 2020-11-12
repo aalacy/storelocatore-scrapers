@@ -7,7 +7,7 @@ import datetime
 import unicodedata
 session = SgRequests()
 def write_output(data):
-    with open('data_advance.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
