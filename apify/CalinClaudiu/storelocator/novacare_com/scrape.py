@@ -28,7 +28,7 @@ def parse_html(x):
         for i in k['address']:
             if i.count(',')!=1:
                 j.append(i)
-        k['address'] = ','.join(j)
+        k['address'] = ', '.join(j)
     except:
         k['address'] = "<MISSING>"
 
