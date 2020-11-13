@@ -95,8 +95,8 @@ def fetch_data():
                         store,
                         phone,
                         '<MISSING>',
-                        '<MISSING>',
-                        '<MISSING>',
+                        lat,
+                        longt,
                         hours
                     ])
        
