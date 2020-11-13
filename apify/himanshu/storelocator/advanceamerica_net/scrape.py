@@ -53,7 +53,7 @@ def fetch_data():
             hours = ""
             for k in range(len(store_hours)):
                 if store_hours[k]['open_time']:
-                    hours = hours + store_hours[k]["day"] + " open_time " + store_hours[k]['open_time'] + " close_time " + store_hours[k]['close_time'] + " "
+                    hours = hours + store_hours[k]["day"] + " " + store_hours[k]['open_time'] + " - " + store_hours[k]['close_time'] + " "
             if hours == "":
                 hours = "<MISSING>"
         except:

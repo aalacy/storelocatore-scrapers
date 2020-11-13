@@ -36,7 +36,7 @@ def fetch_data():
     base_url = "https://www.drmartens.com/"
     while zip_code:
         result_coords = []
-        # logger.info("zips === " + str(zip_code))
+        logger.info("zips === " + str(zip_code))
         try:
             r = session.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
         except:
@@ -55,7 +55,9 @@ def fetch_data():
                 if "," in address_list['town']:
                     city = address_list['town'].split(',')[0]
                     state = address_list['town'].split(',')[1].strip()
-
+                if "San Diego" in address_list['town']:
+                    city = address_list['town']
+                    state = "<MISSING>"
                 elif len(address_list['town']) == 2:
                     city = address_list['line2']
                     state = address_list['town']
@@ -89,7 +91,7 @@ def fetch_data():
                 store.append(zipp)
                 store.append(country_code)
                 store.append("<MISSING>") 
-                store.append(phone.replace("Tel: ",''))
+                store.append(phone)
                 store.append("<MISSING>")
                 store.append(latitude)
                 store.append(longitude)

@@ -5,10 +5,8 @@ import re
 import json
 import sgzip
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('josbank_com')
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,8 +17,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -29,25 +25,19 @@ def fetch_data():
     MAX_DISTANCE = 100
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
     base_url = "https://www.josbank.com/"
-
     while zip_code:
         result_coords = []
-
         # logger.info("zip_code === "+zip_code)
-
         location_url = "https://www.josbank.com/sr/search/resources/store/13452/storelocator/byProximity?catalogId=14052&langId=-24&radius=500&zip="+str(zip_code)+"&city=&state=&brand=JAB&profileName=X_findStoreLocatorWithExtraFields"
         try:
             r = session.get(location_url,headers=headers)
         except:
             continue
         json_data = r.json()
-        
         if json_data != [] and json_data != None:
             if "DocumentList" in json_data:
                 if json_data['DocumentList'] != [] and json_data['DocumentList'] != None:
@@ -63,9 +53,8 @@ def fetch_data():
                         latitude = i['latlong'].split(',')[0]
                         longitude = i['latlong'].split(',')[1]
                         hours_of_operation = i['working_hours_ntk'].replace('<br>',', ')
-                        print(hours_of_operation)
                         page_url = "https://www.josbank.com/store-locator/"+str(city).lower()+"-"+str(state).lower()+"-"+str(store_number)+"?address="+str(zip_code)+"%20%2C"
-
+                        page_url = page_url.replace(" ","-").replace("fort%20worth","fort-worth")
                         result_coords.append((latitude, longitude))
                         store = []
                         store.append(base_url)
@@ -80,13 +69,12 @@ def fetch_data():
                         store.append("<MISSING>")
                         store.append(latitude)
                         store.append(longitude)
-                        store.append(hours_of_operation.replace("SUN",'SUN ').replace("MON","MON ").replace("TUE",'TUE ').replace("THU","THU ").replace("FRI",'FRI ').replace("SAT","SAT ").replace("WED",'WED ').replace("SUN",'SUN ').replace("FRI",'FRI '))
+                        store.append(hours_of_operation)
                         store.append(page_url)
                         if store[2] in addresses:
                             continue
                         addresses.append(store[2])  
                         yield store
-
         if current_results_len < MAX_RESULTS:
             # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -96,11 +84,7 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

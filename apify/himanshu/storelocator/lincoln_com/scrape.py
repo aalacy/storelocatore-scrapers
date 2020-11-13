@@ -1,6 +1,5 @@
 import csv
 import sys
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
@@ -9,11 +8,6 @@ import sgzip
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('lincoln_com')
-
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -26,16 +20,14 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
+            
 def fetch_data():
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Referer": "https://www.lincoln.com/dealerships/",
-        "x-dtpc": "5$343920979_615h3vPDTGJFWDWTFXZXAKGVOSSDVSUAIMTUYZ",
+        "x-dtpc": "6$105614484_619h2vUDAFDUIIQFURTHRADJWNKGVAPCPTIVHV-0e3",
         "X-Requested-With": "XMLHttpRequest"
 
     }
@@ -81,13 +73,13 @@ def fetch_data():
         # lng = -42.225
 
         # zip_code = 11576
-        get_u = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
+        get_u = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)+"&api_key=0d571406-82e4-2b65-cc885011-048eb263"
         # location_url = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
         # logger.info('location_url ==' +location_url))
         try:
             k = session.get(get_u, headers=headers).json()
         except:
-            pass
+            continue
         if "Response" in k and "Dealer" in k['Response']:
             if list ==type(k['Response']["Dealer"]):
                 x = len(k['Response']["Dealer"])
