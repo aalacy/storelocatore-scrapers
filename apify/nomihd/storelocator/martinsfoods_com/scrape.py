@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 import lxml.html
 
 website = "martinsfoods.com"
@@ -59,13 +58,15 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    store_types = ["GROCERY","GAS_STATION"]
+    store_types = ["GROCERY", "GAS_STATION"]
+    loc_list = []
+
     for s in store_types:
         locations_resp = session.get(
-            "https://martinsfoods.com/apis/store-locator/locator/v1/stores/MRTN?storeType="+s.strip()+"&maxDistance=10000&details=true"
+            "https://martinsfoods.com/apis/store-locator/locator/v1/stores/MRTN?storeType="
+            + s.strip()
+            + "&maxDistance=10000&details=true"
         )
-
-        loc_list = []
 
         locations = json.loads(locations_resp.text)["stores"]
 
