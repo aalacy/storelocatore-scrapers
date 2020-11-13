@@ -51,7 +51,15 @@ def fetch_data():
             city = adr_list.split(',')[-2].strip()
             state = adr_list.split(',')[-1].split()[0].strip()
             zip_code = adr_list.split(',')[-1].split()[1].strip()
-
+        
+        print('Clean ', street_address)
+        if not street_address.split()[0].isnumeric():
+            for i, elem in enumerate(street_address.split()):
+                if elem.isnumeric():
+                    index = i
+                    break
+            street_address = ' '.join(street_address.split()[index:])
+            print('after ', street_address)
         street_address = street_address if street_address else '<MISSING>'    
         city = city if city else '<MISSING>'
         state = state if state else '<MISSING>'
