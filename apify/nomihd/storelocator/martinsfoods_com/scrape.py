@@ -59,73 +59,75 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    locations_resp = session.get(
-        "https://martinsfoods.com/apis/store-locator/locator/v1/stores/MRTN?storeType=GROCERY&maxDistance=10000&details=true"
-    )
-
-    loc_list = []
-
-    locations = json.loads(locations_resp.text)["stores"]
-
-    for l in locations:
-        location_name = l["name"]
-        street_address = l["address1"]
-        if len(l["address2"]) > 0:
-            street_address = street_address + "\n" + l["address2"]
-
-        city = l["city"]
-        state = l["state"]
-        zip = l["zip"]
-        store_number = l["storeNo"]
-        location_type = l["storeType"]
-        if location_type == "":
-            location_type = "<MISSING>"
-        latitude = l["latitude"]
-        longitude = l["longitude"]
-
-        store_url = "https://stores.martinsfoods.com/" + store_number
-        store_resp = session.get(store_url)
-        store_sel = lxml.html.fromstring(store_resp.text)
-        country_code = store_sel.xpath(
-            '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]'
+    store_types = ["GROCERY","GAS_STATION"]
+    for s in store_types:
+        locations_resp = session.get(
+            "https://martinsfoods.com/apis/store-locator/locator/v1/stores/MRTN?storeType="+s.strip()+"&maxDistance=10000&details=true"
         )
-        if len(country_code) > 0:
-            country_code = country_code[0].text.strip()
 
-        phone = "".join(
-            store_sel.xpath(
-                '//div[@class="NAP-info l-container"]//span[@itemprop="telephone"]/text()'
-            )
-        ).strip()
-        if phone == "":
-            phone = "<MISSING>"
-        page_url = store_url
-        hours_of_operation = "\n".join(
-            store_sel.xpath(
-                '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content'
-            )
-        ).strip()
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
+        loc_list = []
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-        # break
+        locations = json.loads(locations_resp.text)["stores"]
+
+        for l in locations:
+            location_name = l["name"]
+            street_address = l["address1"]
+            if len(l["address2"]) > 0:
+                street_address = street_address + "\n" + l["address2"]
+
+            city = l["city"]
+            state = l["state"]
+            zip = l["zip"]
+            store_number = l["storeNo"]
+            location_type = l["storeType"]
+            if location_type == "":
+                location_type = "<MISSING>"
+            latitude = l["latitude"]
+            longitude = l["longitude"]
+
+            store_url = "https://stores.martinsfoods.com/" + store_number
+            store_resp = session.get(store_url)
+            store_sel = lxml.html.fromstring(store_resp.text)
+            country_code = store_sel.xpath(
+                '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]'
+            )
+            if len(country_code) > 0:
+                country_code = country_code[0].text.strip()
+
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[@class="NAP-info l-container"]//span[@itemprop="telephone"]/text()'
+                )
+            ).strip()
+            if phone == "":
+                phone = "<MISSING>"
+            page_url = store_url
+            hours_of_operation = "\n".join(
+                store_sel.xpath(
+                    '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content'
+                )
+            ).strip()
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+            loc_list.append(curr_list)
+            # break
 
     log.info(f"No of records being processed: {len(loc_list)}")
 
