@@ -96,6 +96,11 @@ def fetch_data():
         store.append(lng if lng else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         if "<MISSING>" in store[3]:
             pass
         else:
