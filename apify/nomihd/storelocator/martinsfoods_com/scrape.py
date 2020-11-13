@@ -65,13 +65,13 @@ def fetch_data():
 
     loc_list = []
 
-    locations = json.loads(locations_resp.text)['stores']
+    locations = json.loads(locations_resp.text)["stores"]
 
     for l in locations:
         location_name = l["name"]
         street_address = l["address1"]
-        if len(l['address2'])>0:
-            street_address = street_address + "\n"+l['address2']
+        if len(l["address2"]) > 0:
+            street_address = street_address + "\n" + l["address2"]
 
         city = l["city"]
         state = l["state"]
@@ -82,22 +82,31 @@ def fetch_data():
             location_type = "<MISSING>"
         latitude = l["latitude"]
         longitude = l["longitude"]
-        
-        store_url = "https://stores.martinsfoods.com/"+store_number
+
+        store_url = "https://stores.martinsfoods.com/" + store_number
         store_resp = session.get(store_url)
         store_sel = lxml.html.fromstring(store_resp.text)
-        country_code = store_sel.xpath('//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]')
-        if len(country_code)>0:
+        country_code = store_sel.xpath(
+            '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]'
+        )
+        if len(country_code) > 0:
             country_code = country_code[0].text.strip()
 
-        phone = "".join(store_sel.xpath('//div[@class="NAP-info l-container"]//span[@itemprop="telephone"]/text()')).strip()
+        phone = "".join(
+            store_sel.xpath(
+                '//div[@class="NAP-info l-container"]//span[@itemprop="telephone"]/text()'
+            )
+        ).strip()
         if phone == "":
             phone = "<MISSING>"
         page_url = store_url
-        hours_of_operation = "\n".join(store_sel.xpath('//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content')).strip()
+        hours_of_operation = "\n".join(
+            store_sel.xpath(
+                '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content'
+            )
+        ).strip()
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
-
 
         curr_list = [
             locator_domain,
