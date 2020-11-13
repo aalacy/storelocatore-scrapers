@@ -62,67 +62,64 @@ def fetch_data():
     )
 
     loc_list = []
-    try:
-        locations = json.loads(
-            locations_resp.text.split("var model = ")[1]
+
+    locations = json.loads(
+        locations_resp.text.split("var model = ")[1]
+        .strip()
+        .split("</script>")[0]
+        .strip()
+    )["Locations"]
+
+    for l in locations:
+        page_url = "https://www.restaurantdepot.com/locations/find-a-warehouse"
+        location_name = l["Title"]
+        street_address = l["Address"]["Street"]
+        city = l["Address"]["City"]
+        state = l["Address"]["StateCode"]
+        zip = l["Address"]["Zip"]
+        country_code = l["Address"]["CountryCode"]
+        store_number = l["Branch"]
+        phone = l["Phone"]
+        if phone == "":
+            phone = "<MISSING>"
+        location_type = ", ".join(l["Services"]).strip()
+        if location_type == "":
+            location_type = "<MISSING>"
+        latitude = l["Address"]["Latitude"]
+        longitude = l["Address"]["Longitude"]
+        hours_of_operation = (
+            l["StoreHours"]
+            .replace("<div>", "")
+            .replace("<p>", "")
+            .replace("<span>", "")
+            .replace("</span>", "")
+            .replace("<br />", "")
+            .replace("</p>", "")
+            .replace("</div>", "")
             .strip()
-            .split("</script>")[0]
+            .replace("&nbsp;", " ")
             .strip()
-        )["Locations"]
+        )
+        if hours_of_operation == "":
+            hours_of_operation = "<MISSING>"
 
-        for l in locations:
-            page_url = "https://www.restaurantdepot.com/locations/find-a-warehouse"
-            location_name = l["Title"]
-            street_address = l["Address"]["Street"]
-            city = l["Address"]["City"]
-            state = l["Address"]["StateCode"]
-            zip = l["Address"]["Zip"]
-            country_code = l["Address"]["CountryCode"]
-            store_number = l["Branch"]
-            phone = l["Phone"]
-            if phone == "":
-                phone = "<MISSING>"
-            location_type = ", ".join(l["Services"]).strip()
-            if location_type == "":
-                location_type = "<MISSING>"
-            latitude = l["Address"]["Latitude"]
-            longitude = l["Address"]["Longitude"]
-            hours_of_operation = (
-                l["StoreHours"]
-                .replace("<div>", "")
-                .replace("<p>", "")
-                .replace("<span>", "")
-                .replace("</span>", "")
-                .replace("<br />", "")
-                .replace("</p>", "")
-                .replace("</div>", "")
-                .strip()
-                .replace("&nbsp;", " ")
-                .strip()
-            )
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
-
-    except json.decoder.JSONDecodeError:
-        log.error(f"cannot parse json")
+        curr_list = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        loc_list.append(curr_list)
 
     log.info(f"No of records being processed: {len(loc_list)}")
 
