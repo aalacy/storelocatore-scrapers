@@ -15,6 +15,7 @@ def pretty_hours(x):
     
 def parse_html(x):
     k = {}
+    j = []
     add = x.split('loc-result-card-address-container')[1].split("'_blank\'>")[1].split('</a>',1)[0]
     #name
     try:
@@ -23,7 +24,11 @@ def parse_html(x):
         k['name'] = "<MISSING>"
     #street address
     try:
-        k['address'] = add.split('<br/>')[0]
+        k['address'] = add.split('<br/>')
+        for i in k['address']:
+            if i.count(',')!=1:
+                j.append(i)
+        k['address'] = ','.join(j)
     except:
         k['address'] = "<MISSING>"
 
