@@ -77,7 +77,7 @@ def scrape():
         latitude=MappingField(mapping=['data'] , value_transform = lambda x : x.split('latitude=',1)[1].split(' ',1)[0]),
         longitude=MappingField(mapping=['data'] , value_transform = lambda x : x.split('longitude=',1)[1].split(' ',1)[0]),
         street_address=MappingField(mapping=['data'] , value_transform = lambda x : x.split('address=',1)[1].split(' address2',1)[0]),
-        city=MappingField(mapping=['data'] , value_transform = lambda x : x.split('city=',1)[1].split(' ',1)[0]),
+        city=MappingField(mapping=['data'] , value_transform = lambda x : x.split('city=',1)[1].split('state',1)[0]),
         state=MappingField(mapping=['data'] , value_transform = lambda x : x.split('state=',1)[1].split(' ',1)[0]),
         zipcode=MappingField(mapping=['data'] , value_transform = lambda x : x.split('zip=',1)[1].split(' ',1)[0]),
         country_code=MissingField(),
