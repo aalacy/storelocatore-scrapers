@@ -31,7 +31,7 @@ def fetch_data():
         city = a.get('city') or '<MISSING>'
         location_name = html.unescape(f"{city} {j.get('public_name_en')}")
         state = a.get('state') or '<MISSING>'
-        postal = a.get('postcode') or '<MISSING>'
+        postal = a.get('postcode').replace('AB', '').strip() or '<MISSING>'
         country_code = a.get('country') or '<MISSING>'
         store_number = j.get('id') or '<MISSING>'
         page_url = f"https://ca.burberry.com/store-locator/canada/-/{store_number}"
