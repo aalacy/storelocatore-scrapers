@@ -1,5 +1,4 @@
 import csv
-import html
 
 from sgrequests import SgRequests
 
@@ -30,7 +29,7 @@ def fetch_data():
             j = jj.get('profile')
             a = j.get('address')
             locator_domain = url
-            street_address = a.get('line1') or '<MISSING>'
+            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
             city = a.get('city') or '<MISSING>'
             location_name = f"Lane Bryant {j.get('geomodifier')}"
             state = a.get('region') or '<MISSING>'
@@ -39,8 +38,8 @@ def fetch_data():
             store_number = '<MISSING>'
             page_url = j.get('websiteUrl')
             phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
-            latitude = j.get('geocodedCoordinate', {}).get('lat') or '<MISSING>'
-            longitude = j.get('geocodedCoordinate', {}).get('long') or '<MISSING>'
+            latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
+            longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
             location_type = '<MISSING>'
             hours = j.get('hours', {}).get('normalHours')
             _tmp = []
