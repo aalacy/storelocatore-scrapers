@@ -2,6 +2,7 @@ import csv
 from sgrequests import SgRequests
 import json
 from sglogging import sglog
+from bs4 import BeautifulSoup
 
 website = "restaurantdepot.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -88,17 +89,7 @@ def fetch_data():
         latitude = l["Address"]["Latitude"]
         longitude = l["Address"]["Longitude"]
         hours_of_operation = (
-            l["StoreHours"]
-            .replace("<div>", "")
-            .replace("<p>", "")
-            .replace("<span>", "")
-            .replace("</span>", "")
-            .replace("<br />", "")
-            .replace("</p>", "")
-            .replace("</div>", "")
-            .strip()
-            .replace("&nbsp;", " ")
-            .strip()
+            BeautifulSoup(l["StoreHours"], "html.parser").get_text().strip()
         )
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
