@@ -89,11 +89,13 @@ def fetch_data():
             store_url = "https://stores.martinsfoods.com/" + store_number
             store_resp = session.get(store_url)
             store_sel = lxml.html.fromstring(store_resp.text)
-            country_code = store_sel.xpath(
-                '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]'
-            )
-            if len(country_code) > 0:
-                country_code = country_code[0].text.strip()
+            country_code = "".join(
+                store_sel.xpath(
+                    '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]/text()'
+                )
+            ).strip()
+            if country_code == "":
+                country_code = "<MISSING>"
 
             phone = "".join(
                 store_sel.xpath(
