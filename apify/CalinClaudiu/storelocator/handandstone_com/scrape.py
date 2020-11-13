@@ -40,7 +40,7 @@ def scrape():
         state=MappingField(mapping=['state']),
         zipcode=MappingField(mapping=['zip']),
         country_code=MappingField(mapping=['timezone_name'], value_transform = lambda x : "US" if 'America' in x else "<MISISNG>"),
-        phone=MappingField(mapping=['phone'], is_required = False),
+        phone=MultiMappingField(mapping=[['area'],['phone']], multi_mapping_concat_with = ' ', is_required = False),
         store_number=MappingField(mapping=['id']),
         hours_of_operation=MappingField(mapping=['worktime']),
         location_type=MappingField(mapping=['is_coming_soon'], value_transform = lambda x : "Coming Soon" if x == True else "<MISSING>")
