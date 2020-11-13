@@ -39,7 +39,7 @@ def fetch_data():
         location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(coord[0])+"&proximity_lng="+str(coord[1])
         r = session.get(location,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
-
+        items = 0
         main=soup.find('ul',{'class':'geolocation-common-map-locations'}).find_all('li')[:91]
         for ltag in main:
             name=ltag.find('span',{'class':'title'}).text.strip()
@@ -50,7 +50,6 @@ def fetch_data():
                 page_url = base_url+link
             except:
                 page_url = "<MISSING>"
-
             temp_add = ltag.find("p",{"class":"address"})
             try:
                 address_line1 = temp_add.find("span",{"class":"address-line1"}).text
@@ -66,7 +65,10 @@ def fetch_data():
             country = temp_add.find("span",{"class":"country"}).text
             if country == "United States":
                 country_code = "US"
-            phone = ltag.find("div",{"class":"location-content"}).find("a").text
+            try:
+                phone = ltag.find("div",{"class":"location-content"}).find("a").text
+            except:
+                phone = "<MISSING>"
             hour = ltag.find("div",{"class":"location-content"}).find_all("div",{"class":"field-item"})
             hoo = []
             for h in hour:
@@ -91,6 +93,7 @@ def fetch_data():
             store.append(page_url if page_url else "<MISSING>")
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
+                items += 1
                 continue
             addresses.append(store[2])
             yield store
@@ -103,6 +106,7 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
         coord = search.next_coord()
 
 def scrape():
