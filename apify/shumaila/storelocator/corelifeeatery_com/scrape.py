@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import string
+import string,usaddress
 import re, time,json
 
 from sgrequests import SgRequests
@@ -39,7 +39,7 @@ def fetch_data():
             linklist = soup.findAll('loc')
             for link in linklist:
                 link = link.text
-                #print(link)
+                
                 r = session.get(link, headers=headers, verify=False)
                 soup =BeautifulSoup(r.text, "html.parser")
                 title = soup.find('h1').text
@@ -51,18 +51,72 @@ def fetch_data():
                     lat = lat.split('!',1)[0]
                 except:
                     pass
-                address = r.text.split('"address":',1)[1].split('},',1)[0]
-                address = address+'}'
-                address = json.loads(address)                
-                street = address['streetAddress']
-                city= address['addressLocality']
-                state=address['addressRegion']
-                pcode= address['postalCode']
-                ccode = address['addressCountry']
+               
+                content = soup.text.split('Location:',1)[1].split('Get Directions',1)[0].strip()
+                content1 = content.splitlines()
+                #print(content)
+                m = 0                
+                
+                phone = content1[-1]
+                address = content.replace(phone,'').replace('\n',' ').strip()
+                try:
+                    address = address.split('Located',1)[0]
+                except:
+                    pass
+                try:
+                    address = address.split('In the same',1)[0]
+                except:
+                    pass
+                try:
+                    address = address.split('Across',1)[0]
+                except:
+                    pass
+                try:
+                    address = address.split('Near',1)[0]
+                except:
+                    pass
+                address = usaddress.parse(address)
+
+                i = 0
+                street = ""
+                city = ""
+                state = ""
+                pcode = ""
+                while i < len(address):
+                    temp = address[i]
+                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                        street = street + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        pcode = pcode + " " + temp[0]
+                    i += 1
+
+                street = street.lstrip().replace(',','')
+                city = city.lstrip().replace(',','')
+                state = state.lstrip().replace(',','')
+                pcode = pcode.lstrip().replace(',','')
+                try:
+                    state = state.split(' ',1)[0]
+                except:
+                    pass
+                try:
+                    pcode = pcode.split(' ',1)[0]
+                except:
+                    pass
+                try:
+                    city = city.split('(')[0].split(' ')[-1]
+                except:
+                    pass
+                                
                 store = r.text.split('article id="post-',1)[1].split('"',1)[0]
-                if title in titlelist:
+                if link in titlelist:
                     continue
-                titlelist.append(title)
+                titlelist.append(link)
+                city = link.split('locations/',1)[1].split('-'+state.lower(),1)[0]
+                city = city.replace('-',' ').strip()
                 data.append([
                         'https://www.corelifeeatery.com',
                         link,                   
@@ -73,7 +127,7 @@ def fetch_data():
                         pcode,
                         'US',
                         store,
-                        '<MISSING>',
+                        phone.replace('Phone:','').strip(),
                         '<MISSING>',
                         lat,
                         longt,
