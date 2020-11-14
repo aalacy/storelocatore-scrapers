@@ -159,5 +159,6 @@ def scrape():
     write_output(data)
     log.info("Finished")
 
+
 if __name__ == "__main__":
     scrape()
