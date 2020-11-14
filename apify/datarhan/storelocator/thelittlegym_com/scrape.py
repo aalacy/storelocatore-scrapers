@@ -33,10 +33,6 @@ def fetch_data():
     for province in canada_provinces:
         full_province_url = 'https://www.thelittlegym.com/find-a-gym?geoaction=4&param={}'.format(province)
         all_urls.append(full_province_url)
-    international = dom.xpath('//select[@id="ddlInt"]/option/@value')
-    for country in international:
-        full_country_url = 'https://www.thelittlegym.com/find-a-gym?geoaction=5&param={}'.format(country)
-        all_urls.append(full_country_url)
         
     for url in all_urls:
         state_response = session.get(url)
@@ -76,9 +72,10 @@ def fetch_data():
             phone = phone[0] if phone else '<MISSING>'
             location_type = '<MISSING>'
             location_type = location_type if location_type else '<MISSING>'
-            latitude = '<MISSING>'
+            coordinates = location_data.xpath('.//a[contains(@href, "google.com/maps")]/@href')[0].split('@')[-1]
+            latitude = coordinates.split(',')[0]
             latitude = latitude if latitude else '<MISSING>'
-            longitude = '<MISSING>'
+            longitude = coordinates.split(',')[-1]
             longitude = longitude if longitude else '<MISSING>'
             hours_of_operation = '<MISSING>'
 
