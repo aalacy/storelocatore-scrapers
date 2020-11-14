@@ -1,4 +1,4 @@
-sqrequests
+sgrequests
 sglogging
 lxml==4.5.0
 # uncomment if you use selenium
