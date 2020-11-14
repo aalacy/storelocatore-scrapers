@@ -1,11 +1,8 @@
 import csv
 import re
-import pdb
-import requests
+from sgrequests import SgRequests
 from lxml import etree
 import json
-import usaddress
-
 
 base_url = 'https://www.signsnow.com'
 
@@ -34,26 +31,20 @@ def eliminate_space(items):
             rets.append(item)
     return rets
 
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
+def parse_address(addr):
+    street = addr[0].strip()
+    city = addr[1].strip()
+    state = addr[2].split()[0].strip()
+    zipcode = " ".join(addr[2].split()[1:]).strip().replace(">","")
+
+    if "All Of East Tennessee" in street:
+        street = '<MISSING>'
+        city = 'Morristown'
     return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
+        'street': street,
+        'city' : city, 
+        'state' : state, 
+        'zipcode' : zipcode
     }
 
 def write_output(data):
@@ -64,16 +55,21 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+
     output_list = []
     url = "https://www.signsnow.com/all-locations"
     history = []
     page_url = ''
-    session = requests.Session()
-    source = session.get(url).text
+    source = session.get(url).text    
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="innerbody"]//a/@href')
     for store_link in store_list:
-        if store_link != '#' and store_link not in history:
+        if store_link != 'http://www.signsnow.co.uk' and store_link not in history:
             history.append(store_link)
             if 'http' not in store_link:
                 store_link = base_url + store_link
@@ -82,32 +78,33 @@ def fetch_data():
             output.append(base_url) # url
             output.append(store_link) # page url
             output.append(get_value(store.xpath('.//p[@class="location-name"]//text()'))) #location name
-            address = eliminate_space(store.xpath('.//p[@class="contact"]//text()'))[1:]
+            address = eliminate_space(store.xpath('.//p[@class="contact"]//text()'))[0].split("|")
+
+            script = store.xpath('.//script[@type="application/ld+json"]//text()')[0].replace('\n', '').strip()
+            store_js = json.loads(script)
+
+            latitude = store_js['geo']['latitude']
+            longitude = store_js['geo']['longitude']
+            hours = store_js['openingHours']
+
             if address[-1][-2:] != 'GB':
                 if address[-1][-2:] != 'CA':
-                    address = parse_address(', '.join(address))
-                    output.append(address['street']) #address
-                    output.append(address['city']) #city
-                    output.append(address['state']) #state
-                    output.append(address['zipcode']) #zipcode  
-                    output.append('US') #country code
+                    country = "US"
                 else:
-                    try:
-                        output.append(address[0]) #address
-                        city_statezip = address[1].split(', ')
-                        output.append(city_statezip[0]) #city
-                        state_zip = eliminate_space(city_statezip[1].split(' '))
-                        output.append(state_zip[0]) #state
-                        output.append(validate(state_zip[1:-1])) #zipcode  
-                        output.append('CA') #country code
-                    except:
-                        pdb.set_trace()
+                    address = eliminate_space(store.xpath('.//p[@class="contact"]//text()'))[0].replace("CA","").split("|")                    
+                    country = "CA"
+                address = parse_address(address)
+                output.append(address['street']) #address
+                output.append(address['city']) #city
+                output.append(address['state']) #state
+                output.append(address['zipcode']) #zipcode  
+                output.append(country) #country code
                 output.append("<MISSING>") #store_number
                 output.append(get_value(store.xpath('.//p[@class="phone"]//text()'))) #phone
-                output.append("Custom Made Signs, Banners, Displays, & Graphics") #location type
-                output.append("<MISSING>") #latitude
-                output.append("<MISSING>") #longitude
-                output.append("<MISSING>") #opening hours
+                output.append("<MISSING>") #location type
+                output.append(latitude) #latitude
+                output.append(longitude) #longitude
+                output.append(hours) #opening hours
                 output_list.append(output)
     return output_list
 

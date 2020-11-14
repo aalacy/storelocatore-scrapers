@@ -25,11 +25,12 @@ def fetch_data():
     for store in stores:
         href = store.get('website')
         if href:
-            location_name = store['name']
+            location_name = store['name'].encode("ascii", "replace").decode().replace("?","")
             try:
                 street_address = store['address1'] + " " + store['address2']
             except:
                 street_address = store['address1'].strip()
+            street_address = street_address.encode("ascii", "replace").decode().replace("?","")
             city = store['city']
             state = store['state']
             zip_code = store['zip_postal_code'][:5]
