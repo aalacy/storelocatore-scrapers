@@ -43,7 +43,6 @@ def fetch_data():
         page_url = url
         mod = j.get('displayAddress') or j.get('customByName', {}).get('Geomodifier', '')
         location_name = f"{j.get('name')} {mod or ''}".strip() or '<MISSING>'
-        print(location_name)
         street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip() or '<MISSING>'
         city = j.get('city') or '<MISSING>'
         state = j.get('state') or '<MISSING>'
