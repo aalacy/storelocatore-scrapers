@@ -1,6 +1,5 @@
 import csv
 from lxml import etree
-from tqdm import tqdm
 
 from sgrequests import SgRequests
 
@@ -35,7 +34,7 @@ def fetch_data():
         full_province_url = 'https://www.thelittlegym.com/find-a-gym?geoaction=4&param={}'.format(province)
         all_urls.append(full_province_url)
         
-    for url in tqdm(all_urls):
+    for url in all_urls:
         state_response = session.get(url)
         state_dom = etree.HTML(state_response.text)
         all_locations_data = state_dom.xpath('//div[@id="find-a-gym"]//section[@class="location-listing"]')
@@ -62,7 +61,6 @@ def fetch_data():
             
             store_response = session.get(store_url)
             store_dom = etree.HTML(store_response.text)
-            print(store_url)
             store_number = store_dom.xpath('//meta[@name="fln"]/@content')
             store_number = store_number[0] if store_number else '<MISSING>'
             phone = location_data.xpath('.//p[@class="tel"]/text()')
