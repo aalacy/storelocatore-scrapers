@@ -36,8 +36,7 @@ def fetch_data():
                 phone  = data['telephone']
                 hours =''
                 for h in data['openingHoursSpecification']:
-                    hours = hours + " "+" ".join(h['dayOfWeek']) + " "+h['opens'] + " "+ h['closes']
-
+                    hours = hours + " "+" ".join(h['dayOfWeek']) + " "+h['opens'] + "-"+ h['closes']+","
                 store = []
                 store.append("https://www.harristeeter.com/")
                 store.append(location_name if location_name else "<MISSING>") 
@@ -51,18 +50,18 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(lat if lat else "<MISSING>")
                 store.append(lng if lng else "<MISSING>")
-                store.append(hours)
+                store.append(hours.rstrip(","))
                 store.append(page_urls if page_urls else "<MISSING>")
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 if str(store[2]+store[-1]) in addressess:
                     continue
                 addressess.append(str(store[2]+store[-1]))
                 yield store
 
-    
-   
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
 
