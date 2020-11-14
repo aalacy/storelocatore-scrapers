@@ -1,2 +1,5 @@
 sgscrape
+sgzip
+sglogging
+sgrequests
 bs4
