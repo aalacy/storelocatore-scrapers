@@ -3,6 +3,8 @@ import json
 import urllib.parse
 from lxml import etree
 
+from tqdm import tqdm
+
 from sgrequests import SgRequests
 
 DOMAIN = 'brueggers.com'
@@ -24,35 +26,63 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_stores_ids = []
     
     start_url = 'https://locations.brueggers.com/us'
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     
+    add_to_cities = []
+    add_to_locations = []
+    scraped_city_urls = []
+    scraped_locations_urls = []
     allstates_urls = dom.xpath('//a[@class="Directory-listLink"]/@href')
     for state_url in allstates_urls:
-        state_response = session.get(urllib.parse.urljoin(start_url, state_url))
+        full_state_url = urllib.parse.urljoin(start_url, state_url)
+        if len(state_url.split('/')) == 6:
+            add_to_cities.append(state_url)
+        
+        state_response = session.get(full_state_url)
         state_dom = etree.HTML(state_response.text)
+
+        add_cities_urls = state_dom.xpath('//a[@class="Directory-listLink"]/@href')
+        for url in add_cities_urls:
+            add_to_cities.append(url)
+        
+        all_locations = state_dom.xpath('//a[@data-ya-track="visit_page"]/@href')
+        for url in all_locations:
+            add_to_locations.append(urllib.parse.urljoin(start_url, url))
         
         allcities_urls = state_dom.xpath('//a[@class="Directory-listLink"]/@href')
-        for city_url in allcities_urls:
-            city_response = session.get(urllib.parse.urljoin(start_url, city_url))
+        allcities_urls += add_to_cities
+        for city_url in tqdm(list(set(allcities_urls))):
+            full_city_url = urllib.parse.urljoin(start_url, city_url)
+            if len(full_city_url.split('/')) == 7:
+                add_to_locations.append(full_city_url)
+        
+            city_response = session.get(full_city_url)
+            scraped_city_urls.append(full_city_url)
             city_dom = etree.HTML(city_response.text)
             
             all_locations = city_dom.xpath('//a[@data-ya-track="visit_page"]/@href')
-            for location_url in all_locations:
+            all_locations += add_to_locations
+            for location_url in list(set(all_locations)):
                 full_location_url = urllib.parse.urljoin(start_url, location_url)
+                if full_location_url in scraped_locations_urls:
+                    continue
                 location_response = session.get(full_location_url)
+                scraped_locations_urls.append(full_location_url)
                 location_dom = etree.HTML(location_response.text)
                 store_url = full_location_url
                 location_name = location_dom.xpath('//h1[@id="location-name"]/text()')[0]
                 location_name = location_name if location_name else '<MISSING>'
                 street_address = location_dom.xpath('//span[@class="c-address-street-1"]/text()')[0]
+                street_address_2 = location_dom.xpath('//span[@class="c-address-street-2"]/text()')
+                if street_address_2:
+                    street_address += ' ' + street_address_2[0]
                 street_address = street_address if street_address else '<MISSING>'
                 city = location_dom.xpath('//span[@class="c-address-city"]/text()')[0]
                 city = city if city else '<MISSING>'
-                state = state_url.split('/')[-1].upper()
+                state = location_dom.xpath('//span[@itemprop="addressRegion"]/text()')[0]
                 state = state if state else '<MISSING>'
                 zip_code = location_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
                 zip_code = zip_code if zip_code else '<MISSING>'
@@ -95,9 +125,7 @@ def fetch_data():
                     hours_of_operation
                 ]
                 
-                if store_number not in scraped_stores_ids:
-                    scraped_stores_ids.append(store_number)
-                    items.append(item)
+                items.append(item)
 
     return items
 
