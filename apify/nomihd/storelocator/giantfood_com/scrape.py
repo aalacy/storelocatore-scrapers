@@ -38,14 +38,21 @@ def write_output(data):
             ]
         )
         # Body
-        temp_list = [] # ignoring duplicates
+        temp_list = []  # ignoring duplicates
         for row in data:
-            comp_list = [row[2].strip(),row[3].strip(),row[4].strip(),row[5].strip(),row[6].strip(),row[8].strip(),row[10].strip()]
+            comp_list = [
+                row[2].strip(),
+                row[3].strip(),
+                row[4].strip(),
+                row[5].strip(),
+                row[6].strip(),
+                row[8].strip(),
+                row[10].strip(),
+            ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
                 writer.writerow(row)
-            else:
-                print "already in list"
+
         log.info(f"No of records being processed: {len(temp_list)}")
 
 
@@ -141,7 +148,6 @@ def fetch_data():
             loc_list.append(curr_list)
             # break
 
-    
     return loc_list
 
 
