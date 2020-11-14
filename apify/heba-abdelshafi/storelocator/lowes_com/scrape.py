@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
-import string,usaddress
-import re, time,json
+import string
+import re, time, json
 
 from sgrequests import SgRequests
 
@@ -25,129 +25,80 @@ def fetch_data():
     data = []
     pattern = re.compile(r'\s\s+')
     cleanr = re.compile(r'<[^>]+>')
-    url = 'https://www.corelifeeatery.com/sitemap.xml'
+    url = 'https://www.lowes.com/content/lowes/desktop/en_us/stores.xml'
     r = session.get(url, headers=headers, verify=False)    
-    soup =BeautifulSoup(r.text, "html.parser")      
-    divlist = soup.findAll('loc')
+    soup =BeautifulSoup(r.text, "html.parser")   
+    linklist = soup.findAll('loc')
     titlelist = []
     p = 0
-    for div in divlist:
-        if div.text.find('locations') > -1:
-            #print(div.text)
-            r = session.get(div.text, headers=headers, verify=False)
-            soup =BeautifulSoup(r.text, "html.parser")
-            linklist = soup.findAll('loc')
-            for link in linklist:
-                link = link.text
-                
-                r = session.get(link, headers=headers, verify=False)
-                soup =BeautifulSoup(r.text, "html.parser")
-                title = soup.find('h1').text
-                if title.find('Opening Soon!') > -1:
-                    continue
-                hours = soup.text.split('Hours:',1)[1].lstrip().split('Features',1)[0].replace('\n',' ').strip()
-                longt,lat = soup.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d',1)
-                try:
-                    lat = lat.split('!',1)[0]
-                except:
-                    pass
-               
-                content = soup.text.split('Location:',1)[1].split('Get Directions',1)[0].strip()
-                content1 = content.splitlines()
-                #print(content)
-                m = 0                
-                
-                phone = content1[-1]
-                address = content.replace(phone,'').replace('\n',' ').strip()
-                try:
-                    address = address.split('Located',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('In the same',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('Across',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('Near',1)[0]
-                except:
-                    pass
-                address = usaddress.parse(address)
-
-                i = 0
-                street = ""
-                city = ""
-                state = ""
-                pcode = ""
-                while i < len(address):
-                    temp = address[i]
-                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
-                        street = street + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        pcode = pcode + " " + temp[0]
-                    i += 1
-
-                street = street.lstrip().replace(',','')
-                city = city.lstrip().replace(',','')
-                state = state.lstrip().replace(',','')
-                pcode = pcode.lstrip().replace(',','')
-                try:
-                    state = state.split(' ',1)[0]
-                except:
-                    pass
-                try:
-                    pcode = pcode.split(' ',1)[0]
-                except:
-                    pass
-                try:
-                    city = city.split('(')[0].split(' ')[-1]
-                except:
-                    pass
-                                
-                store = r.text.split('article id="post-',1)[1].split('"',1)[0]
-                if link in titlelist:
-                    continue
-                titlelist.append(link)
-                city = link.split('locations/',1)[1].split('-'+state.lower(),1)[0]
-                city = city.replace('-',' ').strip()
-                if 'salt lake city' in city:
-                    city = 'salt lake city'
-                city = city.capitalize() 
-                data.append([
-                        'https://www.corelifeeatery.com',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone.replace('Phone:','').strip(),
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-                #print(p,data[p])
-                p += 1
-                #input()
-                
-                
+    for link in linklist:
+        link = link.text
+        r = session.get(link, headers=headers, verify=False)
+        try:
+            hourlist,r = r.text.split('<script type="application/ld+json">',1)[1].split('</script',1)
+            address,r = r.split('<script type="application/ld+json">',1)[1].split('</script',1)
+            lat = r.split('"lat":"',1)[1].split('"',1)[0]
+            longt = r.split('"long":"',1)[1].split('"',1)[0]
+           
+            hourlist = json.loads(hourlist)
+            address = json.loads(address)        
+            street = address['streetAddress']
+            city = address['addressLocality']
+            state = address['addressRegion']
+            pcode = address['postalCode']
+            phone = address['telephone']
+            title = hourlist['name']
+            hourlist = hourlist['openingHours']
+            hours = ' '.join(hourlist)
+            store = link.split('/')[-1]
+            ccode = 'US'
             
+           
+                    
+        except:
+            soup = BeautifulSoup(r.text,'html.parser')
+            hours = soup.find('div',{'aria-labelledby':"storeHoursSection"}).text
+            r = session.get('https://www.lowes.ca/apim/stores/2922OL', headers=headers, verify=False).json()
+            pcode = r['zip']
+            ccode = 'CA'
+            street = r['address']
+            state= 'ON'
+            city = r['city']
+            title = r["store_name"]
+            store = r['id']
+            phone = r['phone']
+        
+              
+    
+        if street in titlelist:
+            continue
+        titlelist.append(street)
+        data.append(['https://www.lowes.com/',
+                            link,                   
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            ccode,
+                            store,
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            hours
+                        ])
+        
+        p += 1
+           
         
     return data
 
 
-def scrape():    
+def scrape():
+    
     data = fetch_data()
     write_output(data)
    
+
 scrape()
