@@ -53,21 +53,12 @@ def fetch_data():
             state_data = ' '.join([elem.strip() for elem in state_data.split()])
             city = state_data.split(',')[0]
             city = city if city else '<MISSING>'
-            if '5' in url:
-                state = '<MISSING>'
-            else:
-                state = state_data.split(',')[-1].split()[0]
+            state = state_data.split(',')[-1].split()[0]
             state = state if state else '<MISSING>'
-            if '5' in url:
-                zip_code = '<MISSING>'
-            else:
-                zip_code = state_data.split(',')[-1].split()[1:]
-                zip_code = ' '.join(zip_code) if zip_code else '<MISSING>'
+            zip_code = state_data.split(',')[-1].split()[1:]
+            zip_code = ' '.join(zip_code) if zip_code else '<MISSING>'
             country_code = '<MISSING>'
-            if '5' in url:
-                store_number = '<MISSING>'
-            else:
-                store_number = location_name.split('#')[0]
+            store_number = '<MISSING>'
             phone = location_data.xpath('.//p[@class="tel"]/text()')
             phone = phone[0] if phone else '<MISSING>'
             location_type = '<MISSING>'
