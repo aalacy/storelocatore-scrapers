@@ -8,7 +8,8 @@ website = "giantfood.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
@@ -85,28 +86,29 @@ def fetch_data():
 
         locations = json.loads(locations_resp.text)["stores"]
 
-        for l in locations:
-            location_name = l["name"]
-            street_address = l["address1"]
-            if len(l["address2"]) > 0:
-                street_address = street_address + "\n" + l["address2"]
+        for loc in locations:
+            location_name = loc["name"]
+            street_address = loc["address1"]
+            if len(loc["address2"]) > 0:
+                street_address = street_address + "\n" + loc["address2"]
 
-            city = l["city"]
-            state = l["state"]
-            zip = l["zip"]
-            store_number = l["storeNo"]
-            location_type = l["storeType"]
+            city = loc["city"]
+            state = loc["state"]
+            zip = loc["zip"]
+            store_number = loc["storeNo"]
+            location_type = loc["storeType"]
             if location_type == "":
                 location_type = "<MISSING>"
-            latitude = l["latitude"]
-            longitude = l["longitude"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
 
             store_url = "https://stores.giantfood.com/" + store_number
             store_resp = session.get(store_url, headers=headers)
             store_sel = lxml.html.fromstring(store_resp.text)
             country_code = "".join(
                 store_sel.xpath(
-                    '//span[@itemprop="address"]//abbr[@itemprop="addressCountry"]/text()'
+                    '//span[@itemprop="address"]'
+                    '//abbr[@itemprop="addressCountry"]/text()'
                 )
             ).strip()
             if country_code == "":
@@ -114,7 +116,8 @@ def fetch_data():
 
             phone = "".join(
                 store_sel.xpath(
-                    '//div[@class="NAP-info l-container"]//span[@itemprop="telephone"]/text()'
+                    '//div[@class="NAP-info l-container"]'
+                    '//span[@itemprop="telephone"]/text()'
                 )
             ).strip()
             if phone == "":
@@ -155,7 +158,6 @@ def scrape():
     data = fetch_data()
     write_output(data)
     log.info("Finished")
-
 
 if __name__ == "__main__":
     scrape()
