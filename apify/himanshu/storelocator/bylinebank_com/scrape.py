@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import sgzip
+from sgzip import DynamicGeoSearch, SearchableCountries
 import json
 import time
 from sglogging import SgLogSetup
@@ -36,6 +36,13 @@ def fetch_data():
 	for link in a.find_all("a"):
                 logger.info(f'Grabbing branch: {link["href"]}')
                 r1= session.get(link["href"], headers = headers)
+                z = []
+                for i in r1:
+                        z.append(str(i))
+                z = ''.join(z)
+                z = z.replace("'b'",'')
+                latitude = z.split('"latitude":')[1].split(',')[0].replace("'b'",'').replace("'",'').strip()
+                longitude = z.split('"longitude":')[1].split('}')[0].replace("'b'",'').replace("'",'').strip()
                 soup1 = BeautifulSoup(r1.content,"lxml")
                 try:
                         location_name = soup1.find("meta",{"content":True,'property':'og:title'})['content']
@@ -58,8 +65,6 @@ def fetch_data():
                         hours_of_operation = " ".join(list(soup1.find(lambda tag: (tag.name == "h4" ) and "Lobby Hours" in tag.text).find_next("table").stripped_strings))
                 except:
                         hours_of_operation = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
                 page_url = link["href"]
                 location_type = "BRANCH"
                 store_number ="<MISSING>"
@@ -87,106 +92,94 @@ def fetch_data():
 			   "Referer": "https://bylinebank.locatorsearch.com/index.aspx?s=FCS"
 			  }
 	
-	search = sgzip.ClosestNSearch()
+	search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_search_results = 100, max_radius_miles = 80)
 	search.initialize()
-	MAX_RESULTS = 100
-	MAX_DISTANCE = 80
-	coords = search.next_coord()
+	coords = search.next()
 	current_results_len = 0
 	# search.current_zip """"""""==zip
 	
 	while coords:
-		# try:
-		result_coords = []
-		url = 'https://bylinebank.locatorsearch.com/GetItems.aspx'
+                lat, long = coords
+                # try
+                result_coords = []
+                url = 'https://bylinebank.locatorsearch.com/GetItems.aspx'
+                data = "address="+"&lat="+str(lat)+"&lng="+str(long)+"&searchby=ATMSF%7C&SearchKey=&rnd=1569844320549"
+                pagereq = session.post(url,data=data, headers=header)
+                soup = BeautifulSoup(pagereq.text, 'html.parser')
+                add2 = soup.find_all("add2")
+                address1 = soup.find_all("add1")
+                current_results_len = len(address1)
+                loc = soup.find_all("marker")
+                hours = soup.find_all("contents")
+                name = soup.find_all("title")
+                locator_domain = "https://www.bylinebank.com"
+                store_number ="<MISSING>"
+                location_type ='ATM'
+                items = 0
+                for i in range(len(address1)):
+                        street_address = address1[i].text
+                        city = add2[i].text.split(",")[0]
+                        state = add2[i].text.replace(",,",",").split(",")[1].split( )[0]
+                        
+                        zip1 = add2[i].text.replace(",,",",").split(",")[1].split( )[1]
+                        if "<b>" in add2[i].text:
+                                phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
+                        else:
+                                phone = "<MISSING>"
+                        # logger.info(name[i])
+                        location_name = name[i].text.replace("<br>","").strip()
+                        page_url = "https://www.bylinebank.com/locator/"
 
-		data = "address="+str(search.current_zip)+"&lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ATMSF%7C&SearchKey=&rnd=1569844320549"
-		pagereq = session.post(url,data=data, headers=header)
-		soup = BeautifulSoup(pagereq.text, 'html.parser')
-		add2 = soup.find_all("add2")
-		address1 = soup.find_all("add1")
-		current_results_len = len(address1)
-		loc = soup.find_all("marker")
-		hours = soup.find_all("contents")
-		name = soup.find_all("title")
-		locator_domain = "https://www.bylinebank.com"
-		store_number ="<MISSING>"
-		location_type ='ATM'
-		items = 0
-		for i in range(len(address1)):
-			street_address = address1[i].text
-			city = add2[i].text.split(",")[0]
-			state = add2[i].text.replace(",,",",").split(",")[1].split( )[0]
-			
-			zip1 = add2[i].text.replace(",,",",").split(",")[1].split( )[1]
-			if "<b>" in add2[i].text:
-				phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
-			else:
-				phone = "<MISSING>"
-			# logger.info(name[i])
-			location_name = name[i].text.replace("<br>","").strip()
-			page_url = "https://www.bylinebank.com/locator/"
+                        if len(zip1)==3 or len(zip1)==7:
+                                country_code = "CA"
+                        else:
+                                country_code = "US"
+                        
+                        soup_hour = BeautifulSoup(hours[i].text,'lxml')
+                        if soup_hour.find("table"):
+                                h = []
+                                for i in soup_hour.find("table"):
+                                        h.append(i.text)
 
-
-			if len(zip1)==3 or len(zip1)==7:
-				country_code = "CA"
-			else:
-				country_code = "US"
-			
-			soup_hour = BeautifulSoup(hours[i].text,'lxml')
-			if soup_hour.find("table"):
-				h = []
-				for i in soup_hour.find("table"):
-					h.append(i.text)
-
-				hour = " ".join(h).replace(":"," : ").strip()
-			else:
-				hour = "<MISSING>"
-			hours_of_operation = hour
-			try:
-				latitude = loc[i].attrs['lat']
-				longitude = loc[i].attrs['lng']
-			except:
-				pass
-			result_coords.append((latitude,longitude))
-		   
-			store = []
-			store.append(locator_domain if locator_domain else '<MISSING>')
-			store.append(location_name if location_name else '<MISSING>')
-			store.append(street_address if street_address else '<MISSING>')
-			store.append(city if city else '<MISSING>')
-			store.append(state if state else '<MISSING>')
-			store.append(zip1 if zip1 else '<MISSING>')
-			store.append(country_code if country_code else '<MISSING>')
-			store.append(store_number if store_number else '<MISSING>')
-			store.append(phone if phone else '<MISSING>')
-			store.append(location_type)
-			store.append(latitude if latitude else '<MISSING>')
-			store.append(longitude if longitude else '<MISSING>')
-			store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-			store.append(page_url)
-			if store[2] in addresses:
+                                hour = " ".join(h).replace(":"," : ").strip()
+                        else:
+                                hour = "<MISSING>"
+                        hours_of_operation = hour
+                        try:
+                                latitude = loc[i].attrs['lat']
+                                longitude = loc[i].attrs['lng']
+                        except:
+                                pass
+                        result_coords.append((latitude,longitude))
+                   
+                        store = []
+                        store.append(locator_domain if locator_domain else '<MISSING>')
+                        store.append(location_name if location_name else '<MISSING>')
+                        store.append(street_address if street_address else '<MISSING>')
+                        store.append(city if city else '<MISSING>')
+                        store.append(state if state else '<MISSING>')
+                        store.append(zip1 if zip1 else '<MISSING>')
+                        store.append(country_code if country_code else '<MISSING>')
+                        store.append(store_number if store_number else '<MISSING>')
+                        store.append(phone if phone else '<MISSING>')
+                        store.append(location_type)
+                        store.append(latitude if latitude else '<MISSING>')
+                        store.append(longitude if longitude else '<MISSING>')
+                        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                        store.append(page_url)
+                        if store[2] in addresses:
                                 items += 1
                                 continue
-			addresses.append(store[2])
+                        addresses.append(store[2])
 
-			# logger.info("data = " + str(store))
-			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-			yield store
-
-		if current_results_len < MAX_RESULTS:
-			# logger.info("max distance update")
-			search.max_distance_update(MAX_DISTANCE)
-		elif current_results_len == MAX_RESULTS:
-			# logger.info("max count update")
-			search.max_count_update(result_coords)
-		else:
-			raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-		
-		logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
-		coords = search.next_coord()
-		
-	
+                        # logger.info("data = " + str(store))
+                        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
+                search.update_with(result_coords)
+                logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
+                coords = search.next()
+                
+        
 
 
 
