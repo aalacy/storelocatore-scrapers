@@ -125,7 +125,8 @@ def fetch_data():
             page_url = store_url
             hours_of_operation = "\n".join(
                 store_sel.xpath(
-                    '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content'
+                    '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]'
+                    "//table/tbody/tr/@content"
                 )
             ).strip()
             if hours_of_operation == "":
