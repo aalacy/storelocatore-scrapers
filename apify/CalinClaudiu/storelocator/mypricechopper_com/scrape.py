@@ -3,6 +3,8 @@ from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
+import bs4
+from bs4 import BeautifulSoup
 import json
 
 def fetch_data():
@@ -14,17 +16,21 @@ def fetch_data():
     session = SgRequests()
     son = session.get(url, headers = headers).json()
     for i in son['data']:
+        data = session.get("https://mypricechopper.com/"+i['StoreDetailsPageUrl'], headers = headers)
+        soup = BeautifulSoup(data.text , 'lxml')
+        try:
+            hours = soup.find('div',{'class':'card flex-fill'}).find('div',{'class':'card-body'}).find_all('div')
+            k = []
+            for j in hours:
+                k.append(j.text)
+            i['hours'] = '; '.join(k).strip()
+            if len(i['hours']) < 3:
+                i['hours'] = i['PharmacyHoursForWeek']
+        except Exception as e:
+            logzilla.info(f'Error grabbing data!! \n {e}')
+            
         yield i
     logzilla.info(f'Finished grabbing data!!')
-
-def nice_hours(x):
-    hours = []
-    if x != None:
-        for i in x:
-            hours.append(i['DayOfWeek']+': '+i['Hours'])
-    else:
-        hours.append('<MISSING>')
-    return '; '.join(hours)
 
 def scrape():
     url="https://mypricechopper.com/"
@@ -41,7 +47,7 @@ def scrape():
         country_code=MissingField(),
         phone=MappingField(mapping=['Phone']),
         store_number=MappingField(mapping=['StoreId']),
-        hours_of_operation=MappingField(mapping=['PharmacyHoursForWeek'], raw_value_transform = nice_hours, is_required = False),
+        hours_of_operation=MappingField(mapping=['PharmacyHoursForWeek'], is_required = False),
         location_type=MissingField()
     )
 
