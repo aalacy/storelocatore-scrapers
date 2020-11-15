@@ -40,7 +40,7 @@ def fetch_data():
     for url in urls:
         r = session.get(url)
         j = r.json()
-        page_url = url
+        page_url = url.replace('.json', '.html')
         mod = j.get('displayAddress') or j.get('customByName', {}).get('Geomodifier', '')
         location_name = f"{j.get('name')} {mod or ''}".strip() or '<MISSING>'
         street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip() or '<MISSING>'
