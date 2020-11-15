@@ -64,6 +64,8 @@ def fetch_data():
                 soup.find_all('script', attrs={'type': "application/ld+json"})[0].text
             )
         street_address = clean(script.get('address').get('streetAddress'), None).replace("Suite"," Suite").replace("STE","Ste").replace("Ste"," Ste").replace("Unit"," Unit")
+        if street_address == MISSING:
+            continue
         street_address = (re.sub(' +', ' ', street_address)).strip()
         city = clean(script.get('address').get('addressLocality'), None)
         state = clean(script.get('address').get('addressRegion'), None)
