@@ -36,7 +36,8 @@ def fetch_data():
             zip_code = store['zip_postal_code'][:5]
             country_code = "US"
             store_number = "<MISSING>"
-            phone = store['phone_main']
+            # phone = store['phone_main']
+            phone = "<INACCESSIBLE>"
             location_type = "<MISSING>"
             hours_of_operation = "<MISSING>"
             latitude = store['latitude']
