@@ -1,4 +1,4 @@
-SgRequests
-SgLogSetup
-BeautifulSoup
+Sgrequests
+SgLogging
+bs4==0.0.1
 usaddress
