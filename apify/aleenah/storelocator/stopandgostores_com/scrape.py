@@ -84,7 +84,7 @@ def fetch_data():
                         pcode,
                         'US',
                         store,
-                        '<MISSING>',
+                       phone,
                         '<MISSING>',
                         '<MISSING>',
                         '<MISSING>',
