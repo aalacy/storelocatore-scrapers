@@ -36,12 +36,9 @@ def fetch_data():
             city = loc['address']['cityOrTown']
             state = loc['address']['stateOrProvince']
             zip_code = loc['address']['postalOrZipCode']
-            
-            if 'USA' in loc['address']['postalOrZipCode']:
-                country_code = 'US'
-            else:
-                country_code = 'CA'
-                
+
+            country_code = 'US'
+             
             coords = loc['geo']
             
             lat = coords['lat']
