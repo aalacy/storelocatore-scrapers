@@ -1,5 +1,6 @@
 import csv
-from sgrequests import SgRequests
+from sgselenium import SgChrome
+from bs4 import BeautifulSoup
 import json
 
 def write_output(data):
@@ -14,8 +15,7 @@ def write_output(data):
 
 def fetch_data():
 
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    driver = SgChrome().chrome()
 
     locator_domain = 'https://maxmara.com/' 
     us_url = 'https://us.maxmara.com/store-locator?south=-37.85012759632715&west=-149.62984375&north=77.04151444711106&east=-41.70015625&name=&listJson=true&withoutRadius=false&country=US'
@@ -23,8 +23,12 @@ def fetch_data():
     urls = [us_url, can_url]
     all_store_data = []
     for url in urls:
-        r = session.get(url , headers = HEADERS)
-        locs = json.loads(r.content)['features']
+        driver.get(url)
+        driver.implicitly_wait(5)
+        
+        base = BeautifulSoup(driver.page_source,"lxml")
+        locs = json.loads(base.text)['features']
+
         for loc in locs:
             props = loc['properties']
             zip_code = props['zip']
@@ -35,30 +39,40 @@ def fetch_data():
                 
             lat = props['lat']
             longit = props['lng']
-            city = props['city']
+            city = props['city'].strip()
             addy_split = props['formattedAddress'].split(',')
-            state = addy_split[1]
+            state = addy_split[1].strip().replace("Washington","WA")
             
             for d in addy_split[2]:
                 if d.isdigit():
                     state = '<MISSING>'
                     break
 
+            if "Lexington" in state:
+                city = "Lexington Ave"
+                state = "New York"
+
             location_name = props['displayName']
             
             phone_number = props['phone1']
             
-            street_address = props['formattedAddress'].split(',')[0]
+            street_address = " ".join(props['formattedAddress'].split(',')[:-3]).replace("Street And","Street")
+            if not street_address:
+                street_address = props['formattedAddress'].split(',')[0]
       
             hours = ''
                 
             for day, val in props['openingHours'].items():
                 
-                hours += day + ' ' + val[0] +  ' '       
-        
+                hours += day + ' ' + val[0] +  ' '
+            
             hours = hours.strip()
 
-            page_url = 'https://world.maxmara.com/store/' + str(props['name'])
+            if not hours:
+                hours = '<MISSING>'
+
+            store_number = str(props['name'])
+            page_url = 'https://world.maxmara.com/store/' + store_number
             location_type = '<MISSING>'
             store_number = '<MISSING>'
 
