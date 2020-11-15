@@ -1,5 +1,8 @@
 import csv
+import json
+
 from sgrequests import SgRequests
+from lxml import html
 
 
 def write_output(data):
@@ -14,6 +17,14 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_hours(url):
+    session = SgRequests()
+    r = session.get(url)
+    tree = html.fromstring(r.text)
+    js = json.loads(''.join(tree.xpath("//script[@type='application/ld+json']/text()")))
+    return ';'.join(js.get('openingHours') or []).replace('00:00 - 00:00', 'Open - By Appointment') or '<MISSING>'
+
+
 def fetch_data():
     out = []
     url = 'https://www.carstar.ca/en/locations/'
@@ -25,7 +36,6 @@ def fetch_data():
 
     for j in js:
         locator_domain = url
-        page_url = api_url
         location_name = j.get('storeName')
         street_address = j.get('streetAddress1') or '<MISSING>'
         city = j.get('locationCity') or '<MISSING>'
@@ -36,8 +46,11 @@ def fetch_data():
         phone = j.get('phone').encode("ascii", "ignore").decode() or '<MISSING>'
         latitude = j.get('latitude') or '<MISSING>'
         longitude = j.get('longitude') or '<MISSING>'
-        hours_of_operation = '<INACCESSIBLE>'
         location_type = j.get('Type', '<MISSING>')
+        page_url = f"{url}{state.lower()}/{j.get('locationCitySlug')}/carstar-{store_number}/"
+        hours_of_operation = get_hours(page_url)
+        if hours_of_operation == '<MISSING>':
+            page_url = '<MISSING>'
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
