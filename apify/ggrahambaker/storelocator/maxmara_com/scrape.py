@@ -74,7 +74,6 @@ def fetch_data():
             store_number = str(props['name'])
             page_url = 'https://world.maxmara.com/store/' + store_number
             location_type = '<MISSING>'
-            store_number = '<MISSING>'
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                      store_number, phone_number, location_type, lat, longit, hours, page_url]
