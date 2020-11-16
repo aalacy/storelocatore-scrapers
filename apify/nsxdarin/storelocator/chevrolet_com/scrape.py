@@ -1,4 +1,8 @@
 import csv
+<<<<<<< Updated upstream
+=======
+from datetime import datetime
+>>>>>>> Stashed changes
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 
@@ -119,6 +123,30 @@ def extract(location):
     }
 
 
+<<<<<<< Updated upstream
+=======
+MAX_DISTANCE = 50
+MAX_RESULTS = 50
+
+
+def fetch_location(coord, retry_count=0):
+    try:
+        lat, lng = coord
+        params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
+        url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
+        data = session.get(url, headers=headers, params=params, timeout=1).json()
+        dealers = data.get("payload").get("dealers")
+        return dealers or []
+    except:
+        if retry_count == 3:
+            logger.info(f"Unable to fetch data for: {coord}")
+            return []
+
+        retry_count += 1
+        return fetch_location(coord, retry_count)
+
+
+>>>>>>> Stashed changes
 def fetch_data():
     MAX_DISTANCE = 50
     MAX_RESULTS = 50
@@ -132,6 +160,8 @@ def fetch_data():
 
     locations = {}
     coord = search.next()
+
+    count = 0
 
     while coord:
         coords = []
@@ -156,10 +186,17 @@ def fetch_data():
         search.update_with(coords)
         coord = search.next()
 
+        count += 1
+        if count == 50:
+            logger.info(f"remaining zipcodes: {search.zipcodes_remaining()}")
+            count = 0
+
 
 def scrape():
+    start = datetime.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {datetime.now() - start}")
 
 
 scrape()
