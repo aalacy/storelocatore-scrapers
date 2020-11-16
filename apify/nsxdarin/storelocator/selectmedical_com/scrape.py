@@ -64,6 +64,9 @@ def fetch_data():
                                 phone = '<MISSING>'
                             lat = item.split('data-latlong=\\"')[1].split('|')[0]
                             lng = item.split('data-latlong=\\"')[1].split('|')[1].split('\\')[0]
+                            if lat == '':
+                                lat = '<MISSING>'
+                                lng = '<MISSING>'
                             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             pass
