@@ -40,10 +40,10 @@ def fetch_data():
         street_address = j.get('streetAddress1') or '<MISSING>'
         city = j.get('locationCity') or '<MISSING>'
         state = j.get('locationState') or '<MISSING>'
-        postal = j.get('locationPostalCode').encode("ascii", "ignore").decode() or '<MISSING>'
+        postal = j.get('locationPostalCode') or '<MISSING>'
         country_code = 'CA'
         store_number = j.get('storeId') or '<MISSING>'
-        phone = j.get('phone').encode("ascii", "ignore").decode() or '<MISSING>'
+        phone = j.get('phone') or '<MISSING>'
         latitude = j.get('latitude') or '<MISSING>'
         longitude = j.get('longitude') or '<MISSING>'
         location_type = j.get('Type', '<MISSING>')
