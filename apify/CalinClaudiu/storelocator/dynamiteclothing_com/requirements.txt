@@ -1,0 +1,4 @@
+sgscrape
+sglogging
+sgrequests
+bs4
