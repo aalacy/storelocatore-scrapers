@@ -1,10 +1,10 @@
 import csv
-<<<<<<< Updated upstream
-=======
 from datetime import datetime
->>>>>>> Stashed changes
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("chevrolet_com")
 
 session = SgRequests()
 headers = {
@@ -123,8 +123,6 @@ def extract(location):
     }
 
 
-<<<<<<< Updated upstream
-=======
 MAX_DISTANCE = 50
 MAX_RESULTS = 50
 
@@ -146,11 +144,7 @@ def fetch_location(coord, retry_count=0):
         return fetch_location(coord, retry_count)
 
 
->>>>>>> Stashed changes
 def fetch_data():
-    MAX_DISTANCE = 50
-    MAX_RESULTS = 50
-
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=MAX_DISTANCE,
@@ -165,12 +159,7 @@ def fetch_data():
 
     while coord:
         coords = []
-        lat, lng = coord
-
-        params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
-        url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
-        data = session.get(url, headers=headers, params=params).json()
-        dealers = data.get("payload").get("dealers") or []
+        dealers = fetch_location(coord)
 
         for dealer in dealers:
             store_number = dealer.get("id")
@@ -187,7 +176,7 @@ def fetch_data():
         coord = search.next()
 
         count += 1
-        if count == 50:
+        if count == 25:
             logger.info(f"remaining zipcodes: {search.zipcodes_remaining()}")
             count = 0
 
