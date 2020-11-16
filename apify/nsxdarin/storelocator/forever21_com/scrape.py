@@ -17,7 +17,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://locations.forever21.com/modules/multilocation/?near_location=90210&limit=1000&services__in=&published=1&within_business=true&threshold=20000'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, timeout=90, stream=True)
     for item in json.loads(r.content)['objects']:
         if item['country_name'] == 'US' or item['country_name'] == 'United States of America':
             add = item['street']

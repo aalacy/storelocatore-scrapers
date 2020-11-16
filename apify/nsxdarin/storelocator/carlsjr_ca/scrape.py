@@ -21,10 +21,10 @@ def fetch_data():
     lines = r.iter_lines(decode_unicode=True)
     HFound = False
     for line in lines:
-        if 'style="color:#FFC72C;">' in line:
-            state = line.split('style="color:#FFC72C;">')[1].split('<')[0].strip()
-        if '</span></span></span></p></div></div></div></div></div><div data-packed="true"' in line:
-            name = line.split('"color:#2D2926;">')[1].split('<')[0].strip()
+        if 'style="color:#FFC72C;">' in line or '<span style="color:#FFC72C">' in line:
+            state = line.split('<span style="color:#')[1].split('>')[1].split('<')[0].strip()
+        if '</span></span></span></p></div></div></div></div>' in line and '<footer' not in line:
+            name = line.split('<span style="color:#2D2926">')[1].split('<')[0].strip()
             country = 'CA'
             typ = 'Restaurant'
             store = '<MISSING>'
@@ -34,11 +34,11 @@ def fetch_data():
             website = 'carlsjr.ca'
             lat = '<MISSING>'
             lng = '<MISSING>'
-            addinfo = line.split('procn;">')[2]
-            if 'style="color:#2D2926;">' in addinfo:
-                add = addinfo.split('style="color:#2D2926;">')[1].split('<')[0]
+            addinfo = line.split('procn">')[2]
+            if '<span style="color:#2D2926">' in addinfo:
+                add = addinfo.split('<span style="color:#2D2926">')[1].split('<')[0]
             else:
-                add = line.split('procn;">')[2].split('<')[0].strip()
+                add = line.split('procn">')[2].split('<')[0].strip()
             next(lines)
             g = next(lines)
             if 'HOURS:' in g:
@@ -49,16 +49,21 @@ def fetch_data():
                     phone = g.split('PH:')[1].split('<')[0].strip()
                 else:
                     phone = '<MISSING>'
-        if ';">HOURS:' in line:
+        if '">HOURS:' in line:
             HFound = True
-            hours = line.split(';">HOURS:')[1].split('<')[0].strip().replace('&nbsp;',' ')
-        if HFound and 'height:' in line:
+            hours = line.split('">HOURS:')[1].split('<')[0].strip().replace('&nbsp;',' ')
+        if HFound and '<path d="M1.6' in line:
             HFound = False
             hours = hours.replace('&amp;','&').replace('&ndash;','-')
             add = add.replace('&nbsp;',' ').strip()
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        if HFound and ';">HOURS:' not in line and 'procn;">' in line:
-            hours = hours + '; ' + line.split('procn;">')[1].split('<')[0]
+        if HFound and 'window.firstPageId' in line:
+            HFound = False
+            hours = hours.replace('&amp;','&').replace('&ndash;','-')
+            add = add.replace('&nbsp;',' ').strip()
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if HFound and '">HOURS:' not in line and 'procn">' in line:
+            hours = hours + '; ' + line.split('procn">')[1].split('<')[0]
 
 def scrape():
     data = fetch_data()
