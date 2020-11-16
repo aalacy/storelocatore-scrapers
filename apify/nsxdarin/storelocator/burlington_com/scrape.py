@@ -6,8 +6,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('burlington_com')
 
-
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -23,29 +21,33 @@ def fetch_data():
     ids = []
     for code in sgzip.for_radius(200):
         logger.info('Pulling Zip Code %s...' % code)
-        url = 'https://www.mapquestapi.com/search/v2/radius?key=Gmjtd|lu6tnu0bn9,85=o5-lw220&origin=' + code + '+US&radius=200&hostedData=mqap.34107_bcf_stores&_=1569251207933'
+        url = 'https://www.mapquestapi.com/search/v2/radius?key=kY8VAT7oi6AlAXPCq0XNQsuvjV2Cx4Wb&callback=jQuery19206669057244423291_1605555135749&origin=' + code + '+US&radius=200&hostedData=mqap.kY8VAT7oi6AlAXPCq0XNQsuvjV2Cx4Wb_bcf_stores&_=1605555135750'
         r = session.get(url, headers=headers)
-        if 'searchResults' in str(r.content.decode('utf-8')):
-            array = json.loads(r.content)
-            for item in array['searchResults']:
-                store = item['name']
-                name = 'Burlington Store #' + store
-                phone = item['fields']['phone'][:14]
-                add = item['fields']['address']
-                lat = item['fields']['mqap_geography']['latLng']['lat']
-                lng = item['fields']['mqap_geography']['latLng']['lng']
-                website = 'burlington.com'
-                city = item['fields']['city']
-                state = item['fields']['state']
-                zc = item['fields']['postal']
-                country = 'US'
-                typ = 'Store'
-                hours = item['fields']['hours1'] + ' ' + item['fields']['hours2'] + ' ' + item['fields']['hours3']
-                hours = hours.strip()
-                if store not in ids:
-                    ids.append(store)
-                    if 'Opening' not in hours:
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        for line in r.iter_lines():
+            line = str(line.decode('utf-8'))
+            items = line.split('{"distanceUnit":"')
+            for item in items:
+                if '"distance":' in item:
+                    store = item.split('"name":"')[1].split('"')[0]
+                    name = 'Burlington Store #' + store
+                    phone = item.split('"phone":"')[1].split('"')[0][:14]
+                    add = item.split(',"address":"')[1].split('"')[0]
+                    lat = item.split(',"Lat":')[1].split('}')[0]
+                    lng = item.split('{"lng":')[1].split(',')[0]
+                    website = 'burlington.com'
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0]
+                    zc = item.split('"postal":"')[1].split('"')[0]
+                    country = 'US'
+                    typ = 'Store'
+                    hours = item.split('"hours1":"')[1].split('"')[0]
+                    hours = hours + ' ' + item.split('"hours2":"')[1].split('"')[0]
+                    hours = hours + ' ' + item.split('"hours3":"')[1].split('"')[0]
+                    hours = hours.strip()
+                    if store not in ids:
+                        ids.append(store)
+                        if 'Opening' not in hours:
+                            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
