@@ -59,14 +59,19 @@ def fetch_data():
         phone = store_data.get('telephone1')
         phone = phone if phone else '<MISSING>'
         location_type = [elem['value'] for elem in store_data['Attribute'] if elem['name'] == 'StoreType']
-        location_type = location_type[0] if location_type else '<MISSING>'
+        if location_type in ['GAS', 'DC']:
+            continue
+        location_type = 'optical'
+        location_type = location_type if location_type else '<MISSING>'
         latitude = store_data['latitude']
         latitude = latitude if latitude else '<MISSING>'
         longitude = store_data['longitude']
         longitude = longitude if longitude else '<MISSING>'
         hours_of_operation = [elem['value'] for elem in store_data['Attribute'] if elem['name'] == 'Hours of Operation']
         hours_of_operation = hours_of_operation[0].replace('&l;br&g;', '; ').strip()
-        hours_of_operation =  hours_of_operation if hours_of_operation else '<MISSING>'
+        hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
+        if 'N/A' in hours_of_operation:
+            hours_of_operation = '<MISSING>'
         
         item = [
             DOMAIN,
