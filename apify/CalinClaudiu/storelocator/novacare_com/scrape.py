@@ -21,7 +21,8 @@ def parse_html(x):
         k['lat'] = latlon.split(',')[0]
         k['long'] = latlon.split(',')[1]
     except:
-        pass
+        k['lat'] = "<MISSING>"
+        k['long'] = "<MISISNG>"
     add = x.split('loc-result-card-address-container')[1].split("'_blank\'>")[1].split('</a>',1)[0]
     #name
     try:
@@ -87,9 +88,11 @@ def fetch_data():
         store = {}
         store['dic']=i
         store['parsed']=parse_html(i['Html'])
-        if store['dic']['Geospatial']['Latitude'] == '0' or store['dic']['Geospatial']['Latitude'] == '0.0':
+        if store['dic']['Geospatial']['Latitude'] == 0 or store['dic']['Geospatial']['Latitude'] == 0.0:
             store['dic']['Geospatial']['Latitude'] = store['parsed']['lat']
             store['dic']['Geospatial']['Longitude'] = store['parsed']['long']
+        
+        
         yield store
     logzilla.info(f'Finished Grabbing data!')
     
