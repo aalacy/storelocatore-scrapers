@@ -51,7 +51,6 @@ def fetch_data():
             row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                    country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
             out.append(row)
-        print(s, ':', len(js))
     return out
 
 
