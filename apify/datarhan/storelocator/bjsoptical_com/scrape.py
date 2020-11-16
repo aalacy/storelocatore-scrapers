@@ -71,7 +71,7 @@ def fetch_data():
         hours_of_operation = hours_of_operation[0].replace('&l;br&g;', '; ').strip()
         hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
         if 'N/A' in hours_of_operation:
-            hours_of_operation = '<MISSING>'
+            continue
         
         item = [
             DOMAIN,
