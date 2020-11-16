@@ -16,7 +16,7 @@ def write_output(data):
 
 
 def get_clean_hoo(hoo):
-    return hoo.replace('<br>', ';').replace('<', '').replace('>', '').replace('br', '')
+    return hoo.replace('<br>', ';').replace('<', '').replace('>', '').replace('br', '').replace('\n', '')
 
 
 def fetch_data():
