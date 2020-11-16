@@ -63,8 +63,6 @@ def fetch_data():
                                             hours = hours + '; ' + day.split('"dayOfWeek":[')[1].split(']')[0].replace('1','Mon').replace('2','Tue').replace('3','Wed').replace('4','Thu').replace('5','Fri').replace('6','Sat').replace('7','Sun') + ': ' + day.split('"')[0] + '-' + day.split('"openTo":"')[1].split('"')[0]
                             else:
                                 hours = '<MISSING>'
-                            if hours != '<MISSING>':
-                                hours = hours + '; Sun: Closed'
                             if len(zc) == 9:
                                 zc = zc[:5] + '-' + zc[-4:]
                             if store not in ids:
