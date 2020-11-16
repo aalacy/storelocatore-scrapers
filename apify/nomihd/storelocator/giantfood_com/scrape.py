@@ -123,7 +123,7 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             page_url = store_url
-            hours_of_operation = "\n".join(
+            hours_of_operation = " ".join(
                 store_sel.xpath(
                     '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]'
                     "//table/tbody/tr/@content"
