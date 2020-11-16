@@ -63,12 +63,12 @@ def fetch_data():
                         state = 'BC'
                     if city == 'Garson':
                         state = 'ON'
-                    if phone == '':
-                        phone = '<MISSING>'
                     if 'Can' in zc:
                         zc = '<MISSING>'
                     if '>' in phone:
                         phone = phone.split('>')[1].split('<')[0]
+                    if phone == '':
+                        phone = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

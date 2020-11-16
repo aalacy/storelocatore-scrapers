@@ -73,7 +73,8 @@ def fetch_data():
             history.append(store_link)
             if 'http' not in store_link:
                 store_link = base_url + store_link
-            store = etree.HTML(session.get(store_link).text)
+            page = session.get(store_link).text
+            store = etree.HTML(page)
             output = []
             output.append(base_url) # url
             output.append(store_link) # page url
@@ -91,7 +92,7 @@ def fetch_data():
                 if address[-1][-2:] != 'CA':
                     country = "US"
                 else:
-                    address = eliminate_space(store.xpath('.//p[@class="contact"]//text()'))[0].replace("CA","").split("|")                    
+                    address = eliminate_space(store.xpath('.//p[@class="contact"]//text()'))[0].replace("CA","").split("|")
                     country = "CA"
                 address = parse_address(address)
                 output.append(address['street']) #address
@@ -106,6 +107,24 @@ def fetch_data():
                 output.append(longitude) #longitude
                 output.append(hours) #opening hours
                 output_list.append(output)
+            if "www.signsnow.com/sacramento" in store_link and "1821 J Street" in page:
+                output = []
+                output.append(base_url) # url
+                output.append(store_link) # page url
+                output.append('Sacramento (J Street)') #location name
+                output.append('1821 J Street') #address
+                output.append('Sacramento') #city
+                output.append('CA') #state
+                output.append('95811') #zipcode  
+                output.append(country) #country code
+                output.append("<MISSING>") #store_number
+                output.append('(916) 441-2995') #phone
+                output.append("<MISSING>") #location type
+                output.append('38.5773646') #latitude
+                output.append('-121.5516752') #longitude
+                output.append("<MISSING>") #opening hours
+                output_list.append(output)
+
     return output_list
 
 def scrape():

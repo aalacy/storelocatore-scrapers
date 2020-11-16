@@ -58,7 +58,11 @@ def fetch_data():
             zip_code = state_data.split(',')[-1].split()[1:]
             zip_code = ' '.join(zip_code) if zip_code else '<MISSING>'
             country_code = '<MISSING>'
-            store_number = '<MISSING>'
+            
+            store_response = session.get(store_url)
+            store_dom = etree.HTML(store_response.text)
+            store_number = store_dom.xpath('//meta[@name="fln"]/@content')
+            store_number = store_number[0] if store_number else '<MISSING>'
             phone = location_data.xpath('.//p[@class="tel"]/text()')
             phone = phone[0] if phone else '<MISSING>'
             location_type = '<MISSING>'

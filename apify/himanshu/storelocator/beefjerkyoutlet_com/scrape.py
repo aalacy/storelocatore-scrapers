@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+from sgzip import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('beefjerkyoutlet_com')
@@ -27,16 +27,15 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_search_results = 100, max_radius_miles = 200)
     search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 200
-    coord = search.next_coord()
+    coord = search.next()
     base_url ="https://www.beefjerkyoutlet.com"
 
     while coord:
         result_coords = []
-        location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(coord[0])+"&proximity_lng="+str(coord[1])
+        lat, long = coord
+        location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(lat)+"&proximity_lng="+str(long)
         r = session.get(location,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
         items = 0
@@ -97,17 +96,9 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store
-        
-        if len(main) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(main) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        search.update_with(result_coords)
         logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
-        coord = search.next_coord()
+        coord = search.next()
 
 def scrape():
     data = fetch_data()

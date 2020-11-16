@@ -1,6 +1,10 @@
 import csv
+import time
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("chevrolet_com")
 
 session = SgRequests()
 headers = {
@@ -119,10 +123,28 @@ def extract(location):
     }
 
 
-def fetch_data():
-    MAX_DISTANCE = 50
-    MAX_RESULTS = 50
+MAX_DISTANCE = 50
+MAX_RESULTS = 100
 
+
+def fetch_location(coord, retry_count=0):
+    try:
+        lat, lng = coord
+        params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
+        url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
+        data = session.get(url, headers=headers, params=params).json()
+        dealers = data.get("payload").get("dealers")
+        return dealers or []
+    except:
+        if retry_count == 3:
+            logger.info(f"Unable to fetch data for: {coord}")
+            return []
+
+        retry_count += 1
+        return fetch_location(coord, retry_count)
+
+
+def fetch_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_radius_miles=MAX_DISTANCE,
@@ -135,12 +157,7 @@ def fetch_data():
 
     while coord:
         coords = []
-        lat, lng = coord
-
-        params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
-        url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
-        data = session.get(url, headers=headers, params=params).json()
-        dealers = data.get("payload").get("dealers") or []
+        dealers = fetch_location(coord)
 
         for dealer in dealers:
             store_number = dealer.get("id")

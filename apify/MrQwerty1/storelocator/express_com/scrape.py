@@ -36,16 +36,16 @@ def fetch_data():
             state = a.get('region') or '<MISSING>'
             postal = a.get('postalCode') or '<MISSING>'
             country_code = a.get('countryCode') or '<MISSING>'
+            store_number = '<MISSING>'
+            page_url = j.get('c_pagesUrl') or '<MISSING>'
+            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
 
             # there is one duplication with different URLs
-            test = f"{location_name} {street_address} {city} {state} {postal}"
+            test = f"{location_name} {street_address} {city} {state} {postal} {phone}"
             if test in s:
                 continue
             s.add(test)
 
-            store_number = '<MISSING>'
-            page_url = j.get('c_pagesUrl') or '<MISSING>'
-            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
             latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
             longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
             location_type = '<MISSING>'

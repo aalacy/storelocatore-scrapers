@@ -1,2 +1,3 @@
 --ignore StreetAddressHasNumber (Missing street address)
 --ignore StateLevelCountValidator (Confrimed on website)
+--ignore CountValidator (Filtered out POI with no address info)

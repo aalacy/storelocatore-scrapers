@@ -8,7 +8,8 @@ website = "restaurantdepot.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
@@ -83,7 +84,11 @@ def fetch_data():
         phone = l["Phone"]
         if phone == "":
             phone = "<MISSING>"
-        location_type = ", ".join(l["Services"]).strip()
+        location_type = (
+            BeautifulSoup(", ".join(l["Services"]).strip(), "html.parser")
+            .get_text()
+            .strip()
+        )
         if location_type == "":
             location_type = "<MISSING>"
         latitude = l["Address"]["Latitude"]
@@ -121,7 +126,7 @@ def scrape():
     data = fetch_data()
 
     write_output(data)
-    log.info(f"Finished")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

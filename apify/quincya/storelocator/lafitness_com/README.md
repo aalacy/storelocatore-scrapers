@@ -1,0 +1,2 @@
+--ignore CentroidValidator --ignore StreetAddressHasNumber (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 714 POI, but website has 650 POI)

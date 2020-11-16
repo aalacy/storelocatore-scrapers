@@ -34,8 +34,6 @@ def get(url, headers, attempts=0):
     global session
 
     max_attempts = 10
-    if attempts > max_attempts:
-        print(f"Exceeded max attempts ({max_attempts}) for URL: {url}")
 
     try:
         r = session.get(url, headers=headers)
