@@ -1,6 +1,5 @@
 import csv
-import re, time
-import json
+import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
