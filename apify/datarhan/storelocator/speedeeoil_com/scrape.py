@@ -53,7 +53,9 @@ def fetch_data():
         hours_of_operation_raw = json.loads(point['open_hours'])
         hours_of_operation = []
         for day, hours in hours_of_operation_raw.items():
-            hours_of_operation.append('{} - {}'.format(day, hours[0]))
+            hours = hours[0]
+            hours = '<closed>' if '0' in hours else hours
+            hours_of_operation.append('{} - {}'.format(day, hours))
         hours_of_operation = ', '.join(hours_of_operation)
 
         item = [
