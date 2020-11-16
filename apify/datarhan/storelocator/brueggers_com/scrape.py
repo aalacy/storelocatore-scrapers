@@ -3,8 +3,6 @@ import json
 import urllib.parse
 from lxml import etree
 
-from tqdm import tqdm
-
 from sgrequests import SgRequests
 
 DOMAIN = 'brueggers.com'
@@ -54,7 +52,7 @@ def fetch_data():
         
         allcities_urls = state_dom.xpath('//a[@class="Directory-listLink"]/@href')
         allcities_urls += add_to_cities
-        for city_url in tqdm(list(set(allcities_urls))):
+        for city_url in list(set(allcities_urls)):
             full_city_url = urllib.parse.urljoin(start_url, city_url)
             if len(full_city_url.split('/')) == 7:
                 add_to_locations.append(full_city_url)
@@ -86,8 +84,9 @@ def fetch_data():
                 state = state if state else '<MISSING>'
                 zip_code = location_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
                 zip_code = zip_code if zip_code else '<MISSING>'
-                country_code = state_url.split('/')[-2].upper()
-                country_code = country_code if country_code else '<MISSING>'
+                
+                country_code = full_state_url.split('/')[3]
+                country_code = country_code.upper() if country_code else '<MISSING>'
                 store_number = location_dom.xpath('//img[@itemprop="image"]/@id')[0]
                 phone = location_dom.xpath('//a[@data-ya-track="phone"]/text()')[0]
                 phone = phone if phone else '<MISSING>'

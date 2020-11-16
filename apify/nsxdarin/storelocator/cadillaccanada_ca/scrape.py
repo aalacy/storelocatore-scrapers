@@ -49,7 +49,7 @@ def fetch_data():
                             phone = item.split('"primaryPhone":"')[1].split('"')[0]
                         except:
                             phone = '<MISSING>'
-                        if phone == '<MISSING':
+                        if phone == '<MISSING>':
                             try:
                                 phone = item.split('"salesPhone":"')[1].split('"')[0]
                             except:

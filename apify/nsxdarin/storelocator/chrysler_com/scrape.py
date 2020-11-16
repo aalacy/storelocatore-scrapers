@@ -21,6 +21,7 @@ def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
         logger.info('Pulling Zip Code %s...' % code)
+        code = '61270'
         url = 'https://www.chrysler.com/bdlws/MDLSDealerLocator?brandCode=C&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode=' + code
         r = session.get(url, headers=headers)
         lines = r.iter_lines()
@@ -87,6 +88,8 @@ def fetch_data():
                     purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
+                    if 'Monday: 0:00AM' in hours:
+                        hours = '<MISSING>'
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

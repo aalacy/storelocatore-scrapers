@@ -22,7 +22,7 @@ def fetch_data():
     Found = False
     while Found is False:
         logger.info('Getting Locations...')
-        r = session.get(url, headers=headers, timeout=30, stream=True)
+        r = session.get(url, headers=headers, timeout=90, stream=True)
         for line in r.iter_lines():
             line = str(line.decode('utf-8'))
             if '"_id":"restaurant_' in line:

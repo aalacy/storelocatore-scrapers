@@ -6,7 +6,6 @@ from sgrequests import SgRequests
 
 from sgselenium import SgChrome
 
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -55,13 +54,29 @@ def fetch_data():
         req = session.get(store_url, headers = HEADERS)
         soup = BeautifulSoup(req.text,"lxml")
         script = json.loads(
-            soup.select_one('script[type="application/ld+json"]').text
+            soup.find_all('script', attrs={'type': "application/ld+json"})[-1].text
         )
-        street_address = clean(script.get('address').get('streetAddress'), None)
+        street_address = clean(script.get('address').get('streetAddress'), None).replace("Suite"," Suite").replace("STE","Ste").replace("Ste"," Ste").replace("Unit"," Unit")
+
+        if not street_address:
+            script = json.loads(
+                soup.find_all('script', attrs={'type': "application/ld+json"})[0].text
+            )
+        street_address = clean(script.get('address').get('streetAddress'), None).replace("Suite"," Suite").replace("STE","Ste").replace("Ste"," Ste").replace("Unit"," Unit")
+        if street_address == MISSING:
+            continue
+        street_address = (re.sub(' +', ' ', street_address)).strip()
         city = clean(script.get('address').get('addressLocality'), None)
         state = clean(script.get('address').get('addressRegion'), None)
         zipcode = clean(script.get('address').get('postalCode'), None)
-        country_code = script.get('address').get('addressCountry')
+        if not zipcode:
+            zipcode = MISSING
+        country_code = "US"
+        phone = script.get('telephone')
+        if not phone:
+            script = json.loads(
+                soup.find_all('script', attrs={'type': "application/ld+json"})[0].text
+            )
         phone = script.get('telephone')
         if "844-945-1370" in phone:
             phone = "800-697-4733"

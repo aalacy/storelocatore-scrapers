@@ -23,7 +23,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = set()
 
     DOMAIN = 'ironmountain.com'
     start_url = 'https://locations.ironmountain.com/'
@@ -89,10 +88,8 @@ def fetch_data():
                     longitude,
                     hours_of_operation
                 ]
-                
-                if store_number not in scraped_items:
-                    scraped_items.add(store_number)
-                    items.append(item)
+            
+                items.append(item)
 
     return items
 
