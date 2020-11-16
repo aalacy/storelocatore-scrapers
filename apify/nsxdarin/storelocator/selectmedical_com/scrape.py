@@ -40,23 +40,33 @@ def fetch_data():
                 for item in items:
                     if '"Language":"e' in item:
                         website = 'selectmedical.com'
-                        name = item.split('data-variantfieldname=\\"Link')[1].split('>')[1].split('<')[0]
-                        add = item.split('address field-address\\">')[1].split('<')[0]
-                        city = item.split('city field-city\\">')[1].split('<')[0]
-                        state = item.split('state field-state\\">')[1].split('<')[0]
-                        zc = item.split('zip field-zip\\">')[1].split('<')[0]
-                        phone = item.split('"phone-container\\"><div><a href=\\"tel:')[1].split('"')[0].replace('/','').replace('\\','')
-                        hours = '<MISSING>'
-                        country = 'US'
-                        typ = item.split('\\"line-of-business\\">')[1].split('<')[0]
-                        store = item.split('"')[0]
-                        if typ == '':
-                            typ = '<MISSING>'
-                        if phone == '':
-                            phone = '<MISSING>'
-                        lat = item.split('data-latlong=\\"')[1].split('|')[0]
-                        lng = item.split('data-latlong=\\"')[1].split('|')[1].split('\\')[0]
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        try:
+                            name = item.split('data-variantfieldname=\\"Link')[1].split('>')[1].split('<')[0]
+                            addinfo = item.split('"address-line\\">')[1].split('</div>')[0]
+                            if addinfo.count('<br/>') == 1:
+                                add = addinfo.split('<')[0]
+                                city = item.split('<br/>')[1].split(',')[0]
+                                state = item.split('<br/>')[1].split(',')[1].strip().split(' ')[0]
+                                zc = item.split('<br/>')[1].split(',')[1].strip().split('<')[0].rsplit(' ',1)[1]
+                            else:
+                                add = addinfo.split('<')[0] + ' ' + addinfo.split('<br/>')[1].strip()
+                                city = item.split('<br/>')[2].split(',')[0]
+                                state = item.split('<br/>')[2].split(',')[1].strip().split(' ')[0]
+                                zc = item.split('<br/>')[2].split(',')[1].strip().split('<')[0].rsplit(' ',1)[1]
+                            phone = item.split('<a href=\\"tel:')[1].split('\\')[0]
+                            hours = '<MISSING>'
+                            country = 'US'
+                            typ = item.split('\\"line-of-business\\">')[1].split('<')[0]
+                            store = item.split('"')[0]
+                            if typ == '':
+                                typ = '<MISSING>'
+                            if phone == '':
+                                phone = '<MISSING>'
+                            lat = item.split('data-latlong=\\"')[1].split('|')[0]
+                            lng = item.split('data-latlong=\\"')[1].split('|')[1].split('\\')[0]
+                            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        except:
+                            pass
 
 def scrape():
     data = fetch_data()
