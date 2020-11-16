@@ -74,7 +74,7 @@ def fetch_data():
             if item.address.renderContents()
             else "<MISSING>"
         )
-        street_address = street_address.replace(";#39;","'")
+        street_address = street_address.replace(";#39;","'").replace("Bramalea City Centre","").replace("Yonge Sheppard Centre","")
         latitude = (
             item.latitude.renderContents().decode("utf-8")
             if item.latitude.renderContents()
