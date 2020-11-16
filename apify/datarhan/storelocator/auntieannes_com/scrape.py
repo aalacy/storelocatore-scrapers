@@ -74,6 +74,10 @@ def fetch_data():
             hours_of_operation = ', '.join(hours_of_operation)
             hours_of_operation = hours_of_operation if hours_of_operation.strip() else '<MISSING>'
             
+            if state == city == zip_code == '<MISSING>':
+                phone = street_address
+                street_address = '<MISSING>'
+
             item = [
                 DOMAIN,
                 store_url,
