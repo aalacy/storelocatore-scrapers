@@ -48,7 +48,6 @@ def fetch_data():
     data = []
     url = "https://www.foodmaxx.com/api/m_store_location?store_type_ids=1,2,3"
     loclist = session.get(url, headers=headers, verify=False).json()["stores"]
-    print(loclist)
     daylist = {
         0: "Sunday",
         1: "Monday",
