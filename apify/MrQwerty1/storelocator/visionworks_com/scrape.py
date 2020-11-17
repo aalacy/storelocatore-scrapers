@@ -26,9 +26,9 @@ def fetch_data():
         js = r.json()
 
         for j in js:
+            page_url = 'https://locations.visionworks.com' + j.get('llp_url')
             j = j['store_info']
             locator_domain = url
-            page_url = j.get('website') or '<MISSING>'
             street_address = f"{j.get('address')} {j.get('address_extended') or ''}".strip() or '<MISSING>'
             location_name = j.get('name') or '<MISSING>'
             city = j.get('locality') or '<MISSING>'
@@ -37,7 +37,7 @@ def fetch_data():
             if len(postal) == 4:
                 postal = f'0{postal}'
             country_code = j.get('country') or '<MISSING>'
-            store_number = '<MISSING>'
+            store_number = j.get('corporate_id') or '<MISSING>'
             phone = j.get('phone') or '<MISSING>'
             latitude = j.get('latitude') or '<MISSING>'
             longitude = j.get('longitude') or '<MISSING>'
