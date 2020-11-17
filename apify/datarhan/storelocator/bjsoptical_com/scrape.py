@@ -56,8 +56,6 @@ def fetch_data():
         country_code = store_data['country']
         country_code = country_code if country_code else '<MISSING>'
         store_number = store_data['storeName']
-        phone = store_data.get('telephone1')
-        phone = phone if phone else '<MISSING>'
         location_type = [elem['value'] for elem in store_data['Attribute'] if elem['name'] == 'StoreType']
         if location_type in ['GAS', 'DC']:
             continue
@@ -77,6 +75,13 @@ def fetch_data():
         check = [elem['value'] for elem in store_data['Attribute'] if 'Optical' in elem['displayValue']]
         if not check:
             continue
+        phone = ''
+        phone = hours_of_operation.split(';')
+        if len(phone) > 1:
+            hours_of_operation = ', '.join(phone[:-1])
+            phone = phone[-1]
+            
+        phone = phone if phone else '<MISSING>'
         
         item = [
             DOMAIN,
