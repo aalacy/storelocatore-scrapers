@@ -32,40 +32,50 @@ def fetch_data():
     for i in data:
         data1 = (i.find("a")['href'])
         link = "https://www.eurekapizza.com/"+str(data1)
-        soup = bs(session.get(link, headers=headers).text, "lxml")
-        data = soup.find("div",{"class":"dmRespCol large-4 medium-4 small-12 u_1291578465"}).div
-        latitude = (data['lat'])
-        longitude = (data['lon'])
-        st_data = data['geocompleteaddress']
-        street_address = (st_data.split(",")[0])
-        city = (st_data.split(",")[1].strip())
-        country_code = (st_data.split(",")[-1].strip())
-        location_name = (data1.replace("/","").replace("-"," ").replace("---"," ").replace("   "," ").capitalize())
-        phone = soup.find("div",{"class":"u_1763968975 dmNewParagraph hide-for-small"}).text.strip()
-        zipp = soup.find("div",{"class":"u_1007316953 dmNewParagraph"}).text.strip().split(",")[1].strip().split(" ")[1]
-        state = soup.find("div",{"class":"u_1007316953 dmNewParagraph"}).text.strip().split(",")[1].strip().split(" ")[0]
-        if zipp =="72704":
-            city = "Fayetteville"
-            street_address = "2920 W Martin Luther King"
-        if location_name == 'Springdale thompson st':
-            city = "Springdale"
-            street_address = "1503 S Thompson"
-        store = []
-        store.append(base_url if base_url else "<MISSING>")
-        store.append(location_name if location_name else "<MISSING>") 
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append("<MISSING>") 
-        store.append(phone if phone else "<MISSING>")
-        store.append("Eurekapizza")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(link if link else "<MISSING>")
-        yield store 
+        page = session.get(link, headers=headers)
+        soup = bs(page.text, "lxml")
+        if 'coming soon' not in page.text:
+            data = soup.find("div",{"class":"dmRespCol large-4 medium-4 small-12 u_1291578465"}).div
+            latitude = (data['lat'])
+            longitude = (data['lon'])
+            st_data = data['geocompleteaddress']
+            street_address = (st_data.split(",")[0])
+            city = (st_data.split(",")[1].strip())
+            country_code = (st_data.split(",")[-1].strip())
+            phone = ""
+            location_name = (data1.replace("/","").replace("-"," ").replace("---"," ").replace("   "," ").capitalize())
+            try:
+                phone = soup.find("div",{"class":"u_1763968975 dmNewParagraph hide-for-small"}).text.strip()
+            except:
+                phone = soup.find("div",{"class":"u_1031901913 dmNewParagraph"}).text.strip()                
+            try:
+                zipp = soup.find("div",{"class":"u_1007316953 dmNewParagraph"}).text.strip().split(",")[1].strip().split(" ")[1]
+            except:
+                zipp = soup.find("div",{"class":"u_1007316953 dmNewParagraph"}).text.strip().split(",")[-1].strip().split(" ")[1]
+                
+            state = soup.find("div",{"class":"u_1007316953 dmNewParagraph"}).text.strip().split(",")[1].strip().split(" ")[0]
+            if zipp =="72704":
+                city = "Fayetteville"
+                street_address = "2920 W Martin Luther King"
+            if location_name == 'Springdale thompson st':
+                city = "Springdale"
+                street_address = "1503 S Thompson"
+            store = []
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(location_name if location_name else "<MISSING>") 
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
+            store.append("<MISSING>") 
+            store.append(phone if phone else "<MISSING>")
+            store.append("Eurekapizza")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(link if link else "<MISSING>")
+            yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
