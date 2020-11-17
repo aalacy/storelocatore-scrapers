@@ -117,6 +117,9 @@ def fetch_data():
                 titlelist.append(link)
                 city = link.split('locations/',1)[1].split('-'+state.lower(),1)[0]
                 city = city.replace('-',' ').strip()
+                if 'salt lake city' in city:
+                    city = 'salt lake city'
+                city = city.capitalize() 
                 data.append([
                         'https://www.corelifeeatery.com',
                         link,                   
