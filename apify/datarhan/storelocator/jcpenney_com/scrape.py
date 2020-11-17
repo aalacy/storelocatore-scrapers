@@ -5,6 +5,8 @@ import urllib.parse
 from lxml import etree
 from sgzip import SearchableCountries
 
+from tqdm import tqdm
+
 from sgrequests import SgRequests
 
 
@@ -24,7 +26,7 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
+    scraped_stores = []
 
     DOMAIN = 'jcpenney.com'
 
@@ -44,21 +46,30 @@ def fetch_data():
     }
 
     all_codes = []
-    us_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
+    us_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
     for zip_code in us_zips:
         all_codes.append(zip_code)
-    ca_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.CANADA)
+    ca_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.CANADA)
     for zip_code in ca_zips:
         all_codes.append(zip_code)
 
     start_url = 'https://browse-api.jcpenney.com/v1/stores?radius=1000&pageSize=100&storeService=&location={}'
-    for code in all_codes:
+    for code in tqdm(all_codes):
         response = session.get(start_url.format(code))
+        if response.status_code != 200:
+            print('CODE NOT 200 for {}'.format(start_url.format(code)))
         data = json.loads(response.text)
         if not data.get('stores'):
             continue
-
+        
         all_poi = data['stores']
+        
+        for page_url in data['page']:
+            page_response = session.get(page_url['url'])
+            page_data = json.loads(page_response.text)
+            if page_data.get('stores'):
+                all_poi += page_data['stores']
+        
         for poi in all_poi:
             store_url = poi.get('storePageUrl')
             store_url = store_url if store_url else '<MISSING>'
@@ -73,6 +84,8 @@ def fetch_data():
             zip_code = poi['zip']
             zip_code = zip_code if zip_code else '<MISSING>'
             country_code = poi['country']
+            if country_code == 'PUERTO RICO':
+                continue 
             country_code = country_code if country_code else '<MISSING>'
             store_number = poi['number']
             store_number = store_number if store_number else '<MISSING>'
@@ -106,8 +119,9 @@ def fetch_data():
                 hours_of_operation
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            check = '{} {}'.format(store_number, street_address)
+            if check not in scraped_stores:
+                scraped_stores.append(check)
                 items.append(item)
         
     return items
