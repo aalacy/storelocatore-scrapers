@@ -27,7 +27,7 @@ def fetch_data():
 
     hdr = {
         'authority': 'www.bjs.com',
-        'path': '/clubLocatorDetail;radius=250;lat=35.90234;lng=-78.78943',
+        'path': '/optical;radius=999999;lat=37.6032972;lng=-77.2635038',
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'accept-encoding': 'gzip, deflate, br',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6',
@@ -35,7 +35,7 @@ def fetch_data():
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'
     }
 
-    start_url = 'https://www.bjs.com/clubLocatorDetail;radius=25000;lat=35.90234;lng=-78.78943'
+    start_url = 'https://www.bjs.com/optical;radius=999999;lat=37.6032972;lng=-77.2635038'
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[@id="bjs-universal-app-state"]/text()')[0]
@@ -67,10 +67,15 @@ def fetch_data():
         latitude = latitude if latitude else '<MISSING>'
         longitude = store_data['longitude']
         longitude = longitude if longitude else '<MISSING>'
-        hours_of_operation = [elem['value'] for elem in store_data['Attribute'] if elem['name'] == 'Hours of Operation']
+        hours_of_operation = [elem['value'] for elem in store_data['Attribute'] if elem['name'] == 'Optical Phone Number']
         hours_of_operation = hours_of_operation[0].replace('&l;br&g;', '; ').strip()
         hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
+        if hours_of_operation == '0':
+            continue
         if 'N/A' in hours_of_operation:
+            continue
+        check = [elem['value'] for elem in store_data['Attribute'] if 'Optical' in elem['displayValue']]
+        if not check:
             continue
         
         item = [
