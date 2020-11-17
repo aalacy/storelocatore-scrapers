@@ -35,7 +35,7 @@ def para(url):
         k['address'] = "<MISSING>"
         
     try:
-        k['city'] = data.find('span',{'class':'store-city'}).text
+        k['city'] = data.find('span',{'class':'store-city'}).text.replace(',','')
     except:
         k['city'] = "<MISSING>"
         
