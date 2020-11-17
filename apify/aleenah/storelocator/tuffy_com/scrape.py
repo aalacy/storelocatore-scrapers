@@ -31,9 +31,7 @@ def fetch_data():
           "SD", "TN", "TX", "UT", "VT", "VA", "WV", "WI"]
     for statenow in states:
         coordlist =[]
-        url = 'https://www.tuffy.com/location_search?zip_code='+statenow
-        print(url)
-        print('...............')
+        url = 'https://www.tuffy.com/location_search?zip_code='+statenow        
         r = session.get(url, headers=headers, verify=False)       
         soup =BeautifulSoup(r.text, "html.parser")        
         divlist = soup.findAll('div', {'class': 'contact-info'})
@@ -46,7 +44,7 @@ def fetch_data():
                 coordlist.append(temp)
             except:
                 break
-        print(len(coordlist))
+        #print(len(coordlist))
         
         for j in range(0,len(divlist)):
             div = divlist[j]
@@ -110,7 +108,7 @@ def fetch_data():
                             longt,
                             hours
                         ])
-            print(p,data[p])
+            #print(p,data[p])
             p += 1
                     
 
@@ -121,10 +119,8 @@ def fetch_data():
     return data
 
 
-def scrape():
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+def scrape():   
     data = fetch_data()
-    write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    write_output(data)   
 
 scrape()
