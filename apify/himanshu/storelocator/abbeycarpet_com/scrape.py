@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+from sgzip import DynamicZipSearch, SearchableCountries
 import time
 from sglogging import SgLogSetup
 
@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger('abbeycarpet_com')
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -54,12 +54,8 @@ def request_wrapper(url, method, headers, data=None):
                     break
     else:
         return None
+
 def fetch_data():
-    MAX_RESULTS = 10
-    MAX_DISTANCE = 100
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    zip_code = search.next_zip()
     current_results_len =0
     adress = []
     headers = {
@@ -67,8 +63,11 @@ def fetch_data():
     }
 
     base_url = "https://www.abbeycarpet.com/"
-    
+    search = DynamicZipSearch(country_codes=[SearchableCountries.USA], max_search_results = 10, max_radius_miles = 100)
+    search.initialize()
+    zip_code = search.next()
     while zip_code:
+        items = 0
         result_coords =[]
         #logger.info("zip_code === "+zip_code)
     
@@ -140,19 +139,24 @@ def fetch_data():
                         longitude = ""
                 
                 else:
-                    src = soup1.find_all("iframe")[-1]
-                    if "!3d" in src["src"]:
-                        longitude = src["src"].split('!2d')[1].split('!3d')[0]
-                        latitude = src["src"].split('!2d')[1].split('!3d')[1].split('!')[0]                
-                    elif "place?zoom" in src:
-                        latitude = src["src"].split('=')[2].split(',')[0]
-                        longitude = src["src"].split('=')[2].split(',')[1].split('&')[0]   
-                    elif "!3f" in src["src"]:
-                        longitude =  src["src"].split('!2d')[1].split('!3f')[0]
-                        latitude = src["src"].split('!2d')[1].split('!3f')[1].split('!4f')[0]
-                    else:
+                    try:
+                        src = soup1.find_all("iframe")[-1]
+                        if "!3d" in src["src"]:
+                            longitude = src["src"].split('!2d')[1].split('!3d')[0]
+                            latitude = src["src"].split('!2d')[1].split('!3d')[1].split('!')[0]                
+                        elif "place?zoom" in src:
+                            latitude = src["src"].split('=')[2].split(',')[0]
+                            longitude = src["src"].split('=')[2].split(',')[1].split('&')[0]   
+                        elif "!3f" in src["src"]:
+                            longitude =  src["src"].split('!2d')[1].split('!3f')[0]
+                            latitude = src["src"].split('!2d')[1].split('!3f')[1].split('!4f')[0]
+                        else:
+                            latitude = ""
+                            longitude = ""
+                    except:
                         latitude = ""
                         longitude = ""
+                        
                 
             else:
                 hours_of_operation = "<MISSING>" 
@@ -200,21 +204,15 @@ def fetch_data():
             store.append(hours_of_operation1[index])
             store.append(location_url)     
             if store[2] in adress:
+                items +=1
                 continue
             adress.append(store[2]) 
             store = [x.strip() if x else "<MISSING>" for x in store]
             yield store
              
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        
-        zip_code = search.next_zip()
+        search.update_with(result_coords)
+        logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
+        zip_code = search.next()
     
     
 def scrape():
