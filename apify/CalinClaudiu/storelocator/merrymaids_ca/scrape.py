@@ -35,7 +35,7 @@ def scrape():
         latitude=MappingField(mapping=['lat']),
         longitude=MappingField(mapping=['lng']),
         street_address=MappingField(mapping=['address']),
-        city=MappingField(mapping=['city']),
+        city=MappingField(mapping=['city'], is_required = False),
         state=MappingField(mapping=['province']),
         zipcode=MappingField(mapping=['postalCode']),
         country_code=MappingField(mapping=['country']),
