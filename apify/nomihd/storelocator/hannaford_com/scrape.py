@@ -58,6 +58,26 @@ def write_output(data):
         log.info(f"No of records being processed: {len(temp_list)}")
 
 
+def get_formated_street_address(street_address):
+
+    if "&nbsp;" in street_address:
+        add_before_nbsp = street_address.split("&nbsp;")[0].strip()
+        if add_before_nbsp[0].isdigit():
+            street_address = (
+                street_address.split("&nbsp;")[0].strip().replace(",", "").strip()
+            )
+        else:
+            add_after_nbsp = (
+                street_address.split("&nbsp;")[1].strip().replace(",", "").strip()
+            )
+            if add_after_nbsp[0].isdigit():
+                street_address = add_after_nbsp.replace("&nbsp;", " ").strip()
+            else:
+                street_address = street_address.replace("&nbsp;", " ").strip()
+
+    return street_address
+
+
 def fetch_data():
     # Your scraper here
     locator_domain = website
@@ -85,7 +105,6 @@ def fetch_data():
     for store in store_links:
         if "/locations/" in store:
             store_url = store.split("</loc>")[0].strip()
-
             store_resp = session.get(store_url, headers=headers)
             store_sel = lxml.html.fromstring(store_resp.text)
             json_data = json.loads(
@@ -95,9 +114,8 @@ def fetch_data():
             )
 
             location_name = json_data["name"]
-            street_address = (
-                json_data["address"]["streetAddress"].replace("&nbsp;", " ").strip()
-            )
+            street_address = json_data["address"]["streetAddress"].strip()
+            street_address = get_formated_street_address(street_address)
 
             city = json_data["address"]["addressLocality"]
             state = json_data["address"]["addressRegion"]

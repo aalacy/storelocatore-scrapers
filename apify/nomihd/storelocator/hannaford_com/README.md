@@ -11,6 +11,3 @@ Please make sure that:
 
 
 use --ignore StreetAddressHasNumber as it's throwing error even streetAddress has number in it.
-
-use --ignore StreetAddressHasStateName as it's throwing error even there's no stateName in the streetAddress
-
