@@ -1,5 +1,5 @@
 import csv
-import time
+from datetime import datetime
 from sgzip import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -9,10 +9,6 @@ logger = SgLogSetup().get_logger("chevrolet_com")
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authority": "www.chevrolet.com",
-    "accept": "application/json, text/plain, */*",
-    "clientapplicationid": "OCNATIVEAPP",
-    "loginin": "mytest016@outlook.com",
     "locale": "en_US",
 }
 
@@ -124,7 +120,7 @@ def extract(location):
 
 
 MAX_DISTANCE = 50
-MAX_RESULTS = 100
+MAX_RESULTS = 50
 
 
 def fetch_location(coord, retry_count=0):
@@ -132,7 +128,7 @@ def fetch_location(coord, retry_count=0):
         lat, lng = coord
         params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
         url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
-        data = session.get(url, headers=headers, params=params).json()
+        data = session.get(url, headers=headers, params=params, timeout=0.1).json()
         dealers = data.get("payload").get("dealers")
         return dealers or []
     except:
@@ -173,10 +169,14 @@ def fetch_data():
         search.update_with(coords)
         coord = search.next()
 
+        logger.info(f"remaining zipcodes: {search.zipcodes_remaining()}")
+
 
 def scrape():
+    start = datetime.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {datetime.now() - start}")
 
 
 scrape()
