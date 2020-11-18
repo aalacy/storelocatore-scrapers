@@ -63,7 +63,7 @@ def fetch_data():
             break
         for weed in location_list:
             #logger.info("page number is=========="+str(page))
-            location_name = weed['name'].encode('ascii', 'ignore').decode('ascii').strip()
+            location_name = weed['name'].strip()
             if "Coming Soon" in location_name:
                 continue
             street_address = weed['address']
@@ -110,7 +110,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             #logger.info("data ======="+str(store))
             yield store
         

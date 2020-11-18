@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -17,7 +16,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    addressesess = []
+    addressess = []
     url = "https://www.adventhealth.com/views/ajax?_wrapper_format=drupal_ajax"
     page = 0
     while True:
@@ -41,9 +40,12 @@ def fetch_data():
 
         for info  in soup.find_all("li",{"class":"facility-search-block__item"}):
             try:
-                location_name = info.find("a",{"class":"location-block__name-link u-text--fw-300 notranslate"}).text.strip()
+                try:
+                    location_name = info.find("a",{"class":"location-block__name-link u-text--fw-300 notranslate"}).text.strip()
+                except:
+                    location_name = info.find("h3",{"class":"location-block__name h2 notranslate u-text--blue"}).text.strip()
             except:
-                location_name = info.find("h3",{"class":"location-block__name h2 notranslate u-text--blue"}).text.strip()
+                location_name = "<MISSING>"
             street_address = info.find("span",{"property":"streetAddress"}).text.strip().split("Suite")[0].replace(",","").replace("3rd Floor","").replace("1st Floor","").replace("8th Floor","").replace("3rd floor","").replace("2nd Floor","").replace("Floor 2","").strip()
             city = info.find("span",{"property":"addressLocality"}).text.strip()
             try:
@@ -59,12 +61,15 @@ def fetch_data():
             
             try:
                 page_url = info.find("a",{"class":"button--blue--dark"})['href']
+
                 
                 if page_url:
                     if "http" in page_url:
                         page_url1 = page_url
+
                     else:
                         page_url1 = "https://www.adventhealth.com"+page_url
+
 
                     response1 = session.get(page_url1)
                     soup1 = BeautifulSoup(response1.text,'lxml')
@@ -97,7 +102,6 @@ def fetch_data():
                 location_type ='<MISSING>'
                 latitude ='<MISSING>'
                 longitude ='<MISSING>'
-            
             store = []
             store.append("https://www.adventhealth.com")
             store.append(location_name)
@@ -109,18 +113,17 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(phone)
             store.append(location_type if location_type else "<MISSING>")
-
             store.append(latitude)
             store.append(longitude)
+            hours2 = ''
             hours2 = hours2.replace(" secondary shift change (secondary to patient information being exchanged between the nurses and the providers) and only 2 visitors at a bedside.",'')
             store.append(hours2.replace("\n",' ').replace("Hours:  Hours:",'Hours:').replace(",",' ') if hours2 else "<MISSING>")
             store.append(page_url1 )
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # if store[2] in addressesess:
-            #     continue
-            # addressesess.append(store[2])
-            
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
             yield store
         page+=1
 def scrape():

@@ -107,7 +107,7 @@ def fetch_data():
                 hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(location_url)
             #logger.info("data ==" + str(store))
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
 
             yield store
 

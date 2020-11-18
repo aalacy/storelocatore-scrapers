@@ -1,14 +1,10 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import re
 
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
 
 COMPANY_URL = "https://eatcopperbranch.com"
-CHROME_DRIVER_PATH = "chromedriver"
-
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
@@ -20,6 +16,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -54,17 +51,19 @@ def fetch_data():
     coming_soon = []
     data = []
 
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(
-        "https://eatcopperbranch.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1565644279976"
-    )
-    lists = BeautifulSoup(driver.page_source)
+    base_link = "https://eatcopperbranch.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1565644279976"
 
-    for item in lists.find_all("item"):
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+    req = session.get(base_link, headers = HEADERS)
+
+    link = "https://eatcopperbranch.com/locations/"
+
+    lists = BeautifulSoup(req.text,"lxml").find_all("item")
+
+    for item in lists:
         location_title = (
             item.location.renderContents().decode("utf-8")
             if item.location.renderContents()
@@ -75,6 +74,7 @@ def fetch_data():
             if item.address.renderContents()
             else "<MISSING>"
         )
+        street_address = street_address.replace(";#39;","'").replace("Bramalea City Centre","").replace("Yonge Sheppard Centre","")
         latitude = (
             item.latitude.renderContents().decode("utf-8")
             if item.latitude.renderContents()
@@ -105,9 +105,11 @@ def fetch_data():
         )
         opening_soon = item.opening_soon
 
+        hour = (hour.replace("PM","PM ").replace("day","day ").replace("losed","losed ")).replace("  "," ")
+
         # Location title
         locations_titles.append(
-            location_title.replace("&amp", "").replace(";#44;", "")
+            location_title.replace("&amp", "").replace(";#44;", "").replace(";#39;","'")
         ) if location_title.replace("&amp", "").replace(
             ";#44;", ""
         ) != "" else locations_titles.append(
@@ -228,6 +230,7 @@ def fetch_data():
             data.append(
                 [
                     COMPANY_URL,
+                    link,
                     locations_title,
                     street_address,
                     city,
@@ -243,13 +246,11 @@ def fetch_data():
                 ]
             )
 
-    driver.quit()
     return data
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

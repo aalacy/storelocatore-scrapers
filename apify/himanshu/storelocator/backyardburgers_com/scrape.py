@@ -6,6 +6,7 @@ import json
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('backyardburgers_com')
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,12 +33,16 @@ def fetch_data():
         latitude = val['lat']
         longitude = val['lng']
         page_url = "https://www.backyardburgers.com"+val['url']
-        h_data = BeautifulSoup(val['hours'],'lxml')
-        hoo = list(h_data.find("p").stripped_strings)
-        hour = []
-        for h in hoo:
-            hour.append(" ".join(h.split()))
-        hours_of_operation = ", ".join(hour).replace(", *Dinning room closes at 7:00 pm","").replace("Now Open!","<MISSING>").replace("Closed for renovations","")
+        h_data = BeautifulSoup(val['hours'],'html5lib')
+        if page_url=="https://www.backyardburgers.com/location/back-yard-burgers-batesville/":
+            hours_of_operation = "temporarily closed"
+        else:
+            hoo = list(h_data.find("p").stripped_strings)
+            hour = []
+            for h in hoo:
+                hour.append(" ".join(h.split()))
+            hours_of_operation = ", ".join(hour).replace(", *Dinning room closes at 7:00 pm","").replace("Now Open!","<MISSING>").replace("Closed for renovations","")
+            
         
         store = []
         store.append("https://www.backyardburgers.com")
@@ -52,9 +57,9 @@ def fetch_data():
         store.append("Back Yard Burgers")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store.append(hours_of_operation.replace("Nov 11th (Remembrance Day) ",'') if hours_of_operation else '<MISSING>')
         store.append(page_url)
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         if store[2] in addressess:
             continue
         addressess.append(store[2])
@@ -64,6 +69,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-
 
 

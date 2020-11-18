@@ -1,14 +1,12 @@
 import csv
 import urllib.request, urllib.error, urllib.parse
-import requests
+from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('tacobell_ca')
 
-
-
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'content-type': 'application/json',
            'X-Requested-With': 'XMLHttpRequest'

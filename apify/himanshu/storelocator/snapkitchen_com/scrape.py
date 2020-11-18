@@ -44,18 +44,18 @@ def fetch_data():
         tem_var =[]
        
         tem_var.append("https://www.snapkitchen.com")
-        tem_var.append(i['name'].encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(i['address']['street'].encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(i['address']['city'].encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(i['address']['state'].encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append(i['address']['zipcode'].encode('ascii', 'ignore').decode('ascii').strip())
+        tem_var.append(i['name'].strip())
+        tem_var.append(i['address']['street'].strip())
+        tem_var.append(i['address']['city'].strip())
+        tem_var.append(i['address']['state'].strip())
+        tem_var.append(i['address']['zipcode'].strip())
         tem_var.append(i['address']['country'].replace("USA","US"))
         tem_var.append(i["id"])
-        tem_var.append(i['phone'].encode('ascii', 'ignore').decode('ascii').strip())
+        tem_var.append(i['phone'].strip())
         tem_var.append("<MISSING>")
         tem_var.append(i['address']['coord'][1])
         tem_var.append(i['address']['coord'][0])
-        tem_var.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
+        tem_var.append(hours.strip())
         tem_var.append("https://www.snapkitchen.com/locations/" + tem_var[1].replace(' ',"-").lower() + "/" + str(tem_var[7]))
         yield tem_var
 

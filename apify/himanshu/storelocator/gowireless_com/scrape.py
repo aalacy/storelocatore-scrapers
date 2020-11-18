@@ -72,7 +72,7 @@ def fetch_data():
         tem_var.append("GoWireless")
         tem_var.append(latitude)
         tem_var.append(longitude)
-        tem_var.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip() if hours_of_operation else "<MISSING>")
+        tem_var.append(hours_of_operation.strip() if hours_of_operation else "<MISSING>")
         tem_var.append(page_url)
         # logger.info(tem_var)
         return_main_object.append(tem_var)

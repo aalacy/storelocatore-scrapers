@@ -145,7 +145,7 @@ def fetch_data():
                 if str(store[2]) in addresses:
                     continue
                 addresses.append(str(store[2]) )
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("data =="+str(store))
                 # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store

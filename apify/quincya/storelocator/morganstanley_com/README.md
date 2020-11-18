@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed scraped correctly)
+--ignore LatLngDuplicationValidator (Multiple POI same location)

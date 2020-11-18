@@ -32,7 +32,7 @@ def fetch_data():
     for coord in coords:
         #logger.info(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
-        print(url)
+        
         res = session.get(url)
         try:
             jso=res.json()
@@ -56,19 +56,19 @@ def fetch_data():
                 name=name.split(';')[-1]
             all.append([
                 "https://www.clarksoneyecare.com",
-                name,
-                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b',''),
-                js["city"].replace( u'\u200b',''),
-                js["state"].replace( u'\u200b',''),
-                js["zip_code"].replace( u'\u200b',''),
+                name.replace( u'\u200b','').replace( u'\u202c',''),
+                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b','').replace( u'\u202c','').replace('â€™','').replace('â€‹',''),
+                js["city"].replace( u'\u200b','').replace( u'\u202c',''),
+                js["state"].replace( u'\u200b','').replace( u'\u202c',''),
+                js["zip_code"].replace( u'\u200b','').replace( u'\u202c',''),
                 "US",
                 "<MISSING>",  # store #
-                js["phone_number"].replace( u'\u200b',''),  # phone
+                js["phone_number"].replace( u'\u200b','').replace( u'\u202c',''),  # phone
                 "<MISSING>",  # type
-                js["lat"].replace( u'\u200b',''),  # lat
-                js["lng"].replace( u'\u200b',''),  # long
-                tim.replace( u'\u200b',''),  # timing
-                url.replace( u'\u200b','')])
+                js["lat"].replace( u'\u200b','').replace( u'\u202c',''),  # lat
+                js["lng"].replace( u'\u200b','').replace( u'\u202c',''),  # long
+                tim.replace( u'\u200b','').replace( u'\u202c',''),  # timing
+                url.replace( u'\u200b','').replace( u'\u202c','')])
 
     return all
 

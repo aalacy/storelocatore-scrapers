@@ -49,15 +49,19 @@ function getLocation(location) {
     location_name: get(location, 'locationName'),
     street_address: get(location, 'address'),
     city: get(location, 'city'),
-    state: get(location, 'stateProvince'),
+    state: get(location, 'stateProvince').toUpperCase(),
     zip: get(location, 'postalCode'),
-    country_code: get(location, 'country'),
+    country_code: get(location, 'country', 'US').toUpperCase(),
     latitude: get(location, 'lat'),
     longitude: get(location, 'long'),
     store_number: get(location, 'locationId'),
     phone: get(location, 'phoneNumber'),
-    location_type: getAttribute(location.locationAttributes, 'Other Services'),
-    hours_of_operation: getAttribute(location.locationAttributes, 'Location Hours'),
+    location_type: getOneOfAttributes(location.locationAttributes, ['Other Services']),
+    hours_of_operation: getOneOfAttributes(location.locationAttributes, [
+      'Location Hours',
+      'Motor Bank Hours',
+      'ATM Hours',
+    ]),
   };
 }
 
@@ -83,16 +87,18 @@ function getRequestData() {
   };
 }
 
-function get(entity, key) {
-  return entity[key] || MISSING;
+function get(entity, key, defaultValue = MISSING) {
+  return entity[key] || defaultValue;
 }
 
-function getAttribute(attributes, key) {
-  returnVal = '<MISSING>';
-  for (let a of attributes) {
-    if (a['name'] == key) {
-      returnVal = get(a, 'value');
+function getOneOfAttributes(attributes, keys) {
+  for (let key of keys) {
+    for (let a of attributes) {
+      if (a['name'] == key) {
+        return get(a, 'value');
+      }
     }
   }
-  return returnVal;
+
+  return MISSING;
 }

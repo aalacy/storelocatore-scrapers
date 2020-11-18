@@ -77,7 +77,7 @@ def fetch_data():
         store.append(lng)
         store.append(hours.replace("pm,","pm"))
         store.append("https://www.maclonline.com/locations/")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     
 

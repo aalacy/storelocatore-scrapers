@@ -17,33 +17,34 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
 def fetch_data():
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes= ["CA"])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    base_url = "https://secondcup.com"
-
-    while zip_code:
-        result_coords = []
-        # print("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        headers = {
+    headers = {
             'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'content-type':'application/x-www-form-urlencoded',
             'origin':'https://secondcup.com',
             'referer':'https://secondcup.com/find-a-cafe',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
         }
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes= ["CA"])
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 10
+    current_results_len = 0  
+    zip_code = search.next_zip()
+    base_url = "https://secondcup.com"
+    # payload = BeautifulSoup(session.get("https://secondcup.com/find-a-cafe",headers=headers).text,'lxml')
+    # honeypot_time = payload.find("input",{"name":"honeypot_time"})['value']
+    # print(honeypot_time)
+    # form_build_id = payload.find("input",{"name":"form_build_id"})['value']
+    # print(form_build_id)
+
+    while zip_code:
+        result_coords = []
         data = {
             "postal_code":str(zip_code),
-            "honeypot_time":"nMBVNLXtCv8AI0QlSgiIDpklvMze6_yS89Ikbnt-ACk",
-            "form_build_id":"form-4yVWiMP9J21v4mOdkiArnriYQIAPTSrwT4W7K78kQ00",
+            "honeypot_time":"XfwYJFceyauI_LWXAGtAZPzQNUHEkxkD_SXyuC2NPCA",
+            "form_build_id":"form-qtm5jslnAllOaNjqPRPi4TDu_P4PXkpT0rfhVqU2CLQ",
             "form_id": "postal_code_form"
         }
         location_url = "https://secondcup.com/find-a-cafe"
@@ -56,7 +57,6 @@ def fetch_data():
             page_url = base_url+link['href']
             if "closed" in link['href']:
                 continue
-            
             soup1 = BeautifulSoup(session.get(page_url).text, "lxml")
             try:
                 addr = list(soup1.find("div",{"class":"m-location-features__address"}).stripped_strings)
@@ -73,7 +73,7 @@ def fetch_data():
                 try:
                     hours = " ".join(list(soup1.find("ul",{"class":"m-location-hours__list"}).stripped_strings))
                 except:
-                    hours = "<MISSING>"
+                    hours = "CLOSED"
             except:
                 continue
             result_coords.append((0, 0))
@@ -95,14 +95,12 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data~~~~~~"+str(store))
+            store = [x.replace("é","e") if type(x) == str else x for x in store] 
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -111,10 +109,7 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-
 
 
 

@@ -77,7 +77,7 @@ def fetch_data():
         store.append(lng if lng else "<MISSING>")
         store.append(hours_of_operation)
         store.append(page_url)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
 
 

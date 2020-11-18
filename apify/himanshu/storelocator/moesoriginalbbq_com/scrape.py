@@ -172,7 +172,7 @@ def fetch_data():
                 addresses.append(str(store[2]) + str(store[-3]))
                 if "43023" in zipp:
                     continue
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 return_main_object.append(store)
 
     # Get location that's not in api

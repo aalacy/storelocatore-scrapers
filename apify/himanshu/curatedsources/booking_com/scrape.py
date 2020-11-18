@@ -107,7 +107,7 @@ def fetch_data():
                         if store[2] in ca_address:
                             continue
                         ca_address.append(store[2])
-                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        store = [str(x).strip() if x else "<MISSING>" for x in store]
                         
                         yield store
                         
@@ -175,10 +175,10 @@ def fetch_data():
                         phone="<MISSING>"
                         store = []
                         store.append("https://www.booking.com/")
-                        store.append(name.encode('ascii', 'ignore').decode('ascii').strip())
-                        store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
-                        store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-                        store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+                        store.append(name.strip())
+                        store.append(street_address.strip() if street_address else "<MISSING>")
+                        store.append(city.strip())
+                        store.append(state.strip())
                         store.append(zipp if zipp else "<MISSING>")
                         store.append("US")
                         store.append("<MISSING>")

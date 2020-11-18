@@ -6,7 +6,7 @@ from random import randint
 import re
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('30burgers_com')
+logger = SgLogSetup().get_logger('oldcountrybuffet_com')
 
 
 def write_output(data):
@@ -28,7 +28,8 @@ def fetch_data():
 	
 	data = []
 	locator_domain = "oldcountrybuffet.com"
-
+	link = "http://www.oldcountrybuffet.com/locator/"
+	
 	for i in range(52):
 
 		base_link = "http://www.oldcountrybuffet.com/wp-admin/admin-ajax.php?action=usahtml5map_state_info&map_id=0&sid=%s" %i
@@ -79,7 +80,7 @@ def fetch_data():
 				latitude = "<MISSING>"
 				longitude = "<MISSING>"
 
-			data.append([locator_domain, "<MISSING>", location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	return data
 

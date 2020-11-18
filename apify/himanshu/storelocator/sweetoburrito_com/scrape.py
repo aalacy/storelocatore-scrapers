@@ -186,7 +186,7 @@ def fetch_data():
             continue
         if "Twin Falls" in location_name :
             continue
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():

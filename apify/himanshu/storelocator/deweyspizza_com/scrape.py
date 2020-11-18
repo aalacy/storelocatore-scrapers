@@ -79,9 +79,9 @@ def fetch_data():
         tem_var =[]
         # replace("OFallon","O'Fallon")
       
-        tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip() )
-        tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip().replace("OFallon","O'Fallon"))
-        tem_var.append(state.encode('ascii', 'ignore').decode('ascii').strip()) 
+        tem_var.append(address.strip() )
+        tem_var.append(city.strip().replace("OFallon","O'Fallon"))
+        tem_var.append(state.strip())
         tem_var.append(zipp)
         tem_var.append('US')
         tem_var.append("<MISSING>")
@@ -120,20 +120,20 @@ def fetch_data():
    
           
     for i in telephone1:
-        phone.append(i.text.encode('ascii', 'ignore').decode('ascii').strip())
+        phone.append(i.text.strip())
          
     for i in latitude1:
-        lat.append(i.text.strip().encode('ascii', 'ignore').decode('ascii').strip())
+        lat.append(i.text.strip().strip())
 
     for i in longitude1:
-        lng.append(i.text.strip().encode('ascii', 'ignore').decode('ascii').strip())
+        lng.append(i.text.strip().strip())
 
 
   
     for i in range(len(store_name)):
        store = list()
        store.append("http://deweyspizza.com")
-       store.append(store_name[i].encode('ascii', 'ignore').decode('ascii').strip().replace("&#39;","").replace("OFallon","O'Fallon"))
+       store.append(store_name[i].strip().replace("&#39;","").replace("OFallon","O'Fallon"))
        store.extend(store_detail[i])
        store.append(phone[i])
        store.append("<MISSING>")

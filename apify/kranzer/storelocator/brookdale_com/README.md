@@ -1,1 +1,3 @@
-this may have duplication error, because different locations can be placed on the same address
+Phone number set to "<INACCESSIBLE>" because the number in api does not match that on website. Too many pages to get individually since it will require sgselenium.
+--ignore StreetAddressHasStateName --ignore StateLevelCountValidator (Confirmed on website)
+--ignore LatLngDuplicationValidator (Multiple POI at same address)

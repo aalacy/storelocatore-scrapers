@@ -1,13 +1,10 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('johnnywas_com')
-
 
 
 def write_output(data):
@@ -29,52 +26,61 @@ def fetch_data():
 
 	session = SgRequests()
 	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+	base = BeautifulSoup(req.text,"lxml")
 
 	data = []
 
-	items = base.find_all(class_="individual-store-link")
+	items = base.find_all(class_="mw-sl__store__info__name")
 	locator_domain = "johnnywas.com"
 
 	for item in items:
-		if "opening" in item.text.lower():
+		try:
+			link = item.a["href"]
+		except:
 			continue
 
-		link = "https://www.johnnywas.com" + item["href"]
 		logger.info(link)
 		req = session.get(link, headers = HEADERS)
 		base = BeautifulSoup(req.text,"lxml")
 
-		location_name = base.h1.text.strip()
+		location_name = base.h2.text.strip()
 
-		raw_data = base.find(class_="exact-address").text.split(",")
+		raw_data = list(base.find(class_="mw-sl__details__item mw-sl__details__item--location").stripped_strings)
 
-		try:
-			street_address = raw_data[-5].strip() + " " + raw_data[-4].strip()
-		except:
-			street_address = raw_data[-4].strip()
+		street_address = " ".join(raw_data[0].split(",")[:-1]).strip()
 		street_address = (re.sub(' +', ' ', street_address)).strip()
 
-		city = raw_data[-3].strip()
-		state = raw_data[-2].strip()
-		zip_code = raw_data[-1].strip()
+		city = raw_data[0].split(",")[-1].strip()
+		state = raw_data[1].split(",")[0].strip().replace("Washington","WA")
+		zip_code = raw_data[1].split(",")[1].strip().split()[0]
+		if len(zip_code) == 4:
+			zip_code = "0" + zip_code
 		country_code = "US"
 		store_number = "<MISSING>"
 		location_type = "<MISSING>"
-		phone = base.find(class_="phone").text.strip()
-
-		hours_of_operation = base.find(class_="schedule").text.replace("HOURS","").replace("\r \n"," ").strip()
-		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
 
 		try:
-			map_link = base.find(class_="get-directions").a["href"]
-			latitude = map_link.split("=")[-1].split(",")[0]
-			longitude = map_link.split("=")[-1].split(",")[1]
+			phone = base.find(class_="mw-sl__details__item mw-sl__details__item--tel").text.strip()
+		except:
+			if "OPENING" in base.find(class_="description").text.upper():
+				continue
+			phone = "<MISSING>"
+
+		hours_of_operation = base.find(class_="mw-sl__infotable__table").text.replace("\n"," ").strip()
+		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
+
+		fin_script = ""
+		all_scripts = base.find_all('script')
+		for script in all_scripts:
+			if "var location" in str(script):
+				fin_script = script.text.replace('\n', '').strip()
+				break
+		try:
+			geo = re.findall(r'lat: [0-9]{2}\.[0-9]+, lng:.+[0-9]{2,3}\.[0-9]+',fin_script)[0].split(",")
+			latitude = geo[0].split(":")[1].strip()
+			longitude = geo[1].split(":")[1].strip()
+			if "-" not in longitude:
+				longitude = "-" + longitude
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"

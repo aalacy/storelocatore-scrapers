@@ -1,0 +1,6 @@
+sgrequests
+sglogging
+bs4
+#lxml==4.5.0
+# uncomment if you use selenium
+# selenium==3.141.0

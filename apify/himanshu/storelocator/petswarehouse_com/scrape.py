@@ -65,7 +65,7 @@ def fetch_data():
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
         store_number, phone, location_type, lat, lng, hours, page_url]
-        store = [str(x) if str(x).encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" for x in store]
+        store = [str(x) if str(x).strip() else "<MISSING>" for x in store]
         yield store
 
 

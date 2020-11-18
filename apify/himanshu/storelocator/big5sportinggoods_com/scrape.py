@@ -58,11 +58,11 @@ def fetch_data():
         b = (soup.find_all("input",{"name":"latHidden"}))
         for index,i in enumerate(a):
             location_name = (list(i.stripped_strings)[0])
-            street_address = (list(i.stripped_strings)[1].encode('ascii', 'ignore').decode('ascii').strip())
-            city = list(i.stripped_strings)[2].split(",")[0].encode('ascii', 'ignore').decode('ascii').strip()
-            state = (list(i.stripped_strings)[2].split(",")[1].split( )[0].encode('ascii', 'ignore').decode('ascii').strip())
-            zip1 = (list(i.stripped_strings)[2].split(",")[1].split( )[1].encode('ascii', 'ignore').decode('ascii').strip())
-            phone = (list(i.stripped_strings)[4].encode('ascii', 'ignore').decode('ascii').strip())
+            street_address = (list(i.stripped_strings)[1].strip())
+            city = list(i.stripped_strings)[2].split(",")[0].strip()
+            state = (list(i.stripped_strings)[2].split(",")[1].split( )[0].strip())
+            zip1 = (list(i.stripped_strings)[2].split(",")[1].split( )[1].strip())
+            phone = (list(i.stripped_strings)[4].strip())
             hours = (list(i.stripped_strings)[6:13])
             hours_of_operation = (''.join(hours))
             latitude = b[index]['value']

@@ -81,7 +81,7 @@ def fetch_data():
             hours ="<MISSING>"
         store.append(hours.replace("By Appointment Only",'').replace("Center Hours By appointment only Student",'Student').replace("Center Hours Monday-Friday (by appointment)",'').replace("Center Hours By appointments only.",'').replace("/",' ').replace(": Mon",'Mon').replace("To Schedule Tours https://calendly.com/mncodeninjas",'').replace("Center Hours By Appointment Student",'Student').replace("s only. Student",'Student').replace("by Appointment Student",'Student').replace("*See Camp Schedule for Camp hours ","Student").replace("|",' ').replace("Student Hours CREATE Appointments:",'Student Hours').replace("Appointments Only Student","Student").replace("(Note: Last check-in one hour before close)",'').replace("By-Appointment only for Drop-Ins (Due to Covid-19)",'').replace("Center Hours  Student Hours","Student Hours").replace("Center Hours By appointment Student",'Student').replace(")","").replace("(","").replace("Student Hours By Appointment",'').replace("Virtual",'').replace("Center Hours By Appointment only Student",'Student').replace(" To Schedule Tours https:  calendly.com mncodeninjas",'').replace("*See Camp Schedule for Camp hours",'').replace("Appointments Only",'').strip())
         store.append(page_url if page_url else "<MISSING>")     
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         if store[2] in addresses:
             continue
         addresses.append(store[2])

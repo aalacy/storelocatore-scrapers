@@ -7,17 +7,13 @@ import json
 import usaddress as usd
 import collections as coll
 from datetime import datetime
+import usaddress
 # import pprint
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('aesop_com')
-
-
-
 session = SgRequests()
-
 tm={
    'Recipient': 'recipient',
    'AddressNumber': 'address1',
@@ -41,8 +37,10 @@ tm={
    'PlaceName': 'city',
    'StateName': 'state',
    'ZipCode': 'zip_code',
+   'SubaddressType' : 'address1',
+   'SubaddressType' : 'address1',
+   'SubaddressIdentifier' : 'address1',
 }
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -54,10 +52,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-
     headers = {
         'accept': "*/*",
         'accept-encoding': "gzip, deflate, br",
@@ -89,31 +84,19 @@ def fetch_data():
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()    # zip_code = search.next_zip()
     adressess = []
-
     while coord:
         result_coords = []
-        
-        
         lat = coord[0]
         lng = coord[1]
-
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-        # lat = -42.225
-        # lng = -42.225
-        # zip_code = 11576
         payload = '{\"query\":\"\\n  \\n  fragment openingHours on StoreOpeningHoursTimesType {\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n  query {\\n    stores (\\n      query: [\\n        { key: \\\"fields.storeLocation\\\", Op:WITHIN, value: \\\"37.887,-79.488,' + str(lat) + ',' + str(lng) + '\\\" }\\n      ]\\n    ) {\\n      id\\n      address\\n      city\\n      combinedAddress: address\\n      country\\n      email\\n      facialAppointments\\n      facialAppointmentsLink\\n      type\\n      features: type\\n      formattedAddress\\n      image {\\n        large\\n        medium\\n        small\\n      }\\n      location {\\n        lat\\n        lon\\n      }\\n      name\\n      \\n  openingHours {\\n    monday {\\n      ...openingHours\\n    }\\n    tuesday {\\n      ...openingHours\\n    }\\n    wednesday {\\n      ...openingHours\\n    }\\n    thursday {\\n      ...openingHours\\n    }\\n    friday {\\n      ...openingHours\\n    }\\n    saturday {\\n      ...openingHours\\n    }\\n    sunday {\\n      ...openingHours\\n    }\\n  }\\n\\n      \\n  specialOpeningHours {\\n    date\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n      phone\\n    }\\n  }\\n\"}'
 
         location_url = "https://www.aesop.com/graphql"
-
         # logger.info(location_url)
         r = session.post(location_url, headers=headers,data=payload)
         json_data = r.json()['data']['stores']
         current_results_len = len(json_data)
-
         for value in json_data:
             country = ['GB','HK','KR','JP','TH','TW']
-
             if value['country'] not in country:
                 loc_name = ['Aesop Harbour City Facial Room',
                 'Aesop Tryano',
@@ -147,7 +130,8 @@ def fetch_data():
                     
                     locator_domain = base_url
                     location_name = value['name']
-                    temp_add = value['formattedAddress']
+                    temp_add = value['formattedAddress'].replace(", Space B115","")
+                  
     
                     if value['country'] == "CA":
                         # logger.info(location_name)
@@ -401,7 +385,6 @@ def fetch_data():
                     adressess.append(store[2]) 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                     yield store
-
         if current_results_len < MAX_RESULTS:
             # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -411,11 +394,8 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()   # zip_code = search.next_zip()
-     
 def scrape():
     # fetch_data()
     data = fetch_data()
     write_output(data)
-
-
 scrape()

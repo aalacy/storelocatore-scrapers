@@ -159,7 +159,7 @@ def fetch_data():
                     store.append(lng)
                     store.append(hours.replace("Monday: Close  Tuesday: Close  Wednesday: Close Thursday: Close Friday: Close Saturday: Close Sunday: Close",'<MISSING>') if hours else "<MISSING>")
                     store.append(page_url if page_url else "<MISSING>")     
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [str(x).strip() if x else "<MISSING>" for x in store]
                     if street_address_n.strip() in adressess:
                         continue
                     adressess.append(street_address_n.strip())

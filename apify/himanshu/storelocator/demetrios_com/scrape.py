@@ -43,7 +43,7 @@ def fetch_data():
         tem_var=[]
         # logger.info(i.text)
         tem_var.append("https://apps.demetrios.com")
-        tem_var.append(name[index].text.encode('ascii', 'ignore').decode('ascii').strip() if name[index].text else "<MISSING>" )
+        tem_var.append(name[index].text.strip() if name[index].text else "<MISSING>" )
         tem_var.append("<INACCESSIBLE>")
         tem_var.append("<INACCESSIBLE>")
         tem_var.append("<INACCESSIBLE>")
@@ -51,15 +51,15 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         if phone[index].text.strip():
-           tem_var.append(phone[index].text.encode('ascii', 'ignore').decode('ascii').strip() if phone[index].text else "<MISSING>" )
+           tem_var.append(phone[index].text.strip() if phone[index].text else "<MISSING>" )
         else:
            tem_var.append("<MISSING>")  
-        # tem_var.append(phone[index].text.encode('ascii', 'ignore').decode('ascii').strip().replace('','<MISSING>'))
+        # tem_var.append(phone[index].text.strip().replace('','<MISSING>'))
         tem_var.append("demetrios")
         tem_var.append(latitude[index].text)
         tem_var.append(longitude[index].text)
         tem_var.append("<MISSING>")
-        tem_var.append(i.text.replace("\u0393","").replace("\x81","").replace("\u0158","").encode('ascii', 'ignore').decode('ascii').strip())
+        tem_var.append(i.text.replace("\u0393","").replace("\x81","").replace("\u0158","").strip())
         if tem_var[-1] in address1:
            continue
         address1.append(tem_var[-1])

@@ -1,6 +1,6 @@
 import csv
 import os
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 import json
 
 def write_output(data):
@@ -15,7 +15,7 @@ def write_output(data):
 
 def fetch_data():
     locator_domain = 'https://www.harmondiscount.com/'
-    driver = SgSelenium().chrome()
+    driver = SgChrome().chrome()
     driver.get(locator_domain)
     driver.implicitly_wait(10)
 
@@ -36,12 +36,9 @@ def fetch_data():
             city = loc['address']['cityOrTown']
             state = loc['address']['stateOrProvince']
             zip_code = loc['address']['postalOrZipCode']
-            
-            if 'USA' in loc['address']['postalOrZipCode']:
-                country_code = 'US'
-            else:
-                country_code = 'CA'
-                
+
+            country_code = 'US'
+             
             coords = loc['geo']
             
             lat = coords['lat']
@@ -54,11 +51,12 @@ def fetch_data():
             hours_obj = loc['regularHours']
             for day, val in hours_obj.items():
                 
-                if val['label'] == '':
-                    hours = '<MISSING>'
-                    break
-                    
-                hours += day + ' ' + val['label'] + ' '
+                if day != "timeZone":
+                    if val['label'] == '':
+                        hours = '<MISSING>'
+                        break
+                        
+                    hours += day + ' ' + val['label'] + ' '
                 
             store_number = '<MISSING>'
             location_type = '<MISSING>'

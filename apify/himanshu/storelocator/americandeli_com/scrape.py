@@ -38,11 +38,11 @@ def fetch_data():
                 continue
             r=r.json()
             for loc in r:
-                name=loc['store'].encode('ascii', 'ignore').decode('ascii').strip()
-                address=loc['address'].encode('ascii', 'ignore').decode('ascii').strip()
-                city=loc['city'].encode('ascii', 'ignore').decode('ascii').strip()
+                name=loc['store'].strip()
+                address=loc['address'].strip()
+                city=loc['city'].strip()
                 state= name.split(',')[1].strip().split(' ')[0]               
-                country=loc['country'].encode('ascii', 'ignore').decode('ascii').strip()
+                country=loc['country'].strip()
                 if country =="United States":
                     country="US"
                 zip=loc['zip']

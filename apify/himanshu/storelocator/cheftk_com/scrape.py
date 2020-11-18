@@ -6,9 +6,8 @@ import json
 import unicodedata
 import html5lib
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w',  encoding="utf-8") as output_file:
+    with open('E:\\csv_file\\cheftk_data.csv', mode='w',  encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -41,18 +40,18 @@ def fetch_data():
             soup1=BeautifulSoup(r1.text,'html5lib')
             b = soup1.find_all('div',{'class':'editor_color_green'})
             location_name = b[0].text
-            street_address = " ".join(b[1].text.encode('ascii', 'ignore').decode('ascii').split(" ")[0:6])
-            city = " ".join(b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[6:8])
-            state = (b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[8])
-            zipp = (b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[9])
-            phone = (b[2].text.encode('ascii', 'ignore').decode('ascii').strip().split(":")[1])
-            hours_of_operation = (b[3].text.encode('ascii', 'ignore').decode('ascii').strip().split(":")[1])
+            street_address = " ".join(b[1].text.split(" ")[0:6])
+            city = " ".join(b[1].text.strip().split(" ")[6:8])
+            state = (b[1].text.strip().split(" ")[8])
+            zipp = (b[1].text.strip().split(" ")[9])
+            phone = (b[2].text.strip().split(":")[1])
+            hours_of_operation = (b[3].text.strip().split(":")[1])
             page_url = base_url+"/chef-tk-catering-kona.html"
         if "snow-factory-tk-kona.html" in  i.find('a')['href']:
             r2 = session.get(base_url+"/snow-factory-tk-kona.html")
             soup2=BeautifulSoup(r2.text,'html5lib')
             c = soup2.find_all('div',{'id':'wsb-element-a976612f-12fc-4516-b514-9f303f2c12d3'})
-            street_address = " ".join(c[0].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[0:3])
+            street_address = " ".join(c[0].text.strip().split(" ")[0:3])
             city = (c[0].text.split( )[3])
             state = (c[0].text.split( )[4])
             zipp = (c[0].text.split( )[5].replace("96740(808)","96740"))
@@ -96,6 +95,11 @@ def fetch_data():
         store.append(lng if lng else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         if "<MISSING>" in store[3]:
             pass
         else:
@@ -180,7 +184,7 @@ def fetch_data():
                     if type(store[i]) == str:
                         store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
             i+=1
 def scrape():

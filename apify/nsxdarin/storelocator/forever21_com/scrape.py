@@ -16,39 +16,44 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://www.forever21.com/eu/shop/Info/GetFindStoreList'
-    r = session.get(url, headers=headers)
-    for item in json.loads(r.content)['F21StoreList']:
-        if item['CountryName'] == 'U.S.A':
-            add = item['Address'] + ' ' + item['Address2']
-            city = item['City']
+    url = 'https://locations.forever21.com/modules/multilocation/?near_location=90210&limit=1000&services__in=&published=1&within_business=true&threshold=20000'
+    r = session.get(url, headers=headers, timeout=90, stream=True)
+    for item in json.loads(r.content)['objects']:
+        if item['country_name'] == 'US' or item['country_name'] == 'United States of America':
+            add = item['street']
+            try:
+                add = add + ' ' + item['street2']
+            except:
+                pass
+            city = item['city']
             country = 'US'
             website = 'forever21.com'
             typ = '<MISSING>'
-            lat = item['Latitude']
-            lng = item['Longitude']
-            state = item['State']
+            lat = item['lat']
+            lng = item['lon']
+            state = item['state']
             loc = '<MISSING>'
-            name = item['Location']
-            zc = item['ZIP']
-            phone = item['Phone']
-            store = item['StoreID']
-            hours = 'Mon: ' + item['Monday']
-            hours = hours + '; Tue: ' + item['Tuesday']
-            hours = hours + '; Wed: ' + item['Wednesday']
-            hours = hours + '; Thu: ' + item['Thursday']
-            hours = hours + '; Fri: ' + item['Friday']
-            hours = hours + '; Sat: ' + item['Saturday']
-            hours = hours + '; Sun: ' + item['Sunday']
+            name = item['location_name']
+            zc = item['postal_code']
+            phone = item['phonemap']['phone']
+            store = item['id']
+            hours = ''
+            hrs = str(item['formatted_hours'])
+            days = hrs.split("'content': '")
+            dc = 0
+            for day in days:
+                if "'label': '" in day:
+                    dc = dc + 1
+                    hrs = day.split("'label': '")[1].split("'")[0] + ': ' + day.split("'")[0]
+                    if hours == '':
+                        hours = hrs
+                    else:
+                        if dc <= 7:
+                            hours = hours + '; ' + hrs
             if hours == '':
                 hours = '<MISSING>'
             if zc == '':
                 zc = '<MISSING>'
-            if 'AM' not in hours:
-                hours = '<MISSING>'
-            if '0.000000' in lat:
-                lat = '<MISSING>'
-                lng = '<MISSING>'
             hours = hours.replace('\t','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

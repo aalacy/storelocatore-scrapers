@@ -65,7 +65,7 @@ def fetch_data():
                 hours = hours + " " + store_hours[key]["label"] + " " + store_hours[key]["hours"]
             store.append(hours if hours  != "" else "<MISSING>")
             store.append(store_data["url"])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             final_data.append(store)
     return final_data
 

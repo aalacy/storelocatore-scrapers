@@ -72,7 +72,7 @@ def fetch_data():
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
         # logger.info("~~~~~~~~~~~~~~~~ ",store)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     
     
@@ -121,7 +121,7 @@ def fetch_data():
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
         # logger.info("~~~~~~~~~~~~~~~~ ",store)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         
         yield store
 

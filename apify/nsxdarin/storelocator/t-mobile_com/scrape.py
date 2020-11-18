@@ -140,7 +140,7 @@ def fetch_data():
                     yield [
                         website,
                         loc,
-                        name,
+                        location_type,
                         add,
                         city,
                         state,

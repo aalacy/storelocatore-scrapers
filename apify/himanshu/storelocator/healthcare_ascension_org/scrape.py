@@ -77,7 +77,7 @@ def fetch_data():
         store.append(hours.replace("Holidays: Call for Hours",'').replace("p.m. (by appointment only)","p.m.").replace(" Urgent Care: 920-727-4232",'').replace(" 5 p.m. EST (or by appointment)"," 5 p.m."))
         store.append(page_url)
         store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         # if str(store[1]+store[2]+str(store[8])+store[-1]) in addresses:
         #     continue
         # addresses.append( str(store[1]+store[2]+str(store[8]) +store[-1])) 

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 session = SgRequests()
-import requests
+# import requests
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -74,13 +74,13 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    soup = bs( requests.get("https://local.biglots.com/sitemap.xml").text, "lxml")
+    soup = bs( session.get("https://local.biglots.com/sitemap.xml").text, "lxml")
 
     for l in soup.find_all('xhtml:link', href = True):
         
             if l['href'].count("/") >= 5 and "holiday" not in l['href']:
                 page_url = l['href']
-                l_soup = bs(requests.get(page_url).text, "lxml")
+                l_soup = bs(session.get(page_url).text, "lxml")
                 
                 location_name = l_soup.find('h1', attrs = {'class':'Hero-title'}).text.strip()
                 
@@ -134,12 +134,9 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                
                 yield store
-       
-   
-
 def scrape():
     data = fetch_data()
     write_output(data)

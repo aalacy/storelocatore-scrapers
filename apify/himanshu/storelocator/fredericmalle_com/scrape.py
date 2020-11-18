@@ -160,7 +160,7 @@ def fetch_data():
             tem_var.append(longitude)
             tem_var.append(hour)
             tem_var.append("<MISSING>")
-            tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
+            tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
             yield tem_var
 
 def scrape():

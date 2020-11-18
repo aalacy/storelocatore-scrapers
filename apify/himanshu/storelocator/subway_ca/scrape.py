@@ -68,7 +68,7 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                 store.append(page_url)
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
@@ -113,7 +113,7 @@ def fetch_data():
                     store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                     store.append(page_url)
                     store = [x.replace("–","-") if type(x) == str else x for x in store]
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                    store = [x.strip() if type(x) == str else x for x in store]
                     yield store
 def scrape():
     data = fetch_data()

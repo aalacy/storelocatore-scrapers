@@ -93,8 +93,8 @@ def fetch_data():
             hours_of_operation = " ".join(contact).replace("7 days a week Reserve your Time Next Available Walk-in is at: Reserve my spot","").replace("Hours:","").strip()
     
             store = []
-            if location_name.strip().encode('ascii', 'ignore').decode('ascii').strip():
-                location_name = location_name.strip().encode('ascii', 'ignore').decode('ascii').strip()
+            if location_name.strip().strip():
+                location_name = location_name.strip().strip()
             else:
                 location_name = "<MISSING>"
             
@@ -102,9 +102,9 @@ def fetch_data():
             
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(street_address.strip())
+            store.append(city.strip())
+            store.append(state.strip())
             store.append(zipp if zipp else "<MISSING>")   
             store.append("US")
             store.append("<MISSING>")

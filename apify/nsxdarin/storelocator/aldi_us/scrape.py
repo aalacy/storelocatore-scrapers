@@ -3,6 +3,8 @@ import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import sgzip
 
+from sglogging import SgLogSetup
+logger = SgLogSetup().get_logger('aldi_us')
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -28,7 +30,7 @@ def fetch_data():
     coord = search.next_zip()
     while coord:
         website = 'aldi.us'
-        print(coord)
+        logger.info(coord)
         url = 'https://www.aldi.us/stores/en-us/Search?SingleSlotGeo=' + coord + '&Mode=None'
         r = session.get(url, headers=headers)
         if r.encoding is None: r.encoding = 'utf-8'

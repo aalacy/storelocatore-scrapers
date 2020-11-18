@@ -95,7 +95,7 @@ def fetch_data():
         output.append(hours.strip()) #opening hours
         output.append(page_url)
 
-        output = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in output]
+        output = [str(x).strip() if x else "<MISSING>" for x in output]
 
         yield output
 

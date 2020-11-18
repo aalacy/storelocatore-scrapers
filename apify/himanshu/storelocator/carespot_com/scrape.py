@@ -63,7 +63,7 @@ def fetch_data():
         store.append(location["lng"])
         store.append(location_hours if location_hours != "" else "<MISSING>")
         store.append(page_url)
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         # logger.info(store)
         return_main_object.append(store)
     return return_main_object

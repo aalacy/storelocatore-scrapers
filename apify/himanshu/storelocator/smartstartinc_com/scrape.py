@@ -165,7 +165,7 @@ def fetch_data():
             if str(store[1]) + str(store[2]) not in addresses and country_code:
                 addresses.append(str(store[1]) + str(store[2]))
 
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 yield store
 
         if current_results_len < MAX_RESULTS:

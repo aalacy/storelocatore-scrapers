@@ -7,13 +7,7 @@ import sgzip
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('drmartens_com')
-
-
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,14 +18,13 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
+            
 def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 30
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 300
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     addresses = []
@@ -43,7 +36,7 @@ def fetch_data():
     base_url = "https://www.drmartens.com/"
     while zip_code:
         result_coords = []
-        # logger.info("zips === " + str(zip_code))
+        logger.info("zips === " + str(zip_code))
         try:
             r = session.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
         except:
@@ -62,7 +55,9 @@ def fetch_data():
                 if "," in address_list['town']:
                     city = address_list['town'].split(',')[0]
                     state = address_list['town'].split(',')[1].strip()
-
+                if "San Diego" in address_list['town']:
+                    city = address_list['town']
+                    state = "<MISSING>"
                 elif len(address_list['town']) == 2:
                     city = address_list['line2']
                     state = address_list['town']
@@ -87,7 +82,7 @@ def fetch_data():
                     hours_of_operation = "<MISSING>"
             
                 store = []
-                result_coords.append((latitude, longitude))
+                # result_coords.append((latitude, longitude))
                 store.append(base_url)
                 store.append(location_name)
                 store.append(street_address)
@@ -102,21 +97,14 @@ def fetch_data():
                 store.append(longitude)
                 store.append(hours_of_operation)
                 store.append("<MISSING>")
-
                 if store[2] in addresses:                   
                     continue
                 addresses.append(store[2])
-
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield  store
-
             else:
-
                 pass
-
-               
-            
         if current_results_len < MAX_RESULTS:
             # logger.info("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -130,6 +118,4 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

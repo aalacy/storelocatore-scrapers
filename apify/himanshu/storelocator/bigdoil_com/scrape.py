@@ -68,11 +68,11 @@ def fetch_data():
                     if len(list_p1) == 2:
                         # logger.info(list_p1)
                         street_address = "".join(
-                            list_p1[-1].split(',')[0].encode('ascii', 'ignore').decode('ascii').strip())
+                            list_p1[-1].split(',')[0].strip())
                         city = "".join(
-                            list_p1[-1].split(',')[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip())
+                            list_p1[-1].split(',')[-1].split()[0].strip())
                         state = "".join(
-                            list_p1[-1].split(',')[-1].split()[-1].replace('</p>', "").encode('ascii', 'ignore').decode('ascii').strip())
+                            list_p1[-1].split(',')[-1].split()[-1].replace('</p>', "").strip())
                         location_name = "".join(
                             list_p1[0].replace('<p>', "").strip()) + " - " + city
                         zipp = "<MISSING>"

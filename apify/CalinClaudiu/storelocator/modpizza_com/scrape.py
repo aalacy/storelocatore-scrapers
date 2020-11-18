@@ -4,10 +4,18 @@ from sgscrape import simple_utils as utils
 import json
 
 def fetch_data():
-    url = "https://modpizza.com/wp-admin/admin-ajax.php?action=bh_storelocator_posts_query_ajax&postType=bh_sl_locations&security=52fc35ca62"
+    security = "https://modpizza.com/location/"
+    url = "https://modpizza.com/wp-admin/admin-ajax.php?action=bh_storelocator_posts_query_ajax&postType=bh_sl_locations&security="
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'}
-     
-    j = net_utils.fetch_json(request_url = url,
+    j = net_utils.fetch_xml(request_url = security,
+                            root_node_name='body',
+                            location_node_name='script',
+                            location_node_properties = {'type':'text/javascript','id':'storelocator-script-js-extra'},
+                            headers = headers)
+    for i in j:
+        sec = i['script type=text/javascript id=storelocator-script-js-extra'].split('"ajax_nonce":"')[1].split('","post_id"')[0]
+    
+    j = net_utils.fetch_json(request_url = url+sec,
                headers = headers)
 
     for i in j[0]:

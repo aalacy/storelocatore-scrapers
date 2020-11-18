@@ -113,11 +113,11 @@ def fetch_data():
             result_coords.append((latitude,longitude))
             store = ["https://www.prezzorestaurants.co.uk/", name, street_address, city, state, zipp, "UK",
                     store_number, phone, "<MISSING>", str(latitude), str(longitude), hours_of_operation.replace("Opening times",'').strip(),page_url]
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             if store[2]  in addressess:
                 continue
             addressess.append(store[2])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in  store]
+            store = [x.strip() if x else "<MISSING>" for x in  store]
             # logger.info("data = " + str(store))
             # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store

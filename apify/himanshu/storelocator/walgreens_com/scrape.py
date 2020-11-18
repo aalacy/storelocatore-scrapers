@@ -74,7 +74,7 @@ def fetch_data():
                 if storeNumber in keys:
                     continue
                 keys.add(storeNumber)
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
         if len(result_coords) == 0:
             search.max_distance_update(MAX_DISTANCE)
