@@ -56,8 +56,6 @@ def fetch_data():
     start_url = 'https://browse-api.jcpenney.com/v1/stores?radius=1000&pageSize=100&storeService=&location={}'
     for code in tqdm(all_codes):
         response = session.get(start_url.format(code))
-        if response.status_code != 200:
-            print('CODE NOT 200 for {}'.format(start_url.format(code)))
         data = json.loads(response.text)
         if not data.get('stores'):
             continue
