@@ -55,7 +55,7 @@ def fetch_data():
                 street_address1 = data['address1_ntk']
             if "address2_ntk" in data:
                 street_address2 = data['address2_ntk']
-            street_address = street_address1+ ' '+street_address2
+            street_address = street_address1
             soup = BeautifulSoup(data['working_hours_ntk'], "lxml")
             hours_of_operation =  " ".join(list(soup.stripped_strings)).lower().replace("pm"," pm ").replace("am",' am ').replace("sun"," sun ").replace("mon"," mon ").replace("wed"," wed ").replace("thu"," thu ").replace("fri"," fri ").replace("sat"," sat ").replace("tue"," tue ")
             page_url = "https://www.menswearhouse.com/store-locator/"+str(data['stloc_id'])
