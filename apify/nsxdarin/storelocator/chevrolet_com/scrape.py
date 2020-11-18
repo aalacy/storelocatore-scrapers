@@ -9,10 +9,6 @@ logger = SgLogSetup().get_logger("chevrolet_com")
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authority": "www.chevrolet.com",
-    "accept": "application/json, text/plain, */*",
-    "clientapplicationid": "OCNATIVEAPP",
-    "loginin": "mytest016@outlook.com",
     "locale": "en_US",
 }
 
@@ -132,7 +128,7 @@ def fetch_location(coord, retry_count=0):
         lat, lng = coord
         params = {"distance": MAX_DISTANCE, "maxResults": MAX_RESULTS}
         url = f"https://www.chevrolet.com/OCRestServices/dealer/latlong/v1/chevrolet/{lat}/{lng}"
-        data = session.get(url, headers=headers, params=params, timeout=1).json()
+        data = session.get(url, headers=headers, params=params, timeout=0.1).json()
         dealers = data.get("payload").get("dealers")
         return dealers or []
     except:
@@ -155,8 +151,6 @@ def fetch_data():
     locations = {}
     coord = search.next()
 
-    count = 0
-
     while coord:
         coords = []
         dealers = fetch_location(coord)
@@ -175,10 +169,7 @@ def fetch_data():
         search.update_with(coords)
         coord = search.next()
 
-        count += 1
-        if count == 25:
-            logger.info(f"remaining zipcodes: {search.zipcodes_remaining()}")
-            count = 0
+        logger.info(f"remaining zipcodes: {search.zipcodes_remaining()}")
 
 
 def scrape():
