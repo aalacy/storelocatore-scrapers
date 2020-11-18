@@ -42,6 +42,128 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_hours_of_operation(hours_of_operation_list):
+
+    hours_of_operation = ""
+    for hour in hours_of_operation_list:
+        hours_of_operation = (
+            hours_of_operation
+            + "".join(
+                hour.xpath('td[@class="c-location-hours-details-row-day"]' "/text()")
+            ).strip()
+            + " "
+            + "".join(
+                hour.xpath(
+                    'td[@class="c-location-hours-details-row-intervals"]'
+                    '//span[@class="c-location-hours-details-row-intervals-instance-open"]'
+                    "/text()"
+                )
+            ).strip()
+            + "-"
+            + "".join(
+                hour.xpath(
+                    'td[@class="c-location-hours-details-row-intervals"]'
+                    '//span[@class="c-location-hours-details-row-intervals-instance-close"]'
+                    "/text()"
+                )
+            ).strip()
+            + " "
+        )
+
+    return hours_of_operation
+
+
+def set_gas_station_variables(store_sel, page_url, location_name, store_number):
+    locator_domain = website
+    page_url = page_url
+    location_name = location_name
+    street_address = ""
+    city = ""
+    state = ""
+    zip = ""
+    country_code = ""
+    store_number = store_number
+    phone = ""
+    location_type = "GAS_STATION"
+    latitude = ""
+    longitude = ""
+    hours_of_operation = ""
+
+    street_address = "".join(
+        store_sel.xpath(
+            '//div[@class="GasStation-address"]'
+            '//span[@class="c-address-street-1"]/text()'
+        )
+    ).strip()
+    city = "".join(
+        store_sel.xpath(
+            '//div[@class="GasStation-address"]'
+            '//span[@class="c-address-city"]/text()'
+        )
+    ).strip()
+    state = "".join(
+        store_sel.xpath(
+            '//div[@class="GasStation-address"]'
+            '//span[@class="c-address-state"]/text()'
+        )
+    ).strip()
+    zip = "".join(
+        store_sel.xpath(
+            '//div[@class="GasStation-address"]'
+            '//span[@class="c-address-postal-code"]/text()'
+        )
+    ).strip()
+
+    latitude = "".join(
+        store_sel.xpath('//div[@class="GasStation-distance"]' "/span/@data-latitude")
+    ).strip()
+    longitude = "".join(
+        store_sel.xpath('//div[@class="GasStation-distance"]' "/span/@data-longitude")
+    ).strip()
+
+    country_code = "".join(
+        store_sel.xpath(
+            '//div[@class="GasStation-address"]//abbr[@itemprop="addressCountry"]/text()'
+        )
+    ).strip()
+    if country_code == "":
+        country_code = "<MISSING>"
+
+    phone = "".join(
+        store_sel.xpath(
+            '//span[@class="c-phone-number-span c-phone-gas-station-phone-number-span"]/text()'
+        )
+    ).strip()
+    if phone == "":
+        phone = "<MISSING>"
+
+    hours_of_operation_list = store_sel.xpath(
+        '//div[@id="gas-collapse-hours"]' "//table/tbody/tr"
+    )
+
+    hours_of_operation = get_hours_of_operation(hours_of_operation_list)
+    hours_of_operation = hours_of_operation.strip()
+    if hours_of_operation == "":
+        hours_of_operation = "<MISSING>"
+
+    return [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        zip,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+
+
 def fetch_data():
     # Your scraper here
     locator_domain = website
@@ -106,11 +228,13 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             page_url = store_url
-            hours_of_operation = "\n".join(
-                store_sel.xpath(
-                    '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]//table/tbody/tr/@content'
-                )
-            ).strip()
+            hours_of_operation_list = store_sel.xpath(
+                '//div[@class="StoreDetails-hours--desktop u-hidden-xs"]'
+                "//table/tbody/tr"
+            )
+
+            hours_of_operation = get_hours_of_operation(hours_of_operation_list)
+
             if hours_of_operation == "":
                 hours_of_operation = "<MISSING>"
 
@@ -132,6 +256,12 @@ def fetch_data():
             ]
 
             loc_list.append(curr_list)
+            GasStation = store_sel.xpath('//div[@class="GasStation"]')
+            if len(GasStation) > 0:
+                curr_list = set_gas_station_variables(
+                    store_sel, page_url, location_name, store_number
+                )
+                loc_list.append(curr_list)
             # break
 
     log.info(f"No of records being processed: {len(loc_list)}")

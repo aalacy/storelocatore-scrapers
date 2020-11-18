@@ -9,5 +9,8 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
+--ignore StreetAddressHasNumber as I can stree streetnumber is there, I think the word Center is making it to fail e.g.  7673 Lake Raystown Shopping Center or 1000 Scott Town Center
 
 use --ignore LatLngDuplicationValidator as it's throwing error for two different store names, I think it's because KIOSK and location is same for that store
+
+--ignore StoreNumberColumnValidator as we have same number for store and gas station at the same location.
