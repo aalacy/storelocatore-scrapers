@@ -1,21 +1,10 @@
 import csv
-import os
-from sgselenium import SgSelenium
-
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-
-import time
-from random import randint
 import re
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('hobbytown_com')
-
-
 
 
 def addy_ext(addy):
@@ -37,105 +26,73 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.hobbytown.com/'
-    ext = 'store-locations'
 
-    driver = SgSelenium().chrome()
-    time.sleep(randint(2,4))
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+    session = SgRequests()
 
-    driver.get(locator_domain + ext)
+    locator_domain = 'https://www.hobbytown.com'
 
-    element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-        (By.ID, "CityState")))
-    time.sleep(randint(1,2))
+    payload = { 'zip': '52240', 
+            'pageType': 'StoreLocator',
+            'searchRadius': '3000', 
+            'productID': '0'}
 
-    logger.info("Page loaded!")
-    cityinput = driver.find_element_by_id('CityState')
-    cityinput.clear()
-    time.sleep(2)
-    cityinput.send_keys("Iowa City")
-    time.sleep(5)
+    base_link = "https://www.hobbytown.com/ajax/store-locations/store-list"
+    response = session.post(base_link,headers=HEADERS,data=payload)
+    base = BeautifulSoup(response.text,"lxml")
 
-    to_click = driver.find_element_by_id('find-stores').find_element_by_tag_name('button')
-    driver.execute_script("arguments[0].click();", to_click)
-    time.sleep(5)
-
-    select = Select(driver.find_element_by_id('radius'))
-    select.select_by_value('3000')
-
-    time.sleep(5)
-
-    hrefs = driver.find_elements_by_xpath('//a[@title="Store Profile"]')
+    all_scripts = base.find_all('script')
+    for script in all_scripts:
+        if "var options" in str(script):
+            script = str(script)
+            break
+    geos = re.findall(r'[0-9]{2}\.[0-9]+, -[0-9]{2,3}\.[0-9]+',script)
+    hrefs = base.find_all(title="Store Profile")
 
     link_list = []
     for h in hrefs:
-        link = h.get_attribute('href')
+        link = locator_domain + h['href']
         link_list.append(link)
 
     logger.info("Got %s links" %len(link_list))
       
     all_store_data = []
-    for link in link_list:
+    for i, link in enumerate(link_list):
         logger.info(link)
-        driver.get(link)
-        time.sleep(1)
 
-        try:
-            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "h1.titlebar")))
-            time.sleep(randint(1,2))
-        except:
-            logger.info("Page failed to load..retrying")
-            driver.get(link)
-            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "h1.titlebar")))
-            time.sleep(randint(1,2))
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+
+        location_name = base.h1.text.strip()
         
-        location_name = driver.find_element_by_css_selector('h1.titlebar').find_element_by_css_selector('span').text
+        addy = list(base.find(class_='col-12 location-contact').p.stripped_strings)
+        street_address = addy[0]
+        if "," in addy[1]:
+            city, state, zip_code = addy_ext(addy[1])
+            phone_number = addy[2].strip()
+        else:
+            street_address = street_address + " " + addy[1]
+            city, state, zip_code = addy_ext(addy[2])
+            phone_number = addy[3].strip()
+        street_address = street_address.split("(")[0]
         
-        addy = driver.find_element_by_css_selector('div.address').text.split('\n')
-        street_address = ' '.join(addy[:-1])
-        city, state, zip_code = addy_ext(addy[-1])
-        
-        phone_number = driver.find_element_by_css_selector('div.phone').text.replace('+1', '').strip()
-        
-        hour_tds = driver.find_element_by_css_selector('div.hours').find_element_by_css_selector('tbody').find_elements_by_css_selector('td')#.replace('\n', ' ')
-        hours = ''
-        for td in hour_tds:
-            hours += td.text + ' '
-            
-        hours = hours.strip()
+        hours = " ".join(list(base.find(class_="location-hours").stripped_strings)).replace("Store Hours","").strip()
         
         country_code = 'US'
-        store_number = '<MISSING>'
+        store_number = link.split("/")[-1].replace("l","")
         location_type = '<MISSING>'
         page_url = link
 
-        try:
-            element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-                (By.ID, "map")))
-            time.sleep(randint(1,2))
-            try:
-                map_frame = driver.find_element_by_id("map").find_element_by_tag_name("iframe")
-                driver.switch_to.frame(map_frame)
-                time.sleep(randint(1,2))
-                map_str = driver.page_source
-                geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]', map_str)[0].replace("[","").replace("]","").split(",")
-                lat = geo[0]
-                longit = geo[1]
-            except:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-        except:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
+        geo = geos[i].split(",")
+        lat = geo[0].strip()
+        longit = geo[1].strip()
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-        
-    driver.quit()
+
     return all_store_data
 
 def scrape():
