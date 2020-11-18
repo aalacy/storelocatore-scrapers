@@ -168,20 +168,6 @@ def fetch_data():
             postcode = ZipSearch.next()
     logzilla.info(f'Finished grabbing data!!')
 
-def fix_hours(x):
-    x = x.replace('<p>','')
-    x = x.replace('<br \/>\n','')
-    x = x.replace('<\/p>\n','')
-    x = x.replace('<\/p>','')
-    x = x.replace('\n','')
-    x = x.replace('&#8211;','-')
-    x = x.replace('<br />',' ')
-    x = x.replace('</p>','')
-    x = x.replace('/','-')
-    if len(x)<3:
-        x = "<MISSING>"
-    return x
-
 def scrape():
     url="https://bonchon.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
