@@ -46,7 +46,7 @@ def fetch_data():
         long=stores[store]['lng']
 
         all.append([
-                "https://www.zipsdrivein.com",
+                "https://sweetpeasstore.com",
                 '<MISSING>',
                 street,
                 city,
@@ -59,7 +59,7 @@ def fetch_data():
                 lat,  # lat
                 long,  # long
                 '<MISSING>',  # timing
-                'https://www.zipsdrivein.com/locations/'])
+                'https://sweetpeasstore.com/locations/'])
 
     return all
 
