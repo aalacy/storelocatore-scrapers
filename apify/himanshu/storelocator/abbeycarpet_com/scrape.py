@@ -187,14 +187,14 @@ def fetch_data():
                 m.pop(-1) 
                 state = ' '.join(m)  
                 phone = t[4].split('&')[0]
-            
+                
             result_coords.append((latitude1[index] if latitude1 else 0,longitude1[index] if longitude1 else 0))
             store.append(base_url)
             store.append(location_name)
             store.append(street_address)
             store.append(city)
-            store.append(state.replace('QC','').replace('N. Carolina','NC'))
-            store.append(zipp.replace('H4P2S8',''))   
+            store.append(state.replace('N. Carolina','NC'))
+            store.append(zipp)   
             store.append("US")
             store.append("<MISSING>")
             store.append(phone.replace('800-709-3550',''))
