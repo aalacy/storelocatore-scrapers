@@ -27,7 +27,7 @@ def get_urls():
 
 
 def get_exception(tree, page_url):
-    locator_domain = 'http://vcahospitals.com/find-a-hospital/location-directory'
+    locator_domain = 'https://vcahospitals.com/'
     location_name = html.unescape(''.join(tree.xpath("//div[@class='sh-contact-map__hospital']/text()")).strip())
     street_address = tree.xpath("//div[@class='sh-contact-map__txt-indent' and .//a]/p/text()")[0].strip()
     line = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent' and .//a]/p[2]/text()")).strip()
@@ -115,11 +115,7 @@ def fetch_data():
     for task in as_completed(threads):
         row = task.result()
         if row:
-            # to avoid duplicate; by store_number
-            _id = row[-6]
-            if _id not in s:
-                s.add(_id)
-                out.append(row)
+            out.append(row)
 
     return out
 
