@@ -108,7 +108,7 @@ def fetch_data():
                 data.append([
                         'https://www.extraspace.com',
                         link,
-                        title,
+                        title.replace('?',''),
                         street.replace('<br />',' '),
                         city,
                         state,
