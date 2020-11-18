@@ -1,14 +1,9 @@
 from bs4 import BeautifulSoup
 import csv
 import string
-import re, time
+import re, time, json
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('extraspace_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -30,19 +25,18 @@ def fetch_data():
     # Your scraper here
 
     data = []
+    titlelist = []
     state_list = []
     pattern = re.compile(r'\s\s+')
     url = 'https://www.extraspace.com/help/accessibility-commitment/'
     try:
-        r = session.get(url)#requests.get(url,timeout = 30)
-        #time.sleep(8)
+        r = session.get(url)
+
     except:
         pass
-    #logger.info(r.text)
     
-    soup =BeautifulSoup(r.text, "html.parser")
-    #maindiv = soup.find('div',{'id':'self-storage-locations'})
-    #logger.info(maindiv)
+    
+    soup =BeautifulSoup(r.text, "html.parser")   
     maindiv = soup.findAll('a')
     for lt in maindiv:
         try:
@@ -51,12 +45,11 @@ def fetch_data():
         except:
             pass
         
-    logger.info('sitemap',len(state_list))
+   
     p = 0
-    for alink in state_list:
-       
+    for alink in state_list:       
         statelink = alink #"https://www.extraspace.com" + alink['href']
-        #logger.info(statelink)
+        #print(statelink)
         try:
             r1 = session.get(statelink, headers=headers, verify=False)#requests.get(statelink,timeout = 30)
         except:
@@ -64,58 +57,59 @@ def fetch_data():
   
         soup1 =BeautifulSoup(r1.text, "html.parser")
         maindiv1 = soup1.find('div',{'id':'acc-main'})
-        #logger.info(maindiv1)
+        #print(maindiv1)
         link_list = maindiv1.findAll('a')
-        #logger.info("NEXT PAGE",len(link_list))
+        #print("NEXT PAGE",len(link_list))
         for alink in link_list:
             if alink.text.find('Extra Space Storage #') > -1:
                 link = "https://www.extraspace.com" + alink['href']
-                #logger.info(link)
+                #print(link)
                 #input()
                 
-                r2 = session.get(link, headers=headers, verify=False)#requests.get(link)
+                r2 = session.get(link, headers=headers, verify=False)
                 
   
-                soup2 =BeautifulSoup(r2.text, "html.parser")
-                title = soup2.find('span',{'id': 'FacilityTitle'}).text
-                street = soup2.find('span', {'id': 'ctl00_mContent_lbAddress'}).text
-                city = soup2.find('span', {'id': 'ctl00_mContent_lbCity'}).text
-                state = soup2.find('span', {'id': 'ctl00_mContent_lbState'}).text
-                pcode = soup2.find('span', {'id': 'ctl00_mContent_lbPostalCode'}).text
-                phone =soup2.find('span', {'class': 'tel'}).text
-                detail = soup2.findAll('div',{'class': 'fac-info'})
-                hdet = detail[2].text
-                hdet = re.sub(pattern," ",hdet)
-                hdet = hdet.replace("\n", " ")
-                start = hdet.find("Storage Gate Hours")
-                hours = hdet[start:len(hdet)]
-                soup2 = str(soup2)
-                start = soup2.find('storeCSID')
-                start = soup2.find(':', start) + 3
-                end = soup2.find("'", start)
-                store = soup2[start:end]
-                start = soup2.find('latitude')
-                start = soup2.find(':', start) + 3
-                end = soup2.find('"', start)
-                lat = soup2[start:end]
-                start = soup2.find('longitude')
-                start = soup2.find(':', start) + 3
-                end = soup2.find('"', start)
-                longt = soup2[start:end]
-            
+                content = r2.text.split(' "@type": "SelfStorage",',1)[1].split('</script>')[0]
+                content = '{'+content
+                content = json.loads(content)
+                city = content['address']["addressLocality"]
+                state = content['address']["addressRegion"]
+                pcode = content['address']["postalCode"]
+                street = content['address']["streetAddress"]
+                title = content['name']
+                phone = content['telephone'].replace('+1-','')
+                lat = content['geo']['latitude']
+                longt = content['geo']['longitude']
+                hourslist = BeautifulSoup(r2.text,'html.parser').text.split('Storage Office Hours',1)[1].splitlines()[0:10]
+                hours = ''
+                for hr in hourslist:
+                    if ('am' in hr and 'pm' in hr) or 'closed' in hr:
+                        hours = hours + hr + ' '
+                    elif hr == ' ':
+                        break
+               
                 
-                title = title.replace("?","")
-                hours = hours.replace('am', ' am').replace('pm',' pm').replace('-',' - ')
-                flag = True
-                #logger.info(len(data))
+                hours = hours.replace('am', ' am ').replace('pm',' pm ').replace('-',' - ')
+                try:
+                    hours = hours.split('CUT THE LIN',1)[0].strip()
+                except:
+                    pass
+                try:
+                    hours = hours.split('closed',1)[0]
+                    hours = hours + 'closed'
+                except:
+                    pass
+                
+                store = link.split('/')[-2]
 
-
-                if flag:
-                    data.append([
+                if street in titlelist:
+                    continue
+                titlelist.append(street)
+                data.append([
                         'https://www.extraspace.com',
                         link,
                         title,
-                        street,
+                        street.replace('<br />',' '),
                         city,
                         state,
                         pcode,
@@ -127,12 +121,11 @@ def fetch_data():
                         longt,
                         hours
                     ])
-                    #logger.info(p,data[p])
-                    p += 1
+                #print(p,data[p])
+                p += 1
                     
             
-        logger.info(".................")
-
+      
     return data
 
 def scrape():
