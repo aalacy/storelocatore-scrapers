@@ -67,9 +67,15 @@ def fetch_data():
            }
             soup = BeautifulSoup(r.text,'html.parser')
             hours = soup.find('div',{'aria-labelledby':"storeHoursSection"}).text
-            r = session.get('https://www.lowes.ca/apim/stores/2922OL', headers=headers1, verify=False).json()
-            #print(r)
-            pcode = r['zip']
+            try:
+                r = session.get('https://www.lowes.ca/apim/stores/2922OL', headers=headers1, verify=False).json()
+                #print(r)
+                pcode = r['zip']
+            except:
+                r = session.get('https://www.lowes.ca/apim/stores/2922OL', headers=headers, verify=False).json()
+                #print(r)
+                pcode = r['zip']
+                
             ccode = 'CA'
             street = r['address']
             state= 'ON'
