@@ -85,7 +85,7 @@ def fetch_data():
             zip_code = zip_code if zip_code else '<MISSING>'
             country_code = poi['country']
             if country_code == 'PUERTO RICO':
-                continue 
+                country_code = 'USA'
             country_code = country_code if country_code else '<MISSING>'
             store_number = poi['number']
             store_number = store_number if store_number else '<MISSING>'
