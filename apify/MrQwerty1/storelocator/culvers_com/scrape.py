@@ -34,7 +34,7 @@ def get_js():
 def fetch_data():
     out = []
     s = set()
-    url = 'https://www.culvers.com/locator/view-all-locations'
+    url = 'https://www.culvers.com/'
     js = get_js()
     for j in js:
         locator_domain = url
@@ -61,9 +61,15 @@ def fetch_data():
         days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         _tmp = []
         for day in days:
-            start = j.get(f'{day[:3]}openfrom')
+            if day == 'tuesday':
+                part = 'tues'
+            elif day == 'thursday':
+                part = 'thurs'
+            else:
+                part = day[:3]
+            start = j.get(f'{part}openfrom')
             if start:
-                close = j.get(f'{day[:3]}opento')
+                close = j.get(f'{part}opento')
                 _tmp.append(f"{day.capitalize()}: {start} - {close}")
             else:
                 _tmp.append(f"{day.capitalize()}: Closed")
