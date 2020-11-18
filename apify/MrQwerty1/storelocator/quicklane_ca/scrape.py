@@ -43,6 +43,8 @@ def fetch_data():
         locator_domain = url
         street_address = j.get('streetAddress') or '<MISSING>'
         city = j.get('city') or '<MISSING>'
+        if city.endswith(','):
+            city = city[:-1]
         location_name = j.get('dealerName') or '<MISSING>'
         state = j.get('state') or '<MISSING>'
         postal = j.get('zip') or '<MISSING>'
