@@ -197,7 +197,6 @@ def fetch_data():
         #     break
         # break
 
-
     return loc_list
 
 
