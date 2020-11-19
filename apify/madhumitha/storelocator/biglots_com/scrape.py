@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 session = SgRequests()
-# import requests
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -133,9 +132,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                
                 store = [str(x).strip() if x else "<MISSING>" for x in store]
-               
                 yield store
 def scrape():
     data = fetch_data()

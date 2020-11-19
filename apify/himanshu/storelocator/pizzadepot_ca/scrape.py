@@ -1,5 +1,4 @@
 import csv
-# import requests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,24 +8,18 @@ import time
 import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-    
-
 def fetch_data():
     driver = SgSelenium().firefox()
-    
     base_url = "https://pizzadepot.ca/"
     driver.get("https://pizzadepot.ca/index")
     soup = BeautifulSoup(driver.page_source, "lxml")
@@ -60,7 +53,6 @@ def fetch_data():
                 hours = re.sub(r'\s+'," "," ".join(list(soup2.find_all("p")[-1].stripped_strings)))
             else:
                 hours = "<MISSING>"
-
             store = []
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>") 
@@ -79,7 +71,6 @@ def fetch_data():
             store = [x.strip() if x else "<MISSING>" for x in store]
             yield store 
     ### Alberta location
-
     page_url = "https://pizzadepot.ca/locationDetails/44"
     driver.get(page_url)
     soup3 = BeautifulSoup(driver.page_source, "lxml")
@@ -104,7 +95,6 @@ def fetch_data():
         hours = " ".join(list(soup3.find_all("p")[-1].stripped_strings))
     else:
         hours = "<MISSING>"
-
     store = []
     store.append(base_url)
     store.append(location_name if location_name else "<MISSING>") 

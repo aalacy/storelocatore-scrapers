@@ -4,15 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('costcutters_com')
-
-
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -51,7 +44,6 @@ def fetch_data():
                 location_name = soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}).text.strip()
             else:
                 continue
-
             street_address = soup3.find("span",{"itemprop":"streetAddress"}).text.strip()
             city = soup3.find("span",{"itemprop":"addressLocality"}).text.strip()
             state = soup3.find("span",{"itemprop":"addressRegion"}).text.strip()
@@ -60,17 +52,17 @@ def fetch_data():
                 country_code = "US"
             else:
                 country_code = "CA"
-            
             store_number = page_url.split("-")[-1].replace(".html","").strip()
             phone = soup3.find("a",{"id":"sdp-phone"}).text.strip()
             location_type = "Salons"
             latitude = soup3.find("meta", {"itemprop":"latitude"})['content']
             longitude = soup3.find("meta", {"itemprop":"longitude"})['content']
-            hours_of_operation = " ".join(list(soup3.find("div",{"class":"salon-timings"}).stripped_strings))
+            try:
+                hours_of_operation = " ".join(list(soup3.find("div",{"class":"salon-timings"}).stripped_strings))
+            except:
+                hours_of_operation = " ".join(list(soup3.find("section",{"class":"col-sm-12 col-md-5 col-block"}).stripped_strings))
             if "/cost-cutters" not in page_url:
                 continue
-    
-       
             store=[]
             store.append("https://www.costcutters.com")
             store.append(location_name)
@@ -89,18 +81,9 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-        
-            store = [x.strip() if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            #logger.info("data===="+str(store))
-            #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
-
-       
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
