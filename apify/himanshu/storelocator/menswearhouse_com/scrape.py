@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import unicodedata
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('menswearhouse_com')
 session = SgRequests()
@@ -69,7 +70,11 @@ def fetch_data():
             if store[2] + store[-3] in addresses:
                 continue
             addresses.append(store[2] + store[-3])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
 def scrape():
     data = fetch_data()
