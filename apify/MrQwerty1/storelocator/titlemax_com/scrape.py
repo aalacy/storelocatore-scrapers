@@ -74,7 +74,7 @@ def fetch_data():
     threads = []
     urls = get_urls()
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         for url in urls:
             threads.append(executor.submit(get_data, url))
 
