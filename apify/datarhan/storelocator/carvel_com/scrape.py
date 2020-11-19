@@ -55,7 +55,7 @@ def fetch_data():
             country_code = '<MISSING>'
             country_code = country_code if country_code else '<MISSING>'
             store_number = store_url.split('/')[-1]
-            phone = poi_data.xpath('//a[@aria-label="Telephone Number"]/span/text()')
+            phone = poi_data.xpath('.//a[@aria-label="Telephone Number"]/span/text()')
             phone = phone[0] if phone else '<MISSING>'
 
             store_response = session.get(store_url, headers=user_agent)
