@@ -32,6 +32,21 @@ def parse_store(x):
             k['phone']= x.find('a',{'href':lambda x : x and x.startswith('tel:')}).text
         except:
             k['phone']='<MISSING>'
+        try:
+            k['hours'] = list(x.find('div',{'class': lambda x : x and 'location-info-holder' in x}).stripped_strings)
+            h = []
+            still = True
+            for i in k['hours']:
+                if 'Hours' in i:
+                    still = False
+                if 'Contact' in i:
+                    still = True
+                if still == False:
+                    if any(j.isdigit() for j in i) or 'day' in i:
+                        h.append(i)
+            k['hours'] = '; '.join(h)
+        except:
+            k['hours'] = '<MISSING>'
 
             
     else:
@@ -62,6 +77,22 @@ def parse_store(x):
             k['phone']=x.find('a',{'href':lambda x : x and x.startswith('tel:')}).text
         except:
             k['phone']= '<MISSING>'
+        try:
+            k['hours'] = list(x.find('div',{'class': lambda x : x and 'location-info-holder' in x}).stripped_strings)
+            h = []
+            still = True
+            for i in k['hours']:
+                if 'Hours' in i:
+                    still = False
+                if 'Contact' in i:
+                    still = True
+                if still == False:
+                    if any(j.isdigit() for j in i) or 'day' in i:
+                        h.append(i)
+            k['hours'] = '; '.join(h)
+        except:
+            k['hours'] = '<MISSING>'
+                    
             
         k['type']='<MISSING>'
     k['country'] = 'US'       
@@ -98,7 +129,7 @@ def scrape():
         country_code=MappingField(mapping=['country']),
         phone=MappingField(mapping=['phone'], is_required = False),
         store_number=MissingField(),
-        hours_of_operation=MissingField(),
+        hours_of_operation=MappingField(mapping=['hours'], is_required = False),
         location_type=MappingField(mapping=['type'], is_required = False)
     )
 
