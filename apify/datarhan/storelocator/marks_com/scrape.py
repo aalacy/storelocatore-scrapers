@@ -26,7 +26,7 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    DOMAIN = 'autovalue.com'
+    DOMAIN = 'marks.com'
     
     all_codes = []
     ca_zips = sgzip.for_radius(radius=100, country_code=SearchableCountries.CANADA)
