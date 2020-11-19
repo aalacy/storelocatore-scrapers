@@ -1,6 +1,7 @@
 import csv
 import html
 import json
+import re
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html as lxml_html
@@ -17,6 +18,12 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
+
+
+def get_phone(text):
+    regex = r'(\d{3}-\d{3}-\d{4}|\(\d{3}\) \d{3}-\d{4})'
+    phone = re.findall(regex, text)
+    return phone[0].strip()
 
 
 def get_urls():
@@ -38,9 +45,8 @@ def get_exception(tree, page_url):
     country_code = 'US'
     _tmp = ''.join(tree.xpath("//script[contains(text(), 'VCA.HospitalId')]/text()")).strip()
     store_number = _tmp.split('\n')[-1].split('"')[-2]
-    phone = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent']//a[contains(@href,'tel:')]/text()")).strip()
-    if phone.find(',') != -1:
-        phone = phone.split(',')[0]
+    text = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent']//a[contains(@href,'tel:')]/text()")).strip()
+    phone = get_phone(text)
     location_type = '<MISSING>'
     latitude = '<MISSING>'
     longitude = '<MISSING>'
@@ -54,7 +60,7 @@ def get_exception(tree, page_url):
 
 def get_data(url):
     session = SgRequests()
-    locator_domain = 'http://vcahospitals.com/find-a-hospital/location-directory'
+    locator_domain = 'http://vcahospitals.com/'
     page_url = f'http://vcahospitals.com{url}'
     r = session.get(page_url)
     tree = lxml_html.fromstring(r.text)
@@ -81,7 +87,7 @@ def get_data(url):
     country_code = 'US'
     _tmp = ''.join(tree.xpath("//script[contains(text(), 'VCA.HospitalId')]/text()")).strip()
     store_number = _tmp.split('\n')[-1].split('"')[-2]
-    phone = j.get('telephone') or '<MISSING>'
+    phone = get_phone(j.get('telephone', '')) or '<MISSING>'
     g = j.get('geo', {})
     latitude = g.get('latitude') or '<MISSING>'
     longitude = g.get('longitude') or '<MISSING>'
@@ -104,7 +110,6 @@ def get_data(url):
 
 def fetch_data():
     out = []
-    s = set()
     threads = []
     urls = get_urls()
 
