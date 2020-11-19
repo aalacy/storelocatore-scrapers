@@ -5,7 +5,6 @@ import urllib.parse
 from lxml import etree
 from sgzip import SearchableCountries
 
-from tqdm import tqdm
 
 from sgrequests import SgRequests
 
