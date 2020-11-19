@@ -194,15 +194,18 @@ def fetch_data():
             store.append(street_address)
             store.append(city)
             store.append(state.replace('N. Carolina','NC'))
-            store.append(zipp)   
-            store.append("US")
+            store.append(zipp)
+            if zipp.isdigit():
+                store.append("US")
+            else:
+                store.append('CA')
             store.append("<MISSING>")
             store.append(phone.replace('800-709-3550',''))
             store.append("<MISSING>")
             store.append(str(latitude1[index]) if latitude else "<MISSING>")
             store.append(str(longitude1[index]) if longitude else "<MISSING>")
             store.append(hours_of_operation1[index])
-            store.append(location_url)     
+            store.append("<INACCESSIBLE>")     
             if store[2] in adress:
                 items +=1
                 continue
