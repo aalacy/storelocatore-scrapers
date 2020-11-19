@@ -24,7 +24,10 @@ def fetch_data():
                 pass
         if k == 1:
             for i in son:
-                yield i
+                if 'Coming Soon' in i['acf']['restaurant_name']:
+                    i['type'] = 'Coming Soon'
+                if 'Japan' not in i['acf']['country'] and 'Japan' not in i['acf']['state']:
+                    yield i
         page += 1
     
     logzilla.info(f'Finished grabbing data!!')
@@ -45,7 +48,17 @@ def good_addr(x):
             h.append(i)
     h = ', '.join(h)
     h = h.replace('<br \/>',' ').replace('<br>',' ').replace('<BR>',' ')
+    if 'Shopping Center' in h:
+        x = h.split('Shopping Center')
+        h = []
+        for i in x:
+            if any(j.isdigit() for j in i):
+                h.append(i)
+        h = ''.join(h)
+        h = h.replace(',','',1)
+        
     return h
+
 def scrape():
     url="https://www.hawaiianbarbecue.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
