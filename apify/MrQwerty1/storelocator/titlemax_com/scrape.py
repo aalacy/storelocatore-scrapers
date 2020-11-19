@@ -26,10 +26,18 @@ def get_urls():
 
 def get_data(page_url):
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+
     locator_domain = 'https://titlemax.com/'
-    sect = tree.xpath("//section[@id='storeHeader']")[0]
+    for i in range(5):
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        try:
+            sect = tree.xpath("//section[@id='storeHeader']")[0]
+            break
+        except IndexError:
+            pass
+    else:
+        return
     location_name = ''.join(sect.xpath(".//h1[@itemprop='name']/text()")).strip()
     street_address = ''.join(sect.xpath(".//div[@itemprop='streetAddress']/text()")).strip()
     city = ''.join(sect.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
@@ -74,7 +82,7 @@ def fetch_data():
     threads = []
     urls = get_urls()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         for url in urls:
             threads.append(executor.submit(get_data, url))
 
