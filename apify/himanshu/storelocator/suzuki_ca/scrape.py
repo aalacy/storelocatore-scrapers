@@ -53,7 +53,7 @@ def fetch_data():
         store.append("https://www.suzuki.ca")
         store.append(location_name)
         store.append(street_address)
-        store.append(city)
+        store.append(city.replace(", QC J1X 3L2, Canada",""))
         store.append(state)
         store.append(zipp)
         store.append("CA")
