@@ -36,7 +36,7 @@ def fetch_data():
 
     for j in js:
         locator_domain = url
-        page_url = 'https://www.simplesimonspizza.com/locations'
+        page_url = '<MISSING>'
         location_name = j.get('name')
         line = j.get('streetaddress')
         a = usaddress.tag(line, tag_mapping=tag)[0]
