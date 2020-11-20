@@ -50,7 +50,13 @@ def fetch_data():
         city = '<MISSING>'
         state = '<MISSING>'
         add = '<MISSING>'
+        add2 = '<MISSING>'
         for line2 in lines:
+            if '<a class="color-swap social-link" href="https://www.google.com/maps/place/' in line2:
+                try:
+                    add2 = line2.split('2s')[1].split(',')[0].replace('+',' ')
+                except:
+                    add2 = '<MISSING>'
             if '<span itemprop="streetAddress">' in line2:
                 g = next(lines)
                 add = g.replace('\r','').replace('\t','').replace('\n','').strip()
@@ -64,6 +70,8 @@ def fetch_data():
             if '<a class="phone-link phone-number-style text-color" href="tel:' in line2:
                 phone = line2.split('<a class="phone-link phone-number-style text-color" href="tel:')[1].split('"')[0]
         if name != '':
+            if add == '<MISSING>':
+                add = add2
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
