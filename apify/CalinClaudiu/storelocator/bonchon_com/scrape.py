@@ -114,6 +114,10 @@ def parse_store(x):
         k['address'] = k['address'] +', Ste 3045'
         k['state'] = 'PA'
         k['zip'] = '19406'
+    try:
+        k['address'] = k['address'].rsplit(k['city'], 1)[0]
+    except:
+        pass
     return k
 
 def fetch_data():
