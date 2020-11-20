@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import unicodedata
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('menswearhouse_com')
 session = SgRequests()
@@ -55,7 +56,7 @@ def fetch_data():
                 street_address1 = data['address1_ntk']
             if "address2_ntk" in data:
                 street_address2 = data['address2_ntk']
-            street_address = street_address1+ ' '+street_address2
+            street_address = street_address1
             soup = BeautifulSoup(data['working_hours_ntk'], "lxml")
             hours_of_operation =  " ".join(list(soup.stripped_strings)).lower().replace("pm"," pm ").replace("am",' am ').replace("sun"," sun ").replace("mon"," mon ").replace("wed"," wed ").replace("thu"," thu ").replace("fri"," fri ").replace("sat"," sat ").replace("tue"," tue ")
             page_url = "https://www.menswearhouse.com/store-locator/"+str(data['stloc_id'])
@@ -66,10 +67,15 @@ def fetch_data():
                 phone = "<MISSING>"
             store = [locator_domain, store_name.capitalize(), street_address.replace(data['state_ntk'],"").lower(), data['city_ntk'].lower(), data['state_ntk'], data['zipcode_ntk'], country_code,
                     store_number, phone, location_type, data['latlong'].split(",")[0], data['latlong'].split(",")[1], hours_of_operation.replace("   ",","),page_url]
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             if store[2] + store[-3] in addresses:
                 continue
             addresses.append(store[2] + store[-3])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            
             yield store
 def scrape():
     data = fetch_data()

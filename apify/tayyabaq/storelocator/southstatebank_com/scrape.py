@@ -1,12 +1,13 @@
+from bs4 import BeautifulSoup
 import csv
-from sgrequests import SgRequests
-from lxml import etree
+import string
+import re, time
 import json
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger('southstatebank_com')
-
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,57 +19,82 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-endprint = []
-
-def format_hours(json_hours):
-    hours = []
-    for day_hours in json_hours:
-        day = day_hours['day']
-        intervals = day_hours['intervals']
-        if not intervals:
-            hours.append("{}: closed".format(day))
-        else:
-            interval = intervals[0]
-            hours.append("{}: {}-{}".format(day, interval['start'], interval['end']))
-    return ', '.join(hours)
 
 def fetch_data():
+    p = 0
     data = []
-    store_links =[]
-    c=0
-    t=0;m=0
-    session = SgRequests()
-    url = 'https://locations.southstatebank.com/'
-    page = etree.HTML(session.get(url).text)
-    links = [url + x for x in page.xpath("//a[@class='c-directory-list-content-item-link']/@href")]
-    page_urls = []
-    for link in links:
-        response = etree.HTML(session.get(link).text)
-        store_links = response.xpath('//li[@class="c-LocationGridList-item"]//a[@class="Teaser-titleLink"]/@href')
-        if store_links:
-            page_urls += [url + l.split('/', 1)[1] for l in store_links]
+    titlelist = []
+    cleanr = re.compile(r'<[^>]+>')
+    states = ["Georgia",'North Carolina', 'South Carolina','Virginia']
+    for statenow in states:
+        #print(statenow)
+        gurl = 'https://maps.googleapis.com/maps/api/geocode/json?address='+statenow+'&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS'
+        r = session.get(gurl, headers=headers, verify=False).json()
+        if r['status'] == 'REQUEST_DENIED':
+            pass
         else:
-            page_urls.append(link)
-    for page_url in page_urls:
-        logger.info(page_url)
-        response = etree.HTML(session.get(page_url).text)
-        name = response.xpath('//div[@class="Nap-geomodifier"]/text()')[0].strip()
-        street = response.xpath('//span[@class="c-address-street-1"]/text()')[0].strip()
-        city = response.xpath('//span[@class="c-address-city"]/text()')[0].strip()
-        state = response.xpath('//abbr[@class="c-address-state"]/text()')[0].strip()
-        zipcode = response.xpath('//span[@class="c-address-postal-code"]/text()')[0].strip()
-        phone = response.xpath('//span[@id="telephone"]/text()')[0].strip()
-        json_hours = json.loads(response.xpath('//div[@class="c-location-hours"]/div[contains(@class, "js-location-hours")]/@data-days')[0])
-        hours = format_hours(json_hours)
-        lat = response.xpath('//meta[@itemprop="latitude"]/@content')[0]
-        lng = response.xpath('//meta[@itemprop="longitude"]/@content')[0]
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        country = 'US'
-        yield [url, page_url, name, street, city, state, zipcode, country, store_number, phone, location_type, lat, lng, hours]
+            coord = r['results'][0]["geometry"]['location']
+            latnow = str(coord['lat'])
+            lngnow = str(coord['lng'])
+        url = 'https://southstatebank.com/api/locationsearch/Index?lat='+latnow+'&lng='+lngnow+'&searchQuery='+statenow+'&pageNum=10'
+        #print(url)
+        loclist = session.get(url, headers=headers, verify=False).json()["Entities"]
+        
+        for loc in loclist:            
+                        
+            lat = loc['YextDisplayCoordinate']['Latitude']
+            longt = loc['YextDisplayCoordinate']['Longitude']
+            street = loc['Address']['Line1']
+            city = loc['Address']['City']
+            state = loc['Address']['Region']
+            pcode = loc['Address']['PostalCode']
+            store = loc["Meta"]['Id']
+            phone = loc['MainPhoneForDisplay']
+            link = 'https://southstatebank.com/global/location-detail/'+str(store)+'/'+loc['NameForUrl']
+            ltype = 'Branch'
+            title = city+', '+state
+            hours = ' '.join(loc["LobbyHours"])
+            if str(loc['IsAtmOnly']).lower() == 'false':
+                pass
+            else:
+                ltype = 'ATM'
+            if len(hours) <3:
+                hours = '<MISSING>'
+            if store in titlelist:
+                continue
+            titlelist.append(store)
+            data.append([
+                    'https://southstatebank.com/',
+                    link,                   
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    'US',
+                    store,
+                    phone,
+                    ltype,
+                    lat,
+                    longt,
+                    hours
+                ])
+            #print(p,data[p])
+            p += 1
+            
+
+
+        
+                
+        
+    return data
+
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
+

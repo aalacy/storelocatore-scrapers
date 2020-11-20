@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+import unicodedata
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -52,8 +53,11 @@ def fetch_data():
                 store.append(lng if lng else "<MISSING>")
                 store.append(hours.rstrip(","))
                 store.append(page_urls if page_urls else "<MISSING>")
+                for i in range(len(store)):
+                    if type(store[i]) == str:
+                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 if str(store[2]+store[-1]) in addressess:
                     continue
                 addressess.append(str(store[2]+store[-1]))

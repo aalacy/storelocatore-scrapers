@@ -27,7 +27,6 @@ def get_urls():
     for u in urls:
         if u.split('/')[-2].isdigit():
             out.add(u)
-
     return out
 
 
@@ -39,12 +38,13 @@ def fetch_data():
 
     s = set()
     for u in urls:
+        u = u.replace('%26#xe9;', 'é')
         r = session.get(u)
         tree = html.fromstring(r.text)
         locator_domain = url
-        location_name = ''.join(tree.xpath("//h1[@class='heading']/text()")).strip()
-        street_address = ''.join(tree.xpath("//meta[@property='business:contact_data:street_address']/@content"))
-        city = ''.join(tree.xpath("//meta[@property='business:contact_data:locality']/@content"))
+        location_name = ''.join(tree.xpath("//h1[@class='heading']/text()")).replace('&#xe9;', 'é').strip()
+        street_address = ''.join(tree.xpath("//meta[@property='business:contact_data:street_address']/@content")).replace('&#Xe9;', 'é')
+        city = ''.join(tree.xpath("//meta[@property='business:contact_data:locality']/@content")).replace('&#Xe9;', 'é')
         state = ''.join(tree.xpath("//a[contains(@href, 'maps.apple')]/@href")).split(',')[-2]
         postal = ''.join(tree.xpath("//meta[@property='business:contact_data:postal_code']/@content"))
         country_code = ''.join(tree.xpath("//meta[@property='business:contact_data:country_name']/@content"))

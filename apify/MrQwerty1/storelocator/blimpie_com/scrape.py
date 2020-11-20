@@ -37,8 +37,8 @@ def fetch_data():
         if j.get('StatusName'):
             continue
 
-        locator_domain = url
-        page_url = f"{url}{j.get('StoreId')}"
+        locator_domain = 'https://www.blimpie.com/'
+        page_url = "https://www.blimpie.com/locator/"
         location_name = f"Blimpie Restaurant #{j.get('StoreId')}"
         street_address = j.get('Address') or '<MISSING>'
         if street_address.strip().endswith(','):
@@ -52,7 +52,7 @@ def fetch_data():
         latitude = j.get('Latitude') or '<MISSING>'
         longitude = j.get('Longitude') or '<MISSING>'
         location_type = '<MISSING>'
-        hours_of_operation = '<INACCESSIBLE>'
+        hours_of_operation = '<MISSING>'
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]

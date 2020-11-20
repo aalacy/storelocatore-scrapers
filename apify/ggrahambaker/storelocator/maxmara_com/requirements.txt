@@ -1,2 +1,2 @@
 sgrequests
-beautifulsoup4
+sglogging

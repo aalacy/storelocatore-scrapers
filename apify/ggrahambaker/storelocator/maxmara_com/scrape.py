@@ -1,6 +1,9 @@
 import csv
-from bs4 import BeautifulSoup
+from datetime import datetime
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("maxmara_com")
 
 
 def write_output(data):
@@ -75,13 +78,21 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
 
-    us_url = "https://ca.maxmara.com/store-locator?south=-8.658678440878985&west=-141.73433772563934&north=67.44481391760164&east=-49.595662274360656&name=&listJson=true&withoutRadius=false&country=US"
-    can_url = "https://ca.maxmara.com/store-locator?south=-27.105693815228516&west=171.8613245487213&north=84.5028074010682&east=-3.861324548721332&name=&listJson=true&withoutRadius=false&country=CA"
+    countries = ["US", "CA"]
+    for country in countries:
+        logger.info(f"fetch: {country} locations")
+        params = {"listJson": True, "withoutRadius": False, "country": country}
 
-    urls = [us_url, can_url]
-    for url in urls:
-        data = session.get(url, headers=HEADERS, timeout=1).json()
+        data = session.get(
+            "https://ca.maxmara.com/store-locator",
+            params=params,
+            headers=HEADERS,
+            timeout=1,
+        ).json()
+
         locations = data.get("features")
+        logger.info(f"found: {len(locations)} locations")
+
         for location in locations:
 
             properties = location.get("properties", {})

@@ -52,7 +52,7 @@ def fetch_data():
                         phone = i['phone_ntk']
                         latitude = i['latlong'].split(',')[0]
                         longitude = i['latlong'].split(',')[1]
-                        hours_of_operation = i['working_hours_ntk'].replace('<br>',', ')
+                        hours_of_operation = i['working_hours_ntk'].replace('<br>',', ').replace(", TUE",", TUE ").replace("SUN","SUN ").replace(", MON",", MON ").replace(", SAT",", SAT ").replace(", FRI",", FRI ").replace(", WED",", WED ").replace(", THU",", THU ").replace("-"," - ")
                         page_url = "https://www.josbank.com/store-locator/"+str(city).lower()+"-"+str(state).lower()+"-"+str(store_number)+"?address="+str(zip_code)+"%20%2C"
                         page_url = page_url.replace(" ","-").replace("fort%20worth","fort-worth")
                         result_coords.append((latitude, longitude))
