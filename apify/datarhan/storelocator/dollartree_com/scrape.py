@@ -65,6 +65,8 @@ def fetch_data():
             city = poi['city']
             city = city if city else '<MISSING>'
             state = poi['state']
+            if not state:
+                state = poi['province']
             state = state if state else '<MISSING>'
             zip_code = poi['postalcode']
             zip_code = zip_code if zip_code else '<MISSING>'
@@ -80,9 +82,17 @@ def fetch_data():
             latitude = latitude if latitude else '<MISSING>'
             longitude = poi['longitude']
             longitude = longitude if longitude else '<MISSING>'
-            hours_of_operation = poi['hours'] 
+            hours_of_operation = poi['hours']
             if poi['hours2']:
                 hours_of_operation += ', ' + poi['hours2']
+            if not hours_of_operation:
+                hours_of_operation = []
+                for key, value in poi.items():
+                    if 'hours' in key:
+                        if not value:
+                            continue
+                        hours_of_operation.append(value)
+                hours_of_operation = ', '.join(hours_of_operation)
             hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
             
             item = [
