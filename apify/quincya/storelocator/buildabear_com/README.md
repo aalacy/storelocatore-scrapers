@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed on website)
+--ignore CountValidator (Expected 351 POI, but flitered CA/US has 311 POI)
