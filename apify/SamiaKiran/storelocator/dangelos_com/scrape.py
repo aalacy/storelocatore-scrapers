@@ -61,12 +61,12 @@ def fetch_data():
         store = link
         store = store.split("location/")[1]
         store = store.split("/")[0]
-        if store.isdigit() == True:
+        if store.isdigit() is True:
             store = store
         else:
             store = "<MISSING>"
         phone = data.find("span", {"class": "location-phone"})
-        if phone == None:
+        if phone is None:
             phone = data.find("a", {"class": "location-phone"}).text
         else:
             phone = phone.text
