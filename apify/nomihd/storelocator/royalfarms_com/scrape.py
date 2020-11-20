@@ -114,7 +114,7 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(stores_resp.text)
         stores = stores_sel.xpath('//tr[@class="listdata"]')
         for store in stores:
-            page_url = "https://royalfarms.com/location_results.asp"
+            page_url = "<MISSING>"
             temp_address = store.xpath("td[1]/text()")
             address_mobile = [
                 "".join(add).strip()
