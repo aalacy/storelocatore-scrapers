@@ -24,7 +24,7 @@ def fetch_data():
     smurl = ''
     for line in r.iter_lines():
         line = str(line.decode('utf-8'))
-        if '<loc>https://www.caseys.com/medias/Store-en' in line:
+        if 'Store-en-' in line:
             smurl = line.split('<loc>')[1].split('<')[0]
     r = session.get(smurl, headers=headers)
     for line in r.iter_lines():
