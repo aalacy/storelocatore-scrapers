@@ -41,7 +41,7 @@ def fetch_data():
         all_poi = data['pointsOfService']
         for poi in all_poi:
             store_url = [elem['value'] for elem in poi['urlLocalized'] if elem['locale'] == 'en']
-            store_url = urllib.parse.urljoin(start_url, store_url[0]) if store_url else '<MISSING>'
+            store_url = urllib.parse.urljoin('https://www.marks.com/', store_url[0]) if store_url else '<MISSING>'
             location_name = poi['displayName']
             location_name = location_name if location_name else '<MISSING>'
             street_address = poi['address']['line1']
@@ -58,7 +58,7 @@ def fetch_data():
             country_code = country_code if country_code else '<MISSING>'
             store_number = poi['name']
             store_number = store_number if store_number else '<MISSING>'
-            phone = poi.get('phone')
+            phone = poi['address'].get('phone')
             phone = phone if phone else '<MISSING>'
             location_type = ''
             location_type = location_type if location_type else '<MISSING>'
