@@ -108,4 +108,5 @@ def scrape():
     write_output(data)
     logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
+
 scrape()
