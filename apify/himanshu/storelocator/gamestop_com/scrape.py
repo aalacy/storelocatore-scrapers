@@ -8,11 +8,7 @@ import ssl
 import gzip
 import certifi
 from sglogging import SgLogSetup
-
 logger = SgLogSetup().get_logger('gamestop_com')
-
-
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -47,7 +43,6 @@ def fetch_data():
 
         while coord:
             result_coords = []
-            logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
             lat = coord[0]
             lng = coord[1]
             context = ssl.SSLContext(ssl.PROTOCOL_TLS)
@@ -56,7 +51,6 @@ def fetch_data():
             context.load_verify_locations(cafile=certs_path)
             context.verify_mode = ssl.CERT_REQUIRED
             context.check_hostname = True
-
             conn = http_client.HTTPSConnection("www.gamestop.com", context=context)
             conn.connect()
             conn.request("GET",'/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius='+str(MAX_DISTANCE)+"&lat="+str(lat)+"&long="+str(lng), headers=HEADERS)
@@ -84,7 +78,7 @@ def fetch_data():
                     result_coords.append((latitude, longitude))
                     store.append("http://www.gamestop.com")
                     store.append(location_name if location_name else '<MISSING>')
-                    store.append(street_address if street_address else '<MISSING>')
+                    store.append(street_address.replace(" None","") if street_address else '<MISSING>')
                     store.append(city if city else '<MISSING>')
                     store.append(state if state else '<MISSING>')
                     store.append(zipp if zipp else '<MISSING>')
