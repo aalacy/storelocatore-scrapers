@@ -67,14 +67,15 @@ def fetch_data():
                 phone = "<MISSING>"
             store = [locator_domain, store_name.capitalize(), street_address.replace(data['state_ntk'],"").lower(), data['city_ntk'].lower(), data['state_ntk'], data['zipcode_ntk'], country_code,
                     store_number, phone, location_type, data['latlong'].split(",")[0], data['latlong'].split(",")[1], hours_of_operation.replace("   ",","),page_url]
-            if store[2] + store[-3] in addresses:
-                continue
-            addresses.append(store[2] + store[-3])
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            if store[2] + store[-3] in addresses:
+                continue
+            addresses.append(store[2] + store[-3])
+            
             yield store
 def scrape():
     data = fetch_data()
