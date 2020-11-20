@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import csv, re
+import csv
+import re
 import usaddress
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
