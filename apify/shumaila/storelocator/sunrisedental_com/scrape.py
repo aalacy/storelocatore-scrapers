@@ -27,7 +27,7 @@ def fetch_data():
     p = 0
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text,'html.parser')
-    divlist = soup.select("a[href*=near]")
+    divlist = soup.select("a[href*=dentist]")
     
     for div in divlist:
         title = div.text.strip().replace('\n','')
@@ -74,6 +74,9 @@ def fetch_data():
             pass
         if pcode == '9850':
             pcode = '98502'
+        if len(state) < 2:
+            city,state=soup.find('title').text.split('Top Dentist ',1)[1].split(';',1)[0].split(' ',1)
+            state = state.split(' ',1)[0]
         data.append([
                 'https://sunrisedental.com/',
                 link,                   
