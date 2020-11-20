@@ -69,14 +69,20 @@ def fetch_data():
                 h = next(lines)
                 g = str(g.decode('utf-8'))
                 h = str(h.decode('utf-8'))
-                hours = hours + '; ' + dayname + ': ' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                try:
+                    hours = hours + '; ' + dayname + ': ' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                except:
+                    pass
                 next(lines)
                 next(lines)
                 g = next(lines)
                 h = next(lines)
                 g = str(g.decode('utf-8'))
                 h = str(h.decode('utf-8'))
-                hours = hours + '-' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                try:
+                    hours = hours + '-' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                except:
+                    pass
             if '"service"' in line:
                 if purl == '':
                     purl = '<MISSING>'
