@@ -63,7 +63,7 @@ def fetch_data():
         hours_of_operation = poi['hours'].replace('STORE HOURS\r\n', '').replace('\r\n', ', ')
         hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
         if 'TEMPORARILY CLOSED' in hours_of_operation:
-            continue
+            location_name += ' (temporarily closed)'
 
         item = [
             DOMAIN,
