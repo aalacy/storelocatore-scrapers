@@ -57,8 +57,22 @@ def fetch_data():
             store_number = store_number if store_number else '<MISSING>'
             phone = poi['fields']['Phone_Published']
             phone = phone if phone else '<MISSING>'
+            summ = 0
+            for key, value in poi['fields'].items():
+                if 'Is_' in key:
+                    if not value:
+                        continue
+                    if type(value) != int:
+                        continue
+                    summ += int(value)
             location_type = ''
-            location_type = location_type[0] if location_type else '<MISSING>'
+            if summ > 1:
+                if poi['fields']['Is_Branch'] == 1:
+                    location_type = 'branch'
+            if summ == 1:
+                if poi['fields']['Is_ATM'] == 1:
+                    location_type = 'atm'
+            location_type = location_type if location_type else '<MISSING>'
             latitude = poi['fields']['mqap_geography']['latLng']['lat']
             latitude = latitude if latitude else '<MISSING>'
             longitude = poi['fields']['mqap_geography']['latLng']['lng']
