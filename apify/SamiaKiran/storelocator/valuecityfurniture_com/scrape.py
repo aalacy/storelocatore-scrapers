@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import re
-import usaddress
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -53,22 +51,24 @@ def fetch_data():
     StoreAddress = soup.findAll("span", {"class": "sl-address"})
     StorePhone = soup.findAll("span", {"class": "sl-phone"})
     StoreHours = soup.findAll("div", {"class": "store-hours-table"})
-    for title, address, phone, hour  in zip(StoreName, StoreAddress,StorePhone,StoreHours):    
-      title = title.text
-      phone = phone.text
-      phone = phone.strip()
-      street = address.find("span", {"itemprop": "streetAddress"}).text
-      city = address.find("span", {"itemprop": "addressLocality"}).text
-      state = address.find("span", {"itemprop": "addressRegion"}).text
-      pcode = address.find("span", {"itemprop": "postalCode"}).text
-      hour_list = hour.findAll("ul")
-      hours = ""
-      for temp in hour_list:
-          day = temp.find("li").text
-          time = temp.find("time", {"itemprop": "openingHours"}).text
-          hours = hours + day + " " + time + " "
+    for title, address, phone, hour in zip(
+        StoreName, StoreAddress, StorePhone, StoreHours
+    ):
+        title = title.text
+        phone = phone.text
+        phone = phone.strip()
+        street = address.find("span", {"itemprop": "streetAddress"}).text
+        city = address.find("span", {"itemprop": "addressLocality"}).text
+        state = address.find("span", {"itemprop": "addressRegion"}).text
+        pcode = address.find("span", {"itemprop": "postalCode"}).text
+        hour_list = hour.findAll("ul")
+        hours = ""
+        for temp in hour_list:
+            day = temp.find("li").text
+            time = temp.find("time", {"itemprop": "openingHours"}).text
+            hours = hours + day + " " + time + " "
 
-      final_data.append(
+        final_data.append(
             [
                 "https://www.valuecityfurniture.com/",
                 "https://www.valuecityfurniture.com/store-locator/show-all-locations",
@@ -89,9 +89,9 @@ def fetch_data():
     return final_data
 
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
