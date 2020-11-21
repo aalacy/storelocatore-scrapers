@@ -42,7 +42,7 @@ def fetch_data():
         phone = div.find("span", {"class": "phoneNum"}).text
         lat = div.find("span", {"class": "lat"}).text
         long = div.find("span", {"class": "long"}).text
-        r1 = session.get(link, headers=headers, verify=False)
+        r1 = session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "html.parser")
         address = str(address)
         address = re.sub(pattern, ' ', address)
