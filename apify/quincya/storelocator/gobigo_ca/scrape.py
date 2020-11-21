@@ -21,8 +21,8 @@ def fetch_data():
     stores = session.get(base_link, headers = HEADERS).json()['data']['widgets']["84eca792-36b8-45b6-9851-465cd482c3d2"]['data']['settings']['markers']
 
     data = []
-    locator_domain = "bigotiresbroadway.ca"
-
+    locator_domain = "https://gobigo.ca/"
+    
     for store in stores:
         location_name = store["infoTitle"]
         raw_address = store["position"].split(",")
