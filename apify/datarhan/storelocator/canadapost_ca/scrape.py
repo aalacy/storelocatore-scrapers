@@ -51,7 +51,7 @@ def fetch_data():
             store_dom = etree.HTML(store_response.text)
 
             address_raw = store_dom.xpath('//address/p/text()')
-            address_list = [elem.strip() for elem in address_raw if elem.strip()]
+            address_list = [elem.strip() for elem in address_raw if elem.strip() and 'Bilingual' not in elem]
             location_name = address_list[0]
             location_name = location_name if location_name else '<MISSING>'
             street_address = address_list[1]
