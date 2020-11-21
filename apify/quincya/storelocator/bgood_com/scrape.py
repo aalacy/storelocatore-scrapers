@@ -39,7 +39,11 @@ def fetch_data():
             try:
                 raw_hours = store["schedules"]
                 for raw_hour in raw_hours:
-                    hours_of_operation = (hours_of_operation + " " + raw_hour["day"] + " " + raw_hour["hours"][0]["open"] + "-" + raw_hour["hours"][0]["close"]).strip()
+                    if not raw_hour["hours"]:
+                        day_hours = "Closed"
+                    else:
+                        day_hours = raw_hour["hours"][0]["open"] + "-" + raw_hour["hours"][0]["close"]
+                    hours_of_operation = (hours_of_operation + " " + raw_hour["day"] + " " + day_hours).strip()
             except:
                 hours_of_operation = "Mon-Sun Closed"
 
