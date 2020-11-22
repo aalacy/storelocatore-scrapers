@@ -40,7 +40,7 @@ def fetch_data():
         location_name = store_html.xpath('.//h4/a/text()')[0]
         location_name = location_name if location_name else '<MISSING>'
         street_address = store_html.xpath('.//p[@itemprop="streetAddress"]/text()')[0]
-        street_address = street_address.split(',')[-1].strip() if street_address else '<MISSING>'
+        street_address = street_address if street_address else '<MISSING>'
         city = store_html.xpath('.//span[@itemprop="addressLocality"]/text()')[0]
         city = city if city else '<MISSING>'
         state = store_html.xpath('.//span[@itemprop="addressRegion"]/text()')[0]
