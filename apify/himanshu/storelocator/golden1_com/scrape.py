@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+from sgselenium import SgChrome
 
 session = SgRequests()
 
@@ -21,6 +21,17 @@ def write_output(data):
 
 
 def fetch_data():
+    
+    base_link = "https://www.golden1.com/atm-branch-finder"
+    driver = SgChrome().chrome()
+    driver.get(base_link)
+
+    cookies = driver.get_cookies()
+    cookie= ""
+    for cook in cookies:
+        cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
+
+    cookie = cookie.strip()[:-1]
 
     HEADERS = {
             'authority': 'www.golden1.com',
@@ -32,7 +43,7 @@ def fetch_data():
             'accept-language': 'en-US,en;q=0.9',
             'content-length': '275',
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'cookie': 'g1web-cookie-RL=2744297664.20480.0000; ak_bmsc=75E0635CAA910EC8196521F06CC3203F17C91665744400001CFEB85F08034D67~plZVdKTDeGjwqpHQZRhauM8kmaVBQhGFPyLvvVn36m1PZ5SXmUOJn9q1qY94+i03dFBja3xcyguDJb+pXocjpLJejB4OEwT8fveKt3GkjfQPzyzlJUauymmwhwYLAF80LzYCMuM5qqVFPgA7J02BIPOfcJV7fdBMEn/0XhqBGfEClvW4X1nTzHPoXOJABtAASF0l8J5INY48E9rxK8+G6/W4YvdkT373TXqwUtj8mKLSE=; g1web-cookie-HQ=2744232128.20480.0000; _gcl_au=1.1.1023096693.1605959198; _ga=GA1.2.698997750.1605959198; _gid=GA1.2.1812316788.1605959198; __utma=123164701.698997750.1605959198.1605959198.1605959198.1; __utmc=123164701; __utmz=123164701.1605959198.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmt_UA-1815591-1=1; __utmb=123164701.2.10.1605959198; bm_sv=B289FC477E85E0924DFA2CE7F54DBEFC~GT6vk3vxVnitM0eeczY5HdYS2lhjHdxsrQH+35YQDCa8cZ1Z1mC8AEG7HRgmdNwk7ZxZhPtJeBKvGD0IzZR+FoWCgMWsycnNRJQ1lvqgVUM8GWpXj6p/3ndKaUz4oRCkbJcGFxD8tz1EaZJOBIy5H90PSGgiI+Xfz+lxPO3L4Lk=',
+            'cookie': cookie,
             'origin': 'https://www.golden1.com',
             'referer': 'https://www.golden1.com/atm-branch-finder',
             'sec-fetch-dest': 'empty',
@@ -82,7 +93,8 @@ def fetch_data():
             continue
         addresses.append(store[2])
         return_main_object.append(store)
-        
+
+    driver.close()  
     return return_main_object
 
 def scrape():
