@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import time,re
+import time, re
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -13,11 +13,30 @@ headers = {
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,8 +44,8 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    cleanr = re.compile(r'<[^>]+>')
-    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
     url = "http://thelube.com/category/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -45,14 +64,14 @@ def fetch_data():
         r1 = session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "html.parser")
         address = str(address)
-        address = re.sub(pattern, ' ', address)
-        address = address.split('>', 1)[1].split('</span', 1)[0].lstrip().split('<br/>')
+        address = re.sub(pattern, " ", address)
+        address = address.split(">", 1)[1].split("</span", 1)[0].lstrip().split("<br/>")
         count = len(address)
-        street = ' '.join(address[0:count - 1])
-        city, state = address[-1].split(', ')
-        state, pcode = state.lstrip().split(' ', 1)
+        street = " ".join(address[0 : count - 1])
+        city, state = address[-1].split(", ")
+        state, pcode = state.lstrip().split(" ", 1)
 
-        hourslist = soup1.find("li", {"class": "clockIcon"}).  text.splitlines()
+        hourslist = soup1.find("li", {"class": "clockIcon"}).text.splitlines()
         hours = ""
         for hr in hourslist:
             if hr.find("am") > -1 and hr.find("pm") > -1:
@@ -77,12 +96,12 @@ def fetch_data():
         pcode = pcode.strip()
         pcode = pcode.replace(",", "")
 
-        phone = re.sub(r'[A-Za-z*]', "", phone)
+        phone = re.sub(r"[A-Za-z*]", "", phone)
         phone1 = list(phone)
 
         try:
             if phone1[3] == " ":
-               phone1[3] = "-"
+                phone1[3] = "-"
         except:
             pass
         phone = ""
@@ -94,8 +113,7 @@ def fetch_data():
             phone = phone[-12:]
 
         if len(phone) == 0:
-            phone = '<MISSING>'
-
+            phone = "<MISSING>"
 
         data.append(
             [
@@ -113,7 +131,8 @@ def fetch_data():
                 lat,
                 long,
                 hours,
-            ])
+            ]
+        )
 
     return data
 
@@ -124,5 +143,6 @@ def scrape():
     data = fetch_data()
     write_output(data)
     logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()
