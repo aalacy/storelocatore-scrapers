@@ -49,7 +49,7 @@ def get_data(page_url):
     longitude = j.get('Long') or '<MISSING>'
 
     _tmp = []
-    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     hours = j.get('OperatingHours') or []
 
     for h in hours:
@@ -64,7 +64,7 @@ def get_data(page_url):
     if _tmp:
         hours_of_operation = ';'.join(_tmp)
     else:
-        hours_of_operation = 'Temporarily Closed'
+        return
 
     row = [locator_domain, page_url, location_name, street_address, city, state, postal,
            country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
