@@ -71,9 +71,9 @@ def get_data(url):
         hours_of_operation = ';'.join(_tmp)
 
         if hours_of_operation.count('Closed') == 7:
-            hours_of_operation = 'Closed'
+            return
     else:
-        hours_of_operation = 'Coming Soon'
+        return
 
     row = [locator_domain, page_url, location_name, street_address, city, state, postal,
            country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
