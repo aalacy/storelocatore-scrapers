@@ -80,6 +80,7 @@ def fetch_data():
             hours_of_operation = poi['fields']['Hours_Lobby_For_VRU']
             hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
 
+            store_url = '<MISSING>'
             if location_type != '<MISSING>':
                 store_url = 'https://www.suntrust.com/{}/{}/{}/{}/{}?location={}'
                 location = '{} {} {}'.format(city, poi['fields']['region_code'], zip_code)
