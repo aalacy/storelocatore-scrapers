@@ -35,6 +35,9 @@ def fetch_data():
             if location_name.lower().find(' open') != -1:
                 location_name = j.get('name')
 
+            if location_name.lower().find('closed') != -1:
+                continue
+
             state = a.get('region') or '<MISSING>'
             postal = a.get('postalCode') or '<MISSING>'
             country_code = a.get('countryCode') or '<MISSING>'
@@ -50,6 +53,7 @@ def fetch_data():
             for k, v in hours.items():
                 if k == 'holidayHours':
                     continue
+
                 day = k
                 interval = v.get('openIntervals')[0]
                 start = interval.get('start')
@@ -57,9 +61,10 @@ def fetch_data():
                 line = f"{day.capitalize()}: {start} - {end}"
                 _tmp.append(line)
 
-            hours_of_operation = ';'.join(_tmp) or 'Coming Soon'
-            if hours_of_operation.count('Closed') == 7:
-                hours_of_operation = 'Closed'
+            if _tmp:
+                hours_of_operation = ';'.join(_tmp)
+            else:
+                continue
 
             row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                    country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
