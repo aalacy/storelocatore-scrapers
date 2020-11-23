@@ -24,7 +24,7 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    DOMAIN = 'suntrust.com'
+    DOMAIN = 'wbu.com'
 
     start_url = 'https://8nzlzp5za2-2.algolianet.com/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.30.0%3BJS%20Helper%202.26.1%3Bvue-instantsearch%201.7.0&x-algolia-application-id=8NZLZP5ZA2&x-algolia-api-key=f9564c6925184928d6f25d140fbc7942'
     body = '{"requests":[{"indexName":"wild_birds_site_locator","params":"query=&hitsPerPage=999&page=0&highlightPreTag=__ais-highlight__&highlightPostTag=__%2Fais-highlight__&getRankingInfo=true&aroundLatLng=&aroundLatLngViaIP=false&aroundPrecision=1000&facets=%5B%5D&tagFilters="}]}'
