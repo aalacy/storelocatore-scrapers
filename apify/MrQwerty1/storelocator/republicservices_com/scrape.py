@@ -17,7 +17,6 @@ def write_output(data):
 def fetch_data():
     out = []
     url = 'https://republicservices.com/'
-
     api_url = 'https://www.republicservices.com/api/v1/localContent/facilities?latitude=40.9614&longitude=-93.1817&limit=5000'
     session = SgRequests()
     r = session.get(api_url)
@@ -38,7 +37,7 @@ def fetch_data():
         if len(postal) == 4:
             postal = f'0{postal}'
         country_code = a.get('countryName') or '<MISSING>'
-        store_number = '<MISSING>'
+        store_number = j.get('divisionId') or '<MISSING>'
         ph = j.get('phoneNumbers')
         if ph:
             phone = ph[0].get('phoneNumber')
@@ -49,7 +48,19 @@ def fetch_data():
         g = j.get('geoLocation', {}) or {}
         latitude = g.get('latitude') or '<MISSING>'
         longitude = g.get('longitude') or '<MISSING>'
-        hours_of_operation = '<MISSING>'
+        operation = j.get('schedule', {}).get('operating')
+        if operation:
+            _tmp = []
+            t = operation[0]['season']
+            start = t.get('timeBegin')
+            end = t.get('timeEnd')
+            days = t.get('daysOfWeek')
+            for d in days:
+                _tmp.append(f'{d}: {start} - {end}')
+
+            hours_of_operation = ';'.join(_tmp)
+        else:
+            hours_of_operation = '<MISSING>'
 
         types = j.get('facilityTypes', ['<MISSING>']) or ['<MISSING>']
 
