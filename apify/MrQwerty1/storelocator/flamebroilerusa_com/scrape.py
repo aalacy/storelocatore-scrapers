@@ -45,6 +45,9 @@ def fetch_data():
             day = h.keys()
             for d in day:
                 start = h[d].get('open')[:-3]
+                if start == '00:00':
+                    _tmp.append(f'{d.capitalize()}: Closed')
+                    continue
                 close = h[d].get('close')[:-3]
                 _tmp.append(f'{d.capitalize()}: {start} - {close}')
 
