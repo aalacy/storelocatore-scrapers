@@ -64,6 +64,7 @@ def fetch_data():
                 hours = hours.split('Nearby',1)[0]
             except:
                 pass
+            title = title.replace('Kmart','Kmart ').replace('#',' # ').replace('  ',' ')
             data.append([
                         'https://www.kmart.com/',
                         link,                   
