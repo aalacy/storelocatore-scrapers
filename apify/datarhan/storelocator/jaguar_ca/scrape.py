@@ -42,7 +42,7 @@ def fetch_data():
 
         all_poi_html = dom.xpath('//div[@class="infoCardDealer infoCard"]')
         for poi_html in all_poi_html:
-            store_url = poi_html.xpath('.//li[@class="websiteLink"]/a/@href')
+            store_url = poi_html.xpath('.//div[@class="dealerWebsiteDiv"]//a/@href')
             store_url = store_url[0] if store_url else '<MISSING>'
             location_name = poi_html.xpath('.//span[@class="dealerNameText fontBodyCopyLarge"]/text()')
             location_name = location_name[0] if location_name else '<MISSING>'
