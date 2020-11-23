@@ -64,9 +64,7 @@ def fetch_data():
         latitude = latitude if latitude else '<MISSING>'
         longitude = location_data['geo']['longitude']
         longitude = longitude if longitude else '<MISSING>'
-        hours_of_operation = location_dom.xpath('//div[@id="checkInTimes"]//div[@class="modal-body"]//text()')
-        hours_of_operation = [elem.strip() for elem in hours_of_operation if elem.strip()]
-        hours_of_operation = ', '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
+        hours_of_operation = '<MISSING>'
         
         item = [
             DOMAIN,
