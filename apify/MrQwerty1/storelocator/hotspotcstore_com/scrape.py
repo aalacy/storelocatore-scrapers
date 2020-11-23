@@ -53,7 +53,7 @@ def fetch_data():
         country_code = 'US'
         store_number = location_name.split()[-1].strip()
         phone = get_phone(''.join(lines))
-        page_url = '<MISSING> '
+        page_url = 'https://hotspotcstore.com/locations/'
         latitude = '<MISSING>'
         longitude = '<MISSING>'
         location_type = '<MISSING>'
