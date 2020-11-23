@@ -1,5 +1,4 @@
 import csv
-
 from sgrequests import SgRequests
 
 
@@ -30,7 +29,7 @@ def fetch_data():
         city = j.get('CityName') or '<MISSING>'
         state = j.get('StateAbbr') or '<MISSING>'
         postal = j.get('PostalCode') or '<MISSING>'
-        if len(postal) == 5:
+        if len(postal) == 5 or postal.find('-') != -1:
             country_code = 'US'
         else:
             country_code = 'CA'
