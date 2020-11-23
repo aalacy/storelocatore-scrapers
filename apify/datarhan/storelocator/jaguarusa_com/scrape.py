@@ -36,7 +36,7 @@ def fetch_data():
     for zip_code in us_zips:
         all_codes.append(zip_code)
 
-    for code in tqdm(all_codes):
+    for code in all_codes:
         response = session.get(start_url.format(code), headers=hdr)
         dom = etree.HTML(response.text)
 
