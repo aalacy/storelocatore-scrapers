@@ -18,7 +18,7 @@ def fetch_data():
     out = []
     url = 'https://athome.com/'
     api_url = 'https://www.athome.com/on/demandware.store/Sites-athome-sfra-Site/default/Stores-FindStores?showMap' \
-              '=true&radius=5000&lat=40.7127753&long=-74.0059728 '
+              '=true&radius=5000&lat=40.7127753&long=-74.0059728'
 
     session = SgRequests()
     r = session.get(api_url)
@@ -36,7 +36,7 @@ def fetch_data():
         store_number = '<MISSING>'
         phone = j.get('phone') or '<MISSING>'
         if phone.find('Coming') != -1:
-            phone = '<MISSING>'
+            continue
         latitude = j.get('latitude') or '<MISSING>'
         longitude = j.get('longitude') or '<MISSING>'
         location_type = '<MISSING>'
