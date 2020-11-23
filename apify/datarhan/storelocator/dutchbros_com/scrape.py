@@ -60,7 +60,8 @@ def fetch_data():
         longitude = poi['lon']
         longitude = longitude if longitude else '<MISSING>'
         hours_of_operation = poi['hours']
-        hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
+        if not hours_of_operation:
+            continue
         
         item = [
             DOMAIN,
