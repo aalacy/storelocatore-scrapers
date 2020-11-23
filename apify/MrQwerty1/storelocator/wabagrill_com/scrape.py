@@ -29,7 +29,7 @@ def fetch_data():
             j = j['store_info']
             locator_domain = url
             page_url = j.get('website') or '<MISSING>'
-            street_address = j.get('address') or '<MISSING>'
+            street_address = f"{j.get('address')} {j.get('address_extended') or ''}" or '<MISSING>'
             city = j.get('locality') or '<MISSING>'
             location_name = f"{j.get('name')} {city}"
             state = j.get('region') or '<MISSING>'
