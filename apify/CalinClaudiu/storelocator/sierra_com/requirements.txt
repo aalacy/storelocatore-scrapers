@@ -1,2 +1,4 @@
 sgscrape
-bs4
+sgzip
+sgrequests
+sglogging
