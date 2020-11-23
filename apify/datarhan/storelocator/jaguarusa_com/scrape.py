@@ -28,15 +28,18 @@ def fetch_data():
 
     DOMAIN = 'jaguarusa.com'
 
-    start_url = 'https://www.jaguarusa.com/retailer-locator/index.html?postCode={}&filter=dealer'
+    states = [
+        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
+        "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+        "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+        "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+        "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+    ]
+
+    start_url = 'https://www.jaguarusa.com/retailer-locator/index.html?region={}&filter=dealer'
     hdr = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'}
 
-    all_codes = []
-    us_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
-    for zip_code in us_zips:
-        all_codes.append(zip_code)
-
-    for code in all_codes:
+    for code in states:
         response = session.get(start_url.format(code), headers=hdr)
         dom = etree.HTML(response.text)
 
