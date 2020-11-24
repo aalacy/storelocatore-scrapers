@@ -31,18 +31,20 @@ def fetch_data():
             street_address = f"{a.get('line1')}".strip() or '<MISSING>'
             city = a.get('city') or '<MISSING>'
             location_name = f"{j.get('name')} {city}"
+            page_url = j.get('landingPageUrl') or '<MISSING>'
 
             if location_name.lower().find(' open') != -1:
                 location_name = j.get('name')
 
             if location_name.lower().find('closed') != -1:
                 continue
+            elif page_url.find('coming-soon') != -1 and location_name.lower().find('now open') == -1:
+                continue
 
             state = a.get('region') or '<MISSING>'
             postal = a.get('postalCode') or '<MISSING>'
             country_code = a.get('countryCode') or '<MISSING>'
             store_number = '<MISSING>'
-            page_url = j.get('landingPageUrl') or '<MISSING>'
             phone = j.get('mainPhone') or '<MISSING>'
             latitude = j.get('yextDisplayCoordinate', {}).get('latitude') or '<MISSING>'
             longitude = j.get('yextDisplayCoordinate', {}).get('longitude') or '<MISSING>'
@@ -61,9 +63,9 @@ def fetch_data():
                 line = f"{day.capitalize()}: {start} - {end}"
                 _tmp.append(line)
 
-            if _tmp:
-                hours_of_operation = ';'.join(_tmp)
-            else:
+            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
+
+            if hours_of_operation.count('Closed') == 7:
                 continue
 
             row = [locator_domain, page_url, location_name, street_address, city, state, postal,
