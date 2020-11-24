@@ -43,16 +43,20 @@ def fetch_data():
         map_url = soup1.find("div",{"class":"store_map"}).find("img")['src'].split("|")[1].split("&")[0].split(",")
         latitude = map_url[0]
         longitude = map_url[1]
-        if "2402" in store_number and "2407" in store_number:
+        if "M4J 3S3" in zipp or "M4C 4E6" in zipp :
             city = "East York"
-        if "2314" in store_number and "2353" in store_number and "2354" in store_number:
+        if "2314" in store_number or "2353" in store_number or "2354" in store_number :
             city = "York"
-        if "4074" in store_number:
-            city = "Dorchester"
-        if "2008" in store_number:
+        if "2379" in store_number or "2454" in store_number or "2369" in store_number or "2372" in store_number or "2467" in store_number or "2453" in store_number or "2356" in store_number :
+            city = "North York"
+        if "4074" in store_number :
+            city = "Waterdown,"
+        if "2008" in store_number :
             city = "Georgetown"
-        if "4065" in store_number:
+        if "4065" in store_number :
             city = "Burlington"
+        if "3119" in store_number :
+            city = "Dorchester"
         hours_of_operation = " ".join(list(soup1.find_all("div",{"class":"rite_col"})[-1].stripped_strings)).replace("\n","").replace("                                           ","")
         store = []
         store.append(base_url if base_url else '<MISSING>')
@@ -67,7 +71,7 @@ def fetch_data():
         store.append("The Beer Store")
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation.replace("Store Hours Day Hours",'<MISSING>') if hours_of_operation else '<MISSING>')
+        store.append(hours_of_operation.replace("Store Hours Day Hours",'<MISSING>').replace("<MISSING> Monday","Monday") if hours_of_operation else '<MISSING>')
         store.append(page_url)
         store = [x.replace("—","-") if type(x) == str else x for x in store] 
         store = [x.strip() if type(x) == str else x for x in store]
