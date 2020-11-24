@@ -50,11 +50,13 @@ def fetch_data():
     data_list = soup.findAll("div", {"class": "location-map-select"})
     places = data_list[0].findAll("area")
     for p in places:
+
         statelink = p.get("href")
         r = session.get(statelink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         numOfLocs = soup.findAll("hr")
         for num in range(0, len(numOfLocs)):
+
             locName = soup.findAll("span", {"class": "loc-name"})[num]
             title = locName.text
             phone = soup.findAll("span", {"class": "loc-phone"})[num]
@@ -74,14 +76,25 @@ def fetch_data():
             words = location.split(" ")
             state = words[0]
             zcode = words[1]
-            hours = soup.findAll("span", {"loc-hours"})[num]
-            hours = hours.text
-            if hours == "Delivery provided by DoorDash":
-                hours = "<MISSING>"
+            storehours = soup.findAll("div", {"col-hours"})[num]
+            hours = ""
+            for elem in storehours.findAll("span"):
+                el = elem.text
+                el = el.replace(".", "")
+                if ("am" in el) or ("pm" in el):
+                    # print(el)
+                    hours = hours + el + "\n"
+            #            if hours == "Delivery provided by DoorDash":
+            #                hours = "<MISSING>"
             hours = hours.replace(":", "")
             hours = hours.replace(";", "")
-            if hours.find("Closed") != -1:
+            hours = hours.replace("Delivery provided by DoorDash", "")
+            hours = hours.replace("Hours", "")
+
+            if (hours.find("Closed") != -1) or (len(hours.strip("\n")) == 0):
                 hours = "<MISSING>"
+            if hours.find("(breakfast served until 1030 am)") != -1:
+                hours = hours.replace("(breakfast served until 1030 am)", "")
             data.append(
                 [
                     "https://www.piefivepizza.com/locations/",
