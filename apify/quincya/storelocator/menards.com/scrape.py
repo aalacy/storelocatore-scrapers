@@ -52,6 +52,7 @@ def fetch_data():
 		link = "https://www.menards.com/main/storeDetails.html?store=" + str(store_number)
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
+	driver.close()
 	return data
 
 def scrape():
