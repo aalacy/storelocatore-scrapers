@@ -33,7 +33,7 @@ def fetch_data():
         postal = j.get('postalCode') or '<MISSING>'
         country_code = 'CA'
         store_number = j.get('storeId') or '<MISSING>'
-        phone = j.get('restaurantPhoneNumber')[3:] or '<MISSING>'
+        phone = j.get('restaurantPhoneNumber')[3:] if j.get('restaurantPhoneNumber') else j.get('deliveryPhoneNumber')[1:] or '<MISSING>'
         latitude = j.get('latitude') or '<MISSING>'
         longitude = j.get('longitude') or '<MISSING>'
         location_type = j.get('bpType') or '<MISSING>'
