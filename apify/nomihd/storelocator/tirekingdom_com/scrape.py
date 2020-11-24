@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import us
+
 website = "tirekingdom_com"
 domain = "https://www.tirekingdom.com/"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
