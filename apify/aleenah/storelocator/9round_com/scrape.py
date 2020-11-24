@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('9round_com')
@@ -19,7 +19,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
+            
 def fetch_data():
     # Your scraper here
     locs = []
@@ -35,7 +36,7 @@ def fetch_data():
     ids = []
     page_url = []
     countries = []
-    res = requests.get("https://www.9round.com/kickboxing-classes/directory")
+    res = session.get("https://www.9round.com/kickboxing-classes/directory")
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'col-md-12'})
 
@@ -48,9 +49,9 @@ def fetch_data():
     for a in sa:
         url = "https://www.9round.com/" + a.get('href')
         try:
-            res = requests.get(url)
+            res = session.get(url)
         except:
-            res = requests.get(url)
+            res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         # logger.info(url)
 
@@ -70,9 +71,9 @@ def fetch_data():
     for url in page_url:
         logger.info(url)
         try:
-            res = requests.get(url)
+            res = session.get(url)
         except:
-            res = requests.get(url)
+            res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data = str(soup.find('script', {'type': 'application/ld+json'}))
 
