@@ -16,7 +16,7 @@ import time
 def parse_store(son):
     
     data = son
-    days = ['24/7','Closed','day','Mon','Tue','Wed','Thu','Fri','Sat','Sun','0am','1am','2am','3am','4am','5am','6am','7am','8am','9am','0pm','1pm','2pm','3pm','4pm','5pm','6pm','7pm','8pm','9pm']
+    days = ['M-','T-','W-','Th-','F-','Sa-','Su-','-F:','24/7','Closed','day','Mon','Tue','Wed','Thu','Fri','Sat','Sun','0am','1am','2am','3am','4am','5am','6am','7am','8am','9am','0pm','1pm','2pm','3pm','4pm','5pm','6pm','7pm','8pm','9pm']
     
     try:
         addr_data = list(data.find('div',{'class':'col-10'}).find('address').stripped_strings)
