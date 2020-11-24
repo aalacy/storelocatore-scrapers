@@ -110,10 +110,13 @@ def fetch_data():
         count = i['href'].count('/')
         if count == 0:
             states.append(i['href'])
+            logzilla.info(f"State(fromstat)-> {i['href']}")
         elif count == 1:
             cities.append(i['href'])
+            logzilla.info(f"Citye(fromstat)-> {i['href']}")
         elif count > 1:
             stores.append(i['href'])
+            logzilla.info(f"Store(fromstat)-> {i['href']}")
     url = 'https://locations.tacojohns.com/'
     logzilla.info(f'Grabbing city links')
     for i in states:
@@ -123,18 +126,23 @@ def fetch_data():
             count = j['href'].count('/')
             if count == 1:
                 cities.append(j['href'])
+                logzilla.info(f"City(fromstat)-> {j['href']}")
             elif count >1:
                 stores.append(j['href'])
+                logzilla.info(f"Store(fromcit)-> {j['href']}")
 
     logzilla.info(f'Grabbing store links')
 
     for i in cities:
         son = session.get(url+i, headers = headers)
         soup = b4(son.text, 'lxml')
-        for j in soup.find('',{'class':lambda x : x and x.startswith('directory-container')}).find_all('a',{'class':lambda x : x and x.startswith('c-location-grid-item-link'),'href':True,'title':True,'data-yext-tracked':True}):
+        for j in soup.find('div',{'class':lambda x : x and x.startswith('directory-container')}).find_all('a',{'class':lambda x : x and x.startswith('c-location-grid-item-link'),'href':True,'title':True}):
             stores.append(j['href'])
+            logzilla.info(f"Store-> {j['href']}")
 
+    logzilla.info(f'Found {len(stores)} stores data')
     logzilla.info(f'Grabbing store data')
+
     
     lize = utils.parallelize(
                 search_space = stores,
