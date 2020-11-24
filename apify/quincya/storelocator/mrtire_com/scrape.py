@@ -28,6 +28,7 @@ def fetch_data():
 
 	for item in items:
 		location_name = item.find(class_="results-store-header").text.strip() + " " + item.p.text.strip()
+		location_name = location_name[location_name.find(" ")+1:].strip()
 		
 		street_address = item.find(class_="results-store-info").div.text.strip()
 		city_line = item.find(class_="results-store-info").find_all('div')[1].text.strip().split(",")
