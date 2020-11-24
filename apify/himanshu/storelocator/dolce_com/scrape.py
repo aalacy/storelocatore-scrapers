@@ -6,6 +6,7 @@ import json
 import unicodedata
 import html5lib
 session = SgRequests()
+import time 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
