@@ -137,7 +137,7 @@ def fix_comma(x):
 
 
 def scrape():
-    url="https://www.tacojohns.com/"
+    url="https://www.jetspizza.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain = ConstantField(url),
         page_url=MappingField(mapping=['CustomUrl']),
@@ -155,7 +155,7 @@ def scrape():
         location_type=MappingField(mapping=['IsActive']),
     )
 
-    pipeline = SimpleScraperPipeline(scraper_name='tacojohns.com',
+    pipeline = SimpleScraperPipeline(scraper_name='jetspizza.com',
                                      data_fetcher=fetch_data,
                                      field_definitions=field_defs,
                                      log_stats_interval=15)
