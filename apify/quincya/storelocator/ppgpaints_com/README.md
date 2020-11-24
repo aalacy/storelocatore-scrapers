@@ -1,0 +1,2 @@
+--ignore CountValidator --ignore StateLevelCountValidator (Filtered found 464 POI on website)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator (Confirmed on website)
