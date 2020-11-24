@@ -80,7 +80,8 @@ def fetch_data():
                 hours = "<MISSING>"
             hours = hours.replace(":", "")
             hours = hours.replace(";", "")
-
+            if hours.find("Closed") != -1:
+                hours = "<MISSING>"
             data.append(
                 [
                     "https://www.piefivepizza.com/locations/",
