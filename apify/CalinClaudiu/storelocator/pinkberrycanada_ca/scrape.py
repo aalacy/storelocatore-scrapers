@@ -86,7 +86,7 @@ def fetch_data():
 
 
 def scrape():
-    url="https://www.mycountymarket.com/"
+    url="https://www.pinkberrycanada.ca/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain = ConstantField(url),
         page_url=MappingField(mapping=['requrl']),
@@ -104,7 +104,7 @@ def scrape():
         location_type=MissingField()
     )
 
-    pipeline = SimpleScraperPipeline(scraper_name='mycountymarket.com',
+    pipeline = SimpleScraperPipeline(scraper_name='pinkberrycanada.ca',
                                      data_fetcher=fetch_data,
                                      field_definitions=field_defs,
                                      log_stats_interval=15)
