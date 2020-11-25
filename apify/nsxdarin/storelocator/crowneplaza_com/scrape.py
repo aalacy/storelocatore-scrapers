@@ -20,8 +20,7 @@ def write_output(data):
 
 def fetch_data():
     alllocs = []
-    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/canada-hotels',
-            'https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
+    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
     for url in urls:
         states = []
         r = session.get(url, headers=headers)
