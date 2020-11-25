@@ -83,6 +83,17 @@ def fetch_data():
     
     logzilla.info(f'Finished grabbing data!!')
 
+def good_phone(x):
+    try:
+        x = x.split('ext')[0]
+    except:
+        x = x
+    try:
+        x= x.split('int')[0]
+    except:
+        x = x
+    x = x.replace('None','<MISSING>')
+    return x
 
 
 def scrape():
@@ -98,7 +109,7 @@ def scrape():
         state=MappingField(mapping=['state'], value_transform = lambda x : x.replace('None','<MISSING>')),
         zipcode=MappingField(mapping=['zip'], value_transform = lambda x : x.replace('None','<MISSING>'), is_required = False),
         country_code=ConstantField('CA'),
-        phone=MappingField(mapping=['phone'], value_transform = lambda x : x.replace('None','<MISSING>') , is_required = False),
+        phone=MappingField(mapping=['phone'], value_transform = good_phone , is_required = False),
         store_number=MappingField(mapping=['id']),
         hours_of_operation=MappingField(mapping=['hours']),
         location_type=MissingField()
