@@ -40,7 +40,7 @@ def fetch_data():
         latitude = j.get('Latitude') or '<MISSING>'
         longitude = j.get('Longitude') or '<MISSING>'
         location_type = '<MISSING>'
-        hours_of_operation = '<MISSING>'
+        hours_of_operation = '<INACCESSIBLE>'
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
