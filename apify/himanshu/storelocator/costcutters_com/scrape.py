@@ -4,9 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-from sglogging import SgLogSetup
-logger = SgLogSetup().get_logger('costcutters_com')
 session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -79,14 +78,14 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
             yield store
 def scrape():
     data = fetch_data()

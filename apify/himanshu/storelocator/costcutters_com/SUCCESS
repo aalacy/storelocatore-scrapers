@@ -1,3 +1,1 @@
-VALIDATOR_VERSION: 0.0.68
-COMMAND: validate.py apify_docker_storage/ --ignore LatLngDuplicationValidator --ignore StoreNumberColumnValidator --ignore GeoConsistencyValidator --ignore StreetAddressHasStateName --ignore StreetAddressHasNumber --ignore CentroidValidator
-PYTHON_VERSION: sys.version_info(major=3, minor=6, micro=8, releaselevel='final', serial=0)
+0.0.200.0.23
