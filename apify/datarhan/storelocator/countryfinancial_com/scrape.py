@@ -62,7 +62,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
 
         all_poi_html = dom.xpath('//div[contains(@class, "repCard")]')
-        for poi_html in all_poi_html:
+        for poi_html in all_poi_html[1:]:
             store_url = poi_html.xpath('.//div[@class="rep-info"]/a[1]/@href')
             store_url = (
                 [elem.strip() for elem in store_url if elem.strip()][0]
