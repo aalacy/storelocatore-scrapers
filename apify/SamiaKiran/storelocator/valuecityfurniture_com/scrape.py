@@ -47,27 +47,22 @@ def fetch_data():
     url = "https://www.valuecityfurniture.com/store-locator/show-all-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    StoreName = soup.findAll("strong", {"class": "sl-storename"})
-    StoreAddress = soup.findAll("span", {"class": "sl-address"})
-    StorePhone = soup.findAll("span", {"class": "sl-phone"})
-    StoreHours = soup.findAll("div", {"class": "store-hours-table"})
-    for title, address, phone, hour in zip(
-        StoreName, StoreAddress, StorePhone, StoreHours
-    ):
-        title = title.text
-        phone = phone.text
+    loclist = soup.findAll("div", {"class": "store-locator-stores-result-list-item"})
+    for loc in loclist:
+        title = loc.find("strong", {"class": "sl-storename"}).text
+        phone = loc.find("span", {"class": "sl-phone"}).text
         phone = phone.strip()
-        street = address.find("span", {"itemprop": "streetAddress"}).text
-        city = address.find("span", {"itemprop": "addressLocality"}).text
-        state = address.find("span", {"itemprop": "addressRegion"}).text
-        pcode = address.find("span", {"itemprop": "postalCode"}).text
-        hour_list = hour.findAll("ul")
+        street = loc.find("span", {"itemprop": "streetAddress"}).text
+        city = loc.find("span", {"itemprop": "addressLocality"}).text
+        state = loc.find("span", {"itemprop": "addressRegion"}).text
+        pcode = loc.find("span", {"itemprop": "postalCode"}).text
+        hour_list = loc.find("div", {"class": "store-hours-table"})
+        hour_list = hour_list.findAll("ul")
         hours = ""
         for temp in hour_list:
             day = temp.find("li").text
             time = temp.find("time", {"itemprop": "openingHours"}).text
             hours = hours + day + " " + time + " "
-
         final_data.append(
             [
                 "https://www.valuecityfurniture.com/",
