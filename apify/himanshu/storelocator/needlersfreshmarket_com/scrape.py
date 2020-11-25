@@ -50,12 +50,14 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-    base_url= "https://api.freshop.com/1/stores?app_key=needle&has_address=true&limit=-1&token=cc7addbba26f04aaff389c432080acf4"
-    locations = session.get(base_url,headers=headers).json()
+    base_url= "https://api.freshop.com/1/stores?app_key=needle&has_address=true&limit=-1&token=49ed58f7bd1e07f501d0ea8be4542630"
+    locations = session.get(base_url,headers=headers).json()["items"]
+    
     # logger.info(locations)
     # soup= BeautifulSoup(r.text,"lxml")
+ 
     return_main_object=[]
-    for loc in locations['items']:
+    for loc in locations:
         address = loc['address_1']
         latitude = loc['latitude']
         name =loc['name']
@@ -85,7 +87,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(latitude)
         tem_var.append(longitude)
-        tem_var.append(hours)
+        tem_var.append(hours.replace('\n',' ').replace('  ',''))
         tem_var.append(loc['url'])
         # logger.info(tem_var)
         return_main_object.append(tem_var)
