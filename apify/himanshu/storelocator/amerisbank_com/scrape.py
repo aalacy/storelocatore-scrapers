@@ -1,5 +1,4 @@
 import csv
-import requests
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
@@ -32,7 +31,7 @@ def fetch_data():
                 soup = BeautifulSoup(session.get(page_url).content, 'html5lib')
                 data = (soup.find_all("script",{"type":"application/ld+json"})[-1]).text
                 data1 = (data.replace("//if applied, use the tmpl_var to retrieve the database value",""))
-
+                
                 json_data = json.loads(data1)
                 
                 location_name = soup.find("div",{"id":"branchName"}).text.strip()
@@ -59,6 +58,8 @@ def fetch_data():
                         hours = " ".join(list(soup.find("div",{"class":"flexRight"}).stripped_strings))
                 if "n/a" in hours or "N/A" in hours:
                     hours = "<MISSING>"
+                if "24 Hour Access" in hours:
+                    location_type = "ATM's"
                 store = []
                 store.append("https://www.amerisbank.com/")
                 store.append(location_name)
@@ -69,10 +70,10 @@ def fetch_data():
                 store.append(country_code)
                 store.append(store_number if store_number.isdigit() else "<MISSING>")
                 store.append(phone)
-                store.append(location_type)
+                store.append(location_type.replace("BankOrCreditUnion","Bank Or CreditUnion"))
                 store.append(lat)
                 store.append(lng)
-                store.append(hours.replace("Drive-Thru Hours Monday: Drive-Thru Service Not Available Tuesday: Drive-Thru Service Not Available Wednesday: Drive-Thru Service Not Available Thursday: Drive-Thru Service Not Available Friday: Drive-Thru Service Not Available Saturday: Drive-Thru Service Not Available Sunday: Drive-Thru Service Not Available ","").replace("HOURS ","").replace(" Drive-Thru Hours",", Drive-Thru Hours"))
+                store.append(hours.replace("Drive-Thru Hours Monday: Drive-Thru Service Not Available Tuesday: Drive-Thru Service Not Available Wednesday: Drive-Thru Service Not Available Thursday: Drive-Thru Service Not Available Friday: Drive-Thru Service Not Available Saturday: Drive-Thru Service Not Available Sunday: Drive-Thru Service Not Available ","").replace("HOURS ","").replace(" Drive-Thru Hours",", Drive-Thru Hours").replace("Branch Lobby Hours ",""))
                 store.append(page_url)
                 if store[2] in addresses:
                     continue
