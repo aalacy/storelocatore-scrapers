@@ -33,7 +33,7 @@ def fetch_data():
 
     base_url = "https://www.tommy.com"
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['US','CA'])
     MAX_RESULTS = 150
     MAX_DISTANCE = 100

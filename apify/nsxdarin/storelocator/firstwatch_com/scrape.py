@@ -11,7 +11,7 @@ logger = SgLogSetup().get_logger('firstwatch_com')
 
 
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize()
 
 session = SgRequests()

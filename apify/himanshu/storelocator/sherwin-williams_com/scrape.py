@@ -47,7 +47,7 @@ def fetch_data():
         "Accept": "application/json, text/plain, */*"
     }
     for loc_type in location_types:
-        search = sgzip.ClosestNSearch()
+        search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
         search.initialize()
         coord = search.next_coord()
         while coord:

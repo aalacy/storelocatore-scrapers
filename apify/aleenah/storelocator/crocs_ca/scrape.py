@@ -22,7 +22,7 @@ def write_output(data):
 all=[]
 def fetch_data():
     # Your scraper here
-    """search = sgzip.ClosestNSearch()
+    """search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     # Initialize the search for the US and Canada
     search.initialize(country_codes=['ca'])
 
@@ -63,7 +63,7 @@ def fetch_data():
             search.max_distance_update(MAX_DISTANCE)
 
         postcode = search.next_zip()"""
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     # Initialize the search for the US and Canada
     search.initialize(country_codes=['ca'])
     count = 0

@@ -39,7 +39,7 @@ def query_zip(zip_code):
 def fetch_data():
     locator_domain = 'https://www.food4less.com/'
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes= ["US","CA"])
     MAX_RESULTS = 100
     MAX_DISTANCE = 100

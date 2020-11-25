@@ -31,7 +31,7 @@ def fetch_data():
 	data = []
 	found_poi = []
 
-	search = sgzip.ClosestNSearch()
+	search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 	# Initialize the search for the US only
 	search.initialize(country_codes = ['us'])
 

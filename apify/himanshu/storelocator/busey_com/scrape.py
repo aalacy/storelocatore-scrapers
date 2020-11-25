@@ -36,7 +36,7 @@ def fetch_data():
     store_detail  = []
     addresses = []
     addresses1 = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 1000
     MAX_DISTANCE = 50

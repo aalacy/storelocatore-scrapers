@@ -4,7 +4,7 @@ import json
 from sglogging import SgLogSetup
 import sgzip
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['ca'])
 
 logger = SgLogSetup().get_logger('cadillaccanada_ca')

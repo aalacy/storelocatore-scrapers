@@ -26,7 +26,7 @@ def fetch_zip_code(url):
 
 def fetch_data():
     ids = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     code = search.next_zip()
     while code:
