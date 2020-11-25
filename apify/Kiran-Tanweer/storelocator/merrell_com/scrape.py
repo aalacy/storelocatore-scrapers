@@ -43,19 +43,16 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    urls=['https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=Outlet&inline=1&show_links_in_list=&parent_domain=&map_center_lat=14.150713232190412&map_center_lng=67.07029999999772&map_distance_diag=9412.862231536776&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=2',
-          'https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=Merrell&inline=1&show_links_in_list=&parent_domain=&map_center_lat=19.025074077515313&map_center_lng=-90.53330000000011&map_distance_diag=2840.6292207500674&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4']
-    for url in urls:
-        #url = "https://merrell.locally.com/store/52316/merrell-outlet-silver-sands-premium"
-        r = session.get(url, headers=headers, verify=False)
-        site = json.loads(r.text)
-        data_list = site['markers']
-        
-        for store in data_list:
-            print(store)
-            title = store['name']
-            if ("Canada") in title:
-                continue
+    url = 'https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=-4.263256414560601e-14&map_center_lng=-87.84986899999667&map_distance_diag=12578.772558487182&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=0.6366246000856579'
+    r = session.get(url, headers=headers, verify=False)
+    site = json.loads(r.text)
+    data_list = site['markers']
+    
+    for store in data_list:
+        country = store['country']
+        title = store['name']
+        if country == "US" and "Merrell" in title:
+            country = store['country']
             street = store['address']
             city =store['city']
             state =store['state']
@@ -93,7 +90,7 @@ def fetch_data():
                             longt,
                             storehours
                         ])
-           
+        
     return data
 
 def scrape():
