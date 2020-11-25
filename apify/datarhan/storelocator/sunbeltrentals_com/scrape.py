@@ -78,16 +78,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Address"]["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        if poi["WeekHours"]:
-            hours_of_operation.append("WeekHours - {}".format(poi["WeekHours"]))
-        if poi["SaturdayHours"]:
-            hours_of_operation.append("SaturdayHours - {}".format(poi["SaturdayHours"]))
-        if poi["SundayHours"]:
-            hours_of_operation.append("SundayHours - {}".format(poi["SundayHours"]))
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = "<INACCESIBLE>"
 
         item = [
             DOMAIN,
