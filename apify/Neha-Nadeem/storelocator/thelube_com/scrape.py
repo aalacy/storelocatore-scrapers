@@ -44,7 +44,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    cleanr = re.compile(r"<[^>]+>")
     pattern = re.compile(r"\s\s+")
     url = "http://thelube.com/category/locations/"
     r = session.get(url, headers=headers)
