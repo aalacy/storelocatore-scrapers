@@ -1,4 +1,3 @@
 lxml==4.5.2
-sgvalidator==0.0.71
 sgrequests==0.0.15
-zipcodes==1.0.5
+sgvalidator==0.0.71
