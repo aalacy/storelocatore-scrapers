@@ -80,7 +80,7 @@ def fetch_data():
                 close_h = hours["close"]["date"].split()[-1].split(".")[0]
                 hours_of_operation.append("{} {} - {}".format(day, open_h, close_h))
             hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "closed") if hours_of_operation else "<MISSING>"
             )
 
             item = [
