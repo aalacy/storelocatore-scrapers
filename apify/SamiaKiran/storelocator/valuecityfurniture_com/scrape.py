@@ -48,22 +48,22 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     loclist = soup.findAll("div", {"class": "store-locator-stores-result-list-item"})
-    for loc in loclist:  
-      title = loc.find("strong", {"class": "sl-storename"}).text
-      phone = loc.find("span", {"class": "sl-phone"}).text
-      phone = phone.strip()
-      street = loc.find("span", {"itemprop": "streetAddress"}).text
-      city = loc.find("span", {"itemprop": "addressLocality"}).text
-      state = loc.find("span", {"itemprop": "addressRegion"}).text
-      pcode = loc.find("span", {"itemprop": "postalCode"}).text
-      hour_list = loc.find("div", {"class": "store-hours-table"})
-      hour_list = hour_list.findAll("ul")
-      hours = ""
-      for temp in hour_list:
-          day = temp.find("li").text
-          time = temp.find("time", {"itemprop": "openingHours"}).text
-          hours = hours + day + " " + time + " "
-      final_data.append(
+    for loc in loclist:
+        title = loc.find("strong", {"class": "sl-storename"}).text
+        phone = loc.find("span", {"class": "sl-phone"}).text
+        phone = phone.strip()
+        street = loc.find("span", {"itemprop": "streetAddress"}).text
+        city = loc.find("span", {"itemprop": "addressLocality"}).text
+        state = loc.find("span", {"itemprop": "addressRegion"}).text
+        pcode = loc.find("span", {"itemprop": "postalCode"}).text
+        hour_list = loc.find("div", {"class": "store-hours-table"})
+        hour_list = hour_list.findAll("ul")
+        hours = ""
+        for temp in hour_list:
+            day = temp.find("li").text
+            time = temp.find("time", {"itemprop": "openingHours"}).text
+            hours = hours + day + " " + time + " "
+        final_data.append(
             [
                 "https://www.valuecityfurniture.com/",
                 "https://www.valuecityfurniture.com/store-locator/show-all-locations",
@@ -84,9 +84,9 @@ def fetch_data():
     return final_data
 
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
