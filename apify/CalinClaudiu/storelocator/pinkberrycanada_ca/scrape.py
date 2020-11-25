@@ -92,8 +92,17 @@ def good_phone(x):
         x= x.split('int')[0]
     except:
         x = x
+    try:
+        x = x.split('Ext')[0]
+    except:
+        x = x
+    try:
+        x= x.split('Int')[0]
+    except:
+        x = x
+
     x = x.replace('None','<MISSING>')
-    return x
+    return x.strip()
 
 
 def scrape():
