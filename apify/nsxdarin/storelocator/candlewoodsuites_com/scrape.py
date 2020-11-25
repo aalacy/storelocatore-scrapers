@@ -27,8 +27,7 @@ def fetch_data():
         if r.encoding is None: r.encoding = 'utf-8'
         for line in r.iter_lines(decode_unicode=True):
             if 'Hotels</span></a>' in line:
-                if 'florida' in line:
-                    states.append(line.split('href="')[1].split('"')[0])
+                states.append(line.split('href="')[1].split('"')[0])
         for state in states:
             cities = []
             logger.info(('Pulling State %s...' % state))
