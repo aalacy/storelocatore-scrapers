@@ -70,7 +70,7 @@ def fetch_data():
         for con in content:
             store = "store" + str(count)
             count = count + 1
-            if (("Temporarily Closed") in con.find("h4").text.split(",", 1)[1]) == True:
+            if (("Temporarily Closed") in con.find("h4").text.split(",", 1)[1]) is True:
                 continue
             else:
 
