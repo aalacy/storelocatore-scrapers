@@ -1,10 +1,9 @@
 import csv
-import requests
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import time 
+import time
 from datetime import datetime
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('smoothieking_com')
