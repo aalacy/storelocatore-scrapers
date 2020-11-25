@@ -48,7 +48,7 @@ def fetch_data():
             ltype = ltype.lstrip().replace('\n','|')
         else:
             continue
-        hours = div.find('div',{'class':'hours'}).text        
+               
         r = session.get(link, headers=headers, verify=False)    
         soup =BeautifulSoup(r.text, "html.parser")
         try:
@@ -57,10 +57,12 @@ def fetch_data():
         except:
             phone = '<MISSING>'
         try:
-            hours = hours.split('Drive Up Hours',1)[0]
+            hours = soup.find('ul',{'itemprop':'openingHoursSpecification'}).text
+            hours = re.sub(pattern,' ',hours)
+            hours = hours.replace('\n','').strip()
         except:
-            pass
-        hours = hours.replace('\n','').replace('Lobby Hours','')
+            hours = '<MISSING>'
+      
         ltype = ltype.replace('Branch|','Branch')
         try:
             phone = phone.split(' (1-',1)[1].split(')',1)[0]
