@@ -1,5 +1,16 @@
 version: 2.1
 jobs:
+  check-ci-config-current:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: Check that CI configuration is current
+          command: |
+            source ./.circleci/lib.sh
+            check_ci_config_current
+
   check-diffs:
     docker:
       - image: cimg/base:2020.01
@@ -108,6 +119,10 @@ orbs:
 workflows:
   check-updates:
     jobs:
+      - check-ci-config-current:
+          filters:
+            branches:
+              ignore: master
       - check-diffs:
           filters:
             branches:
