@@ -45,7 +45,7 @@ def fetch_data():
 
     start_url = "https://webapi.dairyqueen.com/v3/store/locator?callback=jQuery111304643188529110178_1606299141114&latitude=40.75368539999999&longitude=-73.9991637&radius=50000&mallMenu=true&conditions=dairy_queen"
     response = session.get(start_url)
-    data = re.findall("jQuery.+\d+\((.+)\)", response.text)[0]
+    data = re.findall("\d+\((.+)\)", response.text)[0]
     data = json.loads(data)
 
     for poi in data:
