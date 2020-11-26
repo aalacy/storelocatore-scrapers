@@ -72,9 +72,9 @@ def fetch_data():
         title = loc["name"]
         schedule = loc["schedule"]
         # print(schedule)
-        for time in schedule:
-            day = time["day"]
-            hours = time["hours"]
+        for ti in schedule:
+            day = ti["day"]
+            hours = ti["hours"]
             opentime = hours["openTime"]
             closetime = hours["closeTime"]
             timings = timings + day + ": " + opentime + "-" + closetime + " "
