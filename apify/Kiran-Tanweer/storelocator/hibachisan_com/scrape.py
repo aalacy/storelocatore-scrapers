@@ -1,16 +1,18 @@
 from bs4 import BeautifulSoup
+import csv
+import re, time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import re
-import json
-import time
-import csv
 
-logger = SgLogSetup().get_logger('merrell_com')
+
+logger = SgLogSetup().get_logger("hibachisan_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -42,56 +44,154 @@ def write_output(data):
 
 
 def fetch_data():
+    # Your scraper here
     data = []
-    url = 'https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=-4.263256414560601e-14&map_center_lng=-87.84986899999667&map_distance_diag=12578.772558487182&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=0.6366246000856579'
+    i = 0
+    pattern = re.compile(r"\s\s+")
+    url_list = []
+    coord_list = []
+    url = "http://www.hibachisan.com/locations/"
     r = session.get(url, headers=headers, verify=False)
-    site = json.loads(r.text)
-    data_list = site['markers']
-    
-    for store in data_list:
-        country = store['country']
-        title = store['name']
-        if country == "US" and "Merrell" in title:
-            country = store['country']
-            street = store['address']
-            city =store['city']
-            state =store['state']
-            zipcode = store['zip']
-            tel = store['phone']
-            lat= store['lat']
-            longt=store['lng']
-            storeid= store['id']
-            storelink = "https://merrell.locally.com/store/"+str(storeid)
-            #phone = phonenumbers.parse(tel, 'US')
-            phone = tel.lstrip('+1')
-            
-            r = session.get(storelink, headers=headers, verify=False)
-            subsoup = BeautifulSoup(r.text, "html.parser")
-            storehours = '<MISSING>'
-            if (subsoup.find( 'div' , {'class' : 'landing-header-hours-inner'})):
-                storehours  =  subsoup.find( 'div' , {'class' : 'landing-header-hours-inner'}).findAll('span')
-                storehours= ' '.join([str(elem.text) for elem in storehours])    
-          
-            if len(storehours) == 0:
-                storehours = '<MISSING>'
-            data.append([
-                            'https://merrell.locally.com/',
-                            storelink,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            zipcode,
-                            'US',
-                            storeid,
-                            phone,
-                            '<MISSING>',
-                            lat,
-                            longt,
-                            storehours
-                        ])
-        
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    selectlist = soup.find("select", {"id": "ctl00_ContentPlaceHolder1_ddlState"})
+    statelist = selectlist.find_all("option")
+    statecode = [o.get("value") for o in statelist]
+
+    # We have the state code list
+    if statecode[0] == "-- SELECT --":
+        statecode.pop(0)
+    # for each state code, request!
+    for element in statecode:
+        url = "http://www.hibachisan.com/locations/locatorresults.aspx?state=" + element
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        maindiv = soup.find("div", {"id": "maincontenttext"})
+        info = maindiv.find_all("span")
+        spanid = [o.get("id") for o in info]
+        if spanid[0] != "ctl00_ContentPlaceHolder1_lblNoStoresFound":
+            url_list.append(url)
+    nextpage = ""
+    for url in url_list:
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        secondpage = soup.find("a", {"id": "ctl00_ContentPlaceHolder1_btnNext0"})
+        if secondpage is not None:
+            nextpage = secondpage.get("href")
+            nextpage = "http://www.hibachisan.com" + nextpage
+            url_list.append(nextpage)
+    for url in url_list:
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find(
+            "table", {"id": "ctl00_ContentPlaceHolder1_dlGetStoresByState"}
+        )
+        rowlist = table.findAll("table")
+        for ele in rowlist:
+            col = ele.findAll("td")[2]
+            drive = col.find("a")
+            if drive is not None:
+                drive = drive["href"]
+                coord_list.append(drive)
+                coord_list.append(drive)
+    # for i in coord_list:
+    #     print(i)
+
+    for url in url_list:
+        # print(url)
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find(
+            "table", {"id": "ctl00_ContentPlaceHolder1_dlGetStoresByState"}
+        )
+        rowlist = table.findAll("table")
+
+        for k in range(0, len(rowlist), 2):
+            content = rowlist[k].text
+            hours = rowlist[k + 1].text
+            if "Directions" in content:
+                content = content.split("Directions", 1)[0]
+            content = re.sub(pattern, "\n", content)
+            content = list(content.split("\n"))
+            title = content[1]
+            street = content[2]
+            city = content[3]
+            city = city.rstrip(",")
+            state = content[4]
+            zipcode = content[5]
+            phone = content[6]
+            phone = phone.lstrip("Phone: ")
+            coords = coord_list[i]
+            coord = coords.split("cp=")[1]
+            coord = coord.split("&")[0]
+            lat, longt = coord.split("~")
+            i = i + 2
+            if len(phone) == 0:
+                phone = "<MISSING>"
+            cleanr = re.compile(r"<[^>]+>")
+            pattern = re.compile(r"\s\s+")
+            hours = re.sub(cleanr, "\n", hours)
+            hours = re.sub(pattern, "\n", hours)
+            hours = hours.splitlines()
+            week = hours[1]
+            start_time = hours[2]
+            end_time = hours[3]
+            if start_time.find("AM") != -1:
+                start_time = start_time.replace("AM", "AM-")
+            if start_time.find("PM") != -1:
+                start_time = start_time.replace("PM", "PM-")
+            if start_time.find("CLOSE") != -1:
+                start_time = start_time.replace("CLOSE", "CLOSE-")
+            if end_time.find("AM") != -1:
+                end_time = end_time.replace("AM", "AM ")
+            if end_time.find("PM") != -1:
+                end_time = end_time.replace("PM", "PM ")
+            if end_time.find("CLOSE") != -1:
+                end_time = end_time.replace("CLOSE", "CLOSE ")
+            if week.find("day") != -1:
+                week = week.replace("day", "day ")
+            week = week.split(" ")
+            week.remove("")
+            split_start = []
+            split_end = []
+            # start_time = start_time.split('M ')
+            if "CLOSE" not in start_time:
+                for index in range(0, len(start_time), 9):
+                    split_start.append(start_time[index : index + 9])
+            else:
+                for index in range(0, len(start_time), 6):
+                    split_start.append(start_time[index : index + 6])
+            if "CLOSE" not in end_time:
+                for index in range(0, len(end_time), 8):
+                    split_end.append(end_time[index : index + 8])
+            else:
+                for index in range(0, len(end_time), 6):
+                    split_end.append(end_time[index : index + 6])
+            schedule = ""
+            time = []
+            for a, b, c in zip(week, split_start, split_end):
+                time = a + " " + b + c
+                schedule = schedule + time
+            data.append(
+                [
+                    "https://www.wienerschnitzel.com/",
+                    url,
+                    title,
+                    street,
+                    city,
+                    state,
+                    zipcode,
+                    "US",
+                    "<MISSING>",
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    schedule,
+                ]
+            )
     return data
+
 
 def scrape():
     logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
