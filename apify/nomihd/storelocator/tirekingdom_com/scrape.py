@@ -97,7 +97,7 @@ def fetch_data():
 
         store_json = json.loads(stores_resp.text)["output"]["store"]
 
-        location_name = store_json["address"]["address1"]
+        location_name = store_json["brand"]["brandName"]
         street_address = store_json["address"]["address1"]
         if store_json["address"]["address2"] is not None:
             street_address = street_address + " " + store_json["address"]["address2"]
