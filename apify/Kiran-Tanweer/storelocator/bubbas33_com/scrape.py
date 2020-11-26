@@ -1,7 +1,7 @@
-import csv
-import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
+import csv
 
 
 logger = SgLogSetup().get_logger("bubbas33_com")
