@@ -6,6 +6,12 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
+def backup(x):
+    try:
+        return x.find('div',{'class':lambda x : x and 'storeJSON' in x})['data-storejson']
+    except:
+        raise Exception('Failed to find JSON')
+    
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name='clubmonaco')
     urlUS = "https://www.clubmonaco.com/on/demandware.store/Sites-ClubMonaco_US-Site/en_US/Stores-ViewResults?country=US&postal=96701&radius=15000"
@@ -21,7 +27,10 @@ def fetch_data():
     session = SgRequests()
     son = session.post(urlUS, headers = headers)
     soup = BeautifulSoup(son.text,'lxml')
-    soup1 = soup.find('div',{'class':'storeJSON hide'})['data-storejson']
+    try:
+        soup1 = soup.find('div',{'class':lambda x : x and all(i in x for i in ['storeJSON', 'hide'])})['data-storejson']
+    except:
+        soup1 = backup(soup)
     soup1 = '{"store":'+soup1+"}"
     soup = soup.find('script',{'type':'application/ld+json'})
     son = json.loads(soup.text)
