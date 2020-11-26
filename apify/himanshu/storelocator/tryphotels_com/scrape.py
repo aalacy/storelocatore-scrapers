@@ -2,7 +2,7 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import time 
+import time
 from sgrequests import SgRequests
 session = SgRequests()
 def write_output(data):
@@ -88,6 +88,58 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
+    location_url = "https://www.wyndhamhotels.com/tryp/carolina-puerto-rico/tryp-by-wyndham-isla-verde/overview"
+    try:
+        r1 = session.get(location_url, headers=headers,  allow_redirects=False)
+    except Exception as e:
+        pass
+    soup1= BeautifulSoup(r1.text,"lxml")
+    b1 = soup1.find("script",{"type":"application/ld+json"})
+    b = (str(b1).split('ld+json">')[1].split("</script>")[0])
+    if b != [] and b != None:
+        h  = json.loads(b)  
+        location_name = (h['name'])
+        street_address = h['address']["streetAddress"]              
+        latitude = h['geo']["latitude"]      
+        longitude = h['geo']["longitude"]                 
+        city = h['address']["addressLocality"]   
+        if "postalCode" in  h['address'] :   
+            zipp = h['address']["postalCode"]
+        else:
+            zipp = "<MISSING>"
+        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
+        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+        if ca_zip_list:
+            zipp = ca_zip_list[-1]
+            country_code = "CA"
+        if us_zip_list:
+            zipp = us_zip_list[-1]
+            country_code = "US"
+        if len(zipp)==6 or len(zipp)==7:
+            country_code = "CA"
+        else:
+            country_code = "US"
+        if  "addressRegion" in h['address']:
+            state = h['address']["addressRegion"]
+        else:
+            state = "<MISSING>"
+        phone = h['telephone']              
+        store = []
+        store.append("https://www.wyndhamhotels.com/tryp")
+        store.append(location_name if location_name else "<MISSING>") 
+        store.append(street_address.strip() if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append("Puerto Rico")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country_code)
+        store.append("<MISSING>") 
+        store.append(phone if phone else "<MISSING>" )
+        store.append("TRYP by Wyndham Hotels")
+        store.append( latitude if latitude else "<MISSING>")
+        store.append( longitude if longitude else "<MISSING>")
+        store.append("<MISSING>")
+        store.append(location_url)
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)
