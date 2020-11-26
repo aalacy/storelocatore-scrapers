@@ -23,7 +23,7 @@ def fetch_data():
     coords = sgzip.coords_for_radius(200)
     main_url = "https://www.woodspring.com"
     addresses = []
- 
+    print(len(coords))
     for cord in coords:
         result_coords = []
         x = cord[0]
