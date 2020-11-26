@@ -67,7 +67,10 @@ def fetch_data():
                             lat = line3.split(',"latitude":')[1].split(',')[0]
                             lng = line3.split('"longitude":')[1].split('}')[0]
                             store = lurl.replace('/hoteldetail','').rsplit('/',1)[1]
-                            yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            if store == 'pdxvc' or store == 'omasd' or store == 'nycfq' or store == 'hougo':
+                                print('Coming Soon')
+                            else:
+                                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
