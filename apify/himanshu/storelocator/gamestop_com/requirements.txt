@@ -1,8 +1,8 @@
 lxml
 beautifulsoup4
 sgrequests
-sgzip
 certifi
 urllib3
 pyopenssl
 sglogging
+sgzip==0.0.55

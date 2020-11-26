@@ -5,7 +5,7 @@ from sgzip import ClosestNSearch
 
 from lxml import (html, etree,)
 
-search = ClosestNSearch()
+search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize()
 
 class Acura:

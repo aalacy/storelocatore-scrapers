@@ -50,6 +50,7 @@ def parse_store(x):
         
     try:
         k['address'] = x.find('div',{'class':'col-md-6'}).find('p').text.split(',')[0]
+        backup = k['address']
     except:
         k['address'] = "<MISSING>"
         
@@ -118,6 +119,10 @@ def parse_store(x):
         k['address'] = k['address'].rsplit(k['city'], 1)[0]
     except:
         pass
+    k['address'] = k['address'].strip()
+    if k['address'].isdigit():
+        k['address'] = backup
+        
     return k
 
 def fetch_data():

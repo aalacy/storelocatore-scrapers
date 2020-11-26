@@ -32,17 +32,17 @@ def fetch_data():
     hdr = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'}
 
     all_codes = []
-    us_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
+    us_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
     for zip_code in us_zips:
         all_codes.append(zip_code)
-    ca_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.CANADA)
+    ca_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.CANADA)
     for zip_code in ca_zips:
         all_codes.append(zip_code)
 
     for code in all_codes:
         inccorect_request = False
         try:
-            response = session.get(start_url.format(code), headers=hdr)
+            response = session.get(start_url.format(code.replace(' ', '%20')), headers=hdr)
         except Exception as ex:
             inccorect_request = True
         if inccorect_request:
@@ -67,13 +67,19 @@ def fetch_data():
             store_number = store_number if store_number else '<MISSING>'
             phone = poi['PhoneNumber']
             phone = phone if phone else '<MISSING>'
-            location_type = '<MISSING>'
-            location_type = location_type if location_type else '<MISSING>'
             latitude = poi['Latitude']
             latitude = latitude if latitude else '<MISSING>'
             longitude = poi['Longitude']
             longitude = longitude if longitude else '<MISSING>'
-            hours_of_operation = '<MISSING>'
+            
+            store_response = session.get(store_url)
+            store_dom = etree.HTML(store_response.text)
+            store_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
+            store_data = json.loads(store_data)
+            location_type = store_data['@type']
+            location_type = location_type if location_type else '<MISSING>'
+            hours_of_operation = store_data['openingHours']
+            hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
             
             item = [
                 DOMAIN,
@@ -92,9 +98,9 @@ def fetch_data():
                 hours_of_operation
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
-                items.append(item)
+            # if store_number not in scraped_items:
+            #     scraped_items.append(store_number)
+            items.append(item)
         
     return items
 

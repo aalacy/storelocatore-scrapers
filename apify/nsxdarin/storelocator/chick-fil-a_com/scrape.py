@@ -18,7 +18,7 @@ def write_output(data):
 PATH_TEMPLATE = "/search?q={}&r=1000&per=50"
 URL_TEMPLATE = 'https://locator.chick-fil-a.com.yext-cdn.com' + PATH_TEMPLATE
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['us'])
 
 MAX_RESULTS = 50

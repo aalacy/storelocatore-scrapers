@@ -23,7 +23,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes= ["CA"])
     MAX_RESULTS = 250
     MAX_DISTANCE = 25

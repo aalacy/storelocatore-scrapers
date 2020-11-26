@@ -70,7 +70,7 @@ def http_req(coord):
 
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ["UK"])
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()

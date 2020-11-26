@@ -28,7 +28,7 @@ def fetch_data():
     address = []
     MAX_RESULTS = 50
     MAX_DISTANCE = 100
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     zip_code = search.next_zip()
     current_results_len =0

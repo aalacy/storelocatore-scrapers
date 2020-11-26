@@ -64,7 +64,7 @@ def fetch_data():
     'Connection': 'keep-alive',
     'Cookie': 'tk_ai=woo%3ApLgeTii%2Be43iIzeJv3ESzKfM'}
 
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
 
     MAX_DISTANCE = 50
@@ -113,7 +113,7 @@ def fetch_data():
         coord = search.next_coord()  
 
     #### canada 
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ['ca'])
 
     headers = {'Host': 'petvalu.com',

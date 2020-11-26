@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('9round_com')
@@ -19,7 +19,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
+            
 def fetch_data():
     # Your scraper here
     locs = []
@@ -35,7 +36,7 @@ def fetch_data():
     ids = []
     page_url = []
     countries = []
-    res = requests.get("https://www.9round.com/kickboxing-classes/directory")
+    res = session.get("https://www.9round.com/kickboxing-classes/directory")
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'col-md-12'})
 
@@ -48,9 +49,9 @@ def fetch_data():
     for a in sa:
         url = "https://www.9round.com/" + a.get('href')
         try:
-            res = requests.get(url)
+            res = session.get(url)
         except:
-            res = requests.get(url)
+            res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         # logger.info(url)
 
@@ -66,13 +67,13 @@ def fetch_data():
             del ca[0]
             for aa in ca:
                 page_url.append(aa.get('href'))
-    #logger.info(page_url)
+    # logger.info(page_url)
     for url in page_url:
         logger.info(url)
         try:
-            res = requests.get(url)
+            res = session.get(url)
         except:
-            res = requests.get(url)
+            res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data = str(soup.find('script', {'type': 'application/ld+json'}))
 
@@ -81,11 +82,14 @@ def fetch_data():
         cities.append(re.findall(r'"addressLocality": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
         states.append(re.findall(r'"addressRegion": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
         zips.append(re.findall(r'"postalCode": "([^"]*)"', data)[0].strip().replace('\u202a', ""))
-        timing.append(re.findall(r'"openingHours": "([^"]*)"', data)[0].strip().replace('\u202a', "").replace("Mo",
-                                                                                                              "Monday").replace(
+        tim = re.findall(r'"openingHours": "([^"]*)"', data)[0].strip().replace('\u202a', "").replace("Mo",
+                                                                                                      "Monday").replace(
             "Tu", "Tuesday").replace("We", "Wednesday").replace("Th", "Thursday").replace("Fr", "Friday").replace("Sa",
                                                                                                                   "Saturday").replace(
-            "Su", "Sunday"))
+            "Su", "Sunday")
+        if 'Sunday' not in tim:
+            tim += ', Sunday: CLOSED'
+        timing.append(tim)
         if re.findall(r'"addressCountry": "([^"]*)"', data)[0] == "Canada":
             countries.append('CA')
         else:
@@ -115,46 +119,14 @@ def fetch_data():
         # logger.info(ph)
         if ph == "" or ph == []:
             ph = "<MISSING>"
-        phones.append(ph)
-        """l=soup.find_all('h2', {'class': 'h2-responsive card-title h1 red-text font-weight-bold text-uppercase'})
-        if l==[]:
-            street.append("<MISSING>")
-            cities.append("<MISSING>")
-            states.append("<MISSING>")
-            zips.append("<MISSING>")
-            timing.append("<MISSING>")
-            phones.append("<MISSING>")
-            ids.append("<MISSING>")
-            lat.append("<MISSING>")
-            long.append("<MISSING>")
-            continue
-        l=l[0]
-        locs.append(l.text)
-        addr=soup.find('h4', {'class': 'h4-responsive font-weight-bolder'}).text.strip().split("\n")
-        street.append(addr[0])
-        addr=addr[1].split(",")
-        #logger.info(addr)
-        cities.append(addr[0])
-        addr=addr[1].strip().split()
-        states.append(addr[0])
-        zips.append(addr[1])
-        tim=soup.find_all('ul', {'class': 'list-unstyled opening-hours'})
-        if tim==[]:
-            tim="<MISSING>"
-        else:
-            tim=tim[0].text
-        #    logger.info(tim)
-        timing.append(tim)
-
-        lat.append(soup.find('div', {'id': 'map-container'}).get('data-lat'))
-        long.append(soup.find('div', {'id': 'map-container'}).get('data-lng'))"""
+        phones.append(ph.replace('Call', '').replace('- Texting us is preferred!', '').replace('OR Text',''))
 
     all = []
     for i in range(0, len(locs)):
         row = []
         row.append("https://www.9round.com")
-        row.append(locs[i].replace('&amp;','&'))
-        row.append(street[i].replace('&amp;','&'))
+        row.append(locs[i].replace('&amp;', '&'))
+        row.append(street[i].replace('&amp;', '&'))
         row.append(cities[i])
         row.append(states[i])
         row.append(zips[i])

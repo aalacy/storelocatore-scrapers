@@ -61,7 +61,7 @@ def fetch_data():
                 street_address += ', ' + poi['address2']
             if poi['address3']:
                 street_address += ', ' + poi['address3']
-            street_address = street_address if street_address else '<MISSING>'
+            street_address = ', '.join(street_address.split(',')[:-1]) if street_address else '<MISSING>'
             city = poi['city']
             city = city if city else '<MISSING>'
             state = poi['state']

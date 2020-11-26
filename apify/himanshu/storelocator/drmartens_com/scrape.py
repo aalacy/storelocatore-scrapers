@@ -21,22 +21,16 @@ def write_output(data):
             
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 300
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    addresses = []
+
+    zip_codes = sgzip.for_radius(200)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "Accept": "*/*",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     base_url = "https://www.drmartens.com/"
-    while zip_code:
+    for zip_code in  zip_codes:
         result_coords = []
-        logger.info("zips === " + str(zip_code))
         try:
             r = session.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
         except:
@@ -46,18 +40,16 @@ def fetch_data():
             location_url = r.json()
             current_results_len = len(location_url['data'])
             for address_list in location_url['data']:
-                location_name = address_list['displayName']
+                location_name = address_list['displayName'].replace("- This store will be temporarily closed until further notice",'')
                 latitude = address_list['latitude']
                 longitude = address_list['longitude']
-                phone = address_list['phone']
+                phone = address_list['phone'].replace("Tel: ",'')
                 street_address = address_list['line1']+" "+address_list['line2']
 
                 if "," in address_list['town']:
                     city = address_list['town'].split(',')[0]
                     state = address_list['town'].split(',')[1].strip()
-                if "San Diego" in address_list['town']:
-                    city = address_list['town']
-                    state = "<MISSING>"
+
                 elif len(address_list['town']) == 2:
                     city = address_list['line2']
                     state = address_list['town']
@@ -68,7 +60,10 @@ def fetch_data():
                 else:
                     city = address_list['town']
                     state = "<MISSING>"
-
+                if city=="San":
+                    city="San Diego"
+                if "Diego" in state:
+                    state = "CA"
                 zipp = address_list['postalCode']
                 if len(zipp) == 5:
                     country_code = "US"
@@ -80,7 +75,7 @@ def fetch_data():
                     hours_of_operation = str(address_list['openings']).replace('{', "").replace('}', "").replace("'","").replace(',','')
                 else:
                     hours_of_operation = "<MISSING>"
-            
+                    
                 store = []
                 # result_coords.append((latitude, longitude))
                 store.append(base_url)
@@ -105,16 +100,7 @@ def fetch_data():
                 yield  store
             else:
                 pass
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
+        
 def scrape():
     data = fetch_data()
     write_output(data)

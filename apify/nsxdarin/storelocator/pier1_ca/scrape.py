@@ -83,7 +83,7 @@ def fetch_data(search):
         code = search.next_zip()
 
 def scrape():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ['ca'])
     data = fetch_data(search)
     write_output(data)

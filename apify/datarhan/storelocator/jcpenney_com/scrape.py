@@ -53,7 +53,7 @@ def fetch_data():
         all_codes.append(zip_code)
 
     start_url = 'https://browse-api.jcpenney.com/v1/stores?radius=1000&pageSize=100&storeService=&location={}'
-    for code in tqdm(all_codes):
+    for code in all_codes:
         response = session.get(start_url.format(code))
         data = json.loads(response.text)
         if not data.get('stores'):

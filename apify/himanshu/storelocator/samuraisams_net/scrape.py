@@ -30,13 +30,16 @@ def fetch_data():
     r = session.get("https://www.samuraisams.net/locator/index.php?brand=6&mode=desktop&pagesize=10000&latitude=&longitude=&q=11756&submit.x=0&submit.y=0",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for script in soup.find_all("script"):
-        if "Locator.stores[" in script.text:
-            store_data = json.loads(script.text.split("'] = ")[1].split("} ;")[0] + "}")
+        if "Locator.stores[" in str(script):
+           
+            scr = str(script)
+            store_data = json.loads('{' + scr.split("{",1)[1].split("}",1)[0] + "}")
+            
             if store_data["StatusName"] == "Coming Soon":
                 continue
             location_request = session.get("https://www.samuraisams.net/stores/" + str(store_data["StoreId"]),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            name = location_soup.find("div",{'id':'intro'}).find("h2").text.strip()
+            name = location_soup.find("h2").text.strip()
             store = []
             store.append("https://www.samuraisams.net")
             store.append(name)
@@ -54,7 +57,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(store_data["Latitude"])
             store.append(store_data["Longitude"])
-            hours = " ".join(list(location_soup.find("div",{"id":"storeHoursContainer"}).stripped_strings))
+            hours = " ".join(list(location_soup.find("div",{"class":"group hours"}).stripped_strings)).replace('Store Hours ','')
             store.append(hours if hours else "<MISSING>")
             store.append("https://www.samuraisams.net/stores/" + str(store_data["StoreId"]))
             # logger.info(store)

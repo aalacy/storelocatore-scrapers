@@ -6,7 +6,7 @@ import sgzip
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('aldi_us')
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize()
 
 session = SgRequests()

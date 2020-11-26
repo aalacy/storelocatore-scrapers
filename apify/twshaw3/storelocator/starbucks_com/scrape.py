@@ -29,7 +29,7 @@ HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 URL_TEMPLATE = 'https://www.starbucks.com/bff/locations?lat={}&lng={}'
 MAX_DISTANCE = 30.0
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['us', 'ca'])
 
 def handle_missing(field):
