@@ -1,0 +1,1 @@
+--ignore CountValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator (Multiple POI same address)
