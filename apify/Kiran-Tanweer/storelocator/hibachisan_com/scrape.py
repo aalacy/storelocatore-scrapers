@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
-import re, time
+import re
+import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -94,8 +95,6 @@ def fetch_data():
                 drive = drive["href"]
                 coord_list.append(drive)
                 coord_list.append(drive)
-    # for i in coord_list:
-    #     print(i)
 
     for url in url_list:
         # print(url)
@@ -157,16 +156,16 @@ def fetch_data():
             # start_time = start_time.split('M ')
             if "CLOSE" not in start_time:
                 for index in range(0, len(start_time), 9):
-                    split_start.append(start_time[index : index + 9])
+                    split_start.append(start_time[index: index + 9])
             else:
                 for index in range(0, len(start_time), 6):
-                    split_start.append(start_time[index : index + 6])
+                    split_start.append(start_time[index: index + 6])
             if "CLOSE" not in end_time:
                 for index in range(0, len(end_time), 8):
-                    split_end.append(end_time[index : index + 8])
+                    split_end.append(end_time[index: index + 8])
             else:
                 for index in range(0, len(end_time), 6):
-                    split_end.append(end_time[index : index + 6])
+                    split_end.append(end_time[index: index + 6])
             schedule = ""
             time = []
             for a, b, c in zip(week, split_start, split_end):
