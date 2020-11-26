@@ -20,7 +20,8 @@ def write_output(data):
 
 def fetch_data():
     alllocs = []
-    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
+    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/canada-hotels',
+            'https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
     for url in urls:
         states = []
         r = session.get(url, headers=headers)
@@ -43,7 +44,7 @@ def fetch_data():
                 for line3 in r3.iter_lines(decode_unicode=True):
                     if 'https://www.ihg.com/crowneplaza/hotels/' in line3 and '{"@context":"https://www.schema.org"' in line3:
                         lurl = line3.split('"url":"')[1].split('"')[0]
-                        if lurl not in alllocs:
+                        if lurl not in alllocs and 'NoImageAvailable_RoomRates' not in line3:
                             alllocs.append(lurl)
                             website = 'crowneplaza.com'
                             typ = 'Hotel'
