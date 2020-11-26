@@ -108,6 +108,20 @@ def get_day(day):
     return week_day
 
 
+def append_zero(zip):
+
+    if len(zip) == 1:
+        zip = "0000" + zip
+    if len(zip) == 2:
+        zip = "000" + zip
+    if len(zip) == 3:
+        zip = "00" + zip
+    if len(zip) == 4:
+        zip = "0" + zip
+
+    return zip
+
+
 def fetch_data():
     # Your scraper here
     locator_domain = website
@@ -135,9 +149,7 @@ def fetch_data():
         headers=headers,
     )
     locations_sel = lxml.html.fromstring(locations_resp.text)
-    stores = locations_sel.xpath(
-        '//a[@itemprop="url"]'
-    )
+    stores = locations_sel.xpath('//a[@itemprop="url"]')
     stores_info = locations_sel.xpath(
         '//div[@itemtype="http://schema.org/LocalBusiness"]'
     )
@@ -169,6 +181,8 @@ def fetch_data():
                     'div[@itemprop="address"]/span[@itemprop="addressRegion"]/text()'
                 )
             ).strip()
+            if state == "":
+                state = "<MISSING>"
 
             zip = "".join(
                 stores_info[index].xpath(
@@ -185,29 +199,32 @@ def fetch_data():
             if us.states.lookup(state):
                 country_code = "US"
             else:
-                country_code = "CA"
+                country_code = "<MISSING>"
 
             store_number = "<MISSING>"
             phone = "<MISSING>"
 
             hours_of_operation = "<MISSING>"
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
+            if country_code == "US":
+                zip = append_zero(zip)
+
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                loc_list.append(curr_list)
         else:
 
             stores_resp = session.get(
@@ -232,8 +249,12 @@ def fetch_data():
                 street_address = store_json["addresses"]["marketing"]["addressLineOne"]
                 city = store_json["addresses"]["marketing"]["city"]
                 state = store_json["addresses"]["marketing"]["state"]
+                if state == "":
+                    state = "<MISSING>"
 
                 zip = store_json["addresses"]["marketing"]["zip"]
+                if len(zip) == 4:
+                    zip = "0" + zip
 
                 if location_type == "":
                     location_type = "<MISSING>"
@@ -268,23 +289,28 @@ def fetch_data():
                 if hours_of_operation == "":
                     hours_of_operation = "<MISSING>"
 
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
+                if country_code == "US" or country_code == "CA":
+                    if country_code == "US":
+                        zip = append_zero(zip)
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                    loc_list.append(curr_list)
+                else:
+                    log.info(f"ignored because country is: {country_code}")
             else:
                 log.info(f"\n{page_url} does not have any data to show\n")
 
