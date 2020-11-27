@@ -46,8 +46,12 @@ def fetch_data():
         if 'coming soon' in title.lower():
             continue
 
-        hours = soup.find('div', {'class': 'hours-and-transportation'}).find('p').text.replace('Hours:', '').replace(
-            '\n', '')
+        ps = soup.find('div', {'class': 'hours-and-transportation'}).find_all('p')
+        hours=''
+        for pp in ps:
+            hours+=pp.text+', '
+        hours=hours.replace('Hours:', '').strip().strip(',').replace('M,', 'M:')
+
         det = soup.find('div', {'class': 'address'}).text.lstrip().rstrip().split('\n')
         # logger.info(det)
 
@@ -171,7 +175,14 @@ def fetch_data():
             street = street.replace('Staten Island', '')
         street = street + ' ' + check
 
-        
+        if street.strip()=='':
+            street='<MISSING>'
+        if lat.strip()=='':
+            lat='<MISSING>'
+        if longt.strip() == '':
+            longt='<MISSING>'
+
+
 
         data.append([
             'https://www.shakeshack.com',

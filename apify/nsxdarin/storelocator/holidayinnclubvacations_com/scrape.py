@@ -20,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    for x in range(1, 3):
+    for x in range(1, 4):
         url = 'https://holidayinnclub.com/api/resorts?page=' + str(x)
         r = session.get(url, headers=headers)
         website = 'holidayinnclubvacations.com'
@@ -55,7 +55,8 @@ def fetch_data():
                         if 'Apple Mountain Resort' in name:
                             city = 'Clarkesville'
                             state = 'Georgia'
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        if 'Coming Soon' not in item:
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

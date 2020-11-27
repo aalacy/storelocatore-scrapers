@@ -8,3 +8,5 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+address with no number, address contains state name,same  lat & lng,2 places address  same but other data is different so i have scraped and  i check all data is true this website

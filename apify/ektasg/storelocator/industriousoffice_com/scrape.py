@@ -83,18 +83,18 @@ def fetch_data():
                     titlelist.append(title)
                     data.append([
                         'https://www.industriousoffice.com/',
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
+                        link.replace('\u202c',''),
+                        title.replace('\u202c',''),
+                        street.replace('\u202c',''),
+                        city.replace('\u202c',''),
+                        state.replace('\u202c',''),
+                        pcode.replace('\u202c',''),
                         'US',
                         '<MISSING>',
-                        phone,
+                        phone.replace('\u202c',''),
                         '<MISSING>',
-                        lat,
-                        longt,
+                        lat.replace('\u202c',''),
+                        longt.replace('\u202c',''),
                         '<MISSING>'
                     ])
                     # logger.info(p,data[p])
@@ -119,18 +119,18 @@ def fetch_data():
                 titlelist.append(title)
                 data.append([
                     'https://www.industriousoffice.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
+                    link.replace('\u202c',''),
+                    title.replace('\u202c',''),
+                    street.replace('\u202c',''),
+                    city.replace('\u202c',''),
+                    state.replace('\u202c',''),
+                    pcode.replace('\u202c',''),
                     'US',
                     '<MISSING>',
-                    phone,
+                    phone.replace('\u202c',''),
                     '<MISSING>',
-                    lat,
-                    longt,
+                    lat.replace('\u202c',''),
+                    longt.replace('\u202c',''),
                     '<MISSING>'
                 ])
                 # logger.info(p,data[p])

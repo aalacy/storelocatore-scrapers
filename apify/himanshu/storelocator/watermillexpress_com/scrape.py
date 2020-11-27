@@ -1,122 +1,69 @@
-# coding=UTF-8
-
 import csv
+import sys
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('watermillexpress_com')
-
-
-
-
 
 session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 25
-    current_results_len = 0 
-    coord = search.next_coord()
-
+    addressess =[]
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
-    base_url = "http://www.watermillexpress.com"
-
-    while coord:
-        result_coords = []
-
-        lat = coord[0]
-        lng = coord[1]
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-
-        location_url ="http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=25&search_radius=25&search=&statistics="
-        try:
-
-             r_locations = session.get(location_url, headers=headers)
-        except:
-            continue
-
-        json_data = r_locations.json()
-
-        current_results_len = int(len(json_data))  
-
-        locator_domain = base_url
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        raw_address = ""
-        hours_of_operation = "<MISSING>"
-        page_url = "http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=25&search_radius=25&search=&statistics="
-
-        for location in json_data:
-			
-            city=location["city"]
-            state=location["state"]
-            zipp=location["zip"]
-            address2= location['address2']
-            street_address= location['address'] + " "+str(address2).replace('None','')
-            latitude=location["lat"]
-            longitude=location["lng"]
-            phone=location["phone"]
-            store_number=location["store"]
+    base_url = "https://www.flashfoods.com/"
+    for page in range(1,11):
+        r = session.get("https://www.flashfoods.com/store-locator/page/"+str(page)+"/",headers=headers)
+        soup = BeautifulSoup(r.text,'lxml')
+        for row in soup.find_all("div",{"class":"store-row"}):
+            store_number = row.find("div",{"data-th":"Store#"}).text.strip()
+            street_address = row.find("div",{"data-th":"Address"}).text.strip()
+            city = row.find("div",{"data-th":"City"}).text.strip()
+            state = row.find("div",{"data-th":"State"}).text.strip()
+            zipp = row.find("div",{"data-th":"Zip"}).text.strip()
+            phone = row.find("div",{"data-th":"Phone#"}).text.strip()
+            location_type = row.find("div",{"data-th":"Type"}).text.strip()
+            location_name = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            latitude =  "<MISSING>"
+            longitude =  "<MISSING>"
+            page_url = "<MISSING>"
+     
+    
 
 
-            result_coords.append((latitude, longitude))
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
-
-                store = [x.strip() if x else "<MISSING>" for x in store]
-                yield store
-
-        if current_results_len < MAX_RESULTS:
-            #logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            #logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
-        # break
-
-
+            store = []
+            store.append(base_url if base_url else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append("US")
+            store.append(store_number)
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(page_url)
+            store = [x.strip() if type(x) == str else x for x in store]
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            yield store
+            
+  
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
