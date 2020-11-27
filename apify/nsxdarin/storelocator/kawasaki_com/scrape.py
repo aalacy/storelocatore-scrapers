@@ -34,7 +34,7 @@ def fetch_data():
                     if '"City' in item:
                         website = 'kawasaki.com'
                         purl = '<MISSING>'
-                        name = item.split('\\":\\"')[1].split('\\",\\"Address')[0].replace('\\\\u0027',"'")
+                        name = item.split('\\":\\"')[1].split('\\",\\"Address')[0].replace('\\\\u0027',"'").replace('\\\\u0026','&')
                         add = item.split('"Address\\":\\"')[1].split('\\",\\"Address2')[0]
                         if '"Address2\\":null' not in item:
                             add = add + ' ' + item.split('"Address2\\":\\"')[1].split('\\",\\"City')[0].replace('\\\\u0027',"'")
