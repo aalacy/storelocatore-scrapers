@@ -39,7 +39,7 @@ def fetch_data():
             country_code = 'US'
 
         store_number = j.get('locationID') or '<MISSING>'
-        page_url = '<MISSING>'
+        page_url = f'https://www.discountcar.com/locations/-/{store_number}'
         phone = j.get('phoneNumber') or '<MISSING>'
         if len(phone) < 10:
             phone = '<MISSING>'
