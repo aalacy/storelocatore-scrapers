@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 import re
 import json
+from sgselenium import SgChrome
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -30,31 +31,24 @@ def fetch_data():
 	items = base.find(id="x-section-2").find_all("a")
 	locator_domain = "gologas.com"
 
+	driver = SgChrome().chrome()
+
 	for item in items:
 		try:
 			link = item["href"]
 		except:
 			continue
 			
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+		driver.get(link)
+		
+		base = BeautifulSoup(driver.page_source,"lxml")
 
-		all_scripts = base.find_all('script')
-		for script in all_scripts:
-			if 'wpgmaps_localize_marker_data' in str(script):
-				script = script.text.strip()
-				break
+		locs = base.find_all('div', {'class': re.compile(r'wpgmaps_mlist_row wpgmza_basic_row wpgmaps_.+')})
 
-		js = script.split('wpgmaps_localize_marker_data =')[1].split("}};")[0].strip()
-		all_js = js.split('{"map')[1:]
-
-		for js in all_js:
-			js = '{"map' + js[:js.rfind("}")+1]
-
-			store = json.loads(js)
-
-			location_name = base.title.text.strip()
-			raw_address = store['address']
+		for loc in locs:
+			location_name = base.h2.text.strip()
+			raw_address = loc.find(class_="wpgmza-address").text
+			location_name = base.h2.text.strip()
 			if "," in location_name:
 				city = location_name.split(",")[0].strip()
 				state = location_name.split(",")[1][:3].strip()
@@ -71,14 +65,22 @@ def fetch_data():
 				zip_code = "<MISSING>"
 			country_code = "US"
 			store_number = "<MISSING>"
-			location_type = "<MISSING>"
+			icon = loc.find(class_="wpgmza_marker_icon")["src"]
+			if "savemarker" in icon:
+				location_type = "Save"
+			elif "allstarmarker" in icon:
+				location_type = "AllStar"
+			elif "golomarker" in icon:
+				location_type = "GoLo"
+			else:
+				location_type = "<MISSING>"
 			phone = "<MISSING>"
 			hours_of_operation = "<MISSING>"
-			latitude = store['lat']
-			longitude = store['lat']
+			latitude = loc['data-latlng'].split(",")[0].strip()
+			longitude = loc['data-latlng'].split(",")[1].strip()
 
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
+	driver.close()
 	return data
 
 def scrape():
