@@ -3,7 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import sgzip
+import html5lib
+import unicodedata
 session = SgRequests()
 
 def write_output(data):
@@ -16,96 +18,71 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
 
+    addressesess = []
     base_url = "https://www.nathansfamous.com"
-    headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
-    output = []
-    r = session.get("https://restaurants.nathansfamous.com/locations/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    lat  =[]
-    lng = []
-    for lats in soup.find("div",{"id":"location-map"}).find_all("div",{"class":"et_pb_map_pin"}):
-        lat.append(lats['data-lat'])
-        lng.append(lats['data-lng'])
-  
-    for index,row in enumerate(soup.find_all("div",{"id":"twentyninepalms"})):
-        full = list(row.stripped_strings)
-        if full:
-            if full[0]=="Dominican Republic":
-                break
-            else:
-                phone = full[-1].replace(" x 115",'')           
-                name = full[0]
-                city=''
-                zipp=''
-                if len(full[2:-2])==3:
-                    if full[2:-2][-1]=="32413":
-                        del full[-1]
-                    city = full[2:-2][-1].split(',')[0].replace("29 ",'')
-                    state = full[2:-2][-1].split(",")[-1].split( )[0]
-                    zipp = full[2:-2][-1].split(",")[-1].split( )[-1].replace("FL","32413")
-                    if "801 Pier Park Drive" in full[2:-2][:-1] or "301 Mount Hope Avenue" in full[2:-2][:-1]:
-                        address =" ".join(full[2:-2][:-1])
-                    else:
-                        name = full[2:-2][:-1][0]
-                        address = " ".join(full[2:-2][:-1][1:])
-                elif len(full[2:-2])==2:
-                    state_list = re.findall(r' ([A-Z]{2})', str(full[2:-2][-1]))
-                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full[2:-2][-1]))
-                    if us_zip_list:
-                        zipp = us_zip_list[-1]
-                    else:
-                        zipp=''
-                    if state_list:
-                        state = state_list[-1]
-                    else:
-                        state=""
-                    city = full[2:-2][-1].replace(zipp,'').replace(state,'').replace(",",'')
-                    address = " ".join(full[2:-2][:-1])
-                    
-                elif len(full[2:-2])==1:
-                    state = full[2:-2][0].split(",")[-1].split( )[0]
-                    zipp = full[2:-2][0].split(",")[-1].split( )[1]
-                    city  = full[2:-2][0].split(",")[-2].replace("5770 W. Irlo Bronson Memorial Hwy ",'')
-                    address = full[2:-2][0].split(",")[0].replace("Kissimmee",'')
-                if "12475" in zipp :
-                    state = "New York"
-                    city = city.replace("Ruby New York","Ruby")
-                if "10580" in zipp :
-                    state = "New York"
-                    city = city.replace("Rye New York","Rye")
-                if "11364" in zipp :
-                    state = "New York"
-                    city = city.replace("Bayside New York","Bayside")
-                if "10121" in zipp :
-                    state = "New York"
-                    city = city.replace("New York New York","New York")
-                if "JFK Memorial Hwy. MM 82" in address:
-                    state = "NY"
-                    city = "New York"
-                    address = address.replace('JFK Memorial Hwy. MM 82',"JFK Memorial Hwy. MM 82 Vesey St. & West St.")
-                store = []
-                store.append("http://nathansfamous.com/")
-                store.append(name)
-                store.append(address.strip())
-                store.append(city)
-                store.append(state)
-                store.append(zipp)   
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone)
-                store.append("<MISSING>")
-                store.append(lat[index])
-                store.append(lng[index])
-                store.append("<MISSING>")
-                store.append( "<MISSING>")     
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                yield store
+    headers = {
+        'accept':'*/*',
+        'Cookie':'__cfduid=d89370e180312a50705023f5f19721bec1606384421',
+        'x-requested-with':'XMLHttpRequest',
+        'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
+        }
+    coords = sgzip.coords_for_radius(200)
+    ct = 1
+    for coord in coords:
+        ct = ct + 1
 
+
+        url = "https://restaurants.nathansfamous.com/wp-admin/admin-ajax.php?action=store_search&lat="+coord[0]+"&lng="+coord[1]+"&max_results=100&search_radius=500"
+        json_data = session.get(url,headers=headers).json()
+        for val in json_data:
+            if val['country']=='Canada' or val['country']=='United States':
+                if val['country']=='United States':
+                    country_code="US"
+                else:
+                    country_code="CA"
+                location_name = val['store']
+                street_address = val['address']
+                city = val['city']
+                state = val['state']
+                zipp = val['zip']
+                store_number = val['id']
+                phone = val['phone']
+                if phone=="":
+                    phone = "<MISSING>"
+                latitude = val['lat']
+                longitude = val['lng']
+                h_soup = BeautifulSoup(val['hours'],'html5lib').find_all('tr')
+                hour = []
+                for h in h_soup:
+                    frame = h.find_all('td')[0].text +" "+h.find_all('td')[1].text
+                    hour.append(frame)
+                hours_of_operation = ", ".join(hour)
+                store = []
+                store.append("https://www.nathansfamous.com")
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zipp if zipp else "<MISSING>")
+                store.append(country_code)
+                store.append(store_number)
+                store.append(phone if phone else "<MISSING>")
+                store.append("Nathan's Famous")
+                store.append(latitude)
+                store.append(longitude)
+                store.append(hours_of_operation)
+                store.append("<MISSING>") 
+                for i in range(len(store)):
+                    if type(store[i]) == str:
+                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]   
+                if store[2] in addressesess:
+                    continue
+                addressesess.append(store[2])
+                yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()
