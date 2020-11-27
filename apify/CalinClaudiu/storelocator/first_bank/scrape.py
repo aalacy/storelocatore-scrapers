@@ -3,7 +3,33 @@ from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
+from bs4 import BeautifulSoup as b4
 import json
+
+def para(k):
+    
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
+    url = 'https://www.first.bank/'+k['NodeAliasPath']
+    session = SgRequests()
+    son = session.get(url, headers = headers).text
+    soup = b4(son, 'lxml')
+    final = ''
+    try:
+        hours = soup.find('div',{'class':'location-content-rich-text'}).stripped_strings
+        for i in hours:
+            if 'ours' in i:
+                final = final + i + ': '
+            elif 'day' in i:
+                final = final + i + '; '
+            else:
+                print('HOPAAAAA',i)
+    except:
+        final = '<MISSING>'
+    
+            
+    k['LobbyHours']['Days'].append(final)
+
+    return k
 
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name='Scraper')
@@ -47,14 +73,29 @@ def fetch_data():
     son = session.post(url, headers = headers, data = payload).text
     son = son.replace('\\"','"').replace("'",'').replace('"[','[').replace(']"',']')
     son = json.loads(son)
-    
+
+    nohours = []
     for i in son:
         try:
             i['LobbyHours']['Days'] = i['LobbyHours']['Days']
+            yield i
         except:
             i['LobbyHours'] = {}
             i['LobbyHours']['Days'] = []
+            nohours.append(i)
+
+    lize = utils.parallelize(
+                search_space = nohours,
+                fetch_results_for_rec = para,
+                max_threads = 10,
+                print_stats_interval = 10
+                )
+    for i in lize:
         yield i
+        
+            
+        
+        
         
     logzilla.info(f'Finished grabbing data!!')
 
@@ -79,6 +120,9 @@ def fix_comma(x):
 def pretty_hours(k):
     days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
     h = []
+    if len(k) == 1:
+        return k[0].replace(u'\xa0', u' ')
+    
     for i in k:
         day = days[i['Name']]
         closed = i['Closed']
@@ -91,7 +135,7 @@ def pretty_hours(k):
     return '; '.join(h)
 
 def scrape():
-    url="https://www.atlanticunionbank.com/"
+    url="https://www.first.bank/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain = ConstantField(url),
         page_url = MappingField(mapping=['NodeAliasPath'], value_transform = lambda x : 'https://www.first.bank/'+x),
@@ -106,14 +150,13 @@ def scrape():
         phone = MappingField(mapping=['Phone'], value_transform = lambda x : x.replace('None','<MISSING>') , is_required = False),
         store_number = MappingField(mapping=['Id']),
         hours_of_operation = MappingField(mapping=['LobbyHours','Days'], raw_value_transform = pretty_hours, is_required = False),
-        location_type= MappingField(mapping=['Type'], is_required = False)
+        location_type= MappingField(mapping=['LocationType'], is_required = False)
     )
 
-    pipeline = SimpleScraperPipeline(scraper_name='atlanticunionbank.com',
+    pipeline = SimpleScraperPipeline(scraper_name='first.bank',
                                      data_fetcher=fetch_data,
                                      field_definitions=field_defs,
-                                     log_stats_interval=15,
-                                     post_process_filter=lambda rec: rec['location_type'] != 'Hla')
+                                     log_stats_interval=15)
 
     pipeline.run()
 
