@@ -4,7 +4,7 @@ import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("catofashion_com")
+logger = SgLogSetup().get_logger("catofashions_com")
 
 session = SgRequests()
 headers = {
@@ -121,5 +121,6 @@ def scrape():
     data = fetch_data()
     write_output(data)
     logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()
