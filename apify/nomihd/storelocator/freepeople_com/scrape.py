@@ -6,7 +6,7 @@ import json
 import lxml.html
 import us
 
-website = "freepeople_com"
+website = "freepeople.com"
 domain = "https://www.freepeople.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
