@@ -56,7 +56,7 @@ def para(url):
     try:
         k['City'] = '<MISSING>'
         for i in stuff:
-            if 'Town' in i.text:
+            if 'Town:' in i.text:
                 k['City'] = i.text.split('Town: ')[1].strip()
                 empty = False
         empty = False
@@ -66,7 +66,7 @@ def para(url):
     try:
         k['State'] = '<MISSING>'
         for i in stuff:
-            if 'State' in i.text:
+            if 'State: ' in i.text:
                 k['State'] = i.text.split('State: ')[1].strip()
                 empty = False
     except:
@@ -75,7 +75,7 @@ def para(url):
     try:
         k['Zip'] = '<MISSING>'
         for i in stuff:
-            if 'Zip' in i.text:
+            if 'Zip:' in i.text:
                 k['Zip'] = i.text.split('Zip: ')[1].strip()
                 empty = False
     except:
@@ -84,7 +84,7 @@ def para(url):
     try:
         k['Phone'] = '<MISSING>'
         for i in stuff:
-            if 'Phone' in i.text:
+            if 'Phone:' in i.text:
                 k['Phone'] = i.text.split('Phone: ')[1].strip()
                 empty = False
         empty = False
@@ -95,7 +95,13 @@ def para(url):
             
     k['Country'] = '<MISSING>'
     k['IsActive'] = '<MISSING>'
-
+    if k['State'] == '<MISSING>':
+        try:
+            k['State'] = k['City'].split(',')[-1].strip()
+            k['City'] = k['City'].replace(k['State'],'').replace(',','').strip()
+        except:
+            k['State'] = '<MISSING>'
+            k['City'] = '<MISSING>'
     k['Error'] = empty
     return k
 
