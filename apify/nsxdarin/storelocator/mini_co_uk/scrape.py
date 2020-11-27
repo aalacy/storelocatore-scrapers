@@ -30,7 +30,7 @@ def fetch_data():
             items = line.split('{"key":"')
             for item in items:
                 if '"countryCode":"' in item:
-                    name = item.split('"')[0]
+                    name = item.split('"name":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"street":"')[1].split('"')[0]
                     try:
