@@ -17,7 +17,17 @@ def fetch_data():
     son = session.get(url, headers = headers)
     soup = b4(son.text,'lxml')
     soup = soup.find('script',{'type':'text/javascript','id':'fb_custom_locations_js-js-extra'})
-    son = json.loads(str(soup.text).split('site_data = ',1)[1].rsplit(';',1)[0])
+    try:
+        son = json.loads(str(soup.text).split('site_data = ',1)[1].rsplit(';',1)[0])
+    except:
+        with open('ERROR.log', 'w') as file:
+            file.write(url)
+            file.write('\n','\n','\n','\n',)
+            file.write(str(son.text))
+            file.write('\n','\n','\n','\n',)
+            file.write(str(soup.text))
+        raise Exception(f'Please attach "ERROR.log" file to JIRA ticket')
+            
 
     for i in son['pointsData']:
         yield i
