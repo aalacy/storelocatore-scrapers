@@ -20,11 +20,11 @@ def fetch_data():
     try:
         son = json.loads(str(soup.text).split('site_data = ',1)[1].rsplit(';',1)[0])
     except:
-        with open('ERROR.log', 'w') as file:
+        with open('ERROR.log', 'w', encoding = 'utf-8') as file:
             file.write(url)
-            file.write('\n','\n','\n','\n',)
+            file.write('\n\n\n\n')
             file.write(str(son.text))
-            file.write('\n','\n','\n','\n',)
+            file.write('\n\n\n\n')
             file.write(str(soup.text))
         raise Exception(f'Please attach "ERROR.log" file to JIRA ticket')
             
