@@ -1,6 +1,4 @@
 import csv
-import json
-import urllib.parse
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -41,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "cashstore.com"
     start_url = "https://www.cashstore.com/components/getlocations"
