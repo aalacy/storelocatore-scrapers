@@ -76,9 +76,12 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             for day, hours in poi["gym_settings"]["business_hours_this_week"].items():
-                open_h = hours["open"]["date"].split()[-1].split(".")[0]
-                close_h = hours["close"]["date"].split()[-1].split(".")[0]
-                hours_of_operation.append("{} {} - {}".format(day, open_h, close_h))
+                if hours["closedAllDay"]:
+                    hours_of_operation.append("{} - closed".format(day))
+                else:
+                    open_h = hours["open"]["date"].split()[-1].split(".")[0]
+                    close_h = hours["close"]["date"].split()[-1].split(".")[0]
+                    hours_of_operation.append("{} {} - {}".format(day, open_h, close_h))
             hours_of_operation = (
                 ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "closed")
                 if hours_of_operation
