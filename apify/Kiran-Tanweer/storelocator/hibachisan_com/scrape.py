@@ -97,7 +97,6 @@ def fetch_data():
             if title.find("SanTEPPANYAKI") != -1:
                 title = title.replace('SanTEPPANYAKI', 'San TEPPANYAKI')
             
-            print(title)
             street = content[2]
             city = content[3]
             city = city.rstrip(',')
