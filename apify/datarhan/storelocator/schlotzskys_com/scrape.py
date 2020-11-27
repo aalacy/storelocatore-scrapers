@@ -46,7 +46,7 @@ def fetch_data():
     DOMAIN = "schlotzskys.com"
 
     all_codes = []
-    us_codes = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
+    us_codes = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
     for code in us_codes:
         all_codes.append(code)
 
