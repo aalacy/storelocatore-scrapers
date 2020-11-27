@@ -93,27 +93,36 @@ def fetch_data():
         if r2.encoding is None:
             r2.encoding = "utf-8"
 
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if "&#34;street1&#34;:&#34;" in line2:
-                add = line2.split("&#34;street1&#34;:&#34;")[1].split("&#34")[0]
-                city = line2.split("&#34;city&#34;:&#34;")[1].split("&#34")[0]
-                state = line2.split("&#34;state&#34;:&#34;")[1].split("&#34")[0]
-                country = line2.split("&#34;country&#34;:&#34;")[1].split("&#34")[0]
-                zc = line2.split("&#34;postalcode&#34;:&#34;")[1].split("&#34")[0]
-                phone = line2.split("&#34;phoneNumber&#34;:&#34;")[1].split("&#34")[0]
-                lat = line2.split("&#34;,&#34;latitude&#34;:&#34;")[1].split("&#34")[0]
-                lng = line2.split("&#34;longitude&#34;:&#34;")[1].split("&#34")[0]
-                name = (
-                    line2.split("&#34;name&#34;:&#34;")[1]
-                    .split("&#34")[0]
-                    .replace("\\u0026", "&")
-                )
-                if "United States" in country:
-                    country = "US"
-                if "Canada" in country:
-                    country = "CA"
-                if country == "US":
-                    zc = zc[:5]
+        try:
+            for line2 in r2.iter_lines(decode_unicode=True):
+                if "&#34;street1&#34;:&#34;" in line2:
+                    add = line2.split("&#34;street1&#34;:&#34;")[1].split("&#34")[0]
+                    city = line2.split("&#34;city&#34;:&#34;")[1].split("&#34")[0]
+                    state = line2.split("&#34;state&#34;:&#34;")[1].split("&#34")[0]
+                    country = line2.split("&#34;country&#34;:&#34;")[1].split("&#34")[0]
+                    zc = line2.split("&#34;postalcode&#34;:&#34;")[1].split("&#34")[0]
+                    phone = line2.split("&#34;phoneNumber&#34;:&#34;")[1].split("&#34")[
+                        0
+                    ]
+                    lat = line2.split("&#34;,&#34;latitude&#34;:&#34;")[1].split(
+                        "&#34"
+                    )[0]
+                    lng = line2.split("&#34;longitude&#34;:&#34;")[1].split("&#34")[0]
+                    name = (
+                        line2.split("&#34;name&#34;:&#34;")[1]
+                        .split("&#34")[0]
+                        .replace("\\u0026", "&")
+                    )
+                    if "United States" in country:
+                        country = "US"
+                    if "Canada" in country:
+                        country = "CA"
+                    if country == "US":
+                        zc = zc[:5]
+        except Exception as ex:
+            logger.debug(f"Exception parsing {loc}")
+            logger.debug(ex)
+
         if country == "US" or country == "CA":
             yield [
                 website,
