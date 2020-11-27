@@ -68,7 +68,7 @@ def fetch_data():
                 ccode = content['country']
                 lat = content['latitude']
                 longt = content['longitude']            
-                hours = 'Mon - Sun ' + div.find('p',{'class':"nav-my-store__schedule"}).text
+                hours = 'Mon - Sat: ' + div.find('p',{'class':"nav-my-store__schedule"}).text +' Sun: Closed
                 phone = div.find('p',{'class':'telephone'}).text.replace('\n','')
                 store = div.find('input',{'name':'storeId'})['value']
                 data.append([
