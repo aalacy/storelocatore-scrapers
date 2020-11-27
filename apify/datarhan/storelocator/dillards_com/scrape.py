@@ -1,7 +1,6 @@
 import csv
 import json
 from lxml import etree
-from w3lib.html import remove_tags
 
 from sgrequests import SgRequests
 
