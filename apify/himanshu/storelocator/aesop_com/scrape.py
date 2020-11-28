@@ -8,6 +8,8 @@ import usaddress as usd
 import collections as coll
 from datetime import datetime
 import usaddress
+from sgzip import DynamicGeoSearch, SearchableCountries
+
 # import pprint
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
@@ -77,12 +79,17 @@ def fetch_data():
     addresses123 = []
     op = []
     addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes=['US','CA'])
+
     MAX_RESULTS = 100
     MAX_DISTANCE = 100
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()    # zip_code = search.next_zip()
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA,SearchableCountries.CANADA], max_radius_miles=100, max_search_results=100)
+    search.initialize()
+    coord = search.next()
+ 
+    current_results_len = 0
+
+
+
     adressess = []
     while coord:
         result_coords = []
@@ -92,8 +99,11 @@ def fetch_data():
 
         location_url = "https://www.aesop.com/graphql"
         # logger.info(location_url)
-        r = session.post(location_url, headers=headers,data=payload)
-        json_data = r.json()['data']['stores']
+        try:
+            r = session.post(location_url, headers=headers,data=payload)
+            json_data = r.json()['data']['stores']
+        except:
+            continue
         current_results_len = len(json_data)
         for value in json_data:
             country = ['GB','HK','KR','JP','TH','TW']
@@ -366,10 +376,15 @@ def fetch_data():
 
                     result_coords.append((lat,lng))
                     store = []
+                    if street_address =="Space":
+                        street_address="Space 2118, Westfield, 4545 La Jolla"
+                        state = "Village Drive"
+                        city = "San Diego"
+                        zipp = "92122"
                     store.append(locator_domain)
                     store.append(location_name)
-                    store.append(street_address)
-                    store.append(city)
+                    store.append(street_address.replace("630 Old Country Rd","630 Old Country Rd Space, 1101D"))
+                    store.append(city.replace("Space, 1101D ",''))
                     store.append(state)
                     store.append(zipp)   
                     store.append(country_code)
@@ -385,15 +400,9 @@ def fetch_data():
                     adressess.append(store[2]) 
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                     yield store
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()   # zip_code = search.next_zip()
+                   
+        search.update_with(result_coords)
+        coord = search.next()
 def scrape():
     # fetch_data()
     data = fetch_data()
