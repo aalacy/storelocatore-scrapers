@@ -3,7 +3,16 @@ from bs4 import BeautifulSoup
 import csv
 import re
 import json
+import time
+from random import randint
 from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name='gologas_com')
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -17,7 +26,7 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "http://www.gologas.com/locations"
+	base_link = "http://www.gologas.com/oak-park-il"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -28,30 +37,45 @@ def fetch_data():
 
 	data = []
 
-	items = base.find(id="x-section-2").find_all("a")
-	locator_domain = "gologas.com"
+	script = base.find(id="wpgmza-js-extra").text
+	js = script.split('"maps":')[1].split("]}")[0] + "]"
+
+	stores = json.loads(js)
+	locator_domain = "http://www.gologas.com/"
 
 	driver = SgChrome().chrome()
 
-	for item in items:
-		try:
-			link = item["href"]
-		except:
-			continue
-			
+	for item in stores:
+		link = locator_domain + item['map_title'].replace(", Michigan",", MI").replace("Niles","elgin").lower().replace(", ","-").replace(" ","-")
+		log.info(link)
+		
 		driver.get(link)
 		
+		try:
+			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+				(By.CLASS_NAME, "wpgmza-address")))
+		except:
+			try:
+				driver.get(link)
+				element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
+					(By.CLASS_NAME, "wpgmza-address")))
+			except:
+				continue
+
+		time.sleep(randint(3,5))
+
 		base = BeautifulSoup(driver.page_source,"lxml")
 
 		locs = base.find_all('div', {'class': re.compile(r'wpgmaps_mlist_row wpgmza_basic_row wpgmaps_.+')})
 
 		for loc in locs:
 			location_name = base.h2.text.strip()
+			if "," not in location_name:
+				location_name = item['map_title']
 			raw_address = loc.find(class_="wpgmza-address").text
-			location_name = base.h2.text.strip()
 			if "," in location_name:
 				city = location_name.split(",")[0].strip()
-				state = location_name.split(",")[1][:3].strip()
+				state = location_name.split(",")[1].strip()
 			else:
 				city = location_name.split("|")[0].strip()
 				state = raw_address.split(",")[-1][:3].strip()
@@ -63,6 +87,7 @@ def fetch_data():
 				zip_code = re.findall(r'[0-9]{5}',raw_address[-20:])[0]
 			except:
 				zip_code = "<MISSING>"
+
 			country_code = "US"
 			store_number = "<MISSING>"
 			icon = loc.find(class_="wpgmza_marker_icon")["src"]
