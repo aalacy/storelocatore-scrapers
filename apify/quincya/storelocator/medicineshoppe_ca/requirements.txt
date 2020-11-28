@@ -1,0 +1,4 @@
+sgrequests
+sgselenium
+beautifulsoup4==4.8.1
+sglogging
