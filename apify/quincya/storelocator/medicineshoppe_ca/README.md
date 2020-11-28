@@ -1,0 +1,3 @@
+--ignore LatLngDuplicationValidator (Confirmed on website)
+--ignore CountValidator (Expected 216 POI, but found 152 on website)
+--ignore StoreNumberColumnValidator (Few missing)
