@@ -43,7 +43,7 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    DOMAIN = "hercrentals.com"
+    DOMAIN = "heb.com"
 
     all_codes = []
     us_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
@@ -90,7 +90,7 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["store"]["storeHours"]
 
-            store_url = "https://www.heb.com/heb-store/US/tx/san-antonio/south-flores-market-h-e-b-718"
+            store_url = "https://www.heb.com/heb-store/US/{}/{}/{}-{}".format(state, city.replace(' ', '-'), location_name.replace(' ', '-'), store_number)
 
             item = [
                 DOMAIN,
