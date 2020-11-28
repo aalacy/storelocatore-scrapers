@@ -7,7 +7,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('advanceamerica_net')
 session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -54,11 +54,13 @@ def fetch_data():
             for k in range(len(store_hours)):
                 if store_hours[k]['open_time']:
                     hours = hours + store_hours[k]["day"] + " " + store_hours[k]['open_time'] + " - " + store_hours[k]['close_time'] + " "
+                else:
+                    hours = hours + store_hours[k]["day"] + " " + "Closed "
             if hours == "":
                 hours = "<MISSING>"
         except:
             hours = "<MISSING>"
-            # print(page_url)
+           
         store.append(hours)
         store.append(page_url)
         return_main_object.append(store)
