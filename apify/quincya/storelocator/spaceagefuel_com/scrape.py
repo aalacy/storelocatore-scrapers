@@ -14,7 +14,7 @@ def write_output(data):
 def fetch_data():
 
     base_link = "http://spaceagefuel.com/wp-json/store-locator-plus/v2/locations/"
-    
+
     driver = SgChrome().chrome()
 
     driver.get(base_link)
@@ -27,9 +27,8 @@ def fetch_data():
 
     for sl_id in sl_ids:
         store_link = base_link + sl_id['sl_id']
-        print(store_link)
         driver.get(store_link)
-        time.sleep(2)
+        time.sleep(5)
         base = BeautifulSoup(driver.page_source,"lxml")
         store = json.loads(base.text)
         location_name = store["sl_store"].replace("amp;","")
