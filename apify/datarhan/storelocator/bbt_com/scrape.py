@@ -29,7 +29,7 @@ def fetch_data():
     DOMAIN = 'bbt.com'
     
     all_codes = ['20001']
-    us_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
+    us_zips = sgzip.for_radius(radius=5, country_code=SearchableCountries.USA)
     for zip_code in us_zips:
         all_codes.append(zip_code)
     
@@ -53,8 +53,10 @@ def fetch_data():
 
         if response.text.endswith('}}'):
             data = json.loads(response.text)
-        else:
+        elif response.text.endswith('"'):
             data = json.loads(response.text + '}}')
+        else:
+            data = json.loads(response.text + '"}}')
 
         for poi in data['locationsFound']:
             store_url = '<MISSING>'
@@ -106,8 +108,9 @@ def fetch_data():
                 hours_of_operation
             ]
 
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
+            check = '{} {}'.format(store_number, street_address)
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
         
     return items
