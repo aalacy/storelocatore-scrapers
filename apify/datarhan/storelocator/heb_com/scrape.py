@@ -90,7 +90,12 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["store"]["storeHours"]
 
-            store_url = "https://www.heb.com/heb-store/US/{}/{}/{}-{}".format(state, city.replace(' ', '-'), location_name.replace(' ', '-'), store_number)
+            store_url = "https://www.heb.com/heb-store/US/{}/{}/{}-{}".format(
+                state,
+                city.replace(" ", "-"),
+                location_name.replace(" ", "-"),
+                store_number,
+            )
 
             item = [
                 DOMAIN,
