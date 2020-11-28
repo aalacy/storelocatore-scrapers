@@ -56,7 +56,10 @@ def fetch_data():
             for div in divlist:
                 title = div.find('h4').text.replace('\n','')
                 link = 'https://www.justtires.com'+div.find('h4').find('a')['href']
-                content = div.find('div',{'class':'nav-my-store__information-area'}).find('p')['data-location']
+                try:
+                    content = div.find('div',{'class':'nav-my-store__information-area'}).find('p')['data-location']
+                except:
+                    continue
                 content = json.loads(content)
                 street = content['street']
                 if street in streetlist:
@@ -67,10 +70,17 @@ def fetch_data():
                 pcode = content['zipCode']
                 ccode = content['country']
                 lat = content['latitude']
-                longt = content['longitude']            
-                hours = 'Mon - Sat: ' + div.find('p',{'class':"nav-my-store__schedule"}).text +' Sun: Closed
+                longt = content['longitude']         
                 phone = div.find('p',{'class':'telephone'}).text.replace('\n','')
-                store = div.find('input',{'name':'storeId'})['value']
+                store = div.find('input',{'name':'storeId'})['value']      
+                r = session.get(link, headers=headers, verify=False)
+                soup =BeautifulSoup(r.text, "html.parser")
+                try:
+                    hours = soup.find('ul',{'class':'nav-my-store__schedule'}).text
+                    hours = re.sub(pattern,'\n',hours).replace('\n',' ').strip()
+                except:
+                    hours = '<MISSING>'
+               
                 data.append([
                             'https://www.justtires.com/',
                             link,                   
