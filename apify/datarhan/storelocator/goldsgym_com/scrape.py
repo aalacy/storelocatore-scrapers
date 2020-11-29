@@ -43,8 +43,8 @@ def fetch_data():
     DOMAIN = "goldsgym.com"
 
     start_url = "https://www.goldsgym.com/api/gyms/locate?country={}"
-    countries = ["US", "CA"]
-    for country in countries:
+    all_countries = ["US", "CA"]
+    for country in all_countries:
         response = session.get(start_url.format(country))
         data = json.loads(response.text)
 
