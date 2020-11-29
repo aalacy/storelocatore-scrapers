@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "xpo.com"
     start_url = "https://www.xpo.com/global-locations/"
