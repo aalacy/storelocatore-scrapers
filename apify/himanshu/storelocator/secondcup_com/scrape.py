@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import re
+import time
 import sgzip
 from sgzip import DynamicZipSearch, SearchableCountries
 import json
@@ -38,6 +39,8 @@ def fetch_data():
     driver = SgChrome().chrome()
 
     driver.get(location_url)
+    time.sleep(5)
+
     base = BeautifulSoup(driver.page_source,"lxml")
     
     # payload = BeautifulSoup(session.get(location_url,headers=HEADERS).text,'lxml')
