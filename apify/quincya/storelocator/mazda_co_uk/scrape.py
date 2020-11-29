@@ -55,7 +55,6 @@ def fetch_data():
 			link = store['contact']['website']
 		except:
 			link = store['services'][0]['contact']['website']
-		print(link)
 
 		try:
 			req = session.get(link, headers = HEADERS)
