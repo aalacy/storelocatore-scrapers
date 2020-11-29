@@ -88,11 +88,11 @@ def fetch_data():
         longitude = geo_data["contentData"]["store"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for elem in store_data["openingHoursSpecification"]:
-            day = elem["dayOfWeek"]["name"]
-            opens = elem["opens"]
-            closes = elem["closes"]
-            hours_of_operation.append("{} {} - {}".format(day, opens, closes))
+        hours_html = store_dom.xpath('//div[@class="row storeHours"]//table/tbody/tr')
+        for elem in hours_html:
+            day = elem.xpath("td/text()")[0]
+            hours = elem.xpath("td/text()")[-1]
+            hours_of_operation.append("{} {}".format(day, hours))
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
