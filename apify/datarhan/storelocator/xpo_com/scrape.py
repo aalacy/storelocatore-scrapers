@@ -100,7 +100,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        
+
         items.append(item)
 
     return items
