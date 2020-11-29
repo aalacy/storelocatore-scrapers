@@ -49,17 +49,7 @@ def fetch_data():
 
     all_poi_html = dom.xpath('//div[@id="filtered-locations"]')
     for poi_html in all_poi_html:
-        store_url_1 = (
-            poi_html.xpath('.//div[@class="storename2"]/a/text()')[0]
-            .replace(" ", "-")
-            .lower()
-        )
-        store_url_2 = poi_html.xpath(
-            './/a[div[contains(text(), "Visit Website")]]/@href'
-        )[0]
-        store_url = "https://www.postalannex.com/location/{}{}".format(
-            store_url_1, store_url_2
-        )
+        store_url = "https://www.postalannex.com" + poi_html.xpath(".//a/@href")[0]
         location_name = poi_html.xpath('.//div[@class="storename"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//div[@class="loc-sub"]/a/text()')
@@ -79,7 +69,7 @@ def fetch_data():
         )
         country_code = ""
         country_code = country_code if country_code else "<MISSING>"
-        store_number = store_url_2[1:]
+        store_number = store_url.split("/")[-1]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
@@ -88,6 +78,11 @@ def fetch_data():
 
         poi_response = session.get(store_url)
         poi_dom = etree.HTML(poi_response.text)
+        street_address_raw = poi_dom.xpath(
+            '//div[@itemscope="itemscope"]/div/span[@itemprop="streetAddress"]/text()'
+        )
+        if len(street_address_raw) == 3:
+            street_address += ", " + street_address_raw[-1]
         latitude = poi_dom.xpath('//meta[@name="geo.position"]/@content')
         latitude = latitude[0].split(";")[0] if latitude else "<MISSING>"
         longitude = poi_dom.xpath('//meta[@name="geo.position"]/@content')
