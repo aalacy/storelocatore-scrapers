@@ -100,9 +100,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
+        
+        items.append(item)
 
     return items
 
