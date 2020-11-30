@@ -3,7 +3,6 @@ import csv
 import math
 from sglogging import SgLogSetup
 from urllib.request import Request, urlopen
-from pdfquery import PDFQuery
 import tabula as tb
 from io import BytesIO
 
