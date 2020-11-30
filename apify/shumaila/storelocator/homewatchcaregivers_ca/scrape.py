@@ -36,10 +36,11 @@ def fetch_data():
         lat = div['data-latitude']
         longt = div['data-longitude']
         link = 'https://www.homewatchcaregivers.ca'+div.select_one('a:contains("Website")')['href']
+        #print(link)
         r = session.get(link, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
-        phone = soup.find('span',{'itemprop':'telephone'}).text
-        street = soup.find('span',{'itemprop':'streetAddress'}).text.replace('\n',' ').replace('\t',' ').strip()
+        phone = soup.find('span',{'itemprop':'telephone'}).text        
+        street = re.sub(pattern,' ',soup.find('span',{'itemprop':'streetAddress'}).text)
         city = soup.find('span',{'itemprop':'addressLocality'}).text.replace(',','')
         state = soup.find('span',{'itemprop':'addressRegion'}).text
         pcode = soup.find('span',{'itemprop':'postalCode'}).text        
