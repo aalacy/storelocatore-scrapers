@@ -1,6 +1,9 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup
+from sgselenium import SgSelenium
+from selenium import webdriver
+from urllib.request import urlopen
 import time
 import csv
 
@@ -121,6 +124,12 @@ def fetch_data():
                 hours = hours + " " + hr
             hours = hours.lstrip()
             hours = hours.rstrip()
+            directions = soup.findAll("div", {"class": "col-md-6"})[1]
+            imgs = directions.find("img", {"class": "img-responsive"})['src']
+            coord = imgs.split('H%7C')[1]
+            coord = coord.split('&')[0]
+            lat, longt = coord.split(',')
+
 
             data.append(
                 [
@@ -135,8 +144,8 @@ def fetch_data():
                     "<MISSING>",
                     phone,
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
+                    lat,
+                    longt,
                     hours,
                 ]
             )
@@ -151,3 +160,4 @@ def scrape():
 
 
 scrape()
+
