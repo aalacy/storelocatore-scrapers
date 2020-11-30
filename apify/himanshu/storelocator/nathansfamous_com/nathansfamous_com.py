@@ -9,7 +9,7 @@ import unicodedata
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('nathansfamous.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -30,6 +30,8 @@ def fetch_data():
     ct = 1
     for coord in coords:
         ct = ct + 1
+        print("zip_code === ",coord)
+        print("remaining zipcodes: ",len(coords)-ct)
         url = "https://restaurants.nathansfamous.com/wp-admin/admin-ajax.php?action=store_search&lat="+coord[0]+"&lng="+coord[1]+"&max_results=100&search_radius=500"
         json_data = session.get(url,headers=headers).json()
         for val in json_data:
