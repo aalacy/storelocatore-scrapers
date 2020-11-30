@@ -1,0 +1,4 @@
+sglogging
+sgrequests
+pdfquery
+tabula-py
