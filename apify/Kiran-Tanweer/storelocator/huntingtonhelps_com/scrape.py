@@ -1,9 +1,6 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup
-from sgselenium import SgSelenium
-from selenium import webdriver
-from urllib.request import urlopen
 import time
 import csv
 
