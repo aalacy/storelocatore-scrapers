@@ -10,7 +10,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('woodspring_com')
 session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', newline='', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,7 +23,6 @@ def fetch_data():
     coords = sgzip.coords_for_radius(200)
     main_url = "https://www.woodspring.com"
     addresses = []
-    print(len(coords))
     for cord in coords:
         result_coords = []
         x = cord[0]
@@ -53,9 +52,7 @@ def fetch_data():
             except:
                 phone = phonenumbers.format_number(phonenumbers.parse(str(location_data["hotelInfo"]["hotelSummary"]["phones"][-1]["number"] ), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
             store.append(",".join(add["street"]))
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
+            
             store.append(add["cityName"] if add["cityName"] else "<MISSING>")
             if "," + store[-1] + "," in store[2]:
                 store[2] = store[2].split("," + store[-1])[0]
@@ -84,7 +81,11 @@ def fetch_data():
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+
             yield store
 def scrape():
     data = fetch_data()
