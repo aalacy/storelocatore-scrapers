@@ -71,6 +71,8 @@ def fetch_data():
             state = poi["dealerState"]
             state = state if state else "<MISSING>"
             zip_code = poi["dealerZipCode"]
+            if len(zip_code) == 9:
+                zip_code = zip_code[:5] + "-" + zip_code[5:]
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["dealerShowroomCountry"]
             country_code = country_code if country_code else "<MISSING>"
