@@ -38,60 +38,77 @@ def fetch_data():
             
         else:
             link = 'https://www.lifetime.life'+ link['href']
-        #print(link)
+                
         if 'life-time-locations.html' in link:
             continue
         r = session.get(link, headers=headers, verify=False)  
         soup =BeautifulSoup(r.text, "html.parser")
         title = soup.find('h1').text
+        check = 0
         try:
             address = soup.find('div',{'class':'hero-content'}).select_one("a[href*=maps]")        
             lat,longt = address['href'].split('@',1)[1].split('data',1)[0].split(',',1)
         except:
-            continue
-        longt = longt.split(',',1)[0]
-        address = usaddress.parse(address.text)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-
-        street = street.lstrip().replace(',','')
-        city = city.lstrip().replace(',','')
-        state = state.lstrip().replace(',','')
-        pcode = pcode.lstrip().replace(',','')
-        ccode = 'US'
-        phone = soup.find('div',{'class':'hero-content'}).select_one("a[href*=tel]").text
-        try:
-            hourslink = soup.find('div',{'class':'hero-content'}).select_one('a:contains("Club Hours")')
-            if hourslink.text.find('Future') > -1:
+            if title.find('Winter Park') > -1:
+                check = 1
+            else:
+                
                 continue
-            hourslink = 'https://www.lifetime.life'+ hourslink['href']
-        except:
-            continue
-        r = session.get(hourslink, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
+        if check == 0:
+            longt = longt.split(',',1)[0]
+            address = usaddress.parse(address.text)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+
+            street = street.lstrip().replace(',','')
+            city = city.lstrip().replace(',','')
+            state = state.lstrip().replace(',','')
+            pcode = pcode.lstrip().replace(',','')
+            ccode = 'US'
+            phone = soup.find('div',{'class':'hero-content'}).select_one("a[href*=tel]").text
+            try:
+                hourslink = soup.find('div',{'class':'hero-content'}).select_one('a:contains("Club Hours")')
+                if hourslink.text.find('Future') > -1:
+                    continue
+                hourslink = 'https://www.lifetime.life'+ hourslink['href']
+            except:
+                continue
+            r = session.get(hourslink, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text, "html.parser")
+           
+            if len(pcode) < 4:
+                state,temp = state.split(' ',1)
+                pcode = temp +' '+ pcode
+                ccode = "CA"
+        else:
+            address = soup.find('div',{'class':'m-t-2'}).text.strip().splitlines()
+            street = address[3]
+            city,state = address[4].split(', ',1)
+            state,pcode = state.split(' ',1)
+            phone = address[5]
+            longt, lat = soup.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d',1)           
+            ccode = 'US'
         try:
             hours = soup.find('table').text
             hours = re.sub(pattern,'\n',hours).replace('\n',' ').replace('Hours','').replace('Day','').replace('HOURS','').strip()
         except:
             hours = '<MISSING>'
-        if len(pcode) < 4:
-            state,temp = state.split(' ',1)
-            pcode = temp +' '+ pcode
-            ccode = "CA"
+        hours = hours.replace('Time ','')
+        link = r.url
         data.append([
                         'https://www.lifetime.life/',
                         link,                   
