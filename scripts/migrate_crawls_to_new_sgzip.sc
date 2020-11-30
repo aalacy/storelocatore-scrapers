@@ -4,10 +4,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 case class ExpectedException(reason: String) extends Exception(reason)
 
+val unfrozenSgzip = "sgzip(?!==0.0.55)".r
 lazy val allScrapersWithSgZip = all_scrapers filter {s => 
-                                    requirements_txt_in_dir(s) map { req => 
-                                        File(req.toString).contentAsString.contains("sgzip")
-                                    } getOrElse false
+                                    requirements_txt_in_dir(s) exists { req =>
+                                        unfrozenSgzip.findFirstMatchIn(File(req.toString).contentAsString).nonEmpty
+                                    }
                                 }
 
 val floatingPointNum = """\d+(\.\d+)?"""
@@ -391,9 +392,25 @@ lazy val program = allScrapersWithSgZip foreach { dir =>
     }
 }
 
+val wordySgzip1 = "[a-z]+sgzip.*".r
+val wordySgzip2 = "sgzip.*[a-z]+".r
+
+lazy val freezeAllUnfrozenReqsProgram = allScrapersWithSgZip flatMap requirements_txt_in_dir foreach {reqfile =>
+        println(s">> ${reqfile}")
+        delete_from_reqs(reqfile, "sgzip")
+        insert_in_reqs(reqfile, "sgzip==0.0.55")
+    } 
+
 @main
-def run (x: Boolean) {
-    println(s">> Running program")
-    program
-    println (s">> Failures / Overall ${failed.get()} / ${counter.get()}")
+def run (prog: String) {
+    prog match {
+        case "closestN" =>
+            println(s">> Running 'closestN' program")
+            program
+            println (s">> Failures / Overall ${failed.get()} / ${counter.get()}")        
+        case "freezeAll" =>
+            println(s">> Running 'freezeAll' program")
+            freezeAllUnfrozenReqsProgram
+    }
+
 }

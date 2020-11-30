@@ -1,6 +1,6 @@
 sgrequests
-sgzip
 beautifulsoup4==4.8.0
 lxml==4.3.4
 requests_random_user_agent
 sglogging
+sgzip==0.0.55
