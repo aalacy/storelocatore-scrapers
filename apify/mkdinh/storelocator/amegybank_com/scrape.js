@@ -1,6 +1,6 @@
 const Apify = require('apify');
 const MISSING = '<MISSING>';
-
+print('hello');
 Apify.main(async () => {
   const requestList = await Apify.openRequestList('locations', [
     {
