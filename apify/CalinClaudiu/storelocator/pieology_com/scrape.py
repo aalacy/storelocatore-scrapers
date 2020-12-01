@@ -34,7 +34,7 @@ def fetch_data():
                 logzilla.info(f"Found {len(states)} states with locations\n\n")
         for i in states:
             logzilla.info(f'\n\nGrabbing locations from {i["name"]}.')
-            son = "Getting page"
+            items = "Getting page"
             logzilla.info(f"{son}")
             driver.get("https://order.pieology.com/locations/" + i["code"])
             son = "Waiting for page to load"
@@ -52,7 +52,7 @@ def fetch_data():
                     )
                     for loc in data["vendor-search-results"]:
                         yield loc
-    son = "Finished grabbing data!!"
+    stores = "Finished grabbing data!!"
     logzilla.info(f"{son}")
 
 
