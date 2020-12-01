@@ -20,27 +20,33 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://locations.sonicdrivein.com/sitemap/sitemap_index.xml'
+    url = 'https://locations.sonicdrivein.com/browse/'
     locs = []
-    sitemaps = []
+    states = []
+    cities = []
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<loc>https://locations.sonicdrivein.com/sitemap/sitemap' in line:
-            sitemaps.append(line.split('<loc>')[1].split('<')[0])
-    for sm in sitemaps:
-        smurl = sm
-        with open('branches.xml.gz','wb') as f:
-            f.write(urllib.request.urlopen(smurl).read())
-            f.close()
-            with gzip.open('branches.xml.gz', 'rt') as f:
-                for line in f:
-                    if '<loc>https://locations.sonicdrivein.com/' in line and '.html' in line:
-                        lurl = line.split('<loc>')[1].split('<')[0]
-                        if lurl not in locs:
-                            locs.append(lurl)
-        logger.info('%s Locations Found...' % str(len(locs)))
+    for line in r.iter_lines():
+        line = str(line.decode('utf-8'))
+        if '<a href="https://locations.sonicdrivein.com/' in line and '/ar' in line:
+            states.append(line.split('<a href="')[1].split('"')[0])
+    for state in states:
+        logger.info('Pulling State %s...' % state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if '<a href="https://locations.sonicdrivein.com/' in line2:
+                cities.append(line2.split('href="')[1].split('"')[0])
+    for city in cities:
+        logger.info('Pulling City %s...' % city)
+        r2 = session.get(city, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode('utf-8'))
+            if 'view details</a>' in line2:
+                lurl = line2.split('href="')[1].split('"')[0]
+                if lurl not in locs:
+                    locs.append(lurl)
     for loc in locs:
+        logger.info('Pulling Location %s...' % loc)
         url = loc
         add = ''
         city = ''
