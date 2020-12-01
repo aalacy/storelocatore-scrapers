@@ -1,7 +1,5 @@
 import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import gzip
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("sonicdrivein_com")
