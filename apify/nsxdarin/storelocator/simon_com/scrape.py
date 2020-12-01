@@ -35,7 +35,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.simon.com/search"
     r = session.get(url, headers=headers)
     if r.encoding is None:
