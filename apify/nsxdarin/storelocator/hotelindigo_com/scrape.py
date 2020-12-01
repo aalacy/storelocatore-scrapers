@@ -68,7 +68,7 @@ def fetch_data():
                             lng = line3.split('"longitude":')[1].split('}')[0]
                             store = lurl.replace('/hoteldetail','').rsplit('/',1)[1]
                             if store == 'pdxvc' or store == 'omasd' or store == 'nycfq' or store == 'hougo':
-                                print('Coming Soon')
+                                hours = ''
                             else:
                                 yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

@@ -1,4 +1,6 @@
 import csv
+
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -12,6 +14,18 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
+
+
+def get_hours(url):
+    session = SgRequests()
+    r = session.get(url)
+    tree = html.fromstring(r.text)
+    try:
+        hours = ''.join(tree.xpath("//h2[@style='font-size: 18px; color: #0b2e4d;']")[0].xpath('./text()')) \
+        .replace(',', ':').replace('\n', '').replace('PM', 'PM;').replace('Oct 30 - Dec 6', '').strip() or '<MISSING>'
+    except IndexError:
+        hours = '<MISSING>'
+    return hours
 
 
 def fetch_data():
@@ -40,7 +54,7 @@ def fetch_data():
         latitude = j.get('latitude') or '<MISSING>'
         longitude = j.get('longitude') or '<MISSING>'
         location_type = '<MISSING>'
-        hours_of_operation = '<MISSING>'
+        hours_of_operation = get_hours(page_url)
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]

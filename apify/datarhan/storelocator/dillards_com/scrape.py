@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 from lxml import etree
@@ -76,16 +77,22 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = store_data["@type"]
         location_type = location_type if location_type else "<MISSING>"
-        latitude = ""
+
+        geo_data = store_dom.xpath(
+            '//script[contains(text(), "__INITIAL_STATE__")]/text()'
+        )[0]
+        geo_data = re.findall("__INITIAL_STATE__ =(.+);", geo_data)[0]
+        geo_data = json.loads(geo_data)
+        latitude = geo_data["contentData"]["store"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = ""
+        longitude = geo_data["contentData"]["store"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for elem in store_data["openingHoursSpecification"]:
-            day = elem["dayOfWeek"]["name"]
-            opens = elem["opens"]
-            closes = elem["closes"]
-            hours_of_operation.append("{} {} - {}".format(day, opens, closes))
+        hours_html = store_dom.xpath('//div[@class="row storeHours"]//table/tbody/tr')
+        for elem in hours_html:
+            day = elem.xpath("td/text()")[0]
+            hours = elem.xpath("td/text()")[-1]
+            hours_of_operation.append("{} {}".format(day, hours))
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

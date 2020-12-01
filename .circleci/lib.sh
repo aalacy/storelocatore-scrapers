@@ -1,11 +1,10 @@
 #!/bin/bash
 
-default_target_branch='origin/master'
 crawler_subdir_regex='apify(\/[^/]+){3}'
 
 list_diffs() {
 	current_branch=$(git rev-parse --abbrev-ref HEAD)
-	target_branch="${TARGET_BRANCH:-$default_target_branch}"
+	target_branch="${TARGET_BRANCH:-origin/master}"
 	git --no-pager diff ${1:+"$1"} --name-only "$(git merge-base "$current_branch" "$target_branch")"
 }
 
@@ -41,17 +40,6 @@ filter_node_files() {
 ensure_no_linter_config() {
 	if [ -e "$1" ]; then
 		echo "FAIL: Crawler-specific linting configuration is not allowed. Please remove '$1'"
-		return 1
-	fi
-}
-
-check_ci_config_current() {
-	target_branch="${TARGET_BRANCH:-$default_target_branch}"
-	if grep -Eq \
-		-e '^\.circleci/config\.yml$' \
-		-e '^\.circleci/lib\.sh$' \
-		<(git --no-pager diff --name-only "${target_branch}"); then
-		echo "FAIL: CI configuration has diverged from ${target_branch}. Please rebase your branch on or merge ${target_branch}."
 		return 1
 	fi
 }

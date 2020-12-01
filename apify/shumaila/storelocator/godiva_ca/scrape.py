@@ -30,26 +30,34 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)    
     soup =BeautifulSoup(r.text, "html.parser")    
     statelist = soup.findAll('a', {'class': "c-directory-list-content-item-link"}) 
-    p = 0
-    for statelink in statelist:
-        statelink = 'https://stores.godiva.ca/'+statelink['href']        
+    p = 0    
+    for statelink in statelist:        
+        statelink = 'https://stores.godiva.ca/'+statelink['href']
+        check2 = 0
         r = session.get(statelink, headers=headers, verify=False)
         soup =BeautifulSoup(r.text, "html.parser")
         citylist = soup.findAll('a', {'class': "c-directory-list-content-item-link"})
-        for citylink in citylist:
-            citylink = 'https://stores.godiva.ca/'+citylink['href']
-            citylink = citylink.replace('../','')            
-            r = session.get(citylink, headers=headers, verify=False)
-            soup =BeautifulSoup(r.text, "html.parser")
+        if len(citylist) == 0:
+            check2 = 1            
+            citylist.append(statelink)
+        for citylink in citylist:            
+            if check2 == 1:
+                pass
+            else:
+                citylink = 'https://stores.godiva.ca/'+citylink['href']
+                citylink = citylink.replace('../','')            
+                r = session.get(citylink, headers=headers, verify=False)
+                soup =BeautifulSoup(r.text, "html.parser")
+                
             linklist = []
             linklist = soup.select('a:contains("View Store Page")')
             flag = 0
             if len(linklist) == 0:
-                flag = 1
+                flag = 1                
                 linklist.append(citylink)        
-                
+                 
             for link in linklist:
-                if flag == 0:
+                if flag == 0:                  
                     try:
                         link = 'https://stores.godiva.ca/'+link['href']
                         link = link.replace('../','')
@@ -59,9 +67,15 @@ def fetch_data():
                     soup =BeautifulSoup(r.text, "html.parser")
 
                 
-                soup =BeautifulSoup(r.text, "html.parser")
-                title = soup.find('div',{'class':'info-subtitle'}).text
+                soup =BeautifulSoup(r.text, "html.parser")         
+                try:
+                    title = soup.find('div',{'class':'info-subtitle'}).text
+                except:
+                    title = soup.find('meta',{'property':"og:title"})['content']
+                   
+              
                 street = soup.find('span',{'itemprop':'streetAddress'}).text
+                #print(link)
                 if street in streetlist:
                     continue
                 streetlist.append(street)

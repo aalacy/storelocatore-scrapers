@@ -17,8 +17,15 @@ def fetch_data():
     son = session.get(url, headers = headers)
     soup = b4(son.text,'lxml')
     soup = soup.find('script',{'type':'text/javascript','id':'fb_custom_locations_js-js-extra'})
-    son = json.loads(str(soup.text).split('site_data = ',1)[1].rsplit(';',1)[0])
-
+    try:
+        son = json.loads(str(soup.text).split('site_data = ',1)[1].rsplit(';',1)[0])
+    except:
+        soup = b4(son.text,'lxml')
+        soup = soup.find_all('script',{'type':'text/javascript'})
+        for i in soup:
+            if 'site_data' in i.text:
+                son = json.loads(str(i.text).split('site_data = ',1)[1].rsplit(';',1)[0])
+        
     for i in son['pointsData']:
         yield i
         

@@ -1,5 +1,5 @@
 beautifulsoup4==4.8.0
 requests==2.22.0
 pyzipcode3==2.2
-sgzip
 sglogging
+sgzip==0.0.55

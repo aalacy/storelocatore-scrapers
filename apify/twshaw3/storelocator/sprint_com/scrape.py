@@ -7,7 +7,6 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('sprint_com')
 
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)

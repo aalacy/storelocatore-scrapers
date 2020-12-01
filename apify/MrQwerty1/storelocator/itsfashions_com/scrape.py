@@ -1,5 +1,4 @@
 import csv
-import usaddress
 
 from concurrent import futures
 from lxml import html
@@ -48,12 +47,16 @@ def get_data(_id):
 
     # city, state, postal index
     i = 0
+    street_address = '<MISSING>'
     for l in line:
-        if l.find('\r\n') != -1: break
+        if l[0].strip().isdigit():
+            street_address = l
+        if l.find('\r\n') != -1:
+            break
         i += 1
 
     part_line = line[i]
-    street_address = ', '.join(line[:i])
+
     city = part_line.split('\r\n')[0][:-1].strip()
     state = part_line.split('\r\n')[1].strip()
     postal = part_line.split('\r\n')[-1].strip()

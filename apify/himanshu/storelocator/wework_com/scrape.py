@@ -5,14 +5,11 @@ import re
 import io
 import unicodedata
 import json
-
-
 session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
@@ -27,7 +24,6 @@ def fetch_data():
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for country in ['US','CA']:
-
         for city in soup.find("div",{"class":"markets-list__country markets-list__country--"+str(country)}).find_all("a"):
             
             city_request = session.get("https://www.wework.com" + city["href"],headers=headers)

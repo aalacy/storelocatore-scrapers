@@ -35,7 +35,7 @@ def fetch_data():
             postal = j.get('postalCode') or '<MISSING>'
             country_code = 'US'
             store_number = '<MISSING>'
-            page_url = 'https://www.graybar.com/store-finder'
+            page_url = '<MISSING>'
             phone = j.get('phone') or '<MISSING>'
             latitude = j.get('latitude') or '<MISSING>'
             longitude = j.get('longitude') or '<MISSING>'
