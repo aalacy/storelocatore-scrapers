@@ -1,15 +1,12 @@
 from sgscrape.simple_scraper_pipeline import *
-from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgselenium import SgChrome, SgSelenium
+from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-import bs4
 from bs4 import BeautifulSoup
-import json
 
 
 def para(url):
@@ -168,9 +165,6 @@ def para(url):
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="merrymaids")
     url = "https://www.merrymaids.com/locations/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
-    }
     soup = ""
     with SgChrome() as driver:
         driver.get(url)
