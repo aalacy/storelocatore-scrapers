@@ -2,7 +2,6 @@ import csv
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
-import os
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("bankofamerica_com")
@@ -72,7 +71,6 @@ def fetch_data():
         if len(locs) <= 7000:
             Found = True
             logger.info("Retrying...")
-    stores = []
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         PFound = True
@@ -95,7 +93,6 @@ def fetch_data():
                 lng = ""
                 typ = ""
                 hours = ""
-                AFound = False
                 lines = r2.iter_lines(decode_unicode=True)
                 for line2 in lines:
                     if "var fid = '" in line2:
