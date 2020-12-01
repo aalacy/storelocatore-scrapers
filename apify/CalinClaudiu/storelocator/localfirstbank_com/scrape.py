@@ -1,4 +1,4 @@
-from sgscrape.simple_scraper_pipeline import *
+import sgscrape.simple_scraper_pipeline
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
