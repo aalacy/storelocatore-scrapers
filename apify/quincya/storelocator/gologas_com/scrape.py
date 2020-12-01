@@ -103,7 +103,7 @@ def fetch_data():
 			hours_of_operation = "<MISSING>"
 			latitude = loc['data-latlng'].split(",")[0].strip()
 			longitude = loc['data-latlng'].split(",")[1].strip()
-
+			
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	driver.close()
 	return data
