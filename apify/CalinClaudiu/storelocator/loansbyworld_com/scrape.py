@@ -2,7 +2,6 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
-from sgscrape.simple_scraper_pipeline import MissingField
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgzip import DynamicGeoSearch, SearchableCountries
