@@ -1,5 +1,5 @@
 sgscrape
 sgrequests
 sglogging
-sgzip
 bs4
+sgzip==0.0.55

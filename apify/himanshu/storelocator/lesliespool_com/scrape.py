@@ -7,6 +7,11 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('lesliespool_com')
 
+
+
+
+session = SgRequests()
+
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,6 +55,8 @@ def fetch_data():
         hours_of_operation = dt['storeHours'].replace("*",' ')
         phone = dt['phone']
         
+   
+      
         store = []
         store.append(base_url)
         store.append(location_name.replace("#"+str(dt['ID']),''))
@@ -69,11 +76,17 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
+        # logger.info("data===="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
+
+      
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

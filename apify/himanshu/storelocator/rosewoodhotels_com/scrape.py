@@ -33,8 +33,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
   
     for link in soup.find("div",{"class":"find-all-hotels hotels-list-3 hotels-list-tab-2 hotels-list-mobile-1 aem-GridColumn aem-GridColumn--default--12"}).find("ul").find_all("a"):
-        page_url = (base_url+link['href'])
-        location_request = session.get( base_url+link["href"],headers=headers)
+        page_url = (link['href'])
+        location_request = session.get( link["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         try:
             location_details = list(location_soup.find("span",{"itemprop":"streetAddress"}).stripped_strings)
@@ -61,6 +61,9 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
+            if "https://www.rosewoodhotels.com/en/kona-village"  == store[-1]:
+                continue3
+
             yield store
         except:
             pass

@@ -15,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -83,18 +83,18 @@ def fetch_data():
                     titlelist.append(title)
                     data.append([
                         'https://www.industriousoffice.com/',
-                        link.replace('\u202c',''),
-                        title.replace('\u202c',''),
-                        street.replace('\u202c',''),
-                        city.replace('\u202c',''),
-                        state.replace('\u202c',''),
-                        pcode.replace('\u202c',''),
+                        link,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
                         'US',
                         '<MISSING>',
-                        phone.replace('\u202c',''),
+                        phone,
                         '<MISSING>',
-                        lat.replace('\u202c',''),
-                        longt.replace('\u202c',''),
+                        str(lat),
+                        str(longt),
                         '<MISSING>'
                     ])
                     # logger.info(p,data[p])
@@ -119,18 +119,18 @@ def fetch_data():
                 titlelist.append(title)
                 data.append([
                     'https://www.industriousoffice.com/',
-                    link.replace('\u202c',''),
-                    title.replace('\u202c',''),
-                    street.replace('\u202c',''),
-                    city.replace('\u202c',''),
-                    state.replace('\u202c',''),
-                    pcode.replace('\u202c',''),
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
                     'US',
                     '<MISSING>',
-                    phone.replace('\u202c',''),
+                    phone,
                     '<MISSING>',
-                    lat.replace('\u202c',''),
-                    longt.replace('\u202c',''),
+                    str(lat),
+                    str(longt),
                     '<MISSING>'
                 ])
                 # logger.info(p,data[p])

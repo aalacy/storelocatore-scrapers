@@ -78,7 +78,6 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])   
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 yield store   
 def scrape():
     data = fetch_data()

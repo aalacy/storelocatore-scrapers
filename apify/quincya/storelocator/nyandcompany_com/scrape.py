@@ -55,7 +55,7 @@ def fetch_data():
         elif i == '1':
             location_type = "NY&C Outlets"
         else:
-            location_type = "<MISSING>"
+            continue
 
         base_link = 'https://www.nyandcompany.com/locations/?_DARGS=/storelocator/storelocator.jsp.1&_dyncharset=UTF-8&_dynSessConf=' + sessconf + '&%2Fcom%2Fnyco%2FApplicationConfig.storelocatorLat.homeSite=39&_D%3A%2Fcom%2Fnyco%2FApplicationConfig.storelocatorLat.homeSite=+&%2Fcom%2Fnyco%2FApplicationConfig.storelocatorLng.homeSite=-96&_D%3A%2Fcom%2Fnyco%2FApplicationConfig.storelocatorLng.homeSite=+&location_type=' + str(i) + '&%2Fcom%2Fnyco%2Fstore%2Fcommerce%2FStoreLocatorFormHandler.distance=10000&_D%3A%2Fcom%2Fnyco%2Fstore%2Fcommerce%2FStoreLocatorFormHandler.distance=+&%2Fcom%2Fnyco%2Fstore%2Fcommerce%2FStoreLocatorFormHandler.storeType='+ str(i) +'&_D%3A%2Fcom%2Fnyco%2Fstore%2Fcommerce%2FStoreLocatorFormHandler.storeType=+&addressLat=40.7388319&_D%3AaddressLat=+&addressLng=-73.98153370000001&_D%3AaddressLng=+&addressStatus=OK&_D%3AaddressStatus=+&submit=submit&_D%3Asubmit=+&_DARGS=%2Fstorelocator%2Fstorelocator.jsp.1'
 

@@ -16,7 +16,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 def fetch_data():
-    addressess =[]
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -57,11 +57,9 @@ def fetch_data():
             store.append(hours_of_operation)
             store.append(page_url)
             store = [x.strip() if type(x) == str else x for x in store]
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
+            
             yield store
-        
+            
   
 def scrape():
     data = fetch_data()

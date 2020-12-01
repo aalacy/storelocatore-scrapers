@@ -21,8 +21,7 @@ def para(k):
                 final = final + i + ': '
             elif 'day' in i:
                 final = final + i + '; '
-            else:
-                print('HOPAAAAA',i)
+
     except:
         final = '<MISSING>'
     

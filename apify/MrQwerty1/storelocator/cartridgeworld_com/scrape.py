@@ -74,6 +74,9 @@ def get_data(coord):
 
         hours_of_operation = ';'.join(_tmp) or '<MISSING>'
 
+        if street_address == '<MISSING>':
+            hours_of_operation = '<MISSING>'
+
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
 

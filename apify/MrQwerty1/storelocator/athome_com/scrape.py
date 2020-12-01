@@ -25,7 +25,6 @@ def get_hours(url):
         .replace(',', ':').replace('\n', '').replace('PM', 'PM;').replace('Oct 30 - Dec 6', '').strip() or '<MISSING>'
     except IndexError:
         hours = '<MISSING>'
-    print(hours)
     return hours
 
 

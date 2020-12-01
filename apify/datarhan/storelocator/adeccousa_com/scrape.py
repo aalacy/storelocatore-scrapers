@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "alfaromeousa.com"
+    DOMAIN = "adeccousa.com"
     start_url = "https://www.adeccousa.com/globalweb/branch/branchsearch"
 
     headers = {

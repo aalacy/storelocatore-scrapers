@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "xpo.com"
     start_url = "https://www.xpo.com/global-locations/"
@@ -100,9 +99,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
+
+        items.append(item)
 
     return items
 

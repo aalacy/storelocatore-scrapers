@@ -1,3 +1,3 @@
 sgrequests
 beautifulsoup4==4.7.1
-sgzip
+sgzip==0.0.55

@@ -1,4 +1,5 @@
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 
 def write_output(data):
@@ -48,23 +49,27 @@ def fetch_data():
 
 		location_type = location_type[1:].strip()
 
-		phone = store['contact']['phoneNumber']['original']
+		phone = str(store['contact']['phoneNumber']['original'])
+		
+		try:
+			link = store['contact']['website']
+		except:
+			link = store['services'][0]['contact']['website']
 
 		try:
-			hours_of_operation = ""
-			hours = store['openingHours']
-			for h in hours:
-				hours_of_operation = (hours_of_operation + " " + h['day'] + " " + h['openTime']).strip()
+			req = session.get(link, headers = HEADERS)
+			base = BeautifulSoup(req.text,"lxml")
+
+			hr_link = (link + base.find(class_="contact-us").a["href"]).replace("uk//","uk/")
+			req = session.get(hr_link, headers = HEADERS)
+			base = BeautifulSoup(req.text,"lxml")
+			
+			hours_of_operation = " ".join(list(base.find_all(class_="loc-hours-table")[0].stripped_strings))
 		except:
 			hours_of_operation = "<MISSING>"
 
 		latitude = store['address']['coordinates']['latitude']
 		longitude = store['address']['coordinates']['longitude']
-
-		try:
-			link = store['contact']['website']
-		except:
-			link = store['services'][0]['contact']['website']
 
 		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

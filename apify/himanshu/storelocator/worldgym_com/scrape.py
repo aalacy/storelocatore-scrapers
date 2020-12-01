@@ -8,10 +8,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('worldgym_com')
 
-
-
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -25,17 +21,17 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    base_url = "https://www.worldgym.com/"
+    base_url = "https://www.worldgym.com/findagym"
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var franhiseeLocations" in tag.text).text.split("var franhiseeLocations =")[1].split('$("')[0].replace('}];','}]'))
+    json_data = json.loads(str(soup).split("franhiseeLocations=")[1].split(';$(".header')[0])
+  
+    # json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var franhiseeLocations" in tag.text).text.split("var franhiseeLocations =")[1].split('$("')[0].replace('}];','}]'))
     for data in json_data:
         country_code = data['Country'].replace("USA","US").replace("Canada","CA")
         if country_code not in ["US","CA"]:
@@ -44,7 +40,7 @@ def fetch_data():
         location_name = data['LocationName']
         street_address = (data['Line1'] +" "+ str(data['Line2'])).strip()
         city = data['City']
-        state = data['State']
+        state = data['State'].replace('QB','QC')
         zipp = data['Postal']
         store_number = "<MISSING>"
         if data['PhoneWithOutCountryCode']:
@@ -62,9 +58,7 @@ def fetch_data():
             hours_of_operation = " ".join(list(soup1.find("div",{"class":"tab-pane gymhourstab"}).stripped_strings)).replace("Time to get fit... Hours","")
         else:
             hours_of_operation = soup1.find("h5",{"class":"readmore text-center"}).text.strip()
-        
-        
-    
+          
         store =[]
         store.append(base_url)
         store.append(location_name)
@@ -80,16 +74,12 @@ def fetch_data():
         store.append(longitude)
         store.append(hours_of_operation)
         store.append(page_url)
-        # logger.info("data====="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
+      
         yield store
-
     
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
 
