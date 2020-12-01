@@ -1,7 +1,5 @@
 import csv
 import urllib.request
-import urllib.error
-import urllib.parse
 from sgrequests import SgRequests
 import gzip
 from sglogging import SgLogSetup
