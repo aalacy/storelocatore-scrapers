@@ -1,10 +1,10 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
+from sgscrape.simple_scraper_pipeline import MultiMappingField
+from sgscrape.simple_scraper_pipeline import MissingField
 from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import json
 
 
 def fetch_data():
@@ -23,7 +23,9 @@ def fetch_data():
     son = session.get(urlCA, headers=headers).json()
     for i in son["stores"]:
         yield i
-    logzilla.info(f"Finished grabbing data!!")
+
+    son = "Finished grabbing data!!"
+    logzilla.info(f"{son}")
 
 
 def fix_hours(x):
