@@ -192,8 +192,8 @@ def fetch_data():
         for j in i:
             k = j
             yield k
-
-    logzilla.info(f"Finished grabbing data!!")
+    items = "Finished grabbing data!!"
+    logzilla.info(f'{items}')
 
 
 def scrape():
