@@ -17,7 +17,7 @@ def para(chunk):
     son = session.get(chunk["url"], headers=headers)
     if str(son) != "<Response [200]>":
         raise Exception(
-            "Sorry, this url\n", url, "\nBroke the crawler with response:", son
+            "Sorry, this url\n", chunk["url"], "\nBroke the crawler with response:", son
         )
 
     soup = b4(son.text, "lxml")
