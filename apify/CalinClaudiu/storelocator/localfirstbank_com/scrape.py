@@ -1,6 +1,4 @@
 from sgscrape.simple_scraper_pipeline import *
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
