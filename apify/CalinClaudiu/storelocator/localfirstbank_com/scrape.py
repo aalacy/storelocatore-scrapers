@@ -33,8 +33,8 @@ def fetch_data():
 
     for i in son["pointsData"]:
         yield i
-
-    logzilla.info(f"Finished grabbing data!!")
+    son = "Finished grabbing data!!"
+    logzilla.info(f"{son}")
 
 
 def fix_comma(x):
