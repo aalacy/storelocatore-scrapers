@@ -70,7 +70,7 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain = ConstantField(url),
         page_url = MappingField(mapping=['permalink']),
-        location_name = MappingField(mapping=['name'], value_transform = lambda x : x.replace('None','<MISSING>')),
+        location_name = MappingField(mapping=['name'], value_transform = lambda x : x.replace('None','<MISSING>').replace('&#8217;',"'").replace('&#8211;','-')),
         latitude = MappingField(mapping=['lat']),
         longitude = MappingField(mapping=['lng']),
         street_address = MultiMappingField(mapping=[['address1'],['address2']], multi_mapping_concat_with = ', ', value_transform = fix_comma),
@@ -79,7 +79,7 @@ def scrape():
         zipcode = MappingField(mapping=['zip'], value_transform = lambda x : x.replace('None','<MISSING>'), is_required = False),
         country_code = MissingField(),
         phone = MappingField(mapping=['phone_number'], value_transform = lambda x : x.replace('None','<MISSING>') , is_required = False),
-        store_number = MappingField(mapping=['post_id']),
+        store_number = MappingField(mapping=['branch_number']),
         hours_of_operation = MappingField(mapping=['permalink'], value_transform = pretty_hours, is_required = False),
         location_type= MappingField(mapping=['type'], is_required = False)
     )
