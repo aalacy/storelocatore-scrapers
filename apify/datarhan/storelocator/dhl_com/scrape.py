@@ -4,6 +4,7 @@ import sgzip
 from sgzip import SearchableCountries
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -44,20 +45,24 @@ def fetch_data():
     scrape_items = []
 
     DOMAIN = "dhl.com"
-    start_url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address={}&countryCode=US&capability=80,86,87&weightUom=lb&dimensionsUom=in&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&b64=true&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
+    start_url_us = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode=US&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
+    start_url_ca = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode=CA&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
+    session.get('https://locator.dhl.com/ServicePointLocator/restV3/appConfig')
+    
+    all_requests = []
+    us_coords = sgzip.coords_for_radius(radius=50, country_code=SearchableCountries.USA)
+    for coord in us_coords:
+        lat, lng = coord
+        all_requests.append(start_url_us.format(lat, lng))
+    ca_coords = sgzip.coords_for_radius(radius=50, country_code=SearchableCountries.CANADA)
+    for coord in ca_coords:
+        lat, lng = coord
+        all_requests.append(start_url_ca.format(lat, lng))
 
-    all_codes = []
-    us_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
-    for zip_code in us_zips:
-        all_codes.append(zip_code)
-    ca_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.USA)
-    for zip_code in ca_zips:
-        all_codes.append(zip_code)
-
-    for code in all_codes:
-        response = session.get(start_url.format(code))
-        if not response.text:
-            continue
+    for url in all_requests:
+        response = session.get(url)
+        # if not response.text:
+        #     continue
 
         data = json.loads(response.text)
 
@@ -65,7 +70,7 @@ def fetch_data():
             continue
 
         for poi in data["servicePoints"]:
-            store_url = poi.get("contactDetails", {}).get("linkUri")
+            store_url = ''
             store_url = store_url if store_url else "<MISSING>"
             location_name = poi["servicePointName"]
             location_name = location_name if location_name else "<MISSING>"
@@ -119,8 +124,9 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            if store_number not in scrape_items:
-                scrape_items.append(store_number)
+            check = '{} {}'.format(store_number, street_address)
+            if check not in scrape_items:
+                scrape_items.append(check)
                 items.append(item)
 
     return items
