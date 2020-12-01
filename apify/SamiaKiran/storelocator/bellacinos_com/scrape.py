@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import csv
 import json
 from datetime import datetime
@@ -82,7 +81,7 @@ def fetch_data():
                 city,
                 state,
                 pcode,
-                "US",
+                ccode,
                 store,
                 phone,
                 "<MISSING>",
