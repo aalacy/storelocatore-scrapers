@@ -70,22 +70,28 @@ def fetch_data():
             street_address = street_address if street_address else "<MISSING>"
             city = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[0]
             city = city if city else "<MISSING>"
-            state = (
-                store_dom.xpath('//span[@class="acs-city"]/text()')[0]
-                .split(",")[-1]
-                .strip()
-                .split()[:-1]
-            )
-            state = " ".join(state) if state else "<MISSING>"
-            zip_code = (
-                store_dom.xpath('//span[@class="acs-city"]/text()')[0]
-                .split(",")[-1]
-                .strip()
-                .split()[1:]
-            )
-            zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
             country_code = store_dom.xpath('//span[@class="acs-country"]/text()')[0]
             country_code = country_code if country_code else "<MISSING>"
+            if country_code == 'Canada':
+                state = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(',')[-1].strip().split()[:-2]
+                state = ' '.join(state) if state else '<MISSING>'
+                zip_code = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(',')[-1].strip().split()[-2:]
+                zip_code = ' '.join(zip_code) if zip_code else '<MISSING>'
+            else:
+                state = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[-1].strip().split()[:-1]
+                )
+                state = ' '.join(state) if state else ''
+                if not state:
+                    state = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[1].strip()
+                state = state if state else "<MISSING>"
+                zip_code = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                    .split(",")[-1]
+                    .strip()
+                    .split()[-1:]
+                )
+                zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
             store_number = ""
             store_number = store_number if store_number else "<MISSING>"
             phone = store_dom.xpath('//span[@class="acs-location-phone"]/a/text()')[0]
@@ -139,8 +145,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if street_address not in scraped_items:
-                scraped_items.append(street_address)
+            check = '{} {}'.format(location_name, street_address)
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items
