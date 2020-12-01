@@ -27,14 +27,14 @@ def fetch_data():
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/div/main/div/div[2]/div')
             )
-        )
+        )  # noqa
         for r in driver.requests:
             if "/api/vendors/regions" in r.path:
                 states = json.loads(r.response.body)
                 logzilla.info(f"Found {len(states)} states with locations\n\n")
         for i in states:
             logzilla.info(f'\n\nGrabbing locations from {i["name"]}.')
-            items = "Getting page"
+            son = "Getting page"
             logzilla.info(f"{son}")
             driver.get("https://order.pieology.com/locations/" + i["code"])
             son = "Waiting for page to load"
@@ -43,7 +43,7 @@ def fetch_data():
                 EC.visibility_of_element_located(
                     (By.XPATH, '//*[@id="root"]/div/main/div/div[1]/div[2]/div/a')
                 )
-            )
+            )  # noqa
             for r in driver.requests:
                 if ("/api/vendors/search/" + i["code"]) in r.path:
                     data = json.loads(r.response.body)
@@ -52,7 +52,7 @@ def fetch_data():
                     )
                     for loc in data["vendor-search-results"]:
                         yield loc
-    stores = "Finished grabbing data!!"
+    son = "Finished grabbing data!!"
     logzilla.info(f"{son}")
 
 
