@@ -106,7 +106,7 @@ def fetch_data():
     script = script.split("createMapMarker(")
     for i in script:
         data["stores"].append(parse_store(i))
-        if data["stores"][-1]["error"] == True:
+        if data["stores"][-1]["error"]:
             data["stores"].pop()
 
     lize = utils.parallelize(
