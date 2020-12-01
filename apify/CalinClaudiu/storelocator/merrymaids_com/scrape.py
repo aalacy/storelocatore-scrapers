@@ -1,4 +1,7 @@
-from sgscrape.simple_scraper_pipeline import *
+from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
+from sgscrape.simple_scraper_pipeline import ConstantField
+from sgscrape.simple_scraper_pipeline import MappingField
+from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
