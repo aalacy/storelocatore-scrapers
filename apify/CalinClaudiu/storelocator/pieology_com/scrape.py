@@ -23,7 +23,7 @@ def fetch_data():
         driver.get(url)
         son = "Waiting for page to load"
         logzilla.info(f"{son}")
-        items = WebDriverWait(driver, 20).until(
+        items = WebDriverWait(driver, 20).until(  # noqa
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/div/main/div/div[2]/div')
             )
@@ -39,7 +39,7 @@ def fetch_data():
             driver.get("https://order.pieology.com/locations/" + i["code"])
             son = "Waiting for page to load"
             logzilla.info(f"{son}")
-            stores = WebDriverWait(driver, 20).until(
+            stores = WebDriverWait(driver, 20).until(  # noqa
                 EC.visibility_of_element_located(
                     (By.XPATH, '//*[@id="root"]/div/main/div/div[1]/div[2]/div/a')
                 )
