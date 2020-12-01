@@ -70,7 +70,7 @@ def fetch_data():
                             )
                             store = loc.rsplit("/", 1)[1]
                             phone = item.split('"phone_main":"')[1].split('"')[0]
-                            name = add.split(' ',1)[1]
+                            name = add.split(" ", 1)[1]
                             website = "jiffylube.com"
                             typ = "<MISSING>"
                             lat = item.split('"latitude":')[1].split(",")[0]
