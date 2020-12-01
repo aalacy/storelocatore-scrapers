@@ -3,11 +3,10 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 import json
 from sglogging import sglog
-from sgselenium import SgFirefox, SgSelenium
+from sgselenium import SgFirefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 
 
 def fetch_data():
@@ -15,13 +14,15 @@ def fetch_data():
     url = "https://order.pieology.com/locations"
 
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Crawler")
-    son = []
-    logzilla.info(f"Initializing geckodriver")
+    son = "Initializing geckodriver"
+    logzilla.info(f"{son}")
     with SgFirefox() as driver:
-        logzilla.info(f"Getting page")
+        son = "Getting page"
+        logzilla.info(f"{son}")
         driver.get("https://pieology.com/")
         driver.get(url)
-        logzilla.info(f"Waiting for page to load")
+        son = "Waiting for page to load"
+        logzilla.info(f"{son}")
         items = WebDriverWait(driver, 20).until(
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/div/main/div/div[2]/div')
@@ -33,9 +34,11 @@ def fetch_data():
                 logzilla.info(f"Found {len(states)} states with locations\n\n")
         for i in states:
             logzilla.info(f'\n\nGrabbing locations from {i["name"]}.')
-            logzilla.info(f"Getting page")
+            son = "Getting page"
+            logzilla.info(f"{son}")
             driver.get("https://order.pieology.com/locations/" + i["code"])
-            logzilla.info(f"Waiting for page to load")
+            son = "Waiting for page to load"
+            logzilla.info(f"{son}")
             stores = WebDriverWait(driver, 20).until(
                 EC.visibility_of_element_located(
                     (By.XPATH, '//*[@id="root"]/div/main/div/div[1]/div[2]/div/a')
@@ -49,8 +52,8 @@ def fetch_data():
                     )
                     for loc in data["vendor-search-results"]:
                         yield loc
-
-    logzilla.info(f"Finished grabbing data!!")
+    son = "Finished grabbing data!!"
+    logzilla.info(f"{son}")
 
 
 def pretty_hours(k):
