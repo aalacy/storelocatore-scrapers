@@ -30,7 +30,7 @@ def fetch_data():
     # conn = http.client.HTTPSConnection("guess.radius8.com")
  
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 80

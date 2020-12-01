@@ -63,7 +63,7 @@ def fetch_data():
     address = []
     base_url = "https://locations.tropicalsmoothiecafe.com"
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 50
     MAX_DISTANCE = 100

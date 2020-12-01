@@ -37,7 +37,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
     }
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes= ["CA"])
     MAX_RESULTS = 25
     MAX_DISTANCE = 40

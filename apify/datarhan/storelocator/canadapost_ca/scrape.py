@@ -33,7 +33,7 @@ def fetch_data():
     }
 
     all_coordinates = []
-    ca_coordinates = sgzip.coords_for_radius(radius=10, country_code=SearchableCountries.CANADA)
+    ca_coordinates = sgzip.coords_for_radius(radius=50, country_code=SearchableCountries.CANADA)
     for coord in ca_coordinates:
         all_coordinates.append(coord)
 
@@ -49,9 +49,10 @@ def fetch_data():
             store_url = urllib.parse.urljoin(start_url, poi_url)
             store_response = session.get(store_url)
             store_dom = etree.HTML(store_response.text)
-
+            if not store_dom:
+                continue
             address_raw = store_dom.xpath('//address/p/text()')
-            address_list = [elem.strip() for elem in address_raw if elem.strip()]
+            address_list = [elem.strip() for elem in address_raw if elem.strip() and 'Bilingual' not in elem]
             location_name = address_list[0]
             location_name = location_name if location_name else '<MISSING>'
             street_address = address_list[1]
@@ -101,8 +102,8 @@ def fetch_data():
                 hours_of_operation
             ]
 
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
+            if store_url.split('=')[-1] not in scraped_items:
+                scraped_items.append(store_url.split('=')[-1] )
                 items.append(item)
         
     return items

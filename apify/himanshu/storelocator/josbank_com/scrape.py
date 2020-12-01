@@ -19,17 +19,12 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 200
-    MAX_DISTANCE = 100
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
+    zip_codes = sgzip.for_radius(50)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.josbank.com/"
-    while zip_code:
+    for zip_code in zip_codes:
         result_coords = []
         # logger.info("zip_code === "+zip_code)
         location_url = "https://www.josbank.com/sr/search/resources/store/13452/storelocator/byProximity?catalogId=14052&langId=-24&radius=500&zip="+str(zip_code)+"&city=&state=&brand=JAB&profileName=X_findStoreLocatorWithExtraFields"
@@ -44,8 +39,8 @@ def fetch_data():
                     current_results_len = len(json_data['DocumentList'])
                     for i in json_data['DocumentList']:
                         location_name = i['storeName']
-                        street_address = i['address1_ntk']
-                        city = i['city_ntk']
+                        street_address = i['address1_ntk'].lower()
+                        city = i['city_ntk'].lower()
                         state = i['state_ntk']
                         zipp = i['zipcode_ntk']
                         store_number = i['stloc_id']
@@ -75,15 +70,7 @@ def fetch_data():
                             continue
                         addresses.append(store[2])  
                         yield store
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+  
 def scrape():
     data = fetch_data()
     write_output(data)

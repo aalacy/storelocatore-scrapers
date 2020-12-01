@@ -32,7 +32,7 @@ def write_output(data):
 def fetch_data():
     # header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5','Accept':'application/json, text/javascript, */*; q=0.01'}
     base_url = "https://www.dunkindonuts.com/"
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ["US"])
     postcode = search.next_zip()
 

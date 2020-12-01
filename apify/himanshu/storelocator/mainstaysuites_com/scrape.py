@@ -27,7 +27,7 @@ def fetch_data():
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes= ["US", "CA"])
     MAX_DISTANCE = 75
     coord = search.next_coord()

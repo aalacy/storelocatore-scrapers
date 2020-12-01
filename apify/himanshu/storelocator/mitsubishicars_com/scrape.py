@@ -18,25 +18,18 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     base_url ="https://www.mitsubishicars.com/"
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
     addressess =[]
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
+    zip_codes = sgzip.for_radius(100)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
     }
-    while zip_code:
-        result_coords = []
+    for index,zip_code in enumerate(zip_codes):
+        
         try:
             link = "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="+str(zip_code)+'&idealer=false&ecommerce=false'
             json_data = session.get(link, headers=headers).json()
         except:
             pass
-        current_results_len = len(json_data)  
         for loc in json_data:
             address = loc['address1'].strip()
             if loc['address2']:
@@ -51,6 +44,7 @@ def fetch_data():
             lng = loc['longitude']
             link = loc['dealerUrl'] 
             storeno = loc['bizId']
+            page_url=''
             if link:
                 page_url = "http://"+link.lower()
                 # logger.info(page_url)
@@ -76,9 +70,10 @@ def fetch_data():
                         hours_of_operation = "<INACCESSIBLE>"
             else:
                 hours_of_operation = "<MISSING>"
+                page_url=''
+            
             if city == "Little rock" or city == "Charlottesville":
                 page_url = "<MISSING>"
-            result_coords.append((lat,lng))
             store=[]
             store.append(base_url)
             store.append(name)
@@ -99,13 +94,7 @@ def fetch_data():
             addressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-        if current_results_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()       
+       
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -20,7 +20,7 @@ class Scraper(Scrape):
 
     def fetch_data(self):
         # store data
-        search = sgzip.ClosestNSearch()
+        search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
         search.initialize()
         zip_search = search.next_zip()
 

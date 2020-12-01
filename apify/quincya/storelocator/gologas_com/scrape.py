@@ -3,6 +3,16 @@ from bs4 import BeautifulSoup
 import csv
 import re
 import json
+import time
+from random import randint
+from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name='gologas_com')
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -16,7 +26,7 @@ def write_output(data):
 
 def fetch_data():
 	
-	base_link = "http://www.gologas.com/locations"
+	base_link = "http://www.gologas.com/oak-park-il"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
 	HEADERS = {'User-Agent' : user_agent}
@@ -27,37 +37,45 @@ def fetch_data():
 
 	data = []
 
-	items = base.find(id="x-section-2").find_all("a")
-	locator_domain = "gologas.com"
+	script = base.find(id="wpgmza-js-extra").text
+	js = script.split('"maps":')[1].split("]}")[0] + "]"
 
-	for item in items:
+	stores = json.loads(js)
+	locator_domain = "http://www.gologas.com/"
+
+	driver = SgChrome().chrome()
+
+	for item in stores:
+		link = locator_domain + item['map_title'].replace(", Michigan",", MI").replace("Niles","elgin").lower().replace(", ","-").replace(" ","-")
+		log.info(link)
+		
+		driver.get(link)
+		
 		try:
-			link = item["href"]
+			element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+				(By.CLASS_NAME, "wpgmza-address")))
 		except:
-			continue
-			
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+			try:
+				driver.get(link)
+				element = WebDriverWait(driver, 100).until(EC.presence_of_element_located(
+					(By.CLASS_NAME, "wpgmza-address")))
+			except:
+				continue
 
-		all_scripts = base.find_all('script')
-		for script in all_scripts:
-			if 'wpgmaps_localize_marker_data' in str(script):
-				script = script.text.strip()
-				break
+		time.sleep(randint(3,5))
 
-		js = script.split('wpgmaps_localize_marker_data =')[1].split("}};")[0].strip()
-		all_js = js.split('{"map')[1:]
+		base = BeautifulSoup(driver.page_source,"lxml")
 
-		for js in all_js:
-			js = '{"map' + js[:js.rfind("}")+1]
+		locs = base.find_all('div', {'class': re.compile(r'wpgmaps_mlist_row wpgmza_basic_row wpgmaps_.+')})
 
-			store = json.loads(js)
-
-			location_name = base.title.text.strip()
-			raw_address = store['address']
+		for loc in locs:
+			location_name = base.h2.text.strip()
+			if "," not in location_name:
+				location_name = item['map_title']
+			raw_address = loc.find(class_="wpgmza-address").text
 			if "," in location_name:
 				city = location_name.split(",")[0].strip()
-				state = location_name.split(",")[1][:3].strip()
+				state = location_name.split(",")[1].strip()
 			else:
 				city = location_name.split("|")[0].strip()
 				state = raw_address.split(",")[-1][:3].strip()
@@ -69,16 +87,25 @@ def fetch_data():
 				zip_code = re.findall(r'[0-9]{5}',raw_address[-20:])[0]
 			except:
 				zip_code = "<MISSING>"
+
 			country_code = "US"
 			store_number = "<MISSING>"
-			location_type = "<MISSING>"
+			icon = loc.find(class_="wpgmza_marker_icon")["src"]
+			if "savemarker" in icon:
+				location_type = "Save"
+			elif "allstarmarker" in icon:
+				location_type = "AllStar"
+			elif "golomarker" in icon:
+				location_type = "GoLo"
+			else:
+				location_type = "<MISSING>"
 			phone = "<MISSING>"
 			hours_of_operation = "<MISSING>"
-			latitude = store['lat']
-			longitude = store['lat']
+			latitude = loc['data-latlng'].split(",")[0].strip()
+			longitude = loc['data-latlng'].split(",")[1].strip()
 
 			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
+	driver.close()
 	return data
 
 def scrape():

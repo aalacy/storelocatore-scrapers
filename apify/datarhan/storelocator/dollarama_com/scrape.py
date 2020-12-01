@@ -5,8 +5,6 @@ import urllib.parse
 from lxml import etree
 from sgzip import SearchableCountries
 
-from tqdm import tqdm
-
 from sgrequests import SgRequests
 
 
@@ -42,9 +40,8 @@ def fetch_data():
     ca_coordinates = sgzip.coords_for_radius(radius=100, country_code=SearchableCountries.CANADA)
     for coord in ca_coordinates:
         all_coordinates.append(coord)
-    # all_coordinates += [('-113.610733', '53.621822'), ('-113.32064', '53.51353')]
 
-    for coord in tqdm(all_coordinates):
+    for coord in all_coordinates:
         lat, lng = coord
         response = session.post(start_url.format(lng, lat), headers=hdr)
         
@@ -53,8 +50,6 @@ def fetch_data():
             location_name = poi['Name']
             location_name = location_name if location_name else '<MISSING>'
             street_address = poi['ExtraData']['Address']['AddressNonStruct_Line1']
-            if poi['ExtraData']['Address']['AddressNonStruct_Line2']:
-                street_address += ', ' + poi['ExtraData']['Address']['AddressNonStruct_Line2'] 
             street_address = street_address if street_address else '<MISSING>'
             city = poi['ExtraData']['Address']['Locality']
             city = city if city else '<MISSING>'
@@ -81,9 +76,22 @@ def fetch_data():
             )
 
             hours_of_operation = []
-            days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            hours = poi['ExtraData']['Hours of operations'].split('|')
-            hours_of_operation = list(map(lambda d, h: d + ' ' + h, days, hours))
+            days = {
+                'Mo': 'Monday',
+                'Tu': 'Tuesday',
+                'We': 'Wednesday',
+                'Th': 'Thursday',
+                'Fr': 'Friday',
+                'Sa': 'Saturday',
+                'Su': 'Sunday'
+            }
+    
+            hours = poi['ExtraData']['HoursOfOpStruct']
+            hours_of_operation = []
+            for key, day_name in days.items():
+                start = hours[key]['Ranges'][0]['StartTime']
+                end = hours[key]['Ranges'][0]['EndTime']
+                hours_of_operation.append('{} {} - {}'.format(day_name, start, end))
             hours_of_operation = ', '.join(hours_of_operation)
 
             item = [

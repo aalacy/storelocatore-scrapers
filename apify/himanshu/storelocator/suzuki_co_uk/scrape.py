@@ -41,7 +41,7 @@ def get_driver():
 def fetch_data(): 
     base_url = "https://www.suzuki.co.uk/"
     addressess = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ["gb"])
     MAX_RESULTS = 50
     MAX_DISTANCE = 50

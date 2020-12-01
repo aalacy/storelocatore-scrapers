@@ -1,10 +1,8 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+from sgrequests import SgRequests
 import sgzip
+from sgzip import SearchableCountries
+
 
 base_url = 'https://www.bigotires.com'
 
@@ -32,66 +30,72 @@ def eliminate_space(items):
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     output_list = []
     store_ids = []
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
     url = "https://www.bigotires.com/restApi/dp/v1/store/storesByAddress"
-    with open('cities.json') as data_file:    
-        city_list = json.load(data_file)
-        for city in city_list:
-            data = {
-                "address": city['city'],
-                "distanceInMiles": "100"
-            }
 
-            request = requests.post(url, json=data)
+    zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
+    for zip in zips:
+        # query the store locator using zip
 
-            source = json.loads(request.text)
+        data = {
+            "address": zip,
+            "distanceInMiles": "200"
+        }
 
-            if 'storesType' not in list(source.keys()):
+        source = session.post(url, json=data).json()
+
+        if 'storesType' not in list(source.keys()):
+            continue
+
+        store_list = source['storesType']
+
+        if 'stores' not in list(store_list.keys()):
+            continue
+
+        store_list = store_list['stores']
+        for store in store_list:
+            store_id = validate(store['storeId'])
+            if store_id in store_ids:
                 continue
-
-            store_list = source['storesType']
-
-            if 'stores' not in list(store_list.keys()):
-                continue
-
-            store_list = store_list['stores']
-            for store in store_list:
-                store_id = validate(store['storeId'])
-                if store_id in store_ids:
-                    continue
-                store_ids.append(store_id)
-                store_hours = store['workingHours']
-                hours = ""
-                for x in store_hours:
-                    if validate(x['openingHour']) == 'Closed':
-                        hours += validate(x['day'] + ': ' + x['openingHour'])
-                    else:
-                        hours += validate(x['day'] + ':' + x['openingHour'] + '-' + x['closingHour'] + ' ')
-                storeClosedHours = store['storeClosedHours']
-                for x in storeClosedHours:
-                    hours += validate(x['date'] + ': ' + x['workingHours'] + ' ')
-
-                output = []
-                output.append(base_url) # url
-                output.append(validate(store['address']['address1'])) #location name
-                output.append(validate(store['address']['address1'])) #address
-                output.append(validate(store['address']['city'])) #city
-                output.append(validate(store['address']['state'])) #state
-                output.append(validate(store['address']['zipcode'])) #zipcode
-                output.append("US") #country code
-                output.append(store_id) #store_number
-                output.append(validate(store['phoneNumbers'][0])) #phone
-                output.append("Big O Tires, your auto service experts") #location type
-                output.append(store['mapCenter']['latitude']) #latitude
-                output.append(store['mapCenter']['longitude']) #longitude
-                output.append(get_value(hours)) #opening hours
-                output_list.append(output)
+            store_ids.append(store_id)
+            store_hours = store['workingHours']
+            hours = ""
+            for x in store_hours:
+                if validate(x['openingHour']) == 'Closed ':
+                    hours += x['day'] + ' ' + x['openingHour'] + ' '
+                else:
+                    hours += x['day'] + ' ' + x['openingHour'] + '-' + x['closingHour'] + ' '
+            storeClosedHours = store['storeClosedHours']
+            for x in storeClosedHours:
+                hours += validate(x['date'] + ': ' + x['workingHours'] + ' ')
+            hours = hours.replace("Closed-Closed","Closed").strip()
+            output = []
+            output.append(base_url) # url
+            output.append(base_url + store['storeDetailsUrl'])
+            output.append(validate(store['address']['address1'])) #location name
+            output.append(validate(store['address']['address1'])) #address
+            output.append(validate(store['address']['city'])) #city
+            output.append(validate(store['address']['state'])) #state
+            output.append(validate(store['address']['zipcode'])) #zipcode
+            output.append("US") #country code
+            output.append(store_id) #store_number
+            output.append(validate(store['phoneNumbers'][0])) #phone
+            output.append("<MISSING>") #location type
+            output.append(store['mapCenter']['latitude']) #latitude
+            output.append(store['mapCenter']['longitude']) #longitude
+            output.append(get_value(hours)) #opening hours
+            output_list.append(output)
 
     return output_list
 

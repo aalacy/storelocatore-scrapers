@@ -44,7 +44,7 @@ def fetch_data():
 
     session = SgRequests()
 
-    search = ClosestNSearch()
+    search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = {'ca'})
 
     MAX_DISTANCE = 150

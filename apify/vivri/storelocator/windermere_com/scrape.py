@@ -22,7 +22,7 @@ def fetch_data():
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
         },
         path_to_locations=['data', 'result_list']
-    )
+    )[0]
 
 def strip_extension(phone: str):
     return phone.split("x")[0]

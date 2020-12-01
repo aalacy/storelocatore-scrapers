@@ -29,7 +29,7 @@ def fetch_data():
     main_url = locator_domain = "https://www.valueplace.com"
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(include_canadian_fsas=True)
     MAX_RESULTS = 200
     MAX_DISTANCE = 150

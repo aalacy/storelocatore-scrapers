@@ -1,4 +1,4 @@
 sgrequests
-sgzip
 us
 sglogging
+sgzip==0.0.55

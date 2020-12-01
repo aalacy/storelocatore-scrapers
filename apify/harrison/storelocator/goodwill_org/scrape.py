@@ -46,7 +46,7 @@ def get_form_data(lat, lng):
         'cats': '3,2'
     }
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize()
 
 session = requests.Session()

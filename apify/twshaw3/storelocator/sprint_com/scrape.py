@@ -7,7 +7,6 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('sprint_com')
 
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,7 +25,7 @@ HEADERS = {
 
 URL_TEMPLATE = "https://storelocator.sprint.com/locator/GetData.ashx?loc={}&r=500&sar=1"
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize()
 
 session = SgRequests()

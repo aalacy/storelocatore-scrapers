@@ -39,7 +39,7 @@ def query_zip(postcode):
     return session.post("https://www.comfortkeepers.ca/wp-admin/admin-ajax.php", data=data, headers=headers).json()['response']
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = [ 'ca'])
     MAX_COUNT = 25
     MAX_DISTANCE = 500
