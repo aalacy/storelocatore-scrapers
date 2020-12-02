@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 
@@ -40,60 +41,41 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "hm.com"
+    DOMAIN = "allegramarketingprint.com"
+    start_url = "https://www.allegramarketingprint.com/frontend/locationsMap.js"
 
-    start_url = "https://api.storelocator.hmgroup.tech/v2/brand/hm/stores/locale/en_US/country/US?_type=json&campaigns=true&departments=true&openinghours=true&maxnumberofstores=1000"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
-    }
+    response = session.get(start_url)
+    data = re.findall("franchiseeLocations = (.+);", response.text)
+    data = json.loads(data[0])
 
-    response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
-    all_poi = data["stores"]
-
-    ca_url = "https://api.storelocator.hmgroup.tech/v2/brand/hm/stores/locale/en_US/country/CA?_type=json&campaigns=true&departments=true&openinghours=true&maxnumberofstores=1000"
-    ca_response = session.get(ca_url, headers=hdr)
-    ca_data = json.loads(ca_response.text)
-    all_poi += ca_data["stores"]
-
-    for poi in all_poi:
-        store_url = "<MISSING>"
-        location_name = poi["name"]
+    for poi in data:
+        store_url = poi["MicroSiteUrl"]
+        store_url = store_url if store_url else "<MISSING>"
+        location_name = poi["LocationName"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetName1"]
-        if poi["address"]["streetName2"]:
-            street_address += ", " + poi["address"]["streetName2"]
+        street_address = poi["Line1"]
+        if poi["Line2"]:
+            street_address += ", " + poi["Line2"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        if not city:
-            city = poi.get("address", {}).get("postalAddress")
+        city = poi["City"]
         city = city if city else "<MISSING>"
-        state = poi.get("region", {}).get("name")
-        if not state:
-            state = poi.get("address", {}).get("state")
+        state = poi["State"]
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postCode"]
+        zip_code = poi["Postal"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
+        country_code = poi["Country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["storeCode"]
+        store_number = poi["LocationNumber"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi.get("phone")
+        phone = poi["Phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = ""
         location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["latitude"]
+        latitude = poi["Latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
+        longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        for elem in poi["openingHours"]:
-            hours_of_operation.append(
-                "{} {} - {}".format(elem["name"], elem["opens"], elem["closes"])
-            )
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,

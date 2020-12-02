@@ -39,61 +39,49 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
-    DOMAIN = "hm.com"
+    DOMAIN = "sasshoes.com"
+    start_urls = [
+        "https://www.sasshoes.com/on/demandware.store/Sites-sas-Site/en_US/Stores-GetNearestStores?34.07018&longitude=-118.399956&countryCode=US&distanceUnit=mi&maxdistance=50000&storeType=&assortment=",
+        "https://www.sasshoes.com/on/demandware.store/Sites-sas-Site/en_US/Stores-GetNearestStores?latitude=34.07018&longitude=-118.399956&countryCode=US&distanceUnit=mi&maxdistance=50000&storeType=&assortment=",
+        "https://www.sasshoes.com/on/demandware.store/Sites-sas-Site/en_US/Stores-GetNearestStores?latitude=34.07018&longitude=-118.399956&countryCode=CA&distanceUnit=mi&maxdistance=50000&storeType=&assortment=",
+    ]
 
-    start_url = "https://api.storelocator.hmgroup.tech/v2/brand/hm/stores/locale/en_US/country/US?_type=json&campaigns=true&departments=true&openinghours=true&maxnumberofstores=1000"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
-    }
-
-    response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
-    all_poi = data["stores"]
-
-    ca_url = "https://api.storelocator.hmgroup.tech/v2/brand/hm/stores/locale/en_US/country/CA?_type=json&campaigns=true&departments=true&openinghours=true&maxnumberofstores=1000"
-    ca_response = session.get(ca_url, headers=hdr)
-    ca_data = json.loads(ca_response.text)
-    all_poi += ca_data["stores"]
+    all_poi = []
+    for url in start_urls:
+        response = session.get(url)
+        data = json.loads(response.text)
+        for elem in data["stores"].values():
+            all_poi.append(elem)
 
     for poi in all_poi:
         store_url = "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetName1"]
-        if poi["address"]["streetName2"]:
-            street_address += ", " + poi["address"]["streetName2"]
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += ", " + poi["address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
-        if not city:
-            city = poi.get("address", {}).get("postalAddress")
         city = city if city else "<MISSING>"
-        state = poi.get("region", {}).get("name")
-        if not state:
-            state = poi.get("address", {}).get("state")
+        state = poi["stateCode"]
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postCode"]
+        zip_code = poi["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["storeCode"]
+        store_number = ""
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi.get("phone")
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = ""
         location_type = location_type if location_type else "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        for elem in poi["openingHours"]:
-            hours_of_operation.append(
-                "{} {} - {}".format(elem["name"], elem["opens"], elem["closes"])
-            )
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -112,7 +100,10 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
+        check = "{} {}".format(location_name, street_address)
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 
