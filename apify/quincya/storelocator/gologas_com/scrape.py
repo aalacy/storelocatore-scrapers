@@ -1,25 +1,51 @@
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
 import csv
-import re
 import json
+import re
 import time
+
 from random import randint
-from sgselenium import SgChrome
+
+from bs4 import BeautifulSoup
+
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
 from sglogging import sglog
+
+from sgrequests import SgRequests
+
+from sgselenium import SgChrome
+
 
 log = sglog.SgLogSetup().get_logger(logger_name='gologas_com')
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,11 +54,13 @@ def write_output(data):
 def fetch_data():
     base_link = "http://www.gologas.com/oak-park-il"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent': user_agent}
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML,\
+    like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+
+    headers = {'User-Agent': user_agent}
 
     session = SgRequests()
-    req = session.get(base_link, headers=HEADERS)
+    req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
     data = []
@@ -46,17 +74,19 @@ def fetch_data():
     driver = SgChrome().chrome()
 
     for item in stores:
-        link = locator_domain + item['map_title'].replace(", Michigan", ", MI").replace("Niles", "elgin").lower().replace(", ", "-").replace(" ", "-")
+        link = locator_domain + item['map_title'].replace(", Michigan", ", MI")
+        link = link.replace("Niles", "elgin").lower().replace(", ", "-")
+        link = link.replace(" ", "-")
         log.info(link)
         driver.get(link)
 
         try:
-            WebDriverWait(driver, 50).until(EC.presence_of_element_located(
+            WebDriverWait(driver, 50).until(ec.presence_of_element_located(
                 (By.CLASS_NAME, "wpgmza-address")))
         except:
             try:
                 driver.get(link)
-                WebDriverWait(driver, 100).until(EC.presence_of_element_located(
+                WebDriverWait(driver, 90).until(ec.presence_of_element_located(
                     (By.CLASS_NAME, "wpgmza-address")))
             except:
                 continue
@@ -65,7 +95,8 @@ def fetch_data():
 
         base = BeautifulSoup(driver.page_source, "lxml")
 
-        locs = base.find_all('div', {'class': re.compile(r'wpgmaps_mlist_row wpgmza_basic_row wpgmaps_.+')})
+        locs = base.find_all('div', {'class': re.compile(
+            r'wpgmaps_mlist_row wpgmza_basic_row wpgmaps_.+')})
 
         for loc in locs:
             location_name = base.h2.text.strip()
@@ -103,7 +134,20 @@ def fetch_data():
             latitude = loc['data-latlng'].split(",")[0].strip()
             longitude = loc['data-latlng'].split(",")[1].strip()
 
-            data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+            data.append([locator_domain,
+                         link,
+                         location_name,
+                         street_address,
+                         city,
+                         state,
+                         zip_code,
+                         country_code,
+                         store_number,
+                         phone,
+                         location_type,
+                         latitude,
+                         longitude,
+                         hours_of_operation])
     driver.close()
     return data
 
