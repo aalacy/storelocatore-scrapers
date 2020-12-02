@@ -52,7 +52,7 @@ def para(url):
         k["Longitude"] = "<MISSING>"
 
     try:
-        k["Name"] = soup.find('h1',{'class':'page-title'}).text.strip()
+        k["Name"] = soup.find("h1", {"class": "page-title"}).text.strip()
     except:
         k["Name"] = "<MISSING>"
 
@@ -139,12 +139,12 @@ def fetch_data():
     data = data.split('<li class="parent-2">')[0]
     data = str(data).replace("\n", "").split('><a href="')
     data.pop(0)
-    logzilla.info(f"Grabbing state links") # noqa
+    logzilla.info(f"Grabbing state links")  # noqa
     for i in data:
         states.append(i.split('">', 1)[0])
     issues = []
     url = "https://www.securitasinc.com"
-    logzilla.info(f"Grabbing cities") # noqa
+    logzilla.info(f"Grabbing cities")  # noqa
     for i in states:
         logzilla.info(f'Grabbing cities from state {i.rsplit("/",2)[-2]}')
         son = session.get(url + i, headers=headers)
@@ -157,11 +157,11 @@ def fetch_data():
                 cities.append(j["href"])
         except:
             issues.append(i)
-            logzilla.info( # noqa
+            logzilla.info(  # noqa
                 f'Had an issue with state: {i.rsplit("/",2)[-2]} and url:\n{url+i}'
-            ) # noqa
+            )  # noqa
 
-    logzilla.info(f"Grabbing store data") # noqa
+    logzilla.info(f"Grabbing store data")  # noqa
 
     lize = utils.parallelize(
         search_space=cities,
@@ -177,19 +177,21 @@ def fetch_data():
             yield i
     total_issues = 0
     final_issues = []
-    logzilla.info(f"Sorting {len(issues)} issues..\n============================") # noqa
+    logzilla.info(
+        f"Sorting {len(issues)} issues..\n============================"
+    )  # noqa
     for i in issues:
         k = para(i)
         if not k["Error"]:
             yield k
         else:
             final_issues.append(str(url + i))
-            logzilla.info(f"============================") # noqa
-            logzilla.info(f"=!!!!!!!!!!!!!!!!!!!!!!!!!!=") # noqa
-            logzilla.info(f"Could not figure out this url: \n\n{url+i}\n") # noqa
-            logzilla.info(f"(Likely because page has no data)") # noqa
-            logzilla.info(f"=!!!!!!!!!!!!!!!!!!!!!!!!!!=") # noqa
-            logzilla.info(f"============================\n\n") # noqa
+            logzilla.info(f"============================")  # noqa
+            logzilla.info(f"=!!!!!!!!!!!!!!!!!!!!!!!!!!=")  # noqa
+            logzilla.info(f"Could not figure out this url: \n\n{url+i}\n")  # noqa
+            logzilla.info(f"(Likely because page has no data)")  # noqa
+            logzilla.info(f"=!!!!!!!!!!!!!!!!!!!!!!!!!!=")  # noqa
+            logzilla.info(f"============================\n\n")  # noqa
 
     known_issues = [
         "https://www.securitasinc.com/Contact-Us/District-of-Columbia/",
@@ -205,7 +207,7 @@ def fetch_data():
             if i == j:
                 damn = False
         if damn:
-            raise Exception( # noqa
+            raise Exception(  # noqa
                 "Found an unexpected issue with url:",
                 "\n",
                 "\n",
@@ -214,7 +216,7 @@ def fetch_data():
                 'If this is a non-issue please add the URL to the "known_issues" list:',
                 "\n\n",
                 known_issues,
-            ) # noqa
+            )  # noqa
 
     logzilla.info(f"Finished grabbing data!!")
 
