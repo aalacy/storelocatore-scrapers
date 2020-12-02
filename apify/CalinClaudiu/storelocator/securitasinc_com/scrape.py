@@ -129,7 +129,7 @@ def fetch_data():
     soup = son.text
     states = []
     cities = []
-    stores = []
+    stores = []  # noqa
 
     script = soup.split("<noscript>")[2].split("</noscript>", 1)[0]
     data = script.split(
@@ -175,7 +175,7 @@ def fetch_data():
             issues.append(i["CustomUrl"])
         else:
             yield i
-    total_issues = 0
+    total_issues = 0  # noqa
     final_issues = []
     logzilla.info(
         f"Sorting {len(issues)} issues..\n============================"
@@ -218,7 +218,7 @@ def fetch_data():
                 known_issues,
             )  # noqa
 
-    logzilla.info(f"Finished grabbing data!!")
+    logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
 def fix_comma(x):
