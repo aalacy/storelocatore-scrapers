@@ -1,10 +1,11 @@
-from sgscrape.simple_scraper_pipeline import *
-from sgscrape import simple_network_utils as net_utils
+from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
+from sgscrape.simple_scraper_pipeline import ConstantField
+from sgscrape.simple_scraper_pipeline import MappingField
+from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
-import json
 
 
 def para(url):
@@ -124,7 +125,7 @@ def fetch_data():
     session = SgRequests()
     son = session.get(url, headers=headers)
     soup = son.text
-    states = []
+    states = []  # noqa
     cities = []
     stores = []  # noqa
 
