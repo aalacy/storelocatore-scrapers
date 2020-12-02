@@ -1,7 +1,6 @@
 import csv
 import json
-import sgzip
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 from sgrequests import SgRequests
 
@@ -51,20 +50,18 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
     }
 
-    all_codes = []
-    ca_codes = sgzip.for_radius(radius=200, country_code=SearchableCountries.CANADA)
-    for coord in ca_codes:
-        all_codes.append(coord)
-    us_codes = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
-    for code in us_codes:
-        all_codes.append(code)
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
+        max_radius_miles=49,
+        max_search_results=None
+    )
 
     for code in all_codes:
         response = session.get(start_url.format(code), headers=headers)
         data = json.loads(response.text)
 
         for poi in data["response"]["entities"]:
-            store_url = "https://stores.dxl.com" + poi["url"]
+            store_url = "https://stores.dxl.com/" + poi["url"]
             location_name = poi["profile"]["name"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["profile"]["address"]["line1"]
