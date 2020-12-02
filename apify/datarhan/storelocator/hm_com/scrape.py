@@ -60,11 +60,17 @@ def fetch_data():
         store_url = "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetName2"]
+        street_address = poi["address"]["streetName1"]
+        if poi["address"]["streetName2"]:
+            street_address += ", " + poi["address"]["streetName2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
+        if not city:
+            city = poi.get("address", {}).get("postalAddress")
         city = city if city else "<MISSING>"
-        state = poi["region"]["name"]
+        state = poi.get("region", {}).get("name")
+        if not state:
+            state = poi.get("address", {}).get("state")
         state = state if state else "<MISSING>"
         zip_code = poi["address"]["postCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
