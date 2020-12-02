@@ -15,7 +15,7 @@ headers = {
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -93,8 +93,8 @@ def fetch_data():
                         '<MISSING>',
                         phone,
                         '<MISSING>',
-                        lat,
-                        longt,
+                        str(lat),
+                        str(longt),
                         '<MISSING>'
                     ])
                     # logger.info(p,data[p])
@@ -129,8 +129,8 @@ def fetch_data():
                     '<MISSING>',
                     phone,
                     '<MISSING>',
-                    lat,
-                    longt,
+                    str(lat),
+                    str(longt),
                     '<MISSING>'
                 ])
                 # logger.info(p,data[p])

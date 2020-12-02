@@ -59,7 +59,7 @@ def fetch_data():
         latitude = j.get('lat') or '<MISSING>'
         longitude = j.get('lng') or '<MISSING>'
         location_type = '<MISSING>'
-        hours_of_operation = '<MISSING>'
+        hours_of_operation = '<INACCESSIBLE>'
 
         if state == 'A':
             state = 'AL'

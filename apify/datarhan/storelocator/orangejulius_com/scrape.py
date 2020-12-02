@@ -71,8 +71,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["geo_data"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["storeHours"]
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,

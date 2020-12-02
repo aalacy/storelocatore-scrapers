@@ -73,8 +73,10 @@ def fetch_data():
             if store_url
             else "<MISSING>"
         )
-        location_name = poi_html.xpath('.//div[@class="name"]/div/text()')[0]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = poi_html.xpath('.//div[@class="name"]/div/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        if 'Coming Soon' in location_name:
+            continue
         street_address = poi_html.xpath('.//p[@class="line1 line"]/text()')
         street_address = street_address[0] if street_address else "<MISSING>"
         street_address_2 = poi_html.xpath('.//p[@class="line2 line"]/text()')
@@ -108,7 +110,7 @@ def fetch_data():
             if elem.strip()
         ]
         hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            ", ".join(hours_of_operation).split("*, ")[1].split(', *')[0] if hours_of_operation else "<MISSING>"
         )
 
         item = [

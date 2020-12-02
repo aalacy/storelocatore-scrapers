@@ -48,7 +48,6 @@ def get_from_json(source):
     try:
         j = json.loads(text)
     except:
-        print(source)
         return []
 
     locator_domain = 'https://key.com/'

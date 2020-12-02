@@ -4,8 +4,11 @@ from sgscrape import simple_utils as utils
 import json
 from sglogging import sglog
 from sgselenium import SgFirefox, SgSelenium
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 import re
-import time
 
 def para(tup):
     k = {}
@@ -45,7 +48,9 @@ def fetch_data():
     son = []
     with SgFirefox() as driver:
         driver.get("https://www.radissonhotels.com/en-us/destination")
-        time.sleep(10)
+        accept =  WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH,'//*[@id="privacy_pref_optin"]')))
+        accept.click()
+        items =  WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH,'//*[@id="main"]/div[4]/div[1]/div/div[2]/div/span[1]')))
         for r in driver.requests:
             if r.path=="/zimba-api/destinations/hotels":
                 son.append(r.response.body)
@@ -74,6 +79,7 @@ def fetch_data():
                         if usca==1:
                             yield {'main':k['hotels'][store['index']], 'sub':store}
     logzilla.info(f'Finished grabbing data!!')
+    
 def validatorsux(x):
     if x=='Wisconsin':
         x="WI"

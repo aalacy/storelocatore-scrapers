@@ -1,5 +1,5 @@
 sgscrape
-sgzip
 sglogging
 sgselenium
 bs4
+sgzip==0.0.55
