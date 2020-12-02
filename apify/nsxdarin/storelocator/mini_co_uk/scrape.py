@@ -38,7 +38,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://c2b-services.bmw.com/c2b-localsearch/services/api/v4/clients/BMWSTAGE2_DLO/UK/pois?brand=MINI&cached=off&callback=angular.callbacks._0&category=MI&country=GB&language=en&lat=0&lng=0&maxResults=700&showAll=true&unit=km"
     r = session.get(url, headers=headers)
     website = "mini.co.uk"
