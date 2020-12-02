@@ -7,6 +7,7 @@ from random import randint
 
 from bs4 import BeautifulSoup
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -75,20 +76,19 @@ def fetch_data():
 
     for item in stores:
         link = locator_domain + item['map_title'].replace(", Michigan", ", MI")
-        link = link.replace("Niles", "elgin").lower().replace(", ", "-")
-        link = link.replace(" ", "-")
+        link = link.replace("Niles", "elgin").lower().replace(", ", "-").replace(" ", "-")
         log.info(link)
         driver.get(link)
 
         try:
             WebDriverWait(driver, 50).until(ec.presence_of_element_located(
                 (By.CLASS_NAME, "wpgmza-address")))
-        except:
+        except TimeoutException:
             try:
                 driver.get(link)
                 WebDriverWait(driver, 90).until(ec.presence_of_element_located(
                     (By.CLASS_NAME, "wpgmza-address")))
-            except:
+            except TimeoutException:
                 continue
 
         time.sleep(randint(3, 5))
