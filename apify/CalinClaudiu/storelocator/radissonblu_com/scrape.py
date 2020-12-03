@@ -96,8 +96,8 @@ def fetch_data():
                         for counter, z in enumerate(k["hotels"])
                     ],
                     fetch_results_for_rec=para,
-                    max_threads=10,
-                    print_stats_interval=10,
+                    max_threads=20,
+                    print_stats_interval=20,
                 )
                 for a in par:
                     for store in a:
@@ -176,11 +176,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    x = 0
-    while x < 10:
-        try:
-            scrape()
-            x = 11
-        except:
-            x += 1
-            scrape()
