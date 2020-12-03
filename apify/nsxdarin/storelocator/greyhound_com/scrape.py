@@ -93,6 +93,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = "Sun: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Mon: "
@@ -104,6 +107,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Mon: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Tue: "
@@ -115,6 +121,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Tue: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Wed: "
@@ -126,6 +135,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Wed: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Thu: "
@@ -137,6 +149,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Thu: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Fri: "
@@ -148,6 +163,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Fri: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Sat: "
@@ -160,25 +178,28 @@ def fetch_data():
                             .split('"')[0]
                         )
                     except:
-                        hours = "<MISSING>"
+                        hours = hours + "; Sat: Closed"
                     if phone == "":
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if loc == "":
+                        loc = "<MISSING>"
+                    if "MEX" not in state and "MEX" not in zc and len(state) == 2:
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
