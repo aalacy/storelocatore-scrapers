@@ -67,7 +67,6 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        print(poi)
         if poi.get("homeurl"):
             store_url = "https://" + poi["homeurl"]
         else:
