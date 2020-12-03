@@ -2,7 +2,7 @@ import re
 import csv
 from sglogging import SgLogSetup
 from urllib.request import Request, urlopen
-import tabula as tb
+import tabula as tb  # noqa
 from io import BytesIO
 
 logger = SgLogSetup().get_logger("ups_com__supplychain")
@@ -59,8 +59,8 @@ def is_string(value):
 def get_phone(contact):
     for item in contact:
         if "Phone" in item:
-            phone = re.split("[\/|;]", item)[0]
-            return re.sub("[\D|\s]", "", phone)
+            phone = re.split(r"[\/|;]", item)[0]
+            return re.sub(r"[\D|\s]", "", phone)
             break
 
 
