@@ -172,7 +172,6 @@ def fetch_data():
             if not k["Error"]:
                 yield k
             else:
-                print(str(url + i).count("/"), "\n", url + i, "\n", "\n")
                 if str(url + i).count("/") > 5:
                     final_issues.append(str(url + i))
                     logzilla.info(f"============================")  # noqa
