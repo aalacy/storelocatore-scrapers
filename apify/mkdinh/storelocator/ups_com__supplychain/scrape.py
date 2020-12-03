@@ -1,6 +1,5 @@
 import re
 import csv
-import math
 from sglogging import SgLogSetup
 from urllib.request import Request, urlopen
 import tabula as tb
@@ -106,7 +105,6 @@ def get_locations_from_dataframes(dataframes):
 
 def get_zip(contact):
     canada_zip = "[A-Z][0-9][A-Z] [0-9][A-Z][0-9]"
-    canada_zip_regexp = f"({canada_zip})"
     us_zip = "[0-9]{5}"
     us_extended_zip = "[0-9]{5}-[0-9]{4}"
     zip_regexp = f"({canada_zip}|{us_extended_zip}|{us_zip})"
