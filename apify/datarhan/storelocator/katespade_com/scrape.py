@@ -48,7 +48,7 @@ def fetch_data():
     response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data['stores']:
+    for poi in data["stores"]:
         store_url = "https://www.katespade.com/stores/s/" + poi["slug"]
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
