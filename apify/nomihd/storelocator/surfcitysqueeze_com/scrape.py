@@ -143,7 +143,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if country_code == "US" or country_code =="CA":
+        if country_code == "US" or country_code == "CA":
             loc_list.append(curr_list)
         # break
         # break
