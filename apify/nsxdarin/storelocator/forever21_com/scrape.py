@@ -43,82 +43,85 @@ def fetch_data():
     ids = []
     for code in sgzip.for_radius(200):
         if code != "00794":
-            logger.info("Pulling Zip Code %s..." % code)
-            url = (
-                "https://locations.forever21.com/modules/multilocation/?near_location="
-                + code
-                + "&limit=100&services__in=&published=1&within_business=true&threshold=20000"
-            )
-            r = session.get(url, headers=headers, timeout=90, stream=True)
-            for item in json.loads(r.content)["objects"]:
-                if (
-                    item["country_name"] == "US"
-                    or item["country_name"] == "United States of America"
-                ):
-                    add = item["street"]
-                    try:
-                        add = add + " " + item["street2"]
-                    except:
-                        pass
-                    city = item["city"]
-                    country = "US"
-                    website = "forever21.com"
-                    typ = "<MISSING>"
-                    lat = item["lat"]
-                    lng = item["lon"]
-                    state = item["state"]
-                    loc = "<MISSING>"
-                    name = item["location_name"]
-                    zc = item["postal_code"]
-                    phone = item["phonemap"]["phone"]
-                    store = item["id"]
-                    hours = ""
-                    hrs = str(item["formatted_hours"])
-                    days = hrs.split("'content': '")
-                    dc = 0
-                    for day in days:
-                        if "'label': '" in day:
-                            dc = dc + 1
-                            hrs = (
-                                day.split("'label': '")[1].split("'")[0]
-                                + ": "
-                                + day.split("'")[0]
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                if dc <= 7:
-                                    hours = hours + "; " + hrs
-                    if hours == "":
-                        hours = "<MISSING>"
-                    if zc == "":
-                        zc = "<MISSING>"
-                    hours = (
-                        hours.replace("\t", "")
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                        .replace("  ", " ")
-                    )
-                    if store not in ids:
-                        ids.append(store)
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+            try:
+                logger.info("Pulling Zip Code %s..." % code)
+                url = (
+                    "https://locations.forever21.com/modules/multilocation/?near_location="
+                    + code
+                    + "&limit=100&services__in=&published=1&within_business=true&threshold=20000"
+                )
+                r = session.get(url, headers=headers, timeout=90, stream=True)
+                for item in json.loads(r.content)["objects"]:
+                    if (
+                        item["country_name"] == "US"
+                        or item["country_name"] == "United States of America"
+                    ):
+                        add = item["street"]
+                        try:
+                            add = add + " " + item["street2"]
+                        except:
+                            pass
+                        city = item["city"]
+                        country = "US"
+                        website = "forever21.com"
+                        typ = "<MISSING>"
+                        lat = item["lat"]
+                        lng = item["lon"]
+                        state = item["state"]
+                        loc = "<MISSING>"
+                        name = item["location_name"]
+                        zc = item["postal_code"]
+                        phone = item["phonemap"]["phone"]
+                        store = item["id"]
+                        hours = ""
+                        hrs = str(item["formatted_hours"])
+                        days = hrs.split("'content': '")
+                        dc = 0
+                        for day in days:
+                            if "'label': '" in day:
+                                dc = dc + 1
+                                hrs = (
+                                    day.split("'label': '")[1].split("'")[0]
+                                    + ": "
+                                    + day.split("'")[0]
+                                )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    if dc <= 7:
+                                        hours = hours + "; " + hrs
+                        if hours == "":
+                            hours = "<MISSING>"
+                        if zc == "":
+                            zc = "<MISSING>"
+                        hours = (
+                            hours.replace("\t", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                        )
+                        if store not in ids:
+                            ids.append(store)
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
+            except:
+                pass
 
 
 def scrape():
