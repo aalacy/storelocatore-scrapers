@@ -130,10 +130,7 @@ def fetch_data():
                 store_sel.xpath('//div[@class="school-info"]' "/@data-school-id")
             ).strip()
             phone = "".join(
-                store_sel.xpath(
-                    '//div[@class="school-info-row vcard"]'
-                    '/span[@class="tel show-for-large"]/text()'
-                )
+                store_sel.xpath('//span[@class="localPhone"]/text()')
             ).strip()
             if phone == "":
                 phone = "<MISSING>"

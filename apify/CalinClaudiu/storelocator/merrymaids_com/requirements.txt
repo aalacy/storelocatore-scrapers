@@ -3,3 +3,6 @@ sglogging
 sgrequests
 sgselenium
 bs4
+selenium.webdriver.support.ui
+selenium.webdriver.common.by
+selenium.webdriver.support
