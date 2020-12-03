@@ -31,7 +31,11 @@ def read_pdf_to_dataframes(url):
 
 
 def is_beginning_data_row(row):
-    return isinstance(row['Country'], str) or isinstance(row['City'], str)
+    return is_string(row['Country']) or is_string(row['City'])
+
+
+def is_string(value):
+    return isinstance(value, str)
 
 
 def get_phone(contact):
@@ -57,8 +61,8 @@ def get_locations_from_dataframes(dataframes):
                     if i:
                         previous_row = df.loc[i - 1, :]
                         if (is_beginning_data_row(previous_row)):
-                            row_data['country'] += f" {country}"
-                            row_data['city'] += f" {city}"
+                            row_data['country'] += f" {country}" if is_string(country) else ""
+                            row_data['city'] += f" {city}" if is_string(city) else ""
                             row_data['contact'].append(contact)
                             continue
 
@@ -66,24 +70,30 @@ def get_locations_from_dataframes(dataframes):
 
                     row_data = {}
                     row_data['country'] = country
+
                     row_data['city'] = city
                     row_data['contact'] = []
 
                 row_data['contact'].append(contact)
 
+                if i == len(df) - 1:
+                    locations.append(row_data)
+                    row_data = {}
+
     return locations
 
 
 def get_zip(contact):
-    canada_zip = '[A-Z][A-Z] [A-Z][0-9][A-Z] [0-9][A-Z][0-9]'
+    canada_zip = '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'
+    canada_zip_regexp = f"({canada_zip})"
     us_zip = '[0-9]{5}'
     us_extended_zip = '[0-9]{5}-[0-9]{4}'
     zip_regexp = f'({canada_zip}|{us_extended_zip}|{us_zip})'
 
     for item in contact:
-        match = re.search(zip_regexp, item)
-        if match:
-            return match.group(0)
+        us_match = re.search(zip_regexp, item)
+        if us_match:
+            return us_match.group(0)
 
     return MISSING
 
@@ -115,7 +125,7 @@ def extract(location):
     poi['country_code'] = get_country_code(country)
     poi['zip'] = get_zip(contact)
 
-    poi['city'] = re.sub('\snan', '', location['city'], re.I).split(', ')[0]
+    poi['city'] = location['city'].split(', ')[0]
 
     poi['page_url'] = MISSING
     poi['latitude'] = MISSING
