@@ -82,14 +82,25 @@ def fetch_data():
         location_type = "<MISSING>"
         phone = raw_address[-1].split("or")[0].strip()
 
-        if "temporarily closed" in base.find(class_="row-fluid branch-info").text.lower():
+        if (
+            "temporarily closed"
+            in base.find(class_="row-fluid branch-info").text.lower()
+        ):
             hours_of_operation = "Temporarily Closed"
         else:
-            hours_of_operation = " ".join(list(
-                base.find(class_="row-fluid branch-info")
-                .find_all(class_="span6")[1]
-                .stripped_strings
-            )[1:3]).split("Drive")[0].split("Services")[0].replace("  ", " ").strip()
+            hours_of_operation = (
+                " ".join(
+                    list(
+                        base.find(class_="row-fluid branch-info")
+                        .find_all(class_="span6")[1]
+                        .stripped_strings
+                    )[1:3]
+                )
+                .split("Drive")[0]
+                .split("Services")[0]
+                .replace("  ", " ")
+                .strip()
+            )
         if not hours_of_operation:
             try:
                 hours_of_operation = (
