@@ -55,8 +55,8 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = poi['Path']
-        store_url = 'https://www.mrhandyman.com' + store_url if store_url else ''
+        store_url = poi["Path"]
+        store_url = "https://www.mrhandyman.com" + store_url if store_url else ""
         if not store_url:
             store_url = poi["ExternalDomain"]
         store_url = store_url if store_url else "<MISSING>"
