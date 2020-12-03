@@ -1,4 +1,5 @@
 import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -45,6 +46,8 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
+    gloabal_data = dom.xpath('//script[@id="globale-script-loader-data"]/text()')
+    gloabal_data = json.loads(gloabal_data[0])
 
     all_stores = dom.xpath('//div[@class="store"]/div/a/@href')
     for url in all_stores:
@@ -70,7 +73,7 @@ def fetch_data():
             '//div[@class="store-info-left"]//span[@class="store-address-postal-code"]/text()'
         )
         zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = gloabal_data["country"]
         store_number = store_url.split("=")[-1]
         phone = store_dom.xpath(
             '//div[@class="store-info-left"]//span[@class="store-phone"]/text()'
