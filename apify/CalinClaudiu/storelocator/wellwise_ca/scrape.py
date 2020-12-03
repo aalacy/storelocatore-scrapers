@@ -1,8 +1,7 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
+from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -111,15 +110,14 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(mapping=["CustomUrl"]),
-        location_name=MissingField(),
+        location_name=MultiMappingField(
+            mapping=[["data", "storeType"], ["data", "name"]],
+            multi_mapping_concat_with=" - ",
+        ),
         latitude=MappingField(mapping=["data", "latitude"]),
         longitude=MappingField(mapping=["data", "longitude"]),
         street_address=MultiMappingField(
-            mapping=[
-                ["data", "address"],
-                ["data", "address2"],
-                ["data", "address3"],
-            ],
+            mapping=[["data", "address"], ["data", "address2"], ["data", "address3"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
         ),
