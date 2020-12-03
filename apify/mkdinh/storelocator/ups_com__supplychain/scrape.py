@@ -91,9 +91,9 @@ def get_zip(contact):
     zip_regexp = f'({canada_zip}|{us_extended_zip}|{us_zip})'
 
     for item in contact:
-        us_match = re.search(zip_regexp, item)
-        if us_match:
-            return us_match.group(0)
+        match = re.search(zip_regexp, item)
+        if match:
+            return match.group(0)
 
     return MISSING
 
