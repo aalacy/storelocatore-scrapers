@@ -196,7 +196,7 @@ def fetch_data():
                         link = "<MISSING>"
                         hours_of_operation = "<MISSING>"
                     hours_of_operation = re.sub(
-                        "([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                        r"([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
                         r"",
                         hours_of_operation,
                     )
