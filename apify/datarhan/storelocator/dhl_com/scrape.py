@@ -48,10 +48,18 @@ def fetch_data():
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
 
     all_requests = []
-    us_coords = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_radius_miles=1, max_search_results=None)
+    us_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=5,
+        max_search_results=None,
+    )
     for lat, lng in us_coords:
         all_requests.append(start_url_us.format(lat, lng))
-    ca_coords = DynamicGeoSearch(country_codes=[SearchableCountries.CANADA], max_radius_miles=5, max_search_results=None)
+    ca_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_radius_miles=5,
+        max_search_results=None,
+    )
     for lat, lng in ca_coords:
         all_requests.append(start_url_ca.format(lat, lng))
 
