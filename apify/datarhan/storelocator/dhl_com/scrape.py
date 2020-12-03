@@ -1,7 +1,6 @@
 import csv
 import json
-import sgzip
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
 
@@ -49,21 +48,17 @@ def fetch_data():
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
 
     all_requests = []
-    us_coords = sgzip.coords_for_radius(radius=50, country_code=SearchableCountries.USA)
-    for coord in us_coords:
-        lat, lng = coord
+    us_coords = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_radius_miles=1, max_search_results=None)
+    for lat, lng in us_coords:
         all_requests.append(start_url_us.format(lat, lng))
-    ca_coords = sgzip.coords_for_radius(
-        radius=50, country_code=SearchableCountries.CANADA
-    )
-    for coord in ca_coords:
-        lat, lng = coord
+    ca_coords = DynamicGeoSearch(country_codes=[SearchableCountries.CANADA], max_radius_miles=5, max_search_results=None)
+    for lat, lng in ca_coords:
         all_requests.append(start_url_ca.format(lat, lng))
 
     for url in all_requests:
         response = session.get(url)
-        # if not response.text:
-        #     continue
+        if not response.text:
+            continue
 
         data = json.loads(response.text)
 
