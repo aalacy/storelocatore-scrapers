@@ -6,12 +6,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -20,61 +37,89 @@ def write_output(data):
 def get_ids():
     ids = []
     session = SgRequests()
-    r = session.get('https://www.itsfashions.com/location.aspx?stores=both&radius=999999999&zip=75022')
+    r = session.get(
+        "https://www.itsfashions.com/location.aspx?stores=both&radius=999999999&zip=75022"
+    )
     tree = html.fromstring(r.text)
     links = tree.xpath("//div[@class='location']//a/@href")
     for l in links:
-        ids.append(l.split('=')[-1])
+        ids.append(l.split("=")[-1])
 
     return ids
 
 
 def get_data(_id):
-    locator_domain = 'https://itsfashions.com/'
-    page_url = f'https://www.itsfashions.com/location.aspx?id={_id}'
+    locator_domain = "https://itsfashions.com/"
+    page_url = f"https://www.itsfashions.com/location.aspx?id={_id}"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = ''.join(tree.xpath("//h3[@class='cityheader']/text()")).strip()
+    location_name = "".join(tree.xpath("//h3[@class='cityheader']/text()")).strip()
     line = tree.xpath("//div[@class='location']/div[not(@class) and not(@id)]/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    # closed
-    if line[-1].find('Closed') != -1:
-        return
-
     # city, state, postal index
     i = 0
-    street_address = '<MISSING>'
+    street_address = "<MISSING>"
     for l in line:
         if l[0].strip().isdigit():
             street_address = l
-        if l.find('\r\n') != -1:
+        if l.find("\r\n") != -1:
             break
         i += 1
 
     part_line = line[i]
 
-    city = part_line.split('\r\n')[0][:-1].strip()
-    state = part_line.split('\r\n')[1].strip()
-    postal = part_line.split('\r\n')[-1].strip()
+    city = part_line.split("\r\n")[0][:-1].strip()
+    state = part_line.split("\r\n")[1].strip()
+    postal = part_line.split("\r\n")[-1].strip()
 
     try:
-        phone = line[i+1]
+        phone = line[i + 1]
     except IndexError:
-        phone = '<MISSING>'
+        phone = "<MISSING>"
 
-    country_code = 'US'
+    country_code = "US"
     store_number = _id
-    latitude = ''.join(tree.xpath("//input[@id='ContentPlaceHolder1_locations1_HiddenFieldLat']/@value")) or '<MISSING>'
-    longitude = ''.join(tree.xpath("//input[@id='ContentPlaceHolder1_locations1_HiddenFieldLng']/@value")) or '<MISSING>'
-    location_type = ''.join(tree.xpath("//div[@class='store']/text()")).replace("It's ", '').strip()
-    hours_of_operation = '<MISSING>'
+    latitude = (
+        "".join(
+            tree.xpath(
+                "//input[@id='ContentPlaceHolder1_locations1_HiddenFieldLat']/@value"
+            )
+        )
+        or "<MISSING>"
+    )
+    longitude = (
+        "".join(
+            tree.xpath(
+                "//input[@id='ContentPlaceHolder1_locations1_HiddenFieldLng']/@value"
+            )
+        )
+        or "<MISSING>"
+    )
+    location_type = (
+        "".join(tree.xpath("//div[@class='store']/text()")).replace("It's ", "").strip()
+    )
+    hours_of_operation = "<MISSING>"
 
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
 
     return row
 
