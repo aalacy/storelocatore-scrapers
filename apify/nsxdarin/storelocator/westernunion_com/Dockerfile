@@ -1,4 +1,4 @@
-FROM safegraph/apify-python3-ssl-upgrade:latest
+FROM kevincollinsnc/sg:latest
 
 COPY . ./
 
