@@ -29,12 +29,11 @@ re_get_hours_days = re.compile(r"<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span
 
 def sleep(min=2, max=10):
     duration = random.randint(min, max)
-    # log('sleeping ', duration)
     time.sleep(duration)
 
 
 def log(*args, **kwargs):
-    if show_logs == True:
+    if show_logs:
         logger.info(" ".join(map(str, args)), **kwargs)
 
 
@@ -71,11 +70,11 @@ def get_session(reset=False):
     if (
         (not hasattr(thread_local, "session"))
         or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
-        or (reset == True)
+        or reset
     ):
         thread_local.session = SgRequests()
         # print out what the new IP is ...
-        if show_logs == True:
+        if show_logs:
             r = thread_local.session.get("https://jsonip.com/")
             log(
                 f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}"
