@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-import requests_random_user_agent  # qa
+import requests_random_user_agent  # noqa
 import json
 import re
 import time
@@ -85,7 +85,6 @@ def get_session(reset=False):
         reset_request_count()
 
     return thread_local.session
-    return requests
 
 
 def reset_request_count():
