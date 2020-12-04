@@ -85,7 +85,7 @@ def fetch_data():
             % (postcode, max_distance)
         )
 
-        for i in range(100):
+        # for i in range(100):
         stores = session.get(base_link, headers=headers).json()["response"]["entities"]
 
         result_coords = []
