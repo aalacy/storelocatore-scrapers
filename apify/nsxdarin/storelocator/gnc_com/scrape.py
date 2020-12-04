@@ -22,11 +22,11 @@ headers = {
 }
 
 re_get_json = re.compile(
-    "map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
+    r"map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
 )
-re_get_phone = re.compile('<a href="tel:(.+?)" class="store-phone">')
-re_get_hours_section = re.compile('<div class="storeLocatorHours">([\s\S]+?)<\/div>')
-re_get_hours_days = re.compile("<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>")
+re_get_phone = re.compile(r'<a href="tel:(.+?)" class="store-phone">')
+re_get_hours_section = re.compile(r'<div class="storeLocatorHours">([\s\S]+?)<\/div>')
+re_get_hours_days = re.compile(r"<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>")
 
 
 def sleep(min=2, max=10):
