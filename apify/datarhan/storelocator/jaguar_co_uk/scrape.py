@@ -41,32 +41,17 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    DOMAIN = "jaguarusa.co.uk"
+    DOMAIN = "jaguar.co.uk"
     start_url = "https://www.jaguar.co.uk/national-dealer-locator.html?radius=100&placeName={}&filter=All"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
     }
 
-    cities = [
-        "London",
-        "West Midlands",
-        "Birmingham" "Greater Manchester",
-        "West Yorkshire",
-        "Leeds-Bradford",
-        "Merseyside" "Liverpool" "South Yorkshire",
-        "Sheffield",
-        "Tyne Wear",
-        "Newcastle",
-        "Birmingham",
-        "Leeds",
-        "Sheffield",
-        "Manchester",
-        "Bradford",
-        "Bristol",
-        "Newcastle",
-        "Sunderland",
-        "Wolverhampton",
-    ]
+    response = session.get(
+        "https://www.britannica.com/topic/list-of-cities-and-towns-in-the-United-Kingdom-2034188"
+    )
+    dom = etree.HTML(response.text)
+    cities = dom.xpath("//section/h2/a/text()")
 
     for city in cities:
         response = session.get(start_url.format(city), headers=hdr)
@@ -84,18 +69,21 @@ def fetch_data():
                 0
             ].split(",")
             if len(address_raw) == 5:
-                street_address = ", ".join(address_raw[:3])
-                city = address_raw[3]
-                zip_code = address_raw[-1]
-            if len(address_raw) == 4:
                 street_address = ", ".join(address_raw[:2])
                 city = address_raw[2]
+                state = address_raw[3]
+                zip_code = address_raw[-1]
+            if len(address_raw) == 4:
+                street_address = address_raw[0]
+                city = address_raw[1]
+                state = address_raw[2]
                 zip_code = address_raw[-1]
             if len(address_raw) == 3:
                 street_address = address_raw[0]
                 city = address_raw[1]
+                state = "<MISSING>"
                 zip_code = address_raw[-1]
-            state = "<MISSING>"
+            city = city.strip() if city else "<MISSING>"
             country_code = "<MISSING>"
             country_code = country_code if country_code else "<MISSING>"
             store_number = poi_html.xpath("@data-ci-code")
