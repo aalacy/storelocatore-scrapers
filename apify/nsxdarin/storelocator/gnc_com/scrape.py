@@ -1,15 +1,13 @@
 import csv
 from sgrequests import SgRequests
-import requests_random_user_agent  # ignore_check
+import requests_random_user_agent  # qa
 import json
 import re
 import time
 import random
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPLETED
-from requests.exceptions import ProxyError
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 from sglogging import SgLogSetup
-import requests
 
 logger = SgLogSetup().get_logger("gnc_com")
 
