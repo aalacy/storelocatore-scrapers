@@ -2,9 +2,11 @@ import csv
 import json
 import urllib.parse
 from lxml import etree
+from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+logger = SgLogSetup().get_logger('auntieannes_com')
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf-8') as output_file:
@@ -32,6 +34,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_cities = dom.xpath('//select[@id="citySelect"]/option/@value')
     for city_url in all_cities:
+        logger.info(f"scraping city: {city_url}")
         full_city_url = urllib.parse.urljoin(start_url, city_url)
         city_response = session.get(full_city_url, headers=user_agent)
         city_dom = etree.HTML(city_response.text)
@@ -96,6 +99,7 @@ def fetch_data():
             ]
 
             if location_name not in scraped_items:
+                logger.info("adding result to output")
                 scraped_items.append(location_name)
                 items.append(item)
     
@@ -104,6 +108,7 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
+    logger.info("fetched data")
     write_output(data)
 
 
