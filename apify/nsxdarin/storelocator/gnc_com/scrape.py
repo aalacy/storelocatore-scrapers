@@ -16,11 +16,7 @@ logger = SgLogSetup().get_logger('gnc_com')
 show_logs = False
 thread_local = threading.local()
 
-post_headers = {
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-}
-get_headers = {
+headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
 }
@@ -115,8 +111,6 @@ def get_hours(html):
 
 
 def search_zip(postal, reset=False, attempts=1):
-    if attempts == 5:
-        raise Exception(f'failed to search zip {postal} after {attempts} tries ... giving up')
     log('searching: ', postal)
     url = 'https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores'
     payload = {
@@ -128,24 +122,18 @@ def search_zip(postal, reset=False, attempts=1):
     }
     session = get_session(reset=reset)
     # get the home page before each search to avoid captcha
-    session.get('https://www.gnc.com/', headers=get_headers)
+    session.get('https://www.gnc.com/', headers=headers)
     sleep()
     try:
-        r = requests.post(url, headers=post_headers, data=payload)
+        r = session.post(url, headers=headers, data=payload)
         r.raise_for_status()
         increment_request_count()
         return get_json_data(r.text)["features"]
     except Exception as ex:
         logger.info(f'>>> exception searching zip {postal} >>> {ex}')
-        logger.info(f'resetting session to try again')
-        return search_zip(postal, reset=True, attempts=attempts + 1)
 
 
 def get_location(loc, reset_session=False, attempts=1):
-    max_attempts = 5
-    if attempts > max_attempts:
-        raise Exception(f"Max attempts ({max_attempts}) exceeded getting location {loc['storenumber']}")
-
     props = loc["properties"]
     store_id = props["storenumber"]
     website = 'gnc.com'
@@ -165,25 +153,17 @@ def get_location(loc, reset_session=False, attempts=1):
     session = get_session(reset=reset_session)
     sleep()
     try:
-        r = session.get(url, headers=get_headers)
+        r = session.get(url, headers=headers)
         r.raise_for_status()
+        increment_request_count()
+        phone = get_phone(r.text)
+        hours = get_hours(r.text)
+
+        location = [website, url, name, addr, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
+        return [x if x else "<MISSING>" for x in location]
+
     except Exception as ex:
         logger.info(f'>>> exception getting location {loc} >>> {ex}')
-        logger.info(f'resetting session to try again')
-        return get_location(loc, reset_session=True, attempts=attempts + 1)
-
-    increment_request_count()
-    log(f'Pulling Store {url}')
-
-    if 'px-captcha' in r.text:
-        log('CAPTCHA, resetting and trying again')
-        return get_location(loc, reset_session=True, attempts=attempts + 1)
-
-    phone = get_phone(r.text)
-    hours = get_hours(r.text)
-
-    location = [website, url, name, addr, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
-    return [x if x else "<MISSING>" for x in location]
 
 
 def fetch_data():
@@ -204,12 +184,6 @@ def fetch_data():
                     log(f'queuing store id: {store_id}')
                     search_results.append(loc)
                     store_ids.append(store_id)
-
-    # log(f'found {len(search_results)} locations')
-    # # with open("search_results.json", 'w') as f:
-    # #     json.dump(search_results, f)
-    # with open("search_results.json", 'r') as f:
-    #     search_results = json.load(f)
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(get_location, result) for result in search_results]
