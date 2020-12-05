@@ -94,7 +94,6 @@ def fetch_data():
                 loc = loc["store"]
             except:
                 continue
-            # print(loc)
             pcode = loc["zip"]
             ccode = "CA"
             street = loc["address"]
@@ -107,7 +106,7 @@ def fetch_data():
             city = loc["city"]
             hourlist = loc["storeHours"]
             link = "https://www.lowes.ca/stores/" + loc["bis_name"]
-            # hourlist = json.loads(hourlist)
+
             hours = ""
             for hr in hourlist:
                 hr = hr["day"]
@@ -140,7 +139,7 @@ def fetch_data():
                     hours,
                 ]
             )
-            # print(p,data[p])
+
             p += 1
     return data
 
