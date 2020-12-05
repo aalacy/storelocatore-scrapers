@@ -46,7 +46,7 @@ def get_data(url):
     session = SgRequests()
 
     locator_domain = "https://www.jasonsdeli.com/"
-    page_url = f'https://www.jasonsdeli.com{url}'
+    page_url = f"https://www.jasonsdeli.com{url}"
 
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -56,22 +56,22 @@ def get_data(url):
     street_address = line[0]
     line = line[-1]
     city = line.split(",")[0].strip() or "<MISSING>"
-    line = line.split(',')[1].strip()
+    line = line.split(",")[1].strip()
     postal = line.split()[-1]
-    state = line.replace(postal, '').strip()
+    state = line.replace(postal, "").strip()
     country_code = "US"
-    store_number = tree.xpath("//link[@rel='shortlink']/@href")[0].split('/')[-1]
-    phone = ''.join(tree.xpath("//a[@class='cnphone']/text()")) or "<MISSING>"
-    if phone[0] != '(' and not phone[0].isdigit():
-        phone = '<MISSING>'
+    store_number = tree.xpath("//link[@rel='shortlink']/@href")[0].split("/")[-1]
+    phone = "".join(tree.xpath("//a[@class='cnphone']/text()")) or "<MISSING>"
+    if phone[0] != "(" and not phone[0].isdigit():
+        phone = "<MISSING>"
     location_type = "<MISSING>"
 
     script = "".join(tree.xpath("""//script[contains(text(),'"center":{')]/text()"""))
     if script:
         try:
-            text = script.split(""""center":""")[1].split('},')[0]
+            text = script.split(""""center":""")[1].split("},")[0]
             latlon = json.loads(text)
-            latlon = (latlon.get('lat'), latlon.get('lon'))
+            latlon = (latlon.get("lat"), latlon.get("lon"))
         except:
             latlon = ("<MISSING>", "<MISSING>")
     else:
@@ -79,18 +79,23 @@ def get_data(url):
 
     latitude, longitude = latlon
 
-    hours_of_operation = ';'.join(tree.xpath("//div[@class='loc-hours']/p/text()")).replace('\xa0', ' ')
+    hours_of_operation = ";".join(
+        tree.xpath("//div[@class='loc-hours']/p/text()")
+    ).replace("\xa0", " ")
 
-    if location_name.lower().find('permanently') != -1:
+    if location_name.lower().find("permanently") != -1:
         return
-    elif location_name.lower().find('temporarily') != -1:
-        hours_of_operation = 'Temporarily Closed'
-        location_name = location_name.split('-')[0].strip()
+    elif location_name.lower().find("temporarily") != -1:
+        hours_of_operation = "Temporarily Closed"
+        location_name = location_name.split("-")[0].strip()
 
-    if hours_of_operation.lower().find('vary by') != -1 or hours_of_operation.lower() == 'hours vary':
-        hours_of_operation = '<MISSING>'
-    elif hours_of_operation.lower().find('n/a') != -1:
-        hours_of_operation = '<MISSING>'
+    if (
+        hours_of_operation.lower().find("vary by") != -1
+        or hours_of_operation.lower() == "hours vary"
+    ):
+        hours_of_operation = "<MISSING>"
+    elif hours_of_operation.lower().find("n/a") != -1:
+        hours_of_operation = "<MISSING>"
 
     row = [
         locator_domain,
