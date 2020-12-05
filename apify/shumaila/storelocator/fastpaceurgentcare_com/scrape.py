@@ -76,7 +76,7 @@ def fetch_data():
         end = soup.find('"', start)
         address = soup[start:end].replace("\\", "").replace(",", "")
         if address.find("COMING SOON") == -1:
-            # print(address)
+
             address = usaddress.parse(address)
             i = 0
             street = ""
@@ -117,10 +117,10 @@ def fetch_data():
             end = soup.find(",", start)
             longt = soup[start:end].replace("\\", "").replace('"', "")
             start = end + 1
-            # print(link)
+
             r1 = session.get(link, headers=headers, verify=False)
             soup1 = str(BeautifulSoup(r1.text, "html.parser"))
-            # print(soup)
+
             mstart = soup1.find("Hours of Operation")
             mstart = soup1.find('"Values\\"', mstart)
             mstart = soup1.find("[", mstart) + 1
@@ -157,7 +157,7 @@ def fetch_data():
                     hours,
                 ]
             )
-            # print(p,data[p])
+
             p += 1
         else:
             start = end + 1
