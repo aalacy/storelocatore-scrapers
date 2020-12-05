@@ -88,7 +88,6 @@ def get_data(page_url):
 
     latitude, longitude = latlon
 
-    _tmp = []
     hours = tree.xpath("//p[contains(text(), 'Monday')]/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
 
