@@ -159,7 +159,6 @@ def fetch_data():
             )
             # print(p,data[p])
             p += 1
-            # input()
         else:
             start = end + 1
     return data
