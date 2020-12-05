@@ -4,10 +4,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-
 session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -32,13 +31,10 @@ def fetch_data():
     street_address1 = ''
     store_name=''
     if "DocumentList" in loc:
-        current_results_len = len(loc['DocumentList']) 
         for data in loc['DocumentList']:
             store_name = data['storeName']
             if "address1_ntk" in data:
                 street_address1 = data['address1_ntk']
-            if "address2_ntk" in data:
-                street_address2 = data['address2_ntk']
             street_address = street_address1
             soup = BeautifulSoup(data['working_hours_ntk'], "lxml")
             hours_of_operation =  " ".join(list(soup.stripped_strings)).lower().replace("pm"," pm ").replace("am",' am ').replace("sun"," sun ").replace("mon"," mon ").replace("wed"," wed ").replace("thu"," thu ").replace("fri"," fri ").replace("sat"," sat ").replace("tue"," tue ")
@@ -56,8 +52,6 @@ def fetch_data():
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
 def scrape():
     data = fetch_data()

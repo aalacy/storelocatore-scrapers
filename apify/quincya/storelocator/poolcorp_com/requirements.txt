@@ -3,5 +3,5 @@ sgrequests
 sgselenium
 selenium==3.141.0
 beautifulsoup4==4.7.1
-sgzip
 sglogging
+sgzip==0.0.55

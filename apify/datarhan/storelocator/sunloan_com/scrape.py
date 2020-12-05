@@ -59,7 +59,7 @@ def fetch_data():
         street_address = street_address if street_address else "<MISSING>"
         city = poi["full_address"]["city"]
         city = city if city else "<MISSING>"
-        state = poi["full_address"]["city"]
+        state = poi["full_address"]["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["full_address"]["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"

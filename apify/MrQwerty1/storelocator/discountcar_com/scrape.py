@@ -17,7 +17,7 @@ def write_output(data):
 def fetch_data():
     out = []
     s = set()
-    url = 'https://impark.com/'
+    url = 'https://www.discountcar.com/'
     api_url = 'https://www.discountcar.com/WebAPI2/api/v2/Location/GetAllLocations'
 
     session = SgRequests()

@@ -18,7 +18,6 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-
     addressesess = []
     base_url = "https://www.nathansfamous.com"
     headers = {
@@ -31,8 +30,6 @@ def fetch_data():
     ct = 1
     for coord in coords:
         ct = ct + 1
-
-
         url = "https://restaurants.nathansfamous.com/wp-admin/admin-ajax.php?action=store_search&lat="+coord[0]+"&lng="+coord[1]+"&max_results=100&search_radius=500"
         json_data = session.get(url,headers=headers).json()
         for val in json_data:
@@ -42,7 +39,11 @@ def fetch_data():
                 else:
                     country_code="CA"
                 location_name = val['store']
-                street_address = val['address']
+                if "Vancouver" in location_name:
+                    continue
+                if "PHILIPPINES" in location_name:
+                    continue
+                street_address = val['address'].strip(",")
                 city = val['city']
                 state = val['state']
                 zipp = val['zip']
