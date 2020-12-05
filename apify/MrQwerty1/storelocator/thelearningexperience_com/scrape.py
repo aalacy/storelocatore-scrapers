@@ -52,30 +52,39 @@ def get_data(page_url):
     line = tree.xpath("//p[@class='address']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     street_address = line[0]
-    if street_address.find('(') != -1:
-        street_address = street_address.split('(')[0].strip()
-    if street_address == ', ,':
-        street_address = '<MISSING>'
+    if street_address.find("(") != -1:
+        street_address = street_address.split("(")[0].strip()
+    if street_address == ", ,":
+        street_address = "<MISSING>"
     line = line[-1]
-    city = line.split(',')[0].strip() or '<MISSING>'
-    state = line.split(',')[1].strip() or '<MISSING>'
-    postal = line.split(',')[2].strip() or '<MISSING>'
+    city = line.split(",")[0].strip() or "<MISSING>"
+    state = line.split(",")[1].strip() or "<MISSING>"
+    postal = line.split(",")[2].strip() or "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//p[@class='phone']/a[contains(@href, 'tel:')]/text()")).strip() or '<MISSING>'
-    location_type = '<MISSING>'
+    phone = (
+        "".join(
+            tree.xpath("//p[@class='phone']/a[contains(@href, 'tel:')]/text()")
+        ).strip()
+        or "<MISSING>"
+    )
+    location_type = "<MISSING>"
 
-    script = "".join(tree.xpath("//a[contains(@href, 'http://maps.google.com/maps?q=')]/@href"))
+    script = "".join(
+        tree.xpath("//a[contains(@href, 'http://maps.google.com/maps?q=')]/@href")
+    )
     if script:
         try:
-            latlon = eval('(' + script.replace('http://maps.google.com/maps?q=', '') + ')')
+            latlon = eval(
+                "(" + script.replace("http://maps.google.com/maps?q=", "") + ")"
+            )
 
-            if latlon == (.000000000, .000000000):
-                latlon = ('<MISSING>', '<MISSING>')
+            if latlon == (0.000000000, 0.000000000):
+                latlon = ("<MISSING>", "<MISSING>")
         except:
-            latlon = ('<MISSING>', '<MISSING>')
+            latlon = ("<MISSING>", "<MISSING>")
     else:
-        latlon = ('<MISSING>', '<MISSING>')
+        latlon = ("<MISSING>", "<MISSING>")
 
     latitude, longitude = latlon
 
@@ -84,9 +93,9 @@ def get_data(page_url):
     hours = list(filter(None, [h.strip() for h in hours]))
 
     if hours:
-        hours_of_operation = f'{hours[0]}: {hours[1]}'
+        hours_of_operation = f"{hours[0]}: {hours[1]}"
     else:
-        hours_of_operation = '<MISSING>'
+        hours_of_operation = "<MISSING>"
 
     row = [
         locator_domain,
