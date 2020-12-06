@@ -66,9 +66,9 @@ def fetch_data():
             all_poi_urls += poi_urls
 
     for poi_url in list(set(all_poi_urls)):
-        poi_response = session.get("https://www.coldwellbankerhomes.com" + poi_url)
+        store_url = "https://www.coldwellbankerhomes.com" + poi_url
+        poi_response = session.get(store_url)
         poi_dom = etree.HTML(poi_response.text)
-        store_url = poi_url
         location_name = poi_dom.xpath('//h1[@itemprop="name"]/span/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_dom.xpath('//span[@itemprop="streetAddress"]/text()')
