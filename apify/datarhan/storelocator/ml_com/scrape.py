@@ -66,7 +66,7 @@ def fetch_data():
         if not response.text:
             continue
         data = json.loads(response.text)
-        if not data["Results"]:
+        if not data.get("Results"):
             continue
         for poi in data["Results"]:
             store_url = "https:" + poi["XmlData"]["parameters"]["Url"]
