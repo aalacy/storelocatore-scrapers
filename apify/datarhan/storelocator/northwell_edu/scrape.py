@@ -75,8 +75,8 @@ def fetch_data():
     for poi in all_poi:
         store_url = poi.get("page_url")
         if store_url:
-            if 'https' not in store_url:
-                store_url = 'https:' + store_url
+            if "https" not in store_url:
+                store_url = "https:" + store_url
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi.get("title")
         location_name = location_name if location_name else "<MISSING>"
