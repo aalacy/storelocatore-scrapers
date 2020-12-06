@@ -136,7 +136,7 @@ def fetch_data():
                 location_type = ", ".join(
                     list(item.find(class_="services").stripped_strings)
                 ).replace(
-                    "LAND ROVER TO YOU,Too busy to come to us?,Try Land Rover to You",
+                    "LAND ROVER TO YOU, Too busy to come to us?, Try Land Rover to You",
                     "LAND ROVER TO YOU",
                 )
             except:
