@@ -77,7 +77,7 @@ def fetch_data():
                             all_locations_urls.append(url)
 
     for url in all_locations_urls:
-        full_location_url = "https://locations.krystal.com/" + url
+        full_location_url = "https://locations.krystal.com/" + url.replace("../", "")
         location_response = session.get(full_location_url)
         location_dom = etree.HTML(location_response.text)
 
@@ -116,7 +116,9 @@ def fetch_data():
             '//section[@class="Nap"]//div[@data-days]//tr//text()'
         )
         hours_of_operation = (
-            " ".join(hours_of_operation[1:]) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation[1:]).replace("Hours", "").replace("hours", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
