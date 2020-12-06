@@ -132,6 +132,7 @@ def fetch_data():
 
             country_code = "GB"
             store_number = item["data-ci-code"]
+
             try:
                 location_type = ", ".join(
                     list(item.find(class_="services").stripped_strings)
