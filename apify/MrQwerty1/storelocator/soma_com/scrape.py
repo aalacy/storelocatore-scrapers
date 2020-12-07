@@ -53,14 +53,17 @@ def fetch_data():
                 }
             ],
         }
-        r = session.get(f"{api_url}{json.dumps(params)}")
+
+        params = json.dumps(params)
+        r = session.get(f"{api_url}{params}")
         js = r.json()["hits"]
 
         for j in js:
             locator_domain = url
             a = j.get("attributes")
             location_name = a.get("name") or "<MISSING>"
-            page_url = f'https://stores.soma.com/boutique/{a.get("slug")}'
+            slug = a.get("slug")
+            page_url = f"https://stores.soma.com/boutique/{slug}"
             street_address = (
                 f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
             )
