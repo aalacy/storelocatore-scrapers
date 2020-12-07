@@ -2,10 +2,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 import us
 import lxml.html
-from bs4 import BeautifulSoup
 
 website = "unionbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,20 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    locator_domain = website
-    page_url = ""
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zip = ""
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
     loc_list = []
 
     stores_req = session.get(
@@ -88,9 +72,21 @@ def fetch_data():
         '//div[@class="component__container"]/div/p'
     )
     for store in stores:
+        locator_domain = website
+        page_url = ""
+        location_name = ""
+        street_address = ""
+        city = ""
+        state = ""
+        zip = ""
+        country_code = ""
+        store_number = "<MISSING>"
+        phone = ""
+        location_type = ""
+        latitude = ""
+        longitude = ""
+        hours_of_operation = ""
 
-        if location_type == "":
-            location_type = "<MISSING>"
         raw_text = store.xpath("text()")
         if len(raw_text) > 0:
             street_address = raw_text[0].strip()
@@ -106,8 +102,13 @@ def fetch_data():
         zip = city_state_zip.split(",")[1].strip().split(" ")[1].strip()
 
         if len(raw_text) > 2:
-            phone = raw_text[2].replace("Tel:", "").strip()
+            if "Tel:" in raw_text[2]:
+                phone = raw_text[2].replace("Tel:", "").strip()
+            else:
+                location_type = raw_text[2].strip()
 
+        if location_type == "":
+            location_type = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
 
