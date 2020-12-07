@@ -53,29 +53,31 @@ def fetch_data():
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         store_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')
-        store_data = json.loads(store_data[0].replace('\n', ''))
+        store_data = json.loads(store_data[0].replace("\n", ""))
         if type(store_data) == dict:
-            store_data = [store_data, ]
-        
-        location_name = store_data[0]['name']
+            store_data = [
+                store_data,
+            ]
+
+        location_name = store_data[0]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = store_data[0]['address']['streetAddress']
+        street_address = store_data[0]["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
-        city = store_data[0]['address']['addressLocality']
+        city = store_data[0]["address"]["addressLocality"]
         city = city if city else "<MISSING>"
-        state = store_data[0]['address']['addressRegion']
+        state = store_data[0]["address"]["addressRegion"]
         state = state if state else "<MISSING>"
-        zip_code = store_data[0]['address']['postalCode']
+        zip_code = store_data[0]["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = store_data[0]['address']['addressCountry']
+        country_code = store_data[0]["address"]["addressCountry"]
         store_number = poi_html.xpath('.//div[@class="location-cta"]/a/@href')
         store_number = store_number[0].split("=")[-1] if store_number else "<MISSING>"
         if "/" in store_number:
             store_number = store_number.split("/")[-2]
-        phone = store_data[0].get('telephone')
+        phone = store_data[0].get("telephone")
         phone = phone if phone else "<MISSING>"
-        location_type = store_data[0]['@type']
-        location_type = location_type if location_type else '<MISSING>'
+        location_type = store_data[0]["@type"]
+        location_type = location_type if location_type else "<MISSING>"
         latitude = poi_html.xpath("@data-latitude")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi_html.xpath("@data-longitude")
