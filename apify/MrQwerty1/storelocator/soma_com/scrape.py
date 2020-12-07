@@ -64,9 +64,8 @@ def fetch_data():
             location_name = a.get("name") or "<MISSING>"
             slug = a.get("slug")
             page_url = f"https://stores.soma.com/boutique/{slug}"
-            street_address = (
-                f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
-            )
+            adr1, adr2 = a.get("address1") or "", a.get("address2") or ""
+            street_address = f"{adr1} {adr2}".strip() or "<MISSING>"
             city = a.get("city") or "<MISSING>"
             state = a.get("state") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
