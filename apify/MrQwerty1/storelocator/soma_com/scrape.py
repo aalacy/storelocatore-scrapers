@@ -40,7 +40,7 @@ def fetch_data():
     session = SgRequests()
 
     for i in range(0, 5000):
-        api_url = f"https://soma.brickworksoftware.com/locations_search?esSearch="
+        api_url = "https://soma.brickworksoftware.com/locations_search?esSearch="
         params = {
             "page": i,
             "storesPerPage": 50,
@@ -53,19 +53,17 @@ def fetch_data():
                 }
             ],
         }
-
-        params = json.dumps(params)
-        r = session.get(f"{api_url}{params}")
+        r = session.get(f"{api_url}{json.dumps(params)}")
         js = r.json()["hits"]
 
         for j in js:
             locator_domain = url
             a = j.get("attributes")
             location_name = a.get("name") or "<MISSING>"
-            slug = a.get("slug")
-            page_url = f"https://stores.soma.com/boutique/{slug}"
-            adr1, adr2 = a.get("address1") or "", a.get("address2") or ""
-            street_address = f"{adr1} {adr2}".strip() or "<MISSING>"
+            page_url = f'https://stores.soma.com/boutique/{a.get("slug")}'
+            street_address = (
+                f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
+            )
             city = a.get("city") or "<MISSING>"
             state = a.get("state") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
