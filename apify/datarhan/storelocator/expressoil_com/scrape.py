@@ -1,4 +1,5 @@
 import csv
+import json
 from lxml import etree
 from sgrequests import SgRequests
 
@@ -35,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
 
@@ -49,28 +50,34 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = poi_html.xpath("@data-viewurl")
         store_url = store_url[0] if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//div[@class="location-details"]/a/text()')
+        store_response = session.get(store_url)
+        store_dom = etree.HTML(store_response.text)
+        store_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')
+        store_data = json.loads(store_data[0].replace("\n", ""))
+        if type(store_data) == dict:
+            store_data = [
+                store_data,
+            ]
+
+        location_name = store_data[0]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//div[@class="location-details"]/p[1]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath("@data-city")
-        city = city[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//div[@class="location-details"]/p[1]/text()')
-        state = state[-1].split(",")[-1].strip().split()[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//div[@class="location-details"]/p[1]/text()')
-        zip_code = (
-            zip_code[-1].split(",")[-1].strip().split()[-1] if zip_code else "<MISSING>"
-        )
-        country_code = "<MISSING>"
+        street_address = store_data[0]["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = store_data[0]["address"]["addressLocality"]
+        city = city if city else "<MISSING>"
+        state = store_data[0]["address"]["addressRegion"]
+        state = state if state else "<MISSING>"
+        zip_code = store_data[0]["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = store_data[0]["address"]["addressCountry"]
         store_number = poi_html.xpath('.//div[@class="location-cta"]/a/@href')
         store_number = store_number[0].split("=")[-1] if store_number else "<MISSING>"
         if "/" in store_number:
             store_number = store_number.split("/")[-2]
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        phone = store_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = store_data[0].get("telephone")
+        phone = phone if phone else "<MISSING>"
+        location_type = store_data[0]["@type"]
+        location_type = location_type if location_type else "<MISSING>"
         latitude = poi_html.xpath("@data-latitude")
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi_html.xpath("@data-longitude")
@@ -112,15 +119,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
-
-hdr = {
-    "authority": "www.ediblearrangements.com",
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-    "content-type": "application/json; charset=UTF-8",
-    "origin": "https://www.ediblearrangements.com",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
-}
