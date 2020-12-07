@@ -2,8 +2,6 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
-import us
 import lxml.html
 
 website = "ezpawn.com"
