@@ -1,4 +1,5 @@
 sgscrape
 sglogging
-sgrequests
+sgselenium
+selenium
 bs4
