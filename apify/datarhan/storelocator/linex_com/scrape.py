@@ -133,7 +133,11 @@ def fetch_data():
                 city = address_raw[0].split(",")[0].split()[0]
                 state = address_raw[0].split(",")[0].split()[-1]
                 zip_code = address_raw[0].split(",")[-1].strip()
-        country_code = "<MISSING>"
+        country_code = ""
+        if "/ca/" in store_url:
+            country_code = "CA"
+        if "/us/" in store_url:
+            country_code = "US"
         store_number = "<MISSING>"
         phone = loc_html.xpath(
             './/h5[contains(text(), "Contact:")]/following-sibling::p/text()'
