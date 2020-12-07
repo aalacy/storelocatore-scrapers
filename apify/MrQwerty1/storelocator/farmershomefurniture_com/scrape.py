@@ -81,7 +81,7 @@ def fetch_data():
         longitude = line.split("]")[0].split(",")[-1] or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = (
-            "".join(root.xpath(".//span[@class='hours']/text()")).strip() or "<MISSING>"
+            "".join(root.xpath(".//span[@class='hours']/text()")).strip() or "<INACCESSIBLE>"
         )
 
         row = [
