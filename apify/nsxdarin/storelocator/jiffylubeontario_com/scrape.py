@@ -152,6 +152,7 @@ def fetch_data():
         "Kincardine",
         "Meaford",
     ]
+    coords = []
     for city in cities:
         logger.info("Pulling City %s..." % city)
         payload = {
@@ -161,16 +162,34 @@ def fetch_data():
             "search[map_case]": "load_locations_from_postal_code",
         }
         r = session.post(url, headers=headers, data=payload)
+        count = 0
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
+            if "new google.maps.LatLng(" in line and "(0, 0)" not in line:
+                llat = line.split("new google.maps.LatLng(")[1].split(",")[0]
+                llng = (
+                    line.split("new google.maps.LatLng(")[1]
+                    .split(",")[1]
+                    .strip()
+                    .split(")")[0]
+                )
+                coords.append(llat + "|" + llng)
             if '<span class="postal">' in line:
                 lc = line.split(",")[0].strip().replace("\t", "")
                 lp = line.split('<span class="postal">')[1].split("<")[0].strip()
             if '<a href="https://www.jiffylubeontario.com/' in line:
                 lurl = line.split('href="')[1].split('"')[0]
                 linfo = lurl + "|" + lp + "|" + lc
+                linfo = (
+                    linfo
+                    + "|"
+                    + coords[count].split("|")[0]
+                    + "|"
+                    + coords[count].split("|")[1]
+                )
                 if linfo not in locs:
                     locs.append(linfo)
+                count = count + 1
 
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
@@ -183,8 +202,8 @@ def fetch_data():
         typ = "<MISSING>"
         hours = ""
         add = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
+        lat = loc.split("|")[3]
+        lng = loc.split("|")[4]
         phone = ""
         store = "<MISSING>"
         name = ""
