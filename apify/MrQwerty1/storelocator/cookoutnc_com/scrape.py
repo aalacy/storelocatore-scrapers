@@ -35,11 +35,19 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_data(coord):
+def get_coming():
+    session = SgRequests()
+    r = session.get("https://cookout.com/locations/")
+    tree = html.fromstring(r.text)
+
+    return set(tree.xpath("//div[@id='coming-soon']//a/@href"))
+
+
+def get_data(coord, coming):
     rows = []
     lat, lon = coord
     locator_domain = "https://cookout.com/"
-    api_url = f"https://cookout.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}8&max_results=200&search_radius=200"
+    api_url = f"https://cookout.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}&max_results=200&search_radius=200"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -76,6 +84,9 @@ def get_data(coord):
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
+        if page_url in coming:
+            hours_of_operation = "Coming Soon"
+
         row = [
             locator_domain,
             page_url,
@@ -102,9 +113,12 @@ def fetch_data():
     out = []
     s = set()
     coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
+    coming = get_coming()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
+        future_to_url = {
+            executor.submit(get_data, coord, coming): coord for coord in coords
+        }
         for future in futures.as_completed(future_to_url):
             rows = future.result()
             for row in rows:
