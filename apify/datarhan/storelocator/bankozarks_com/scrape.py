@@ -51,6 +51,8 @@ def fetch_data():
         location_name = poi["branchName"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["street"]
+        if poi["address"]["suite"]:
+            street_address += ", " + poi["address"]["suite"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["address"]["city"]
         city = city if city else "<MISSING>"
@@ -72,7 +74,7 @@ def fetch_data():
         hours_of_operation = []
         for day, hours in poi["hours"].items():
             if hours:
-                if hours.get("blocks"):
+                if hours["blocks"]:
                     opens = hours["blocks"][0]["from"]
                     opens = "{}:{}".format(opens[:-2], opens[-2:])
                     closes = hours["blocks"][0]["to"]
@@ -80,6 +82,8 @@ def fetch_data():
                     hours_of_operation.append("{} {} - {}".format(day, opens, closes))
                 else:
                     hours_of_operation.append("{} closed".format(day))
+            else:
+                hours_of_operation.append("{} closed".format(day))
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
