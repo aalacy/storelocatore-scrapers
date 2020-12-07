@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 from sgrequests import SgRequests
@@ -53,6 +54,9 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
+    usr_agent = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+    }
     body = '{"Locator":"MER-WM-Offices","PostalCode":"%s","Company":null,"ProfileTypes":"Branch","DoFuzzyNameSearch":0,"SearchRadius":"50"}'
 
     all_codes = DynamicZipSearch(
@@ -66,7 +70,7 @@ def fetch_data():
         if not response.text:
             continue
         data = json.loads(response.text)
-        if not data["Results"]:
+        if not data.get("Results"):
             continue
         for poi in data["Results"]:
             store_url = "https:" + poi["XmlData"]["parameters"]["Url"]
@@ -85,7 +89,7 @@ def fetch_data():
             country_code = poi["Country"]
             country_code = country_code if country_code else "<MISSING>"
             store_number = poi["ProfileId"]
-            phone = poi.get("LocalNumber")
+            phone = poi["XmlData"]["parameters"]["LocalNumber"]
             phone = phone if phone else "<MISSING>"
             latitude = poi["GeoLat"]
             latitude = latitude if latitude else "<MISSING>"
@@ -93,7 +97,21 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             location_type = poi["ProfileType"]
             location_type = location_type if location_type else "<MISSING>"
-            hours_of_operation = "<MISSING>"
+
+            check = "{} {}".format(location_name, street_address)
+            if check in scraped_items:
+                continue
+            store_response = session.get(store_url, headers=usr_agent)
+            store_dom = etree.HTML(store_response.text)
+            if store_dom:
+                hours_of_operation = store_dom.xpath(
+                    '//div[@id="more-hours"]//ul/li/text()'
+                )
+                hours_of_operation = (
+                    " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                )
+            else:
+                hours_of_operation = "<MISSING>"
 
             item = [
                 DOMAIN,
