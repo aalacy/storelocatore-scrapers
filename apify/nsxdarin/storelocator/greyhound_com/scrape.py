@@ -69,13 +69,11 @@ def fetch_data():
                     phone = item.split('"phoneNumberMain":"')[1].split('"')[0]
                     website = "greyhound.com"
                     store = item.split('"iataCode":"')[1].split('"')[0]
-                    try:
-                        loc = (
-                            "https://www.greyhound.com/en-us/"
-                            + item.split('"greyhoundSlug":"')[1].split('"')[0]
-                        )
-                    except:
-                        loc = "<MISSING>"
+                    loc = (
+                        "https://www.greyhound.com/en-us/bus-station-"
+                        + store
+                        + "?redirecturl=true"
+                    )
                     state = item.split('"stateAbbreviation":"')[1].split('"')[0]
                     city = item.split('"cityName":"')[1].split('"')[0]
                     country = "US"
