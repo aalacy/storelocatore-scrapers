@@ -31,6 +31,30 @@ def write_output(data):
             writer.writerow(row)
 
 
+def normalize_hours(hours):
+    s = (
+        hours.lower()
+        .replace("a", "")
+        .replace("m", "")
+        .replace("p", "")
+        .replace(".", "")
+        .replace(":", "")
+    )
+    s = "".join(s.split()).strip()
+    start = s.split("-")[0]
+    if start[0] == "0":
+        start = start[1:]
+
+    end = s.split("-")[1]
+    if end[0] == "0":
+        end = end[1:]
+
+    start = f"{start[0]}:{start[1:]} am"
+    end = f"{end[0]}:{end[1:]} pm"
+
+    return f"{start} - {end}"
+
+
 def fetch_data():
     out = []
     url = "https://kiddieacademy.com/"
@@ -67,7 +91,17 @@ def fetch_data():
         latitude = geo[1]
         longitude = geo[0]
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours = j.get("hoursOfOperation") or ""
+        if hours:
+            if hours.find("M-") != -1:
+                days = ""
+            else:
+                hours = normalize_hours(hours)
+                days = "Monday - Friday:"
+
+            hours_of_operation = f"{days} {hours}".strip()
+        else:
+            hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,
