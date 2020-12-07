@@ -134,8 +134,8 @@ def parse_html(x):
 
 
 def fetch_data():
-    # src="https://resources.selectmedical.com/logos/op/brand-novacare.png"
-    # novacare has this above in class=\"loc-result-card-logo\">
+    # src "https://resources.selectmedical.com/logos/op/brand-novacare.png"  #noqa
+    # novacare has this above in class=\"loc-result-card-logo\">  #noqa
     logzilla = sglog.SgLogSetup().get_logger(logger_name="novacare")
     url = "https://www.novacare.com//sxa/search/results/?s=&itemid={891FD4CE-DCBE-4AA5-8A9C-539DF5FCDE97}&sig=&autoFireSearch=true&v=%7B80D13F78-0C6F-42A0-A462-291DD2D8FA17%7D&p=3000&g=&o=Distance%2CAscending&e=0"
     # API call looks scary but on further inspection didn't see any random tokens/auth/security
