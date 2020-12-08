@@ -55,7 +55,7 @@ def fetch_data():
         )
         store_response = session.get(store_url)
         poi = json.loads(store_response.text)
-        store_url = 'https://www.txfb-ins.com/county/details/{}'.format(county)
+        store_url = "https://www.txfb-ins.com/county/details/{}".format(county)
         if not poi["_countyOffice"]:
             continue
         location_name = poi["_countyOffice"][0]["_agencyName"]
