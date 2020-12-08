@@ -56,7 +56,7 @@ def fetch_data():
     response = session.get(start_url, headers=user_agent)
     dom = etree.HTML(response.text)
     all_cities = dom.xpath('//select[@id="citySelect"]/option/@value')
-    for city_url in all_cities[0:50]:
+    for city_url in all_cities:
         logger.info(f"scraping city: {city_url}")
         full_city_url = urllib.parse.urljoin(start_url, city_url)
         city_response = session.get(full_city_url, headers=user_agent)
