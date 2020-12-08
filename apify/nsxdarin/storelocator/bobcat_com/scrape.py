@@ -68,11 +68,17 @@ def fetch_data():
                     0
                 ]
             if '<span onclick="">' in line:
-                raw_address = next(lines).split("<div>")[1].split("</div>")[0]
+                raw_address = (
+                    next(lines)
+                    .split("<div>")[1]
+                    .split("</div>")[0]
+                    .replace("Ave", "Avenue")
+                    .replace("Avenuenue", "Avenue")
+                )
                 tel_line = next(lines)
                 while "tel:" not in tel_line:
                     tel_line = next(lines)
-                phone = tel_line.split("tel:1")[1].split('"')[0]
+                phone = tel_line.split("tel:1")[1].split('"')[0].replace("'", "")
                 if 'website-icon.png"' in tel_line:
                     purl = (
                         tel_line.split('website-icon.png">')[1]
