@@ -23,7 +23,8 @@ headers = {
 "x-frame-options":"DENY, SAMEORIGIN",
 "x-iinfo":"14-23166273-23166274 NNNN CT(62 152 0) RT(1607440051131 0) q(0 0 2 0) r(8 8) U2",
 "x-oneagent-js-injection":"true, true",
-"x-xss-protection":"1; mode=block, 1; mode=block",    
+"x-xss-protection":"1; mode=block, 1; mode=block",  
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 }
 
 
