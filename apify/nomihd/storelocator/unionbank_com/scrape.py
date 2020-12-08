@@ -105,6 +105,10 @@ def fetch_data():
             if "Tel:" in raw_text[2]:
                 phone = raw_text[2].replace("Tel:", "").strip()
             else:
+                if len(raw_text) > 3:
+                    if "Tel:" in raw_text[3]:
+                        phone = raw_text[3].replace("Tel:", "").strip()
+
                 location_type = raw_text[2].strip()
 
         if location_type == "":
