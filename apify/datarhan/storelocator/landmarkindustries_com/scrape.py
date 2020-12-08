@@ -48,17 +48,27 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
+    all_poi = []
     all_locations = dom.xpath('//td[@width="263"]/p/text()')
-    all_locations = " ".join(all_locations).split("\r\n")
+    all_locations_raw = "".join(all_locations).split("\r\n")
 
-    for loc in all_locations:
+    for elem in all_locations_raw:
+        print(elem)
+        all_poi += elem.strip().split("\n")
+
+    for loc in all_poi:
+        if not loc:
+            continue
         loc = loc.replace("\n", "").strip()
         store_url = "<MISSING>"
-        location_name = loc.split("/")[0].strip()
+        location_name = re.findall("(.+ Exxon)", loc)
         if not location_name:
+            location_name = re.findall("(.+ Shell)", loc)
+        location_name = location_name[0] if location_name else "<MISSING>"
+        if location_name == "<MISSING>":
             continue
-        address_raw = loc.split("/")[-1]
-        street_address = address_raw.split(",")[0]
+        address_raw = loc.split(location_name)[-1]
+        street_address = address_raw.split(",")[0].strip()
         try:
             address_raw = usaddress.tag(address_raw)
             address_raw = OrderedDict(address_raw[0])
@@ -70,7 +80,7 @@ def fetch_data():
         city = address_raw.get("PlaceName")
         if city:
             street_address = street_address.replace(city, "").strip()
-        city = city if city else "<MISSING>"
+        city = city.replace(",", "") if city else "<MISSING>"
         state = address_raw.get("StateName")
         state = state if state else "<MISSING>"
         zip_code = address_raw.get("ZipCode")
