@@ -167,9 +167,6 @@ def fetch_data():
 
         hours_of_operation = mon + tue + wed + thu + fri + sat + sun
 
-        # try:
-        # log.info(link)
-
         phone = "<INACCESSIBLE>"
 
         # Store data
