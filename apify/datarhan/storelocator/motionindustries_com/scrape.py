@@ -40,12 +40,18 @@ def fetch_data():
     items = []
 
     DOMAIN = "motionindustries.com"
-    start_url = "https://www.motionindustries.com/misvc/mi/services/json/locations.search?siteCode=MI"
+    start_urls = [
+        "https://www.motionindustries.com/misvc/mi/services/json/locations.search?siteCode=MI",
+        "https://www.motionindustries.com/misvc/mi/services/json/locations.search?corpCode=2&searchType=1&siteCode=MI"
+    ]
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    all_poi = []
+    for url in start_urls:
+        response = session.get(url)
+        data = json.loads(response.text)
+        all_poi += data["locations"]
 
-    for poi in data["locations"]:
+    for poi in all_poi:
         store_url = "<MISSING>"
         location_name = poi["label"]
         street_address = poi["addrLine2"]
