@@ -61,7 +61,8 @@ def fetch_data():
         link = r.url
         try:
             check = r.text.split('"comingSoon":"', 1)[1].split('"', 1)[0]
-            continue
+            if check != "":
+                continue
         except:
             pass
         try:
