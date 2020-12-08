@@ -56,7 +56,7 @@ def fetch_data():
         if not poi["GasStation"]["Company"]["Name"] == "Lukoil Americas Corporation":
             continue
 
-        store_url = "https://lukoilamericas.com/en/ForMotorists/PetrolStations/PetrolStation?type=gasStation&id=".format(
+        store_url = "https://lukoilamericas.com/en/ForMotorists/PetrolStations/PetrolStation?type=gasStation&id={}".format(
             elem["GasStationId"]
         )
         location_name = poi["GasStation"]["Name"]
