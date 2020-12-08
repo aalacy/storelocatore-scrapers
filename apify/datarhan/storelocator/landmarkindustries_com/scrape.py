@@ -76,7 +76,7 @@ def fetch_data():
         zip_code = address_raw.get("ZipCode")
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = re.findall("\d\d\d", location_name)
+        store_number = re.findall(r"\d\d\d", location_name)
         store_number = store_number[0] if store_number else "<MISSING>"
         phone = address_raw.get("OccupancyIdentifier")
         phone = phone if phone else "<MISSING>"
