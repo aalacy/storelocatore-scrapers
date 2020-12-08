@@ -66,12 +66,14 @@ def fetch_data():
             all_sub_urls = sub_dir_dom.xpath(
                 '//a[@data-ya-track="directory_links"]/@href'
             )
-            all_sub_urls += sub_dir_dom.xpath('//a[@data-ya-track="dir_viewdetails"]/@href')
+            all_sub_urls += sub_dir_dom.xpath(
+                '//a[@data-ya-track="dir_viewdetails"]/@href'
+            )
             for sub_url in all_sub_urls:
                 all_locations.append(sub_url)
 
     for loc_url in list(set(all_locations)):
-        store_url = "https://www.xfinity.com/local/" + loc_url.replace('../', '')
+        store_url = "https://www.xfinity.com/local/" + loc_url.replace("../", "")
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
 
