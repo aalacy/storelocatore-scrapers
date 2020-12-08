@@ -3,3 +3,4 @@ sglogging
 sgrequests
 sgselenium
 bs4
+selenium
