@@ -118,20 +118,21 @@ def fetch_data():
 
                         except:
                             logzilla.info(f"Issues finding Country for record: {store}")
-                            if len(list(store))>5:
-                                logzilla.info(f"====================")   # noqa
+                            if len(list(store)) > 5:
+                                logzilla.info(f"====================")  # noqa
                                 logzilla.info(f"====================")  # noqa
                                 logzilla.info(f"{store}")
                                 logzilla.info(f"====================")  # noqa
                                 logzilla.info(f"====================")  # noqa
-                                raise Exception("Crawler would've dropped this location above")
+                                raise Exception(
+                                    "Crawler would've dropped this location above"
+                                )
                             else:
                                 badrecords.append(store)
                         if usca == 1:
                             yield {"main": k["hotels"][store["index"]], "sub": store}
-                            
+
     logzilla.info(f"Finished grabbing data!!")  # noqa
-        
 
 
 def validatorsux(x):
