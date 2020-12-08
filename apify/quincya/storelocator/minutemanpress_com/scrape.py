@@ -110,7 +110,6 @@ def fetch_data():
 
                     try:
                         link = final_item.find(class_="visit-website button")["href"]
-                        # logger.info(link)
                         if link in found:
                             continue
                         found.append(link)
