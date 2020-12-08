@@ -42,8 +42,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")  
     url = "https://www.lifetime.life/view-all-locations.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
