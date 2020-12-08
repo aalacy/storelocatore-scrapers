@@ -46,7 +46,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<a href="https://locations.sonicdrivein.com/' in line and "/ar" in line:
+        if '<a href="https://locations.sonicdrivein.com/' in line:
             states.append(line.split('<a href="')[1].split('"')[0])
     for state in states:
         logger.info("Pulling State %s..." % state)

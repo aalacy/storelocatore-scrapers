@@ -1,6 +1,7 @@
 import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -37,7 +38,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
 
@@ -49,7 +50,7 @@ def fetch_data():
     data = json.loads(data[0])
 
     for poi in data:
-        store_url = poi["MicroSiteUrl"]
+        store_url = poi["MicroSiteUrl"].replace("http:", "https:")
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["LocationName"]
         location_name = location_name if location_name else "<MISSING>"
@@ -75,7 +76,21 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+
+        try:
+            store_response = session.get(store_url)
+            store_dom = etree.HTML(store_response.text)
+            hours_of_operation = store_dom.xpath(
+                '//div[@class="oprationalHours"]//text()'
+            )
+            hours_of_operation = [
+                elem.strip() for elem in hours_of_operation if elem.strip()
+            ]
+            hours_of_operation = (
+                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            )
+        except:
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
