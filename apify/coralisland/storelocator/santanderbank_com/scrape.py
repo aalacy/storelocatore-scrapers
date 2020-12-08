@@ -84,7 +84,9 @@ def parse_detail(store, link):
         get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))
     )  # zipcode
     output.append("US")  # country code
-    store_number = store.xpath('.//div[@class="Nap-branchId"]//text()')[0].split(":")[-1].strip()
+    store_number = (
+        store.xpath('.//div[@class="Nap-branchId"]//text()')[0].split(":")[-1].strip()
+    )
     output.append(store_number)  # store_number
     output.append(
         get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))
