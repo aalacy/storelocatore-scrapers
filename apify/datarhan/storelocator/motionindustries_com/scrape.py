@@ -42,7 +42,7 @@ def fetch_data():
     DOMAIN = "motionindustries.com"
     start_urls = [
         "https://www.motionindustries.com/misvc/mi/services/json/locations.search?siteCode=MI",
-        "https://www.motionindustries.com/misvc/mi/services/json/locations.search?corpCode=2&searchType=1&siteCode=MI"
+        "https://www.motionindustries.com/misvc/mi/services/json/locations.search?corpCode=2&searchType=1&siteCode=MI",
     ]
 
     all_poi = []
