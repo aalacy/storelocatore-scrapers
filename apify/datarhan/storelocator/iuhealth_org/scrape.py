@@ -83,6 +83,10 @@ def fetch_data():
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
+        if not hours_of_operation:
+            hours_of_operation = store_dom.xpath(
+                '//p[@class="LocationCardText__todays-hours"]//text()'
+            )
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
