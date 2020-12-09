@@ -76,6 +76,8 @@ def fetch_data():
         for elem in poi["openCloseTimes"]:
             if elem["closeTime"] == "Closed":
                 hours_of_operation.append("{} closed".format(elem["dayOfWeek"]))
+            elif not elem["openTime"]:
+                hours_of_operation.append("{} closed".format(elem["dayOfWeek"]))
             else:
                 hours_of_operation.append(
                     "{} {} - {}".format(
