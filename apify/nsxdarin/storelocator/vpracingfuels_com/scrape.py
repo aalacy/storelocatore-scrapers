@@ -62,9 +62,14 @@ def fetch_data():
                             .replace(", USA", "")
                         )
                         if "," in add:
-                            city = add.split(",")[1].strip()
-                            state = add.split(",")[2].strip().split(" ")[0]
-                            zc = add.rsplit(" ", 1)[1]
+                            try:
+                                city = add.split(",")[1].strip()
+                                state = add.split(",")[2].strip().split(" ")[0]
+                                zc = add.rsplit(" ", 1)[1]
+                            except:
+                                city = "<MISSING>"
+                                state = "<MISSING>"
+                                zc = "<MISSING>"
                         else:
                             city = "<MISSING>"
                             state = "<MISSING>"
