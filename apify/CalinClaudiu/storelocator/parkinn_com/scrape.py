@@ -43,12 +43,18 @@ def fetch_data():
     logzilla.info(f'Selected brand: {brand}')
     #Brand selector
     son = []
+<<<<<<< Updated upstream
     with SgFirefox() as driver:
         driver.get("https://www.radissonhotels.com/en-us/destination")
         time.sleep(10)
         for r in driver.requests:
             if r.path=="/zimba-api/destinations/hotels":
                 son.append(r.response.body)
+=======
+    son.append(resp)
+    badrecords = []
+
+>>>>>>> Stashed changes
     for i in son:
         i = i.decode()
         k = json.loads(i)
@@ -70,10 +76,31 @@ def fetch_data():
                                 logzilla.info(f"Ignoring hotel due to country not US or CA:\n {store['mainEntity']['address']['addressCountry']} for url -> {store['requrl']}")
                                 
                         except:
+<<<<<<< Updated upstream
                             logzilla.info(f'Issues finding Country for record: {store}')
                         if usca==1:
                             yield {'main':k['hotels'][store['index']], 'sub':store}
     logzilla.info(f'Finished grabbing data!!')
+=======
+                            logzilla.info(f"Issues finding Country for record: {store}")
+                            if len(list(store)) > 5:
+                                logzilla.info(f"====================")  # noqa
+                                logzilla.info(f"====================")  # noqa
+                                logzilla.info(f"{store}")
+                                logzilla.info(f"====================")  # noqa
+                                logzilla.info(f"====================")  # noqa
+                                raise Exception(
+                                    "Crawler would've dropped this location above"
+                                )
+                            else:
+                                badrecords.append(store)
+                        if usca == 1:
+                            yield {"main": k["hotels"][store["index"]], "sub": store}
+
+    logzilla.info(f"Finished grabbing data!!")  # noqa
+
+
+>>>>>>> Stashed changes
 def validatorsux(x):
     if x=='Wisconsin':
         x="WI"
