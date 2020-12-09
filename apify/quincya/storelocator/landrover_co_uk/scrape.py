@@ -57,7 +57,7 @@ def fetch_data():
     cities = ["london", "plymouth", "swansea", "manchester", "carlisle", "inverness"]
     for num, i in enumerate(cities):
         base_link = (
-            "https://www.landrover.co.uk/national-dealer-locator.html?placeName=%s&radius=100&filter=dealer"
+            "https://www.landrover.co.uk/national-dealer-locator.html?placeName=%s&radius=100&filter=All"
             % i
         )
 
@@ -93,11 +93,15 @@ def fetch_data():
             location_name = item.find(
                 class_="dealerNameText fontBodyCopyLarge"
             ).text.strip()
-            link = item.find(class_="primaryLinkWithStyle")["href"]
 
-            if link in found_poi:
-                continue
-            found_poi.append(link)
+            try:
+                link = item.find(class_="primaryLinkWithStyle")["href"]
+
+                if link in found_poi:
+                    continue
+                found_poi.append(link)
+            except:
+                link = "<MISSING>"
 
             raw_address = item.find(class_="addressText").text.split(",")
             zip_code = raw_address[-1].strip()
@@ -122,10 +126,27 @@ def fetch_data():
                 city = raw_address[-3].strip()
                 state = raw_address[-2].strip()
 
+            if location_name + street_address in found_poi:
+                continue
+            found_poi.append(location_name + street_address)
+
             country_code = "GB"
             store_number = item["data-ci-code"]
-            location_type = "<MISSING>"
-            phone = item.find(class_="phoneNumber").text.strip()
+
+            try:
+                location_type = ", ".join(
+                    list(item.find(class_="services").stripped_strings)
+                ).replace(
+                    "LAND ROVER TO YOU, Too busy to come to us?, Try Land Rover to You",
+                    "LAND ROVER TO YOU",
+                )
+            except:
+                location_type = "<MISSING>"
+
+            try:
+                phone = item.find(class_="phoneNumber").text.strip()
+            except:
+                phone = "<MISSING>"
             hours_of_operation = "INACCESSIBLE"
             latitude = item["data-lat"]
             longitude = item["data-lng"]
