@@ -4,7 +4,6 @@ import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import usaddress
-import requests
 
 logger = SgLogSetup().get_logger("officetaverngrill_com")
 
