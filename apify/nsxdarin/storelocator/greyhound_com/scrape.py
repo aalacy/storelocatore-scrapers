@@ -69,13 +69,11 @@ def fetch_data():
                     phone = item.split('"phoneNumberMain":"')[1].split('"')[0]
                     website = "greyhound.com"
                     store = item.split('"iataCode":"')[1].split('"')[0]
-                    try:
-                        loc = (
-                            "https://www.greyhound.com/en-us/"
-                            + item.split('"greyhoundSlug":"')[1].split('"')[0]
-                        )
-                    except:
-                        loc = "<MISSING>"
+                    loc = (
+                        "https://www.greyhound.com/en-us/bus-station-"
+                        + store
+                        + "?redirecturl=true"
+                    )
                     state = item.split('"stateAbbreviation":"')[1].split('"')[0]
                     city = item.split('"cityName":"')[1].split('"')[0]
                     country = "US"
@@ -93,6 +91,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = "Sun: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Mon: "
@@ -104,6 +105,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Mon: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Tue: "
@@ -115,6 +119,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Tue: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Wed: "
@@ -126,6 +133,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Wed: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Thu: "
@@ -137,6 +147,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Thu: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Fri: "
@@ -148,6 +161,9 @@ def fetch_data():
                             .split('"close":"')[1]
                             .split('"')[0]
                         )
+                    except:
+                        hours = hours + "; Fri: Closed"
+                    try:
                         hours = (
                             hours
                             + "; Sat: "
@@ -160,25 +176,28 @@ def fetch_data():
                             .split('"')[0]
                         )
                     except:
-                        hours = "<MISSING>"
+                        hours = hours + "; Sat: Closed"
                     if phone == "":
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if loc == "":
+                        loc = "<MISSING>"
+                    if "MEX" not in state and "MEX" not in zc and len(state) == 2:
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

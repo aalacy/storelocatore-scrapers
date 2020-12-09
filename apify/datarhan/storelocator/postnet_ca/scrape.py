@@ -1,8 +1,7 @@
 import csv
 import json
-import sgzip
 from lxml import etree
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 from sgrequests import SgRequests
 
@@ -46,10 +45,11 @@ def fetch_data():
 
     DOMAIN = "postnet.ca"
 
-    all_codes = []
-    ca_zips = sgzip.for_radius(radius=50, country_code=SearchableCountries.CANADA)
-    for zip_code in ca_zips:
-        all_codes.append(zip_code)
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_radius_miles=50,
+        max_search_results=None,
+    )
     start_url = "https://locations.postnet.ca/search?q={}"
 
     for code in all_codes:
@@ -121,8 +121,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            check = "{} {}".format(location_name, street_address)
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items
