@@ -1,10 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-import usaddress as usd
-import collections as coll
 
 session = SgRequests()
 
