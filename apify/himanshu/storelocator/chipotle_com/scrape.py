@@ -113,7 +113,6 @@ def fetch_data():
             location_type = ""
             latitude = ""
             longitude = ""
-            raw_address = ""
             page_url = ""
             hours_of_operation = ""
             store_number = location.parent.parent.find_previous_sibling(
@@ -181,3 +180,4 @@ def scrape():
 
 
 scrape()
+
