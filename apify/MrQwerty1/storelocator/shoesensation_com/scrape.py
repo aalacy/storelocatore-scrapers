@@ -55,8 +55,8 @@ def get_hours(url):
     session = SgRequests()
     r = session.get(url)
     tree = html.fromstring(r.text)
-    tr = tree.xpath("//div[@class='table-responsive']//tr")
-    for t in tr:
+    tt = tree.xpath("//div[@class='table-responsive']//tr")
+    for t in tt:
         day = "".join(t.xpath("./td[1]/text()"))
         time = "".join(t.xpath("./td[3]/text()"))
         _tmp.append(f"{day} {time}")
