@@ -8,12 +8,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -28,7 +45,7 @@ def clean_adr(text):
 
 
 def get_id(text):
-    regex = r'\d+'
+    regex = r"\d+"
     return re.findall(regex, text)[0]
 
 
@@ -40,19 +57,19 @@ def get_hours(url):
     tree = html.fromstring(r.text)
     tr = tree.xpath("//div[@class='table-responsive']//tr")
     for t in tr:
-        day = ''.join(t.xpath('./td[1]/text()'))
-        time = ''.join(t.xpath('./td[3]/text()'))
-        _tmp.append(f'{day} {time}')
+        day = "".join(t.xpath("./td[1]/text()"))
+        time = "".join(t.xpath("./td[3]/text()"))
+        _tmp.append(f"{day} {time}")
 
-    hoo = ';'.join(_tmp) or '<MISSING>'
+    hoo = ";".join(_tmp) or "<MISSING>"
     return {_id: hoo}
 
 
 def fetch_data():
     out = []
     s = set()
-    url = 'https://www.shoesensation.com/'
-    api_url = 'https://www.shoesensation.com/storelocator/index/loadstore/?curPage={}'
+    url = "https://www.shoesensation.com/"
+    api_url = "https://www.shoesensation.com/storelocator/index/loadstore/?curPage={}"
 
     session = SgRequests()
 
@@ -60,7 +77,7 @@ def fetch_data():
         urls = []
         hours = []
         r = session.get(api_url.format(i))
-        js = r.json()['storesjson']
+        js = r.json()["storesjson"]
 
         for j in js:
             urls.append(f'{url}{j.get("rewrite_request_path")}')
@@ -74,22 +91,36 @@ def fetch_data():
 
         for j in js:
             locator_domain = url
-            location_name = j.get('store_name')
-            street_address = clean_adr(j.get('address')) or '<MISSING>'
-            city = j.get('city') or '<MISSING>'
-            state = j.get('state') or '<MISSING>'
-            postal = j.get('zipcode') or '<MISSING>'
-            country_code = j.get('country_id') or '<MISSING>'
+            location_name = j.get("store_name")
+            street_address = clean_adr(j.get("address")) or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            state = j.get("state") or "<MISSING>"
+            postal = j.get("zipcode") or "<MISSING>"
+            country_code = j.get("country_id") or "<MISSING>"
             page_url = f'{url}{j.get("rewrite_request_path")}'
             store_number = get_id(page_url)
-            phone = j.get('phone') or '<MISSING>'
-            latitude = j.get('latitude') or '<MISSING>'
-            longitude = j.get('longitude') or '<MISSING>'
-            location_type = '<MISSING>'
+            phone = j.get("phone") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            longitude = j.get("longitude") or "<MISSING>"
+            location_type = "<MISSING>"
             hours_of_operation = hours.get(store_number)
 
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
             if store_number not in s:
                 s.add(store_number)
