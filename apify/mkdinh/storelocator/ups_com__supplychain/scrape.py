@@ -141,7 +141,7 @@ def extract(location):
     poi["city"] = location["city"].split(", ")[0]
 
     street_address = contact[1].strip()
-    poi['street_address'] = re.sub(poi['city'], '', street_address, re.I).strip()
+    poi["street_address"] = re.sub(poi["city"], "", street_address, re.I).strip()
 
     poi["state"] = state
     poi["country_code"] = get_country_code(country)
