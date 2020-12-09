@@ -78,7 +78,6 @@ def fetch_data():
                 .text.strip()
                 .split("\n")
             )
-            # logger.info(addr)
             if len(addr) == 2:
                 street = addr[0]
                 addr = addr[1].strip().split(",")
