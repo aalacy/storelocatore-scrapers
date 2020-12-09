@@ -78,7 +78,12 @@ def fetch_data():
             store_number = "<MISSING>"
             phone = loc_html.xpath('.//li[@class="locations-phone"]/a/text()')
             phone = phone[0] if phone else "<MISSING>"
-            location_type = "<MISSING>"
+            if "orange" in loc_html.xpath('.//img[@class="marker-image"]/@src')[0]:
+                location_type = "Wholesale/Retail"
+            if "blue" in loc_html.xpath('.//img[@class="marker-image"]/@src')[0]:
+                location_type = "Retail"
+            else:
+                location_type = "Wholesale"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_of_operation = "<MISSING>"
