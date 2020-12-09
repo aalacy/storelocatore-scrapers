@@ -73,7 +73,7 @@ def fetch_data():
         store_data = json.loads(store_data)
         location_name = store_dom.xpath('//h1[@id="main-content-heading"]//text()')
         location_name = [elem.strip() for elem in location_name if elem.strip()]
-        location_name = ' '.join(location_name) if location_name else "<MISSING>"
+        location_name = " ".join(location_name) if location_name else "<MISSING>"
         street_address = store_data["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
         city = store_data["address"]["addressLocality"]
