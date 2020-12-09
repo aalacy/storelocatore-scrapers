@@ -123,14 +123,7 @@ def fetch_data():
                         ll = item.split(',"LatLon":"')[1].split('"')[0]
                         lat = ll.split(",")[0]
                         lng = ll.split(",")[1]
-                        try:
-                            loc = (
-                                item.split('\\"url\\": \\"')[1]
-                                .split('\\",')[0]
-                                .replace("\\", "")
-                            )
-                        except:
-                            loc = "<MISSING>"
+                        loc = "https://www.enterprisecarsales.com/location/" + store
                         hours = (
                             "Sun: "
                             + item.split('"SundayOpen":"')[1].split('"')[0]
