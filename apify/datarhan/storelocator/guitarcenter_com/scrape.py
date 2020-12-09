@@ -73,6 +73,9 @@ def fetch_data():
                     sub2directories_urls = sub2dir_dom.xpath(
                         '//a[@class="Directory-listLink"]/@href'
                     )
+                    sub2directories_urls += sub2dir_dom.xpath(
+                        '//a[@class="Teaser-titleLink"]/@href'
+                    )
                     for url in sub2directories_urls:
                         if not url.endswith(".html"):
                             all_locations_urls.append(url)
@@ -114,7 +117,7 @@ def fetch_data():
         longitude = location_dom.xpath('//meta[@itemprop="longitude"]/@content')
         longitude = longitude[0] if longitude else "<MISSING>"
         hours_of_operation = location_dom.xpath(
-            '//section[@class="Nap"]//div[@data-days]//tr//text()'
+            '//table[@class="c-hours-details"]//text()'
         )
         hours_of_operation = (
             " ".join(hours_of_operation[1:]).replace("Hours", "").replace("hours", "")
