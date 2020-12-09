@@ -134,7 +134,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 long,
-                hours,
+                hours.replace("\n", " "),
             ]
         )
     return data
