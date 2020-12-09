@@ -1,7 +1,7 @@
-import csv
 import json
+import csv
+import urllib.parse
 from lxml import etree
-
 from sgrequests import SgRequests
 
 
@@ -37,58 +37,58 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "cbac.com"
-    start_url = "https://www.cbac.com/locations/?CallAjax=GetLocations"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+    DOMAIN = "windsorstore.com"
+    start_url = (
+        "https://cdn.shopify.com/s/files/1/0070/8853/7651/t/8/assets/stores.json"
+    )
 
-    response = session.post(start_url, headers=headers)
+    response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = "https://www.cbac.com" + poi["Path"]
-        location_name = poi["FranchiseLocationName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["Address1"]
-        if poi["Address2"]:
-            street_address += ", " + poi["Address2"]
+    for poi in data["features"]:
+        store_url = "https://www.windsorstore.com" + poi["properties"]["url"]
+        location_name = poi["properties"]["name"]
+        if location_name == "zebra test location":
+            continue
+        if "Coming" in location_name:
+            continue
+        street_address = poi["properties"]["street_1"]
+        if poi["properties"]["street_2"]:
+            street_address += ", " + poi["properties"]["street_2"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["City"]
-        city = city if city else "<MISSING>"
-        state = poi["State"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["ZipCode"]
-        country_code = poi["Country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["FranchiseLocationID"]
-        phone = poi["Phone"]
+        city = poi["properties"]["city"]
+        state = poi["properties"]["state"]
+        zip_code = poi["properties"]["zip"]
+        country_code = "<MISSING>"
+        store_number = poi["properties"]["store_number"]
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["properties"]["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["LocationType"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["Latitude"]
+        location_type = "<MISSING>"
+        latitude = poi["geometry"]["coordinates"][0]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["Longitude"]
+        longitude = poi["geometry"]["coordinates"][-1]
         longitude = longitude if longitude else "<MISSING>"
 
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         hours_of_operation = store_dom.xpath(
-            '//ul[@id="LocalMapAreaOpenHourBanner2"]//text()'
+            '//div[@class="StoreDetail__hours"]/@data-store-hours'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            urllib.parse.unquote(hours_of_operation[0]) if hours_of_operation else ""
         )
-        if hours_of_operation == "<MISSING>":
-            location_type = "Coming Soon"
+        hoo = []
+        if hours_of_operation:
+            hours_of_operation = json.loads(hours_of_operation)
+            hours_of_operation = hours_of_operation if hours_of_operation else []
+            for elem in hours_of_operation:
+                hoo.append(f'{elem["day"]} {elem["hours"]}')
+        hours_of_operation = " ".join(hoo).replace("+", " ") if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -106,7 +106,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items

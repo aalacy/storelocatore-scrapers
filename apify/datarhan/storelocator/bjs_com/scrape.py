@@ -1,7 +1,5 @@
 import csv
 import json
-from lxml import etree
-
 from sgrequests import SgRequests
 
 
@@ -41,54 +39,50 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "cbac.com"
-    start_url = "https://www.cbac.com/locations/?CallAjax=GetLocations"
+    DOMAIN = "bjs.com"
+    start_url = "https://api.bjs.com/digital/live/api/v1.2/club/search/10201"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-
-    response = session.post(start_url, headers=headers)
+    body = '{"Town":"","latitude":"40.75368539999999","longitude":"-73.9991637","radius":"50000","zipCode":""}'
+    response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = "https://www.cbac.com" + poi["Path"]
-        location_name = poi["FranchiseLocationName"]
+    for poi in data["Stores"]["PhysicalStore"]:
+        store_url = "<MISSING>"
+        location_name = poi["Description"][0]["displayStoreName"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["Address1"]
-        if poi["Address2"]:
-            street_address += ", " + poi["Address2"]
+        street_address = poi["addressLine"][0]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["City"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["State"]
+        state = poi["stateOrProvinceName"]
         state = state if state else "<MISSING>"
-        zip_code = poi["ZipCode"]
-        country_code = poi["Country"]
+        zip_code = poi["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["FranchiseLocationID"]
-        phone = poi["Phone"]
+        store_number = poi["storeName"]
+        phone = poi.get("telephone1")
         phone = phone if phone else "<MISSING>"
-        location_type = poi["LocationType"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["Latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["Longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        hours_of_operation = store_dom.xpath(
-            '//ul[@id="LocalMapAreaOpenHourBanner2"]//text()'
-        )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
+        location_type = [
+            elem["value"] for elem in poi["Attribute"] if elem["name"] == "StoreType"
         ]
+        location_type = location_type[0] if location_type else "<MISSING>"
+        latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = [
+            elem["value"]
+            for elem in poi["Attribute"]
+            if elem["name"] == "Hours of Operation"
+        ]
+        hours_of_operation = hours_of_operation[0].replace("<br>", " ")
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            hours_of_operation if hours_of_operation.strip() else "<MISSING>"
         )
-        if hours_of_operation == "<MISSING>":
-            location_type = "Coming Soon"
 
         item = [
             DOMAIN,
