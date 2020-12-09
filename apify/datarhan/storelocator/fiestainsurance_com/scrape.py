@@ -4,7 +4,6 @@ from lxml import etree
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
-from six import b
 
 
 def write_output(data):
