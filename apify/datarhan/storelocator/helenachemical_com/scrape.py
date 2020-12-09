@@ -55,7 +55,7 @@ def fetch_data():
         for loc_html in all_locations:
             store_url = "<MISSING>"
             location_name = loc_html.xpath('.//li[@class="locations-name"]/text()')
-            location_name = location_name[0].strip() if location_name else "<MISSING>"
+            location_name = location_name[-1].strip() if location_name else "<MISSING>"
             street_address = loc_html.xpath('.//span[@class="add-1"]/text()')
             street_address = street_address[0] if street_address else "<MISSING>"
             city = loc_html.xpath('.//span[@class="add-3"]/text()')[0].split(",")[0]
