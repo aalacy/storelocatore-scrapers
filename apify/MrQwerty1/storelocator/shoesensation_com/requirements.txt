@@ -47,3 +47,4 @@ usaddress-scourgify==0.2.4
 uszipcode==0.2.4
 yaml-config==0.1.5
 zipcodes==1.0.5
+scourgify
