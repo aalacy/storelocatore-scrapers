@@ -38,7 +38,9 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://findastore.appdevelopergroup.co/embed/27b82c6f4bd86d69ba7d77bdff9eb577"
+    base_link = (
+        "https://findastore.appdevelopergroup.co/embed/27b82c6f4bd86d69ba7d77bdff9eb577"
+    )
 
     driver = SgChrome().chrome()
 
