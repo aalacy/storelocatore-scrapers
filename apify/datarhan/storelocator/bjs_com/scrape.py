@@ -60,15 +60,17 @@ def fetch_data():
         state = poi["stateOrProvinceName"]
         state = state if state else "<MISSING>"
         zip_code = poi["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code.strip() if zip_code else "<MISSING>"
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeName"]
         phone = poi.get("telephone1")
-        phone = phone if phone else "<MISSING>"
+        phone = phone.strip() if phone else "<MISSING>"
         location_type = [
             elem["value"] for elem in poi["Attribute"] if elem["name"] == "StoreType"
         ]
+        if location_type[0] != "CLUB":
+            continue
         location_type = location_type[0] if location_type else "<MISSING>"
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
