@@ -60,7 +60,9 @@ def fetch_data():
         for poi in data:
             store_url = poi["permalink"]
             location_name = poi["store"]
-            location_name = location_name if location_name else "<MISSING>"
+            location_name = (
+                location_name.replace("&#8211;", "") if location_name else "<MISSING>"
+            )
             street_address = poi["address"]
             if poi["address2"]:
                 street_address += ", " + poi["address2"]
