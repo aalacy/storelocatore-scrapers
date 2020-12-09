@@ -62,6 +62,8 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi["Fields"]["Address1"]
         street_address = street_address[0] if street_address else "<MISSING>"
+        if poi["Fields"].get("Address2"):
+            street_address += ", " + poi["Fields"]["Address2"][0]
         city = poi["Fields"]["City"]
         city = city[0] if city else "<MISSING>"
         state = poi["Fields"]["State"]
