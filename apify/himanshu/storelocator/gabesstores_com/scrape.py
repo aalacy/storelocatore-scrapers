@@ -2,9 +2,8 @@ import csv
 import sys
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 import sgzip
+
 
 session = SgRequests()
 def write_output(data):
@@ -22,9 +21,9 @@ def fetch_data():
     }
     base_url = "https://www.gabesstores.com"
     addresses = []
+    
     zipcodes = sgzip.for_radius(100)
     for zipcode in zipcodes:
-        result_coords = []
         locator_domain = base_url
         location_name = ""
         street_address = ""
@@ -60,14 +59,13 @@ def fetch_data():
                 time = (" ".join(list(soup2.find("tbody",{"class":"hours-body"}).stripped_strings)))
             else:
                 page_url = "<MISSING>"
-            result_coords.append((latitude, longitude))
+            store_number = page_url.split("-")[1]
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                     store_number, phone, location_type, latitude, longitude, time,page_url]
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))                   
                 store = [x if x else "<MISSING>" for x in store]
                 yield store
-                # print(store)
 def scrape():
     data = fetch_data()
     write_output(data)
