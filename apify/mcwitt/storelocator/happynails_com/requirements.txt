@@ -13,7 +13,8 @@ pyOpenSSL==20.0.0
 python-dateutil==2.8.1
 pytz==2020.4
 requests==2.25.0
-sgrequests==0.0.15
+sglogging
+sgrequests
 sgzip==0.1.0
 Shapely==1.7.1
 six==1.15.0
