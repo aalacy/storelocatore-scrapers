@@ -1,9 +1,18 @@
+# -*- coding: utf-8 -*-
+
 import csv
 from bs4 import BeautifulSoup
 import re
 import json
-from sgselenium import SgSelenium
 import time
+import os
+
+from sgselenium import SgChrome
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from urllib.parse import urljoin
 
 
 def write_output(data):
@@ -35,24 +44,33 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-    headers = {
-        "User-Agent": user_agent,
-    }
-    driver = SgSelenium().chrome(user_agent=user_agent)
+def get_driver():
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36"
 
+    chrome = SgChrome()
+    options = webdriver.ChromeOptions()
+    chrome._SgSelenium__add_chrome_arguments(options, user_agent)
+
+    driver = webdriver.Chrome(options=options)
+    chrome._SgSelenium__configure_chromedriver(driver, user_agent)
+    return driver
+
+
+def fetch_data():
+    driver = get_driver()
     addresses = []
     base_url = "https://www.trumphotels.com"
-    driver.get("https://www.trumphotels.com/")
+    driver.get(base_url)
     soup = BeautifulSoup(driver.page_source, "lxml")
-    for country in soup.find("div", {"id": "ourhotels"}).find_all(
+
+    for country in soup.find("div", class_="ourhotels-list-container").find_all(
         "div", {"class": "filterlist"}
     ):
         for location in country.find_all("a"):
-            driver.get(base_url + location["href"])
-            page_url = base_url + location["href"]
+            page_url = urljoin(base_url, location["href"])
+            driver.get(page_url)
             location_soup = BeautifulSoup(driver.page_source, "html5lib")
+
             for script in location_soup.find_all(
                 "script", {"type": "application/ld+json"}
             ):
@@ -60,9 +78,11 @@ def fetch_data():
                     store_data = json.loads(script.text)
                     if store_data["address"]["addressCountry"] not in ("USA", "Canada"):
                         continue
+
                     name = location.text.strip()
                     address = store_data["address"]
                     geo_location = location_soup.find("div", {"class": "map-outer-div"})
+
                     store = []
                     store.append("https://www.trumphotels.com")
                     store.append(name.replace("®", ""))
@@ -81,7 +101,7 @@ def fetch_data():
                         if store_data["telephone"]
                         else "<MISSING>"
                     )
-                    store.append("<MISSING>")
+                    store.append(store_data["@type"])
                     store.append(geo_location["data-latitude"])
                     store.append(geo_location["data-longitude"])
                     store.append("<MISSING>")
