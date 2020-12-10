@@ -90,7 +90,7 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = poi.xpath('.//div[@class="search-result-phone-location"]/a/text()')
         if phone:
-            if len(phone[0].strip()) > 13:
+            if len(phone[0].strip()) > 14:
                 phone = phone[0].split()[0].split(",")
         phone = phone[0] if phone else "<MISSING>"
         location_type = poi.xpath('.//div[@class="category"]/text()')
