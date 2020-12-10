@@ -60,7 +60,6 @@ def fetch_data():
             + "&cats=3%2C1%2C2%2C4%2C6%2C7%2C5"
         )
         r = session.get(url, headers=headers)
-        result_coords = []
         array = []
         website = "goodwill.org"
         for item in json.loads(r.content):
