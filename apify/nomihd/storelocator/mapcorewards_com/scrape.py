@@ -110,7 +110,7 @@ def fetch_data():
                     state = "<MISSING>"
 
                 zip = store_json["address"]["postalCode"]
-                if zip == "" or zip.isdigit() == False:
+                if zip == "" or zip.isdigit() is False:
                     zip = "<MISSING>"
                 country_code = store_json["address"]["addressCountry"]
                 store_number = location_name.split(" ")[-1]
