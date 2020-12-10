@@ -34,7 +34,7 @@ def write_output(data):
 #         return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 50
     MAX_DISTANCE = 100

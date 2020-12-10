@@ -73,7 +73,7 @@ def fetch_data():
         store.append(store_data["Longitude"])
         store.append(hours.replace("Hours","").replace("Fax: 847.984.5888",'').replace("Parking available on site.","<MISSING>"))
         store.append(base_url + location["href"])
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         #logger.info(store)
         yield store
     

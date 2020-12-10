@@ -75,7 +75,7 @@ def fetch_data():
         store.append(mp['long'] if mp['long'] else "<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         # if 'store[2]' in addresses :
         #     continue
         # addresses.append(store[2])

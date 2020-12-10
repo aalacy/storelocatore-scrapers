@@ -23,7 +23,7 @@ def write_output(data):
 
 URL_TEMPLATE = 'https://www.edeka.de/api/marketsearch/markets?searchstring={}&size=' + str(MAX_RESULTS)
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['de'])
 
 session = SgRequests()

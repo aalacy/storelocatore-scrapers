@@ -44,14 +44,14 @@ def fetch_data():
             state = "Ontario"
         store = []
         store.append("http://cinnabon.homestead.com/")
-        store.append(st.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(st.strip())
         store.append("<MISSING>")
-        store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(city.strip())
+        store.append(state.strip())
         store.append("<MISSING>")
         store.append("CA")
         store.append("<MISSING>")
-        store.append(phone.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(phone.strip())
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")

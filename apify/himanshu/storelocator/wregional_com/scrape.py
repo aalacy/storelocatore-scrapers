@@ -43,7 +43,7 @@ def fetch_data():
 			store = [locator_domain, location_name,address1,city , state, zipcode, country_code,
 				storeNumber, phone.strip(), "Facilities", latitude, longitude, hours,"https://www.wregional.com/main/dialysis-centers"]
 			store = [x.replace("–","-") if type(x) == str else x for x in store]
-			store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+			store = [x.strip() if type(x) == str else x for x in store]
 			yield store	
 	urls=["https://www.wregional.com/main/sleep-disorders",'https://www.wregional.com/main/springdale-center-for-health','https://www.wregional.com/main/medical-plaza']
 	for index,u in enumerate(urls):
@@ -85,7 +85,7 @@ def fetch_data():
 		store = [locator_domain, location_name,address1,city , state, zipcode, country_code,
 				storeNumber, phone.strip(), "Facilities", latitude, longitude, hours,u]
 		store = [x.replace("–","-") if type(x) == str else x for x in store]
-		store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+		store = [x.strip() if type(x) == str else x for x in store]
 		yield store	
 	r= session.get("https://www.wregional.com/main/find-a-facility-or-clinic",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
@@ -138,7 +138,7 @@ def fetch_data():
 								store = [locator_domain, location_name,address01,city , state, zipp, country_code,
 									storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 								store = [x.replace("–","-") if type(x) == str else x for x in store]
-								store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+								store = [x.strip() if type(x) == str else x for x in store]
 								yield store
 							except:
 								try:
@@ -163,7 +163,7 @@ def fetch_data():
 								store = [locator_domain, location_name,address01,city , state, zipp, country_code,
 									storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 								store = [x.replace("–","-") if type(x) == str else x for x in store]
-								store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+								store = [x.strip() if type(x) == str else x for x in store]
 								yield store
 				else:
 					try:
@@ -190,7 +190,7 @@ def fetch_data():
 						store = [locator_domain, location_name,address01,city , state, zipp, country_code,
 							storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 						store = [x.replace("–","-") if type(x) == str else x for x in store]
-						store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+						store = [x.strip() if type(x) == str else x for x in store]
 						yield store
 					except:
 						try:
@@ -215,7 +215,7 @@ def fetch_data():
 						store = [locator_domain, location_name,address01,city , state, zipp, country_code,
 							storeNumber, phone.strip(), location_type, latitude, longitude, Hours,page_url]
 						store = [x.replace("–","-") if type(x) == str else x for x in store]
-						store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+						store = [x.strip() if type(x) == str else x for x in store]
 						yield store
 			except:
 				pass
@@ -291,7 +291,7 @@ def fetch_data():
 			store.append(hours_of_operation)
 			store.append(page_url)
 			store = [x.replace("–","-") if type(x) == str else x for x in store]
-			store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+			store = [x.strip() if type(x) == str else x for x in store]
 			if store[2] in adressess:
 				continue
 			adressess.append(store[2])
@@ -349,7 +349,7 @@ def fetch_data():
 		store.append(hours_of_operation)
 		store.append(page_url)
 		store = [x.replace("–","-") if type(x) == str else x for x in store]
-		store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+		store = [x.strip() if type(x) == str else x for x in store]
 		if store[2] in adressess:
 			continue
 		adressess.append(store[2])
@@ -391,7 +391,7 @@ def fetch_data():
 		store.append(hours_of_operation)
 		store.append(dl)
 		store = [x.replace("–","-") if type(x) == str else x for x in store]
-		store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+		store = [x.strip() if type(x) == str else x for x in store]
 		if store[2] in adressess:
 			continue
 		adressess.append(store[2])

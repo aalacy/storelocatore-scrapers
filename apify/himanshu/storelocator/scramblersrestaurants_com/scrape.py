@@ -76,7 +76,7 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append("<MISSING>")
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         # logger.info("data===="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store

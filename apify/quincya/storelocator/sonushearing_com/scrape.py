@@ -90,7 +90,7 @@ def fetch_data():
 		hours_of_operation = "<MISSING>"
 		for row in rows:
 			if "hours of operation" in row.text.lower():
-				hours_of_operation = row.text.split("tion")[1].split("*")[-1].replace("\n"," ").encode("ascii", "replace").decode().replace("?","").strip()
+				hours_of_operation = row.text.split("tion")[1].split("*")[-1].split("Weekend")[0].replace("\n"," ").encode("ascii", "replace").decode().replace("?","").strip()
 				break
 		try:
 			geo = re.findall(r'[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+', map_link)[0].split(",")

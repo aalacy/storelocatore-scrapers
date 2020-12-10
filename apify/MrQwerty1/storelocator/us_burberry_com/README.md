@@ -1,0 +1,3 @@
+- **--ignore CountryValidator**: data from the API, validator think "Washington" is incorrect US state
+- **--ignore GeoConsistencyValidator**: data from the API, "Washington" state and 98004 postal code
+- **--ignore StreetAddressHasNumber**: data from the API

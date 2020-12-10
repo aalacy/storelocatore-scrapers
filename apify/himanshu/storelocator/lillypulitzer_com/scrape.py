@@ -64,7 +64,7 @@ def fetch_data():
         page_url = "https://www.lillypulitzer.com/store/details/?storeId="+store_number+"&city="+new_city
         store.append(page_url
                      if page_url != '' else "<MISSING>")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
 def scrape():
     data = fetch_data()

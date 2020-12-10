@@ -34,7 +34,7 @@ def fetch_data():
     data = []
     p = 0
     pattern = re.compile(r'\s\s+')
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     query_coord = search.next_zip()
     logger.info(query_coord)

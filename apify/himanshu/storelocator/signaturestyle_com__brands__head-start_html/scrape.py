@@ -78,7 +78,7 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
 def scrape():
     data = fetch_data()

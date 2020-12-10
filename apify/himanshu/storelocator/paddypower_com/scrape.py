@@ -23,7 +23,7 @@ def write_output(data):
 			writer.writerow(row)
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 500
     MAX_DISTANCE = 10
@@ -82,7 +82,7 @@ def fetch_data():
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("----------------------",store)
                 yield store
         if current_results_len < MAX_RESULTS:

@@ -33,7 +33,7 @@ def fetch_data():
     ## FOR STORE    
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 300
     MAX_DISTANCE = 50
@@ -150,7 +150,7 @@ def fetch_data():
         addresses.append(store[2])
         # logger.info("data ====="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         yield store
     
 

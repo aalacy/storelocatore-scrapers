@@ -34,7 +34,7 @@ session.proxies = proxies
 def fetch_data():
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 10
@@ -118,7 +118,7 @@ def fetch_data():
             if store[2] + store[-3] not in addresses:
                 addresses.append(store[2] + store[-3])
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store

@@ -61,7 +61,7 @@ def fetch_data():
             
             try:
                 address =" ".join(list(soup2.find("div",class_="page-header-meta").find("address").stripped_strings)).split(",")
-                street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
+                street_address = " ".join(address[:-2]).strip()
 
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[-1]))
                 if us_zip_list:
@@ -74,7 +74,7 @@ def fetch_data():
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [str(x).strip() if x else "<MISSING>" for x in store]
                     # logger.info(street_address)
                     # logger.info("data = " + str(store))
                     # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -93,7 +93,7 @@ def fetch_data():
                                 soup = BeautifulSoup(r.text,"lxml")
                                 location_name = soup.find("div",class_="page-header-meta").find("h1").text.strip()
                                 address =" ".join(list(soup.find("div",class_="page-header-meta").find("address").stripped_strings)).split(",")
-                                street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
+                                street_address = " ".join(address[:-2]).strip()
                                 city = address[-2]
                                 state = address[-1].split()[0]
                                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[-1]))
@@ -112,7 +112,7 @@ def fetch_data():
                                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                                store = [str(x).strip() if x else "<MISSING>" for x in store]
                                 # logger.info(street_address)
                                 # logger.info("data = " + str(store))
                                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -129,7 +129,7 @@ def fetch_data():
                                 soup = BeautifulSoup(r.text,"lxml")
                                 location_name = soup.find("div",class_="page-header-meta").find("h1").text.strip()
                                 address =" ".join(list(soup.find("div",class_="page-header-meta").find("address").stripped_strings)).split(",")
-                                street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
+                                street_address = " ".join(address[:-2]).strip()
                                 city = address[-2]
                                 state = address[-1].split()[0]
                                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[-1]))
@@ -148,7 +148,7 @@ def fetch_data():
                                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                                store = [str(x).strip() if x else "<MISSING>" for x in store]
                                 # logger.info(street_address)
                                 # logger.info("data = " + str(store))
                                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -166,7 +166,7 @@ def fetch_data():
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info(street_address)
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

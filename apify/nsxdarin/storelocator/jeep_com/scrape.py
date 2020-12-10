@@ -61,7 +61,7 @@ def fetch_data():
             if '"dealerShowroomLatitude" : "' in line:
                 lat = line.split('"dealerShowroomLatitude" : "')[1].split('"')[0]
             if 'day"' in line and '"sunday" :' not in line:
-                dayname = line.split('"')[1][3:].title()
+                dayname = line.split('"')[1].split('day')[0].title()[:3]
                 next(lines)
                 next(lines)
                 next(lines)
@@ -69,19 +69,29 @@ def fetch_data():
                 h = next(lines)
                 g = str(g.decode('utf-8'))
                 h = str(h.decode('utf-8'))
-                hours = hours + '; ' + dayname + ': ' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                try:
+                    hours = hours + '; ' + dayname + ': ' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                except:
+                    pass
                 next(lines)
                 next(lines)
                 g = next(lines)
                 h = next(lines)
                 g = str(g.decode('utf-8'))
                 h = str(h.decode('utf-8'))
-                hours = hours + '-' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                try:
+                    hours = hours + '-' + g.split('"time" : "')[1].split('"')[0] + h.split('"ampm" : "')[1].split('"')[0]
+                except:
+                    pass
             if '"service"' in line:
                 if purl == '':
                     purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
+                    if len(zc) == 9:
+                        zc = zc[:5] + '-' + zc[-4:]
+                    if len(zc) == 8:
+                        zc = zc[:4] + '-' + zc[-4:]
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
     
     addressess123 = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 50
     MAX_DISTANCE = 5
@@ -106,7 +106,7 @@ def fetch_data():
                 result_coords.append((latitude,longitude))
                 store = [base_url, location_name, street_address, city, state, zipp, country_code,
                         store_number, phone, location_type, str(latitude), str(longitude), hours_of_operation,page_url]
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in  store]
+                store = [str(x).strip() if x else "<MISSING>" for x in  store]
                 if (str(store[2])+str(store[-3])+str(store[-1]))  in addressess123:
                     continue
                 addressess123.append(str(store[2])+str(store[-3])+str(store[-1]))

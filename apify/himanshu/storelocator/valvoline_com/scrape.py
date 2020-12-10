@@ -20,7 +20,7 @@ def fetch_data():
 		}
 	locator_domain = 'https://www.valvoline.com/'
 	addresses = []
-	search = sgzip.ClosestNSearch()
+	search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 	search.initialize(country_codes= ["US"])
 	MAX_RESULTS = 500
 	MAX_DISTANCE = 25
@@ -79,7 +79,7 @@ def fetch_data():
 				if str(store[2]+" "+store[-5]) not in addresses :
 					addresses.append(str(store[2]+" "+store[-5]))
 
-					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+					store = [str(x).strip() if x else "<MISSING>" for x in store]
 					yield store
 		if current_result_len < MAX_RESULTS:
 			search.max_distance_update(MAX_DISTANCE)

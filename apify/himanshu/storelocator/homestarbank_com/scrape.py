@@ -35,7 +35,7 @@ def fetch_data2():
     base_url = "https://www.midlandsb.com/homestar-and-midland"
     return_main_object = []
     addresses2 = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 80
@@ -159,7 +159,7 @@ def fetch_data1():
     # conn = http.client.HTTPSConnection("guess.radius8.com")
     return_main_object = []
     addresses1 = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 80

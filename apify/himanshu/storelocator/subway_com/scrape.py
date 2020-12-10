@@ -9,7 +9,7 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('subway_com1.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -76,10 +76,10 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                 store.append(page_url)
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                if store[2] in addressess:
+                store = [x.strip() if type(x) == str else x for x in store]
+                if str(store[2]+store[-1]) in addressess:
                     continue
-                addressess.append(store[2])
+                addressess.append(str(store[2]+store[-1]))
                 yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
@@ -134,10 +134,10 @@ def fetch_data():
                     store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                     store.append(page_url)
                     store = [x.replace("–","-") if type(x) == str else x for x in store]
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                    if store[2] in addressess:
+                    store = [x.strip() if type(x) == str else x for x in store]
+                    if str(store[2]+store[-1]) in addressess:
                         continue
-                    addressess.append(store[2])
+                    addressess.append(str(store[2]+store[-1]))
                     yield store
 
 #==========================================================================================================
@@ -194,10 +194,10 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                 store.append(page_url)
                 store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                if store[2] in addressess:
+                store = [x.strip() if type(x) == str else x for x in store]
+                if str(store[2]+store[-1]) in addressess:
                     continue
-                addressess.append(store[2])
+                addressess.append(str(store[2]+store[-1]))
                 yield store
             else:
                 city_link = j['href'].replace("..","https://restaurants.subway.com/")
@@ -252,10 +252,10 @@ def fetch_data():
                     store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                     store.append(page_url)
                     store = [x.replace("–","-") if type(x) == str else x for x in store]
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                    if store[2] in addressess:
+                    store = [x.strip() if type(x) == str else x for x in store]
+                    if str(store[2]+store[-1]) in addressess:
                         continue
-                    addressess.append(store[2])
+                    addressess.append(str(store[2]+store[-1]))
                     yield store
 def scrape():
     data = fetch_data()

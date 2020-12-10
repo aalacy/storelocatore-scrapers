@@ -101,7 +101,7 @@ def fetch_data():
                 hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 times"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")
                 store.append(store_data["permalink"])
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
 
 def scrape():

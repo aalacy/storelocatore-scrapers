@@ -67,7 +67,7 @@ def fetch_data():
 
     encountered_identities=set()
 
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['us', 'ca'])
 
     result_coords = []

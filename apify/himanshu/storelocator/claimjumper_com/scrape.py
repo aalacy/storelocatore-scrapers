@@ -74,7 +74,7 @@ def fetch_data():
         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         
 
-        store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).replace("–","-").strip() if x else "<MISSING>" for x in store]
         yield store
         
 def scrape():

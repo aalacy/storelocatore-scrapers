@@ -55,7 +55,7 @@ def fetch_data():
         lng = "<MISSING>"
         store = []
         store.append("https://www.dylanscandybar.com/")
-        store.append(name.replace('|','').encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(name.replace('|','').strip())
         if "52 Main Street" in street_address:
             hours_of_operation ="Mon-Thur: 12pm - 6pm Fri-Sun: 11am - 7pm"
         
@@ -65,9 +65,9 @@ def fetch_data():
             hours_of_operation = "Mon - Sun: 10am - 6pm"
         if "5501 Josh Birmingham Pkwy" in street_address:
              hours_of_operation = "Mon - Sun: 7am - 8pm"
-        store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace("- Terminal B",''))
-        store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(street_address.strip().replace("- Terminal B",''))
+        store.append(city.strip())
+        store.append(state.strip())
         store.append(zipp)
         if "6301 Silver Dart Dr" in street_address:
             store.append("CA")

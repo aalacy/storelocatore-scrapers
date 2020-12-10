@@ -73,18 +73,18 @@ def fetch_data():
                         del new[-1]
             return_object =[]
             return_object.append("https://www.cityblueshop.com")
-            return_object.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>")
-            return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
-            return_object.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
-            return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state  else "<MISSING>")
+            return_object.append(location_name.strip() if location_name else "<MISSING>")
+            return_object.append(street_address.strip() if street_address else "<MISSING>")
+            return_object.append(city.strip() if city else "<MISSING>")
+            return_object.append(state.strip() if state  else "<MISSING>")
             return_object.append(zipcode if zipcode else "<MISSING>")
             return_object.append("US")
             return_object.append("<MISSING>")
-            return_object.append(str(phone1).encode('ascii', 'ignore').decode('ascii').strip().replace("Ph:","") if phone1 else "<MISSING>")
+            return_object.append(str(phone1).strip().replace("Ph:","") if phone1 else "<MISSING>")
             return_object.append("<MISSING>")
             return_object.append(latitude if latitude else "<MISSING>")
             return_object.append(longitude if longitude else "<MISSING>")
-            return_object.append(hours.encode('ascii', 'ignore').decode('ascii').strip() if hours else "<MISSING>")
+            return_object.append(hours.strip() if hours else "<MISSING>")
             return_object.append(page_url)
             if return_object[2] in addresses:
                 continue

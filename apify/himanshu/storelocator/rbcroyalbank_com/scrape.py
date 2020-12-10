@@ -68,7 +68,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.rbcroyalbank.com/"
     addressess = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(include_canadian_fsas = True)
     # logger.info("====")
 

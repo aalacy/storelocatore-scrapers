@@ -103,7 +103,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).replace("–","-").strip() if x else "<MISSING>" for x in store]
             return_main_object.append(store)
     return return_main_object
 

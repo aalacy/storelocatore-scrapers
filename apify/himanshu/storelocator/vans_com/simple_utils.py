@@ -154,7 +154,7 @@ def dedup_records(data: List[dict], record_identity: lambda r: str) -> List[dict
 
 
 def remove_non_ascii(s: str) -> str:
-    return s.encode('ascii', 'ignore').decode('ascii').strip()
+    return s.strip()
 
 def or_else(cond: str, default: str) -> str:
     return cond if cond else default

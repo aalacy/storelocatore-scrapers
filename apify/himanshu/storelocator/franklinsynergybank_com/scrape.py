@@ -62,7 +62,7 @@ def fetch_data():
                     if type(tem_var[i]) == str:
                         tem_var[i] = ''.join((c for c in unicodedata.normalize('NFD', tem_var[i]) if unicodedata.category(c) != 'Mn'))
                 tem_var = [x.replace("–","-") if type(x) == str else x for x in tem_var]
-                tem_var = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in tem_var]
+                tem_var = [x.strip() if type(x) == str else x for x in tem_var]
                 yield tem_var
 def scrape():
     data = fetch_data()

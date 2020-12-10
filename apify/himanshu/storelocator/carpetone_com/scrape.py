@@ -33,7 +33,7 @@ def fetch_data():
     # zips = sgzip.for_radius(50)
 
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes= ["CA","US"])
     MAX_RESULTS = 25
     MAX_DISTANCE = 75.0

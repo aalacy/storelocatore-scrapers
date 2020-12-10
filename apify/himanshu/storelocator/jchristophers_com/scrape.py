@@ -57,7 +57,7 @@ def fetch_data():
                 store.append(lng if  lng else "<MISSING>")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
     if exists:
         for data in exists.find_all('a'):
@@ -105,7 +105,7 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
 def scrape():
     data = fetch_data()

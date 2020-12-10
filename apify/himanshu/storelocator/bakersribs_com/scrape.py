@@ -61,17 +61,17 @@ def fetch_data():
             store = []
             store.append("http://bakersribs.com")
             store.append(name)
-            store.append(st1.encode('ascii', 'ignore').decode('ascii').strip().replace(", TX",""))
-            store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else "<MISSING>")
+            store.append(st1.strip().replace(", TX",""))
+            store.append(city.strip())
+            store.append(state.strip() if state else "<MISSING>")
             store.append("<MISSING>")
             store.append("US")
             store.append("<MISSING>")
-            store.append(phone.replace("\xa0","").encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(phone.replace("\xa0","").strip())
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            store.append(" ".join(hours1).encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(" ".join(hours1).strip())
             store.append("<MISSING>")
             yield store
 

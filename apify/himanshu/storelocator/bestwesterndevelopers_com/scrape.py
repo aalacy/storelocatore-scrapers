@@ -58,7 +58,7 @@ def fetch_data():
             store.append("<MISSING>")
             page_url = "https://www.bestwestern.com/en_US/book/hotels-in-"+str(store_data["city"].replace(" ","-").lower())+"/"+str(store_data["name"].replace(" ","-").replace("'","-").replace("A.F.B.","a-f-b-").replace("&","").replace(".","").replace("/","").replace(",","").lower())+"/propertyCode."+str(location["resort"])+".html"
             store.append(page_url)
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 
 def scrape():

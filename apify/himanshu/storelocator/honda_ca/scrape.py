@@ -31,7 +31,7 @@ def write_output(data):
 def fetch_data():
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 25
     MAX_DISTANCE = 50
@@ -59,7 +59,7 @@ def fetch_data():
 
         # logger.info("location_url ==== " + location_url)
 
-        # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
+        # r_utf = r.text
 
         # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
         json_data = r.json()

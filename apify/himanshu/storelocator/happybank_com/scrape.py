@@ -33,7 +33,7 @@ def write_output(data1,data2):
 def fetch_data1():
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 10000
     MAX_DISTANCE = 150

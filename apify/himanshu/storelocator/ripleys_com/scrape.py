@@ -296,7 +296,7 @@ def fetch_data():
             zipp="53965"
             hours_of_operation="Mon - Sun	Closed"
 
-        # logger.info(str(street_address).encode('ascii', 'ignore').decode('ascii').strip()+ " !!! last street_address === "+ str(street_address))
+        # logger.info(str(street_address).strip()+ " !!! last street_address === "+ str(street_address))
         # logger.info("hours_of_operation === "+ str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -305,7 +305,7 @@ def fetch_data():
         if str(store[2]) not in addresses and country_code:
             addresses.append(str(store[2]))
 
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
 
             # logger.info("data = " + str(store))
             # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountValidator --ignore StateLevelCountValidator (Data scraped correctly from api)

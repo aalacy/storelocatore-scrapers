@@ -26,7 +26,7 @@ def write_output(data):
 def fetch_data():
     MAX_RESULTS = 300
     MAX_DISTANCE = 300
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['US'])
     zip_code = search.next_zip()
     current_results_len = 0
@@ -66,7 +66,7 @@ def fetch_data():
                 continue
             adressess.append(store[2])
 
-            # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 
         #logger.info(len(json_data))

@@ -48,7 +48,7 @@ def fetch_data():
         store.append(lng)
         store.append("<INACCESSIBLE>")
         store.append(page_url)    
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     json_data = session.get("https://nafta-service.mbusa.com/api/dlrsrv/v1/ca/search?zip=A1A1A1&start=1&count=100&filter=mbdealer").json()['aoiDealer']
     location_name = json_data['name']
@@ -78,7 +78,7 @@ def fetch_data():
         store.append(lng)
         store.append("<INACCESSIBLE>")
         store.append("https://www.mercedes-benz-stjohns.ca") 
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     json_data = session.get("https://www.mercedes-benz-oregans.ca/")
     soup = bs(json_data.text, "html5lib")
@@ -107,7 +107,7 @@ def fetch_data():
     store.append("-63.6166623")
     store.append("<INACCESSIBLE>")
     store.append("https://www.mercedes-benz-oregans.ca")   
-    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    store = [str(x).strip() if x else "<MISSING>" for x in store]
     yield store
 def scrape():
     data = fetch_data()

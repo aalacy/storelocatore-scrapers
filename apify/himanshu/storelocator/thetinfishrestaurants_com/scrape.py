@@ -54,7 +54,7 @@ def fetch_data():
         phone = i['phone']
         state = i['state']
         zip1 = i['zip']
-        hours = i['data']['sl_hours'].replace("\t","").encode('ascii', 'ignore').decode('ascii').strip().replace("\n","").replace("&#44;","")
+        hours = i['data']['sl_hours'].replace("\t","").strip().replace("\n","").replace("&#44;","")
 
         tem_var.append("https://www.thetinfishrestaurants.com")
         tem_var.append(name)

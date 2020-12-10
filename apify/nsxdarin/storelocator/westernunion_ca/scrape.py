@@ -34,8 +34,6 @@ def get(url, headers, attempts=0):
     global session
 
     max_attempts = 10
-    if attempts > max_attempts:
-        print(f"Exceeded max attempts ({max_attempts}) for URL: {url}")
 
     try:
         r = session.get(url, headers=headers)
@@ -90,9 +88,10 @@ def fetch_data():
                 if 'Western Union Agent Location' in name:
                     name = name.replace(name[:32], '')
                     name = name.strip()
+                name = name.replace('&amp;','&')
             if '"streetAddress":"' in line and AFound is False:
                 AFound = True
-                add = line.split('"streetAddress":"')[1].split('"')[0]
+                add = line.split('"streetAddress":"')[1].split('"')[0].replace('&amp;','&')
                 state = line.split('"state":"')[1].split('"')[0]
                 city = line.split('"city":"')[1].split('"')[0]
                 zc = line.split('"postal":"')[1].split('"')[0]

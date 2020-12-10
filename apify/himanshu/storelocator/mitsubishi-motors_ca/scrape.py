@@ -118,14 +118,14 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
-        store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.strip())
         store.append(page_url)
         #logger.info("data == "+str(store))
         #logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
           
 def scrape():

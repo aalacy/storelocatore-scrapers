@@ -75,7 +75,7 @@ def fetch_data():
         tem_var.append(hour)
         tem_var.append("<MISSING>")
         #logger.info(tem_var)
-        tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
+        tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         if 'Dubai' in city:
             continue
         yield tem_var

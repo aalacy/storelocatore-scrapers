@@ -24,7 +24,7 @@ def write_output(data):
 
 def fetch_data(): 
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['gb'])
     MAX_RESULTS = 200
     MAX_DISTANCE = 50
@@ -127,7 +127,7 @@ def fetch_data():
                     store.append(hours)
                     store.append(page_url)     
                 
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [str(x).strip() if x else "<MISSING>" for x in store]
                     if store[2] + store[1] in addresses:
                         continue
                     addresses.append(store[2] + store[1])
@@ -210,7 +210,7 @@ def fetch_data():
                 store.append(hours)
                 store.append(page_url)     
             
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 if store[2] + store[1] not in addresses:
                     yield store
                 addresses.append(store[2] + store[1])

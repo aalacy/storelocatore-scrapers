@@ -77,7 +77,7 @@ def fetch_data():
 			longitude = link.find("div",{"class":"views-field views-field-Longitude element-invisible"}).text.strip()
 			store =[]
 			store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-				store_number, phone, location_type, latitude, longitude, hours.encode('ascii', 'ignore').decode('ascii').strip(),page_url]
+				store_number, phone, location_type, latitude, longitude, hours.strip(),page_url]
 
 			# logger.info("data = " + str(store))
 			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

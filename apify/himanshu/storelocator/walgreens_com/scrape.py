@@ -18,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     keys = set()
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_DISTANCE = 25
     zip_code = search.next_zip()
@@ -74,7 +74,7 @@ def fetch_data():
                 if storeNumber in keys:
                     continue
                 keys.add(storeNumber)
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
         if len(result_coords) == 0:
             search.max_distance_update(MAX_DISTANCE)

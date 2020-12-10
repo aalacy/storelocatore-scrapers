@@ -51,7 +51,7 @@ def format_hours(hours_of_operations):
 def fetch_data():
     MAX_COUNT = 50
     MAX_DISTANCE = 1000
-    search = ClosestNSearch()
+    search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     zip_code = search.next_zip()
     headers = {

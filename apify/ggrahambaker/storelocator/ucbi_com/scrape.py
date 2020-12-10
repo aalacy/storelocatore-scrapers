@@ -1,86 +1,86 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
+import csv
+import string
+import re, time
 
-logger = SgLogSetup().get_logger('ucbi_com')
+from sgrequests import SgRequests
 
-
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-
-    locator_domain = 'https://www.ucbi.com/' 
-    ext = 'locations/'
-    r = session.get(locator_domain + ext, headers = HEADERS)
-
-    soup = BeautifulSoup(r.content, 'html.parser')
-
-    locs = soup.find('div', {'class': 'locations-listings'}).find_all('article')
-
-    all_store_data = []
-
-    for loc in locs:
-        location_name = loc['aria-label']
-        
-        lat = loc['data-lat']
-        longit = loc['data-lng']
-        
-        loc_types = loc.find('div', {'class': 'options'}).find_all('div')
-        location_type = ''
-        for t in loc_types:
-            location_type += t.text + ' '
-            
-        phone_number = loc.find('div', {'class': 'locationContact'}).find('a').text
-        
-        page_url = locator_domain[:-1] + loc.find('a')['href']
-
-        r = session.get(page_url, headers = HEADERS)
-
-        soup = BeautifulSoup(r.content, 'html.parser')
-
-        addy = soup.find('p', {'itemprop': 'streetAddress'})
-
-        street_city = addy.find_all('span', {'itemprop': 'addressLocality'})
-        street_address = street_city[0].text
-        city = street_city[1].text
-
-        state = addy.find('span', {'itemprop': 'addressRegion'}).text
-        zip_code = addy.find('span', {'itemprop': 'postalCode'}).text
-  
-        office_hours = soup.find_all('ul', {'itemprop': 'openingHoursSpecification'})
-
-        if len(office_hours) == 0:
-            hours = '<MISSING>'
+    # Your scraper here
+    data = []
+    pattern = re.compile(r'\s\s+')
+    cleanr = re.compile(r'<[^>]+>')
+    url = 'https://www.ucbi.com/locations/'
+    r = session.get(url, headers=headers, verify=False)    
+    soup =BeautifulSoup(r.text, "html.parser")   
+    divlist = soup.findAll('article')
+    #print(len(divlist))
+   
+   # print("states = ",len(state_list))
+    p = 0
+    for div in divlist:       
+        store = div['data-id']
+        lat = div['data-lat']
+        longt = div['data-lng']
+        street = div['data-street']
+        city = div['data-citystatezip']
+        city,state = city.split(', ',1)
+        state,pcode = state.lstrip().split(' ',1)
+        title = div['aria-label']
+        link = 'https://www.ucbi.com'+div.find('a')['href']
+        ltype = div.find('div',{'class':'options'}).text
+        if 'Branch' in ltype or 'Office' in ltype:
+            ltype = ltype.lstrip().replace('\n','|')
         else:
-            days = office_hours[0].find_all('li')
-            hours = 'Office Hours : '
-            for day in days:
-                hours += day.text.strip() + ' '
-
-        store_number = '<MISSING>'
-        country_code = '<MISSING>'
+            continue
+               
+        r = session.get(link, headers=headers, verify=False)    
+        soup =BeautifulSoup(r.text, "html.parser")
+        try:
+            phone = soup.find('p',{'itemprop':'telephone'}).text
+            
+        except:
+            phone = '<MISSING>'
+        try:
+            hours = soup.find('ul',{'itemprop':'openingHoursSpecification'}).text
+            hours = re.sub(pattern,' ',hours)
+            hours = hours.replace('\n','').strip()
+        except:
+            hours = '<MISSING>'
+      
+        ltype = ltype.replace('Branch|','Branch')
+        try:
+            phone = phone.split(' (1-',1)[1].split(')',1)[0]
+        except:
+            pass
+        data.append(['https://www.ucbi.com',link,title,
+                        street,city,state,pcode.strip(),'US',
+                        store,phone,ltype,lat,longt,hours
+                    ])
+        #print(p,data[p])
+        p += 1
         
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+       
+    return data
 
-        logger.info(store_data)
-        all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
+   
     data = fetch_data()
     write_output(data)
 

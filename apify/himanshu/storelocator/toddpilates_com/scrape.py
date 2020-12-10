@@ -74,7 +74,7 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         yield store
 
 

@@ -70,10 +70,10 @@ def fetch_data():
         if  "759 Pembina Hwy" in street_address:
             code="CA"
         store.append(base_urls)
-        store.append(name.encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-        store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(name.strip())
+        store.append(street_address.strip())
+        store.append(city.strip())
+        store.append(state.strip())
         store.append(zipp)
         store.append(code)
         store.append("<MISSING>")

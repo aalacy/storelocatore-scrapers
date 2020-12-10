@@ -91,7 +91,7 @@ def fetch_data():
                             output.append(longitude) #longitude
                             output.append("<MISSING>") 
                             output.append(page_url)#opening hours
-                            output = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in output]                 
+                            output = [str(x).strip() if x else "<MISSING>" for x in output]
                             yield output
     for i1 in data_8:
         # logger.info(i1)
@@ -128,7 +128,7 @@ def fetch_data():
                             output.append(longitude) #longitude
                             output.append("<MISSING>") 
                             output.append(page_url)#opening hours
-                            output = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in output]             
+                            output = [str(x).strip() if x else "<MISSING>" for x in output]
                             yield output
 def scrape():
     data = fetch_data()

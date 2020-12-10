@@ -1,18 +1,7 @@
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import csv
 import re
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
-
-options = Options() 
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('chromedriver', options=options)
 
 BASE_URL = 'https://www.softsurroundings.com'
 MISSING = '<MISSING>'
@@ -23,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -40,42 +29,72 @@ def parse_address(address):
         for item in [city, state, zipcode]
     ]
 
-def parse_google_maps_url(url):
-    return re.findall(r'@(-?\d*.{1}\d*,-?\d*.{1}\d*)', url)[0].split(',')
-
 def fetch_data():
+
     data = []
-    driver.get('https://www.softsurroundings.com/stores/all/')
+
+    base_link = 'https://www.softsurroundings.com/stores/all/'
+
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
+    req = session.get(base_link, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+
     store_urls = [
-        a_tag.get_attribute('href')
-        for a_tag in driver.find_elements_by_css_selector('ul.storeBlock li a')
+        "https://www.softsurroundings.com" + a_tag['href']
+        for a_tag in base.find(id="storeResults").find_all(class_="button thin")
     ]
+
     for store_url in store_urls:
-        driver.get(store_url)
-        location_name = " ".join([
-            item.capitalize()
-            for item in driver.find_element_by_css_selector('h2.storeName').text.split()
-        ])
-        street_address, address, phone = [
-            li.text.strip()
-            for li in driver.find_elements_by_css_selector('ul.storeList li')[:3]
-        ]
-        city, state, zipcode = parse_address(address)
+        if "///" in store_url:
+            continue
+            
+        req = session.get(store_url, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
+
+        location_name = base.h2.text.strip()
+
+        address = list(base.find(class_='storeList').stripped_strings)
+        street_address = address[0]
+        city, state, zipcode = parse_address(address[1])
         state = re.findall(r'[A-Z]{2}', state)[0]
-        store_number = driver.find_element_by_css_selector("input[id='storeId']") \
-            .get_attribute('value')
-        hours_of_operation = driver.find_element_by_css_selector("h4 ~ p") \
-            .text \
+        phone = address[2]
+        store_number = base.find(id='storeId')['value']
+
+        hours_of_operation = " ".join(list(base.find(style="line-height:2.0em;margin-bottom:0.5em;").stripped_strings)).replace("\xa0"," ") \
             .replace("Now Open", '').replace("Now open", '') \
-            .replace("!", '') \
-            .strip()
+            .replace("!", '').replace("Store Hours:","").strip()
+
+        try:
+            hours_of_operation = hours_of_operation.split("order.")[1].strip()
+        except:
+            pass
+
+        if not hours_of_operation:
+            hours_of_operation = " ".join(list(base.find(class_="MsoNormal").stripped_strings)).replace("\xa0"," ") \
+                .replace("Now Open", '').replace("Now open", '') \
+                .replace("!", '').replace("Store Hours:","").strip()
+
         if 'Opening' in hours_of_operation: continue
-        google_maps_url = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='@']"))
-        ).get_attribute('href')
-        lat, lon = parse_google_maps_url(google_maps_url)
+
+        # Maps
+        map_link = base.find(class_='storeList').a["href"]
+        req = session.get(map_link, headers = HEADERS)
+        maps = BeautifulSoup(req.text,"lxml")
+
+        try:
+            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
+            lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
+            lon = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+        except:
+            lat = "<MISSING>"
+            lon = "<MISSING>"
+
         data.append([
             BASE_URL,
+            store_url,
             location_name,
             street_address,
             city,
@@ -89,7 +108,7 @@ def fetch_data():
             lon,
             hours_of_operation
         ])
-    driver.quit()
+
     return data
 
 def scrape():

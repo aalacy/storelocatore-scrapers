@@ -109,7 +109,7 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours if hours else "<MISSING>")
                 store.append("<MISSING>")
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
         
                 yield store
     vk = soup.find("div",{"class":"leading-0"}).find("table",{"align":"center","style":"width: 100%; background-color: #f4f646;","border":"1","cellspacing":"2","cellpadding":"3"})
@@ -150,7 +150,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(hours if hours else "<MISSING>")
                     store.append("<MISSING>")
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [str(x).strip() if x else "<MISSING>" for x in store]
                     yield store
                 if "17th Street Building" in add:
                     name  =add[4]
@@ -196,7 +196,7 @@ def fetch_data():
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
         
                 yield store
         

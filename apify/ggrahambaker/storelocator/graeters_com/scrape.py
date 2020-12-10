@@ -1,6 +1,6 @@
 import csv
-import os
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,44 +22,56 @@ def addy_ext(addy):
 
 def fetch_data():
     locator_domain = 'https://www.graeters.com/'
-    ext = 'neighborhood-locations'
+    ext = 'stores/locations-list'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-    hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'retail-stores/')]")
+    session = SgRequests()
+    req = session.get(locator_domain+ext, headers = HEADERS)
+    base = BeautifulSoup(req.text,"lxml")
+
+    hrefs = base.find(class_="column main").find_all("a")
     link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    for a in hrefs:
+        href = a['href']
+        if "retail-stores/" in href:
+            street = str(a).split('> ')[1].split(",")[0]
+            link_list.append([locator_domain+"stores/"+href, street])
+
     all_store_data = []
 
-    for link in link_list:
+    for link_row in link_list:
+        link = link_row[0]
+        req = session.get(link, headers = HEADERS)
+        base = BeautifulSoup(req.text,"lxml")
 
-        driver.get(link)
-        driver.implicitly_wait(10)
-
-        google_link = driver.find_element_by_xpath("//a[contains(@href, 'google.com/maps/dir/')]").get_attribute('href')
-        start_idx = google_link.find('Current+Location/') + len('Current+Location/')
-        coords = google_link[start_idx:].split(',')
+        coords = base.find(class_="location-button action primary")["href"].split("/")[-1].split(",")
 
         lat = coords[0]
         longit = coords[1]
 
-        phone_number = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href').replace(
-            'tel:', '').strip()
+        phone_number = base.find(class_="location-phone").text.strip()
 
-        location_name = driver.find_element_by_css_selector(
-            'p.oswald-font.medium-text.medium-large-text-mobile.graeters-brown').text
+        location_name = base.h1.text.strip()
 
-        addy = driver.find_element_by_css_selector('p.georgia-font.medium-small-text.graeters-brown').text.split('\n')
+        street_address = link_row[1].replace("Towne","Town").replace("W. ","West ").replace("E. ","East ").replace("N. ","North ").replace("S. ","South ").replace("147 Easton","142 Easton")
+        if street_address == "6509 Bardstown Road":
+            city = "Louisville"
+            state = "KY"
+            zip_code = "40291"
+        else:
+            addy = base.find(class_="location-address").text.replace("Hwy","Highway").replace("Pike","Pk").replace(" St "," Street ").replace(" Rd "," Road ").replace("N. ","North ").replace(" S. "," South ").replace(" W High"," West High").replace(".,","").replace(street_address,"").strip()
 
-        if "We've Moved!" in addy[0]:
-            addy = driver.find_elements_by_css_selector('p.georgia-font.medium-small-text.graeters-brown')[
-                1].text.split('\n')
-        street_address = addy[0]
-        city, state, zip_code = addy_ext(addy[1])
+            if addy[:1] == "," or addy[:1] == ".":
+                addy = addy[1:].strip()
+            city, state, zip_code = addy_ext(addy)
 
-        hours = driver.find_elements_by_css_selector('p.georgia-font.graeters-brown')[2].text.replace('\n', ' ')
+        if city == "Suite 116 Beachwood":
+            city = "Beachwood"
+            street_address = street_address + " Suite 116"
+
+        hours = " ".join(list(base.find(class_="widget block block-static-block").ul.stripped_strings)).replace("Temporarily No Bakery","").strip()
 
         country_code = 'US'
         page_url = link
@@ -71,7 +83,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 def scrape():

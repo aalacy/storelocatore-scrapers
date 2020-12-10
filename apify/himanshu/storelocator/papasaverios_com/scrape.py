@@ -58,7 +58,7 @@ def fetch_data():
         store.append(" ".join(location_details[6:]) if " ".join(location_details[6:]) != "" else "<MISSING>")
         store.append("https://papasaverios.com/all-locations")
         store = [x.replace("–","-") for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        store = [x.strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():

@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 import phonenumbers
 from sglogging import SgLogSetup
+
+
 logger = SgLogSetup().get_logger('biggby_com')
 session = SgRequests()
 
@@ -32,13 +34,11 @@ def fetch_data():
     r = session.get("https://www.biggby.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     key = str(soup).split('"bgcSecurity":"')[1].split('","ajax":')[0]
-    # print(key)
     data = soup.find_all("marker")
     for i in data:
         if i['coming-soon'] == "yes" :
             continue
         location_name = i['name']
-        # print(location_name)
         street_address = i['address-one'] +" "+ i['address-two']
         city = i['city']
         state = i['state']
@@ -64,74 +64,75 @@ def fetch_data():
 
         if i['mon-thurs-close-hour']:
             try:
-                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                mon_c = datetime.strptime(str(i['mon-thurs-close-hour']), "%H:%M")
                 mon_close=mon_c.strftime("%I:%M %p")       
             except:
-                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                mon_c = datetime.strptime(str(i['mon-thurs-close-hour']), "%H")
                 mon_close=mon_c.strftime("%I:%M %p")
         else:
             mon_close = "close"
 
         if i['fri-open-hour']:
             try:
-                fir_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                fir_o = datetime.strptime(str(i['fri-open-hour']), "%H:%M")
                 fri_open=fir_o.strftime("%I:%M %p")       
             except:
-                fir_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                fir_o = datetime.strptime(str(i['fri-open-hour']), "%H")
                 fri_open=fir_o.strftime("%I:%M %p")
         else:
             fri_open = "close"
 
         if i['fri-close-hour']:
             try:
-                fri_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                fri_c = datetime.strptime(str(i['fri-close-hour']), "%H:%M")
                 fri_close=fri_c.strftime("%I:%M %p")       
             except:
-                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                mon_c = datetime.strptime(str(i['fri-close-hour']), "%H")
                 fri_close=fri_c.strftime("%I:%M %p")
         else:
             fri_close = "close"
 
         if i['sat-open-hour']:
             try:
-                sat_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sat_o = datetime.strptime(str(i['sat-open-hour']), "%H:%M")
                 sat_open=sat_o.strftime("%I:%M %p")       
             except:
-                sat_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sat_o = datetime.strptime(str(i['sat-open-hour']), "%H")
                 sat_open=sat_o.strftime("%I:%M %p")
         else:
             sat_open = "close"
 
         if i['sat-close-hour']:
             try:
-                sat_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sat_c = datetime.strptime(str(i['sat-close-hour']), "%H:%M")
                 sat_close=sat_c.strftime("%I:%M %p")       
             except:
-                sat_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sat_c = datetime.strptime(str(i['sat-close-hour']), "%H")
                 sat_close=sat_c.strftime("%I:%M %p")
         else:
             sat_close = "close"
 
         if i['sun-open-hour']:
             try:
-                sun_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sun_o = datetime.strptime(str(i['sun-open-hour']), "%H:%M")
                 sun_open=sun_o.strftime("%I:%M %p")       
             except:
-                sun_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sun_o = datetime.strptime(str(i['sun-open-hour']), "%H")
                 sun_open=sun_o.strftime("%I:%M %p")
         else:
             sun_open = "close"
 
         if i['sun-close-hour']:
             try:
-                sun_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sun_c = datetime.strptime(str(i['sun-close-hour']), "%H:%M")
                 sun_close=sun_c.strftime("%I:%M %p")       
             except:
-                sun_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sun_c = datetime.strptime(str(i['sun-close-hour']), "%H")
                 sun_close=sun_c.strftime("%I:%M %p")
         else:
             sun_close = "close"
-        hours = "mon thurs open hour"+"-"+str(mon_open)+" "+"mon thurs close hour"+"-"+str(mon_close)+" "+"fri open hour"+"-"+str(fri_open)+" "+"fri close hour"+"-"+str(fri_close)+" "+"sat open hour"+"-"+str(sat_open)+" "+"sat close hour"+"-"+str(sat_close)+" "+"sun open hour"+"-"+str(sun_open)+" "+"sun close hour"+"-"+str(sun_close)
+        hours = "mon to thurs"+" "+str(mon_open)+"-"+str(mon_close)+","+"fri"+" "+str(fri_open)+"-"+str(fri_close)+","+"sat"+" "+str(sat_open)+"-"+str(sat_close)+","+"sun"+" "+str(sun_open)+"-"+str(sun_close)
+        hours = hours.replace("close-close","close")
 
         r1 = session.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security="+key+"&post_id="+str(i['pid'])).json()
         number = r1['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
@@ -164,6 +165,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()    
-# (440) 385-7778
+

@@ -21,7 +21,7 @@ def fetch_data():
 
     locator_domain = 'https://www.signaturestyle.com/brands/best-cuts.html'
 
-    search = ClosestNSearch()
+    search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25

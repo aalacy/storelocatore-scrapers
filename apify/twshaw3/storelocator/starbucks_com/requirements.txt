@@ -1,5 +1,5 @@
 lxml==4.3.4
-sgzip
 sgrequests
 tenacity
 sglogging
+sgzip==0.0.55

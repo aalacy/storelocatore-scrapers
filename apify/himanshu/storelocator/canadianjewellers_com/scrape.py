@@ -80,17 +80,17 @@ def fetch_data():
                 longitude = "<MISSING>"
 
             tem_var.append("https://www.canadianjewellers.com")
-            tem_var.append(name.replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip())
-            tem_var.append(address.replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip())
+            tem_var.append(name.replace("\x90","").replace("0xc2","").strip())
+            tem_var.append(address.replace("\x90","").replace("0xc2","").strip())
             tem_var.append("<INACCESSIBLE>")
-            tem_var.append(state.replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip()) 
+            tem_var.append(state.replace("\x90","").replace("0xc2","").strip()) 
             tem_var.append("<MISSING>")
             tem_var.append("CA")
             tem_var.append("<MISSING>")
-            tem_var.append(phone[index].replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip())
+            tem_var.append(phone[index].replace("\x90","").replace("0xc2","").strip())
             tem_var.append("<MISSING>")
-            tem_var.append(latitude.replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip())
-            tem_var.append(longitude.replace("\x90","").replace("0xc2","").encode('ascii', 'ignore').decode('ascii').strip())
+            tem_var.append(latitude.replace("\x90","").replace("0xc2","").strip())
+            tem_var.append(longitude.replace("\x90","").replace("0xc2","").strip())
             tem_var.append("<MISSING>")
             tem_var.append(new_link)
             

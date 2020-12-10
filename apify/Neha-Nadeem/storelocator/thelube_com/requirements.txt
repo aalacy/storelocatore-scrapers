@@ -1,0 +1,4 @@
+sgrequests
+sglogging
+bs4==0.0.1
+

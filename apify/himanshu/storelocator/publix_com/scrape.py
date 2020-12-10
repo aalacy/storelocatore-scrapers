@@ -27,7 +27,7 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 50
     MAX_DISTANCE = 10
@@ -94,7 +94,7 @@ def fetch_data():
                 continue
 
             addresses.append(store[2] + store[-3])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.strip() if x else "<MISSING>" for x in store]
 
             # logger.info("data = " + str(store))
             # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

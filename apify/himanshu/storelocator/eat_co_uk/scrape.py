@@ -86,7 +86,7 @@ def fetch_data():
         tem_var.append(log)
         tem_var.append(hours)
         tem_var.append(page_url)
-        tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
+        tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         
         # logger.info("tem_var============ ",tem_var)
         yield tem_var

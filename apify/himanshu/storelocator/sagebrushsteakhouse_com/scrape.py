@@ -1,14 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-import urllib3
-import requests
 
-session = SgRequests()
-
-requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,57 +16,55 @@ def write_output(data):
 
 
 def fetch_data():
-    headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-        }
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
+
+    session = SgRequests()
 
     base_url= "https://www.sagebrushsteakhouse.com/"
-    r = session.get(base_url,headers=headers,verify=False)
+    r = session.get(base_url,headers=HEADERS,verify=False)
     soup= BeautifulSoup(r.text,"lxml")
 
     for link in soup.find("ul",{"class":"subnavigation"}).find_all("a"):
         location_soup = BeautifulSoup(session.get(link.get('href')).content,"lxml")
 
-        for data in location_soup.find_all("div",{"class":"t-edit-helper"})[1:]:
+        try:
+            address = location_soup.find(id="ctl01_rptSpan_ctl00_pTruncatedText").text.replace(", NC,",", NC").replace("Blvd.","Blvd,").split(",")
+        except:
+            continue
 
-            address = list(data.stripped_strings)
-            
-            location_name = address[0]
-            if location_name == "SAGEBRUSH OF":
-                location_name += " "+ address[1]
-                del address[1]
-            if "Temporarily Closed" in address[1]:
-                del address[1]
-            street_address = address[3]
-            if address[4].count(",") == 2:
-                city = address[4].split(",")[0].strip()
-                state = address[4].split(",")[1].strip()
-                zipp = address[4].split(",")[2].strip()
-            else:
-                city = address[4].split(",")[0]
-                state = address[4].split(",")[1].split()[0]
-                zipp = address[4].split(",")[1].split()[1]
-            phone = address[2]
+        street_address = address[0].strip()
+        city = address[1].strip()
+        state = address[2].split()[0].strip()
+        zipp = address[2].split()[1].strip()
+        phone = location_soup.find_all(id="ctl01_rptSpan_ctl00_pText")[1].text.split()[0]
 
-            hours = " ".join(address[6:10])
+        raw_hours = location_soup.find_all(id="ctl01_rptSpan_ctl01_pText")
+        hours = ""
+        for hour in raw_hours:
+            hours = (hours + " " + hour.text.split("Less")[0].replace("\n"," ").replace("\r"," ").strip()).strip()
 
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)   
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(hours)
-            store.append(link.get('href')) 
-    
-            yield store
+        if "temporarily closed" in location_soup.h3.text.lower():
+            hours = "Temporarily Closed"
+
+        location_name = "SAGEBRUSH OF " + city
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(hours)
+        store.append(link.get('href')) 
+
+        yield store
 
 def scrape():
     data = fetch_data()

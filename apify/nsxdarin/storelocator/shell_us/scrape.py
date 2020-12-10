@@ -74,7 +74,7 @@ def parse_coords(stores):
 
 def fetch_data():
 
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['US'])
     coord = search.next_coord()
     while coord:

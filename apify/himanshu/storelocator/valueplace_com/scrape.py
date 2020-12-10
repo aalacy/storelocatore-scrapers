@@ -29,7 +29,7 @@ def fetch_data():
     main_url = locator_domain = "https://www.valueplace.com"
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(include_canadian_fsas=True)
     MAX_RESULTS = 200
     MAX_DISTANCE = 150
@@ -127,7 +127,7 @@ def fetch_data():
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
             #logger.info(store)
 

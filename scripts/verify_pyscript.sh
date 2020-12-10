@@ -3,8 +3,8 @@
 #echo $@
 
 script=$1
-s_dir=$(dirname $script)
-s_name=$(basename $script)	
+s_dir=$(dirname "$script")
+s_name=$(basename "$script")
 
 $(
 	rm -rf $s_dir/__pycache__
@@ -17,7 +17,7 @@ $(
 		echo ">> Compiler error: $script"
 	fi
 
-	pychecker $script
+	pylint -E $s_name
 	cmp_result=$?
 	if [ $cmp_result -ne 0 ]; then
 		echo ">> Linter error: $script"

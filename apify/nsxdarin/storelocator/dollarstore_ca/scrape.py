@@ -39,7 +39,12 @@ def fetch_data():
                         state = 'ON'
                         zc = 'L4P 3E9'
                     else:
-                        if addinfo.count(',') == 3:
+                        if addinfo.count(',') == 2:
+                            add = addinfo.split(',')[0].strip()
+                            city = addinfo.split(',')[1].strip()
+                            state = addinfo.split(',')[2].strip().split(' ')[0]
+                            zc = addinfo.strip().rsplit(' ',1)[1].strip()
+                        elif addinfo.count(',') == 3:
                             add = addinfo.split(',')[0].strip()
                             city = addinfo.split(',')[1].strip()
                             state = addinfo.split(',')[2].strip()
@@ -58,12 +63,12 @@ def fetch_data():
                         state = 'BC'
                     if city == 'Garson':
                         state = 'ON'
-                    if phone == '':
-                        phone = '<MISSING>'
                     if 'Can' in zc:
                         zc = '<MISSING>'
                     if '>' in phone:
                         phone = phone.split('>')[1].split('<')[0]
+                    if phone == '':
+                        phone = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

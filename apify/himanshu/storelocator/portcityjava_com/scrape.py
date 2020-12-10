@@ -80,7 +80,7 @@ def fetch_data():
             store.append("https://www.portcityjava.com")
             store.append(store_name[i])
             store.extend(store_detail[i])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             if store[2] in addressess:
                 continue
             addressess.append(store[2])

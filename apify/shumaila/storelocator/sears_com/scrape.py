@@ -145,7 +145,7 @@ def fetch_data():
                                         hours = hours.replace("\n"," ")
                                         hours = hours.strip()
                                         title = title.lstrip()
-                                        title = title.encode('ascii', 'ignore').decode('ascii')
+                                        title = title
                                         title = title.replace('Sears','Sears ')
                                         title = title.replace('  ',' ')
                                         flag = True

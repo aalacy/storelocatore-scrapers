@@ -31,7 +31,7 @@ def fetch_data():
     }
     return_main_object = []
     addresses = []
-    # search = sgzip.ClosestNSearch()
+    # search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     # search.initialize()
     # MAX_RESULTS = 500
     # MAX_DISTANCE = 50
@@ -81,7 +81,7 @@ def fetch_data():
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             store = [x if x.replace(" ","") != "NA" else "<MISSING>" for x in store]
             if store[2] in addresses:
                 continue

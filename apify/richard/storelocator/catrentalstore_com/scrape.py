@@ -1,149 +1,185 @@
-import json
-
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+import csv
+import re
 
 URL = "https://www.catrentalstore.com/"
 
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        location_types = []
-        stores = []
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        # Fetch stores from location menu
-        location_url = "https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&searchType=address&searchValue=USA&maxResults=50&productDivId=2%2C1%2C6&appId=GdeKAczdmNrGwdPo"
-        driver.get(location_url)
-        stores = json.loads(driver.find_element_by_css_selector("pre").text)
+def fetch_data():
 
-        for store in stores:
-            # Store ID
-            location_id = store["dealerId"]
+    # store data
+    locations_ids = []
+    locations_titles = []
+    street_addresses = []
+    cities = []
+    states = []
+    zip_codes = []
+    latitude_list = []
+    longitude_list = []
+    phone_numbers = []
+    hours = []
+    countries = []
+    location_types = []
+    links = []
+    stores = []
+    data = []
 
-            # Name
-            location_title = store["dealerName"]
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    HEADERS = {'User-Agent' : user_agent}
 
-            # Type
-            location_type = store["type"]
+    session = SgRequests()
 
-            # Street
-            street_address = (
-                    store["siteAddress"] + " " + store["siteAddress1"]
-            ).strip()
+    # Fetch stores from location menu
+    location_url = "https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&searchType=name&searchValue=Cat+Rental&maxResults=1000&productDivId=2%2C1%2C6&appId=GdeKAczdmNrGwdPo"
 
-            # Country
-            country = store["countryCode"]
+    stores = session.get(location_url, headers = HEADERS).json()
 
-            # State
-            state = store["siteState"]
+    for store in stores:
 
-            # city
-            city = store["siteCity"]
+        # Country
+        country = store["countryCode"]
+        if not country in ["US","CA"]:
+            continue
 
-            # zip
-            zipcode = store["sitePostal"]
+        # Store ID
+        location_id = store["dealerLocationId"]
 
-            # Lat
-            lat = store["latitude"]
+        # Name
+        location_title = store["dealerName"]
 
-            # Long
-            lon = store["longitude"]
+        # Type
+        try:
+            location_type = re.findall(r"marketingName.+Cat Rental Store'",str(store))[0].split(":")[1].strip().replace("'","").split(", store")[0].strip().encode("ascii", "replace").decode().replace("?","-")
+            if "Cat Rental Store" not in location_type:
+                continue
+        except:
+            continue
 
-            # Phone
-            phone = store["locationPhone"]
+        # Street
+        street_address = (
+                store["siteAddress"] + " " + store["siteAddress1"]
+        ).strip()
 
+        # State
+        state = store["siteState"].replace("West Virginia","WV").replace("Washington","WA").replace("Wyoming","WY").replace("WYOMING","WY")
+
+        # city
+        city = store["siteCity"]
+
+        # zip
+        zipcode = store["sitePostal"]
+
+        # Lat
+        lat = store["latitude"]
+
+        # Long
+        lon = store["longitude"]
+
+        # Phone
+        try:
+            phone = store["locationPhone"].replace("  "," ")
+            if not phone:
+                phone = str(store).split("phoneNumber': '")[1].split("'")[0].replace("  "," ").strip()
+        except:            
+            try:
+                phone = str(store).split("phoneNumber': '")[1].split("'")[0].replace("  "," ").strip()
+            except:
+                break
+                phone = "<MISSING>"
+
+        try:
             # hour
             hour_dict = {}
             for key in store["stores"][0].keys():
                 if "storeHours" in key:
                     hour_dict[key] = store["stores"][0][key]
 
-            hour = " ".join([day + " " + hour for day, hour in hour_dict.items()])
+            hour = " ".join([day + " " + hour for day, hour in hour_dict.items()]).replace("storeHours","").replace("  ", " Closed ")
+            if hour[-1:] == " ":
+                hour = hour + "Closed"
+        except:
+            hour = "<MISSING>"
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
+        link = store["locationWebSite"]
 
-        for (
+        # Store data
+        links.append(link)
+        locations_ids.append(location_id)
+        locations_titles.append(location_title)
+        street_addresses.append(street_address)
+        states.append(state)
+        zip_codes.append(zipcode)
+        hours.append(hour)
+        latitude_list.append(lat)
+        longitude_list.append(lon)
+        phone_numbers.append(phone)
+        cities.append(city)
+        countries.append(country)
+        location_types.append(location_type)
+
+    for (   
+            link,
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
+    ) in zip(
+        links,
+        locations_titles,
+        street_addresses,
+        cities,
+        states,
+        zip_codes,
+        phone_numbers,
+        latitude_list,
+        longitude_list,
+        hours,
+        locations_ids,
+        countries,
+        location_types,
+    ):
+        data.append(
+            [
+                URL,
+                link,
                 locations_title,
                 street_address,
                 city,
                 state,
                 zipcode,
+                country,
+                location_id,
                 phone_number,
+                location_type,
                 latitude,
                 longitude,
                 hour,
-                location_id,
-                country,
-                location_type,
-        ) in zip(
-            locations_titles,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-            location_types,
-        ):
-            self.data.append(
-                [
-                    self.url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
+            ]
+        )
 
-        driver.quit()
+    return data
 
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-scrape = Scraper(URL)
-scrape.scrape()
+scrape()

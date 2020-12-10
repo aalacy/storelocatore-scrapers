@@ -4,15 +4,12 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import urllib3
-import requests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('cinemark_com')
 
 
 session = SgRequests()
-requests.packages.urllib3.disable_warnings()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,26 +27,34 @@ def fetch_data():
    
     base_url= "https://cinemark.com/"
 
-    
-    headers = {           
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
-    
+    headers = {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9,pt;q=0.8',
+    'cache-control': 'max-age=0',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
     }
+
     
-    r = session.get("https://centurytheatres.com/full-theatre-list", headers=headers, verify=False)
+    
+    
+    r = session.get("https://cinemark.com/full-theatre-list", headers=headers, verify=False)
 
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find("div",{"class":"columnList wide"})
     for link in data.find_all("a"):
         # if "Tinseltown" not in link.text:
         #     continue
-
-        page_url = "https://centurytheatres.com"+link['href']
-        #logger.info(page_url)
-        r1 = session.get(page_url, headers=headers, verify=False)
+        page_url = "https://cinemark.com/"+link['href']
+#        logger.info(page_url)
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text
+     
         data = json.loads(info)
         for address in  data['address']:
             street_address = address['streetAddress']
@@ -82,6 +87,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
+
         # logger.info("data =="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store

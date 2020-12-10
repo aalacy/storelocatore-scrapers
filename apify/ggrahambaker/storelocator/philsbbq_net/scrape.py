@@ -81,10 +81,16 @@ def fetch_data():
         all_store_data.append(store_data)
 
     #weird format of html, gotta dive in here
-    hours = soup.find('h2', text='San Diego International Airport').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text
-    store_data = [locator_domain, soup.find('h2', text='San Diego International Airport').text, '<MISSING>', 'San Diego', 'CA', '<MISSING>', 'US',
+    try:
+        hours = soup.find('h2', text='San Diego International Airport').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text
+    except:
+        hours = "<MISSING>"
+    try:
+        store_data = [locator_domain, soup.find('h2', text='San Diego International Airport').text, '<MISSING>', 'San Diego', 'CA', '<MISSING>', 'US',
                      '<MISSING>', '<MISSING>', 'airport', '<MISSING>', '<MISSING>', hours ]
-    all_store_data.append(store_data)
+        all_store_data.append(store_data)
+    except:
+        pass
 
     ## need to hardcode this
 

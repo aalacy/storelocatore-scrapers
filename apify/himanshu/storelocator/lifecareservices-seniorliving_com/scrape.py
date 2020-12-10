@@ -81,9 +81,9 @@ def fetch_data():
             if "Under Construction" in street_address:
                 continue
             else:
-                store = ["https://www.lifecareservices-seniorliving.com", location_name, street_address.encode('ascii', 'ignore').decode('ascii').strip(), city, state, zipp.replace("IL","<MISSING>"), country_code,
+                store = ["https://www.lifecareservices-seniorliving.com", location_name, street_address.strip(), city, state, zipp.replace("IL","<MISSING>"), country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]   
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 yield store
 
 def scrape():

@@ -40,7 +40,7 @@ def minute_to_hours(time):
 
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     
     return_main_object = []

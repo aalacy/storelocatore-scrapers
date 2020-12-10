@@ -87,8 +87,8 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url)
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             if store[2]=="<MISSING>" and store[3]=="<MISSING>" and store[4]=="<MISSING>" and store[5]=="<MISSING>":
                 continue
             # print(store)

@@ -20,7 +20,7 @@ base_url = 'https://www.paparazzitrattoria.com'
 def validate(item):    
     if type(item) == list:
         item = ' '.join(item)
-    return item.encode('ascii', 'ignore').decode('ascii').strip()
+    return item.strip()
 
 def get_value(item):
     if item == None :

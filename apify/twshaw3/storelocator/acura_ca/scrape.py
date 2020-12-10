@@ -24,7 +24,7 @@ HEADERS = {
 
 URL_TEMPLATE = "https://api.honda.ca/dealer/A/Live/dealers/{}/{}/with-driving-distance?AcceptLanguage=en"
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['ca'])
 
 session = SgRequests()

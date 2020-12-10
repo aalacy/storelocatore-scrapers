@@ -25,7 +25,7 @@ def write_output(data):
 def fetch_data():
     MAX_RESULTS = 50
     MAX_DISTANCE = 40
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['US',"CA"])
     coord = search.next_coord()
     current_results_len = 0
@@ -159,7 +159,7 @@ def fetch_data():
                     store.append(lng)
                     store.append(hours.replace("Monday: Close  Tuesday: Close  Wednesday: Close Thursday: Close Friday: Close Saturday: Close Sunday: Close",'<MISSING>') if hours else "<MISSING>")
                     store.append(page_url if page_url else "<MISSING>")     
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    store = [str(x).strip() if x else "<MISSING>" for x in store]
                     if street_address_n.strip() in adressess:
                         continue
                     adressess.append(street_address_n.strip())

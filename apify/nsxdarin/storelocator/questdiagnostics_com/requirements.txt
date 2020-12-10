@@ -1,4 +1,4 @@
 sgrequests
-sgzip
 requests_toolbelt
 sglogging
+sgzip==0.0.55

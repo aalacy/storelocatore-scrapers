@@ -64,11 +64,20 @@ def fetch_data():
                     interval = d.get('intervals')[0]
                     start = str(interval.get('start'))
                     end = str(interval.get('end'))
+
+                    # normalize 9:30 -> 09:30
+                    if len(start) == 3:
+                        start = f'0{start}'
+
                     line = f'{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}'
                 except IndexError:
                     line = f'{day}  Closed'
                 _tmp.append(line)
             hours_of_operation = ';'.join(_tmp)
+
+            # skip closed locations
+            if hours_of_operation.count('Closed') == 7:
+                continue
 
         row = [locator_domain, page_url, location_name, street_address, city, state, postal,
                country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]

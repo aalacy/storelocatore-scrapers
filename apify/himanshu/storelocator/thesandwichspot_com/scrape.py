@@ -55,7 +55,7 @@ def fetch_data():
         location_soup = BS(session.get(page_url).text, "lxml")
         hours = " ".join(list(location_soup.find_all("div",{"class":"txtNew"})[4].stripped_strings)).split("HOURS:")[1]
         store = [base_url, location_name, street_address, city, state, zipp, "US","<MISSING>", phone, "<MISSING>", lat, lng, hours.strip(), page_url]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
 def scrape():
     data = fetch_data()

@@ -1,6 +1,6 @@
 lxml
 sgrequests
-sgzip
 bs4
 html5lib
 sglogging
+sgzip==0.0.55

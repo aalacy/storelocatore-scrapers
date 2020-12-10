@@ -23,7 +23,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 150
     MAX_DISTANCE = 60
@@ -69,7 +69,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 
         if current_results_len < MAX_RESULTS:

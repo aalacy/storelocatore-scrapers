@@ -66,7 +66,7 @@ def fetch_data():
                 addresses.append(store[2])
                 if "21536" in zipp:
                     continue
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 yield store
                 # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~",store)
 

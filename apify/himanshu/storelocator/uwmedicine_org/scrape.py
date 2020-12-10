@@ -76,7 +76,7 @@ def fetch_data():
                     store.append("<INACCESSIBLE>")
                     store.append(hours)
                     store.append(page_url)
-                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                    store = [x.strip() if type(x) == str else x for x in store]
                     if str(store[2])+str(store[1]) in addresses:
                         continue
                     addresses.append(str(store[2])+str(store[1]))

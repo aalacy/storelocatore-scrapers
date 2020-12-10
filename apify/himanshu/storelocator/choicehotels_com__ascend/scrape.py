@@ -32,7 +32,7 @@ def fetch_data():
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(include_canadian_fsas=True)
     # MAX_RESULTS = 32
     MAX_DISTANCE = 100

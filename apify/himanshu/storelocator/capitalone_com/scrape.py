@@ -26,7 +26,7 @@ def fetch_data():
             'cache-control': "no-cache",
     }
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=["US"])
     MAX_RESULTS = 150
     MAX_DISTANCE = 50
@@ -91,7 +91,7 @@ def fetch_data():
             store.append(hours.strip() if hours != "" else "<MISSING>")
             
             store.append("https://locations.capitalone.com/bank/"+str(store_data["address"]["stateCode"].lower())+"/"+str(store_data['slug']))
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         
         if len(json_data) < MAX_RESULTS:

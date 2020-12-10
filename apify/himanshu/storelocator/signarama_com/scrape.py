@@ -59,10 +59,10 @@ def fetch_data():
                 lng = "<MISSING>"
             store = []
             store.append(base_url)
-            store.append(name.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
-            store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(name.strip())
+            store.append(street_address.strip())
+            store.append(city.strip())
+            store.append(state.strip())
             store.append(zipp)
             store.append("US")
             store.append("<MISSING>")

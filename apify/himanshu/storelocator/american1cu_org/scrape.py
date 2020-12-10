@@ -64,7 +64,7 @@ def fetch_data():
             store.append(lng)
             store.append(hours)
             store.append("https://www.american1cu.org/locations")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
     Other_coordinates = {}
     Other_soup= BeautifulSoup(session.get("https://www.american1cu.org/locations?street=&search=&state=&radius=99&options%5B%5D=atms&options%5B%5D=shared_branches").text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
@@ -116,7 +116,7 @@ def fetch_data():
         store.append(Other_coordinates[street_address]['lng'])
         store.append(hours)
         store.append("https://www.american1cu.org/locations?search=&state=&options%5B%5D=atms&options%5B%5D=shared_branches")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store
     atm_soup = BeautifulSoup(session.get("https://www.american1cu.org/locations?street=&search=&state=&radius=99&options%5B%5D=cuatms").text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
     atm_coords = atm_soup.find(lambda tag:(tag.name == "script") and "var point" in tag.text).text
@@ -155,7 +155,7 @@ def fetch_data():
             store.append(lng)
             store.append(hours_of_operation)
             store.append("https://www.american1cu.org/locations")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
 def scrape():
     data = fetch_data()

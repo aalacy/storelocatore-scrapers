@@ -29,7 +29,10 @@ def fetch_data():
         store = []
         store.append("https://cbna.com")
         store.append(current_store["title"])
-        store.append(current_store["address"]["street1"])
+        street = current_store["address"]["street1"]
+        if not street:
+            street = "<MISSING>"
+        store.append(street)
         store.append(current_store["address"]["city"])
         store.append(current_store["address"]["state"])
         store.append(current_store["address"]["zip"])
@@ -39,17 +42,34 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(current_store["address"]["lat"])
         store.append(current_store["address"]["lng"])
+
+        link = current_store["url"]
         hours = ""
+
+        days = {"0":"Sun",
+                "1":"Mon",
+                "2":"Tue",
+                "3":"Wed",
+                "4":"Thu",
+                "5":"Fri",
+                "6":"Sat"}
+
         if "branchLobbyHours" in current_store:
             store_hours = current_store["branchLobbyHours"]
             for key in store_hours:
-                if store_hours[key]["open"] == None and store_hours[key]["close"] == None:
-                    continue
-                hours = hours + " open " + datetime.strptime(store_hours[key]["open"]["date"].split(" ")[1][0:8] , "%H:%M:%S").strftime("%I:%M %p") + " close " + datetime.strptime(store_hours[key]["close"]["date"].split(" ")[1][0:8] , "%H:%M:%S").strftime("%I:%M %p")
+                day = days[key]
+                if not store_hours[key]["open"]:
+                    open_close = "Closed"
+                else:
+                    open_close = (datetime.strptime(store_hours[key]["open"]["date"].split(" ")[1][0:8] , "%H:%M:%S").strftime("%I:%M %p") + " - " + datetime.strptime(store_hours[key]["close"]["date"].split(" ")[1][0:8] , "%H:%M:%S").strftime("%I:%M %p") ).strip()
+                hours = (hours + " " + day + " " + open_close).strip()
         elif "notes" in current_store:
             hours = current_store["notes"][0]
+
+        if hours == "Sun Closed Mon Closed Tue Closed Wed Closed Thu Closed Fri Closed Sat Closed":
+            hours = "<MISSING>"
         store.append(hours if hours != "" else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(link)
         yield store
 
 def scrape():

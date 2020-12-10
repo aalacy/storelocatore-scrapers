@@ -57,7 +57,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(lat)
             tem_var.append(log)
-            tem_var.append(" ".join(v1[5:]).encode('ascii', 'ignore').decode('ascii').strip())
+            tem_var.append(" ".join(v1[5:]).strip())
             tem_var.append(i['href'])
             return_main_object.append(tem_var)
             # logger.info(tem_var)

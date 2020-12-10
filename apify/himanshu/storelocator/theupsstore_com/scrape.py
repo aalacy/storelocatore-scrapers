@@ -65,7 +65,7 @@ def fetch_data():
     }
     base_url = "https://www.theupsstore.com"
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 30
     MAX_DISTANCE = 350.0
@@ -108,7 +108,7 @@ def fetch_data():
             store.append(hours.replace("  "," ") if hours else "<MISSING>")
             store.append(store_data["StoreURL"])
             store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             # logger.info(store)
             yield store
         if len(data) < MAX_RESULTS:

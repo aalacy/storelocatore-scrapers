@@ -1,0 +1,4 @@
+sgscrape
+sglogging
+sgrequests
+sgzip==0.0.55

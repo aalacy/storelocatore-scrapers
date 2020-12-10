@@ -262,7 +262,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(latitude)
         store.append(longitude)
-        store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.strip())
         store.append(page_url)
         stores.append(store)
         # logger.info(store)

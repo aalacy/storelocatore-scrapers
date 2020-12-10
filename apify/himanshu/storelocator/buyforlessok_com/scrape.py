@@ -67,7 +67,7 @@ def fetch_data():
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             if str(store[1]) + str(store[2]) not in addresses and "coming soon" not in location_name.lower():
                 addresses.append(str(store[1]) + str(store[2]))
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store

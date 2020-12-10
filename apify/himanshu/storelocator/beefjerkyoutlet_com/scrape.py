@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+from sgzip import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('beefjerkyoutlet_com')
@@ -27,19 +27,18 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_search_results = 100, max_radius_miles = 200)
     search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 200
-    coord = search.next_coord()
+    coord = search.next()
     base_url ="https://www.beefjerkyoutlet.com"
 
     while coord:
         result_coords = []
-        location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(coord[0])+"&proximity_lng="+str(coord[1])
+        lat, long = coord
+        location = "https://www.beefjerkyoutlet.com/location-finder?proximity_lat="+str(lat)+"&proximity_lng="+str(long)
         r = session.get(location,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
-
+        items = 0
         main=soup.find('ul',{'class':'geolocation-common-map-locations'}).find_all('li')[:91]
         for ltag in main:
             name=ltag.find('span',{'class':'title'}).text.strip()
@@ -50,7 +49,6 @@ def fetch_data():
                 page_url = base_url+link
             except:
                 page_url = "<MISSING>"
-
             temp_add = ltag.find("p",{"class":"address"})
             try:
                 address_line1 = temp_add.find("span",{"class":"address-line1"}).text
@@ -66,7 +64,10 @@ def fetch_data():
             country = temp_add.find("span",{"class":"country"}).text
             if country == "United States":
                 country_code = "US"
-            phone = ltag.find("div",{"class":"location-content"}).find("a").text
+            try:
+                phone = ltag.find("div",{"class":"location-content"}).find("a").text
+            except:
+                phone = "<MISSING>"
             hour = ltag.find("div",{"class":"location-content"}).find_all("div",{"class":"field-item"})
             hoo = []
             for h in hour:
@@ -76,34 +77,28 @@ def fetch_data():
             result_coords.append((lat,lng))
             store=[]
             store.append(base_url)
-            store.append(name.encode('ascii', 'ignore').decode('ascii') if name else "<MISSING>")
-            store.append(address.encode('ascii', 'ignore').decode('ascii') if address else "<MISSING>")
-            store.append(city.encode('ascii', 'ignore').decode('ascii') if city else "<MISSING>")
-            store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
-            store.append(zipp.encode('ascii', 'ignore').decode('ascii') if zipp else "<MISSING>")
-            store.append(country_code.encode('ascii', 'ignore').decode('ascii') if country_code else "<MISSING>")
+            store.append(name if name else "<MISSING>")
+            store.append(address if address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
             store.append("beefjerkyoutlet")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
-            store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii') if hours_of_operation.strip() else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
+                items += 1
                 continue
             addresses.append(store[2])
             yield store
-        
-        if len(main) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(main) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
+        search.update_with(result_coords)
+        logger.info(f'Coordinates remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-items} stores.')
+        coord = search.next()
 
 def scrape():
     data = fetch_data()

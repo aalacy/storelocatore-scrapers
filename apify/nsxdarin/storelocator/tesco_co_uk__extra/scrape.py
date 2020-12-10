@@ -20,7 +20,7 @@ def write_output(data):
 
 URL_TEMPLATE = 'https://api.tesco.com/tescolocation/v3/locations/search?offset=0&limit=100&sort=near:%22{},{}%22&filter=category:Store%20AND%20isoCountryCode:x-uk&fields=name,geo,openingHours,altIds.branchNumber,contact'
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['gb'])
 
 MAX_RESULTS = 100

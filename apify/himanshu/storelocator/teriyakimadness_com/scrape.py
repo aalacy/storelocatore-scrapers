@@ -60,10 +60,10 @@ def fetch_data():
             
             store=[]
             store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else '<MISSING>')
-            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else '<MISSING>')
-            store.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else '<MISSING>')
-            store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state else '<MISSING>')
+            store.append(location_name.strip() if location_name else '<MISSING>')
+            store.append(street_address.strip() if street_address else '<MISSING>')
+            store.append(city.strip() if city else '<MISSING>')
+            store.append(state.strip() if state else '<MISSING>')
             store.append(zip if zip else '<MISSING>')
             store.append(country_code if country_code else '<MISSING>')
             store.append(store_number if store_number else '<MISSING>')

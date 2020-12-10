@@ -44,7 +44,7 @@ def write_output(data):
 def fetch_data():
     MAX_RESULTS = 20
     MAX_DISTANCE = 200
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=["US"])
     zip_code = search.next_zip()
     addressess = []

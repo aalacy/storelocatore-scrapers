@@ -92,7 +92,7 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("----------------------",store)
                 yield store
                 # logger.info(list(soup1.find("div",{'class':"columns small-12 large-5 large-push-1"}).stripped_strings)[1])
@@ -129,7 +129,7 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 # logger.info("----------------------",store)
                 yield store
 

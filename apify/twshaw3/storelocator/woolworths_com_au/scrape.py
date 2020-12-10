@@ -23,7 +23,7 @@ def write_output(data):
 
 URL_TEMPLATE = 'https://www.woolworths.com.au/apis/ui/StoreLocator/Stores?Max=' + str(MAX_RESULTS) + '&Division=SUPERMARKETS,PETROL,CALTEXWOW,METROCALTEX&Facility=&postcode={}'
 
-search = sgzip.ClosestNSearch()
+search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes = ['au'])
 
 session = SgRequests()

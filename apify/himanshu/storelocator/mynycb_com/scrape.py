@@ -101,7 +101,7 @@ def fetch_data():
                 hours = " ".join(list(location.find("div",{"class":"aLocationHours"}).stripped_strings))
                 store.append(hours if hours and hours != "ATM Only at this location" else "<MISSING>")
                 store.append("<MISSING>")
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                store = [x.strip() if type(x) == str else x for x in store]
                 # logger.info(store)
                 yield store
             if soup.find("a",text="Next") == None:

@@ -32,7 +32,7 @@ def write_output(data):
 def fetch_data():
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(include_canadian_fsas = True)
     MAX_RESULTS = 10
     MAX_DISTANCE = 50
@@ -128,7 +128,7 @@ def fetch_data():
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]))
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
 
                 # logger.info("data = " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

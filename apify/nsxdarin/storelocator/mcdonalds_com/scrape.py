@@ -25,7 +25,7 @@ def fetch_data():
         "Referer": "https://www.mcdonalds.com/us/en-us/restaurant-locator.html"
     }
 
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, timeout=90, stream=True)
     array = json.loads(r.content)
 
     country = 'US'

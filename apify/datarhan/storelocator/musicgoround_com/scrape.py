@@ -6,6 +6,8 @@ import time
 from sgrequests import SgRequests
 from sgselenium import SgFirefox, SgSelenium
 
+DOMAIN = 'musicgoround.com'
+
 
 class SgSeleniumDelay(SgSelenium):
     '''
@@ -65,9 +67,16 @@ def fetch_data():
         latitude = latitude if latitude != 0 else '<MISSING>'
         longitude = location_data['xp']['longitude']
         longitude = longitude if longitude != 0 else '<MISSING>'
+        hours_of_operation = location_full_data['xp']['hours']
+        if hours_of_operation:
+            hours_list = []
+            for key, value in hours_of_operation.items():
+                hours_list.append('{} - {}'.format(key, value))
+            hours_of_operation = ', '.join(hours_list)
+        hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
         
         item = [
-            'musicgoround.com',
+            DOMAIN,
             'https://www.musicgoround.com/locations/{}'.format(location_data['xp']['slug']),
             location_full_data['CompanyName'],
             location_full_data['Street1'],
@@ -80,7 +89,7 @@ def fetch_data():
             location_type,
             latitude,
             longitude,
-            location_full_data['xp']['hours']
+            hours_of_operation
         ]
         items.append(item)
         

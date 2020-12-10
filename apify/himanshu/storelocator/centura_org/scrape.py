@@ -103,7 +103,7 @@ def fetch_data():
             if str(store[2]+str(store[7])+store[-1]) in adressessess :
                 continue
             adressessess.append(str(store[2]+str(store[7])+store[-1]))
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
            # logger.info("data==="+str(store))
           #  logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 

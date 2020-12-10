@@ -59,7 +59,7 @@ def fetch_data():
                 store.append(hours)
                 store.append(url)     
             
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
         else:
             name = soup.find_all("td",{"class":"branchname"})
@@ -91,7 +91,7 @@ def fetch_data():
                 store.append(lng[index].text)
                 store.append("Open Monday through Friday: "+ hours1[index].text+ " Saturday Hours: "+ hours2[index].text)
                 store.append("<MISSING>")
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [str(x).strip() if x else "<MISSING>" for x in store]
                 yield store
    
     

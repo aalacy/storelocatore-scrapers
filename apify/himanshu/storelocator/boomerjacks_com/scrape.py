@@ -72,7 +72,7 @@ def fetch_data():
         phone = phone_list[-1]
         
         soup1= BeautifulSoup(description,"lxml")
-        hours_of_operation = (soup1.text.replace(phone_list1[0],"").replace(phone_list1[-1],"").split("Store")[0].replace("Patio, dog friendly","").replace(". CalendarMore InfoOrder Online","").replace("Dog friendly","").replace("P F ","").encode('ascii', 'ignore').decode('ascii').strip().replace("P   F ","").replace("P   F ","").replace(". Calendar","").replace(".  Calendar","").replace("Live"," Live").replace("P  ","").replace("F ",""))
+        hours_of_operation = (soup1.text.replace(phone_list1[0],"").replace(phone_list1[-1],"").split("Store")[0].replace("Patio, dog friendly","").replace(". CalendarMore InfoOrder Online","").replace("Dog friendly","").replace("P F ","").strip().replace("P   F ","").replace("P   F ","").replace(". Calendar","").replace(".  Calendar","").replace("Live"," Live").replace("P  ","").replace("F ",""))
 
         if us_zip_list:
             zipp = us_zip_list[-1]
@@ -103,7 +103,7 @@ def fetch_data():
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))
 
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.strip() if x else "<MISSING>" for x in store]
             # logger.info("data = " + str(store))
             # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         

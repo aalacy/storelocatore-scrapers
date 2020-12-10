@@ -67,7 +67,7 @@ def fetch_data():
                 store.append(longitude)
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append(href)
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]    
+                store = [x.strip() if x else "<MISSING>" for x in store]
                 if store[2] in address:     
                     continue
                 address.append(store[2])

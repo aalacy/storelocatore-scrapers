@@ -40,7 +40,7 @@ def time_converter(number):
 def fetch_data():
     base_url ="http://suzuki.com"
     addresses = []
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 4
     MAX_DISTANCE = 25.0
@@ -101,7 +101,7 @@ def fetch_data():
                 continue
             store.append("<MISSING>")
             store = [x.replace("–","-") for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            store = [x.strip() if type(x) == str else x for x in store]
             yield store
         if len(soup.find_all('dealerinfo')) < MAX_RESULTS:
             #logger.info("max distance update")

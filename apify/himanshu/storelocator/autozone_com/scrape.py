@@ -64,7 +64,7 @@ def fetch_data():
             store1.append(longitude)
             store1.append(hours)
             store1.append(page_url)
-            store1 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
+            store1 = [str(x).strip() if x else "<MISSING>" for x in store1]
             yield store1
             # logger.info("========================================",store1)
         else:
@@ -108,7 +108,7 @@ def fetch_data():
                     store2.append(longitude)
                     store2.append(hours)
                     store2.append(page_url)
-                    store2 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store2]
+                    store2 = [str(x).strip() if x else "<MISSING>" for x in store2]
                     yield store2
                     # logger.info("========================================",store2)
                 else:
@@ -154,7 +154,7 @@ def fetch_data():
                         store3.append(longitude)
                         store3.append(hours)
                         store3.append(page_url)
-                        store3 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store3]
+                        store3 = [str(x).strip() if x else "<MISSING>" for x in store3]
                         yield store3
                         # logger.info("========================================",store3)
     ## For WC location
@@ -196,7 +196,7 @@ def fetch_data():
         store4.append(longitude)
         store4.append(hours)
         store4.append(page_url)
-        store4 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store4]
+        store4 = [str(x).strip() if x else "<MISSING>" for x in store4]
         yield store4
         # logger.info("========================================",store4)
 def scrape():

@@ -47,7 +47,7 @@ def fetch_data():
     location_url = "https://www.runnings.com/"
 
     r = session.get(location_url, headers=headers)
-    # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
+    # r_utf = r.text
     soup = BeautifulSoup(r.text, "lxml")
 
     i = 0
@@ -58,19 +58,19 @@ def fetch_data():
 
         locator_domain =   base_url
 
-        location_name = location['name'].encode('ascii', 'ignore').decode('ascii').strip()
+        location_name = location['name'].strip()
 
-        street_address = location['street'].encode('ascii', 'ignore').decode('ascii').strip()
-        city =  location['city'].encode('ascii', 'ignore').decode('ascii').strip()
-        state = location['region_code'].encode('ascii', 'ignore').decode('ascii').strip()
-        zip = location['postal_code'].encode('ascii', 'ignore').decode('ascii').strip()
-        phone = location['phone'].encode('ascii', 'ignore').decode('ascii').strip()
-        country_code = location['country_id'].encode('ascii', 'ignore').decode('ascii').strip()
-        store_number = location['store_number'].encode('ascii', 'ignore').decode('ascii').strip()
+        street_address = location['street'].strip()
+        city =  location['city'].strip()
+        state = location['region_code'].strip()
+        zip = location['postal_code'].strip()
+        phone = location['phone'].strip()
+        country_code = location['country_id'].strip()
+        store_number = location['store_number'].strip()
         location_type = ''
 
-        latitude  = location['lat'].encode('ascii', 'ignore').decode('ascii').strip()
-        longitude  = location['lng'].encode('ascii', 'ignore').decode('ascii').strip()
+        latitude  = location['lat'].strip()
+        longitude  = location['lng'].strip()
 
         hours_of_operation = BeautifulSoup(location['operation_hours'],"lxml").text.replace('\n','')
 

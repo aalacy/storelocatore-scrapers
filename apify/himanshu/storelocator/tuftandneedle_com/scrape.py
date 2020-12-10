@@ -26,7 +26,7 @@ def fetch_data():
     return_main_object = []
     addresses = []
     addresses1 =[]
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     MAX_RESULTS = 50
     MAX_DISTANCE = 10
@@ -116,7 +116,7 @@ def fetch_data():
                     continue
 
                 addresses1.append(store1[2])
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
+                store = [x.strip() if x else "<MISSING>" for x in store1]
 
                 # logger.info("data = partnershipStores " + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -145,7 +145,7 @@ def fetch_data():
                     continue
 
                 addresses.append(store[2])
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
 
                 # logger.info("data = retailStores" + str(store))
                 # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

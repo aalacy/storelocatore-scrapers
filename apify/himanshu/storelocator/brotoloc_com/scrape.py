@@ -75,7 +75,7 @@ def fetch_data():
             location_type = '<MISSING>'
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                         store_number, phone, location_type, latitude, longitude, hours1, page_url]
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             
             # if store[2]  in addressess123:
             #     continue

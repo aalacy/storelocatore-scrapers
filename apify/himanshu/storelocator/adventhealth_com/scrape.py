@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
-import requests
 import time
 session = SgRequests()
 def write_output(data):
@@ -28,11 +27,11 @@ def fetch_data():
             'cache-control': "no-cache",
             'postman-token': "67ad5f12-df8c-ff6c-91cc-8ca13af8abd5"
         }
-
-        response = session.post(url, data=payload, headers=headers, params=querystring)
-        json_data = json.loads(response.text)
-
-
+        try:
+            response = session.post(url, data=payload, headers=headers, params=querystring)
+            json_data = json.loads(response.text)
+        except:
+            continue
         soup = BeautifulSoup(json_data[-1]['data'],"lxml")
         if "No locations were found that match your search" in soup.text:
             break
@@ -41,10 +40,17 @@ def fetch_data():
 
         for info  in soup.find_all("li",{"class":"facility-search-block__item"}):
             try:
+                if "Coming Soon" == info.find("p",{"class":"location-block__endorsement"}).text.strip():
+                   
+                    continue
+            except:
+                pass
+            try:
                 location_name = info.find("a",{"class":"location-block__name-link u-text--fw-300 notranslate"}).text.strip()
             except:
-                location_name = info.find("h3",{"class":"location-block__name h2 notranslate u-text--blue"}).text.strip()
+                location_name = info.find("h3",{"class":"location-block__name"}).text.strip()
             street_address = info.find("span",{"property":"streetAddress"}).text.strip().split("Suite")[0].replace(",","").replace("3rd Floor","").replace("1st Floor","").replace("8th Floor","").replace("3rd floor","").replace("2nd Floor","").replace("Floor 2","").strip()
+             
             city = info.find("span",{"property":"addressLocality"}).text.strip()
             try:
                 state = info.find("span",{"property":"addressRegion"}).text.strip()
@@ -59,13 +65,13 @@ def fetch_data():
             
             try:
                 page_url = info.find("a",{"class":"button--blue--dark"})['href']
-                
+               
+                hours2 =''
                 if page_url:
                     if "http" in page_url:
                         page_url1 = page_url
                     else:
                         page_url1 = "https://www.adventhealth.com"+page_url
-
                     response1 = session.get(page_url1)
                     soup1 = BeautifulSoup(response1.text,'lxml')
                     try:
@@ -79,12 +85,19 @@ def fetch_data():
                     except:
                         latitude='<MISSING>'
                         longitude = '<MISSING>'
-                    hours1 = soup1.find("ul",{"class":"location-block__details-list"})
-                    if  hours1 != None:
-                        hours  = hours1.find("li").text.strip()
+                    try:
+                        hours1 = soup1.find("ul",{"class":"location-block__details-list"})
+                        if  hours1 != None:
+                            hours  = hours1.find("li").text.strip()
 
-                    if "Visiting Hours" in hours and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours:
-                        hours2 = hours.split("Emergency Care:")[0].replace("Visiting",'')
+                        if "Visiting Hours" in hours and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours:
+                            hours2 = hours.split("Emergency Care:")[0].replace("Visiting",'')
+                           
+                    except:
+                       
+                        hours2 = " ".join(list(soup1.find("div",{"class":"location-information-widget__top-right"}).stripped_strings))
+                       
+
                 else:
                     page_url1 = "<MISSING>"
                     hours2 ='<MISSING>'
@@ -97,7 +110,6 @@ def fetch_data():
                 location_type ='<MISSING>'
                 latitude ='<MISSING>'
                 longitude ='<MISSING>'
-            
             store = []
             store.append("https://www.adventhealth.com")
             store.append(location_name)
@@ -117,10 +129,10 @@ def fetch_data():
             store.append(page_url1 )
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # if store[2] in addressesess:
-            #     continue
-            # addressesess.append(store[2])
-            
+            if store[2] in addressesess:
+                continue
+            addressesess.append(store[2])
+           
             yield store
         page+=1
 def scrape():

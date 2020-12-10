@@ -76,7 +76,7 @@ def fetch_data():
         store.append(longitude)
         store.append("<MISSING>")
         store.append(page_url)
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [x.strip() if x else "<MISSING>" for x in store]
         yield store
 
     r1 = session.get("https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Climit%3E5000%3C%2Flimit%3E%3Corder%3Erank%3A%3Anumeric%3C%2Forder%3E%3Cwhere%3E%3Ccity%3E%3Cne%3EQuam%3C%2Fne%3E%3C%2Fcity%3E%3Ccountry%3E%3Ceq%3EUS%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E", headers=headers)
@@ -129,7 +129,7 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [x.strip() if x else "<MISSING>" for x in store]
         yield store
 
 def scrape():

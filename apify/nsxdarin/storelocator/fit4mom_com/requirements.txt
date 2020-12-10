@@ -1,4 +1,4 @@
 sgrequests
-sgzip
 usaddress==0.5.10
 sglogging
+sgzip==0.0.55

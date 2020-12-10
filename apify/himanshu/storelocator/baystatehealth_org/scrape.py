@@ -103,7 +103,7 @@ def fetch_data():
 			if (store[-1]) in addressess123:
 				continue
 			addressess123.append(store[-1])
-			store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+			store = [str(x).strip() if x else "<MISSING>" for x in store]
 			yield store
 			# logger.info("~~~",store)
 			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

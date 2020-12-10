@@ -138,7 +138,7 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store = [x.strip() if x else "<MISSING>" for x in store]
 
                 if store[2] in addressess:
                     continue

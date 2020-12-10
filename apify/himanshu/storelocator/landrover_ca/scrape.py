@@ -15,7 +15,7 @@ def write_output(data):
 def fetch_data():
     MAX_RESULTS = 50
     MAX_DISTANCE = 5
-    search = sgzip.ClosestNSearch()
+    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize(country_codes=['CA'])
     zip_code = search.next_zip()
     adressess = []
@@ -69,7 +69,7 @@ def fetch_data():
             if store[2] in adressess:
                 continue
             adressess.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
         if len(soup.find_all("div",{"class":"infoCardDealer infoCard"})) < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)

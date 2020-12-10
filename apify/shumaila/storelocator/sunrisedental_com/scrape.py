@@ -4,11 +4,6 @@ import string
 import re, time
 import json,usaddress
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('sunrisedental_com')
-
-
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -28,17 +23,27 @@ def write_output(data):
 def fetch_data():    
     data = []
     cleanr = re.compile(r'<[^>]+>')    
-    url = 'https://sunrisedental.com/wp-json/wp/v2/pages/1121'
+    url = 'https://sunrisedental.com/locations/'
     p = 0
-    r = session.get(url, headers=headers, verify=False).json()['content']['rendered']
-    soup = BeautifulSoup(r,'html.parser')
-    divlist = soup.findAll('div',{'class':'swiper-slide-contents'}) 
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text,'html.parser')
+    divlist = soup.select("a[href*=dentist]")
+    
     for div in divlist:
-        #logger.info(div.text)
-        title = div.text.split('Phone')[0]
-        phone = div.text.split(': ',1)[1].split('\n',1)[0]
-        address = div.text.split('Address: ',1)[1].split('More',1)[0]
-        address = usaddress.parse(address.replace('United States',''))
+        title = div.text.strip().replace('\n','')
+        link = div['href']
+        if link.find('http') == -1:
+            link = 'https://sunrisedental.com'+link
+       
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text,'html.parser')
+        address = soup.find('iframe')['title'].replace('United States','').strip()
+       
+        phone = soup.find('small').text.strip()
+        hours = soup.text.split('Monday:',1)[1].splitlines()[0:7]
+        hours = 'Monday:'+ ' '.join(hours)
+        address = usaddress.parse(address)
+
         i = 0
         street = ""
         city = ""
@@ -62,23 +67,19 @@ def fetch_data():
         pcode = pcode.lstrip().replace(',','')
         if len(pcode) < 3:
             pcode = '<MISSING>'
-        if len(state.strip()) > 2:
-            state,pcode = state.split(' ',1)
+        state = state.replace('Washington','WA')
         try:
-            pcode = pcode.split('Click')[0]
+            phone = phone.split('\n',1)[0]
         except:
             pass
-        try:
-            city = city.split('Click')[0]
-        except:
-            pass
-        try:
-            phone = phone.split('Address',1)[0]
-        except:
-            pass
+        if pcode == '9850':
+            pcode = '98502'
+        if len(state) < 2:
+            city,state=soup.find('title').text.split('Top Dentist ',1)[1].split(';',1)[0].split(' ',1)
+            state = state.split(' ',1)[0]
         data.append([
                 'https://sunrisedental.com/',
-                'https://sunrisedental.com/contact-us_new/',                   
+                link,                   
                 title,
                 street,
                 city,
@@ -90,9 +91,9 @@ def fetch_data():
                 '<MISSING>',
                 '<MISSING>',
                 '<MISSING>',
-                '<MISSING>'
+                hours.replace('\xa0',' ').replace('pm','pm ').replace('  ',' ')
             ])
-        #logger.info(p,data[p])
+        
         p += 1
        
         
@@ -100,10 +101,10 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+   
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+   
 
 scrape()
 

@@ -33,7 +33,6 @@ def fetch_data():
                 states.append('https://oldnavy.gap.com/stores/' + stname)
     for state in states:
         cities = []
-        locs = []
         logger.info(('Pulling State %s...' % state))
         r2 = session.get(state, headers=headers)
         if r2.encoding is None: r2.encoding = 'utf-8'
@@ -41,17 +40,23 @@ def fetch_data():
             if '<a href="/stores/' in line2:
                 cities.append('https://oldnavy.gap.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
-            #logger.info('Pulling City %s...' % city)
+            locs = []
+            logger.info('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             if r3.encoding is None: r3.encoding = 'utf-8'
             for line3 in r3.iter_lines(decode_unicode=True):
                 if 'View Store Details</a>' in line3:
-                    locs.append('https://oldnavy.gap.com' + line3.split('href="')[1].split('"')[0])
+                    locurl = 'https://oldnavy.gap.com' + line3.split('href="')[1].split('"')[0]
+                    if locurl not in locs:
+                        locs.append(locurl)
             for loc in locs:
-                #logger.info('Pulling Location %s...' % loc)
+                logger.info('Pulling Location %s...' % loc)
                 website = 'oldnavy.com'
                 typ = '<MISSING>'
-                store = loc.rsplit('-',1)[1].replace('.html','')
+                try:
+                    store = loc.rsplit('-',1)[1].replace('.html','')
+                except:
+                    store = '<MISSING>'
                 hours = ''
                 name = ''
                 add = ''
@@ -62,27 +67,38 @@ def fetch_data():
                 phone = ''
                 lat = ''
                 lng = ''
-                r4 = session.get(loc, headers=headers)
-                lines = r4.iter_lines(decode_unicode=True)
-                for line4 in lines:
-                    if '<div class="location-name"' in line4:
-                        name = next(lines).split('<')[0].strip().replace('\t','')
-                    if '"latitude": "' in line4:
-                        lat = line4.split('"latitude": "')[1].split('"')[0]
-                    if '"longitude": "' in line4:
-                        lng = line4.split('"longitude": "')[1].split('"')[0]
-                    if '"openingHours": "' in line4:
-                        hours = line4.split('"openingHours": "')[1].split('"')[0].strip()
-                    if '"telephone": "' in line4:
-                        phone = line4.split('"telephone": "')[1].split('"')[0]
-                    if '"streetAddress": "' in line4:
-                        add = line4.split('"streetAddress": "')[1].split('"')[0]
-                    if '"addressLocality": "' in line4:
-                        city = line4.split('"addressLocality": "')[1].split('"')[0]
-                    if '"addressRegion": "' in line4:
-                        state = line4.split('"addressRegion": "')[1].split('"')[0]
-                    if '"postalCode": "' in line4:
-                        zc = line4.split('"postalCode": "')[1].split('"')[0]
+                if 'osagebeach' in loc:
+                    name = 'PREWITTS POINT'
+                    add = '909 Highway D'
+                    city = 'Osage Beach'
+                    state = 'MO'
+                    zc = '65065'
+                    phone = '573-746-2481'
+                    lat = '38.161437'
+                    lng = '-92.60072'
+                    hours = 'Mon: 9:00am - 9:00pm; Tue: 9:00am - 9:00pm; Wed: 8:00am - 10:00pm; Thu: Closed; Fri: 12:00am - 11:00pm; Sat: 9:00am - 10:00pm; Sun:10:00am - 8:00pm'
+                else:
+                    r4 = session.get(loc, headers=headers)
+                    lines = r4.iter_lines(decode_unicode=True)
+                    for line4 in lines:
+                        if '<div class="location-name"' in line4:
+                            name = next(lines).split('<')[0].strip().replace('\t','')
+                        if '"latitude": "' in line4:
+                            lat = line4.split('"latitude": "')[1].split('"')[0]
+                        if '"longitude": "' in line4:
+                            lng = line4.split('"longitude": "')[1].split('"')[0]
+                        if '"openingHours": "' in line4:
+                            hours = line4.split('"openingHours": "')[1].split('"')[0].strip()
+                        if '"telephone": "' in line4:
+                            phone = line4.split('"telephone": "')[1].split('"')[0]
+                        if '"streetAddress": "' in line4:
+                            add = line4.split('"streetAddress": "')[1].split('"')[0]
+                        if '"addressLocality": "' in line4:
+                            city = line4.split('"addressLocality": "')[1].split('"')[0]
+                        if '"addressRegion": "' in line4:
+                            state = line4.split('"addressRegion": "')[1].split('"')[0]
+                        if '"postalCode": "' in line4:
+                            zc = line4.split('"postalCode": "')[1].split('"')[0]
                 if hours == '':
                     hours = '<MISSING>'
                 if loc not in alllocs:

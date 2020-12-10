@@ -228,7 +228,7 @@ def crawl_location_url(url):
     if store_key in unique_locations:
         return None
     unique_locations.append(store_key)
-    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    store = [str(x).strip() if x else "<MISSING>" for x in store]
     
     return store
 

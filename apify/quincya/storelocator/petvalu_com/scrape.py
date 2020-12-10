@@ -36,7 +36,7 @@ def fetch_data():
     base_url = "petvalu.com"
     keys = set()
     for ctry in ['us', 'ca']:
-        search = sgzip.ClosestNSearch()
+        search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
         search.initialize(country_codes = [ctry])
         coord = search.next_coord()
         while coord:

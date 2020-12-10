@@ -75,6 +75,20 @@ def delete_all_from(str: String, things: Seq[String]): String =
         accum.replaceAll(nxt, "")
     }
 
+def python_code_lines_from(python_file_path: File): Stream[String] =
+    python_file_path
+        .lines
+        .toStream
+        // .filterNot(_.trim().isEmpty())
+        // .filterNot(_.trim.startsWith("#"))
+        // .map { line =>
+        //     val i = line.indexOf("#")
+        //     if (i != -1)
+        //         line.substring(0,i)
+        //     else
+        //         line
+        // }
+
 lazy val sg_dir = pwd / up
 
 lazy val all_scrapers = all_authors(sg_dir) flatMap all_scrapers_from_author

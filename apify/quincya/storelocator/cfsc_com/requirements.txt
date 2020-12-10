@@ -1,5 +1,5 @@
 lxml==4.3.3
-sgzip
 sgrequests
 sglogging
 beautifulsoup4==4.7.1
+sgzip==0.0.55

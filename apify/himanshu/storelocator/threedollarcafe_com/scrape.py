@@ -70,12 +70,12 @@ def fetch_data():
 
         hours_of_operation = ' '.join(list(script.find('p',{'class':'day-time'}).stripped_strings))
 
-        # hours_of_operation = hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip()
+        # hours_of_operation = hours_of_operation.strip()
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [x.strip() if x else "<MISSING>" for x in store]
 
         # logger.info("data = " + str(store))
         # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

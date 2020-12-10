@@ -51,7 +51,7 @@ def fetch_data():
     latitude1 = soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0]
     store = []
     store.append("https://slaters5050.com")
-    store.append(name1.encode('ascii', 'ignore').decode('ascii').strip())
+    store.append(name1.strip())
     store.append(address2)
     store.append(city1)
     store.append(state1)
@@ -62,7 +62,7 @@ def fetch_data():
     store.append("<MISSING>")
     store.append(latitude1)
     store.append(longitude1)
-    store.append(hours1.encode('ascii', 'ignore').decode('ascii').strip())
+    store.append(hours1.strip())
     store.append("http://slaters5050lasvegas.com/")
     # logger.info(store)
     yield store
@@ -147,7 +147,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").replace("Restaurant Hours","").encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").replace("Restaurant Hours","").strip())
         store.append(page_url)
         yield store
         # # return_main_object.append(store)

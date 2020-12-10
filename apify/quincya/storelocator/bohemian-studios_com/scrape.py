@@ -47,7 +47,7 @@ def fetch_data():
 				script = str(script)
 				break
 
-		location_name = base.main.h1.text.strip()
+		location_name = base.find(class_="collection active").text.strip()
 		
 		raw_address = list(base.h3.em.stripped_strings)
 		

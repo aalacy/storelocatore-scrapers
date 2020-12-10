@@ -66,7 +66,7 @@ def fetch_data():
                 store.append(store_data["geolocation"]["longitude"])
             store.append(store_data["openingHours"]["openingHoursText"].replace("\n"," ") if store_data["openingHours"]["openingHoursText"]  != "" else "<MISSING>")
             store.append(page_url)
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
             return_main_object.append(store)
     return return_main_object
 

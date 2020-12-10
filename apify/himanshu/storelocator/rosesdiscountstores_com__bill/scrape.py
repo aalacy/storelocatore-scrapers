@@ -61,7 +61,7 @@ def fetch_data():
             hours = store_data["hours"]
         store.append(hours.strip() if hours else "<MISSING>")
         store.append("<MISSING>")
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]        
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         yield store 
     
 def scrape():

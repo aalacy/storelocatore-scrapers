@@ -106,8 +106,8 @@ def fetch_data():
             longitue= "<MISSING>"
         location_type = "<MISSING>"
         store_number= location_name.split("#")[-1].strip()
-        store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
-                        store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitue, hours_of_operation.replace("Hours:", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
+        store = [locator_domain, location_name.strip(), street_address.strip(), city.strip(), state.strip(), zipp.strip(), country_code,
+                        store_number, phone.strip(), location_type, latitude, longitue, hours_of_operation.replace("Hours:", "").strip(), page_url]
 
         if str(store[2]) + str(store[-1]) not in addresses:
             addresses.append(str(store[2]) + str(store[-1]))

@@ -77,7 +77,7 @@ def fetch_data():
             if type(store[i]) == str:
                 store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
         store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
         # logger.info("data ==="+str(store))
         # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
         yield store

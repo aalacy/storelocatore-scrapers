@@ -81,18 +81,18 @@ def fetch_data():
                         latitude = json_data['latitude']
                         longitude = json_data['longitude']
                 tem_var.append("https://www.goodyear.com")
-                tem_var.append(name1.encode('ascii', 'ignore').decode('ascii').strip() if name1 else "<MISSING>")
-                tem_var.append(address1.encode('ascii', 'ignore').decode('ascii').strip() if address1 else "<MISSING>")
-                tem_var.append(city1.encode('ascii', 'ignore').decode('ascii').strip() if city1 else "<MISSING>")
-                tem_var.append(state1.encode('ascii', 'ignore').decode('ascii').strip() if state1 else "<MISSING>")
-                tem_var.append(zipcode.encode('ascii', 'ignore').decode('ascii').strip() if zipcode else "<MISSING>")
+                tem_var.append(name1.strip() if name1 else "<MISSING>")
+                tem_var.append(address1.strip() if address1 else "<MISSING>")
+                tem_var.append(city1.strip() if city1 else "<MISSING>")
+                tem_var.append(state1.strip() if state1 else "<MISSING>")
+                tem_var.append(zipcode.strip() if zipcode else "<MISSING>")
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
-                tem_var.append(phone1.encode('ascii', 'ignore').decode('ascii').strip() if phone1 else "<MISSING>")
+                tem_var.append(phone1.strip() if phone1 else "<MISSING>")
                 tem_var.append("<MISSING>")
-                tem_var.append(str(latitude).encode('ascii', 'ignore').decode('ascii').strip() if str(latitude) else "<MISSING>")
-                tem_var.append(str(longitude).encode('ascii', 'ignore').decode('ascii').strip() if str(longitude) else "<MISSING>")
-                tem_var.append(hours1.encode('ascii', 'ignore').decode('ascii').strip() if  hours1 else "<MISSING>")
+                tem_var.append(str(latitude).strip() if str(latitude) else "<MISSING>")
+                tem_var.append(str(longitude).strip() if str(longitude) else "<MISSING>")
+                tem_var.append(hours1.strip() if  hours1 else "<MISSING>")
                 tem_var.append("https://www.goodyear.com"+store1['href'])
                 if tem_var[2] in addressess:
                     continue
