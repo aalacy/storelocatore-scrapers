@@ -54,6 +54,8 @@ def fetch_data():
         location_name = poi["properties"]["name"]
         if location_name == "zebra test location":
             continue
+        if "Coming" in location_name:
+            continue
         street_address = poi["properties"]["street_1"]
         if poi["properties"]["street_2"]:
             street_address += ", " + poi["properties"]["street_2"]
@@ -86,7 +88,7 @@ def fetch_data():
             hours_of_operation = hours_of_operation if hours_of_operation else []
             for elem in hours_of_operation:
                 hoo.append(f'{elem["day"]} {elem["hours"]}')
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo).replace("+", " ") if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
