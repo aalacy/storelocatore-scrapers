@@ -1,7 +1,10 @@
 import csv
+
 from lxml import etree
-from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
+
+from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("santanderbank_com")
 
@@ -61,7 +64,6 @@ def write_output(data):
 
 
 def parse_detail(store, link):
-    logger.info(link)
     output = []
     output.append(base_url)  # url
     output.append(link)  # url
@@ -82,17 +84,16 @@ def parse_detail(store, link):
         get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))
     )  # zipcode
     output.append("US")  # country code
-    output.append("<MISSING>")  # store_number
+    store_number = (
+        store.xpath('.//div[@class="Nap-branchId"]//text()')[0].split(":")[-1].strip()
+    )
+    output.append(store_number)  # store_number
     output.append(
         get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))
     )  # phone
     location_type = "<MISSING>"
     if "atm" in name.lower():
-        if "branch" in location_type.lower():
-            raise Exception("Error parsing location_type")
-        location_type = "ATM"
-    elif "branch" in name.lower():
-        location_type = "Branch"
+        return "skip"
     output.append(location_type)  # location type
     lat = float(store.xpath('//meta[@itemprop="latitude"]/@content')[0])
     lng = float(store.xpath('//meta[@itemprop="longitude"]/@content')[0])
@@ -110,6 +111,7 @@ def parse_detail(store, link):
 
 def fetch_data():
     output_list = []
+    found = []
     url = "https://locations.santanderbank.com/index.html"
     session = SgRequests()
     headers1 = {
@@ -126,6 +128,7 @@ def fetch_data():
     )
     for state in state_list:
         state = "https://locations.santanderbank.com/" + state
+        logger.info(state)
         headers2 = {
             "referer": "https://locations.santanderbank.com/directory.html",
             "authority": "locations.santanderbank.com",
@@ -144,9 +147,11 @@ def fetch_data():
                 '//a[@class="location-tile-link Link"]/@href'
             )
             if len(city_list) > 0:
-                logger.info("city_list")
                 for city in city_list:
                     city = "https://locations.santanderbank.com/" + city
+                    if city in found:
+                        continue
+                    found.append(city)
                     city_response = etree.HTML(session.get(city, headers=headers2).text)
                     if city_response is not None:
                         store_list = city_response.xpath(
@@ -158,29 +163,43 @@ def fetch_data():
                                     "https://locations.santanderbank.com/"
                                     + store.replace("../", "")
                                 )
+                                if store in found:
+                                    continue
+                                found.append(store)
                                 store_response = etree.HTML(
                                     session.get(store, headers=headers2).text
                                 )
                                 if store_response is not None:
-                                    output_list.append(
-                                        parse_detail(store_response, store)
-                                    )
+                                    result = parse_detail(store_response, store)
+                                    if result == "skip":
+                                        continue
+                                    output_list.append(result)
                         else:
-                            output_list.append(parse_detail(city_response, city))
+                            result = parse_detail(city_response, city)
+                            if result == "skip":
+                                continue
+                            output_list.append(result)
             elif len(store_list) > 0:
-                logger.info("store_list")
                 for store in store_list:
                     store = "https://locations.santanderbank.com/" + store.replace(
                         "../", ""
                     )
+                    if store in found:
+                        continue
+                    found.append(store)
                     store_response = etree.HTML(
                         session.get(store, headers=headers2).text
                     )
                     if store_response is not None:
-                        output_list.append(parse_detail(store_response, store))
+                        result = parse_detail(store_response, store)
+                        if result == "skip":
+                            continue
+                        output_list.append(result)
             else:
-                logger.info("store")
-                output_list.append(parse_detail(state_response, state))
+                result = parse_detail(state_response, state)
+                if result == "skip":
+                    continue
+                output_list.append(result)
     return output_list
 
 
