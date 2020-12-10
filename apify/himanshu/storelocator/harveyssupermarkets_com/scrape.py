@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import sgzip
 import datetime
 import unicodedata
 from sglogging import SgLogSetup
