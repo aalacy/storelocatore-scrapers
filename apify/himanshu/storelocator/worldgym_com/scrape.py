@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
 import phonenumbers
 from sglogging import SgLogSetup
@@ -11,7 +10,7 @@ logger = SgLogSetup().get_logger('worldgym_com')
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -31,7 +30,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     json_data = json.loads(str(soup).split("franhiseeLocations=")[1].split(';$(".header')[0])
   
-    # json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var franhiseeLocations" in tag.text).text.split("var franhiseeLocations =")[1].split('$("')[0].replace('}];','}]'))
     for data in json_data:
         country_code = data['Country'].replace("USA","US").replace("Canada","CA")
         if country_code not in ["US","CA"]:
@@ -60,7 +58,7 @@ def fetch_data():
             hours_of_operation = soup1.find("h5",{"class":"readmore text-center"}).text.strip()
           
         store =[]
-        store.append(base_url)
+        store.append("https://worldgym.com/")
         store.append(location_name)
         store.append(street_address)
         store.append(city)
