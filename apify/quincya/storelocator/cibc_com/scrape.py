@@ -205,10 +205,10 @@ def fetch_data():
             store_number = "<MISSING>"
 
             try:
-                phone = re.findall("[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
+                phone = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
             except:
                 try:
-                    phone = re.findall("[\d]{3}.+[\d]{3}-[\d]{4}", str(item))[0]
+                    phone = re.findall(r"[\d]{3}.+[\d]{3}-[\d]{4}", str(item))[0]
                 except:
                     phone = "<MISSING>"
 
