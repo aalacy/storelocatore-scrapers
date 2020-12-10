@@ -51,9 +51,14 @@ def fetch_data():
         '//h2[contains(text(), "Browse Locations by State")]/following-sibling::p/a/@href'
     )
     for url in states_urls:
-        state_response = session.get("https://www.wafdbank.com" + url)
-        state_dom = etree.HTML(state_response.text)
-        all_locations += state_dom.xpath('//a[@id="branch-review-1-button"]/@href')
+        state_response = session.get(
+            "https://www.wafdbank.com/page-data/locations/{}/page-data.json".format(
+                url.split("/")[-1]
+            )
+        )
+        data = json.loads(state_response.text)
+        for elem in data["result"]["pageContext"]["stateData"]["branch_locations"]:
+            all_locations.append(elem["PageURL"])
 
     for url in list(set(all_locations)):
         store_url = "https://www.wafdbank.com" + url
@@ -61,8 +66,9 @@ def fetch_data():
         store_dom = etree.HTML(store_response.text)
         store_data = store_dom.xpath('//script[@data-react-helmet="true"]/text()')
         poi = json.loads(store_data[0])
-
         location_name = poi["name"]
+        if not location_name:
+            continue
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
@@ -80,15 +86,18 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi["_type"]
         location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["geo"]["latitude"]
+        latitude = ""
+        longitude = ""
+        if poi["geo"]:
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["geo"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for elem in poi["openingHoursSpecification"]:
             day = elem["dayOfWeek"].split("/")[-1]
-            opens = elem["opens"][-3]
-            closes = elem["closes"][-3]
+            opens = elem["opens"][:-3]
+            closes = elem["closes"][:-3]
             hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = ", ".join(hours_of_operation)
 
