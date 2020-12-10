@@ -47,13 +47,13 @@ def write_output(data):
 
 
 def fetch_data():
-    for x in range(3000, 3500):
+    for x in range(3000, 4000):
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers2)
         website = "callitspring.com"
         country = "CA"
         typ = "<MISSING>"
-        loc = "https://www.callitspring.com/us/en_US/store-locator/store/" + str(x)
+        loc = "https://www.callitspring.com/ca/en/store-locator/store/" + str(x)
         name = ""
         add = ""
         city = ""
@@ -115,7 +115,7 @@ def fetch_data():
                 lng,
                 hours,
             ]
-    for x in range(3000, 3500):
+    for x in range(3000, 4000):
         url = "https://www.callitspring.com/api/stores/" + str(x)
         r = session.get(url, headers=headers)
         website = "callitspring.com"
