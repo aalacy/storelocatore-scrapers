@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import csv
-from bs4 import BeautifulSoup
-import re
 import json
-import time
-import os
-
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 from sgselenium import SgChrome
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from urllib.parse import urljoin
 
 
 def write_output(data):
@@ -58,7 +51,6 @@ def get_driver():
 
 def fetch_data():
     driver = get_driver()
-    addresses = []
     base_url = "https://www.trumphotels.com"
     driver.get(base_url)
     soup = BeautifulSoup(driver.page_source, "lxml")
