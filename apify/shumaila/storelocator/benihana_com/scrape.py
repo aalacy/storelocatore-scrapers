@@ -120,10 +120,10 @@ def fetch_data():
                 ccode,
                 store.strip(),
                 phone.strip(),
-                ltype.strip().replace('&amp;',"&"),
+                ltype.strip().replace("&amp;", "&"),
                 lat,
                 longt,
-                hours.strip().replace('&amp;',"&").replace('�',''),
+                hours.strip().replace("&amp;", "&").replace("�", ""),
             ]
         )
 
