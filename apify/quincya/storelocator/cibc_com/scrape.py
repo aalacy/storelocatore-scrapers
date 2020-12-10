@@ -220,7 +220,11 @@ def fetch_data():
                     item.find_all("p")[2].text.split("Please call")[0].strip()
                 )
 
-            hours_of_operation = hours_of_operation.replace("Office Hours", "").replace("Lobby Hours", "").strip()
+            hours_of_operation = (
+                hours_of_operation.replace("Office Hours", "")
+                .replace("Lobby Hours", "")
+                .strip()
+            )
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
