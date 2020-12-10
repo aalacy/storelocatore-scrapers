@@ -159,7 +159,7 @@ def fetch_data():
         location_type = section.find(class_="sticky-inpage-anchor").text.strip()
         if location_type == "ATMs":
             continue
-        print(location_type)
+        logger.info(location_type)
         items = section.find_all(class_="container-content")
         for item in items:
             location_name = item.p.text.strip()
