@@ -69,9 +69,15 @@ def fetch_data():
         location_name = poi["name"]
         if not location_name:
             continue
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = (
+            location_name.replace("&#x27;", "'").replace("&amp;", "")
+            if location_name
+            else "<MISSING>"
+        )
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("&quot;", "") if street_address else "<MISSING>"
+        )
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
@@ -91,8 +97,12 @@ def fetch_data():
         if poi["geo"]:
             latitude = poi["geo"]["latitude"]
             longitude = poi["geo"]["longitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = longitude if longitude else "<MISSING>"
+        if "locations/washington" in store_url:
+            latitude = "48.646755"
+            longitude = "-118.737804"
+        else:
+            latitude = latitude if latitude else "<MISSING>"
+            longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for elem in poi["openingHoursSpecification"]:
             day = elem["dayOfWeek"].split("/")[-1]
@@ -100,6 +110,10 @@ def fetch_data():
             closes = elem["closes"][:-3]
             hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = ", ".join(hours_of_operation)
+        if "Saturday" not in hours_of_operation:
+            hours_of_operation += ", Saturday Closed"
+        if "Sunday" not in hours_of_operation:
+            hours_of_operation += ", Sunday Closed"
 
         item = [
             DOMAIN,
