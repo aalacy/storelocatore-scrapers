@@ -1,5 +1,4 @@
 import csv
-import time
 import html
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -112,10 +111,8 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
 scrape()
