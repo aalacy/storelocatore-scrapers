@@ -47,9 +47,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    ##    url = "https://www.stewartsshops.com/wp-admin/admin-ajax.php?action=store_search&lat=40.71278&lng=-74.00597&max_results=300&search_radius=200"
     url = "https://www.stewartsshops.com/wp-admin/admin-ajax.php?action=store_search&lat=44.5588&lng=-72.57784&max_results=300&search_radius=200"
-    ##    url = "https://www.stewartsshops.com/wp-admin/admin-ajax.php?action=store_search&lat=44.5588&lng=-72.57784&max_results=300&search_radius=200"
     loclist = session.get(url, headers=headers, verify=False).json()
 
     for loc in loclist:
