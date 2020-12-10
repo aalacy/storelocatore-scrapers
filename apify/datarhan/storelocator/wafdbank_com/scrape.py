@@ -51,10 +51,14 @@ def fetch_data():
         '//h2[contains(text(), "Browse Locations by State")]/following-sibling::p/a/@href'
     )
     for url in states_urls:
-        state_response = session.get("https://www.wafdbank.com/page-data/locations/{}/page-data.json".format(url.split('/')[-1]))
+        state_response = session.get(
+            "https://www.wafdbank.com/page-data/locations/{}/page-data.json".format(
+                url.split("/")[-1]
+            )
+        )
         data = json.loads(state_response.text)
-        for elem in data['result']['pageContext']['stateData']['branch_locations']:
-            all_locations.append(elem['PageURL'])
+        for elem in data["result"]["pageContext"]["stateData"]["branch_locations"]:
+            all_locations.append(elem["PageURL"])
 
     for url in list(set(all_locations)):
         store_url = "https://www.wafdbank.com" + url
@@ -82,8 +86,8 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi["_type"]
         location_type = location_type if location_type else "<MISSING>"
-        latitude = ''
-        longitude = ''
+        latitude = ""
+        longitude = ""
         if poi["geo"]:
             latitude = poi["geo"]["latitude"]
             longitude = poi["geo"]["longitude"]
