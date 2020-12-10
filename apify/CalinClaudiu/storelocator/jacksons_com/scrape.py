@@ -76,7 +76,11 @@ def scrape():
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        country_code=MappingField(mapping=["country_code"]),
+        country_code=MappingField(
+            mapping=["country_code"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            is_required=False,
+        ),
         phone=MappingField(
             mapping=["main_phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),

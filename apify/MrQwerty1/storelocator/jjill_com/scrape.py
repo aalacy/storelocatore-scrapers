@@ -96,7 +96,12 @@ def fetch_data():
         ]
         _tmp = []
         for day in days:
-            part = day[:3]
+            if day == "tuesday":
+                part = "tues"
+            elif day == "thursday":
+                part = "thurs"
+            else:
+                part = day[:3]
             start = j.get(f"{part}_open")
             if start and start != "CLOSED":
                 close = j.get(f"{part}_close")
