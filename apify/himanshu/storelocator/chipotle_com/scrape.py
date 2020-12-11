@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import time
 from datetime import datetime
 
 session = SgRequests()
@@ -49,7 +48,6 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
         "Cookie": "f5avrbbbbbbbbbbbbbbbb=BICEEDMJHEEIPPKKLCHLEGPPJAPGBHCOBFCJIPDFFNNBEMEKBDEBPPGJKEFAIGGMDGGJGCENDJHDIAAKMGKMDKMMJLLADGLEBPBCKGAIDPIHLMNJCEMNGJIMBHJJOPOK; ADRUM_BTa=R:0|g:7ffa7868-95e7-48bf-99f2-759a08b51a76|n:chipotle-prod_20db0ee1-fc55-47c0-9912-7a6fbdf65d4d; ADRUM_BT1=R:0|i:2259539; TS01811d4a=0106a0d561b565a08954c97da32677a5cfc4f0b0ec21634ffecfbe395a950fd46f9737925e00c4c5830eed8c4c6d1d0c86bf804798919d24b2cee76337825469e9122e1eefbad495826a0cbfb78ffed5d14df3fd61",
     }
-    base_url = "https://chipotle.com"
     r = session.post(
         "https://services.chipotle.com/restaurant/api/v2.1/search",
         data=data,
