@@ -72,7 +72,6 @@ def fetch_data():
         store.append("UK")
         store.append(i["organisationCode"] if i["organisationCode"] else "<MISSING>")
         store.append(i["phone"] if i["phone"] else "<MISSING>")
-        # city = i['address']['city']
         store.append(
             i["name"]
             .replace(i["address"]["city"], "")
