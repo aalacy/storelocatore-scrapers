@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "https://stores.guitarcenter.com/index.html"
+    DOMAIN = "guitarcenter.com"
     start_url = "https://stores.guitarcenter.com/index.html"
 
     response = session.get(start_url)
@@ -59,6 +59,9 @@ def fetch_data():
             )
             sub_directories_urls = dir_dom.xpath(
                 '//a[@class="Directory-listLink"]/@href'
+            )
+            sub_directories_urls += dir_dom.xpath(
+                '//a[@class="Teaser-titleLink"]/@href'
             )
             for url in sub_directories_urls:
                 if not url.endswith(".html"):
@@ -87,9 +90,7 @@ def fetch_data():
 
         store_url = full_location_url
         store_url = store_url if store_url else "<MISSING>"
-        location_name = location_dom.xpath(
-            '//h1[@id="location-name"]//span[@class="LocationName"]//text()'
-        )
+        location_name = location_dom.xpath('//h1[@id="location-name"]//text()')
         location_name = " ".join(location_name) if location_name else "<MISSING>"
         street_address = location_dom.xpath(
             '//meta[@itemprop="streetAddress"]/@content'
@@ -106,7 +107,7 @@ def fetch_data():
         country_code = location_dom.xpath('//address[@id="address"]/@data-country')
         country_code = country_code[0] if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = location_dom.xpath('//span[@id="telephone"]/text()')
+        phone = location_dom.xpath('//div[@itemprop="telephone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = location_dom.xpath("//main/@itemtype")
         location_type = (
