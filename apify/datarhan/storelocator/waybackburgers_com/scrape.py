@@ -50,6 +50,11 @@ def fetch_data():
     for poi in all_locations:
         store_url = poi.xpath("@data-order_online_url")
         store_url = store_url[0] if store_url[0].strip() else "<MISSING>"
+        if store_url == "<MISSING>":
+            store_url = (
+                "https://waybackburgers.com/locations/#location_"
+                + poi.xpath("@data-id")[0]
+            )
         location_name = poi.xpath("@data-name")
         location_name = (
             urllib.parse.unquote(location_name[0]) if location_name else "<MISSING>"
