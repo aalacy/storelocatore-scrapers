@@ -1,4 +1,4 @@
-sgzip==0.0.55
-sgrequests==0.0.15
 lxml==4.5.2
+sgrequests==0.0.15
+jstyleson==0.0.2
 sgvalidator==0.0.71
