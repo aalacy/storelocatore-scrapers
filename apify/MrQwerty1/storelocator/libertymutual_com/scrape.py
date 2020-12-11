@@ -1,7 +1,6 @@
 import csv
 
 from concurrent import futures
-from lxml import html
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 
