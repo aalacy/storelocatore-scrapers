@@ -80,8 +80,8 @@ def fetch_data():
         location_type = "<MISSING>"
         hours_of_operation = "<INACCESSIBLE>"
         raw_gps = item.a["href"]
-        latitude = raw_gps[raw_gps.find("=") + 1: raw_gps.find(",")].strip()
-        longitude = raw_gps[raw_gps.find(",") + 1:].strip()
+        latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find(",")].strip()
+        longitude = raw_gps[raw_gps.find(",") + 1 :].strip()
 
         data.append(
             [
