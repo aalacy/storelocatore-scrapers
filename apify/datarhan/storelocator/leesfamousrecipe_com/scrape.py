@@ -42,11 +42,15 @@ def fetch_data():
 
     DOMAIN = "leesfamousrecipe.com"
     start_url = "https://www.leesfamousrecipe.com/locations/all"
-    headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"}
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
+    }
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    
-    all_locations = dom.xpath('//div[@class="region region-content"]//div[@class="field-content"]/a/@href')
+
+    all_locations = dom.xpath(
+        '//div[@class="region region-content"]//div[@class="field-content"]/a/@href'
+    )
     for url in all_locations:
         store_url = url
         loc_response = session.get(store_url)
@@ -55,7 +59,7 @@ def fetch_data():
         location_name = loc_dom.xpath('//h1[@class="node-title"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = loc_dom.xpath('//div[@class="street-address"]/text()')
-        street_address = street_address[0].strip() if street_address else '<MISSING>'
+        street_address = street_address[0].strip() if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@class="locality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = loc_dom.xpath('//span[@class="region"]/text()')
@@ -69,8 +73,14 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = [elem.strip() for elem in loc_dom.xpath('//div[@class="group-hours"]//text()') if elem.strip()]
-        hours_of_operation = ' '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
+        hours_of_operation = [
+            elem.strip()
+            for elem in loc_dom.xpath('//div[@class="group-hours"]//text()')
+            if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
