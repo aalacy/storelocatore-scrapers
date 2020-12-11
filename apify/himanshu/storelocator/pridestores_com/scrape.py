@@ -111,11 +111,6 @@ def fetch_data():
             state = addr[0].split(",")[-1].strip()
         else:
             state = "MA"
-        # if street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') in dics:
-        #     latitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lat']
-        #     longitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['lng']
-        #     zipp = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st')]['zipp']
-        # else:
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         zipp = "<MISSING>"
