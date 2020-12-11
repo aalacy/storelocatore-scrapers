@@ -56,40 +56,64 @@ def fetch_data():
                     except:
                         pass
                     city = item.split('"city":"')[1].split('"')[0]
-                    state = item.split('"state":"')[1].split('"')[0]
-                    country = item.split('"country_code":"')[1].split('"')[0]
-                    zc = item.split('"postal_code":"')[1].split('"')[0]
-                    store = item.split('"number":"')[1].split('"')[0]
-                    phone = item.split('"phone_number":"')[1].split('"')[0]
-                    lat = item.split('"latitude":')[1].split(",")[0]
-                    lng = item.split('"longitude":')[1].split(",")[0]
-                    days = (
-                        item.split('"regular_hours":[{')[1]
-                        .split("]")[0]
-                        .split('"start_time":"')
-                    )
-                    hours = ""
-                    for day in days:
-                        if '"end_time":"' in day:
-                            if '"closed":true' in day:
-                                hrs = (
-                                    day.split('"display_day":"')[1].split('"')[0]
-                                    + ": Closed"
-                                )
-                            else:
-                                hrs = (
-                                    day.split('"display_day":"')[1].split('"')[0]
-                                    + ": "
-                                    + day.split('"display_start_time":"')[1].split('"')[
-                                        0
-                                    ]
-                                    + "-"
-                                    + day.split('"display_end_time":"')[1].split('"')[0]
-                                )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
+                    try:
+                        state = item.split('"state":"')[1].split('"')[0]
+                    except:
+                        state = "<MISSING>"
+                    try:
+                        country = item.split('"country_code":"')[1].split('"')[0]
+                    except:
+                        country = "<MISSING>"
+                    try:
+                        zc = item.split('"postal_code":"')[1].split('"')[0]
+                    except:
+                        zc = "<MISSING>"
+                    try:
+                        store = item.split('"number":"')[1].split('"')[0]
+                    except:
+                        store = "<MISSING>"
+                    try:
+                        phone = item.split('"phone_number":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        lat = item.split('"latitude":')[1].split(",")[0]
+                        lng = item.split('"longitude":')[1].split(",")[0]
+                    except:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                    try:
+                        days = (
+                            item.split('"regular_hours":[{')[1]
+                            .split("]")[0]
+                            .split('"start_time":"')
+                        )
+                        hours = ""
+                        for day in days:
+                            if '"end_time":"' in day:
+                                if '"closed":true' in day:
+                                    hrs = (
+                                        day.split('"display_day":"')[1].split('"')[0]
+                                        + ": Closed"
+                                    )
+                                else:
+                                    hrs = (
+                                        day.split('"display_day":"')[1].split('"')[0]
+                                        + ": "
+                                        + day.split('"display_start_time":"')[1].split(
+                                            '"'
+                                        )[0]
+                                        + "-"
+                                        + day.split('"display_end_time":"')[1].split(
+                                            '"'
+                                        )[0]
+                                    )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                    except:
+                        hours = "<MISSING>"
                     if country == "CA" or country == "US":
                         yield [
                             website,
