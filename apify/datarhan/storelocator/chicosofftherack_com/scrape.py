@@ -52,61 +52,64 @@ def fetch_data():
     all_poi = []
     response = session.get(start_url, headers=headers)
     data = json.loads(response.text)
-    all_poi += data['hits']
-    total_pages = data['nbPages'] + 1
+    all_poi += data["hits"]
+    total_pages = data["nbPages"] + 1
     for page in range(1, total_pages):
-        page_url = 'https://chicosofftherack.brickworksoftware.com/locations_search?'
+        page_url = "https://chicosofftherack.brickworksoftware.com/locations_search?"
         params = {
-            'hitsPerPage': '24',
-            'page': str(page),
-            'getRankingInfo': 'true',
-            'facets[]': '*',
-            'aroundRadius': 'all',
-            'filters': 'domain:chicosofftherack.brickworksoftware.com AND publishedAt<=1607684950300',
-            'esSearch': '{"page":%s,"storesPerPage":24,"domain":"chicosofftherack.brickworksoftware.com","locale":"en_US","must":[{"type":"range","field":"published_at","value":{"lte":1607684950300}}],"filters":[],"aroundLatLng":{"lat":"40.581811","lon":"-74.166455"}}' % str(page),
-            'aroundLatLng': '40.581811,-74.166455'
+            "hitsPerPage": "24",
+            "page": str(page),
+            "getRankingInfo": "true",
+            "facets[]": "*",
+            "aroundRadius": "all",
+            "filters": "domain:chicosofftherack.brickworksoftware.com AND publishedAt<=1607684950300",
+            "esSearch": '{"page":%s,"storesPerPage":24,"domain":"chicosofftherack.brickworksoftware.com","locale":"en_US","must":[{"type":"range","field":"published_at","value":{"lte":1607684950300}}],"filters":[],"aroundLatLng":{"lat":"40.581811","lon":"-74.166455"}}'
+            % str(page),
+            "aroundLatLng": "40.581811,-74.166455",
         }
         page_url = add_or_replace_parameters(start_url, params)
         print(page_url)
         response = session.get(page_url, headers=headers)
         data = json.loads(response.text)
-        if not data.get('hits'):
+        if not data.get("hits"):
             continue
-        all_poi += data['hits']
+        all_poi += data["hits"]
 
     for poi in all_poi:
-        store_url = 'https://stores.chicosofftherack.com/s/' + poi['attributes']['slug']
-        location_name = poi['attributes']['name']
+        store_url = "https://stores.chicosofftherack.com/s/" + poi["attributes"]["slug"]
+        location_name = poi["attributes"]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi['attributes']['address1']
-        if poi['attributes']['address2']:
-            street_address += ' ' + poi['attributes']['address2']
-        if poi['attributes']['address3']:
-            street_address += ' ' + poi['attributes']['address1']
+        street_address = poi["attributes"]["address1"]
+        if poi["attributes"]["address2"]:
+            street_address += " " + poi["attributes"]["address2"]
+        if poi["attributes"]["address3"]:
+            street_address += " " + poi["attributes"]["address1"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi['attributes']['city']
+        city = poi["attributes"]["city"]
         city = city if city else "<MISSING>"
-        state = poi['attributes']['state']
+        state = poi["attributes"]["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi['attributes']['postalCode']
-        country_code = poi['attributes']['countryCode']
+        zip_code = poi["attributes"]["postalCode"]
+        country_code = poi["attributes"]["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = poi['id']
-        phone = poi['attributes']['phoneNumber']
+        store_number = poi["id"]
+        phone = poi["attributes"]["phoneNumber"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi['attributes']['type']
+        location_type = poi["attributes"]["type"]
         location_type = location_type if location_type else "<MISSING>"
-        latitude = poi['attributes']['latitude']
+        latitude = poi["attributes"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi['attributes']['longitude']
+        longitude = poi["attributes"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for elem in poi['relationships']['hours']:
-            day = elem['displayDay']
-            opens = elem['displayStartTime']
-            closes = elem['displayEndTime']
-            hours_of_operation.append(f'{day} {opens} - {closes}')
-        hours_of_operation = ' '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
+        for elem in poi["relationships"]["hours"]:
+            day = elem["displayDay"]
+            opens = elem["displayStartTime"]
+            closes = elem["displayEndTime"]
+            hours_of_operation.append(f"{day} {opens} - {closes}")
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
@@ -124,7 +127,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f'{store_number} {street_address}'
+        check = f"{store_number} {street_address}"
         if check not in scraped_items:
             scraped_items.append(check)
             items.append(item)
