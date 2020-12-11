@@ -56,7 +56,7 @@ def get_data(page_url):
 
     location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()"))
     street_address = " ".join(
-        tree.xpath("//input[contains(@id, 'storeAddressLine')]/@value")
+        tree.xpath("//input[contains(@id, 'storeAddressLine1')]/@value")
     ).strip()
     city = "".join(tree.xpath("//input[@id='city']/@value")) or "<MISSING>"
     state = "".join(tree.xpath("//input[@id='state']/@value")) or "<MISSING>"

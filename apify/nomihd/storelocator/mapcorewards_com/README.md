@@ -14,3 +14,5 @@ use --ignore StreetAddressHasNumber as script is fetching what's available on th
 use --ignore CountryValidator as script is fetching what's available on the website.
 
 use --ignore StoreNumberColumnValidator as script is fetching what's available on the website.
+
+use --ignore LatLngDuplicationValidator as script is fetching what's available on the website.
