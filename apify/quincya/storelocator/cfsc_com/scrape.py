@@ -62,7 +62,9 @@ def fetch_data():
     )
 
     for zipcode in search:
-        log.info("Searching: %s | Items remaining: %s" % (zipcode, search.items_remaining()))
+        log.info(
+            "Searching: %s | Items remaining: %s" % (zipcode, search.items_remaining())
+        )
         link = (
             "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=%s&location=%s&limit=%s&api_key=7620f61553e8f9aac3c03e159d2d8072&v=20181201&resolvePlaceholders=true&entityTypes=location"
             % (max_distance, zipcode, max_results)
