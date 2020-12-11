@@ -50,12 +50,11 @@ def fetch_data():
                 if '"name":"' in item:
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.nike.com/us/retail/s/" + item.split('"')[0]
-                    add = (
-                        item.split('"address_1":"')[1].split('"')[0]
-                        + " "
-                        + item.split('"address_2":"')[1].split('"')[0]
-                    )
-                    add = add.strip
+                    add = item.split('"address_1":"')[1].split('"')[0]
+                    try:
+                        add = add + " " + item.split('"address_2":"')[1].split('"')[0]
+                    except:
+                        pass
                     city = item.split('"city":"')[1].split('"')[0]
                     state = item.split('"state":"')[1].split('"')[0]
                     country = item.split('"country_code":"')[1].split('"')[0]
