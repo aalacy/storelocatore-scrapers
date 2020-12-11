@@ -7,7 +7,7 @@ from sglogging import sglog
 
 from sgrequests import SgRequests
 
-from sgzip import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="cfsc.com")
 
@@ -53,7 +53,7 @@ def fetch_data():
     data = []
 
     max_results = 50
-    max_distance = 500
+    max_distance = 200
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -61,15 +61,13 @@ def fetch_data():
         max_search_results=max_results,
     )
 
-    search.initialize()
-    postcode = search.next()
-
-    log.info("Searching API using sgzip..Can take up to an hour ..")
-
-    while postcode:
+    for zipcode in search:
+        log.info(
+            "Searching: %s | Items remaining: %s" % (zipcode, search.items_remaining())
+        )
         link = (
             "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=%s&location=%s&limit=%s&api_key=7620f61553e8f9aac3c03e159d2d8072&v=20181201&resolvePlaceholders=true&entityTypes=location"
-            % (max_distance, postcode, max_results)
+            % (max_distance, zipcode, max_results)
         )
 
         req = session.get(link, headers=headers)
@@ -77,8 +75,6 @@ def fetch_data():
 
         store_data = json.loads(base.text)["response"]["entities"]
         locator_domain = "cfsc.com"
-
-        result_coords = []
 
         for store in store_data:
 
@@ -137,7 +133,7 @@ def fetch_data():
                 geo = store["yextDisplayCoordinate"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            result_coords.append([latitude, longitude])
+            search.mark_found([latitude, longitude])
 
             data.append(
                 [
@@ -157,10 +153,6 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
-
-        if len(result_coords) > 0:
-            search.update_with(result_coords)
-        postcode = search.next()
 
     return data
 
