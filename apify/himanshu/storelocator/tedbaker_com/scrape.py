@@ -66,7 +66,6 @@ def fetch_data():
                 continue
             store.append("https://www.tedbaker.com")
             store.append(store_data["displayName"])
-            # logger.info(store)
             store.append("<INACCESSIBLE>")
             store.append("<INACCESSIBLE>")
             store.append("<INACCESSIBLE>")
@@ -77,7 +76,7 @@ def fetch_data():
                 store_data["address"]["phone"]
                 if "phone" in store_data["address"]
                 and store_data["address"]["phone"] != ""
-                and store_data["address"]["phone"] != None
+                and store_data["address"]["phone"] is not None
                 else "<MISSING>"
             )
             store.append("<MISSING>")
