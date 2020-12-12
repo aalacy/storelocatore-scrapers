@@ -1,7 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, DynamicZipSearch
 
 session = SgRequests()
 
