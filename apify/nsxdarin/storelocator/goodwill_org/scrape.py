@@ -59,49 +59,52 @@ def fetch_data():
             + str(llng)
             + "&cats=3%2C1%2C2%2C4%2C6%2C7%2C5"
         )
-        r = session.get(url, headers=headers)
-        array = []
-        website = "goodwill.org"
-        for item in json.loads(r.content):
-            store = item["LocationId"]
-            country = "US"
-            typ = "<MISSING>"
-            name = item["LocationName"]
-            lat = item["LocationLatitude1"]
-            lng = item["LocationLongitude1"]
-            add = item["LocationStreetAddress1"]
-            city = item["LocationCity1"]
-            state = item["LocationState1"]
-            zc = item["LocationPostal1"]
-            phone = item["LocationPhoneOffice"]
-            loc = item["LocationParentWebsite"]
-            if phone == "":
-                phone = "<MISSING>"
-            hours = "<MISSING>"
-            if store not in sids:
-                sids.append(store)
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
-        if len(array) <= MAX_RESULTS:
-            logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
+        try:
+            r = session.get(url, headers=headers)
+            array = []
+            website = "goodwill.org"
+            for item in json.loads(r.content):
+                store = item["LocationId"]
+                country = "US"
+                typ = "<MISSING>"
+                name = item["LocationName"]
+                lat = item["LocationLatitude1"]
+                lng = item["LocationLongitude1"]
+                add = item["LocationStreetAddress1"]
+                city = item["LocationCity1"]
+                state = item["LocationState1"]
+                zc = item["LocationPostal1"]
+                phone = item["LocationPhoneOffice"]
+                loc = item["LocationParentWebsite"]
+                if phone == "":
+                    phone = "<MISSING>"
+                hours = "<MISSING>"
+                if store not in sids:
+                    sids.append(store)
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
+            if len(array) <= MAX_RESULTS:
+                logger.info("max distance update")
+                search.max_distance_update(MAX_DISTANCE)
+            else:
+                raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            coord = search.next_coord()
+        except:
+            pass
 
 
 def scrape():
