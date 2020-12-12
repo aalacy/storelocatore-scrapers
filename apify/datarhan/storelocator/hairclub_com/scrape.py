@@ -77,7 +77,7 @@ def fetch_data():
             zip_code = address_raw[2].split(",")[-1].split()[-1]
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = "<MISSING>"
-            store_number = re.findall("\d+", address_raw[0])
+            store_number = re.findall(r"\d+", address_raw[0])
             store_number = store_number[0] if store_number else "<MISSING>"
             phone = store_dom.xpath("//@data-js-web-phone")
             phone = phone[0].strip() if phone else ""
