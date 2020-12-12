@@ -1,18 +1,18 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import sgzip
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+    with open("gabesstore.csv", mode="w", encoding="utf-8", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
+
         writer.writerow(
             [
                 "locator_domain",
@@ -31,7 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -43,7 +43,11 @@ def fetch_data():
     base_url = "https://www.gabesstores.com"
     addresses = []
 
-    zipcodes = sgzip.for_radius(100)
+    zipcodes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=200,
+        max_search_results=100,
+    )
     for zipcode in zipcodes:
         locator_domain = base_url
         location_name = ""
