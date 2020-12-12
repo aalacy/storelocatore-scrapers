@@ -59,12 +59,12 @@ def fetch_data():
             state = value["address"]["data"]["region_code_full_name"]
             zip = value["address"]["data"]["postal_code"]
             country_code = value["address"]["data"]["country_code"]
-            if value["address"]["data"]["phone"] != None:
+            if value["address"]["data"]["phone"] is not None:
                 phone = value["address"]["data"]["phone"]
             else:
                 phone = "<MISSING>"
 
-            if value["address"]["data"]["latitude"] != None:
+            if value["address"]["data"]["latitude"] is not None:
                 latitude = value["address"]["data"]["latitude"]
                 longitude = value["address"]["data"]["longitude"]
             else:
