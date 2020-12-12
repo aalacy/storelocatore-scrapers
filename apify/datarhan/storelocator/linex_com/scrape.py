@@ -77,60 +77,74 @@ def fetch_data():
 
     for loc_html in list(set(all_locations)):
         store_url = loc_html.xpath('.//a[contains(text(), "Visit Website")]/@href')
-        store_url = store_url[0].strip().replace(' ', '').replace('http://https', 'https') if store_url else "<MISSING>"
-        if '/linex.com' not in store_url:
+        store_url = (
+            store_url[0].strip().replace(" ", "").replace("http://https", "https")
+            if store_url
+            else "<MISSING>"
+        )
+        if "/linex.com" not in store_url:
             continue
-        if store_url != '<MISSING>':
+        if store_url != "<MISSING>":
             print(store_url)
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
 
             location_name = loc_html.xpath("@data-title")
-            location_name = location_name[0] if location_name else '<MISSING'
+            location_name = location_name[0] if location_name else "<MISSING"
             address_raw = loc_dom.xpath('//div[@class="footer-blocks"]//address/text()')
             address_raw = [elem.strip() for elem in address_raw if elem.strip()]
             add_check = ["Visit us at our New Location!", "Get Directions"]
-            address_raw = [elem.strip() for elem in address_raw if elem not in add_check]
+            address_raw = [
+                elem.strip() for elem in address_raw if elem not in add_check
+            ]
             if len(address_raw) == 3:
-                address_raw = [address_raw[0] + ' ' + address_raw[1], address_raw[2]]
-            street_address = '<MISSING>'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zip_code = '<MISSING>'
-            country_code = '<MISSING>'
-            store_number = '<MISSING>'
+                address_raw = [address_raw[0] + " " + address_raw[1], address_raw[2]]
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zip_code = "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
             if address_raw:
                 street_address = address_raw[0]
-                state_zip = address_raw[1].split(',')[0].split()
+                state_zip = address_raw[1].split(",")[0].split()
                 if len(state_zip[-1].strip()) == 3:
-                    city = address_raw[1].split(',')[0]
-                    state = ' '.join(address_raw[1].split(',')[-1].split()[:-2])
-                    zip_code = ' '.join(address_raw[1].split(',')[-1].split()[-2:])
+                    city = address_raw[1].split(",")[0]
+                    state = " ".join(address_raw[1].split(",")[-1].split()[:-2])
+                    zip_code = " ".join(address_raw[1].split(",")[-1].split()[-2:])
                 else:
-                    city = address_raw[1].split(',')[0]
-                    state = address_raw[1].split(',')[-1].split()[0]
-                    if len(address_raw[1].split(',')[0].split()[-1]) == 2:
-                        state = address_raw[1].split(',')[0].split()[-1]
-                    zip_code = address_raw[1].split(',')[-1].split()[-1]
+                    city = address_raw[1].split(",")[0]
+                    state = address_raw[1].split(",")[-1].split()[0]
+                    if len(address_raw[1].split(",")[0].split()[-1]) == 2:
+                        state = address_raw[1].split(",")[0].split()[-1]
+                    zip_code = address_raw[1].split(",")[-1].split()[-1]
                     if len(zip_code) == 3:
-                        zip_code = ' '.join(address_raw[1].split(',')[-1].strip().split()[-2:])
+                        zip_code = " ".join(
+                            address_raw[1].split(",")[-1].strip().split()[-2:]
+                        )
             phone = loc_dom.xpath('//div[@class="telephone"]/span/text()')
-            phone = phone[0] if phone else '<MISSING>'
-            location_type = '<MISSING>'
+            phone = phone[0] if phone else "<MISSING>"
+            location_type = "<MISSING>"
             if loc_dom.xpath('//h1[contains(text(), "COMING SOON")]'):
-                location_type = 'coming soon'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+                location_type = "coming soon"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
             hours_of_operation = loc_dom.xpath('//div[@class="hours-block"]/text()')
-            hours_of_operation = [elem.strip() for elem in hours_of_operation if elem.strip()]
-            hours_of_operation = ' '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
+            hours_of_operation = [
+                elem.strip() for elem in hours_of_operation if elem.strip()
+            ]
+            hours_of_operation = (
+                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            )
         else:
             location_name = loc_html.xpath("@data-title")
             location_name = location_name[0] if location_name else "<MISSING>"
             address_raw = loc_html.xpath(".//address//text()")
             address_raw = [elem.strip() for elem in address_raw if elem.strip()]
             add_check = ["Visit us at our New Location!", "Get Directions"]
-            address_raw = [elem.strip() for elem in address_raw if elem not in add_check]
+            address_raw = [
+                elem.strip() for elem in address_raw if elem not in add_check
+            ]
             if len(address_raw) > 1:
                 check_elems = [
                     "Ste ",
@@ -201,9 +215,9 @@ def fetch_data():
             hours_of_operation = (
                 " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
             )
-        
-        if 'coming soon' in location_name.lower():
-            location_type = 'coming soon'
+
+        if "coming soon" in location_name.lower():
+            location_type = "coming soon"
 
         item = [
             DOMAIN,
@@ -219,7 +233,7 @@ def fetch_data():
             location_type,
             latitude,
             longitude,
-            hours_of_operation
+            hours_of_operation,
         ]
         check = "{} {}".format(location_name, street_address)
         if check not in scraped_items:
