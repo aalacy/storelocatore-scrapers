@@ -132,22 +132,21 @@ def parsed(k):
         nice["hours"] = "<MISSING>"
 
     try:
-        nice["hours"] = nice["hours"].split('\n')
+        nice["hours"] = nice["hours"].split("\n")
     except Exception:
         nice["hours"] = [nice["hours"]]
-        
+
     try:
-        typ=[]
+        typ = []
         for i in nice["hours"]:
-            typ.append(i.split(' >')[0])
-        nice["type"] = ', '.join(typ)
-            
+            typ.append(i.split(" >")[0])
+        nice["type"] = ", ".join(typ)
+
     except Exception:
         nice["type"] = k["heading1"]
 
-    
     try:
-        nice["hours"] = nice["hours"][0].split(' >')[-1].strip()
+        nice["hours"] = nice["hours"][0].split(" >")[-1].strip()
     except Exception:
         nice["hours"] = nice["hours"][0]
 
@@ -214,7 +213,7 @@ def parsed(k):
         )
 
     nice["morestuff"] = k
-    nice["country"] = nice["id"].split('_',1)[0]
+    nice["country"] = nice["id"].split("_", 1)[0]
 
     return nice
 
