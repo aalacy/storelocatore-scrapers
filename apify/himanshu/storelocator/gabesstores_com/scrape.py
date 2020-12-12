@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
+
         writer.writerow(
             [
                 "locator_domain",
@@ -31,7 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -49,7 +49,6 @@ def fetch_data():
         max_search_results=100,
     )
     for zipcode in zipcodes:
-        # print (f'Zipcodes remaining: {zipcodes.items_remaining()}')
         locator_domain = base_url
         location_name = ""
         street_address = ""
