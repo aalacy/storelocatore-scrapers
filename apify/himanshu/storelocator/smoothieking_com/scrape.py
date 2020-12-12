@@ -1,7 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import re
-import time
 from datetime import datetime
 from sglogging import SgLogSetup
 
