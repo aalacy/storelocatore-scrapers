@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 session = SgRequests()
 
 
