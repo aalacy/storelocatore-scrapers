@@ -40,7 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
     addresses = []
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
@@ -83,7 +82,6 @@ def fetch_data():
         location_type = ""
         latitude = ""
         longitude = ""
-        raw_address = ""
         hours_of_operation = "<MISSING>"
         page_url = (
             "http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="
