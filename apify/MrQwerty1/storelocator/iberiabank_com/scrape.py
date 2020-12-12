@@ -62,10 +62,7 @@ def get_data(url):
     location_name = (
         f"{j.get('name')} {j.get('geomodifier') or ''}".strip() or "<MISSING>"
     )
-    if (
-        location_name.lower().find("atm ") != -1
-        or location_name.lower().find("closed") != -1
-    ):
+    if location_name.lower().find("atm ") != -1:
         return
 
     a = j.get("address", {}) or {}
@@ -104,8 +101,14 @@ def get_data(url):
         _tmp.append(line)
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") == 7:
-        return
+    if (
+        hours_of_operation.count("Closed") == 7
+        or location_name.lower().find("closed") != -1
+    ):
+        hours_of_operation = "Closed"
+
+    if location_name.lower().find(":") != -1:
+        location_name = location_name.split(":")[0].strip()
 
     row = [
         locator_domain,
