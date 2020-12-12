@@ -52,7 +52,6 @@ def fetch_data():
         phone = loc["phone"]
         lat = loc["lat"]
         longt = loc["lng"]
-        hours = "<MISSING>"
         if len(phone) < 3:
             phone = "<MISSING>"
         data.append(
