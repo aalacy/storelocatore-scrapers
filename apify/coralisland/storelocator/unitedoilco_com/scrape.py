@@ -39,15 +39,11 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
-
     data = []
     url = "https://www.unitedoilco.com/locations?brand=united"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-
     divlist = soup.find("table", {"class": "list-of-station"}).findAll("tr")
-    # print("states = ",len(state_list))
     p = 0
     for div in divlist:
         rowlist = div.findAll("td")
