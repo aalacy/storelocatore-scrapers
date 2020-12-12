@@ -1,5 +1,5 @@
 import csv
-
+import json
 from sgrequests import SgRequests
 
 
@@ -73,6 +73,7 @@ def fetch_data():
     for poi in all_poi:
         store_url = poi["url"]
         store_url = store_url if store_url else "<MISSING>"
+
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
@@ -80,8 +81,47 @@ def fetch_data():
         city = "<MISSING>"
         state = "<MISSING>"
         zip_code = "<MISSING>"
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
+        if store_url != "<MISSING>":
+            session.get(store_url)
+            site_id = session.session.cookies.get_dict()["site_id"]
+            det_query = """query siteOptionsQuery($siteId: String, $kwuid: Int) {  SiteOptionsQuery(siteId: $siteId, kwuid: $kwuid) {    id    type    kw_uid    org_id    domain    compliance {      links {        display_key        url        __typename      }      __typename    }    config {      theme {        theme_color        header_text        header_sub_text        search_header_text        hero_images        __typename      }      analytics {        facebook_pixel_id        google_analytics_account_id        google_analytics_tracking_id        __typename      }      seo {        seo_keywords        seo_description        __typename      }      __typename    }    pages {      name      label      slug      url      description      config_id      template_id      __typename    }    profile {      id      type      type_id      profile {        __typename        ... on MarketBusinessCenterProfileType {          org_info {            org_key            org_name            org_address {              address_1              address_2              city              state              postal_code              __typename            }            doing_business_in            org_phone            org_fax            contact_email            website_country            __typename          }          logo {            dba_logos            __typename          }          site_info {            about_info {              header_text              body_text              photo_url              photo_redirect_url              __typename            }            area_info {              header_text              body_text_1              body_text_2              __typename            }            footer_links {              link              title              __typename            }            legal_disclaimer            neighborhoods {              boundary_id              name              __typename            }            __typename          }          association {            brokers {              kwuid              first_name              last_name              email              __typename            }            team_leaders {              kwuid              first_name              last_name              email              __typename            }            parent_org {              org_type              org_id              org_info {                org_name                org_address {                  address_1                  address_2                  city                  state                  postal_code                  __typename                }                doing_business_in                org_phone                org_fax                __typename              }              __typename            }            child_org {              org_type              orgs {                org_id                org_info {                  org_name                  __typename                }                __typename              }              __typename            }            __typename          }          branding_enabled          __typename        }      }      __typename    }    deleted_by    created_at    updated_at    deleted_at    __typename  }}"""
+            payload = {
+                "operationName": "siteOptionsQuery",
+                "variables": {"siteId": site_id},
+                "query": det_query,
+            }
+            store_response = session.post(start_url, headers=headers, json=payload)
+            store_data = json.loads(store_response.text)
+
+            city = store_data["data"]["SiteOptionsQuery"]["profile"]["profile"][
+                "org_info"
+            ]["org_address"]["city"]
+            if city == "Yuba City":
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zip_code = "<MISSING>"
+            else:
+                state = store_data["data"]["SiteOptionsQuery"]["profile"]["profile"][
+                    "org_info"
+                ]["org_address"]["state"]
+                zip_code = store_data["data"]["SiteOptionsQuery"]["profile"]["profile"][
+                    "org_info"
+                ]["org_address"]["postal_code"]
+                country_code = store_data["data"]["SiteOptionsQuery"]["profile"][
+                    "profile"
+                ]["org_info"]["website_country"]
+                if store_data["data"]["SiteOptionsQuery"]["profile"]["profile"][
+                    "org_info"
+                ]["org_address"]["address_2"]:
+                    street_address += (
+                        ", "
+                        + store_data["data"]["SiteOptionsQuery"]["profile"]["profile"][
+                            "org_info"
+                        ]["org_address"]["address_2"]
+                    )
+
+        zip_code = zip_code if zip_code else "<MISSING>"
         store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
