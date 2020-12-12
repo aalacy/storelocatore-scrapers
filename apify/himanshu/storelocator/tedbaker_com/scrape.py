@@ -41,7 +41,6 @@ def fetch_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
-    base_url = "https://www.tedbaker.com"
     lst = [
         "https://www.tedbaker.com/us/json/stores/for-country?isocode=US",
         "https://www.tedbaker.com/us/json/stores/for-country?isocode=CA",
