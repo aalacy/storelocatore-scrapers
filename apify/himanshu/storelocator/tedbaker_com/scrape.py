@@ -86,7 +86,7 @@ def fetch_data():
             if "openingHours" in store_data:
                 store_hours = store_data["openingHours"]["weekDayOpeningList"]
                 for k in range(len(store_hours)):
-                    if store_hours[k]["closed"] == True:
+                    if store_hours[k]["closed"] is True:
                         hours = hours + " closed " + store_hours[k]["weekDay"]
                     else:
                         hours = (
