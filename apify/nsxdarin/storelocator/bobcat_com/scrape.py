@@ -334,6 +334,7 @@ def fetch_data():
             + city
             + "&lang=en&ll=&stype=place&async=results"
         )
+        session = SgRequests()
         r = session.get(url, headers=headers)
         if r.encoding is None:
             r.encoding = "utf-8"
@@ -348,8 +349,9 @@ def fetch_data():
                     '<h4 style="margin: 0; color: black; font-size: 18px">'
                 )[1].split("<")[0]
                 typ = "Dealer"
+            if "KW.bobcat.toggleDetail('" in line:
+                store = line.split("KW.bobcat.toggleDetail('")[1].split("'")[0]
             if '<span onclick="">' in line:
-                store = line.split("toggleDetail('")[1].split("'")[0]
                 raw_address = next(lines).split("<div>")[1].split("</div>")[0]
                 tel_line = next(lines)
                 while "tel:" not in tel_line:
