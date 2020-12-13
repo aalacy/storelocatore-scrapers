@@ -47,7 +47,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = poi["singleplatform"]["website"]
+        store_url = "https://kegsteakhouse.com" + poi["drupal"]["url"]
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["singleplatform"]["name"]
         location_name = location_name if location_name else "<MISSING>"
