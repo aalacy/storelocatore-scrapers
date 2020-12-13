@@ -1,16 +1,14 @@
 import csv
-from sgrequests import SgRequests
-import requests_random_user_agent  # ignore_check
 import json
 import re
 import time
 import random
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPLETED
-from requests.exceptions import ProxyError
-from sglogging import SgLogSetup
-import requests
+import requests_random_user_agent  # noqa
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 
 logger = SgLogSetup().get_logger("gnc_com")
 
@@ -23,21 +21,17 @@ headers = {
 }
 
 re_get_json = re.compile(
-    "map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
+    r"map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
 )
-re_get_phone = re.compile('<a href="tel:(.+?)" class="store-phone">')
-re_get_hours_section = re.compile('<div class="storeLocatorHours">([\s\S]+?)<\/div>')
-re_get_hours_days = re.compile("<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>")
 
 
 def sleep(min=2, max=10):
     duration = random.randint(min, max)
-    # log('sleeping ', duration)
     time.sleep(duration)
 
 
 def log(*args, **kwargs):
-    if show_logs == True:
+    if show_logs:
         logger.info(" ".join(map(str, args)), **kwargs)
 
 
@@ -74,11 +68,11 @@ def get_session(reset=False):
     if (
         (not hasattr(thread_local, "session"))
         or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
-        or (reset == True)
+        or reset
     ):
         thread_local.session = SgRequests()
         # print out what the new IP is ...
-        if show_logs == True:
+        if show_logs:
             r = thread_local.session.get("https://jsonip.com/")
             log(
                 f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}"
@@ -88,7 +82,6 @@ def get_session(reset=False):
         reset_request_count()
 
     return thread_local.session
-    return requests
 
 
 def reset_request_count():
