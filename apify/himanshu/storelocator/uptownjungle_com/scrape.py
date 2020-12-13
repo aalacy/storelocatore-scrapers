@@ -68,7 +68,13 @@ def fetch_data():
             .split("!3m", 1)[0]
             .split("!3d", 1)
         )
-        phone = soup.select_one("a[href*=tel]").text
+        num = link.split("//", 1)[1].split(".", 1)[0]
+        num = num.replace("las", "las-")
+        phone = "<MISSING>"
+        phonelist = soup.find("div", {"id": "number"}).findAll("p")
+        for ph in phonelist:
+            if num in ph["id"]:
+                phone = ph.text.strip()
         address = usaddress.parse(address)
         i = 0
         street = ""
