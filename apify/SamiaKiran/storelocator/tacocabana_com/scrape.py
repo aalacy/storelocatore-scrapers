@@ -49,10 +49,14 @@ def fetch_data():
     with SgChrome() as driver:
         driver.get("https://www.tacocabana.com/locations")
         time.sleep(15)
-        driver.find_element_by_xpath("//button[contains(., 'view all locations')]").click()
+        driver.find_element_by_xpath(
+            "//button[contains(., 'view all locations')]"
+        ).click()
         time.sleep(40)
-        soup = BeautifulSoup(driver.page_source,'html.parser')
-        loclist = soup.findAll("div", {"class": "card-info styles__StyledCardInfo-s1y7dfjk-3 gCNPSz"})
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.findAll(
+            "div", {"class": "card-info styles__StyledCardInfo-s1y7dfjk-3 gCNPSz"}
+        )
     r = session.get("https://www.tacocabana.com/locations", headers=headers)
     temp_r = r.text.split(',"list":')[1].split(',"detail"', 1)[0]
     cleanr = re.compile(r"<[^>]+>")
@@ -71,7 +75,7 @@ def fetch_data():
             city = content[3]
             state = content[4]
             pcode = content[5]
-            phone = content[6]    
+            phone = content[6]
         elif len(content) == 4:
             street = content[1]
             street = street.replace("&amp;", "&")
@@ -94,7 +98,7 @@ def fetch_data():
                 state = temp[1]
                 pcode = temp[2]
                 phone = content[4]
-               
+
             except:
                 street = content[1]
                 street = street.replace("&amp;", "&")
@@ -103,7 +107,7 @@ def fetch_data():
                 state = temp[0]
                 pcode = temp[1]
                 phone = content[4]
-                
+
         else:
             street = content[1]
             street = street.replace("&amp;", "&")
@@ -145,5 +149,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
