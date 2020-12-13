@@ -1,9 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
-import re
 import json
-from sgselenium import SgSelenium
-import time
+from selenium import webdriver
 
 
 def write_output(data):
@@ -11,7 +9,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,19 +27,12 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-    headers = {
-        "User-Agent": user_agent,
-    }
-    driver = SgSelenium().chrome(user_agent=user_agent)
-
-    addresses = []
+    driver = webdriver.Chrome(executable_path="chromedriver")
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
     soup = BeautifulSoup(driver.page_source, "lxml")
