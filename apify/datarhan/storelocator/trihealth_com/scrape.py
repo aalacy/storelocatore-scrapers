@@ -54,7 +54,6 @@ def fetch_data():
             store_url = "https://www.trihealth.com" + url
         if "cgha.com" in url:
             continue
-        print(store_url)
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         loc_type_1 = store_dom.xpath('//div[contains(@id, "prLoc")]')

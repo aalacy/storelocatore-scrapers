@@ -108,13 +108,7 @@ def fetch_data():
     session = SgRequests()
     son = session.get(url, headers=headers)
     soup = b4(son.text, "lxml")
-
-    results = list(
-        i.text
-        for i in soup.find_all("loc")
-        if i.text.startswith("https://www.budgens.com/our-stores/")
-    )
-
+    results = list(i.text for i in soup.find_all("loc") if "our-stores" in i.text)
     lize = utils.parallelize(
         search_space=results,
         fetch_results_for_rec=para,
@@ -143,7 +137,7 @@ def fix_comma(x):
 
 
 def scrape():
-    url = "https://www.wahaca.co.uk/"
+    url = "https://www.budgens.co.uk/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(mapping=["link"]),
