@@ -107,16 +107,16 @@ def fetch_data():
         phone = location_dom.xpath('//div[@id="phone-main"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = location_dom.xpath("//main/@itemtype")
-        location_type = location_dom.xpath('//main/@itemtype')[0].split('/')[-1]
+        location_type = location_dom.xpath("//main/@itemtype")[0].split("/")[-1]
         latitude = location_dom.xpath('//meta[@itemprop="latitude"]/@content')
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = location_dom.xpath('//meta[@itemprop="longitude"]/@content')
         longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = location_dom.xpath('//tr[@itemprop="openingHours"]//text()')
+        hours_of_operation = location_dom.xpath(
+            '//tr[@itemprop="openingHours"]//text()'
+        )
         hours_of_operation = (
-            " ".join(hours_of_operation)
-            if hours_of_operation
-            else "<MISSING>"
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
         item = [
