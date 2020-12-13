@@ -66,7 +66,7 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            if len(pcode.strip()) > 5 and pcode.isdigit():
+            if pcode.strip().isdigit():
                 ccode = "US"
             else:
                 ccode = "CA"
