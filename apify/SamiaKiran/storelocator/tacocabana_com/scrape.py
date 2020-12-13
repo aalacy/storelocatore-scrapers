@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 import json, time, re
-from sgselenium import SgSelenium, SgChrome
+from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
