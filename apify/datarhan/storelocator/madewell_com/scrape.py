@@ -39,7 +39,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "krystal.com"
+    DOMAIN = "madewell.com"
     start_url = "https://stores.madewell.com/us"
 
     response = session.get(start_url)
@@ -54,10 +54,10 @@ def fetch_data():
             full_subdir_url = "https://stores.madewell.com/" + url
             sub_dir_response = session.get(full_subdir_url)
             dir_dom = etree.HTML(sub_dir_response.text)
-            sub_directories_urls = dir_dom.xpath(
-                '//a[@data-ya-track="visit_page"]/@href'
+            all_locations_urls += dir_dom.xpath(
+                '//a[@data-ya-track="businessname"]/@href'
             )
-            sub_directories_urls += dir_dom.xpath(
+            sub_directories_urls = dir_dom.xpath(
                 '//a[@class="Directory-listLink"]/@href'
             )
             for url in sub_directories_urls:
@@ -68,10 +68,10 @@ def fetch_data():
                     full_sub2dir_url = "https://stores.madewell.com/" + url
                     sub2dir_response = session.get(full_sub2dir_url)
                     sub2dir_dom = etree.HTML(sub2dir_response.text)
-                    sub2directories_urls = sub2dir_dom.xpath(
-                        '//a[@data-ya-track="visit_page"]/@href'
+                    all_locations_urls += sub2dir_dom.xpath(
+                        '//a[@data-ya-track="businessname"]/@href'
                     )
-                    sub2directories_urls += sub2dir_dom.xpath(
+                    sub2directories_urls = sub2dir_dom.xpath(
                         '//a[@class="Directory-listLink"]/@href'
                     )
                     for url in sub2directories_urls:
@@ -80,15 +80,15 @@ def fetch_data():
                             all_locations_urls.append(url)
 
     for url in list(set(all_locations_urls)):
+        url = url.replace("../", "")
         store_url = "https://stores.madewell.com/" + url
+        print(store_url)
         location_response = session.get(store_url)
         location_dom = etree.HTML(location_response.text)
 
         store_url = store_url if store_url else "<MISSING>"
-        location_name = location_dom.xpath(
-            '//h1[@id="location-name"]//span[@class="LocationName"]//text()'
-        )
-        location_name = " ".join(location_name) if location_name else "<MISSING>"
+        location_name = location_dom.xpath('//h1[@id="location-name"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
         street_address = location_dom.xpath(
             '//meta[@itemprop="streetAddress"]/@content'
         )
@@ -104,21 +104,17 @@ def fetch_data():
         country_code = location_dom.xpath('//address[@id="address"]/@data-country')
         country_code = country_code[0] if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = location_dom.xpath('//span[@id="telephone"]/text()')
+        phone = location_dom.xpath('//div[@id="phone-main"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = location_dom.xpath("//main/@itemtype")
-        location_type = (
-            location_type[0].split("/")[-1] if location_type else "<MISSING>"
-        )
+        location_type = location_dom.xpath('//main/@itemtype')[0].split('/')[-1]
         latitude = location_dom.xpath('//meta[@itemprop="latitude"]/@content')
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = location_dom.xpath('//meta[@itemprop="longitude"]/@content')
         longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = location_dom.xpath(
-            '//section[@class="Nap"]//div[@data-days]//tr//text()'
-        )
+        hours_of_operation = location_dom.xpath('//tr[@itemprop="openingHours"]//text()')
         hours_of_operation = (
-            " ".join(hours_of_operation[1:]).replace("Hours", "").replace("hours", "")
+            " ".join(hours_of_operation)
             if hours_of_operation
             else "<MISSING>"
         )
