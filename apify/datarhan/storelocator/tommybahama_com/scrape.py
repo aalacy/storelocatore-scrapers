@@ -44,7 +44,7 @@ def fetch_data():
     session = SgRequests()
 
     DOMAIN = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=false&searchOutlets=false&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@id="store-search-results-state"]//a/@href')
@@ -116,7 +116,11 @@ def fetch_data():
         hours_of_operation = (
             hours_of_operation[0].split(":")[-1].strip() if hours_of_operation else ""
         )
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hours_of_operation = (
+            hours_of_operation.split(".")[0] if hours_of_operation else "<MISSING>"
+        )
+        if "For the health" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
