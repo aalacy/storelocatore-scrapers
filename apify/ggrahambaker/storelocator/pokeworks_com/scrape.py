@@ -113,7 +113,7 @@ def fetch_data():
         content = base.find(class_="main-content")
 
         try:
-            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(content))[0]
+            phone = re.findall(r"[(\d)]{5}.[\d]{3}-[\d]{4}", str(content))[0]
         except:
             phone = "<MISSING>"
 
@@ -136,6 +136,20 @@ def fetch_data():
                         .strip()
                     )
                     break
+            if "pm" not in str(p).lower():
+                if "0pm" in content.span.text:
+                    hours_of_operation = (
+                        " ".join(list(content.span.stripped_strings))
+                        .replace("Store Hours:", "")
+                        .replace("Store Hours", "")
+                        .replace("-Takeout & Delivery only-", "")
+                        .replace("- Takeout & Delivery only- ", "")
+                        .replace("-Pickup & Delivery only-", "")
+                        .replace("STORE HOURS", "")
+                        .replace("Temporary Hours:", "")
+                        .strip()
+                    )
+
         if "STORE INFO" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("  ")[-1].strip()
 
