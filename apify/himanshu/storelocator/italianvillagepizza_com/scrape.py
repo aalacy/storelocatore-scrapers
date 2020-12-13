@@ -63,7 +63,13 @@ def fetch_data():
             .replace("3Rd", "3rd")
             .replace(" Us ", " US ")
         )
-        city = value["name"].replace("Downtown", "").replace("FL", "").strip()
+        city = (
+            value["name"]
+            .replace("Downtown", "")
+            .replace("FL", "")
+            .replace(" Se", " SE")
+            .strip()
+        )
         state = value["state"]
         zipp = value["zip"]
         country_code = "US"
