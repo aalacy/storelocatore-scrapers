@@ -54,7 +54,10 @@ def fetch_data():
             or location_name.lower().find("soon") != -1
         ):
             continue
-        street_address = j.get("addressLineOne") or "<MISSING>"
+        street_address = (
+            f'{j.get("addressLineOne")} {j.get("addressLineTwo") or ""}'.strip()
+            or "<MISSING>"
+        )
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
