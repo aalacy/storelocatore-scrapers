@@ -77,7 +77,6 @@ def fetch_data():
             '//a[@class="paragraph_link" and contains(@href, "tel")]/text()'
         )
         phone = phone[0].strip() if phone else "<MISSING>"
-        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             driver_r = etree.HTML(driver.page_source)
