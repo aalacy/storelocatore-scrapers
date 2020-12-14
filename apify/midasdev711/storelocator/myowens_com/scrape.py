@@ -1,36 +1,57 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
 import json
 
-base_url = 'https://www.myowens.com'
+from sgrequests import SgRequests
+
+
+base_url = "https://www.myowens.com"
+
 
 def validate(items):
     rets = []
     for item in items:
-        
-        if item is '<MISSING>':
-            continue
         if type(item) is str:
-            item = item.encode('ascii','ignore').strip()
+            item = item.strip()
 
         rets.append(item)
     return rets
 
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
     return
 
+
 def fetch_data():
+
+    session = SgRequests()
+
     output_list = []
     url = "https://www.myowens.com/wp-admin/admin-ajax.php?action=store_search&lat=40.58654&lng=-122.39168&max_results=25&search_radius=50&autoload=1"
-    headers={
+    headers = {
         "accept": "*/*",
         "accept-encoding": "gzip, deflate, br",
         "accept-language": "en-US,en;q=0.9",
@@ -39,39 +60,49 @@ def fetch_data():
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-origin",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest"
-        }
-    request = requests.get(url, headers=headers)
+        "x-requested-with": "XMLHttpRequest",
+    }
+    request = session.get(url, headers=headers)
     store_list = json.loads(request.text)
     for store in store_list:
         output = []
-        hours = store.get('hours')
+        hours = store.get("hours")
         store_hours = ""
-        hour_infos = hours.split('<tr>')[1:]
+        hour_infos = hours.split("<tr>")[1:]
         for info in hour_infos:
-            hour = info.split('<td>')[1:]
-            if '</time>' in hour[1]:
-                store_hours += hour[0].split('</td>')[0] + " " + hour[1].split('<time>').pop().split('</time>')[0] + ","
+            hour = info.split("<td>")[1:]
+            if "</time>" in hour[1]:
+                store_hours += (
+                    hour[0].split("</td>")[0]
+                    + " "
+                    + hour[1].split("<time>").pop().split("</time>")[0]
+                    + ","
+                )
             else:
-                store_hours += hour[0].split('</td>')[0] + " " + hour[1].split('</td>')[0] + ","
+                store_hours += (
+                    hour[0].split("</td>")[0] + " " + hour[1].split("</td>")[0] + ","
+                )
         output.append(base_url)
-        output.append(store.get('store'))
-        output.append(store.get('address'))
-        output.append(store.get('city'))
-        output.append(store.get('state'))
-        output.append(store.get('zip'))
-        output.append('US')
-        output.append(store.get('id'))
-        output.append(store.get('phone'))
-        output.append('hearing centres')
-        output.append(store.get('lat'))
-        output.append(store.get('lng'))
-        output.append(store_hours)
+        output.append("https://www.myowens.com/locations/")
+        output.append(store.get("store").replace("#038;", ""))
+        output.append(store.get("address") + " " + store.get("address2"))
+        output.append(store.get("city"))
+        output.append(store.get("state").upper())
+        output.append(store.get("zip"))
+        output.append("US")
+        output.append(store.get("id"))
+        output.append(store.get("phone"))
+        output.append("<MISSING>")
+        output.append(store.get("lat"))
+        output.append(store.get("lng"))
+        output.append(store_hours[:-1])
         output_list.append(validate(output))
     return output_list
-    
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

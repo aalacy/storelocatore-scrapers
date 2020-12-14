@@ -73,7 +73,7 @@ def nice_hours(k):
 
 
 def scrape():
-    url = "https://www.dunelm.com/"
+    url = "https://www.dacia.co.uk/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MissingField(),
