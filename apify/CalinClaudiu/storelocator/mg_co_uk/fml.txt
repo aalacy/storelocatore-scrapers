@@ -1,0 +1,99 @@
+<div class="clearfix dealer_summary_and_contact_form dealer-not-featured">
+<div class="dealer_summary clearfix">
+<div class="dealer_icons">
+<span class="distance">5<span> miles</span></span> <img alt="Sales dealership" src="/images/icons/dealer-sales.png"/>
+<img alt="After service dealership" src="/images/icons/dealer-service.png"/>
+</div>
+<div class="dealer_details clearfix">
+<h3><a href="//sere.mg.co.uk" target="_blank">S.E.R.E. Belfast </a></h3>
+<div class="dealer_address_and_contact_block">
+<address>
+          7-13 Boucher road<br/>                              Belfast<br/>          Belfast<br/>          BT12 6HR<br/> </address>
+<p><a href="tel:0289 020 5100">0289 020 5100</a></p> </div>
+<div class="clearfix dealer_links_block">
+<a class="inline_button inline-test-drive form_toggle" href="//sere.mg.co.uk#test-drive" target="_blank"><span>Take a test drive</span></a><br/>
+<a class="inline_button inline-brochure form_toggle" href="//sere.mg.co.uk#request-brochure" target="_blank"><span>Request a brochure</span></a><br/>
+<a class="inline_button" href="//sere.mg.co.uk" target="_blank">Visit website</a><br/> <a class="inline_button" href="http://maps.google.co.uk/maps?daddr=BT12+6HR" target="_blank">Get directions</a> </div>
+<div class="dealer_featued_block clearfix">
+</div>
+</div>
+</div>
+<form action="#dealer-f-134" class="waxform dealer_contact_form clearfix" enctype="multipart/form-data" id="dealer-f-134" method="post">
+<input name="dealer_contact[dealer_id]" type="hidden" value="134"/>
+<input name="dealer_contact[mg_to_you]" type="hidden" value=""/>
+<input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_source" name="dealer_contact[utm_source]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_campaign" name="dealer_contact[utm_campaign]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_medium" name="dealer_contact[utm_medium]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_page_completed_on" name="dealer_contact[page_completed_on]" type="hidden" value="mg.co.uk/dealers/?search%5Btext%5D=BT8"/>
+<fieldset class="clearfix">
+<span class="check-in">
+<label for="check-in">Check in</label>
+<input class="input_field text_field" id="check-in" name="when[2020-12-12]" type="text" value=""/>
+</span>
+<h3>Contact S.E.R.E. Belfast </h3>
+<span><label for="dealer_contact_title">Title</label><select class="input_field select_field validate valid-length valid-length" id="dealer_contact_title" name="dealer_contact[title]"><option value="mr">Mr</option><option value="miss">Miss</option><option value="mrs">Mrs</option><option value="ms">Ms</option><option value="dr">Dr</option></select></span>
+</fieldset>
+<fieldset class="clearfix">
+<span><label for="dealer_contact_first_name">First name</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_first_name" maxlength="255" name="dealer_contact[first_name]" placeholder="Enter your first name" type="text" value=""/></span>
+<span class="end"><label for="dealer_contact_last_name">Last name</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_last_name" maxlength="255" name="dealer_contact[last_name]" placeholder="Enter your last name" type="text" value=""/></span>
+</fieldset>
+<fieldset class="clearfix">
+<span><label for="dealer_contact_email_address">Email address</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_email_address" maxlength="100" name="dealer_contact[email_address]" placeholder="Enter your email address" type="text" value=""/></span>
+<span class="end"><label for="dealer_contact_telephone">Telephone</label><input class="input_field text_field validate valid-length valid-length" id="dealer_contact_telephone" maxlength="255" name="dealer_contact[telephone]" placeholder="Enter your contact number" type="text" value=""/></span>
+</fieldset>
+<fieldset class="clearfix">
+<span class="textfield"><label for="dealer_contact_message">Message</label><textarea class="input_field textarea_field validate valid-required valid-required" id="dealer_contact_message" maxlength="" name="dealer_contact[message]"></textarea></span>
+</fieldset>
+<fieldset>
+<script async="" defer="" src="https://www.google.com/recaptcha/api.js"></script>
+<div class="g-recaptcha" data-sitekey="6Lfe604UAAAAAOuu51oLLfOwEudb_n0dEW9lfM14"></div>
+</fieldset>
+<input class="button" name="dealer_submit" type="submit" value="Submit"/>
+</form>
+</div>KAPPKAPPA<div class="clearfix dealer_summary_and_contact_form dealer-not-featured">
+<div class="dealer_summary clearfix">
+<div class="dealer_icons">
+<span class="distance">10<span> miles</span></span> <img alt="Sales dealership" src="/images/icons/dealer-sales.png"/>
+<img alt="After service dealership" src="/images/icons/dealer-service.png"/>
+</div>
+<div class="dealer_details clearfix">
+<h3><a href="//sslogan.mg.co.uk" target="_blank">SS Logan &amp; Son LTD</a></h3>
+<div class="dealer_address_and_contact_block">
+<address>
+          450 -456 Shore Road<br/>          Whiteabbey<br/>                    Newtownabbey<br/>          County Antrim<br/>          BT37 0AA<br/> </address>
+<p><a href="tel:028 90863229">028 90863229</a></p> </div>
+<div class="clearfix dealer_links_block">
+<a class="inline_button inline-test-drive form_toggle" href="//sslogan.mg.co.uk#test-drive" target="_blank"><span>Take a test drive</span></a><br/>
+<a class="inline_button inline-brochure form_toggle" href="//sslogan.mg.co.uk#request-brochure" target="_blank"><span>Request a brochure</span></a><br/>
+<a class="inline_button" href="//sslogan.mg.co.uk" target="_blank">Visit website</a><br/> <a class="inline_button" href="http://maps.google.co.uk/maps?daddr=BT37+0AA" target="_blank">Get directions</a> </div>
+<div class="dealer_featued_block clearfix">
+</div>
+</div>
+</div>
+<form action="#dealer-f0-89" class="waxform dealer_contact_form clearfix" enctype="multipart/form-data" id="dealer-f0-89" method="post">
+<input name="dealer_contact[dealer_id]" type="hidden" value="89"/>
+<input name="dealer_contact[mg_to_you]" type="hidden" value="0"/>
+<input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_source" name="dealer_contact[utm_source]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_campaign" name="dealer_contact[utm_campaign]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_utm_medium" name="dealer_contact[utm_medium]" type="hidden" value=""/> <input class="input_field hidden_field validate valid-length valid-length" id="dealer_contact_page_completed_on" name="dealer_contact[page_completed_on]" type="hidden" value="mg.co.uk/dealers/?search%5Btext%5D=BT8"/>
+<fieldset class="clearfix">
+<span class="check-in">
+<label for="check-in">Check in</label>
+<input class="input_field text_field" id="check-in" name="when[2020-12-12]" type="text" value=""/>
+</span>
+<h3>Contact SS Logan &amp; Son LTD</h3>
+<span><label for="dealer_contact_title">Title</label><select class="input_field select_field validate valid-length valid-length" id="dealer_contact_title" name="dealer_contact[title]"><option value="mr">Mr</option><option value="miss">Miss</option><option value="mrs">Mrs</option><option value="ms">Ms</option><option value="dr">Dr</option></select></span>
+</fieldset>
+<fieldset class="clearfix">
+<span><label for="dealer_contact_first_name">First name</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_first_name" maxlength="255" name="dealer_contact[first_name]" placeholder="Enter your first name" type="text" value=""/></span>
+<span class="end"><label for="dealer_contact_last_name">Last name</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_last_name" maxlength="255" name="dealer_contact[last_name]" placeholder="Enter your last name" type="text" value=""/></span>
+</fieldset>
+<fieldset class="clearfix">
+<span><label for="dealer_contact_email_address">Email address</label><input class="input_field text_field validate valid-required valid-length valid-required valid-length" id="dealer_contact_email_address" maxlength="100" name="dealer_contact[email_address]" placeholder="Enter your email address" type="text" value=""/></span>
+<span class="end"><label for="dealer_contact_telephone">Telephone</label><input class="input_field text_field validate valid-length valid-length" id="dealer_contact_telephone" maxlength="255" name="dealer_contact[telephone]" placeholder="Enter your contact number" type="text" value=""/></span>
+</fieldset>
+<fieldset class="clearfix">
+<span class="textfield"><label for="dealer_contact_message">Message</label><textarea class="input_field textarea_field validate valid-required valid-required" id="dealer_contact_message" maxlength="" name="dealer_contact[message]"></textarea></span>
+</fieldset>
+<fieldset>
+<script async="" defer="" src="https://www.google.com/recaptcha/api.js"></script>
+<div class="g-recaptcha" data-sitekey="6Lfe604UAAAAAOuu51oLLfOwEudb_n0dEW9lfM14"></div>
+</fieldset>
+<input class="button" name="dealer_submit" type="submit" value="Submit"/>
+</form>
+</div>KAPPKAPPA
