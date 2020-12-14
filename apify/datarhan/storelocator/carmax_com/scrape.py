@@ -57,11 +57,13 @@ def fetch_data():
         state_response = session.get(state_url, headers=headers)
         state_dom = etree.HTML(state_response.text)
         urls = state_dom.xpath('//a[@class="stores-list-cabinet--single"]/@href')
+        loc_urls = state_dom.xpath('//a[contains(@id, "store-details")]/@href')
+        all_locations += loc_urls
         for url in urls:
             if (url.split("/")[-1]).isdigit():
                 all_locations.append(url)
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         store_url = "https://www.carmax.com" + url
         store_response = session.get(store_url, headers=headers)
         store_dom = etree.HTML(store_response.text)
@@ -69,8 +71,9 @@ def fetch_data():
             '//script[@type="application/ld+json" and contains(text(), "GeoCoordinates")]/text()'
         )[0]
         store_data = json.loads(store_data)
-        location_name = store_data["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = store_dom.xpath('//h1[@id="main-content-heading"]//text()')
+        location_name = [elem.strip() for elem in location_name if elem.strip()]
+        location_name = " ".join(location_name) if location_name else "<MISSING>"
         street_address = store_data["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
         city = store_data["address"]["addressLocality"]
