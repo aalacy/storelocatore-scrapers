@@ -97,7 +97,7 @@ def fetch_data():
                     is_phone_number = True
                     phone = curr_text.strip()
 
-        if is_phone_number == True:
+        if is_phone_number:
             city_state_zip = raw_text[-2]
             street_address = ", ".join(raw_text[:-2]).strip()
         else:
