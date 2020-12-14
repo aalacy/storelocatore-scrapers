@@ -110,9 +110,6 @@ def fetch_data():
         if r == None:
             continue
         soup = BeautifulSoup(r.text, "lxml")
-        current_results_len = len(
-            soup.find_all("span", {"class": re.compile("LocationName-brand")})
-        )
 
         json = r.json()
         temp_locations = json["locations"]
