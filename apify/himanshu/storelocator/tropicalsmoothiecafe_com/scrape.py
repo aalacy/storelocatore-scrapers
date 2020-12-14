@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import re
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import time
 from sglogging import SgLogSetup
