@@ -1,18 +1,8 @@
 import csv
-import sys
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
 import usaddress as usd
-import collections as coll
-from datetime import datetime
-import usaddress
-from sgzip import DynamicGeoSearch, SearchableCountries
-
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger('aesop_com')
 session = SgRequests()
@@ -44,7 +34,7 @@ tm={
    'SubaddressIdentifier' : 'address1',
 }
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', newline='', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -76,25 +66,13 @@ def fetch_data():
     }
 
     base_url = "https://www.aesop.com"
-    addresses123 = []
-    op = []
-    addresses = []
-
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
     search = DynamicGeoSearch(country_codes=[SearchableCountries.USA,SearchableCountries.CANADA], max_radius_miles=100, max_search_results=100)
-    search.initialize()
-    coord = search.next()
  
-    current_results_len = 0
-
-
+  
 
     adressess = []
-    while coord:
-        result_coords = []
-        lat = coord[0]
-        lng = coord[1]
+    for lat, lng in search:
+       
         payload = '{\"query\":\"\\n  \\n  fragment openingHours on StoreOpeningHoursTimesType {\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n  query {\\n    stores (\\n      query: [\\n        { key: \\\"fields.storeLocation\\\", Op:WITHIN, value: \\\"37.887,-79.488,' + str(lat) + ',' + str(lng) + '\\\" }\\n      ]\\n    ) {\\n      id\\n      address\\n      city\\n      combinedAddress: address\\n      country\\n      email\\n      facialAppointments\\n      facialAppointmentsLink\\n      type\\n      features: type\\n      formattedAddress\\n      image {\\n        large\\n        medium\\n        small\\n      }\\n      location {\\n        lat\\n        lon\\n      }\\n      name\\n      \\n  openingHours {\\n    monday {\\n      ...openingHours\\n    }\\n    tuesday {\\n      ...openingHours\\n    }\\n    wednesday {\\n      ...openingHours\\n    }\\n    thursday {\\n      ...openingHours\\n    }\\n    friday {\\n      ...openingHours\\n    }\\n    saturday {\\n      ...openingHours\\n    }\\n    sunday {\\n      ...openingHours\\n    }\\n  }\\n\\n      \\n  specialOpeningHours {\\n    date\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n      phone\\n    }\\n  }\\n\"}'
 
         location_url = "https://www.aesop.com/graphql"
@@ -104,7 +82,6 @@ def fetch_data():
             json_data = r.json()['data']['stores']
         except:
             continue
-        current_results_len = len(json_data)
         for value in json_data:
             country = ['GB','HK','KR','JP','TH','TW']
             if value['country'] not in country:
@@ -144,8 +121,6 @@ def fetch_data():
                   
     
                     if value['country'] == "CA":
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
                         if location_name == "Aesop Gastown":
                             street_address = "19 Water St."
                             city = "Vancouver"
@@ -193,22 +168,14 @@ def fetch_data():
                             elif len(tem_state_zip) == 2:
                                 zipper = []
                                 zipper[:] = tem_state_zip[-1]
-                                # logger.info(zipper)
                                 if len(zipper) == 7:
                                     state = tem_state_zip[0]
                                     zipp = tem_state_zip[-1]
                                 else:
                                     state = "<MISSING>"
                                     zipp = "-".join(tem_state_zip)
-                                # state = "<MISSING>"
-                                # zipp = "-".join(tem_state_zip)
                         country_code = "CA"
-                        # logger.info(ca_add)
-                        # logger.info(tem_state_zip)
-                        # logger.info("==============================")
                     elif value['country'] == "US":
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
                         if location_name == "Madison Hall":
                             street_address = "CAA Hotel/ 12 S Michigan Ave"
                             city = value['city']
@@ -258,11 +225,7 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                         country_code = "US"
-                        # logger.info("=======================")
-                 
-                    elif value['country'] == None:
-                        # logger.info(location_name)
-                        # logger.info(temp_add)
+                    elif value['country'] is None:
                         if location_name == "Aesop UTC":
                             street_address = "Space 2118, Westfield, 4545 La Jolla Village Drive"
                             city = "San Diego"
@@ -282,7 +245,6 @@ def fetch_data():
                             elif len(tem_state_zip) == 2:
                                 zipper = []
                                 zipper[:] = tem_state_zip[-1]
-                                # logger.info(zipper)
                                 if len(zipper) == 7:
                                     state = tem_state_zip[0]
                                     zipp = tem_state_zip[-1]
@@ -305,8 +267,6 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                             country_code = "US"
-                            
-                        #logger.info("=======================")
                     
                     else:
                         continue
@@ -326,55 +286,52 @@ def fetch_data():
 
                         h = value['openingHours']
                     
-                        if h['monday']['closedAllDay'] == True:
+                        if h['monday']['closedAllDay'] is True:
                             monday = "closed"
                         else:
                             monday = h['monday']['openingTimeHour'] + ":" + h['monday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['monday']['closingTimeHour'])-12) + ":" + h['monday']['closingTimeMinute'].replace("0","00") + "PM"
 
-                        if h['tuesday']['closedAllDay'] == True:
+                        if h['tuesday']['closedAllDay'] is True:
                             tuesday = "closed"
                         else:
                             tuesday = h['tuesday']['openingTimeHour'] + ":" + h['tuesday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['tuesday']['closingTimeHour'])-12) + ":" + h['tuesday']['closingTimeMinute'].replace("0","00") + "PM"
                         
-                        if h['wednesday']['closedAllDay'] == True:
+                        if h['wednesday']['closedAllDay'] is True:
                             wednesday = "closed"
                         else:
                             wednesday = h['wednesday']['openingTimeHour'] + ":" + h['wednesday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['wednesday']['closingTimeHour'])-12) + ":" + h['wednesday']['closingTimeMinute'].replace("0","00") + "PM"
 
-                        if h['thursday']['closedAllDay'] == True:
+                        if h['thursday']['closedAllDay'] is True:
                             thursday = "closed"
                         else:
                             thursday = h['thursday']['openingTimeHour'] + ":" + h['thursday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['thursday']['closingTimeHour'])-12) + ":" + h['thursday']['closingTimeMinute'].replace("0","00") + "PM"
 
-                        if h['friday']['closedAllDay'] == True:
+                        if h['friday']['closedAllDay'] is True:
                             friday = "closed"
                         else:
                             friday = h['friday']['openingTimeHour'] + ":" + h['friday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['friday']['closingTimeHour'])-12) + ":" + h['friday']['closingTimeMinute'].replace("0","00") + "PM"
 
-                        if h['saturday']['closedAllDay'] == True:
+                        if h['saturday']['closedAllDay'] is True:
                             saturday = "closed"
                         else:
                             saturday = h['saturday']['openingTimeHour'] + ":" + h['saturday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['saturday']['closingTimeHour'])-12) + ":" + h['saturday']['closingTimeMinute'].replace("0","00") + "PM"
 
-                        if h['sunday']['closedAllDay'] == True:
+                        if h['sunday']['closedAllDay'] is True:
                             sunday = "closed"
                         else:
                             sunday = h['sunday']['openingTimeHour'] + ":" + h['sunday']['openingTimeMinute'].replace("0","00")+ "AM" + "-" + str(int(h['sunday']['closingTimeHour'])-12) + ":" + h['sunday']['closingTimeMinute'].replace("0","00") + "PM"
                         
                         hours_of_operation = "monday-"+monday+", tuesday-"+tuesday+", wednesday-"+wednesday+", thursday-"+thursday+", friday-"+friday+", saturday-"+saturday+", sunday-" +sunday
-                        # logger.info(hours_of_operation)
+                        
                     except:
                         hours_of_operation = "<MISSING>"
                     
-                    # logger.info(hours_of_operation)
+                    
 
                     if location_type == "Signature Store":
                         page_url = "https://www.aesop.com/hk/en/r/" + value['id']
                     else:
                         page_url = "<MISSING>"
-                    # logger.info(page_url)
-
-                    result_coords.append((lat,lng))
                     store = []
                     if street_address =="Space":
                         street_address="Space 2118, Westfield, 4545 La Jolla"
@@ -401,10 +358,8 @@ def fetch_data():
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                     yield store
                    
-        search.update_with(result_coords)
-        coord = search.next()
+
 def scrape():
-    # fetch_data()
     data = fetch_data()
     write_output(data)
 scrape()
