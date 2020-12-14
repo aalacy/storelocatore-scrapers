@@ -17,7 +17,7 @@ def fetch_data():
     url = "https://www.greatamericancookies.com/locations/"
 
     son = ""
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox() as driver:
         logzilla.info(f"Getting page..")  # noqa
         driver.get(url)
         logzilla.info(f"Waiting for response to load.")  # noqa
