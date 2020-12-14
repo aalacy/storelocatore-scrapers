@@ -94,6 +94,10 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if not hours_of_operation.endswith("pm"):
+            hours_of_operation = " ".join(hours_of_operation.split()[:-1])
+        if "SorryFolks!" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
