@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import re
 import usaddress as usd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
