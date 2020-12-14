@@ -49,13 +49,7 @@ def write_output(data):
 
 
 def fetch_data():
-    streetlist = []
     data = []
-    pattern = re.compile(r"\s\s+")
-    url = "https://www.flooringamerica.com/find-a-flooring-store/states"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.find("div", {"id": "stateList"}).select('a:contains(" Stores")')
     p = 0
     states = [
         "AL",
