@@ -78,7 +78,6 @@ def fetch_data():
         max_radius_miles=200,
         max_search_results=5,
     )
-    zip_list = []
     for zip_code in zips:
         log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
 
