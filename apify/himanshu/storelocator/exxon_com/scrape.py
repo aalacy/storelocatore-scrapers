@@ -15,7 +15,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -34,7 +33,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -116,7 +114,6 @@ def fetch_data():
             addresses.append(str(store[2]) + str(store[-1]))
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
-            # logger.info(store)
 
 
 def scrape():
