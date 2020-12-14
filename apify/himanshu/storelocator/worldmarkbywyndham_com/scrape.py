@@ -82,7 +82,7 @@ def fetch_data():
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
         capabilities = webdriver.DesiredCapabilities.CHROME.copy()
         capabilities["acceptInsecureCerts"] = True
-        service_start = service.Service("C:\chromedriver")
+        service_start = service.Service("C:chromedriver")
         service_start.start()
 
         driver = webdriver.Remote(
