@@ -9,9 +9,9 @@ from sgrequests import SgRequests
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-log = sglog.SgLogSetup().get_logger(logger_name="cfsc.com")
-
 URL = "shoeshowmega.com"
+
+log = sglog.SgLogSetup().get_logger(logger_name=URL)
 
 
 def write_output(data):
@@ -185,7 +185,7 @@ def fetch_data():
         data.append(
             [
                 URL,
-                "<MISSING>",
+                "https://www.shoeshowmega.com/stores",
                 locations_title,
                 street_address,
                 city,
