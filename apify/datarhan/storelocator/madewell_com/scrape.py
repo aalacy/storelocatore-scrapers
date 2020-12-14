@@ -82,7 +82,6 @@ def fetch_data():
     for url in list(set(all_locations_urls)):
         url = url.replace("../", "")
         store_url = "https://stores.madewell.com/" + url
-        print(store_url)
         location_response = session.get(store_url)
         location_dom = etree.HTML(location_response.text)
 
