@@ -99,14 +99,6 @@ def fetch_data():
 
         location_name = loc_html.xpath(".//h4/text()")
         location_name = location_name[0] if location_name else "<MISSING"
-        # address_raw = loc_dom.xpath('//div[@class="footer-blocks"]//address/text()')
-        # address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        # add_check = ["Visit us at our New Location!", "Get Directions"]
-        # address_raw = [
-        #     elem.strip() for elem in address_raw if elem not in add_check
-        # ]
-        # if len(address_raw) == 3:
-        #     address_raw = [address_raw[0] + " " + address_raw[1], address_raw[2]]
         address_raw = loc_html.xpath(".//address/text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         if len(address_raw[0]) == 1:
@@ -135,78 +127,7 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        # else:
-        #     location_name = loc_html.xpath("@data-title")
-        #     location_name = location_name[0] if location_name else "<MISSING>"
-        #     address_raw = loc_html.xpath(".//address//text()")
-        #     address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        #     add_check = ["Visit us at our New Location!", "Get Directions"]
-        #     address_raw = [
-        #         elem.strip() for elem in address_raw if elem not in add_check
-        #     ]
-        #     if len(address_raw) > 1:
-        #         check_elems = [
-        #             "Ste ",
-        #             "(",
-        #             "Suit",
-        #             "Unit",
-        #             "Building",
-        #             "#",
-        #             "STE",
-        #             "Hangar",
-        #             "Ste.",
-        #             "Ste-",
-        #         ]
-        #         for elem in check_elems:
-        #             if elem in address_raw[1]:
-        #                 address_raw = [" ".join(address_raw[:2])] + address_raw[2:]
-        #                 break
-        #     if len(address_raw) > 1:
-        #         if len(address_raw[1].split()) == 6:
-        #             address_raw = address_raw.pop(1)
 
-        #     if len(address_raw[0]) == 1:
-        #         street_address = "<MISSING>"
-        #         city = "<MISSING>"
-        #         state = "<MISSING>"
-        #         zip_code = "<MISSING>"
-        #     else:
-        #         if len(address_raw) > 1:
-        #             street_address = address_raw[0]
-        #             city = address_raw[1].split(",")[0].split()[:-1]
-        #             if not city:
-        #                 city = [
-        #                     street_address,
-        #                 ]
-        #                 street_address = "<MISSING>"
-        #             city = " ".join(city) if city else "<MISSING>"
-        #             if not address_raw[1].split(",")[0]:
-        #                 state = "<MISSING>"
-        #             else:
-        #                 state = address_raw[1].split(",")[0].split()[-1]
-        #             state = state if state else "<MISSING>"
-        #             zip_code = address_raw[-1].split(",")[-1]
-        #             zip_code = zip_code.strip() if zip_code else "<MISSING>"
-        #         else:
-        #             street_address = "<MISSING>"
-        #             city = address_raw[0].split(",")[0].split()[0]
-        #             state = address_raw[0].split(",")[0].split()[-1]
-        #             zip_code = address_raw[0].split(",")[-1].strip()
-        #     country_code = ""
-        #     if "/ca/" in store_url:
-        #         country_code = "CA"
-        #     if "/us/" in store_url:
-        #         country_code = "US"
-        #     store_number = "<MISSING>"
-        #     phone = loc_html.xpath(
-        #         './/h5[contains(text(), "Contact:")]/following-sibling::p/text()'
-        #     )
-        #     phone = phone[0] if phone else "<MISSING>"
-        #     location_type = "<MISSING>"
-        #     latitude = loc_html.xpath("@data-lat")
-        #     latitude = latitude[0] if latitude else "<MISSING>"
-        #     longitude = loc_html.xpath("@data-lon")
-        #     longitude = longitude[0] if longitude else "<MISSING>"
         hours_of_operation = loc_html.xpath('.//p[@class="hours"]/text()')
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
