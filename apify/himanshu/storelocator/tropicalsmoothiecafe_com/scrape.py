@@ -105,7 +105,7 @@ def fetch_data():
             "get",
             headers=headers,
         )
-        if r is not None:
+        if r is None:
             continue
 
         json = r.json()
