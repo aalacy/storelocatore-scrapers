@@ -55,45 +55,54 @@ def fetch_data():
             city_soup = BeautifulSoup(city_request.text, "lxml")
             for locaion in city_soup.find_all("a", {"class": "ray-card"}):
                 page_url = "https://www.wework.com" + locaion["href"]
-                location_request = session.get(page_url, headers=headers)
-                location_soup = BeautifulSoup(location_request.text, "lxml")
-                json_data = json.loads(
-                    str(location_soup.find("script", {"type": "application/ld+json"}))
-                    .split(">")[1]
-                    .split("<")[0]
-                )["@graph"][-1]
-                addr = list(location_soup.find("address").stripped_strings)[0].split(
-                    "\n"
-                )
-
-                street_address = re.sub(r"\s+", " ", " ".join(addr[:-1]))
-                city = addr[-1].split(",")[0].strip()
-                state = addr[-1].split(",")[1].split()[0].strip()
                 try:
-                    zipp = " ".join(addr[-1].split(",")[1].split()[1:])
-                except:
-                    zipp = "<MISSING>"
+                    location_request = session.get(page_url, headers=headers)
+                    location_soup = BeautifulSoup(location_request.text, "lxml")
+                    json_data = json.loads(
+                        str(
+                            location_soup.find(
+                                "script", {"type": "application/ld+json"}
+                            )
+                        )
+                        .split(">")[1]
+                        .split("<")[0]
+                    )["@graph"][-1]
+                    addr = list(location_soup.find("address").stripped_strings)[
+                        0
+                    ].split("\n")
 
-                store = []
-                store.append("https://www.wework.com")
-                store.append(location_soup.find("h1", {"id": "heading"}).text.strip())
-                store.append(street_address)
-                store.append(city)
-                store.append(state)
-                store.append(zipp.replace("AB T2P 3H9", "T2P 3H9"))
-                store.append(json_data["address"]["addressCountry"])
-                store.append("<MISSING>")
-                store.append(json_data["telephone"])
-                store.append(json_data["brand"])
-                store.append(json_data["geo"]["latitude"])
-                store.append(json_data["geo"]["longitude"])
-                store.append("<MISSING>")
-                store.append(page_url)
-                store = [
-                    str(x).replace("–", "-").strip() if x else "<MISSING>"
-                    for x in store
-                ]
-                yield store
+                    street_address = re.sub(r"\s+", " ", " ".join(addr[:-1]))
+                    city = addr[-1].split(",")[0].strip()
+                    state = addr[-1].split(",")[1].split()[0].strip()
+                    try:
+                        zipp = " ".join(addr[-1].split(",")[1].split()[1:])
+                    except:
+                        zipp = "<MISSING>"
+
+                    store = []
+                    store.append("https://www.wework.com")
+                    store.append(
+                        location_soup.find("h1", {"id": "heading"}).text.strip()
+                    )
+                    store.append(street_address)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zipp.replace("AB T2P 3H9", "T2P 3H9"))
+                    store.append(json_data["address"]["addressCountry"])
+                    store.append("<MISSING>")
+                    store.append(json_data["telephone"])
+                    store.append(json_data["brand"])
+                    store.append(json_data["geo"]["latitude"])
+                    store.append(json_data["geo"]["longitude"])
+                    store.append("<MISSING>")
+                    store.append(page_url)
+                    store = [
+                        str(x).replace("–", "-").strip() if x else "<MISSING>"
+                        for x in store
+                    ]
+                    yield store
+                except:
+                    pass
 
 
 def scrape():
