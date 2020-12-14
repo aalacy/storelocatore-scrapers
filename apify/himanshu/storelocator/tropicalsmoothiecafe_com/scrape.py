@@ -109,7 +109,6 @@ def fetch_data():
         if r == None:
             continue
 
-
         json = r.json()
         temp_locations = json["locations"]
 
