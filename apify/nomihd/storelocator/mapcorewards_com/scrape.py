@@ -79,16 +79,11 @@ def fetch_data():
             for store in stores:
                 locator_domain = website
                 page_url = "https://www.mapcorewards.com/store/" + store["meta"]["slug"]
+
+                raw_address = store["fields"]["address"][0]["location_street"]
+
                 store_req = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_req.text)
-                open("temp.json", "w").write(
-                    "".join(
-                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                    )
-                    .strip()
-                    .replace("\n", "")
-                    .strip()
-                )
                 store_json = json.loads(
                     "".join(
                         store_sel.xpath('//script[@type="application/ld+json"]/text()')
@@ -97,19 +92,34 @@ def fetch_data():
                 )
 
                 location_name = store_json["name"]
-                street_address = store_json["address"]["streetAddress"]
+                if len(raw_address.split(",")) >= 4:
+                    street_address = ", ".join(raw_address.rsplit(",")[:-3])
+                    city = raw_address.split(",")[-3].strip()
+                    try:
+                        state = raw_address.split(",")[-2].strip().split(" ")[0].strip()
+                    except:
+                        state = store_json["address"]["addressRegion"]
+
+                    try:
+                        zip = raw_address.split(",")[-2].strip().split(" ")[1].strip()
+                    except:
+                        zip = store_json["address"]["postalCode"]
+
+                else:
+                    street_address = store_json["address"]["streetAddress"]
+                    city = store_json["address"]["addressLocality"]
+                    state = store_json["address"]["addressRegion"]
+                    zip = store_json["address"]["postalCode"]
+
                 if street_address == "":
                     street_address = "<MISSING>"
 
-                city = store_json["address"]["addressLocality"]
-                if city == "":
+                if city == "" or "United States" in city:
                     city = "<MISSING>"
 
-                state = store_json["address"]["addressRegion"]
                 if state == "":
                     state = "<MISSING>"
 
-                zip = store_json["address"]["postalCode"]
                 if zip == "" or zip.isdigit() is False:
                     zip = "<MISSING>"
                 country_code = store_json["address"]["addressCountry"]
