@@ -41,7 +41,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -60,7 +59,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -105,7 +104,6 @@ def fetch_data():
         )
 
         location_url = "https://www.aesop.com/graphql"
-        # logger.info(location_url)
         try:
             r = session.post(location_url, headers=headers, data=payload)
             json_data = r.json()["data"]["stores"]
