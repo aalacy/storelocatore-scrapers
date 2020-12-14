@@ -1,13 +1,14 @@
 import csv
-from sgrequests import SgRequests
-import requests_random_user_agent  # noqa
 import json
 import re
 import time
 import random
 import threading
-from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
+import requests_random_user_agent  # noqa
+from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 
 logger = SgLogSetup().get_logger("gnc_com")
 
@@ -22,9 +23,6 @@ headers = {
 re_get_json = re.compile(
     r"map\.data\.addGeoJson\(\s*JSON\.parse\(\s*eqfeed_callback\((.+?)\)\s*\)\s*\);"
 )
-re_get_phone = re.compile(r'<a href="tel:(.+?)" class="store-phone">')
-re_get_hours_section = re.compile(r'<div class="storeLocatorHours">([\s\S]+?)<\/div>')
-re_get_hours_days = re.compile(r"<span><span>([\s\S]+?)<\/span>([\s\S]+?)<\/span>")
 
 
 def sleep(min=2, max=10):
@@ -104,34 +102,26 @@ def get_json_data(html):
     return json.loads(json_text)
 
 
-def get_phone(html):
-    match = re.search(re_get_phone, html)
-    if match is None:
-        return "<MISSING>"
-    else:
-        return match.group(1)
+def get_phone(soup):
+    phone = soup.find("a", class_="store-phone")
+
+    return re.sub("(|)", "", phone.getText()) or "<MISSING>" if phone else "<MISSING>"
 
 
-def get_hours(html):
-    match_section = re.search(re_get_hours_section, html)
-    if match_section is None:
-        return "<MISSING>"
+def extract_hours(node):
+    return node.getText().strip().replace("\n", " ")
 
-    hours = ""
-    match_days = re.findall(re_get_hours_days, match_section.group(1))
-    if len(match_days) == 0:
+
+def get_hours(soup):
+    storeHours = soup.find("div", class_="storeLocatorHours")
+    if not storeHours:
         return "<MISSING>"
 
-    for m in match_days:
-        if len(hours) > 0:
-            hours = hours + ", "
-        hours = f"{hours}{m[0].strip()}: {m[1].strip()}"
-
-    hours = hours.replace("\n", "")
-    return hours
+    openingHours = storeHours.findChildren("span")
+    return ",".join(extract_hours(day) for day in openingHours)
 
 
-def search_zip(postal, reset=False, attempts=1):
+def search_zip(postal, reset=False):
     log("searching: ", postal)
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
@@ -154,7 +144,7 @@ def search_zip(postal, reset=False, attempts=1):
         logger.info(f">>> exception searching zip {postal} >>> {ex}")
 
 
-def get_location(loc, reset_session=False, attempts=1):
+def get_location(loc, reset_session=False):
     props = loc["properties"]
     store_id = props["storenumber"]
     website = "gnc.com"
@@ -177,8 +167,10 @@ def get_location(loc, reset_session=False, attempts=1):
         r = session.get(url, headers=headers)
         r.raise_for_status()
         increment_request_count()
-        phone = get_phone(r.text)
-        hours = get_hours(r.text)
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        phone = get_phone(soup)
+        hours = get_hours(soup)
 
         location = [
             website,
