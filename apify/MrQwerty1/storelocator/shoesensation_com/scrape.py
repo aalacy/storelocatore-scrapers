@@ -153,7 +153,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if store_number not in s and hours_of_operation.count("Closed") != 7:
+            if store_number not in s:
                 s.add(store_number)
                 out.append(row)
 
