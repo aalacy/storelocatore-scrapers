@@ -64,7 +64,6 @@ def fetch_data():
     stores_req = session.get(
         "https://www.jcpenneyoptical.com/store-locator/", headers=headers
     )
-    # open("page_source.html", "w+b").write(stores_req.text.encode("utf-8"))
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
         '//div[@class="store col-lg-4 col-md-4 col-sm-6 col-xs-12"]'
