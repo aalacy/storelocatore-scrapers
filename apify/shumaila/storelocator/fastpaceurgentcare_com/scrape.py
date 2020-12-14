@@ -139,6 +139,8 @@ def fetch_data():
             if "Tennessee" in city and len(state) < 2:
                 state = "TN"
                 city = city.replace("Tennessee", "")
+            if len(phone) < 3:
+                phone = "<MISSING>"
             data.append(
                 [
                     "https://fastpaceurgentcare.com/",
