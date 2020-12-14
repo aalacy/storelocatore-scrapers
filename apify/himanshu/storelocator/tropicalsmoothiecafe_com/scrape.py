@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import time
@@ -109,7 +108,7 @@ def fetch_data():
         )
         if r == None:
             continue
-        soup = BeautifulSoup(r.text, "lxml")
+
 
         json = r.json()
         temp_locations = json["locations"]
