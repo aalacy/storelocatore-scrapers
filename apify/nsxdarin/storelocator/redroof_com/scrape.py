@@ -1,8 +1,5 @@
 import csv
 import requests  # ignore_check
-import json
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections
