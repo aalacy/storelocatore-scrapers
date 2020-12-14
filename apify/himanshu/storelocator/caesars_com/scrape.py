@@ -3,12 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
-import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('caesars')
-
-
 session = SgRequests()
 
 
@@ -38,14 +32,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
     'X-Requested-With': 'XMLHttpRequest'
     }
-    page = 0
     data = bs(session.get(base_url, headers=headers).text,'lxml')
     j_ = json.loads(data.find("div",{"class":"hero aem-GridColumn aem-GridColumn--default--12"}).find("cet-hero")['data-model'])
     for it  in j_['booker']['markets']:
         for pro in it['properties']:
             location_name = pro['label']
             url = "https://www.caesars.com/api/v1/properties/"+str(pro['value'].upper())
-          
+        
             try:
                 adr  = session.get(url,headers=headers).json()
                 street_address = adr['address']['street']
@@ -84,21 +77,16 @@ def fetch_data():
                 addressess.append(str(store[2]+store[-1]))
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # logger.info('---store--'+str(store))
+    
                 yield store
 
             except:
                 pass
-    
-
-    
-        
+      
             
 
 def scrape():
     data = fetch_data()
-
     write_output(data)
-
 
 scrape()
