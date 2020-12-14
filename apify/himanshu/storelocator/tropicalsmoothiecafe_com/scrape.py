@@ -78,16 +78,12 @@ def request_wrapper(url, method, headers, data=None):
 def fetch_data():
     address = []
     base_url = "https://locations.tropicalsmoothiecafe.com"
-    addresses = []
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
         max_radius_miles=49,
         max_search_results=100,
     )
     MAX_RESULTS = 25
-    # MAX_DISTANCE = 100
-    # coords = search.next_coord()
-    current_results_len = 0
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
