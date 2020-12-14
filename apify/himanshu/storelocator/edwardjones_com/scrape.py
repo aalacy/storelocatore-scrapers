@@ -63,7 +63,7 @@ def fetch_data():
         except:
             continue
 
-        if "error" not in json_data and json_data["multipleLocations"] == False:
+        if "error" not in json_data and json_data["multipleLocations"] is False:
             if json_data["faList"] != [] and json_data["faList"] is not None:
                 for x in json_data["faList"]:
                     if x["additionalFaData"]["faInfo"] is not None:
