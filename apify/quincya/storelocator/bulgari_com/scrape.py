@@ -115,8 +115,14 @@ def fetch_data():
             )
             state = raw_address[-2].strip()
             if not state:
-                raw_state = base.find(class_="storelocator-bread-subtitle").text.replace("\n", " ").strip()
-                state = raw_state[raw_state.rfind(",") + 1:raw_state.rfind(" ")].strip()
+                raw_state = (
+                    base.find(class_="storelocator-bread-subtitle")
+                    .text.replace("\n", " ")
+                    .strip()
+                )
+                state = raw_state[
+                    raw_state.rfind(",") + 1 : raw_state.rfind(" ")
+                ].strip()
 
             zip_code = raw_address[-1].strip()
 
