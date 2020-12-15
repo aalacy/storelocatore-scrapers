@@ -117,7 +117,7 @@ def fix_comma(x):
 
 def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=MappingField(mapping=["url"]),,
+        locator_domain=MappingField(mapping=["url"]),
         page_url=MultiMappingField(
             mapping=[["url"], ["StoreId"]], multi_mapping_concat_with="/stores/"
         ),
