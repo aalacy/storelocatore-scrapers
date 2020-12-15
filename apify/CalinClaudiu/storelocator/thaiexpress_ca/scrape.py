@@ -163,8 +163,7 @@ def fetch_data():
                     EC.visibility_of_element_located((By.XPATH, '//*[@id="store0"]'))
                 )
                 soup = b4(driver.page_source, "lxml")
-        except Exception as e:
-            print(e)
+        except Exception:
             count += 1
             continue
 
