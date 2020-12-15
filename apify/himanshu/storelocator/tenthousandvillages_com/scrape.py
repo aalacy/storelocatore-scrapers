@@ -80,12 +80,12 @@ def fetch_data():
         ).json()
         for val in json_data:
             location_name = val["name"]
-            if val["address_2"] != None:
+            if val["address_2"] is not None:
                 address2 = val["address_2"]
             else:
                 address2 = ""
 
-            if val["address_1"] != None:
+            if val["address_1"] is not None:
                 address1 = val["address_1"]
             else:
                 address1 = ""
