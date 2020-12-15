@@ -38,7 +38,6 @@ def write_output(data):
 
 def fetch_data():
     addressesess = []
-    base_url = "https://www.nathansfamous.com"
     headers = {
         "accept": "*/*",
         "Cookie": "__cfduid=d89370e180312a50705023f5f19721bec1606384421",
