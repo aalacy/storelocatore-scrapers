@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator --ignore GeoConsistencyValidator --ignore StateLevelCountValidator (Confirmed on website)
