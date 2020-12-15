@@ -1,8 +1,12 @@
 import csv
 
+from sglogging import sglog
+
 from sgrequests import SgRequests
 
-from sgzip import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="medicineshoppe.com")
 
 
 def write_output(data):
@@ -38,12 +42,12 @@ def write_output(data):
 def fetch_data():
     session = SgRequests()
     headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     }
     locator_domain = "medicineshoppe.com"
 
     max_results = 10
-    max_distance = 1000
+    max_distance = 100
 
     all_store_data = []
 
@@ -55,20 +59,19 @@ def fetch_data():
         max_search_results=max_results,
     )
 
-    search.initialize()
-    postcode = search.next()
-
     base_link = "https://api-web.rxwiki.com/api/v2/location/search"
 
     i = 1
-    while postcode:
+    for postcode in search:
         json = {
             "search_radius": max_distance,
             "query": postcode,
             "page": "0",
             "app_id": "2faa9d19-602f-4342-a44f-e2a8c7df2797",
         }
-
+        log.info(
+            "Searching: %s | Items remaining: %s" % (postcode, search.items_remaining())
+        )
         # Reset every 20 to avoid Too many requests block
         if i % 20 == 0:
             session = SgRequests()
@@ -77,9 +80,6 @@ def fetch_data():
         res_json = session.post(base_link, headers=headers, json=json).json()[
             "locations"
         ]
-
-        result_coords = []
-
         for loc in res_json:
 
             location_name = loc["name"].strip()
@@ -92,7 +92,7 @@ def fetch_data():
 
             lat = loc["latitude"]
             longit = loc["longitude"]
-            result_coords.append([lat, longit])
+            search.mark_found([lat, longit])
 
             raw_address = loc["addr"]["Main"]
             try:
@@ -169,10 +169,6 @@ def fetch_data():
             ]
 
             all_store_data.append(store_data)
-
-        if len(result_coords) > 0:
-            search.update_with(result_coords)
-        postcode = search.next()
 
     return all_store_data
 

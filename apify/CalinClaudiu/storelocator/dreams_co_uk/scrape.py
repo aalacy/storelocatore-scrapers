@@ -142,6 +142,7 @@ def scrape():
         page_url=sp.MappingField(
             mapping=["url"],
             is_required=False,
+            value_transform=lambda x: "https://www.dreams.co.uk" + x,
         ),
         location_name=sp.MappingField(
             mapping=["displayName"],
