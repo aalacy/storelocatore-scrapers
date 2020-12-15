@@ -103,7 +103,6 @@ def fetch_data():
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
-            print(rows)
             for row in rows:
                 _id = row[8]
                 if _id not in s:
