@@ -81,69 +81,106 @@ def fetch_data():
     for zip_code in zips:
         log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
 
-        page_url = (
+        search_url = (
             "https://www.floorstogo.com/StoreLocator.aspx?&searchZipCode=" + zip_code
         )
-        stores_req = session.get(page_url, headers=headers)
+        stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath(
-            "//div[@class=" '"search-store__results-address col-xs-12 col-sm-4"]'
-        )
+        stores = stores_sel.xpath('//table[@class="MasterTable_Default"]/tbody/tr')
         for store in stores:
-            temp_text = store.xpath("p")
-            raw_text = []
-            for t in temp_text:
-                raw_text.append("".join(t.xpath("text()")).strip())
+            temp_text = store.xpath(
+                ".//div[@class='search-store__results-address col-xs-12 col-sm-4']/p"
+            )
+            if store.xpath(
+                ".//div[@class='search-store__results-address col-xs-12 col-sm-4']"
+            ):
+                raw_text = []
+                for t in temp_text:
+                    raw_text.append("".join(t.xpath("text()")).strip())
 
-            locator_domain = website
-            location_name = raw_text[-4]
-            street_address = raw_text[-3]
-            city_state_zip = raw_text[-2]
-            city = city_state_zip.split(",")[0].strip()
-            state = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[0].strip()
-            zip = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[1].strip()
+                locator_domain = website
+                location_name = raw_text[-4]
+                street_address = raw_text[-3]
+                city_state_zip = raw_text[-2]
+                city = city_state_zip.split(",")[0].strip()
+                state = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[0].strip()
+                zip = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[1].strip()
 
-            if street_address == "":
-                street_address = "<MISSING>"
+                if street_address == "":
+                    street_address = "<MISSING>"
 
-            if city == "":
-                city = "<MISSING>"
+                if city == "":
+                    city = "<MISSING>"
 
-            if state == "":
-                state = "<MISSING>"
+                if state == "":
+                    state = "<MISSING>"
 
-            if zip == "":
-                zip = "<MISSING>"
+                if zip == "":
+                    zip = "<MISSING>"
 
-            country_code = "US"
+                country_code = "US"
 
-            store_number = "<MISSING>"
-            phone = raw_text[-1].strip()
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = raw_text[-1].strip()
+                location_type = "<MISSING>"
+                hours_of_operation = ""
+                web = "".join(
+                    store.xpath('.//a[contains(text(),"view website")]/@href')
+                ).strip()
+                if len(web) > 0:
+                    latitude = "<INACCESSIBLE>"
+                    longitude = "<INACCESSIBLE>"
 
-            hours_of_operation = "<MISSING>"
-            if phone == "":
-                phone = "<MISSING>"
+                    url = "https://www.floorstogo.com" + web
+                    store_req = session.get(url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_req.text)
+                    page_url = store_req.url
+                    locations = store_sel.xpath('//div[@class="multi-location"]')
+                    if len(locations) <= 0:
+                        locations = store_sel.xpath('//div[@class="single-location"]')
+                    hours_of_operation = ""
+                    for loc in locations:
+                        if (
+                            phone
+                            == "".join(
+                                loc.xpath('a[@class="footer-phone"]/text()')
+                            ).strip()
+                        ):
+                            hours_of_operation = "".join(
+                                loc.xpath('p[@class="hours"]/text()')
+                            ).strip()
+                            if not hours_of_operation:
+                                hours_of_operation = "".join(
+                                    store_sel.xpath('.//p[@class="hours"]/text()')
+                                ).strip()
+                            break
+                else:
+                    page_url = search_url
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
+
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                loc_list.append(curr_list)
 
     return loc_list
 
