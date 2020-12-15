@@ -19,6 +19,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -118,8 +119,13 @@ def fetch_data():
                     hours = hrinfo
                 else:
                     hours = hours + "; " + hrinfo
+        if "NON DRY" in add:
+            add = add.split("NON DRY")[0].strip()
+        if "Temp." in add:
+            add = add.split("Temp.")[0].strip()
         yield [
             website,
+            loc,
             name,
             add,
             city,
