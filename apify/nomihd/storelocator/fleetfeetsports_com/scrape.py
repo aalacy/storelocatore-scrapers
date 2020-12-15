@@ -66,7 +66,6 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="location-list"]//div[@class="location"]')
     for store in stores:
-        page_url = "https://www.fleetfeet.com/locations"
         temp_text = store.xpath("p/text()")
 
         street_address = ""
@@ -108,6 +107,12 @@ def fetch_data():
         state = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[0].strip()
         zip = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[1].strip()
 
+        page_url = "".join(store.xpath('p/a[contains(text(),"website")]/@href')).strip()
+        if "http" not in page_url:
+            page_url = "https://www.fleetfeet.com" + page_url
+
+        if page_url == "":
+            page_url = "<MISSING>"
         locator_domain = website
         location_name = "".join(store.xpath("h3/text()")).strip()
 
