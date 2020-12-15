@@ -51,7 +51,7 @@ def parser(location_soup, url):
     store_zip = location_soup.find("meta", {"property": re.compile("postal-code")})[
         "content"
     ]
-    if location_soup.find("meta", {"property": re.compile("phone_number")}) == None:
+    if location_soup.find("meta", {"property": re.compile("phone_number")}) is None:
         phone = "<MISSING>"
     else:
         phone = location_soup.find("meta", {"property": re.compile("phone_number")})[
