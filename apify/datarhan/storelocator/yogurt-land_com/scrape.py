@@ -54,7 +54,6 @@ def fetch_data():
     next_page = data["has_more"]
     while next_page:
         page_num = str(int(data["page"]) + 1)
-        print(page_num)
         next_page_url = add_or_replace_parameter(start_url, "page", page_num)
         response = session.get(next_page_url, headers=headers)
         data = json.loads(response.text)
