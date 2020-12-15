@@ -89,6 +89,10 @@ def fetch_data():
             hours = '<MISSING>'
             if state == '':
                 state = 'PR'
+            print(name)
+            print(add)
+            print(city)
+            print(state)
             if name != '':
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
