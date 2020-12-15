@@ -68,7 +68,6 @@ def fetch_data():
             "aroundLatLng": "40.581811,-74.166455",
         }
         page_url = add_or_replace_parameters(start_url, params)
-        print(page_url)
         response = session.get(page_url, headers=headers)
         data = json.loads(response.text)
         if not data.get("hits"):
