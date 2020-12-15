@@ -1,9 +1,6 @@
 import csv
 import json
-import sgzip
-import urllib.parse
-from lxml import etree
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
 
@@ -33,18 +30,10 @@ def fetch_data():
         'x-requested-with': 'XMLHttpRequest'
     }
     start_url = 'https://www.dollarama.com/en-CA/locations/GetDataByCoordinates?longitude={}&latitude={}&distance=500&units=kilometers&amenities=&paymentMethods='
-    all_coordinates = []
-    us_coordinates = sgzip.coords_for_radius(radius=100, country_code=SearchableCountries.USA)
-    for coord in us_coordinates:
-        all_coordinates.append(coord)
-    ca_coordinates = sgzip.coords_for_radius(radius=100, country_code=SearchableCountries.CANADA)
-    for coord in ca_coordinates:
-        all_coordinates.append(coord)
+    all_coordinates = DynamicGeoSearch(country_codes=[SearchableCountries.CANADA, SearchableCountries.USA], max_radius_miles=100, max_search_results=None)
 
-    for coord in all_coordinates:
-        lat, lng = coord
+    for lat, lng in all_coordinates:
         response = session.post(start_url.format(lng, lat), headers=hdr)
-        
         all_poi_data = json.loads(response.text)
         for poi in all_poi_data['StoreLocations']:
             location_name = poi['Name']
