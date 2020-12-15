@@ -33,7 +33,6 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    s = set()
     url = "https://christushealth.org/"
     api_url = "https://christushealth.org/~/locations/%7BFA392008-735A-4839-B72D-2E06304BCB4C%7D.ashx"
 
@@ -81,10 +80,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            check = tuple(row[2:6])
-            if check not in s:
-                s.add(check)
-                out.append(row)
+            out.append(row)
 
     return out
 
