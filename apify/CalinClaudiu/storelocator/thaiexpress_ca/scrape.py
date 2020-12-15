@@ -3,19 +3,14 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from sglogging import sglog
-from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 
 def parse_store(store):
     k = {}
     try:
-        crappyaddr = store.find(
-            "div", {"class": lambda x: x and "store-address" in x}
-        ).text.strip()
+        crappyaddr = store.find("address").text.strip()
         crappyaddr = crappyaddr.split("  ")
     except Exception:
         crappyaddr = "<MISSING>"
@@ -29,32 +24,17 @@ def parse_store(store):
             crappyaddr.pop(0)
 
     try:
-        k["Name"] = store.find(
-            "div", {"class": lambda x: x and "store-location" in x}
-        ).text.strip()
+        k["Name"] = store.find("location").text.strip()
     except Exception:
         k["Name"] = "<MISSING>"
 
     try:
-        coords = (
-            store.find(
-                "a",
-                {"href": lambda x: x and x.startswith("https://maps.google.com/maps")},
-            )["href"]
-            .split("(")[1]
-            .split(")")[0]
-            .split(",")
-        )
-    except Exception:
-        coords = "<MISSING>"
-
-    try:
-        k["Latitude"] = coords[0].strip()
+        k["Latitude"] = store.find("latitude").text.strip()
     except Exception:
         k["Latitude"] = "<MISSING>"
 
     try:
-        k["Longitude"] = coords[1].strip()
+        k["Longitude"] = store.find("longitude").text.strip()
     except Exception:
         k["Longitude"] = "<MISSING>"
 
@@ -97,38 +77,30 @@ def parse_store(store):
     k["CountryCode"] = "<MISSING>"
 
     try:
-        k["Phone"] = store.find(
-            "div", {"class": lambda x: x and "store-tel" in x}
-        ).text.strip()
+        k["Phone"] = store.find("telephone").text.strip()
     except Exception:
         k["Phone"] = "<MISSING>"
 
     try:
-        k["StoreId"] = store.find(
-            "div", {"class": lambda x: x and "store-description" in x}
-        ).text.strip()
+        k["StoreId"] = store.find("storeid").text.strip()
     except Exception:
         k["StoreId"] = "<MISSING>"
 
     try:
-        k["hours"] = "; ".join(
-            list(
-                store.find(
-                    "div", {"class": lambda x: x and "store-operating-hours" in x}
-                ).stripped_strings
-            )
-        ).replace("&nbsp;", " ")
+        hours = store.find("operatinghours").text.strip()
+        hours = "<div>" + hours + "</div>"
+        hours = b4(hours, "lxml")
+        hours = list(hours.stripped_strings)
+        k["hours"] = "; ".join(hours).replace("&nbsp;", " ")
     except Exception:
         k["hours"] = "<MISSING>"
 
     try:
-        k["StatusName"] = "/".join(
-            list(
-                store.find(
-                    "div", {"class": lambda x: x and "store-description" in x}
-                ).stripped_strings
-            )
-        ).replace("&nbsp;", " ")
+        hours = store.find("description").text.strip()
+        hours = "<div>" + hours + "</div>"
+        hours = b4(hours, "lxml")
+        hours = list(hours.stripped_strings)
+        k["StatusName"] = "/".join(hours).replace("&nbsp;", " ")
     except Exception:
         k["StatusName"] = "<MISSING>"
 
@@ -137,40 +109,20 @@ def parse_store(store):
 
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://thaiexpress.ca/"
-    soup = "3"
-    count = 0
-    while soup == "3" and count < 20:
-        try:
-            with SgChrome() as driver:
-                logzilla.info(f"Getting page..")  # noqa
-                driver.get(url)
-                menu = WebDriverWait(driver, 120).until(
-                    EC.visibility_of_element_located(
-                        (By.XPATH, '//*[@id="page"]/div[2]/div[2]/div[1]/a')
-                    )
-                )
-                driver.execute_script("arguments[0].click();", menu)
-                menu = WebDriverWait(driver, 120).until(
-                    EC.visibility_of_element_located(
-                        (By.XPATH, '//*[@id="mobile-menu"]/li[4]/a')
-                    )
-                )
-                driver.execute_script("arguments[0].click();", menu)
-
-                logzilla.info(f"Waiting for response to load.")  # noqa
-                locs = WebDriverWait(driver, 120).until(  # noqa
-                    EC.visibility_of_element_located((By.XPATH, '//*[@id="store0"]'))
-                )
-                soup = b4(driver.page_source, "lxml")
-        except Exception:
-            count += 1
-            continue
-
-    stores = soup.find("span", {"id": "storeLocator__storeList"})
-    stores = stores.find_all("div", {"class": "store-locator__infobox"})
+    url = "https://thaiexpress.ca/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+    }
+    session = SgRequests()
+    son = session.get(url, headers=headers)
+    soup = b4(son.text, "lxml")
+    stores = soup.find("store")
+    stores = stores.find_all("item")
     for i in stores:
-        yield (parse_store(i))
+        k = parse_store(i)
+        if "Closed permanently" in k["hours"]:
+            k["StatusName"] = k["StatusName"] + "/Closed permanently"
+        yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
