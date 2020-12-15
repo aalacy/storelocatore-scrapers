@@ -56,11 +56,15 @@ def fetch_data():
         street_address = (
             (value["address"].strip() + " " + value["address2"].strip())
             .strip()
-            .title()
             .replace("&#039;", "")
             .replace("Highway 70", "Highway 70 SE")
+            .title()
+            .replace("2Nd", "2nd")
+            .replace("3Rd", "3rd")
+            .replace(" Us ", " US ")
+            .replace(" Se", " SE")
         )
-        city = value["city"]
+        city = value["name"].replace("Downtown", "").replace("FL", "").strip()
         state = value["state"]
         zipp = value["zip"]
         country_code = "US"
