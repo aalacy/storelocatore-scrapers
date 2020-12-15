@@ -51,7 +51,6 @@ def fetch_data():
         max_search_results=100,
     )
     for coord in coords:
-        ct = ct + 1
         url = (
             "https://restaurants.nathansfamous.com/wp-admin/admin-ajax.php?action=store_search&lat="
             + coord[0]
