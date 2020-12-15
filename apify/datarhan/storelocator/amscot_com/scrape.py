@@ -1,6 +1,5 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    gathered_poi = []
 
     DOMAIN = "amscot.com"
     start_url = "https://www.amscot.com/handlers/pinsNearestAms.ashx?city1=altamonte+springs&lat1=28.665015750000002&lon1=-81.38724625&range=20000"
