@@ -59,9 +59,7 @@ def fetch_data():
             '//ol[@class="ResultList"]//a[@data-ya-track="website_cta"]/@href'
         )
 
-    print("Total locations: ", len(list(set(all_locations))))
     for store_url in list(set(all_locations)):
-        print(store_url)
         if not store_url.strip():
             continue
         if "html" in store_url:
