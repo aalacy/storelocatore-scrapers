@@ -272,8 +272,9 @@ def fetch_data():
             data["final"].append(j)
 
     for i in data["final"]:
-        if i["heading1"] == "Location":
-            yield parsed(i)
+        k = parsed(i)
+        if "MISSING" not in k["type"]:
+            yield k
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -298,20 +299,31 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(mapping=["url"]),
-        location_name=sp.MappingField(mapping=["name"], is_required=False),
+        location_name=sp.MappingField(
+            mapping=["name"], is_required=False, part_of_record_identity=True
+        ),
         latitude=sp.MappingField(mapping=["latitude"]),
         longitude=sp.MappingField(mapping=["longitude"]),
         street_address=sp.MappingField(
-            mapping=["address"], is_required=False, value_transform=fix_comma
+            mapping=["address"],
+            is_required=False,
+            value_transform=fix_comma,
+            part_of_record_identity=True,
         ),
-        city=sp.MappingField(mapping=["city"], is_required=False),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
-        country_code=sp.MappingField(mapping=["country"]),
+        city=sp.MappingField(
+            mapping=["city"], is_required=False, part_of_record_identity=True
+        ),
+        state=sp.MappingField(
+            mapping=["state"], is_required=False, part_of_record_identity=True
+        ),
+        zipcode=sp.MappingField(
+            mapping=["zipcode"], is_required=False, part_of_record_identity=True
+        ),
+        country_code=sp.MappingField(mapping=["country"], part_of_record_identity=True),
         phone=sp.MappingField(mapping=["phone"]),
-        store_number=sp.MappingField(mapping=["id"], part_of_record_identity=True),
+        store_number=sp.MappingField(mapping=["id"]),
         hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MappingField(mapping=["type"]),
+        location_type=sp.MappingField(mapping=["type"], part_of_record_identity=True),
     )
 
     pipeline = sp.SimpleScraperPipeline(
