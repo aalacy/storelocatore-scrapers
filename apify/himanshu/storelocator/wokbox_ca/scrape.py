@@ -15,7 +15,6 @@ def fetch_data():
     container = soup.find("table")
     rows = container.find_all("tr")
     del rows[0]
-    i = 1
     for row in rows:
         locator_domain = "https://wokbox.ca/locations"
         name = row.find(class_="wpgmza_table_title all").get_text()
@@ -27,7 +26,6 @@ def fetch_data():
         country_code = "CA"
         store_number = "<MISSING>"
         desc = row.find(class_="wpgmza_table_description").get_text().split()
-        # hours = ['Mon - Sat: 12pm - 7pm','Sun: 12pm - 6pm','Phone: 604-746-1070']
         for index, h in enumerate(desc):
             if "Phone" in h:
                 hours = " ".join(desc[:index])
