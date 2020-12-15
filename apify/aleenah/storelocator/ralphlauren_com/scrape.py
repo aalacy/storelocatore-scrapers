@@ -77,7 +77,6 @@ def fetch_data():
             for j in js:
                 if "appointment" in locs[js.index(j)].lower():
                     continue
-                print(urls[js.index(j)].find("a").get("href"))
                 city = cities[js.index(j)]
                 state = states[js.index(j)]
                 country = countries[js.index(j)]
