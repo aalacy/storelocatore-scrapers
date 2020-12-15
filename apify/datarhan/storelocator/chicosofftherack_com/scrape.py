@@ -102,7 +102,7 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for elem in poi["relationships"]["hours"]:
-            if elem['type'] != 'regular':
+            if elem["type"] != "regular":
                 continue
             day = elem["displayDay"]
             opens = elem["displayStartTime"]
