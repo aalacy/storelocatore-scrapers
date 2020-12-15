@@ -130,7 +130,7 @@ def get_locations_in_city(city_url):
             try:
                 next(lines)
                 g = next(lines)
-                if 'href="' not in g:
+                while 'href="' not in g:
                     g = next(lines)
                 lurl = g.split('href="')[1].split('/"')[0]
                 if "http" not in lurl:
