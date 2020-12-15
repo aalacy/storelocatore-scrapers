@@ -28,9 +28,7 @@ def parse_dealer(k):
     soup = b4(page.text, "lxml")
 
     try:
-        h = soup.find(
-            "div", {"class": lambda x: x and "intro-opening-times" in x}
-        )
+        h = soup.find("div", {"class": lambda x: x and "intro-opening-times" in x})
         h = h.find_all("p")
         k["hours"] = []
         for i in h:
@@ -78,9 +76,9 @@ def get_url(soup):
         k["address"] = addr[0]
         addr.pop(0)
         while any(i.isdigit() for i in addr[0]):
-            k["address"] = k["address"]+', '+addr[0]
+            k["address"] = k["address"] + ", " + addr[0]
             addr.pop(0)
-            
+
     except Exception:
         k["address"] = "<MISSING>"
 
@@ -187,8 +185,10 @@ def fetch_data():
                     tot += 1
                     identities.add(i["page_url"])
                     final_results.append(i)
-        
-        logzilla.info(f"{coord} | remaining: {search.items_remaining()} | found: {now} | Total: {tot} ")
+
+        logzilla.info(
+            f"{coord} | remaining: {search.items_remaining()} | found: {now} | Total: {tot} "
+        )
 
     lize = utils.parallelize(
         search_space=final_results,
@@ -281,7 +281,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours"],
-            value_transform = lambda x : x.replace('/',':'),
+            value_transform=lambda x: x.replace("/", ":"),
             is_required=False,
         ),
         location_type=sp.MissingField(),
