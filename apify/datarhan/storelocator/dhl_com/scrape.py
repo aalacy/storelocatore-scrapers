@@ -5,6 +5,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from itertools import chain
 
+
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
@@ -45,7 +46,11 @@ def country_name(country):
 
 
 def fetch_data():
-    return chain(scrape_country(SearchableCountries.USA), scrape_country(SearchableCountries.CANADA))
+    return chain(
+        scrape_country(SearchableCountries.USA),
+        scrape_country(SearchableCountries.CANADA),
+    )
+
 
 def scrape_country(country):
     session = SgRequests()
@@ -55,15 +60,12 @@ def scrape_country(country):
     DOMAIN = "dhl.com"
     api_url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode={}&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
-    
+
     search = DynamicGeoSearch(
-        country_codes=[country],
-        max_radius_miles=50,
-        max_search_results=None
+        country_codes=[country], max_radius_miles=50, max_search_results=None
     )
 
     for lat, lng in search:
-        print(f'{(lat, lng)} | remaining: {search.items_remaining()}')
         url = api_url.format(country_name(country), str(lat), str(lng))
         response = session.get(url)
         if not response.text:
@@ -136,7 +138,6 @@ def scrape_country(country):
             if check not in scrape_items:
                 scrape_items.append(check)
                 yield item
-        print(len(coords))
         search.mark_found(coords)
 
 
