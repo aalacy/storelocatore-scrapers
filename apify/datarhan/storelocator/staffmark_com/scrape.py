@@ -78,36 +78,9 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
 
-    all_locations = []
-    all_states = dom.xpath('//select[@id="ddState"]/option/@value')[1:]
-    for state in all_states:
-        formdata["ddState"] = state
-        response = session.post(start_url, data=formdata, headers=headers)
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//table[@width="100%"]/tr')
-        viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')
-        if not viewstate:
-            response = session.get(start_url)
-            dom = etree.HTML(response.text)
-            viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')
-        viewstate = viewstate[0]
-        view_gen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
-        validation = dom.xpath('//input[@id="__EVENTVALIDATION"]/@value')[0]
-        as_fid = dom.xpath('//input[@name="as_fid"]/@value')[0]
-
-        formdata = {
-            "__EVENTTARGET": "",
-            "__EVENTARGUMENT": "",
-            "__VIEWSTATE": viewstate,
-            "__VIEWSTATEGENERATOR": view_gen,
-            "__EVENTVALIDATION": validation,
-            "txtCity": "",
-            "ddState": "",
-            "txtZip": "",
-            "ddDist": "100",
-            "btnSearchLocations": "Search",
-            "as_fid": as_fid,
-        }
+    response = session.post(start_url, data=formdata, headers=headers)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//table[@width="100%"]/tr')
 
     for poi_html in list(set(all_locations)):
         check = " ".join(poi_html.xpath(".//text()"))
