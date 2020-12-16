@@ -74,7 +74,7 @@ def get_locations(zone):
         if j["brandCode"] not in ("HI"):
             continue
         store = []
-        store.append("https://doubletree3.hilton.com")
+        store.append("hilton.com")
         store.append(j["name"])
         store.append(j["address"]["addressLine1"])
         store.append(j["address"]["city"])
