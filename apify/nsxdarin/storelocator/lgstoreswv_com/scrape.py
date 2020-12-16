@@ -71,7 +71,7 @@ def fetch_data():
             )
             if "," in phone:
                 try:
-                    phone = re.findall("[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
+                    phone = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
                 except:
                     phone = "<MISSING>"
             typ = item.img["src"].split("/")[-1].split("-MapIcon")[0].strip()
