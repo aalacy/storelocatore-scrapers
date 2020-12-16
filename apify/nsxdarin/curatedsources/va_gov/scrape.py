@@ -64,14 +64,14 @@ def fetch_data():
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"long":')[1].split(",")[0]
                     try:
+                        phone = "<MISSING>"
                         phurl = "https://api.va.gov/v1/facilities/va/" + store
                         rp = session.get(phurl, headers=headers)
                         for lineph in rp.iter_lines():
                             lineph = str(lineph.decode("utf-8"))
-                            if '"phone":{"main":"' in lineph:
-                                phone = lineph.split('"phone":{"main":"')[1].split('"')[
-                                    0
-                                ]
+                            if '"phone":{' in lineph:
+                                phinfo = lineph.split('"phone":{')[1].split("}")[0]
+                                phone = phinfo.split('"main":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
                     hours = "Mon: " + item.split('"monday":"')[1].split('"')[0]
@@ -149,14 +149,14 @@ def fetch_data():
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"long":')[1].split(",")[0]
                     try:
+                        phone = "<MISSING>"
                         phurl = "https://api.va.gov/v1/facilities/va/" + store
                         rp = session.get(phurl, headers=headers)
                         for lineph in rp.iter_lines():
                             lineph = str(lineph.decode("utf-8"))
-                            if '"phone":{"main":"' in lineph:
-                                phone = lineph.split('"phone":{"main":"')[1].split('"')[
-                                    0
-                                ]
+                            if '"phone":{' in lineph:
+                                phinfo = lineph.split('"phone":{')[1].split("}")[0]
+                                phone = phinfo.split('"main":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
                     hours = "Mon: " + item.split('"monday":"')[1].split('"')[0]
@@ -234,14 +234,14 @@ def fetch_data():
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"long":')[1].split(",")[0]
                     try:
+                        phone = "<MISSING>"
                         phurl = "https://api.va.gov/v1/facilities/va/" + store
                         rp = session.get(phurl, headers=headers)
                         for lineph in rp.iter_lines():
                             lineph = str(lineph.decode("utf-8"))
-                            if '"phone":{"main":"' in lineph:
-                                phone = lineph.split('"phone":{"main":"')[1].split('"')[
-                                    0
-                                ]
+                            if '"phone":{' in lineph:
+                                phinfo = lineph.split('"phone":{')[1].split("}")[0]
+                                phone = phinfo.split('"main":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
                     try:
@@ -334,14 +334,14 @@ def fetch_data():
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"long":')[1].split(",")[0]
                     try:
+                        phone = "<MISSING>"
                         phurl = "https://api.va.gov/v1/facilities/va/" + store
                         rp = session.get(phurl, headers=headers)
                         for lineph in rp.iter_lines():
                             lineph = str(lineph.decode("utf-8"))
-                            if '"phone":{"main":"' in lineph:
-                                phone = lineph.split('"phone":{"main":"')[1].split('"')[
-                                    0
-                                ]
+                            if '"phone":{' in lineph:
+                                phinfo = lineph.split('"phone":{')[1].split("}")[0]
+                                phone = phinfo.split('"main":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
                     try:
