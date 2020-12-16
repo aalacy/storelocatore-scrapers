@@ -79,7 +79,7 @@ def fetch_data():
         street_address = street_address if street_address else "<MISSING>"
         city = poi["City"]
         city = city if city else "<MISSING>"
-        state = poi["StateAbrv"]
+        state = poi["State"]
         state = state if state else "<MISSING>"
         zip_code = poi["Zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
@@ -98,6 +98,9 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if poi['TempClosed']:
+            hours_of_operation = "<MISSING>"
+            location_type = 'temporary closed'
 
         item = [
             DOMAIN,
