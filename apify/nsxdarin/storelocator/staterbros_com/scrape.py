@@ -132,6 +132,9 @@ def fetch_data():
                         .replace("&#8211;", "-")
                     )
         if add != "":
+            if state == "Linda":
+                state = "CA"
+                city = "Yorba Linda"
             yield [
                 website,
                 loc,
