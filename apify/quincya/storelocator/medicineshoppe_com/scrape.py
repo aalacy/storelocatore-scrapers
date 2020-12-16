@@ -101,6 +101,9 @@ def fetch_data():
                 ).strip()
             except:
                 street_address = raw_address["street1"]
+            street_address = (
+                street_address.replace("Ventura, CA", "").replace("  ", " ").strip()
+            )
             city = raw_address["city"]
             state = raw_address["state"]
             zip_code = raw_address["zip"]
@@ -147,6 +150,9 @@ def fetch_data():
             try:
                 page_url = loc["custUrl"]["Main"]["url"]
             except:
+                page_url = "<MISSING>"
+
+            if not page_url:
                 page_url = "<MISSING>"
 
             location_type = "<MISSING>"

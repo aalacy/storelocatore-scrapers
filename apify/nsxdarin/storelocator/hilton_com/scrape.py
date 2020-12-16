@@ -1,11 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("hilton_com")
 
-
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -36,6 +35,12 @@ def write_output(data):
         )
         for row in data:
             writer.writerow(row)
+
+
+@retry(stop=stop_after_attempt(2))
+def get_loc(loc):
+    session = SgRequests()
+    return session.get(loc, headers=headers)
 
 
 def fetch_data():
@@ -108,6 +113,7 @@ def fetch_data():
         "puerto-rico",
     ]
     url = "https://www3.hilton.com/sitemapurl-hi-00000.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -138,7 +144,10 @@ def fetch_data():
             phone = ""
             lat = ""
             lng = ""
-            r2 = session.get(loc, headers=headers)
+            try:
+                r2 = get_loc(loc)
+            except IOError:
+                continue
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))
                 if '"name": \'' in line2:
