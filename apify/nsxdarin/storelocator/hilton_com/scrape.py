@@ -5,7 +5,6 @@ from tenacity import retry, stop_after_attempt
 
 logger = SgLogSetup().get_logger("hilton_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -40,6 +39,7 @@ def write_output(data):
 
 @retry(stop=stop_after_attempt(2))
 def get_loc(loc):
+    session = SgRequests()
     return session.get(loc, headers=headers)
 
 
@@ -113,6 +113,7 @@ def fetch_data():
         "puerto-rico",
     ]
     url = "https://www3.hilton.com/sitemapurl-hi-00000.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
