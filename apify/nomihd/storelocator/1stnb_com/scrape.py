@@ -208,7 +208,7 @@ def fetch_data():
             url = "https://www.1stnb.com" + next_page
         else:
             break
-        
+
     return loc_list
 
 
