@@ -131,6 +131,17 @@ def fix_comma(x):
     return h.strip()
 
 
+def pick_phone(x):
+    phone = ""
+    for i in x:
+        if i is not None:
+            if len(i) > 1:
+                phone = i
+                return phone
+
+    return "<MISSING>"
+
+
 def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=MappingField(mapping=["domain"]),
@@ -163,9 +174,9 @@ def scrape():
             mapping=["address", "country"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
-        phone=MappingField(
-            mapping=["storeDetails", "phoneNumber"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        phone=MultiMappingField(
+            mapping=[["storeDetails", "phoneNumber"], ["contactNumber"]],
+            raw_value_transform=pick_phone,
             is_required=False,
         ),
         store_number=MappingField(mapping=["storeId"]),
