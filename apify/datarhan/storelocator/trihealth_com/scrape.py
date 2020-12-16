@@ -104,7 +104,7 @@ def fetch_data():
                 if check not in scraped_items:
                     scraped_items.append(check)
                     items.append(item)
-        elif loc_type_2 and not directions_url:
+        if loc_type_2 and not directions_url:
             for loc_2 in loc_type_2:
                 location_name = loc_2.xpath('.//div[@class="fn org"]//text()')
                 if not location_name:
@@ -154,9 +154,12 @@ def fetch_data():
                 if check not in scraped_items:
                     scraped_items.append(check)
                     items.append(item)
-        elif loc_type_3:
-            for loc_3 in loc_type_3[1:]:
-                location_name = loc_3.xpath(".//a/strong/text()")[0]
+        if loc_type_3:
+            for loc_3 in loc_type_3:
+                location_name = loc_3.xpath(".//a/strong/text()")
+                location_name = location_name[0] if location_name else ""
+                if not location_name:
+                    continue
                 address_raw = loc_3.xpath("text()")
                 address_raw = [
                     elem.strip() for elem in address_raw if elem.strip() and elem != "."
@@ -193,7 +196,7 @@ def fetch_data():
                 if check not in scraped_items:
                     scraped_items.append(check)
                     items.append(item)
-        elif directions_url:
+        if directions_url:
             directions_response = session.get(
                 "https://www.trihealth.com" + directions_url[0]
             )
@@ -292,50 +295,6 @@ def fetch_data():
                 if check not in scraped_items:
                     scraped_items.append(check)
                     items.append(item)
-        else:
-            location_name = store_dom.xpath('//div[@id="subhead"]/h1/text()')
-            location_name = location_name[0].strip() if location_name else "<MISSING>"
-            street_address = store_dom.xpath('//span[@class="street-address"]/text()')
-            street_address = (
-                street_address[0].strip() if street_address else "<MISSING>"
-            )
-            city = store_dom.xpath('//span[@class="locality"]/text()')
-            city = city[0] if city else "<MISSING>"
-            state = store_dom.xpath('//span[@class="region"]/text()')
-            state = state[0] if state else "<MISSING>"
-            zip_code = store_dom.xpath('//span[@class="postal-code"]/text()')
-            zip_code = zip_code[0] if zip_code else "<MISSING>"
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = store_dom.xpath(
-                '//div[@class="tel subtle"]/span/span[@class="hidden-xs hidden-sm"]/text()'
-            )
-            phone = phone[0] if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = f"{location_name} {street_address}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
 
     return items
 
