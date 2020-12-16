@@ -98,9 +98,9 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        if poi['TempClosed']:
+        if poi["TempClosed"]:
             hours_of_operation = "<MISSING>"
-            location_type = 'temporary closed'
+            location_type = "temporary closed"
 
         item = [
             DOMAIN,
