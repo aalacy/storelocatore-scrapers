@@ -75,28 +75,47 @@ def fetch_data():
                 state = item["LocationState1"]
                 zc = item["LocationPostal1"]
                 phone = item["LocationPhoneOffice"]
+                if phone == "":
+                    phone = "<MISSING>"
                 loc = item["LocationParentWebsite"]
                 if phone == "":
                     phone = "<MISSING>"
                 hours = "<MISSING>"
                 if store not in sids:
-                    sids.append(store)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if (
+                        state == "ON"
+                        or state == "QC"
+                        or state == "PE"
+                        or state == "NB"
+                        or state == "NS"
+                        or state == "AB"
+                        or state == "PEI"
+                        or state == "BC"
+                        or state == "SK"
+                    ):
+                        country = "CA"
+                    if (
+                        "1495 Sneed Rd" not in add
+                        and "2714 Fairview Blvd" not in add
+                        and "3812 Hillsboro Rd" not in add
+                    ):
+                        sids.append(store)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
             if len(array) <= MAX_RESULTS:
                 logger.info("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
