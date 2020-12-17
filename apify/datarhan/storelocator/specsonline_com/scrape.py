@@ -1,6 +1,5 @@
 import csv
 from lxml import etree
-from sgrequests import SgRequests
 from sgselenium import SgChrome
 
 
@@ -36,7 +35,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
 
     items = []
 
