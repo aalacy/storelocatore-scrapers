@@ -1,5 +1,7 @@
 import csv
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 session = SgRequests()
 
@@ -9,7 +11,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
+
         writer.writerow(
             [
                 "locator_domain",
@@ -28,7 +30,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -71,7 +73,16 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
             page_url = "https://instore.vervecoffee.com/?location=" + value["id"]
-            hours_of_operation = "<MISSSING>"
+            hours_of_operation = (
+                "Every day / "
+                + datetime.strptime(
+                    value["pickup_hours"]["MON"][0]["open"], "%H:%M:%S"
+                ).strftime("%I:%M %p")
+                + " - "
+                + datetime.strptime(
+                    value["pickup_hours"]["MON"][0]["close"], "%H:%M:%S"
+                ).strftime("%I:%M %p")
+            )
             page_url = "https://instore.vervecoffee.com/?location=" + value["id"]
 
             if (
@@ -80,7 +91,7 @@ def fetch_data():
             ):
                 continue
             store = []
-            store.append("https://www.wework.com")
+            store.append("https://www.vervecoffee.com/")
             store.append(location_name)
             store.append(street_address)
             store.append(city)
