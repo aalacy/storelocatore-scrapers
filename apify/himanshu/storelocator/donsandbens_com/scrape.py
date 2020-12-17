@@ -62,7 +62,7 @@ def fetch_data():
         location_name = val["merchant"]["name"]
         street_address = val["merchant"]["address"]["address_properties"][
             "street_address"
-        ]
+        ].replace("Address:", "")
         city = val["merchant"]["address"]["address_properties"]["city"]
         state = val["merchant"]["address"]["address_properties"]["state"]
         zipp = val["merchant"]["address"]["address_properties"]["zip"]
