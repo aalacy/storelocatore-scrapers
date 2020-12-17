@@ -3,3 +3,4 @@ sglogging
 sgzip
 urllib
 lxml
+sgrequests
