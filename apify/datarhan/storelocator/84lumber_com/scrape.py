@@ -101,7 +101,9 @@ def fetch_data():
             closes = hours["close"]
             hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            ", ".join(hours_of_operation).replace("12:00AM - 12:00AM", "Closed")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
