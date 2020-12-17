@@ -2,7 +2,6 @@ import csv
 from lxml import etree
 from time import sleep
 
-from sgrequests import SgRequests
 from sgselenium import SgChrome
 
 
@@ -38,10 +37,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-
     items = []
-    scraped_items = []
 
     DOMAIN = "thechristhospital.com"
     start_url = "https://www.thechristhospital.com/locations"
