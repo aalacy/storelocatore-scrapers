@@ -69,7 +69,6 @@ def fetch_data():
             "Frios Gourmet Pops - "
             + base.find_all(class_="elementor-text-editor elementor-clearfix")[0].text
         )
-        # logger.info(location_name)
 
         try:
             raw_address = base.find_all(
