@@ -3,6 +3,7 @@ import html
 from typing import Dict, NamedTuple
 
 import lxml.html
+from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -10,6 +11,8 @@ DOMAIN = "happynails.com"
 URL = "https://www.happynails.com/store-locator/"
 
 API_URL = "https://www.happynails.com/wp-admin/admin-ajax.php"
+
+_logger = SgLogSetup().get_logger("happynails_com")
 
 
 class Row(NamedTuple):
@@ -90,7 +93,7 @@ def fetch_data():
 
     all_rows = set()
     for lat, lng in search:
-        print(f"{(lat, lng)} | remaining: {search.items_remaining()}")
+        _logger.info("(%f, %f) | remaining: %d", lat, lng, search.items_remaining())
 
         # NOTE: `autoload=1` enables "closest N" search behavior with N=25
         url = _query_url(action="store_search", lat=lat, lng=lng, autoload=1)
