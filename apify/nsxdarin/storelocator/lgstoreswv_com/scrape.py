@@ -1,11 +1,14 @@
 import csv
 import re
+import time
 
 from bs4 import BeautifulSoup
 
-from sgselenium import SgSelenium
+from sglogging import SgLogSetup
 
-driver = SgSelenium().chrome()
+from sgselenium import SgChrome
+
+log = SgLogSetup().get_logger("cibc_com")
 
 
 def write_output(data):
@@ -36,9 +39,18 @@ def write_output(data):
 
 
 def fetch_data():
+
+    driver = SgChrome().chrome()
+
     url = "https://lgstoreswv.com/locations/"
     driver.get(url)
+    time.sleep(8)
     base = BeautifulSoup(driver.page_source, "lxml")
+
+    if "Access from your Country was disabled" in str(base):
+        log.info("Geo Blocked!")
+    else:
+        log.info("Page loaded!")
 
     data = []
     found = []
