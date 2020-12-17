@@ -1,2 +1,5 @@
+lxml==4.3.3
 sgselenium
+selenium==3.141.0
 sglogging
+beautifulsoup4==4.7.1
