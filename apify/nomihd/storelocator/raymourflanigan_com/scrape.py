@@ -117,7 +117,6 @@ def fetch_data():
                     + hours[day]["close"]
                     + ""
                 )
-
         hours_of_operation = hours_of_operation.strip()
 
         latitude = store_json["latitude"]
