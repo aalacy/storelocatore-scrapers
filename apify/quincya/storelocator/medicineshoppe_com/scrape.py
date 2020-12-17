@@ -149,7 +149,12 @@ def fetch_data():
             if "Sun" not in hours:
                 hours = hours + " Sun Closed"
 
-            hours = hours.replace("21:0-", "9:0-").replace(":0 ", ":00 ").replace(":0-", ":00-").strip()
+            hours = (
+                hours.replace("21:0-", "9:0-")
+                .replace(":0 ", ":00 ")
+                .replace(":0-", ":00-")
+                .strip()
+            )
 
             try:
                 page_url = loc["custUrl"]["Main"]["url"]
