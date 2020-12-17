@@ -60,7 +60,6 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "spherion.com" not in store_url:
             continue
-        print(store_url)
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
         store_data = loc_dom.xpath(
