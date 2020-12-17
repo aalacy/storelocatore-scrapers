@@ -84,6 +84,9 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.replace("  ", " closed ")
+        if hours_of_operation.endswith(" "):
+            hours_of_operation = hours_of_operation + "closed"
 
         item = [
             DOMAIN,
