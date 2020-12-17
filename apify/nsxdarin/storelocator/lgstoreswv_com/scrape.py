@@ -4,11 +4,15 @@ import time
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
 from sglogging import SgLogSetup
 
 from sgselenium import SgChrome
 
-log = SgLogSetup().get_logger("cibc_com")
+log = SgLogSetup().get_logger("lgstoreswv.com")
 
 
 def write_output(data):
@@ -40,11 +44,14 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
+    driver = SgChrome().chrome(user_agent=user_agent)
 
     url = "https://lgstoreswv.com/locations/"
     driver.get(url)
-    time.sleep(8)
+    WebDriverWait(driver, 50).until(ec.presence_of_element_located(
+        (By.CLASS_NAME, "owl-item")))
+    time.sleep(2)
     base = BeautifulSoup(driver.page_source, "lxml")
 
     if "Access from your Country was disabled" in str(base):
@@ -59,8 +66,10 @@ def fetch_data():
     hours = "<MISSING>"
 
     items = base.find_all(class_="owl-item")
+    log.info("Items found: " + str(len(items)))
     for item in items:
         if "data-address" in str(item):
+            log.info("Store data found ..")
             name = item.find(class_="wpgmza_carousel_info_holder").find_all("p")[1].text
             if name in found:
                 continue
