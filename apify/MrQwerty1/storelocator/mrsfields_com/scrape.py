@@ -37,7 +37,7 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get(f"https://www.mrsfields.com/stores/")
+    r = session.get("https://www.mrsfields.com/stores/")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//div[@class='state-list']//a/@href")
