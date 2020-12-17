@@ -90,7 +90,7 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = address_raw.get("ZipCode")
         zip_code = zip_code if zip_code else "<MISSING>"
-        if 'soon' in zip_code.lower():
+        if "soon" in zip_code.lower():
             zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = re.findall(r"\d\d\d", location_name)
