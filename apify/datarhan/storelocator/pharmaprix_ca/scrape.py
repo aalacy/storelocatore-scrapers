@@ -51,7 +51,6 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_poi = dom.xpath('//div[@class="col-sm-6 col-md-3 listing-link"]/a/@href')
     for store_url in all_poi:
-        print(store_url)
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         poi = store_dom.xpath(
