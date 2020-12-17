@@ -7,9 +7,7 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("harveyssupermarkets_com")
 session = SgRequests()
-
 now = datetime.datetime.today().strftime("%A")
-tomorrow = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime("%A")
 
 
 def write_output(data):
@@ -18,7 +16,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -37,7 +34,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -70,23 +67,18 @@ def fetch_data():
         )
         phone = soup1.find("label", {"class": "mob_num"}).text.strip()
         latitude = (
-            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[3]
+            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[-3]
         )
         longitude = (
-            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[4]
+            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[-2]
         )
-        hours_of_operation = (
-            " ".join(
-                list(
-                    soup1.find(
-                        "div", {"class": "dis-inflex stores_head Mdis-blk w-100"}
-                    ).stripped_strings
-                )[1:]
-            )
-            .split("Pharmacy")[0]
-            .replace("Today", now)
-            .replace("Tomorrow", tomorrow)
-        )
+        hours_of_operation = " ".join(
+            list(
+                soup1.find(
+                    "div", {"class": "dis-inflex stores_head Mdis-blk w-100"}
+                ).stripped_strings
+            )[1:]
+        ).replace("Today", now)
 
         store = []
         store.append("https://www.harveyssupermarkets.com")
