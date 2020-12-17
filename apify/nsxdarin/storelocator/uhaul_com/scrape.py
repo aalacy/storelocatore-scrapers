@@ -82,14 +82,12 @@ def get_cities_in_state(state_url):
     cities = []
     session = get_session()
 
-    logger.info("Pulling State %s ..." % state_url)
     random_sleep()
     try:
         r = session.get(state_url, headers=headers)
     except SSLError:
         session = get_session(reset=True)
         r = session.get(state_url, headers=headers)
-    logger.info("status: ", r.status_code)
 
     for line in r.iter_lines(decode_unicode=True):
         if "<a href='/Locations/" in line:
@@ -117,7 +115,6 @@ def get_locations_in_city(city_url):
     allids = []
     coords = []
     alllocs = []
-    logger.info("Pulling City %s ..." % city_url)
     r2 = session.get(city_url, headers=headers)
     lines = r2.iter_lines(decode_unicode=True)
     for line2 in lines:
@@ -133,7 +130,7 @@ def get_locations_in_city(city_url):
             try:
                 next(lines)
                 g = next(lines)
-                if 'href="' not in g:
+                while 'href="' not in g:
                     g = next(lines)
                 lurl = g.split('href="')[1].split('/"')[0]
                 if "http" not in lurl:
@@ -175,7 +172,6 @@ def fetch_data():
 def get_location(loc):
 
     session = get_session()
-    logger.info("Pulling Location %s ..." % loc.split("|")[0])
     website = "uhaul.com"
     typ = ""
     hours = ""
@@ -197,7 +193,6 @@ def get_location(loc):
     except SSLError:
         session = get_session(reset=True)
         r2 = session.get(lurl, headers=headers, timeout=5)
-    logger.info("status: ", r2.status_code)
 
     for line2 in r2.iter_lines(decode_unicode=True):
         if '<small class="text-light">(' in line2 and "all room" not in line2:
