@@ -51,7 +51,6 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["features"]:
-        print(poi)
         store_url = poi["properties"]["permalink"]
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"

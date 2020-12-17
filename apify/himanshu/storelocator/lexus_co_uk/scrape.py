@@ -1,5 +1,4 @@
 import csv
-import requests
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -29,22 +28,18 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     address = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
     base_url = "https://www.lexus.co.uk/"
     url = "https://www.lexus.co.uk/api/dealers/all"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
     }
-    response = requests.get(url, headers=headers).json()
+    response = session.get(url, headers=headers).json()
     j = response["dealers"]
     for i in j:
         store = []
