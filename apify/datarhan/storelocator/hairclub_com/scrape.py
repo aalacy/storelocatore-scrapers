@@ -58,9 +58,9 @@ def fetch_data():
             '//ul[@class="center-info-address-list center-info-list list-unstyled"]/li/text()'
         )
         location_name = address_raw[2].split(",")[0]
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name if location_name else "<MISSING>"
         street_address = address_raw[1]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address.strip() if street_address else "<MISSING>"
         city = address_raw[2].split(",")[0]
         city = city if city else "<MISSING>"
         state = address_raw[2].split(",")[-1].split()[0]

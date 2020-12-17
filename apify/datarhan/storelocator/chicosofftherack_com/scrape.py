@@ -53,7 +53,7 @@ def fetch_data():
     response = session.get(start_url, headers=headers)
     data = json.loads(response.text)
     all_poi += data["hits"]
-    total_pages = data["nbPages"] + 1
+    total_pages = data["nbPages"] + 2
     for page in range(1, total_pages):
         page_url = "https://chicosofftherack.brickworksoftware.com/locations_search?"
         params = {
@@ -62,13 +62,12 @@ def fetch_data():
             "getRankingInfo": "true",
             "facets[]": "*",
             "aroundRadius": "all",
-            "filters": "domain:chicosofftherack.brickworksoftware.com AND publishedAt<=1607684950300",
+            "filters": "",
             "esSearch": '{"page":%s,"storesPerPage":24,"domain":"chicosofftherack.brickworksoftware.com","locale":"en_US","must":[{"type":"range","field":"published_at","value":{"lte":1607684950300}}],"filters":[],"aroundLatLng":{"lat":"40.581811","lon":"-74.166455"}}'
             % str(page),
             "aroundLatLng": "40.581811,-74.166455",
         }
         page_url = add_or_replace_parameters(start_url, params)
-        print(page_url)
         response = session.get(page_url, headers=headers)
         data = json.loads(response.text)
         if not data.get("hits"):
@@ -103,6 +102,8 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
         for elem in poi["relationships"]["hours"]:
+            if elem["type"] != "regular":
+                continue
             day = elem["displayDay"]
             opens = elem["displayStartTime"]
             closes = elem["displayEndTime"]
@@ -127,9 +128,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{store_number} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items
