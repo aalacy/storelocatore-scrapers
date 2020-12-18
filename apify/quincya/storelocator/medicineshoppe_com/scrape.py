@@ -144,8 +144,19 @@ def fetch_data():
                     + ":"
                     + str(raw_hour["endMM"])
                 ).strip()
+            if "Sat" not in hours:
+                hours = hours + " Sat Closed"
             if "Sun" not in hours:
                 hours = hours + " Sun Closed"
+
+            hours = (
+                hours.replace("21:0-", "9:0-")
+                .replace(":0 ", ":00 ")
+                .replace(":0-", ":00-")
+                .strip()
+            )
+            if hours[-2:] == ":0":
+                hours = hours + "0"
 
             try:
                 page_url = loc["custUrl"]["Main"]["url"]

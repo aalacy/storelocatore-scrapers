@@ -64,19 +64,28 @@ def fetch_data():
         states = re.findall(r'"addressRegion":"([^"]*)"', data)
         if states == []:
             states = re.findall(r'"Location":"([^"]*)"', data)
-        cities = re.findall(r'"areaServed":"([^"]*)"', data)
+
+        cities = re.findall(r'"Location":"([^"]*)"', data)
         phones = re.findall(r'"telephone":"([^"]*)"', data)
+        dups = {}
         for l in locs:
             if "appointment" in l.lower():
-                states[locs.index(l) : locs.index(l)] = ["<MISSING>"]
-                cities[locs.index(l) : locs.index(l)] = ["<MISSING>"]
+
+                if l in dups:
+                    states.insert(locs.index(l, dups[l] + 1), "<MISSING>")
+                else:
+                    dups[l] = locs.index(l)
+                    states.insert(locs.index(l), "<MISSING>")
+
         urls = soup.find_all("span", {"class": "store-listing-name"})
         data = soup.find("div", {"class": "storeJSON hide"}).get("data-storejson")
         if data != "null":
             js = json.loads("".join(data))
             for j in js:
+
                 if "appointment" in locs[js.index(j)].lower():
                     continue
+
                 city = cities[js.index(j)]
                 state = states[js.index(j)]
                 country = countries[js.index(j)]
@@ -108,7 +117,8 @@ def fetch_data():
                 zip = sz[-1].strip()
                 del sz[-1]
                 street = " ".join(sz)
-
+                if tim == "":
+                    tim = "<MISSING>"
                 all.append(
                     [
                         "https://www.ralphlauren.com",
@@ -152,6 +162,8 @@ def fetch_data():
                 loc = locs[i]
                 if loc.strip() == "":
                     loc = "<MISSING>"
+                if tim == "":
+                    tim = "<MISSING>"
                 all.append(
                     [
                         "https://www.ralphlauren.com",
