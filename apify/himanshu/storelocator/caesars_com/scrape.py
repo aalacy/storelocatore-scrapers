@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+import io
 import re
 import json
 
@@ -8,12 +9,11 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with io.open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -32,7 +32,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -49,6 +49,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
+
     data = bs(session.get(base_url, headers=headers).text, "lxml")
     j_ = json.loads(
         data.find(
@@ -58,6 +59,7 @@ def fetch_data():
     for it in j_["booker"]["markets"]:
         for pro in it["properties"]:
             location_name = pro["label"]
+
             url = "https://www.caesars.com/api/v1/properties/" + str(
                 pro["value"].upper()
             )
@@ -99,13 +101,7 @@ def fetch_data():
                 if str(store[2] + store[-1]) in addressess:
                     continue
                 addressess.append(str(store[2] + store[-1]))
-                store = [
-                    str(x).encode("ascii", "ignore").decode("ascii").strip()
-                    if x
-                    else "<MISSING>"
-                    for x in store
-                ]
-
+                store = [x.replace("’", "'") if type(x) == str else x for x in store]
                 yield store
 
             except:

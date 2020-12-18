@@ -55,7 +55,7 @@ def fetch_data():
                 website = "dodge.com"
                 typ = "Dealer"
                 country = "US"
-                hours = "Sunday: Closed"
+                hours = ""
                 add = ""
                 name = ""
                 state = ""
@@ -84,7 +84,7 @@ def fetch_data():
                 lng = line.split('"dealerShowroomLongitude" : "')[1].split('"')[0]
             if '"dealerShowroomLatitude" : "' in line:
                 lat = line.split('"dealerShowroomLatitude" : "')[1].split('"')[0]
-            if 'day"' in line and '"sunday" :' not in line:
+            if 'day"' in line:
                 dayname = line.split('"')[1].title()
                 next(lines)
                 next(lines)
@@ -120,6 +120,7 @@ def fetch_data():
                     purl = "<MISSING>"
                 if store not in ids:
                     ids.append(store)
+                    hours = hours.replace("Sunday: 0:00AM-0:00AM", "Sunday: Closed")
                     yield [
                         website,
                         purl,
