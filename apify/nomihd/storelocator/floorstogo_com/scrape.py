@@ -74,11 +74,11 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     loc_list = []
-    # zips = DynamicZipSearch(
-    #     country_codes=[SearchableCountries.USA],
-    #     max_radius_miles=75,
-    #     max_search_results=5,
-    # )
+    zips = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=75,
+        max_search_results=5,
+    )
     zips = ["94010"]
     zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
     for zip_code in zips:
