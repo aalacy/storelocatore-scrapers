@@ -103,7 +103,7 @@ def get_locations_in_city(city_url, retry_count=0, reset_session=False):
         session = get_session(reset_session)
         r = session.get(city_url, headers=headers)
 
-        soup = BeautifulSoup(r.text, 'html.parser')
+        soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.select("script")
         location_script = next(
             filter(lambda script: re.search("entityNum", script.string or ""), scripts),
@@ -170,7 +170,7 @@ def get_location(loc, retry_count=0, reset_session=False):
     try:
         session = get_session(reset_session)
         r = session.get(page_url, headers=headers, timeout=5)
-        soup = BeautifulSoup(r.text, 'html.parser')
+        soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.find_all("script", type="application/ld+json")
         location_script = next(
             filter(lambda script: re.search('"address"', script.string or ""), scripts),
