@@ -150,7 +150,7 @@ def fetch_data():
                 '//div[@class="section field '
                 "field-name-field-operating-hours field-type-text-"
                 "long "
-                'field-label-above"]/div[1]/div[1]/p/text()'
+                'field-label-above"]/div[1]/div[1]/p//text()'
             )
 
             final_hours = []
