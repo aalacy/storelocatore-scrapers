@@ -36,7 +36,8 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.ems.com/find-a-store"
-    soup = bs(session.get(base_url).text, "lxml")
+    r = session.get(base_url)
+    soup = bs(r.text, "lxml")
     soup_ = soup.find_all("script")[2]
     for x in soup_:
         soup_ = str(soup_)
@@ -44,6 +45,9 @@ def fetch_data():
     soup_ = soup_.replace("];</script>", "]")
     for i in json.loads(soup_):
         location_name = i["title"]
+
+        city = i["slug"].replace("-climbing-school", "")
+        state = i["addressRegion"]
         street_address = (
             re.sub(r"\s+", " ", i["address"])
             .replace(", Hadley MA 01035", "")
@@ -52,11 +56,18 @@ def fetch_data():
             .replace("Peterborough NH 03458", "")
             .replace(" NY 12946", "")
             .replace(", Warwick RI 02889", "")
+            .replace(
+                " ".join(
+                    [word.capitalize() for word in " ".join(city.split("-")).split(" ")]
+                ),
+                "",
+            )
+            .replace(" , MA, 01752", "")
+            .replace(state, "")
         )
-        city = i["slug"]
-        state = i["addressRegion"]
+
         zipp = i["addressPostalCode"]
-        country_code = i["country"]
+        country_code = i["country"].replace("Un", "US")
         store_number = i["legacyId"]
         phone = i["telephone"]
         location_type = "Eastern Mountain Sports"
@@ -83,9 +94,7 @@ def fetch_data():
         store.append("https://www.ems.com")
         store.append(location_name if location_name else "<Missing>")
         store.append(
-            street_address.replace("Marlborough, MA, 01752", "").replace(
-                ", Freeport ME", ""
-            )
+            street_address.replace(" , MA, 01752", "").replace(", Freeport ME", "")
             if street_address
             else "<Missing>"
         )
