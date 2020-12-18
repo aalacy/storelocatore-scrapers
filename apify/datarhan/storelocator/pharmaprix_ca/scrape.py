@@ -59,9 +59,13 @@ def fetch_data():
         poi = demjson.decode(poi[0])
 
         location_name = poi["name"]
-        location_name = location_name.replace("&#39;", "'") if location_name else "<MISSING>"
+        location_name = (
+            location_name.replace("&#39;", "'") if location_name else "<MISSING>"
+        )
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address.replace("&#39;", "'") if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("&#39;", "'") if street_address else "<MISSING>"
+        )
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
