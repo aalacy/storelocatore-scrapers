@@ -11,11 +11,12 @@ now = datetime.datetime.today().strftime("%A")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("harvery.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -34,7 +35,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -107,10 +108,7 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        store = [
-            x.encode("ascii", "ignore").decode("ascii").strip() if type(x) == str else x
-            for x in store
-        ]
+                store[i] = store[i].replace(" ", " ")
         yield store
 
 
