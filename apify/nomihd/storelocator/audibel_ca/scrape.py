@@ -100,9 +100,6 @@ def fetch_data():
 
             latitude = store_json["Latitude"]
             longitude = store_json["Longitude"]
-            latlng_tuple = (latitude, longitude)
-            latlng_list = [latlng_tuple]
-            # zips.mark_found(latlng_list)
             if latitude == "":
                 latitude = "<MISSING>"
             if longitude == "":
