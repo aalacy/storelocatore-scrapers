@@ -81,10 +81,10 @@ def fetch_data():
     )
     zips = ["94010"]
     zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-    for zip_code in zips:
-
-        # for zip_code in zips:
-        # log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
+    # for zip_code in zips:
+    if True:
+        for zip_code in zips:
+            log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
 
         search_url = (
             "https://www.floorstogo.com/StoreLocator.aspx?&searchZipCode=" + zip_code
