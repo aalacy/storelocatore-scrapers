@@ -62,6 +62,9 @@ def get_data(url):
     r = session.get(url)
     j = r.json()
 
+    if str(j).lower().find("coming soon") != -1:
+        return
+
     page_url = j.get("path") or "<MISSING>"
     location_name = j.get("title") or "<MISSING>"
     street_address = (

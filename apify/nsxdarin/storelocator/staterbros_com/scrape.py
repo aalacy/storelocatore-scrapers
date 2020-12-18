@@ -65,8 +65,17 @@ def fetch_data():
         store = loc.split("/stores/")[1].split("/")[0]
         hours = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
+            if "Phone Number</h1>" in line2:
+                next(lines)
+                next(lines)
+                next(lines)
+                next(lines)
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                phone = g.split('">')[1].split("<")[0]
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" - ")[0]
             if '<div class="elementor-custom-embed"><iframe frameborder="0"' in line2:
@@ -123,12 +132,15 @@ def fetch_data():
                         .replace("&#8211;", "-")
                     )
         if add != "":
+            if state == "Linda":
+                state = "CA"
+                city = "Yorba Linda"
             yield [
                 website,
                 loc,
                 name,
                 rawadd,
-                add,
+                address,
                 city,
                 state,
                 zc,

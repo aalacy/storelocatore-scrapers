@@ -58,6 +58,8 @@ def fetch_data():
         zc = item["zip"]
         lat = item["latitude"]
         lng = item["longitude"]
+        if " Lids" in add:
+            add = add.split(" Lids")[0]
         hours = "Mon-Fri: " + item["monFriOpen"] + "-" + item["monFriClose"]
         hours = hours + "; Sat: " + item["satOpen"] + "-" + item["satClose"]
         hours = hours + "; Sun: " + item["sunOpen"] + "-" + item["sunClose"]

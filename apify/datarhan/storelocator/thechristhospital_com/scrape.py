@@ -1,7 +1,8 @@
 import csv
 from lxml import etree
+from time import sleep
 
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -36,52 +37,56 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-
     items = []
-    scraped_items = []
 
     DOMAIN = "thechristhospital.com"
-    start_url = "https://www.thechristhospital.com/"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    }
-
-    response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
-
+    start_url = "https://www.thechristhospital.com/locations"
     all_locations = []
-    dir_urls = dom.xpath('//a[@href="/locations"]/following-sibling::div/ul/li/a/@href')
-    for url in dir_urls:
-        dir_response = session.get("https://www.thechristhospital.com" + url)
-        dir_dom = etree.HTML(dir_response.text)
-        all_locations += dir_dom.xpath('//div[@class="location js-location"]')
+    with SgChrome() as driver:
+        driver.get(start_url)
+        sleep(3)
+        driver.find_element_by_id("btnSearchAdvanced").click()
+        sleep(5)
+        dom = etree.HTML(driver.page_source)
+        all_locations += dom.xpath('//div[@class="location"]')
+        next_page = driver.find_element_by_xpath('//a[contains(@id, "PageFwd")]')
+        while next_page:
+            next_page.click()
+            sleep(8)
+            dom = etree.HTML(driver.page_source)
+            all_locations += dom.xpath('//div[@class="location"]')
+            try:
+                next_page = driver.find_element_by_xpath(
+                    '//a[contains(@id, "PageFwd")]'
+                )
+            except:
+                next_page = ""
 
-    for poi_html in list(set(all_locations)):
-        store_url = poi_html.xpath(
-            './/a[@class="location-header js-location__name"]/@href'
-        )
-        store_url = store_url[0] if store_url else "<MISSING>"
+    for poi_html in all_locations:
+        store_url = "<MISSING>"
         location_name = poi_html.xpath(
-            './/a[@class="location-header js-location__name"]/text()'
+            './/span[@class="location-header no-details-link"]/text()'
         )
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//span[@class="addressline"]/text()')
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
+        street_address = poi_html.xpath('.//span[@class="addressline"]/text()')[
+            0
+        ].strip()
         address_2 = poi_html.xpath('.//span[@class="addressline addressline2"]/text()')
         if address_2:
             street_address += ", " + address_2[0].strip()
-        city = poi_html.xpath('.//span[@class="addressline"]/text()')
+        address_raw = poi_html.xpath('.//span[@class="addressline"]/text()')
+        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        city = address_raw
         city = city[-1].strip().split(",")[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@class="addressline"]/text()')
+        state = address_raw
         state = state[-1].strip().split(",")[-1].split()[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@class="addressline"]/text()')
+        zip_code = address_raw
         zip_code = (
             zip_code[-1].strip().split(",")[-1].split()[-1] if zip_code else "<MISSING>"
         )
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//span[@class="phonenumber"]//b/text()')
+        phone = poi_html.xpath('.//span[@class="phonenumber"]//a/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
@@ -112,10 +117,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
