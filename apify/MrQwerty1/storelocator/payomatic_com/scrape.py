@@ -1,6 +1,7 @@
 import csv
 import json
 
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -35,42 +36,42 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = "https://www.greasemonkeyauto.com/"
-    api_url = "https://www.greasemonkeyauto.com/wp-admin/admin-ajax.php?action=asl_load_stores&load_all=1&layout=1&category=87%2C86%2C85%2C84%2C83%2C82%2C81%2C80%2C79%2C78%2C77%2C76%2C75%2C74%2C73%2C72%2C71%2C70%2C69%2C68%2C67%2C66%2C65%2C64%2C63%2C62%2C61%2C60%2C58%2C57%2C56%2C55%2C53%2C132%2C143"
+    locator_domain = "https://www.payomatic.com/"
+    api_url = "https://www.payomatic.com/store-locator/"
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()
+    tree = html.fromstring(r.text)
+    script = "".join(tree.xpath("//script[contains(text(), 'var stores_data')]/text()"))
+    line = ""
+    for s in script.split("\n"):
+        if s.find("var stores_data") != -1:
+            line = s.split("var stores_data =")[1][:-1]
+
+    js = json.loads(line)["features"]
 
     for j in js:
-        locator_domain = url
-        location_name = j.get("title") or "<MISSING>"
-        street_address = j.get("street") or "<MISSING>"
+        geo = j.get("geometry", {}).get("coordinates") or ["<MISSING>", "<MISSING>"]
+        j = j["properties"]
+        location_name = j.get("location_name")
+        street_address = j.get("address") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = j.get("website") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
+        store_number = j.get("store_code") or "<MISSING>"
+        page_url = j.get("permalink") or "<MISSING>"
+        phone = j.get("primary_phone") or "<MISSING>"
+        latitude = geo[1] or "<MISSING>"
+        longitude = geo[0] or "<MISSING>"
         location_type = "<MISSING>"
 
         _tmp = []
-        hours = j.get("open_hours") or ""
-        hours = json.loads(hours)
-
+        hours = j.get("store_hours") or {}
         for k, v in hours.items():
-            if v == "0":
-                _tmp.append(f"{k.capitalize()}: Closed")
-            else:
-                _tmp.append(f"{k.capitalize()}: {v[0]}")
+            _tmp.append(f"{k.capitalize()}: {v}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "<INACCESSIBLE>"
 
         row = [
             locator_domain,
