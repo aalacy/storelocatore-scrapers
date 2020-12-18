@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list
 
 website = "floorstogo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -75,11 +76,15 @@ def fetch_data():
     loc_list = []
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=75,
         max_search_results=5,
     )
-    for zip_code in zips:
-        log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
+    zips = ["94010"]
+    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
+    # for zip_code in zips:
+    if True:
+        for zip_code in zips:
+            log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
 
         search_url = (
             "https://www.floorstogo.com/StoreLocator.aspx?&searchZipCode=" + zip_code
