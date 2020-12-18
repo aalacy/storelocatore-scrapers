@@ -33,6 +33,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+
         for row in data:
             writer.writerow(row)
 
@@ -47,6 +48,7 @@ def fetch_data():
     addresses = []
 
     for lat, long in search:
+
         result_coords = []
 
         base_url = (
@@ -68,6 +70,8 @@ def fetch_data():
             if "MOBIL" in location["DisplayName"]:
                 continue
             if "Mobil" in location["DisplayName"]:
+                continue
+            if "mobil" in location["BrandingImage"]:
                 continue
             page_url = (
                 "https://www.exxon.com/en/find-station/"

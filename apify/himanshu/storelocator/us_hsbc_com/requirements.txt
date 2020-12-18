@@ -1,0 +1,5 @@
+lxml
+sgrequests
+bs4
+selenium
+sgzip
