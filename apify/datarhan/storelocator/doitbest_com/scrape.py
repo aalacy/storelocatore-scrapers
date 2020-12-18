@@ -91,7 +91,6 @@ def fetch_data():
         try:
             location_name = poi["Name"]
         except TypeError:
-            print(poi)
             continue
         location_name = location_name if location_name else "<MISSING>"
         if "do it best" not in location_name.lower():
