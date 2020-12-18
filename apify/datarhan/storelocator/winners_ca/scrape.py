@@ -63,7 +63,6 @@ def fetch_data():
         response = session.post(start_url, headers=headers, data=formdata)
         data = json.loads(response.text)
         all_locations += data["Stores"]
-        print(len(all_locations))
 
     for poi in all_locations:
         store_url = "<MISSING>"
