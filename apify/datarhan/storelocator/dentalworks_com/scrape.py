@@ -54,7 +54,9 @@ def fetch_data():
         store_url = poi["properties"]["permalink"]
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        address_raw = poi["properties"]["address"].replace("\r\n", ", ").replace(', USA', '')
+        address_raw = (
+            poi["properties"]["address"].replace("\r\n", ", ").replace(", USA", "")
+        )
         print(poi["properties"]["address"])
         address_raw = address_raw.split(",")
         address_raw = [elem.strip() for elem in address_raw]
@@ -62,7 +64,7 @@ def fetch_data():
             address_raw = address_raw[:4]
         if len(address_raw) == 4:
             address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
-        street_address = address_raw[0].replace(',', '')
+        street_address = address_raw[0].replace(",", "")
         if len(address_raw[1].strip().split()[0]) == 2:
             city = "<MISSING>"
             state = address_raw[1].split()[0]
@@ -82,10 +84,10 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
         if len(zip_code.strip()) == 2:
-            zip_code = '<MISSING>'
-        if city == '<MISSING>':
+            zip_code = "<MISSING>"
+        if city == "<MISSING>":
             city = street_address.split()[-1]
-            street_address = ' '.join(street_address.split()[:-1])
+            street_address = " ".join(street_address.split()[:-1])
 
         item = [
             DOMAIN,
