@@ -62,7 +62,6 @@ def fetch_data():
         response = session.post(start_url, data=formdata, headers=headers)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//a[@class="fs--grocery-detail"]/@href')
-        print(len(all_locations))
 
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
