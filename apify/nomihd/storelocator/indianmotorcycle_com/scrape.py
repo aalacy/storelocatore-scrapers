@@ -134,26 +134,26 @@ def fetch_data():
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
         if country_code == "US" or country_code == "CA":
+            page_url = store_json["webSite"]
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
             loc_list.append(curr_list)
-        # break
-        # break
+
     return loc_list
 
 
