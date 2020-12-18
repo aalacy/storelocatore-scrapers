@@ -124,6 +124,9 @@ def fetch_data():
             city = city.replace("SR", "R")
             street_address += " S"
 
+        if "soon" in zip_code.lower():
+            zip_code = "<MISSING>"
+
         item = [
             DOMAIN,
             store_url,
