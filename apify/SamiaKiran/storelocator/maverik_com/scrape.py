@@ -43,17 +43,30 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    street_list = []
     url = "https://gateway.maverik.com/ac-loc/location/all"
     loclist = session.get(url, headers=headers).json()["locations"]
     for loc in loclist:
         if "Closed" in loc["name"]:
             continue
         title = loc["name"]
+        store = loc["code"]
+        if title.count("-") == 2:
+            title = title.split("-", 1)[1].split("-", 1)[0]
+            title = title.strip()
+            title = title + " #" + store
+        else:
+            title = title.split("-", 1)[0]
+            title = title + " #" + store
         street = loc["address"]["address1"]
+        if street in street_list:
+            continue
+        street_list.append(street)
         city = loc["address"]["city"]
         state = loc["address"]["stateProvince"]
         pcode = loc["address"]["postalCode"]
         phone = loc["address"]["phone"]
+
         if phone is None:
             phone = "<MISSING>"
         try:
@@ -74,7 +87,7 @@ def fetch_data():
                 state,
                 pcode,
                 "US",
-                "<MISSING>",
+                store,
                 phone,
                 "<MISSING>",
                 lat,

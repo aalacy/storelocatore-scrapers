@@ -2,6 +2,7 @@ import csv
 import json
 
 from concurrent import futures
+from lxml import html
 from sgrequests import SgRequests
 
 
@@ -34,8 +35,17 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_exclude_list(st):
+    session = SgRequests()
+    r = session.get(f"https://stores.orschelnfarmhome.com/results/?state={st}")
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//input[@id='locationsToExclude']/@value")).split(",")
+
+
 def get_data(st):
     rows = []
+    ex = get_exclude_list(st)
     locator_domain = "https://stores.orschelnfarmhome.com"
     api_url = f"https://stores.orschelnfarmhome.com/umbraco/api/Location/GetDataByState?region={st}"
 
@@ -44,6 +54,9 @@ def get_data(st):
     js = json.loads(r.json())["StoreLocations"]
 
     for j in js:
+        _id = j.get("LocationNumber")
+        if _id in ex:
+            continue
         name = j.get("Name").strip()
         e = j.get("ExtraData", {}) or {}
         a = e.get("Address", {}) or {}
