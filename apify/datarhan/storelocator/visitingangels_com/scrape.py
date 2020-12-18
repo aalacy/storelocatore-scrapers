@@ -117,7 +117,7 @@ def fetch_data():
         state = poi_html.xpath("text()")[3].split()[-2]
         zip_code = poi_html.xpath("text()")[3].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = store_url.split("_")[-1]
         phone = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
