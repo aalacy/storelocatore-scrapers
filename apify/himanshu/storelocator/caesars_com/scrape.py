@@ -1,7 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import io, re
+import io
+import re
 import json
 
 session = SgRequests()
