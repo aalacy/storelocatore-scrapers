@@ -45,7 +45,7 @@ def fetch_data():
     start_url = "https://api.rexall.ca/BeautyStoreLocatorExternalV3/Service.svc/StoreList?callback=jQuery112406116886901938874_1608282807022&APIKEY=supyYmaA3wywM700&Latitude=43.653226&Longitude=-79.3831843&NumResults=4000&ReturnRadius=6000&FilterAttributeList%5B0%5D%5BStoreAttribute.AttributeName%5D=Retail"
 
     response = session.get(start_url)
-    data = re.findall("\((.+)\);", response.text)[0]
+    data = re.findall(r"\((.+)\);", response.text)[0]
     data = json.loads(data)
 
     for poi in data["Store"]:
