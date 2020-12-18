@@ -100,10 +100,6 @@ def get_locations_from_dataframes(dataframes):
                     locations.append(row_data)
                     row_data = {}
 
-                if i == len(df) - 1:
-                    locations.append(row_data)
-                    row_data = {}
-
     return locations
 
 
@@ -114,9 +110,9 @@ def get_zip(contact):
     zip_regexp = f"({canada_zip}|{us_extended_zip}|{us_zip})"
 
     for item in contact:
-        us_match = re.search(zip_regexp, item)
-        if us_match:
-            return us_match.group(0)
+        matched = re.search(zip_regexp, item)
+        if matched:
+            return matched.group(0)
 
     return MISSING
 
