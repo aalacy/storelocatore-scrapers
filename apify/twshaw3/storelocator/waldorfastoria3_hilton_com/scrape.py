@@ -8,7 +8,7 @@ headers = {
     "cache-control": "no-cache",
 }
 
-logger = SgLogSetup().get_logger("hilton_com")
+logger = SgLogSetup().get_logger("waldorfastoria3_hilton_com")
 
 BRAND_CODE = "WA"
 COUNTRIES = {"US", "CA"}
