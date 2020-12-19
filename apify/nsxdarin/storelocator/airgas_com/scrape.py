@@ -72,6 +72,7 @@ def fetch_data():
         country = "US"
         hours = ""
         logger.info(loc)
+        daycount = 0
         store = loc.rsplit(".", 1)[0].rsplit("-", 1)[1]
         typ = "<MISSING>"
         r2 = session.get(loc, headers=headers)
@@ -108,21 +109,27 @@ def fetch_data():
                     + line2.split('<span class="time-close">')[1].split("<")[0]
                 )
                 hrinfo = day + ": " + hrs
-                if hours == "":
-                    hours = hrinfo
-                else:
-                    hours = hours + "; " + hrinfo
+                daycount = daycount + 1
+                if daycount <= 7:
+                    if hours == "":
+                        hours = hrinfo
+                    else:
+                        hours = hours + "; " + hrinfo
             if "<span>Closed</span>" in line2:
                 hrs = "Closed"
                 hrinfo = day + ": " + hrs
-                if hours == "":
-                    hours = hrinfo
-                else:
-                    hours = hours + "; " + hrinfo
+                daycount = daycount + 1
+                if daycount <= 7:
+                    if hours == "":
+                        hours = hrinfo
+                    else:
+                        hours = hours + "; " + hrinfo
         if "NON DRY" in add:
             add = add.split("NON DRY")[0].strip()
         if "Temp." in add:
             add = add.split("Temp.")[0].strip()
+        if phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             loc,
