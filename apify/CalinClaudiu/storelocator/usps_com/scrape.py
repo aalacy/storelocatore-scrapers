@@ -25,11 +25,17 @@ def fetch_data():
             + '","requestZipPlusFour":""}'
         )
         logzilla.info(f"{(zipcode)} | remaining: {search.items_remaining()}")
-        results = session.post(
-            "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
-            headers=headers,
-            data=data,
-        ).json()
+        results = "None"
+        while results == "None":
+            try:
+                results = session.post(
+                    "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
+                    headers=headers,
+                    data=data,
+                ).json()
+            except Exception:
+                continue
+
         try:
             results = results["locations"]
             new_coordinates = []
