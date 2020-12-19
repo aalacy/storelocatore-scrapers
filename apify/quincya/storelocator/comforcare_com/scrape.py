@@ -102,13 +102,18 @@ def fetch_data():
 
     for state in states:
         log.info(state)
-        link = "https://www.comforcare.com/ajax.Location.php?action=locations&zipcode=&state=" + state
+        link = (
+            "https://www.comforcare.com/ajax.Location.php?action=locations&zipcode=&state="
+            + state
+        )
         stores = session.get(link, headers=headers).json()[0]
 
         for store in stores:
             link = "https://www.comforcare.com/" + store["webaddress"]
             location_name = store["companyname"]
-            street_address = (store["address1"] + " " + store["address2"] + " " + store["address3"]).strip()
+            street_address = (
+                store["address1"] + " " + store["address2"] + " " + store["address3"]
+            ).strip()
             city = store["city"]
             state = store["state"]
             zip_code = store["zip"]
