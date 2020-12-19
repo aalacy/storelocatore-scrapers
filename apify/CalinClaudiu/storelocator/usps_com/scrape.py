@@ -13,7 +13,6 @@ def fetch_data():
         "Content-Type": "application/json",
     }
 
-    session = SgRequests()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], max_search_results=199
     )
@@ -28,6 +27,7 @@ def fetch_data():
         results = "None"
         while results == "None":
             try:
+                session = SgRequests()
                 results = session.post(
                     "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
                     headers=headers,
