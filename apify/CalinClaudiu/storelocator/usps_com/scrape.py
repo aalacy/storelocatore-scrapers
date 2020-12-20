@@ -2,6 +2,7 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import os
 
 
 def fetch_data():
@@ -27,8 +28,9 @@ def fetch_data():
         logzilla.info(f"{(zipcode)} | remaining: {search.items_remaining()}")
         count = 0
         while count < 5:
-
             try:
+                os.environ["PROXY_URL"] = ""
+                os.environ["PROXY_PASSWORD"] = ""
                 session = SgRequests()
                 results = session.post(
                     "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
