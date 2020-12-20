@@ -27,6 +27,7 @@ def fetch_data():
         logzilla.info(f"{(zipcode)} | remaining: {search.items_remaining()}")
         count = 0
         while count < 5:
+
             try:
                 session = SgRequests()
                 results = session.post(
