@@ -62,6 +62,9 @@ def fetch_data():
         store_dom = etree.HTML(store_response.text)
 
         location_name = store_dom.xpath('//div[@class="content"]/h1/text()')
+        if not location_name:
+            location_name = store_dom.xpath('//h1[@class="loc-detail-h1"]/text()')
+            location_name = [location_name[0].strip()] if location_name else ""
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = store_dom.xpath('//span[@id="address1"]/text()')[0]
         if store_dom.xpath('//span[@id="address2"]/text()'):
@@ -76,18 +79,32 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = store_dom.xpath('//div[@class="phones"]//a/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Hospital"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = []
-        hoo = store_dom.xpath('//div[@id="tabs-1"]//text()')
+        hoo = store_dom.xpath(
+            '//h4[contains(text(), "Hours")]/following-sibling::ul//text()'
+        )
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         for elem in hoo:
-            if ("Fax" or "Phone") in elem:
+            if ("Fax" and "Phone" and "Please") in elem:
                 continue
             hours_of_operation.append(elem)
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
+        if "00 p.m" not in hours_of_operation:
+            hours_of_operation = "<MISSING>"
+        if hours_of_operation != "<MISSING>":
+            hours_of_operation = "Monday" + hours_of_operation.split("Monday")[-1]
+            hours_of_operation = hours_of_operation.strip()
+            if not hours_of_operation.endswith("p.m."):
+                hours_of_operation = "p.m. ".join(
+                    hours_of_operation.split("p.m. ")[:-1]
+                )
+        hours_of_operation = (
+            hours_of_operation.strip() if hours_of_operation.strip() else "<MISSING>"
         )
 
         item = [
