@@ -53,11 +53,11 @@ def fetch_data():
 
     for poi in data["features"]:
         store_url = poi["properties"]["permalink"]
-        store_response = session.get(store_url + 'our-location/', headers=headers)
+        store_response = session.get(store_url + "our-location/", headers=headers)
         store_dom = etree.HTML(store_response.text)
         hoo = store_dom.xpath('//div[@class="location__hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = ', '.join(hoo) if hoo else '<MISSING>'
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
@@ -94,8 +94,10 @@ def fetch_data():
         if city == "<MISSING>":
             city = street_address.split()[-1]
             street_address = " ".join(street_address.split()[:-1])
-        if zip_code == '<MISSING>':
-            zip_code = store_dom.xpath('//div[@class="location__addy"]/p/text()')[2].split()[-1]
+        if zip_code == "<MISSING>":
+            zip_code = store_dom.xpath('//div[@class="location__addy"]/p/text()')[
+                2
+            ].split()[-1]
 
         item = [
             DOMAIN,
