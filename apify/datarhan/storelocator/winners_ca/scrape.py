@@ -52,25 +52,22 @@ def fetch_data():
         max_search_results=None,
     )
     for lat, lng in all_coordinates:
-        for chain in ["93, 92, 91"]:
-            formdata = {
-                "chain": chain,
-                "geolat": "43.653226",
-                "geolong": "-79.3831843",
-                "lang": "en",
-                "maxstores": "250",
-            }
-            headers = {"Content-Type": "application/x-www-form-urlencoded"}
-            response = session.post(start_url, headers=headers, data=formdata)
-            data = json.loads(response.text)
-            all_locations += data["Stores"]
+        formdata = {
+            "chain": "91",
+            "geolat": lat,
+            "geolong": lng,
+            "lang": "en",
+            "maxstores": "250",
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = session.post(start_url, headers=headers, data=formdata)
+        data = json.loads(response.text)
+        all_locations += data["Stores"]
 
     for poi in all_locations:
         store_url = "<MISSING>"
-        location_name = "<MISSING>"
+        location_name = "Winners at " + poi["Address2"]
         street_address = poi["Address"]
-        if poi["Address2"]:
-            street_address += ", " + poi["Address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["City"]
         state = poi["State"]
