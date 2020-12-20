@@ -51,7 +51,6 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_poi = dom.xpath('//div[@class="col-sm-6 col-md-3 listing-link"]/a/@href')
     for store_url in all_poi:
-        print(store_url)
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
         poi = store_dom.xpath(
@@ -60,9 +59,13 @@ def fetch_data():
         poi = demjson.decode(poi[0])
 
         location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = (
+            location_name.replace("&#39;", "'") if location_name else "<MISSING>"
+        )
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("&#39;", "'") if street_address else "<MISSING>"
+        )
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
@@ -87,6 +90,8 @@ def fetch_data():
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if hours_of_operation == "Mo, Tu, We, Th, Fr, Sa, Su":
+            hours_of_operation = "Open 24 Hours"
 
         item = [
             DOMAIN,

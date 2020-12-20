@@ -128,6 +128,8 @@ def fetch_data():
             add = add.split("NON DRY")[0].strip()
         if "Temp." in add:
             add = add.split("Temp.")[0].strip()
+        if phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             loc,
