@@ -13,9 +13,9 @@ def fetch_data():
         "Content-Type": "application/json",
     }
 
-    session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=199
+        country_codes=[SearchableCountries.USA],
+        max_search_results=199,
     )
     identities = set()
     for zipcode in search:
@@ -25,11 +25,25 @@ def fetch_data():
             + '","requestZipPlusFour":""}'
         )
         logzilla.info(f"{(zipcode)} | remaining: {search.items_remaining()}")
-        results = session.post(
-            "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
-            headers=headers,
-            data=data,
-        ).json()
+        count = 0
+        while count < 5:
+
+            try:
+                session = SgRequests()
+                results = session.post(
+                    "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
+                    headers=headers,
+                    data=data,
+                ).json()
+                count = 6
+            except Exception:
+                session = ""
+                count += 1
+                continue
+
+        if count == 5:
+            raise Exception("This should never happen")
+
         try:
             results = results["locations"]
             new_coordinates = []
