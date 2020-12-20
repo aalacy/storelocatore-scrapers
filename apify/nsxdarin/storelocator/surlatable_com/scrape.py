@@ -55,7 +55,6 @@ def fetch_data():
                 "https://www.surlatable.com" + line.split('href="')[1].split('"')[0]
             )
     for loc in locs:
-        print(loc)
         name = ""
         city = ""
         state = ""

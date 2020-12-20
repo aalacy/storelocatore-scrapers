@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
     url = "https://www.greasemonkeyauto.com/"
-    api_url = "https://www.greasemonkeyauto.com/wp-admin/admin-ajax.php?action=asl_load_stores&load_all=1"
+    api_url = "https://www.greasemonkeyauto.com/wp-admin/admin-ajax.php?action=asl_load_stores&load_all=1&layout=1&category=87%2C86%2C85%2C84%2C83%2C82%2C81%2C80%2C79%2C78%2C77%2C76%2C75%2C74%2C73%2C72%2C71%2C70%2C69%2C68%2C67%2C66%2C65%2C64%2C63%2C62%2C61%2C60%2C58%2C57%2C56%2C55%2C53%2C132%2C143"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -70,7 +70,7 @@ def fetch_data():
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         if hours_of_operation.count("Closed") == 7:
-            continue
+            hours_of_operation = "<INACCESSIBLE>"
 
         row = [
             locator_domain,

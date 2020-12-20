@@ -72,6 +72,7 @@ def parse_store(store, domain):
 
     try:
         k["StatusName"] = k["StatusName"] + "-" + store.find("statusname").text.strip()
+        k["StatusName"] = k["StatusName"].replace("Under Construction", "Coming Soon")
     except Exception:
         k["StatusName"] = "<MISSING>"
 
