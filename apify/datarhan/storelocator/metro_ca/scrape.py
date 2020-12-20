@@ -122,7 +122,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = '{} {}'.format(street_address, location_name)
+        check = "{} {}".format(street_address, location_name)
         if check not in scraped_items:
             scraped_items.append(check)
             items.append(item)
