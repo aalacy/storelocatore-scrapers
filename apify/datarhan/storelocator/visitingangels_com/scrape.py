@@ -40,6 +40,7 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "visitingangels.com"
     start_url = "https://www.visitingangels.com/senior-home-care-{}-{}"
@@ -117,7 +118,7 @@ def fetch_data():
         state = poi_html.xpath("text()")[3].split()[-2]
         zip_code = poi_html.xpath("text()")[3].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = store_url.split("_")[-1]
         phone = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
@@ -140,8 +141,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
 
     return items
 

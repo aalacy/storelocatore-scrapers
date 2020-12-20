@@ -4,11 +4,11 @@ import json
 import sgzip
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('claires_com')
+logger = SgLogSetup().get_logger("claires_com")
 
-
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
+search = (
+    sgzip.ClosestNSearch()
+)  # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
 search.initialize(country_codes=["us", "ca"])
 
 session = SgRequests()
@@ -50,85 +50,88 @@ def fetch_data():
     ids = []
     coord = search.next_coord()
     while coord:
-        result_coords = []
-        x = coord[0]
-        y = coord[1]
-        url = "https://www.claires.com/on/demandware.store/Sites-clairesNA-Site/en_US/Stores-GetNearestStores"
-        payload = {
-            "time": "00:00",
-            "page": "storelocator",
-            "lat": str(x),
-            "lng": str(y),
-        }
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        website = "claires.com"
-        r = session.post(url, headers=headers, data=payload)
-        if '"id":"' in r.content.decode("utf-8"):
-            for item in json.loads(r.content)["stores"]:
-                hours = ""
-                store = item["id"]
-                name = item["name"]
-                add = item["address1"]
-                try:
-                    add = add + " " + item["address2"]
-                except:
-                    pass
-                add = add.strip()
-                city = item["city"]
-                zc = item["postalCode"]
-                country = item["country"]
-                phone = item["phone"]
-                state = "<MISSING>"
-                lat = item["coordinates"]["lat"]
-                lng = item["coordinates"]["lng"]
-                result_coords.append((lat, lng))
-                typ = item["business"]
-                loc = "https://www.claires.com/us/store-details/?StoreID=" + store
-                r2 = session.get(loc, headers=headers)
-                lines = r2.iter_lines()
-                for line2 in lines:
-                    line2 = str(line2.decode("utf-8"))
-                    if "<p><strong>" in line2:
-                        next(lines)
-                        next(lines)
-                        next(lines)
-                        g = next(lines)
-                        g = str(g.decode("utf-8"))
-                        state = g.strip().split(" ")[0]
-                for day in item["storeHours"]:
-                    hrs = (
-                        day["day"]
-                        + ": "
-                        + day["from"].strip()
-                        + "-"
-                        + day["to"].strip()
-                    )
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-                if store not in ids:
-                    ids.append(store)
-                    poi = [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                    yield poi
+        try:
+            result_coords = []
+            x = coord[0]
+            y = coord[1]
+            url = "https://www.claires.com/on/demandware.store/Sites-clairesNA-Site/en_US/Stores-GetNearestStores"
+            payload = {
+                "time": "00:00",
+                "page": "storelocator",
+                "lat": str(x),
+                "lng": str(y),
+            }
+            logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            website = "claires.com"
+            r = session.post(url, headers=headers, data=payload)
+            if '"id":"' in r.content.decode("utf-8"):
+                for item in json.loads(r.content)["stores"]:
+                    hours = ""
+                    store = item["id"]
+                    name = item["name"]
+                    add = item["address1"]
+                    try:
+                        add = add + " " + item["address2"]
+                    except:
+                        pass
+                    add = add.strip()
+                    city = item["city"]
+                    zc = item["postalCode"]
+                    country = item["country"]
+                    phone = item["phone"]
+                    state = "<MISSING>"
+                    lat = item["coordinates"]["lat"]
+                    lng = item["coordinates"]["lng"]
+                    result_coords.append((lat, lng))
+                    typ = item["business"]
+                    loc = "https://www.claires.com/us/store-details/?StoreID=" + store
+                    r2 = session.get(loc, headers=headers)
+                    lines = r2.iter_lines()
+                    for line2 in lines:
+                        line2 = str(line2.decode("utf-8"))
+                        if "<p><strong>" in line2:
+                            next(lines)
+                            next(lines)
+                            next(lines)
+                            g = next(lines)
+                            g = str(g.decode("utf-8"))
+                            state = g.strip().split(" ")[0]
+                    for day in item["storeHours"]:
+                        hrs = (
+                            day["day"]
+                            + ": "
+                            + day["from"].strip()
+                            + "-"
+                            + day["to"].strip()
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                    if store not in ids:
+                        ids.append(store)
+                        poi = [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
+                        yield poi
 
-        search.max_count_update(result_coords)
-        coord = search.next_coord()
+            search.max_count_update(result_coords)
+            coord = search.next_coord()
+        except:
+            pass
 
 
 def scrape():
