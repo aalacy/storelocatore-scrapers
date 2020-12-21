@@ -86,7 +86,6 @@ def fetch_data():
             pass
         if stores_req.status_code == 200:
             break
-
     stores = json.loads(stores_req.text.strip())["stores"]
     for store in stores.keys():
         locator_domain = website
