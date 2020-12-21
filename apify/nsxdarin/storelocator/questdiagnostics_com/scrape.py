@@ -51,7 +51,7 @@ def get_f5_cookie():
             return (cookie.name, response.cookies.get(cookie.name))
 
 
-def set_session_cookies():
+def set_session_cookies(session):
     # this request is required in order to get the "demyq" cookie, otherwise 401 unauthorized
     f5_cookie = get_f5_cookie()
     csrf_token = get_random_string()
@@ -79,7 +79,7 @@ def set_session_cookies():
 
 def init_session():
     session = SgRequests()
-    set_session_cookies()
+    set_session_cookies(session)
 
 
 def write_output(data):
@@ -113,20 +113,20 @@ def extract(loc):
     country = "US"
 
     return {
-        'locator_domain': "questdiagnostics.com",
-        'store_number': store_num,
-        'location_name': name,
-        'street_address': address,
-        'city': city,
-        'state': state,
-        'zip': postal,
-        'country_code': country,
-        'latitude': lat,
-        'longitude': lng,
-        'phone': phone,
-        'hours_of_operation': hours,
-        'location_type': '<MISSING>',
-        'page_url': '<MISSING>'
+        "locator_domain": "questdiagnostics.com",
+        "store_number": store_num,
+        "location_name": name,
+        "street_address": address,
+        "city": city,
+        "state": state,
+        "zip": postal,
+        "country_code": country,
+        "latitude": lat,
+        "longitude": lng,
+        "phone": phone,
+        "hours_of_operation": hours,
+        "location_type": "<MISSING>",
+        "page_url": "<MISSING>",
     }
 
 
@@ -186,11 +186,11 @@ def fetch_data():
 
         for loc in locations:
             poi = extract(loc)
-            id = poi.get('store_number')
+            id = poi.get("store_number")
 
             if id not in dedup_tracker:
                 dedup_tracker.append(id)
-                coords = [poi.get('latitude'), poi.get('longitude')]
+                coords = [poi.get("latitude"), poi.get("longitude")]
 
                 result_coords.append(coords)
                 yield [poi[field] for field in FIELDS]
