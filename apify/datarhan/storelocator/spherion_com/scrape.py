@@ -93,6 +93,9 @@ def fetch_data():
         hours_of_operation = loc_dom.xpath(
             '//div[@class="branch-loc-details--opening-hours"]/text()'
         )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
         if hours_of_operation:
             hours_of_operation = hours_of_operation[-1].strip()
             if not hours_of_operation.strip():
