@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "freshii.com"
+    DOMAIN = "goinpostal.com"
 
     start_url = (
         "https://goinpostal.com/wp-admin/admin-ajax.php?action=get_stores_by_zipcode"
@@ -55,7 +55,11 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "<MISSING>"
+        store_url = (
+            "https://goinpostal.com/locations/locator_store.php/?storeID={}".format(
+                poi["store_id_old"]
+            )
+        )
         location_name = poi["store_name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["store_address"]
