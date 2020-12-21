@@ -66,7 +66,7 @@ def fetch_data():
 
                 json_data = json.loads(
                     re.sub(
-                        "(\w+):",
+                        r"(\w+):",
                         r'"\1":',
                         (
                             data["data-ng-click"]
