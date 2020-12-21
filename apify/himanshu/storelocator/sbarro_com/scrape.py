@@ -36,7 +36,6 @@ def write_output(data):
 
 
 def fetch_data():
-    addressess = []
     base_url = "https://sbarro.com"
     UsState = [
         "AL",
