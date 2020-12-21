@@ -1,13 +1,10 @@
 import csv
-import os
 from sgrequests import SgRequests
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('costa_co_uk__business__costa-express')
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +13,13 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes = ['gb'])
-
-MAX_RESULTS = 250
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.BRITAIN],
+    max_radius_miles=None,
+    max_search_results=250,
+)
 
 session = SgRequests()
-
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
            }
 
@@ -30,7 +27,6 @@ def fetch_data():
     ids = []
     adds = []
     locations = []
-    coord = search.next_coord()
     BFound = True
     if BFound:
         BFound = False
@@ -100,10 +96,11 @@ def fetch_data():
                 adds.append(addinfo)
                 ids.append(store)
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-    while coord:
+    for lat, lng in search:
         result_coords = []
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        x, y = coord[0], coord[1]
+        x = lat
+        y = lng
+        logger.info('%s - %s...' % (str(x), str(y)))
         url = 'https://www.costa.co.uk/api/locations/stores?latitude=' + str(x) + '&longitude=' + str(y) + '&maxrec=500'
         r = session.get(url, headers=headers)
         try:
@@ -173,9 +170,6 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
-        logger.info("max count update")
-        search.max_count_update(result_coords)
-        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
