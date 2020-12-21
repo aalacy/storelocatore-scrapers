@@ -11,11 +11,10 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", newline="", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -119,6 +118,7 @@ def fetch_data():
             location_type = ""
             latitude = ""
             longitude = ""
+            raw_address = ""
             page_url = ""
             hours_of_operation = ""
             store_number = location.parent.parent.find_previous_sibling(
