@@ -49,7 +49,6 @@ headers = {
 def fetch_data():
     ids = []
     adds = []
-    locations = []
     BFound = True
     if BFound:
         BFound = False
@@ -182,7 +181,6 @@ def fetch_data():
                     hours,
                 ]
     for lat, lng in search:
-        result_coords = []
         x = lat
         y = lng
         logger.info("%s - %s..." % (str(x), str(y)))
