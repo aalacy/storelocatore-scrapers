@@ -93,12 +93,17 @@ def fetch_data():
         hours_of_operation = loc_dom.xpath(
             '//div[@class="branch-loc-details--opening-hours"]/text()'
         )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
         if hours_of_operation:
             hours_of_operation = hours_of_operation[-1].strip()
             if not hours_of_operation.strip():
                 hours_of_operation = "<MISSING>"
         else:
             hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.split("with")[0]
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,
