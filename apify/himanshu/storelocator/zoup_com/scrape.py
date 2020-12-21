@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-import html5lib
 
 session = SgRequests()
 
