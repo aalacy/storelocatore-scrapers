@@ -77,13 +77,15 @@ def fetch_data():
     )
     while True:
         session = SgRequests()
-        stores_req = session.get(
-            url,
-            headers=headers,
-        )
+        try:
+            stores_req = session.get(
+                url,
+                headers=headers,
+            )
+        except:
+            pass
         if stores_req.status_code == 200:
             break
-
     stores = json.loads(stores_req.text.strip())["stores"]
     for store in stores.keys():
         locator_domain = website
