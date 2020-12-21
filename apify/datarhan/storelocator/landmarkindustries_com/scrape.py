@@ -126,6 +126,7 @@ def fetch_data():
 
         if "soon" in zip_code.lower():
             zip_code = "<MISSING>"
+            location_type = "opening soon"
 
         item = [
             DOMAIN,
