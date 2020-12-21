@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import json
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
