@@ -1,5 +1,4 @@
 import csv
-import os
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
