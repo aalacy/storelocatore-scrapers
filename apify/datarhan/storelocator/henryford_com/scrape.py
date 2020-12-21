@@ -80,32 +80,12 @@ def fetch_data():
         phone = store_dom.xpath('//div[@class="phones"]//a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "Hospital"
+        if store_dom.xpath('//div[@class="time"]/p/text()'):
+            if "once we open" in store_dom.xpath('//div[@class="time"]/p/text()')[0]:
+                location_type = "opening soon"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = []
-        hoo = store_dom.xpath(
-            '//h4[contains(text(), "Hours")]/following-sibling::ul//text()'
-        )
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        for elem in hoo:
-            if ("Fax" and "Phone" and "Please") in elem:
-                continue
-            hours_of_operation.append(elem)
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
-        if "00 p.m" not in hours_of_operation:
-            hours_of_operation = "<MISSING>"
-        if hours_of_operation != "<MISSING>":
-            hours_of_operation = "Monday" + hours_of_operation.split("Monday")[-1]
-            hours_of_operation = hours_of_operation.strip()
-            if not hours_of_operation.endswith("p.m."):
-                hours_of_operation = "p.m. ".join(
-                    hours_of_operation.split("p.m. ")[:-1]
-                )
-        hours_of_operation = (
-            hours_of_operation.strip() if hours_of_operation.strip() else "<MISSING>"
-        )
+        hours_of_operation = "<INACCESSIBLE>"
 
         item = [
             DOMAIN,
