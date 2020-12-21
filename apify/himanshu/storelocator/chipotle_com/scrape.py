@@ -56,7 +56,7 @@ def fetch_data():
     data = r.json()["data"]
     for i in range(len(data)):
         store_data = data[i]
-        if "Cultivate Center" in store_data["restaurantName"]:
+        if "Cultivate Center" == store_data["restaurantName"]:
             continue
         store = []
         store.append("https://chipotle.com")
@@ -103,7 +103,7 @@ def fetch_data():
                     + " - "
                     + store_data["normalHours"][k]["closeTime"]
                 )
-            store.append(hours if hours is not "" else "<MISSING>")
+            store.append(hours if hours != "" else "<MISSING>")
         except:
             store.append("<MISSING>")
         page_url = (
