@@ -63,10 +63,13 @@ def fetch_data():
         store_url = poi["locationUrl"]
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = remove_tags(poi["address"]).split("\n")[0]
-        city = remove_tags(poi["address"]).split("\n")[1].split(",")[0]
-        state = remove_tags(poi["address"]).split("\n")[1].split(",")[-1].split()[0]
-        zip_code = remove_tags(poi["address"]).split("\n")[1].split(",")[-1].split()[-1]
+        address_raw = etree.HTML(poi["address"])
+        address_raw = address_raw.xpath('.//text()')
+        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        street_address = address_raw[0]
+        city = address_raw[1].split(',')[0]
+        state = address_raw[1].split(',')[-1].split()[0]
+        zip_code = address_raw[1].split(',')[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = ""
@@ -76,7 +79,12 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hours_of_operation = "<MISSING>"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hours_of_operation = loc_dom.xpath('//p[@class="maplist-hours"]/text()')
+        hours_of_operation = hours_of_operation[0].strip() if hours_of_operation else '<MISSING>'
+        hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
 
         item = [
             DOMAIN,
