@@ -75,10 +75,15 @@ def fetch_data():
         "Sites-JanieAndJack-Site/en/Stores-GetNearestStores?latitude=31.4137"
         "&longitude=73.0805&countryCode=US&distanceUnit=mi&maxdistance=250000"
     )
-    stores_req = session.get(
-        url,
-        headers=headers,
-    )
+    while True:
+        session = SgRequests()
+        stores_req = session.get(
+            url,
+            headers=headers,
+        )
+        if stores_req.status_code == 200:
+            break
+
     stores = json.loads(stores_req.text.strip())["stores"]
     for store in stores.keys():
         locator_domain = website
