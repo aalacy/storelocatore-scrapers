@@ -81,7 +81,7 @@ def fetch_data():
             store.append(
                 store_data["zipcode"] if "zipcode" in store_data else "<MISSING>"
             )
-            if store[-1].split("-")[0].isdigit() == False:
+            if not store[-1].split("-")[0].isdigit():
                 store[-1] = "<MISSING>"
             store.append("US")
             store.append("<MISSING>")
@@ -89,7 +89,7 @@ def fetch_data():
                 store_data["phone"]
                 if "phone" in store_data
                 and store_data["phone"] != ""
-                and store_data["phone"] != None
+                and store_data["phone"] is not None
                 else "<MISSING>"
             )
             store.append(
@@ -100,7 +100,7 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             hours = ""
-            if "monopen" in store_data and store_data["monopen"] != None:
+            if "monopen" in store_data and store_data["monopen"] is not None:
                 hours = (
                     hours
                     + " monday "
@@ -108,7 +108,7 @@ def fetch_data():
                     + " - "
                     + store_data["monclose"]
                 )
-            if "tuesopen" in store_data and store_data["tuesopen"] != None:
+            if "tuesopen" in store_data and store_data["tuesopen"] is not None:
                 hours = (
                     hours
                     + " tuesday "
@@ -116,7 +116,7 @@ def fetch_data():
                     + " - "
                     + store_data["tuesclose"]
                 )
-            if "wedopen" in store_data and store_data["wedopen"] != None:
+            if "wedopen" in store_data and store_data["wedopen"] is not None:
                 hours = (
                     hours
                     + " wednesda "
@@ -124,7 +124,7 @@ def fetch_data():
                     + " - "
                     + store_data["wedclose"]
                 )
-            if "thuopen" in store_data and store_data["thuopen"] != None:
+            if "thuopen" in store_data and store_data["thuopen"] is not None:
                 hours = (
                     hours
                     + " thursday "
@@ -132,7 +132,7 @@ def fetch_data():
                     + " - "
                     + store_data["thuclose"]
                 )
-            if "friopen" in store_data and store_data["friopen"] != None:
+            if "friopen" in store_data and store_data["friopen"] is not None:
                 hours = (
                     hours
                     + " friday "
@@ -140,7 +140,7 @@ def fetch_data():
                     + " - "
                     + store_data["friclose"]
                 )
-            if "satopen" in store_data and store_data["satopen"] != None:
+            if "satopen" in store_data and store_data["satopen"] is not None:
                 hours = (
                     hours
                     + " saturday "
@@ -148,7 +148,7 @@ def fetch_data():
                     + " - "
                     + store_data["satclose"]
                 )
-            if "sunopen" in store_data and store_data["sunopen"] != None:
+            if "sunopen" in store_data and store_data["sunopen"] is not None:
                 hours = (
                     hours
                     + " sunday "
