@@ -48,14 +48,14 @@ def fetch_data():
     all_locations = []
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=200,
+        max_radius_miles=100,
         max_search_results=None,
     )
     for lat, lng in all_coordinates:
         formdata = {
-            "chain": "93",
-            "geolat": "43.653226",
-            "geolong": "-79.3831843",
+            "chain": "91",
+            "geolat": lat,
+            "geolong": lng,
             "lang": "en",
             "maxstores": "250",
         }
@@ -63,14 +63,11 @@ def fetch_data():
         response = session.post(start_url, headers=headers, data=formdata)
         data = json.loads(response.text)
         all_locations += data["Stores"]
-        print(len(all_locations))
 
     for poi in all_locations:
         store_url = "<MISSING>"
-        location_name = "<MISSING>"
+        location_name = "Winners at " + poi["Address2"]
         street_address = poi["Address"]
-        if poi["Address2"]:
-            street_address += ", " + poi["Address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["City"]
         state = poi["State"]
