@@ -47,9 +47,7 @@ def fetch_data():
                     .get_text()
                     .strip()
                 )
-                page_url = base_url + r.find(
-                    "a",
-                    {"class": "location-block__name-link u-text--fw-300 notranslate"},
+                page_url = base_url + r.find("a",{"class": "location-block__name-link u-text--fw-300 notranslate"},
                 ).get("href")
             except:
                 name = r.find_all("h3")[0].get_text().strip()
