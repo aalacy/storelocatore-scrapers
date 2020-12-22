@@ -42,24 +42,21 @@ def fetch_data():
         rows = soup.find_all("li", {"class": "facility-search-block__item"})
         for r in rows:
             try:
-                name = (
-                    r.find("span", {"class": "location-block__name-link-text"})
-                    .get_text()
-                    .strip()
-                )
-                page_url = base_url + r.find("a",{"class": "location-block__name-link u-text--fw-300 notranslate"},
-                ).get("href")
+                page_ss = ""
+                name = r.find(
+                    "span", {"class": "location-block__name-link-text"}
+                ).text.strip()
+                page_ss = r.find(
+                    "a",
+                    {"class": "location-block__name-link u-text--fw-300 notranslate"},
+                )["href"]
+                page_url = base_url + page_ss
             except:
-                name = r.find_all("h3")[0].get_text().strip()
+                name = r.find_all("h3")[0].text.strip()
                 page_url = "<MISSING>"
 
             try:
-                phone = (
-                    r.find("a", {"class": "telephone"})
-                    .get_text()
-                    .strip()
-                    .split()[-1][2:]
-                )
+                phone = r.find("a", {"class": "telephone"}).text.strip().split()[-1][2:]
             except:
                 phone = "<MISSING>"
 
