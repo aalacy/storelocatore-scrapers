@@ -1,6 +1,7 @@
 import re
 import json
 import csv
+from time import sleep
 from lxml import etree
 
 from sgselenium import SgChrome
@@ -61,6 +62,7 @@ def fetch_data():
             driver.find_element_by_xpath(
                 '//button[@class="wpgmza-api-consent"]'
             ).click()
+            sleep(60)
             dom = etree.HTML(driver.page_source)
             data = dom.xpath('//script[contains(text(), "marker_data")]/text()')[0]
             data = json.loads(re.findall(r"marker_data = (.+?);", data)[0])
