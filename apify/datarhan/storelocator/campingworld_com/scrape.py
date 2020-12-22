@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "campingworld.com"
     start_url = "https://rv.campingworld.com/locationsbystate"
