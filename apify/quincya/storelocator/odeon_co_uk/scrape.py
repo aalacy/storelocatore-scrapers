@@ -52,7 +52,9 @@ def fetch_data():
     items = base.find_all(class_="btn blue")[1:]
     locator_domain = "odeon.co.uk"
 
-    items = json.loads(base.find(id="v-site-list-all-cinemas")["data-v-site-list"])["config"]["cinemas"]
+    items = json.loads(base.find(id="v-site-list-all-cinemas")["data-v-site-list"])[
+        "config"
+    ]["cinemas"]
 
     for item in items:
 
