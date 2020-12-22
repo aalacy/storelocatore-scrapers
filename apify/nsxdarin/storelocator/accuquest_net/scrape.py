@@ -94,6 +94,16 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if "days-<" in line2:
+                hrs = (
+                    line2.split("<br>")[0]
+                    .replace("</strong>", "")
+                    .replace("<strong>", "")
+                )
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
             if "day</strong>" in line2:
                 hrs = (
                     line2.split("<strong>")[1].split("<br>")[0].replace("</strong>", "")
