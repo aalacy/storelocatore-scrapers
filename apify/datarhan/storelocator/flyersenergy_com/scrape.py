@@ -63,7 +63,7 @@ def fetch_data():
             ).click()
             dom = etree.HTML(driver.page_source)
             data = dom.xpath('//script[contains(text(), "marker_data")]/text()')[0]
-            data = json.loads(re.findall("marker_data = (.+?);", data)[0])
+            data = json.loads(re.findall(r"marker_data = (.+?);", data)[0])
 
     for poi in data["1"].values():
         store_url = "<MISSING>"
@@ -75,7 +75,7 @@ def fetch_data():
         latitude = poi["lat"]
         longitude = poi["lng"]
         country_code = "<MISSING>"
-        store_number = re.findall("(\d+) -", poi["title"])[0]
+        store_number = re.findall(r"(\d+) -", poi["title"])[0]
         phone = "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
