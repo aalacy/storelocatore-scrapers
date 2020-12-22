@@ -2,7 +2,6 @@ import csv
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
 
 logger = SgLogSetup().get_logger("appleone_com")
 
