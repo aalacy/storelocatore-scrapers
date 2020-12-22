@@ -62,7 +62,7 @@ def fetch_data():
             store_url = "https://www.txfb-ins.com/county/details/{}".format(county)
             if office["_branchCode"]:
                 store_url = (
-                    "https://www.txfb-ins.com/county/details/{}/Branch/{}".format(
+                    "https://www.txfb-ins.com/county/details/{}/{}".format(
                         county, office["_branchCode"]
                     )
                 )
