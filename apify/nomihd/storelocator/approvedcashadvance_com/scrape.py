@@ -43,7 +43,6 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         temp_list = []  # ignoring duplicates
         for row in data:
             comp_list = [
