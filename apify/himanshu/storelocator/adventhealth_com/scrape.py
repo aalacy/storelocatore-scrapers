@@ -41,29 +41,10 @@ def fetch_data():
         soup = BeautifulSoup(page.text, "lxml")
         rows = soup.find_all("li", {"class": "facility-search-block__item"})
         for r in rows:
-            try:
-                name = (
-                    r.find("span", {"class": "location-block__name-link-text"})
-                    .get_text()
-                    .strip()
-                )
-                page_url = base_url + r.find(
-                    "a",
-                    {"class": "location-block__name-link u-text--fw-300 notranslate"},
-                ).get("href")
-            except Exception:
-                name = r.find_all("h3")[0].get_text().strip()
-                page_url = "<MISSING>"
+            name = "<MISSING>"
+            page_url = "<MISSING>"
 
-            try:
-                phone = (
-                    r.find("a", {"class": "telephone"})
-                    .get_text()
-                    .strip()
-                    .split()[-1][2:]
-                )
-            except Exception:
-                phone = "<MISSING>"
+            phone = "<MISSING>"
 
             street = r.find("span", {"property": "streetAddress"}).get_text().strip()
             city = r.find("span", {"property": "addressLocality"}).get_text().strip()
