@@ -61,10 +61,8 @@ def fetch_data():
         for office in poi["_countyOffice"]:
             store_url = "https://www.txfb-ins.com/county/details/{}".format(county)
             if office["_branchCode"]:
-                store_url = (
-                    "https://www.txfb-ins.com/county/details/{}/Branch/{}".format(
-                        county, office["_branchCode"]
-                    )
+                store_url = "https://www.txfb-ins.com/county/details/{}/{}".format(
+                    county, office["_branchCode"]
                 )
             location_name = office["_agencyName"]
             location_name = location_name if location_name else "<MISSING>"
