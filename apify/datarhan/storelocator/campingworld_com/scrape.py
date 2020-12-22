@@ -1,6 +1,6 @@
 import csv
-import json
 from lxml import etree
+
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -41,47 +41,40 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "campingworld.com"
-    start_url = "https://rv.campingworld.com/api/locationmiles?glcodes=RVA,082,FVA,HAN,TVA,AVA,MCG,AIR,HAR,NVA,BRI,APA,ROA,LAK,GNC,RAL,CFX,BUF,SYU,FAY,CNY,SRV,KIN,STA,CNC,002,MB,MNC&lat=39.04&lon=-77.48"
-
+    start_url = "https://rv.campingworld.com/locationsbystate"
     response = session.get(start_url)
-    all_locations = json.loads(response.text)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//div[@class="section-content"]//li/a/@href')
 
-    for poi in all_locations:
+    for url in all_locations:
         base_url = "https://rv.ganderoutdoors.com/dealer/"
-        store_url = urljoin(base_url, poi["dealer_url"])
-        location_name = poi["location_name__c"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["billing_street__c"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["billing_city__c"]
-        city = city if city else "<MISSING>"
-        state = poi["billing_state_code__c"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["billing_postal_5code__c"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["billing_country_code__c"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["location_id__c"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone__c"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        if poi["legal_name__c"]:
-            if "Camping World" in poi["legal_name__c"]:
-                location_type = "Camping World"
-        latitude = poi["geolocation_latitude__c"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["geolocation_longitude__c"]
-        longitude = longitude if longitude else "<MISSING>"
-
-        check = "{} {}".format(location_name, street_address)
-        if check in scraped_items:
-            continue
+        store_url = urljoin(base_url, url)
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
+
+        location_name = store_dom.xpath('//div[@class="col-xs-12 address"]/a/h1/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        if "Camping World" not in location_name:
+            continue
+        address_raw = store_dom.xpath('//div[@class="col-xs-12 address"]/a/p/text()')
+        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        street_address = address_raw[0]
+        city = address_raw[1].split(", ")[0]
+        state = address_raw[1].split(", ")[-1].split()[0]
+        zip_code = address_raw[1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = store_dom.xpath('//a[@class="phone-number"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = store_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(
+            ";"
+        )[0]
+        longitude = store_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(
+            ";"
+        )[1]
         hoo = store_dom.xpath(
             '//div[@id="dealerHours"]/div[@class="storehours"]//div[@class="row hours-row"]//text()'
         )
@@ -105,9 +98,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        items.append(item)
 
     return items
 
