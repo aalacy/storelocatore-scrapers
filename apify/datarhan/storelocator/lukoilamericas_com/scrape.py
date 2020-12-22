@@ -1,6 +1,5 @@
 import csv
 import json
-
 from sgrequests import SgRequests
 
 
@@ -42,7 +41,9 @@ def fetch_data():
 
     DOMAIN = "lukoilamericas.com"
     start_url = "https://lukoilamericas.com/api/cartography/GetCountryDependentSearchObjectData?form=gasStation&country=US"
-
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    }
     allpoints_response = session.get(start_url, verify=False)
     data = json.loads(allpoints_response.text)
     for elem in data["GasStations"]:
@@ -50,7 +51,7 @@ def fetch_data():
             elem["GasStationId"]
         )
 
-        gs_response = session.get(gs_url)
+        gs_response = session.get(gs_url, headers=headers)
         poi = json.loads(gs_response.text)[0]
 
         if not poi["GasStation"]["Company"]["Name"] == "Lukoil Americas Corporation":
@@ -59,13 +60,15 @@ def fetch_data():
         store_url = "https://lukoilamericas.com/en/ForMotorists/PetrolStations/PetrolStation?type=gasStation&id={}".format(
             elem["GasStationId"]
         )
-        location_name = poi["GasStation"]["Name"]
+        location_name = "Station №" + str(poi["GasStation"]["Name"])
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["GasStation"]["Street"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["GasStation"]["City"]
         city = city if city else "<MISSING>"
-        state = poi["GasStation"]["Address"].split(",")[-1]
+        state = poi["GasStation"]["Address"].split(",")[-2]
+        if len(state.strip()) > 2:
+            state = poi["GasStation"]["Address"].split(",")[-1].split()[0]
         state = state.strip() if state else "<MISSING>"
         zip_code = poi["GasStation"]["PostCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
