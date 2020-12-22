@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("accuquest_net")
+logger = SgLogSetup().get_logger("plaidpantry_com")
 
 
 def write_output(data):
@@ -39,69 +39,63 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://accuquest.com/store_page-sitemap.xml"
+    url = "https://www.plaidpantry.com/store-locator/"
     r = session.get(url, headers=headers)
-    website = "accuquest.net"
+    website = "plaidpantry.com"
     typ = "<MISSING>"
     country = "US"
-    store = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if (
-            "<loc>https://accuquest.com/location-details/" in line
-            and "/test-" not in line
-        ):
-            lurl = line.split("<loc>")[1].split("<")[0]
-            if lurl != "https://accuquest.com/location-details/":
-                locs.append(lurl)
+        if "location.push('https://www.plaidpantry.com/store/" in line:
+            locs.append(line.split("('")[1].split("'")[0])
     for loc in locs:
         logger.info(loc)
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        phone = ""
+        store = "<MISSING>"
+        lat = ""
+        lng = ""
+        hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
-        hours = ""
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if '<h1 class="entry-title" itemprop="headline">' in line2:
-                name = line2.split('<h1 class="entry-title" itemprop="headline">')[
-                    1
-                ].split("<")[0]
-            if "Address</strong><br />" in line2:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                add = g.split(",")[0]
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                if "Bad Axe" in g:
-                    city = "Bad Axe"
-                    state = "Michigan"
-                    zc = "48413"
-                elif "Eau Claire W" in g:
-                    city = "Eau Claire"
-                    state = "Wisconsin"
-                    zc = "54701"
-                else:
-                    city = g.split(",")[0]
-                    state = g.split(",")[1].strip().rsplit(" ", 1)[0]
-                    zc = g.split("<")[0].rsplit(" ", 1)[1]
-            if "day-<" in line2:
-                hrs = (
-                    line2.split("<br>")[0]
-                    .replace("</strong>", "")
-                    .replace("<strong>", "")
+            if "<div class='page_title'><h1>" in line2:
+                name = line2.split("<div class='page_title'><h1>")[1].split("<")[0]
+            if '<p class="store-address"><strong><a' in line2:
+                addinfo = (
+                    line2.split('<p class="store-address"><strong><a')[1]
+                    .split('">')[1]
+                    .split("<")[0]
                 )
+                add = addinfo.split(",")[0]
+                if "Portland OR" in addinfo:
+                    city = "Portland"
+                    state = "OR"
+                else:
+                    city = addinfo.split(",")[1].strip()
+                    state = addinfo.split(",")[2].strip().split(" ")[0]
+                zc = addinfo.rsplit(" ", 1)[1]
+            if '<h6><strong><a href="tel:' in line2:
+                phone = line2.split('<h6><strong><a href="tel:')[1].split('"')[0]
+            if "window.storeLat = " in line2:
+                lat = line2.split("window.storeLat = ")[1].split(";")[0]
+            if "window.storeLong = " in line2:
+                lng = line2.split("window.storeLong = ")[1].split(";")[0]
+            if "day:</td>" in line2:
+                day = line2.split(">")[1].split("<")[0]
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                hrs = day + " " + g.split(">")[1].split("<")[0]
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "Call: (" in line2:
-                phone = "(" + line2.split("Call: (")[1].split("<")[0].strip()
-            if '<a href="https://www.google.com/maps/' in line2:
-                lat = line2.split("/@")[1].split(",")[0]
-                lng = line2.split("/@")[1].split(",")[1]
-        hours = hours.replace("<p>", "")
-        if hours == "":
-            hours = "<MISSING>"
         yield [
             website,
             loc,
