@@ -193,7 +193,7 @@ def fetch_data():
                                 (
                                     c
                                     for c in unicodedata.normalize("NFD", store[i])
-                                    if unicodedata.category(c) is not "Mn"
+                                    if unicodedata.category(c) != "Mn"
                                 )
                             )
                     store = [
