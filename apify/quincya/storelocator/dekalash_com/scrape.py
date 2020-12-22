@@ -43,8 +43,8 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
@@ -65,9 +65,14 @@ def fetch_data():
             "Searching: %s, %s | Items remaining: %s"
             % (lat, lng, search.items_remaining())
         )
-        api_link = "https://api.storepoint.co/v1/15e2b4dd23ff14/locations?lat=%s&long=%s&radius=%s" % (lat, lng, max_distance)
+        api_link = (
+            "https://api.storepoint.co/v1/15e2b4dd23ff14/locations?lat=%s&long=%s&radius=%s"
+            % (lat, lng, max_distance)
+        )
 
-        store_data = session.get(api_link, headers=headers).json()["results"]["locations"]
+        store_data = session.get(api_link, headers=headers).json()["results"][
+            "locations"
+        ]
         if not store_data:
             continue
 
@@ -110,7 +115,9 @@ def fetch_data():
             if "temporarily closed" in base.find(class_="elementor-row").text.lower():
                 hours_of_operation = "Temporarily Closed"
             else:
-                hours_of_operation = " ".join(list(base.find(class_="IiXf4c").stripped_strings))
+                hours_of_operation = " ".join(
+                    list(base.find(class_="IiXf4c").stripped_strings)
+                )
 
             data.append(
                 [
