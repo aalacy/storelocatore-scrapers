@@ -41,6 +41,8 @@ def write_output(data):
 def xpath(hxt, query_string):
     hxp = hxt.xpath(query_string)
     if hxp:
+        if hasattr(hxp[0], "encode"):
+            return hxp[0].encode("utf-8")
         return hxp[0]
     return None
 
@@ -49,7 +51,7 @@ def extract(row):
 
     re_address = re.compile(r"([A-Z0-9]+) ([ \.A-Z0-9a-z]+) ([A-Z0-9a-z\.]+)")
 
-    name = xpath(row, ".//span//text()").strip().decode("utf-8")
+    name = xpath(row, ".//span//text()").decode("utf-8").strip()
     text = etree.tostring(row).decode("utf-8")
     text = re.sub("&#8217;|&nbsp;|&#160;", "", text)
 
