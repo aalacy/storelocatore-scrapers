@@ -63,6 +63,7 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
+        HFound = True
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
@@ -96,7 +97,7 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Hours</strong><br />" in line2:
+            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
                 hours = (
                     line2.split("Hours</strong><br />")[1]
                     .replace("<br />", "; ")
@@ -106,7 +107,8 @@ def fetch_data():
                     .replace("\n", "")
                     .strip()
                 )
-            if "Hours</strong><br/>" in line2:
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
                 hours = (
                     line2.split("Hours</strong><br/>")[1]
                     .replace("<br/>", "; ")
@@ -116,28 +118,81 @@ def fetch_data():
                     .replace("\n", "")
                     .strip()
                 )
-            if "Sales Hours</strong><br/>" in line2:
+                HFound = False
+            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
-                if "day" in g:
-                    hours = (
-                        g.replace("\r", "")
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .strip()
-                        .replace("<br/>", "; ")
-                        .replace("<br>", "; ")
-                        .replace("<br />", "; ")
-                    )
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
         if "; <p>" in hours:
             hours = hours.split("; <p>")[0]
         if hours == "":
             hours = "<MISSING>"
+        hours = hours.replace(";;", ";")
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
         if add == "":
             add = "<MISSING>"
+        if "</p>" in hours:
+            hours = hours.split("</p>")[0].strip()
         yield [
             website,
             loc,
@@ -170,6 +225,7 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
+        HFound = True
         state = ""
         zc = ""
         store = "<MISSING>"
@@ -207,27 +263,100 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Store Hours</strong><br />" in line2:
+            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Store Hours</strong><br />")[1]
-                    .split("</p>")[0]
+                    line2.split("Hours</strong><br />")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
                 )
-            if "Store Hours</strong><br/>" in line2:
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Store Hours</strong><br/>")[1]
-                    .split("</p>")[0]
+                    line2.split("Hours</strong><br/>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
                 )
+                HFound = False
+            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
         if "; <p>" in hours:
             hours = hours.split("; <p>")[0]
         if hours == "":
             hours = "<MISSING>"
+        hours = hours.replace(";;", ";")
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
+        if "</p>" in hours:
+            hours = hours.split("</p>")[0].strip()
         yield [
             website,
             loc,
@@ -248,7 +377,6 @@ def fetch_data():
     url = "https://www.tesla.com/findus/list/stores/Canada"
     r = session.get(url, headers=headers)
     website = "tesla.com"
-    typ = "<MISSING>"
     country = "CA"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
@@ -260,12 +388,14 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
+        typ = ""
         state = ""
         zc = ""
         store = "<MISSING>"
         phone = ""
         lat = ""
         lng = ""
+        HFound = True
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
@@ -292,8 +422,8 @@ def fetch_data():
                     .strip()
                     .split(" ", 1)[1]
                 )
-            if '<span class="type">' in line2:
-                typ = line2.split('<span class="type">')[1].split("<")[0]
+            if '<span class="type">' in line2 and typ == "":
+                typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
                 phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
@@ -304,24 +434,95 @@ def fetch_data():
                     .split(",")[1]
                     .split('"')[0]
                 )
-            if "Store Hours</strong><br />" in line2:
+            if "Hours</strong><br />" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Store Hours</strong><br />")[1]
-                    .split("</p>")[0]
+                    line2.split("Hours</strong><br />")[1]
                     .replace("<br />", "; ")
                     .replace("<br/>", "; ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
                 )
-            if "Store Hours</strong><br/>" in line2:
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" in line2 and HFound:
                 hours = (
-                    line2.split("Store Hours</strong><br/>")[1]
-                    .split("</p>")[0]
+                    line2.split("Hours</strong><br/>")[1]
                     .replace("<br/>", "; ")
                     .replace("<br />", "; ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
                 )
+                HFound = False
+            if "Hours</strong><br />" in line2 and "day" not in line2 and HFound:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
+            if "Hours</strong><br/>" in line2 and "day" not in line2 and HFound:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "day" not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                while "day" in g:
+                    if hours == "":
+                        hours = (
+                            g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + "; "
+                            + g.replace("<br />", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("<br/>", "; ")
+                            .replace("\r", "")
+                            .replace("\t", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
+                HFound = False
         if "; <p>" in hours:
             hours = hours.split("; <p>")[0]
         if hours == "":
             hours = "<MISSING>"
+        hours = hours.replace(";;", ";")
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
@@ -344,6 +545,11 @@ def fetch_data():
             zc = "M6A 2T9"
         if "https://www.tesla.com/findus/location/store/montrealferrier" in loc:
             hours = "M-F: 7:30-17:30; Sat-Sun: Closed"
+        if "torontovaughan" in loc:
+            lat = "43.7937365"
+            lng = "-79.5496246"
+        if "</p>" in hours:
+            hours = hours.split("</p>")[0].strip()
         yield [
             website,
             loc,
