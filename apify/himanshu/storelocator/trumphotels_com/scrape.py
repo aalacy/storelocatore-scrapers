@@ -32,7 +32,8 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = webdriver.Chrome(executable_path="chromedriver")
+    DRIVER_PATH = "chromedriver"
+    driver = webdriver.Chrome(executable_path=DRIVER_PATH)
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
     soup = BeautifulSoup(driver.page_source, "lxml")
