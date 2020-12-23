@@ -39,7 +39,7 @@ class DataMixin(object):
 class Base(DataMixin):
 
     csv_filename = ''
-    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'naics_code', 'latitude', 'longitude', 'hours_of_operation']
+    csv_fieldnames = ['locator_domain', 'page_url', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'naics_code', 'latitude', 'longitude', 'hours_of_operation']
     domain_name = ''
     default_country = 'US'
     url = ''
