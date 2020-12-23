@@ -10,3 +10,5 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 use --ignore StreetAddressHasNumber as script is fetching what's available on the website
+
+use --ignore CountryValidator as script is fetching what's available on the website
