@@ -2,3 +2,4 @@ sgrequests
 sglogging 
 sgzip==0.0.55
 usaaddress
+bs4
