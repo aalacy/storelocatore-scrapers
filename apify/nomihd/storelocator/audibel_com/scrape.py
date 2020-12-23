@@ -75,7 +75,7 @@ def fetch_data():
         stores = json.loads(stores_req.text)["Locations"]
         for store_json in stores:
             if store_json["Country"] == "United States":
-                page_url = search_url
+                page_url = "<MISSING>"
                 locator_domain = website
                 location_name = store_json["BusinessName"]
                 street_address = store_json["StreetAddress"]
