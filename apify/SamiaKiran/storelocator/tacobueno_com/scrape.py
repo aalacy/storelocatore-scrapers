@@ -3,6 +3,7 @@ import sgzip
 import re
 import time
 import usaddress
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
