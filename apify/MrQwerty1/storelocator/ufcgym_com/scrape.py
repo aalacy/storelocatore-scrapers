@@ -61,6 +61,7 @@ def get_data(url):
         "o",
         "st",
     )
+
     data = (
         "{name" + text.split("name")[1].split(",email")[0].replace("zip", "_zip") + "}"
     )
@@ -73,18 +74,18 @@ def get_data(url):
         data = data.replace(f"{k},", f"{v},")
 
     data = eval(data)
-    location_name = data.get("n") or "<MISSING>"
-    street_address = data.get("str") or "<MISSING>"
-    city = data.get("c") or "<MISSING>"
-    state = data.get("s") or "<MISSING>"
-    postal = data.get("z") or "<MISSING>"
+    location_name = data.get(name) or "<MISSING>"
+    street_address = data.get(street) or "<MISSING>"
+    city = data.get(city) or "<MISSING>"
+    state = data.get(state) or "<MISSING>"
+    postal = data.get(_zip) or "<MISSING>"
     if len(postal) == 5 or postal == "<MISSING>":
         country_code = "US"
     else:
         country_code = "CA"
 
     store_number = "<MISSING>"
-    phone = data.get("p") or "<MISSING>"
+    phone = data.get(phone) or "<MISSING>"
     latitude = "".join(re.findall(r"lat:(\d+.\d+)", text)) or "<MISSING>"
     longitude = "".join(re.findall(r"lng:(-?\d+.\d+)", text)) or "<MISSING>"
     location_type = "<MISSING>"
