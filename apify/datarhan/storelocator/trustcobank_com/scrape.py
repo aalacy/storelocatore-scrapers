@@ -61,25 +61,30 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         address_raw = loc_dom.xpath('//div[@id="location-info"]/p/text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        if "00am" in address_raw[-1]:
+            address_raw = address_raw[:-1]
+        if len(address_raw) == 5:
+            address_raw = address_raw[:-1]
+        if len(address_raw) == 4:
+            address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
         street_address = address_raw[0]
         street_address = street_address if street_address else "<MISSING>"
         city = address_raw[1].split(",")[0]
         state = address_raw[1].split(",")[-1].split()[0]
         zip_code = address_raw[1].split(",")[-1].split()[-1]
         country_code = "<MISSING>"
-        phone = loc_dom.xpath(
-            '//h2[contains(text(), "Phone Number")]/following-sibling::p/text()'
-        )
-        phone = phone[0] if phone else "<MISSING>"
+        phone = address_raw[-1]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = loc_dom.xpath(
-            '//table[@class="table-location table-hours"]//text()'
+        days = loc_dom.xpath(
+            '//table[@class="table-location table-hours"]//tr/th/text()'
+        )[2:]
+        hours = loc_dom.xpath(
+            '//table[@class="table-location table-hours"]//tr/td[1]/text()'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
+        hours_of_operation = list(map(lambda d, h: d + " " + h, days, hours))
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

@@ -60,7 +60,6 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "spherion.com" not in store_url:
             continue
-        print(store_url)
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
         store_data = loc_dom.xpath(
@@ -92,14 +91,24 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//div[@class="branch-loc-details--opening-hours"]/text()'
+            '//div[@class="branch-loc-details--opening-hours"]//text()'
         )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
         if hours_of_operation:
-            hours_of_operation = hours_of_operation[-1].strip()
+            hours_of_operation = " ".join(hours_of_operation[1:]).strip()
             if not hours_of_operation.strip():
                 hours_of_operation = "<MISSING>"
         else:
             hours_of_operation = "<MISSING>"
+        hours_of_operation = hours_of_operation.split("with")[0]
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = loc_dom.xpath(
+                '//div[@id="ctl08_ctl03_OpeningHoursWrapperDiv"]/p[1]/text()'
+            )
+            hours_of_operation = hours_of_operation[0] if hours_of_operation else ""
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,
