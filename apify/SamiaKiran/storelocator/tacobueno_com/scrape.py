@@ -131,8 +131,8 @@ def fetch_data():
                         ]
                     )
         except Exception as e:
-           pass
-  
+            pass
+
         search.max_distance_update(MAX_DISTANCE)
         search.max_count_update(result_coords)
         query_coord = search.next_zip()
