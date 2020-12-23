@@ -63,7 +63,12 @@ def fetch_data():
         logger.info(page_url)
         location_name = in_semi_part.find("a").text
         city = in_semi_part.find("a").text.split(",")[-1].strip()
-        city = city.split("(")[0].replace("Downtown", "").replace("at Embarcadero", "").strip()
+        city = (
+            city.split("(")[0]
+            .replace("Downtown", "")
+            .replace("at Embarcadero", "")
+            .strip()
+        )
         store_re = session.get(page_url)
         main_store_soup = BeautifulSoup(store_re.text, "lxml")
 
