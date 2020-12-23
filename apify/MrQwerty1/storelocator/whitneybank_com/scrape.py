@@ -60,11 +60,11 @@ def get_data(coord):
         longitude = geo[0]
         location_type = ",".join(j.get("locationTypes")) or "<MISSING>"
 
-        if location_type == 'atm':
+        if location_type == "atm":
             continue
 
         hours_of_operation = (
-                j.get("lobbyHours").replace("(appointment only)", "") or "<MISSING>"
+            j.get("lobbyHours").replace("(appointment only)", "") or "<MISSING>"
         )
         if hours_of_operation.find("(") != -1:
             hours_of_operation = hours_of_operation.split("(")[0].strip()
