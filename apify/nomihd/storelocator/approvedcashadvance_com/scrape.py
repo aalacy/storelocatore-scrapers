@@ -134,88 +134,141 @@ def fetch_data():
                 locations = store_sel.xpath(
                     '//div[@class="addres_sec"]//div[@class="add_box"]'
                 )
-
-                cool = (
-                    store_resp.text.split("var locations = ")[1]
-                    .strip()
-                    .split("];")[0]
-                    .strip()
-                    + "]"
-                )
-
-                if "]," in cool:
-                    loc_array = json.loads(
-                        "["
-                        + BS(cool, "html.parser")
-                        .get_text()
-                        .rsplit("],", 1)[0]
+                if len(locations) > 0:
+                    cool = (
+                        store_resp.text.split("var locations = ")[1]
                         .strip()
-                        .split("[", 1)[1]
+                        .split("];")[0]
                         .strip()
-                        + "]]"
+                        + "]"
                     )
 
-                    for index in range(0, len(locations)):
-                        phone_to_be_matched = "".join(store.xpath("b/a/text()")).strip()
-                        phone = "".join(locations[index].xpath("b/a/text()")).strip()
+                    if "]," in cool:
+                        loc_array = json.loads(
+                            "["
+                            + BS(cool, "html.parser")
+                            .get_text()
+                            .rsplit("],", 1)[0]
+                            .strip()
+                            .split("[", 1)[1]
+                            .strip()
+                            + "]]"
+                        )
 
-                        if phone_to_be_matched == phone:
-                            location_name = "".join(
-                                locations[index].xpath("span/text()")
+                        for index in range(0, len(locations)):
+                            phone_to_be_matched = "".join(
+                                store.xpath("b/a/text()")
                             ).strip()
-                            if "-" in location_name:
-                                location_name = location_name.split("-")[0].strip()
+                            phone = "".join(
+                                locations[index].xpath("b/a/text()")
+                            ).strip()
 
-                            temp_address = locations[index].xpath("text()")
-                            add_list = []
-                            for addr in temp_address:
-                                if len("".join(addr).strip()) > 0:
-                                    add_list.append("".join(addr).strip())
+                            if phone_to_be_matched == phone:
+                                location_name = "".join(
+                                    locations[index].xpath("span/text()")
+                                ).strip()
+                                if "-" in location_name:
+                                    location_name = location_name.split("-")[0].strip()
 
-                            street_address = add_list[0].strip()
-                            city = add_list[1].split(",")[0].strip()
-                            state = add_list[1].split(",")[1].strip()
-                            zip = "<MISSING>"
-                            country_code = ""
-                            if us.states.lookup(state):
-                                country_code = "US"
+                                temp_address = locations[index].xpath("text()")
+                                add_list = []
+                                for addr in temp_address:
+                                    if len("".join(addr).strip()) > 0:
+                                        add_list.append("".join(addr).strip())
 
-                            if country_code == "":
-                                country_code = "<MISSING>"
-                            location_type = "<MISSING>"
-                            latitude = loc_array[index][1]
-                            longitude = loc_array[index][2]
-                            hours_of_operation = ""
-                            temp_hours = store_sel.xpath(
-                                '//div[@class="hoursoperation_sec"]/text()'
-                            )
-                            hours_list = []
-                            for hour in temp_hours:
-                                if len("".join(hour).strip()) > 0:
-                                    hours_list.append("".join(hour).strip())
+                                street_address = add_list[0].strip()
+                                city = add_list[1].split(",")[0].strip()
+                                state = add_list[1].split(",")[1].strip()
+                                zip = "<MISSING>"
+                                country_code = ""
+                                if us.states.lookup(state):
+                                    country_code = "US"
 
-                            hours_of_operation = " ".join(hours_list).strip()
-                            if hours_of_operation == "":
-                                hours_of_operation = "<MISSING>"
+                                if country_code == "":
+                                    country_code = "<MISSING>"
+                                location_type = "<MISSING>"
+                                latitude = loc_array[index][1]
+                                longitude = loc_array[index][2]
+                                hours_of_operation = ""
+                                temp_hours = store_sel.xpath(
+                                    '//div[@class="hoursoperation_sec"]/text()'
+                                )
+                                hours_list = []
+                                for hour in temp_hours:
+                                    if len("".join(hour).strip()) > 0:
+                                        hours_list.append("".join(hour).strip())
 
-                            curr_list = [
-                                locator_domain,
-                                page_url,
-                                location_name,
-                                street_address,
-                                city,
-                                state,
-                                zip,
-                                country_code,
-                                store_number,
-                                phone,
-                                location_type,
-                                latitude,
-                                longitude,
-                                hours_of_operation,
-                            ]
+                                hours_of_operation = " ".join(hours_list).strip()
+                                if hours_of_operation == "":
+                                    hours_of_operation = "<MISSING>"
 
-                            loc_list.append(curr_list)
+                                curr_list = [
+                                    locator_domain,
+                                    page_url,
+                                    location_name,
+                                    street_address,
+                                    city,
+                                    state,
+                                    zip,
+                                    country_code,
+                                    store_number,
+                                    phone,
+                                    location_type,
+                                    latitude,
+                                    longitude,
+                                    hours_of_operation,
+                                ]
+
+                                loc_list.append(curr_list)
+                else:
+                    page_url = "<MISSING>"
+                    locator_domain = website
+                    location_name = "".join(store.xpath("span/text()")).strip()
+                    if "-" in location_name:
+                        location_name = location_name.split("-")[0].strip()
+
+                    temp_address = store.xpath("text()")
+                    add_list = []
+                    for addr in temp_address:
+                        if len("".join(addr).strip()) > 0:
+                            add_list.append("".join(addr).strip())
+
+                    street_address = add_list[0].strip()
+                    city = add_list[1].split(",")[0].strip()
+                    state = add_list[1].split(",")[1].strip()
+                    zip = "<MISSING>"
+                    country_code = ""
+                    if us.states.lookup(state):
+                        country_code = "US"
+
+                    if country_code == "":
+                        country_code = "<MISSING>"
+
+                    phone = "".join(store.xpath("b/a/text()")).strip()
+                    location_type = "<MISSING>"
+                    latitude = store_loc_array[count][1]
+                    longitude = store_loc_array[count][2]
+                    hours_of_operation = "<MISSING>"
+                    count = count + 1
+
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+
+                    loc_list.append(curr_list)
             else:
 
                 page_url = "<MISSING>"
