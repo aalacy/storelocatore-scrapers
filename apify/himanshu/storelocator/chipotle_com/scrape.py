@@ -6,11 +6,11 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
+
         writer.writerow(
             [
                 "locator_domain",
@@ -29,7 +29,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -56,7 +56,7 @@ def fetch_data():
     data = r.json()["data"]
     for i in range(len(data)):
         store_data = data[i]
-        if "Cultivate Center" in store_data["restaurantName"]:
+        if "Cultivate Center" == store_data["restaurantName"]:
             continue
         store = []
         store.append("https://chipotle.com")
@@ -65,7 +65,6 @@ def fetch_data():
             continue
         store.append(
             store_data["addresses"][0]["addressLine1"]
-            + store_data["addresses"][0]["addressLine2"]
             if "addressLine2" in store_data["addresses"][0]
             else store_data["addresses"][0]["addressLine1"]
         )
@@ -131,16 +130,12 @@ def fetch_data():
         )
         if "3999" in store_data["addresses"][0]["addressLine1"]:
             page_url = "https://locations.chipotle.com/ga/austell/3999-austell-rd"
+        if "spc-200" in page_url:
+            page_url = "https://locations.chipotle.com/ca/bakersfield/2701-ming-ave"
         store.append(page_url)
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
         yield store
 
 
