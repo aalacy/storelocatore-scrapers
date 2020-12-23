@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from urllib.parse import urljoin
 
-from util import Util # noqa: I900
+from util import Util  # noqa: I900
 
 myutil = Util()
 
