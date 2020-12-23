@@ -149,11 +149,15 @@ def fetch_data():
             if len(city_list) > 0:
                 for city in city_list:
                     city = "https://locations.santanderbank.com/" + city
-                    if city in found:
-                        continue
-                    found.append(city)
+
                     city_response = etree.HTML(session.get(city, headers=headers2).text)
-                    if city_response is not None:
+                    if city.count("/") > 4:
+                        result = parse_detail(city_response, city)
+                        if result == "skip":
+                            continue
+                        output_list.append(result)
+
+                    elif city_response is not None:
                         store_list = city_response.xpath(
                             '//a[@class="location-tile-link Link"]/@href'
                         )
