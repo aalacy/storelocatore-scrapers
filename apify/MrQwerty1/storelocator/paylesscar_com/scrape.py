@@ -38,7 +38,7 @@ def write_output(data):
 def get_urls():
     urls = []
     session = SgRequests()
-    countries = ["us", "ca"]
+    countries = ["us", "ca", "pr"]
 
     for c in countries:
         r = session.get(f"https://www.paylesscar.com/en/locations/{c}")
