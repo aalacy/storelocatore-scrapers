@@ -66,10 +66,25 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
-        hours = "<MISSING>"
+        hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "var hoursOfOperation = [" in line2:
+                days = line2.split("var hoursOfOperation = [")[1].split('"Day":"')
+                for day in days:
+                    if '"EndTimes":' in day:
+                        hrs = (
+                            day.split('"')[0]
+                            + ": "
+                            + day.split('"StartTimes":["')[1].split('"')[0]
+                            + "-"
+                            + day.split('"EndTimes":["')[1].split('"')[0]
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0]
                 if " |" in name:
@@ -87,6 +102,8 @@ def fetch_data():
             if 'data-latitude="' in line2:
                 lat = line2.split('data-latitude="')[1].split('"')[0]
                 lng = line2.split('longitude="')[1].split('"')[0]
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,
