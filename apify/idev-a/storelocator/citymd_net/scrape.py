@@ -1,7 +1,6 @@
 import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
 from urllib.parse import urljoin
 
 from util import Util  # noqa: I900
