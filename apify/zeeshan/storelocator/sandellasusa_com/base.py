@@ -1,6 +1,9 @@
 import csv
 import os
-import requests
+
+from sgrequests import SgRequests
+
+requests = SgRequests()
 
 
 def xpath(hxt, query_string):
