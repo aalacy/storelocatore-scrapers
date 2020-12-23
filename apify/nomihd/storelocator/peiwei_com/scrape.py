@@ -74,7 +74,7 @@ def fetch_data():
     for store in stores:
         page_url = store["link"]
         locator_domain = website
-        location_name = store["title"]
+        location_name = store["title"].replace("&#8211;", "-").strip()
         if location_name == "":
             location_name = "<MISSING>"
 
@@ -90,9 +90,6 @@ def fetch_data():
                 state = tuple[0].replace(",", "").strip()
             if tuple[1] == "ZipCode":
                 zip = tuple[0].replace(",", "").strip()
-
-        if state == "USA":
-            state = "<MISSING>"
 
         city = city.strip()
         street_address = address.split(",")[0].strip() + ","
