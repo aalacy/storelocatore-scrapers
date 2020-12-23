@@ -52,7 +52,9 @@ def fetch_data():
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    semi_part = soup.find_all(id="north-america")[1].find_all(class_="LinksList-linkContainer")
+    semi_part = soup.find_all(id="north-america")[1].find_all(
+        class_="LinksList-linkContainer"
+    )
 
     locator_domain = "https://www.fourseasons.com"
 
