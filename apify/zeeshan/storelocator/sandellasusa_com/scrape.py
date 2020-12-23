@@ -41,8 +41,6 @@ def write_output(data):
 def xpath(hxt, query_string):
     hxp = hxt.xpath(query_string)
     if hxp:
-        if hasattr(hxp[0], "encode"):
-            return hxp[0].encode("ascii", "ignore")
         return hxp[0]
     return None
 
