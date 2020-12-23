@@ -53,7 +53,7 @@ def fetch_data():
     if BFound:
         BFound = False
         url = "https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500"
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, verify=False)
         for item in json.loads(r.content)["stores"]:
             store = item["storeNo8Digit"]
             typ = item["storeType"]
@@ -191,8 +191,8 @@ def fetch_data():
             + str(y)
             + "&maxrec=500"
         )
-        r = session.get(url, headers=headers)
         try:
+            r = session.get(url, headers=headers, verify=False)
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
                 typ = item["storeType"]
