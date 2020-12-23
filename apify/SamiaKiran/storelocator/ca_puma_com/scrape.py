@@ -1,7 +1,6 @@
 import csv
 import time
 import sgzip
-import re
 from datetime import datetime
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -64,7 +63,6 @@ def fetch_data():
         "F": "Saturday",
         "G": "Sunday",
     }
-    i = 0
     while query_coord:
         result_coords = []
         url = (
