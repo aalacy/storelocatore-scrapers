@@ -1,6 +1,5 @@
 import csv
 import sgzip
-import re
 import time
 import usaddress
 from bs4 import BeautifulSoup
