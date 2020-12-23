@@ -75,7 +75,7 @@ def fetch_data():
             "".join(store.xpath("td[3]/text()")).strip().replace("\xa0", "").strip()
         )
 
-        street_address = address.split(",")[0].strip()
+        street_address = address.rsplit(",", 1)[0].strip()
         city = location_name
         state = "".join(store.xpath('td[@class="hidden province"]/text()')).strip()
 
@@ -112,7 +112,7 @@ def fetch_data():
 
         hours_of_operation = ""
         if hours == "1":
-            hours_of_operation = "24/7"
+            hours_of_operation = "24 hours/7 days"
 
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"

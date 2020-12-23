@@ -141,12 +141,7 @@ def fetch_data():
             lng,
             hours,
         ]
-        location = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in location
-        ]
+        location = [str(x) if x else "<MISSING>" for x in location]
 
         yield location
 
