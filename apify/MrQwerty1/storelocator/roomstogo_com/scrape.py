@@ -54,7 +54,7 @@ def fetch_data():
         country_code = "US"
         store_number = j.get("storeNumber") or "<MISSING>"
         location_type = j.get("storeType") or "<MISSING>"
-        city_url = city.lower().replace(" ", "-")
+        city_url = city.lower().replace(" ", "-", 1)
         state_url = states.get(state)
         name = j.get("storeName") or ""
         if name:

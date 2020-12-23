@@ -43,6 +43,7 @@ def fetch_data():
     website = "thebookrack.com"
     typ = "<MISSING>"
     country = "US"
+    loc = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -52,12 +53,6 @@ def fetch_data():
             city = line.split('<td class="column-2">')[1].split("<")[0]
             state = line.split('<td class="column-3">')[1].split("<")[0]
             phone = line.split('<td class="column-4">')[1].split("<")[0]
-            try:
-                loc = line.split('<td class="column-5">')[1].split("<")[0]
-            except:
-                loc = "<MISSING>"
-            if loc == "":
-                loc = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
             store = "<MISSING>"

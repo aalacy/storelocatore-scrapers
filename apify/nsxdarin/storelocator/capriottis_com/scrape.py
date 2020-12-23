@@ -114,6 +114,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        name = name.replace("&#39;", "'")
         yield [
             website,
             loc,
