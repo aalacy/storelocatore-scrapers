@@ -94,6 +94,8 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
+        if "dirt-cheap-corporate-office" in loc:
+            hours = "9am-8pm, Mon-Sat; 12pm-7pm Sunday"
         hours = hours.replace("\t", "").strip()
         yield [
             website,
