@@ -9,16 +9,15 @@ website = "janieandjack.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "www.hibbett.com",
-    "cache-control": "max-age=0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    'authority': 'www.janieandjack.com',
+    'accept': 'application/json, text/javascript, */*; q=0.01',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36',
+    'x-requested-with': 'XMLHttpRequest',
+    'sec-fetch-site': 'same-origin',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-dest': 'empty',
+    'referer': 'https://www.janieandjack.com/stores?lang=en',
+    'accept-language': 'en-US,en-GB;q=0.9,en;q=0.8',
 }
 
 
@@ -76,12 +75,14 @@ def fetch_data():
         "&longitude=73.0805&countryCode=US&distanceUnit=mi&maxdistance=250000"
     )
     count = 0
+    stores_req = None
     while count < 5:
         try:
             session = SgRequests()
             stores_req = session.get(url, headers=headers)
             count = 6
         except Exception:
+            log.info(f"status_code:{str(stores_req.status_code)}")
             session = ""
             count += 1
             continue
