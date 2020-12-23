@@ -80,7 +80,7 @@ def fetch_data():
                 loc = item["LocationParentWebsite"]
                 if phone == "":
                     phone = "<MISSING>"
-                if loc == "":
+                if "." not in loc:
                     loc = "<MISSING>"
                 hours = "<MISSING>"
                 try:

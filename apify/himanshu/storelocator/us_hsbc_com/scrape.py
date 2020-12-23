@@ -4,6 +4,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import os
 
 
 def setUp():
@@ -22,7 +23,7 @@ def setUp():
         options=options,
         capabilities=capabilities,
         firefox_profile=profile,
-        executable_path=r"geckodriver.exe",
+        executable_path=os.path.abspath("geckodriver"),
     )
 
 
@@ -132,7 +133,6 @@ def fetch_data():
                     location_name = soup.find(
                         "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
                     ).text
-
                     try:
                         phone = soup.find(
                             "div", {"class": "_1BVddhgeNL2TGp0jUBgsXb"}
@@ -167,7 +167,6 @@ def fetch_data():
                         .split("/")[1]
                         .split("&")[0]
                     )
-
                     store = []
                     store.append(base_url)
                     store.append(location_name if location_name else "<MISSING>")
