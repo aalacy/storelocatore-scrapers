@@ -90,6 +90,7 @@ def fetch_data():
     if count == 5:
         raise Exception("This should never happen")
 
+    print(stores_req.text)
     stores = json.loads(stores_req.text.strip())["stores"]
     for store in stores.keys():
         locator_domain = website
