@@ -1,5 +1,6 @@
 import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
 
@@ -39,7 +40,9 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+
+    driver = SgChrome().chrome(user_agent=user_agent)
 
     data = []
     locator_domain = "meijer.com"
@@ -51,7 +54,7 @@ def fetch_data():
         )
         log.info(base_link)
         driver.get(base_link)
-
+        time.sleep(1)
         base = BeautifulSoup(driver.page_source, "lxml")
         stores = json.loads(base.text)["data"]
 
