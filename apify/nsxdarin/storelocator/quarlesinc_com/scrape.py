@@ -56,7 +56,6 @@ def fetch_data():
     loc = "<MISSING>"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
-    lines = r.iter_lines()
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<li class='row' data-lat='" in line:
