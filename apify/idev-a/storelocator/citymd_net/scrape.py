@@ -1,12 +1,9 @@
 import csv
 from bs4 import BeautifulSoup as bs
-import re
-import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from urllib.parse import urljoin
 from util import Util
-import pdb
 
 myutil = Util()
 
