@@ -61,6 +61,8 @@ def get_data(url):
         "o",
         "st",
     )
+    if status or owner:
+        pass
 
     data = (
         "{name" + text.split("name")[1].split(",email")[0].replace("zip", "_zip") + "}"
