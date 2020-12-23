@@ -65,6 +65,19 @@ def fetch_data():
                         + "/"
                         + item.split(',"FileName":"')[1].split('"')[0]
                     )
+                    try:
+                        logger.info(loc)
+                        r2 = session.get(loc, headers=headers)
+                        lines = r2.iter_lines()
+                        for line2 in lines:
+                            line2 = str(line2.decode("utf-8"))
+                            if "In-Bay Service Hours:</strong>" in line2:
+                                g = next(lines)
+                                g = next(lines)
+                                g = str(g.decode("utf-8"))
+                                hours = g.split(">")[1].split("<")[0]
+                    except:
+                        hours = "<INACCESSIBLE>"
                     if "Petro" in name:
                         typ = "Petro"
                     elif "TA Express" in name:
