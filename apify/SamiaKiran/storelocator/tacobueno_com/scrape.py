@@ -47,16 +47,13 @@ def fetch_data():
     # Your scraper here
     data = []
     titlelist = []
-    MAX_RESULTS = 15  # max number of results the website gives
     MAX_DISTANCE = 50.0  # max number of distance from the zip it covers
-    pattern = re.compile(r"\s\s+")
     search = (
         sgzip.ClosestNSearch()
     )  # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
     search.initialize()
     query_coord = search.next_zip()
     while query_coord:
-        count = 0
         result_coords = []
         url = "https://www.tacobueno.com/locations/&zip=" + query_coord
         r = session.get(url, headers=headers, verify=False)
@@ -133,13 +130,9 @@ def fetch_data():
                         ]
                     )
         except Exception as e:
-            logger.info(e)
-            input()
-        ##            pass
-
+           pass
+  
         search.max_distance_update(MAX_DISTANCE)
-        """elif count == MAX_RESULTS:  # check to save lat lngs to find zip that excludes them
-            logger.info("max count update")"""
         search.max_count_update(result_coords)
         query_coord = search.next_zip()
     return data
