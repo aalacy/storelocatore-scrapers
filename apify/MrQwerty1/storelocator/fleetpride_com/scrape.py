@@ -97,6 +97,8 @@ def fetch_data():
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         location_type = j.get("Store Type_CS") or "<MISSING>"
+        if location_type == "Affiliates":
+            continue
 
         _tmp = []
         tmp_js = json.loads(j.get("hours_sets:primary")).get("days", {})

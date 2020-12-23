@@ -37,6 +37,20 @@ def parse_dealer(k):
         k["hours"] = "; ".join(k["hours"])
     except Exception:
         k["hours"] = "<MISSING>"
+    if len(k["hours"]) < 2:
+        k["hours"] = "<MISSING>"
+    if k["hours"] == "<MISSING>":
+        try:
+            h = soup.find("div", {"class": lambda x: x and "intro-opening-times" in x})
+            h = list(h.find("tbody").stripped_strings)
+            j = 0
+            while j < len(h):
+                h[j] = h[j] + ": " + h[j + 1]
+                h.pop(j + 1)
+                j += 1
+            k["hours"] = "; ".join(h)
+        except:
+            k["hours"] = "<MISSING>"
 
     try:
         k["lat"] = soup.find("div", {"id": "gm-contact-us"})["data-lat"]
