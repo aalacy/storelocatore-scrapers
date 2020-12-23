@@ -1,4 +1,6 @@
-import os, csv, requests
+import csv
+import os
+import requests
 
 
 def xpath(hxt, query_string):
