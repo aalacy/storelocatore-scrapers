@@ -28,6 +28,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+
         for row in data:
             writer.writerow(row)
 
@@ -49,7 +50,7 @@ def fetch_data():
         store.append(base_url if base_url else "<MISSING>")
         store.append(i["name"] if i["name"] else "<MISSING>")
         store.append(
-            i["address"]["address1"].strip()
+            i["address"]["address1"].strip().replace("&#xD;&#xA;", " ")
             if i["address"]["address1"].strip()
             else "<MISSING>"
         )
@@ -109,6 +110,8 @@ def fetch_data():
         try:
             store.append(i["url"] if i["url"] else "<MISSING>")
         except:
+            store.append("<MISSING>")
+        if i["address"]["zip"] == "CF11 8AQ":
             store.append("<MISSING>")
         if store[2] in address:
             continue
