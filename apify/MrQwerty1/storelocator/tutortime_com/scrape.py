@@ -35,21 +35,38 @@ def write_output(data):
 
 
 def get_urls():
+    urls = []
     session = SgRequests()
-    r = session.get(
-        "https://www.tutortime.com/sitemaps/www-tutortime-com-localschools.xml"
-    )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//loc/text()")
-
-
-def get_data(page_url):
-    session = SgRequests()
-    r = session.get(page_url)
+    r = session.get("https://www.tutortime.com/child-care-centers/find-a-school/")
     tree = html.fromstring(r.text)
+    states = tree.xpath("//map[@id='USMap']/area/@href")
+    for s in states:
+        r = session.get(f"https://www.tutortime.com{s}")
+        tree = html.fromstring(r.text)
+        links = tree.xpath(
+            "//div[@class='locationCards thisBrand row']//a[@class='schoolNameLink']/@href"
+        )
+        for l in links:
+            urls.append(f"https://www.tutortime.com{l}")
 
-    if r.url != page_url:
+    return urls
+
+
+def get_data(url):
+    store_number = url.split("-")[-1].replace("/", "")
+    session = SgRequests()
+
+    r = session.get(url)
+    if r.url == "https://www.tutortime.com/":
+        url = f"https://www.tutortime.com/your-local-school/{store_number}/"
+        r = session.get(url)
+
+    if r.url == "https://www.tutortime.com/" or not r.url.startswith(
+        "https://www.tutortime.com/"
+    ):
         return
+
+    tree = html.fromstring(r.text)
     locator_domain = "https://www.tutortime.com/"
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     street_address = (
@@ -61,12 +78,14 @@ def get_data(page_url):
     line = "".join(
         tree.xpath("//div[@class='school-info-row']//span[@class='cityState']/text()")
     ).strip()
+
     city = line.split(",")[0].strip() or "<MISSING>"
     line = line.split(",")[1].strip()
     state = line.split()[0].strip()
     postal = line.split()[1].strip()
     country_code = "US"
-    store_number = page_url.split("-")[-1].replace("/", "")
+    page_url = r.url
+
     phone = (
         "".join(tree.xpath("//span[@class='localPhone']/text()")).strip() or "<MISSING>"
     )
