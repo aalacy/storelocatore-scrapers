@@ -3,11 +3,11 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from urllib.parse import urljoin
-from util import Util
+
+from util import Util # noqa: I900
 
 myutil = Util()
 
-logger = SgLogSetup().get_logger("citymd_net")
 
 session = SgRequests()
 
@@ -88,6 +88,8 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
+
+        break
 
     return data
 
