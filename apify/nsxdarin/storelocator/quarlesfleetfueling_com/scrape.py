@@ -40,10 +40,19 @@ def write_output(data):
 
 
 def fetch_data():
+    url = (
+        "https://www.quarlesinc.com/fleet-fueling-products/quarles-fleet-fueling-sites/"
+    )
+    nid = ""
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if '"quarles_locator_nonce":"' in line:
+            nid = line.split('"quarles_locator_nonce":"')[1].split('"')[0]
     url = "https://www.quarlesinc.com/wp-admin/admin-ajax.php"
     payload = {
         "action": "quarles_locator_ajax",
-        "quarles_locator_nonce": "4e12deea82",
+        "quarles_locator_nonce": nid,
         "location[lat]": "40.00",
         "location[long]": "-75.00",
         "location[distance]": "4000",
