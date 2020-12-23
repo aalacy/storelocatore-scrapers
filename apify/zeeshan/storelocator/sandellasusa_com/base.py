@@ -210,7 +210,7 @@ class Base(DataMixin):
         with open(output_file, "w") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.csv_fieldnames)
             writer.writeheader()
-            for row in self.rows:
+            for row in self.rows:  # type: List[str]
                 if hasattr(self, "map_data"):
                     row = self.map_data(row)
                 writer.writerow(row)
