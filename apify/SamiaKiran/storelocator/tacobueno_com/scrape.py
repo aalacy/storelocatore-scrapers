@@ -58,80 +58,76 @@ def fetch_data():
         url = "https://www.tacobueno.com/locations/&zip=" + query_coord
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            loclist = soup.findAll("div", {"class": "map-listing_item active"})
-            for loc in loclist:
-                title = loc.find("h2").text
-                store = title.split("-", 1)[1].strip()
-                if "temporarily closed" in store:
-                    store = store.split("(", 1)[0]
-                    store = store.strip()
-                address = loc.find("address").text
-                temp = title.replace("-", "")
-                temp = " ".join(temp.split())
-                temp = "Call" + " " + temp
-                phone = loc.find("a").text
-                if not phone:
-                    phone = "<MISSING>"
-                gps = loc.get("data-gps").split(",")
-                lat = gps[0]
-                longt = gps[1]
-                hour_list = loc.find("ul").findAll(
-                    "li", {"class": "list-toggle-item inactive"}
+        loclist = soup.findAll("div", {"class": "map-listing_item active"})
+        for loc in loclist:
+            title = loc.find("h2").text
+            store = title.split("-", 1)[1].strip()
+            if "temporarily closed" in store:
+                store = store.split("(", 1)[0]
+                store = store.strip()
+            address = loc.find("address").text
+            temp = title.replace("-", "")
+            temp = " ".join(temp.split())
+            temp = "Call" + " " + temp
+            phone = loc.find("a").text
+            if not phone:
+                phone = "<MISSING>"
+            gps = loc.get("data-gps").split(",")
+            lat = gps[0]
+            longt = gps[1]
+            hour_list = loc.find("ul").findAll(
+                "li", {"class": "list-toggle-item inactive"}
+            )
+            hours = ""
+            for hour in hour_list:
+                hours = hours + " " + hour.text
+            address = usaddress.parse(address)
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+            if title in titlelist:
+                pass
+            else:
+                titlelist.append(title)
+                data.append(
+                    [
+                        "https://www.tacobueno.com/",
+                        "https://www.tacobueno.com/locations/",
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        "US",
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours,
+                    ]
                 )
-                hours = ""
-                for hour in hour_list:
-                    hours = hours + " " + hour.text
-                address = usaddress.parse(address)
-                i = 0
-                street = ""
-                city = ""
-                state = ""
-                pcode = ""
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street = street + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        pcode = pcode + " " + temp[0]
-                    i += 1
-                if title in titlelist:
-                    pass
-                else:
-                    titlelist.append(title)
-                    data.append(
-                        [
-                            "https://www.tacobueno.com/",
-                            "https://www.tacobueno.com/locations/",
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            "US",
-                            store,
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours,
-                        ]
-                    )
-        except Exception as e:
-            pass
-
         search.max_distance_update(MAX_DISTANCE)
         search.max_count_update(result_coords)
         query_coord = search.next_zip()
