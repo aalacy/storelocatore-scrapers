@@ -40,6 +40,7 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "onehanesplace.com"
     start_url = "https://outlets.onehanesplace.com/index.html"
@@ -51,23 +52,25 @@ def fetch_data():
     for url in all_urls:
         if len(url.split("/")) == 3:
             all_locations.append(url)
-            continue
+
         state_response = session.get(urljoin(start_url, url))
         state_dom = etree.HTML(state_response.text)
+        all_locations += state_dom.xpath(
+            '//a[@class="LocationCard-link LocationCard-link--page"]/@href'
+        )
         state_urls = state_dom.xpath(
             '//a[@class="c-directory-list-content-item-link"]/@href'
         )
         for url in state_urls:
             if len(url.split("/")) == 3:
                 all_locations.append(url)
-                continue
             city_response = session.get(urljoin(start_url, url))
             city_dom = etree.HTML(city_response.text)
             all_locations += city_dom.xpath(
                 '//a[@class="LocationCard-link LocationCard-link--page"]/@href'
             )
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         store_response = session.get(store_url)
         loc_dom = etree.HTML(store_response.text)
@@ -112,8 +115,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = "{} {}".format(location_name, street_address)
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

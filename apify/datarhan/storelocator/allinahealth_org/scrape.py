@@ -78,13 +78,24 @@ def fetch_data():
         store_number = store_number if store_number else "<MISSING>"
         phone = poi_html.xpath('.//a[@class="ahn-link visible-xs-block"]/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
-        if "institute" in location_type:
-            location_type = "institute"
+        store_response = session.get(loc_url)
+        store_dom = etree.HTML(store_response.text)
+        hours_of_operation = store_dom.xpath(
+            '//ul[@class="list-unstyled text-muted zebra-hours"]/li/span/text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
+        location_type = store_dom.xpath(
+            '//div[@class="row find-service-list"]//a/text()'
+        )
+        location_type = ", ".join(location_type) if location_type else "<MISSING>"
 
         item = [
             DOMAIN,
