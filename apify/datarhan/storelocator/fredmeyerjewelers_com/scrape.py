@@ -2,7 +2,6 @@ import csv
 import json
 from lxml import etree
 
-from sgselenium import SgFirefox
 from sgselenium.sgselenium import SgFirefox
 
 
