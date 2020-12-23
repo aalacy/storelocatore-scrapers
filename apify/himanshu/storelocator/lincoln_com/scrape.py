@@ -159,7 +159,7 @@ def fetch_data():
 
         if "Response" in k and "Dealer" in k["Response"]:
             y = type(k["Response"]["Dealer"])
-            if isinstance(y, dict) :
+            if isinstance(y, dict):
                 if "Street1" in k["Response"]["Dealer"]["Address"]:
                     street_address = k["Response"]["Dealer"]["Address"]["Street1"]
                 else:
