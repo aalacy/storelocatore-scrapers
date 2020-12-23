@@ -79,16 +79,38 @@ def fetch_data():
                     zc = item["postalCode"]
                     country = item["country"]
                     phone = item["phone"]
-                    state = "<MISSING>"
                     lat = item["coordinates"]["lat"]
                     lng = item["coordinates"]["lng"]
                     result_coords.append((lat, lng))
                     typ = item["business"]
+                    state = "<MISSING>"
                     loc = "https://www.claires.com/us/store-details/?StoreID=" + store
                     r2 = session.get(loc, headers=headers)
                     lines = r2.iter_lines()
                     for line2 in lines:
                         line2 = str(line2.decode("utf-8"))
+                        if (
+                            '<link rel="canonical" href="https://stores.claires.com/us/'
+                            in line2
+                        ):
+                            state = (
+                                line2.split(
+                                    '<link rel="canonical" href="https://stores.claires.com/us/'
+                                )[1]
+                                .split("/")[0]
+                                .upper()
+                            )
+                        if (
+                            '<link rel="canonical" href="https://stores.claires.com/ca/'
+                            in line2
+                        ):
+                            state = (
+                                line2.split(
+                                    '<link rel="canonical" href="https://stores.claires.com/ca/'
+                                )[1]
+                                .split("/")[0]
+                                .upper()
+                            )
                         if "<p><strong>" in line2:
                             next(lines)
                             next(lines)
