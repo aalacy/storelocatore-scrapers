@@ -89,7 +89,7 @@ def fetch_data():
 
     if count == 5:
         raise Exception("This should never happen")
-    
+
     log.info(f"status_code:{str(stores_req.status_code)}")
     log.info(stores_req.text)
     stores = json.loads(stores_req.text.strip())["stores"]
