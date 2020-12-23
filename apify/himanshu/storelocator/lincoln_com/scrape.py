@@ -72,7 +72,8 @@ def fetch_data():
         except:
             continue
         if "Response" in k and "Dealer" in k["Response"]:
-            if list == type(k["Response"]["Dealer"]):
+            x = type(k["Response"]["Dealer"])
+            if isinstance(x, list):
                 for i in k["Response"]["Dealer"]:
                     if i["ldlrcalltrk_lad"]:
                         phone = i["ldlrcalltrk_lad"]
@@ -157,8 +158,8 @@ def fetch_data():
                     yield store
 
         if "Response" in k and "Dealer" in k["Response"]:
-            if dict == type(k["Response"]["Dealer"]):
-
+            y = type(k["Response"]["Dealer"])
+            if isinstance(y, dict) :
                 if "Street1" in k["Response"]["Dealer"]["Address"]:
                     street_address = k["Response"]["Dealer"]["Address"]["Street1"]
                 else:
