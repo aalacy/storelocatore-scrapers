@@ -9,15 +9,15 @@ website = "janieandjack.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    'authority': 'www.janieandjack.com',
-    'accept': 'application/json, text/javascript, */*; q=0.01',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36',
-    'x-requested-with': 'XMLHttpRequest',
-    'sec-fetch-site': 'same-origin',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-dest': 'empty',
-    'referer': 'https://www.janieandjack.com/stores?lang=en',
-    'accept-language': 'en-US,en-GB;q=0.9,en;q=0.8',
+    "authority": "www.janieandjack.com",
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
+    "x-requested-with": "XMLHttpRequest",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.janieandjack.com/stores?lang=en",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
