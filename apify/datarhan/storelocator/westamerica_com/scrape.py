@@ -78,9 +78,6 @@ def fetch_data():
                 if not sub_hoo:
                     continue
                 sub_hoo = " ".join(sub_hoo)
-                hoo = []
-                # if sub_hoo == 'Lobby Hours:':
-                #     hoo.append(elem.xpath('.//text()'))
                 if "Monday" in sub_hoo:
                     all_sub_hours.append(elem.xpath(".//text()"))
 
