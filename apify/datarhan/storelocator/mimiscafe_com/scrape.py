@@ -65,6 +65,12 @@ def fetch_data():
             .strip()
             .capitalize()
         )
+        if len(city.split()) > 2:
+            city = street_address.split(", ")[1]
+            street_address = street_address.split(", ")[0]
+        if len(city.split()[0]) == 2:
+            city = location_name
+            street_address = street_address.replace(city, "")
         state = (
             store_dom.xpath("//section//address/text()")[-1].split(", ")[-1].split()[0]
         )

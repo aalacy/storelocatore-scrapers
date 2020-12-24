@@ -48,7 +48,6 @@ def fetch_data():
 
     session = SgRequests()
     r = session.get(api_url, headers=headers)
-    print(r.status_code)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@id='info']")
 
