@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("newks_com")
+logger = SgLogSetup().get_logger("goldfishswimschool_com")
 
 
 def write_output(data):
@@ -39,16 +39,19 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://locations.newks.com/sitemap.xml"
+    url = "https://www.goldfishswimschool.com/SiteMap.xml"
     r = session.get(url, headers=headers)
-    website = "newks.com"
+    website = "goldfishswimschool.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://locations.newks.com/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+        if (
+            "/contact-us/</loc>" in line
+            and "//www.goldfishswimschool.com/contact-us/" not in line
+        ):
+            locs.append(line.split("<loc>")[1].split("/contact")[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -61,39 +64,31 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        daycount = 0
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if ',"name":"' in line2:
-                days = line2.split('"@type":"OpeningHoursSpecification"')
-                for day in days:
-                    if '"dayOfWeek' in day:
-                        try:
-                            hrs = (
-                                day.split('"dayOfWeek":"')[1].split('"')[0]
-                                + ": "
-                                + day.split('"opens":"')[1].split('"')[0]
-                                + "-"
-                                + day.split('"closes":"')[1].split('"')[0]
-                            )
-                        except:
-                            hrs = (
-                                day.split('"dayOfWeek":"')[1].split('"')[0] + ": Closed"
-                            )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-                name = line2.split(',"name":"')[1].split('"')[0]
-                phone = line2.split(',"telephone":"')[1].split('"')[0].replace("+", "")
-            if '<span class="c-address-street-1">' in line2:
-                add = line2.split('<span class="c-address-street-1">')[1].split("<")[0]
-                city = line2.split('<span class="c-address-city">')[1].split("<")[0]
-                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
-                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-            if '"latitude":' in line2:
-                lat = line2.split('"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
+            if 'mob-loc" href="tel:' in line2:
+                phone = line2.split('mob-loc" href="tel:')[1].split('"')[0]
+            if 'data-address="' in line2:
+                name = line2.split('businessname="')[1].split('"')[0]
+                add = line2.split('data-address="')[1].split('"')[0]
+                city = line2.split('data-city="')[1].split('"')[0]
+                state = line2.split('data-state="')[1].split('"')[0]
+                zc = line2.split('data-zip="')[1].split('"')[0]
+                lat = line2.split('data-latitude="')[1].split('"')[0]
+                lng = line2.split('data-longitude="')[1].split('"')[0]
+            if "day:" in line2:
+                daycount = daycount + 1
+                if 'class="closed">' in line2:
+                    hrs = line2.split('class="closed">')[1].split(":")[0] + ": Closed"
+                else:
+                    hrs = line2.split(">")[1].split("<")[0]
+                if daycount <= 7:
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
         yield [
             website,
             loc,
