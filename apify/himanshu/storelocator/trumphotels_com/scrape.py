@@ -40,10 +40,6 @@ def write_output(data):
 def fetch_data():
     path = os.path.abspath("geckodriver")
     driver = webdriver.Firefox(executable_path=path, options=opts)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
-    addresses = []
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
     driver.implicitly_wait(3)
