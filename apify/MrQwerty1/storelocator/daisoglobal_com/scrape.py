@@ -6,12 +6,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -19,12 +36,14 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = 'https://impark.com/'
-    api_url = 'https://cdn.storelocatorwidgets.com/json/305108bbd6b1fed18ddf5701d3977501'
+    locator_domain = "https://impark.com/"
+    api_url = (
+        "https://cdn.storelocatorwidgets.com/json/305108bbd6b1fed18ddf5701d3977501"
+    )
     session = SgRequests()
     r = session.get(api_url)
-    text = r.text.replace('slw(', '')[:-1]
-    js = json.loads(text)['stores']
+    text = r.text.replace("slw(", "")[:-1]
+    js = json.loads(text)["stores"]
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -55,38 +74,60 @@ def fetch_data():
     }
 
     for j in js:
-        d = j.get('data')
-        line = d.get('address', {}) or {}
+        d = j.get("data")
+        line = d.get("address", {}) or {}
         a = usaddress.tag(line, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
         if street_address == "None":
             street_address = "<MISSING>"
         city = a.get("city") or "<MISSING>"
-        if city.find('(') != -1:
-            city = city.split(',')[-1].strip()
+        if city.find("(") != -1:
+            city = city.split(",")[-1].strip()
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
-        country_code = 'US'
-        store_number = j.get('storeid') or '<MISSING>'
-        page_url = '<MISSING>'
-        location_name = j.get('name') or '<MISSING>'
-        phone = d.get('phone') or '<MISSING>'
-        if phone == 'TBA':
-            phone = '<MISSING>'
-        latitude = d.get('map_lat') or '<MISSING>'
-        longitude = d.get('map_lng') or '<MISSING>'
-        location_type = '<MISSING>'
+        country_code = "US"
+        store_number = j.get("storeid") or "<MISSING>"
+        page_url = "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        phone = d.get("phone") or "<MISSING>"
+        if phone == "TBA":
+            phone = "<MISSING>"
+        latitude = d.get("map_lat") or "<MISSING>"
+        longitude = d.get("map_lng") or "<MISSING>"
+        location_type = "<MISSING>"
 
         _tmp = []
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         for day in days:
-            time = d.get(f'hours_{day}')
-            _tmp.append(f'{day}: {time}')
+            time = d.get(f"hours_{day}")
+            _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ';'.join(_tmp) or '<MISSING>'
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
-        row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-               country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
         out.append(row)
 
     return out
