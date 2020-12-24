@@ -139,8 +139,6 @@ def fetch_data():
                     yield tem_var
 
             else:
-
-                name1 = soup2
                 tem_var = []
                 name = soup2.find("div", {"class": "Hero-type"})
                 try:
