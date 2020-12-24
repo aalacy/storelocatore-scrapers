@@ -92,9 +92,9 @@ def fetch_data():
                 addinfo = (
                     g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
                 )
-                zc = g.rsplit(" ", 1)[1]
-                city = g.split(",")[0]
-                state = g.split(",")[1].strip().split(" ")[0]
+                zc = addinfo.rsplit(" ", 1)[1]
+                city = addinfo.split(",")[0]
+                state = addinfo.split(",")[1].strip().split(" ")[0]
             if ">Phone:</b> " in line2:
                 phone = line2.split(">Phone:</b> ")[1].split("<")[0]
             if '<dd class="' in line2:
