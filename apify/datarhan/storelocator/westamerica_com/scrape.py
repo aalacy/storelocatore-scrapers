@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 
@@ -50,7 +51,6 @@ def fetch_data():
     for city_html in all_locations:
         sub_locs_names = city_html.xpath(".//h2/text()")
         for location_name in sub_locs_names:
-            print(location_name)
             all_elements = city_html.xpath(
                 '//h2[contains(text(), "%s")]/following-sibling::*' % location_name
             )
@@ -112,6 +112,9 @@ def fetch_data():
                     hours_of_operation = hours_of_operation.replace(
                         "Lobby Hours:", ""
                     ).strip()
+                    hours_of_operation = re.findall(
+                        "(.+Sunday: Closed)", hours_of_operation
+                    )[0]
                 except:
                     hours_of_operation = "<MISSING>"
 
