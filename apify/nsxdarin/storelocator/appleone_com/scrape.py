@@ -104,32 +104,17 @@ def fetch_data():
                 name = line2.split(
                     '<dd class="accordion-navigation" data-officename="'
                 )[1].split('"')[0]
-            if '<span class="addr-details">' in line2:
-                g = next(lines)
-                h = next(lines)
-                i = next(lines)
-                j = next(lines)
-                j = str(j.decode("utf-8"))
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                i = str(i.decode("utf-8"))
-                if ", " in i:
-                    add = (
-                        g.split("<")[0].strip().replace("\t", "")
-                        + " "
-                        + h.split("<")[0].strip().replace("\t", "")
-                    )
-                    city = i.split(",")[0].strip().replace("\t", "")
-                    state = i.split(",")[1].strip().split(" ")[0]
-                    zc = i.split("<")[0].rsplit(" ", 1)[1]
+                addinfo = line2.split('address="')[1].split('"')[0]
+                if addinfo.count(",") == 3:
+                    add = addinfo.split(",")[0] + " " + addinfo.split(",")[1].strip()
+                    city = addinfo.split(",")[2].strip()
+                    state = addinfo.split(",")[3].strip().split(" ")[0]
+                    zc = addinfo.rsplit(" ", 1)[1]
                 else:
-                    add = g.split("<")[0].strip().replace("\t", "")
-                    while "," not in h:
-                        h = next(lines)
-                        h = str(h.decode("utf-8"))
-                    city = h.split(",")[0].strip().replace("\t", "")
-                    state = h.split(",")[1].strip().split(" ")[0]
-                    zc = h.split("<")[0].rsplit(" ", 1)[1]
+                    add = addinfo.split(",")[0]
+                    city = addinfo.split(",")[1].strip()
+                    state = addinfo.split(",")[2].strip().split(" ")[0]
+                    zc = addinfo.rsplit(" ", 1)[1]
             if '<a href="tel:+' in line2:
                 phone = line2.split('">')[1].split("<")[0]
             if "day</span>" in line2:

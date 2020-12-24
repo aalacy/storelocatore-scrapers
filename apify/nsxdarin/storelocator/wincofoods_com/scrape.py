@@ -45,15 +45,15 @@ def fetch_data():
     website = "wincofoods.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"storeID":"' in line:
-            items = line.split('"storeID":"')
+        if '"locationID":"' in line:
+            items = line.split('"locationID":"')
             for item in items:
                 if '"store_number":"' in item:
                     store = item.split('"')[0]
+                    loc = "https://www.wincofoods.com/stores/" + store
                     name = item.split('"storeName":"')[1].split('"')[0]
                     add = item.split('"address":"')[1].split('"')[0]
                     city = item.split('"city":"')[1].split('"')[0]
