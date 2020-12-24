@@ -38,7 +38,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.altardstate.com/on/demandware.store/Sites-altardstate-Site/default/Stores-FindStores?showMap=true&radius=5000&postalCode=55441&radius=300"
     r = session.get(url, headers=headers)
     website = "altardstate.com"
