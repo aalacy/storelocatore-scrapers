@@ -63,7 +63,7 @@ def fetch_data():
 
     url = (
         "https://www.janieandjack.com/on/demandware.store/"
-        "Sites-JanieAndJack-Site/en/Stores-GetNearestStores?latitude=31.4137"
+        "Sites-JanieAndJack-Site/en_US/Stores-GetNearestStores?latitude=31.4137"
         "&longitude=73.0805&countryCode=US&distanceUnit=mi&maxdistance=250000"
     )
     count = 0
@@ -83,7 +83,6 @@ def fetch_data():
         raise Exception("This should never happen")
 
     log.info(f"status_code:{str(stores_req.status_code)}")
-    log.info(stores_req.json())
     stores = stores_req.json()["stores"]
     for store in stores.keys():
         locator_domain = website
