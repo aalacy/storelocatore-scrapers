@@ -98,7 +98,20 @@ def fetch_data():
                     or "British Columbia" in state
                 ):
                     country = "CA"
-                if float(lng) < -50 and float(lat) > 10 and state != "":
+                if (
+                    "Ohio" in state
+                    or "California" in state
+                    or "Oregon" in state
+                    or "Arizona" in state
+                ):
+                    country = "US"
+                if (
+                    float(lng) < -50
+                    and float(lat) > 10
+                    and state != ""
+                    and state != "Guatemala"
+                    and state != "Distrito Federal"
+                ):
                     yield [
                         website,
                         loc,
