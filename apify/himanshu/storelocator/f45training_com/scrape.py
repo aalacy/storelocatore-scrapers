@@ -78,8 +78,8 @@ def preprocess(row):
     if row[2] == "<INACCESSIBLE>":
         row[2] = "<MISSING>"
 
-    zip1 = re.findall("[0-9]+", raw_address)
-    zip2 = re.findall("[A-Z]\d[A-Z] *\d[A-Z]\d", raw_address)
+    zip1 = re.findall(r"[0-9]+", raw_address)
+    zip2 = re.findall(r"[A-Z]\d[A-Z] *\d[A-Z]\d", raw_address)
     for z in zip1:
         if len(z) == 5:
             row[5] = str(z).replace("[", "").replace("]", "").replace(",", "")
@@ -90,7 +90,7 @@ def preprocess(row):
 
     v = raw_address.split(",")[1:]
     if len(v) >= 3:
-        city = re.findall("[A-Za-z]+\s[A-Za-z]+|[A-Za-z]+", v[0])
+        city = re.findall(r"[A-Za-z]+\s[A-Za-z]+|[A-Za-z]+", v[0])
         if city != []:
             row[3] = city[0]
     else:
@@ -100,7 +100,7 @@ def preprocess(row):
     lst = raw_address.split(",")
     for l in lst:
         l = l.strip()
-        state = re.findall("[A-Z]{2}", l)
+        state = re.findall(r"[A-Z]{2}", l)
         if state != []:
             row[4] = state[0]
         else:
