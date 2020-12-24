@@ -1,7 +1,5 @@
 import csv
 import json
-import urllib.parse
-from lxml import etree
 
 from sgrequests import SgRequests
 
