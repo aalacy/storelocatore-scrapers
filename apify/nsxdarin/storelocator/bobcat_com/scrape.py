@@ -202,7 +202,7 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
     url = "https://bobcat.know-where.com/bobcat/cgi/selection"
     params = {
         "place": "",
-        "option": "",
+        "option": "T,R,E,M,G,W,X,U,P,V,D",
         "lang": "en",
         "ll": f"{lat},{lng}",
         "stype": "ll",
