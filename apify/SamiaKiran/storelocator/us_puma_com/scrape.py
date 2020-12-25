@@ -5,7 +5,7 @@ from sgzip.static import static_zipcode_list
 from datetime import datetime
 from sgrequests import SgRequests
 
-website = "ca_puma_com"
+website = "us_puma_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -117,13 +117,16 @@ def fetch_data():
                 lat = loc["lat"]
                 longt = loc["lng"]
                 phone = loc["phone"]
+                if len(phone) == 20:
+                    phone = phone[0:10]
                 if not phone:
                     phone = "<MISSING>"
                 ccode = loc["country"]
-                if "CANADA" not in ccode:
+                matches = ["UNITED STATES", "United States", "US"]
+                if not any(x in ccode for x in matches):
                     continue
                 location_type = loc["scat"]
-                if location_type == 1:
+                if location_type == "1":
                     location_type = "Store"
                 else:
                     location_type = "Outlet"
@@ -150,14 +153,14 @@ def fetch_data():
                         hours = hours + day + " " + Open + " - " + close + " "
                 data.append(
                     [
-                        "https://ca.puma.com/",
-                        "https://ca.puma.com/en/ca/store",
+                        "https://us.puma.com/",
+                        "https://us.puma.com/en/us/store",
                         title,
                         street,
                         city,
                         state,
                         pcode,
-                        "CA",
+                        ccode,
                         store,
                         phone,
                         location_type,
