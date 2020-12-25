@@ -4,7 +4,6 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import os
 
 
 def setUp():
@@ -23,7 +22,7 @@ def setUp():
         options=options,
         capabilities=capabilities,
         firefox_profile=profile,
-        executable_path=os.path.abspath("geckodriver"),
+        executable_path=r"geckodriver.exe",
     )
 
 
@@ -32,7 +31,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -51,7 +50,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -133,6 +132,11 @@ def fetch_data():
                     location_name = soup.find(
                         "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
                     ).text
+                    # hours_of_operation=''
+                    # try:
+                    #     hours_of_operation = " ".join(list(soup.find("div",{"class":"_2CVtVOP_Z0HGI_B6QkgJRF"}).stripped_strings))
+                    # except:
+                    #     hours_of_operation=''
                     try:
                         phone = soup.find(
                             "div", {"class": "_1BVddhgeNL2TGp0jUBgsXb"}
@@ -167,6 +171,7 @@ def fetch_data():
                         .split("/")[1]
                         .split("&")[0]
                     )
+
                     store = []
                     store.append(base_url)
                     store.append(location_name if location_name else "<MISSING>")
