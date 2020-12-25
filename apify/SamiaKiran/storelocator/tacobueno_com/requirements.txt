@@ -2,4 +2,4 @@ sgrequests
 sglogging 
 sgzip
 bs4
-usaaddress
+usaddress
