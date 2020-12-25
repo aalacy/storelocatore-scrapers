@@ -1,5 +1,4 @@
 import csv
-import time
 from sglogging import sglog
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
