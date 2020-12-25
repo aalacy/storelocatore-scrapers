@@ -43,13 +43,11 @@ def fetch_data():
     street = []
     states = []
     cities = []
-    types = []
     phones = []
     zips = []
     long = []
     lat = []
     timing = []
-    ids = []
     page_url = []
     countries = []
 
@@ -153,7 +151,6 @@ def fetch_data():
     logger.info(len(page_url))
 
     key_set = set([])
-    k = 0
     for url in page_url:
         logger.info(url)
         # if k==1:
@@ -173,19 +170,7 @@ def fetch_data():
         z = div.find("span", {"class": "c-address-postal-code"}).text
         if s + c + z + st in key_set:
             logger.info("This is a duplicate, but its data is added to the file")
-            """street.append("<MISSING>") 
-          locs.append("<MISSING>")
-          street.append("<MISSING>")
-          cities.append("<MISSING>")
-          states.append("<MISSING>")
-          zips.append("<MISSING>")
-          phones.append("<MISSING>")
-          timing.append(tim.strip().strip(',') )
-          lat.append(re.findall(r'(-?[\d\.]+);',latlng)[0])
-          long.append(re.findall(r';(-?[\d\.]+)',latlng)[0])
-          #del countries[page_url.index(url)]
-          #k=1
-          continue"""
+
         key_set.add(s + c + z + st)
         locs.append(soup.find("span", {"class": "LocationName-geo"}).text)
         street.append(st)
