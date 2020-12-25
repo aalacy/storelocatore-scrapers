@@ -132,11 +132,7 @@ def fetch_data():
                     location_name = soup.find(
                         "h2", {"class": "_1521gYSzrNIMk9R-rS4Hur"}
                     ).text
-                    # hours_of_operation=''
-                    # try:
-                    #     hours_of_operation = " ".join(list(soup.find("div",{"class":"_2CVtVOP_Z0HGI_B6QkgJRF"}).stripped_strings))
-                    # except:
-                    #     hours_of_operation=''
+
                     try:
                         phone = soup.find(
                             "div", {"class": "_1BVddhgeNL2TGp0jUBgsXb"}
