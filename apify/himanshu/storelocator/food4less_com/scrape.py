@@ -67,7 +67,7 @@ def fetch_data():
     for zip_code in zip_codes:
         datas = query_zip(zip_code)
         result_coords = []
-        if datas != None:
+        if datas is not None:
             for key in datas["stores"]:
                 location_name = key["vanityName"]
                 street_address = key["address"]["addressLine1"].capitalize()
@@ -124,7 +124,7 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-        if datas != None:
+        if datas is not None:
             if "fuel" in datas:
                 for key1 in datas["fuel"]:
                     location_name = key1["vanityName"]
