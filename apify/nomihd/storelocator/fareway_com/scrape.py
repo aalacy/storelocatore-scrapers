@@ -137,7 +137,7 @@ def fetch_data():
             if "Floral" in hours_of_operation:
 
                 try:
-                    hours = "".join(hours).split("\n")
+                    hours = hours_of_operation.split("\n")
                     for hour in hours:
                         if "Floral" not in hour:
                             hours_list.append(hour)
