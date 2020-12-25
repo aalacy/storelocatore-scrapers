@@ -101,8 +101,7 @@ def fill_city(tokens, address):
     idx, street_name = possible_name
     if street_name:
         try:
-            street_address, city_and_others = re.split(
-                street_name, address, flags=re.I)
+            street_address, city_and_others = re.split(street_name, address, flags=re.I)
             city, *others = city_and_others.split(", ")
             tokens["PlaceName"] = city.strip()
         except Exception as e:
@@ -121,8 +120,7 @@ def get_street_address(addr, address):
         street_address = street_address.replace(addr.get("ZipCode"), "")
 
     if addr.get("OccupancyIdentifier"):
-        street_address = street_address.replace(
-            addr.get("OccupancyIdentifier"), "")
+        street_address = street_address.replace(addr.get("OccupancyIdentifier"), "")
 
     if addr.get("OccupancyType"):
         street_address = street_address.replace(addr.get("OccupancyType"), "")
@@ -143,8 +141,7 @@ def get_street_address(addr, address):
 def get_state_zip(addr, address, country_code):
     if country_code == SearchableCountries.USA:
         state = addr.get("StateName") or MISSING
-        zipcode = addr.get("ZipCode") or addr.get(
-            "OccupancyIdentifier") or MISSING
+        zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
         return state, zipcode
 
     if country_code == SearchableCountries.CANADA:
@@ -285,8 +282,7 @@ def fetch_locations(country_code, radius_miles, dedup_tracker):
             f"query {country_code.upper()} locations with {executor._max_workers} number of workers within {radius_miles} miles"
         )
         futures = [
-            executor.submit(fetch_us_location, coord,
-                            country_code, dedup_tracker)
+            executor.submit(fetch_us_location, coord, country_code, dedup_tracker)
             for coord in coords
         ]
         for future in as_completed(futures):
