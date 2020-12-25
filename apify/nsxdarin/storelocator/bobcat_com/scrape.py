@@ -202,7 +202,7 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
     url = "https://bobcat.know-where.com/bobcat/cgi/selection"
     params = {
         "place": "",
-        "option": "T,R,E,M,G,W,X,U,P,V,D",
+        "option": "",
         "lang": "en",
         "ll": f"{lat},{lng}",
         "stype": "ll",
@@ -298,7 +298,7 @@ def fetch_locations(country_code, radius_miles, dedup_tracker):
 
 def fetch_data():
     dedup_tracker = []
-    yield from fetch_locations(SearchableCountries.USA, 25, dedup_tracker)
+    yield from fetch_locations(SearchableCountries.USA, 40, dedup_tracker)
     yield from fetch_locations(SearchableCountries.CANADA, 10, dedup_tracker)
 
 
