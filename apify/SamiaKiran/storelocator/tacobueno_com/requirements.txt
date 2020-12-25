@@ -1,5 +1,0 @@
-sgrequests
-sglogging 
-sgzip==0.0.55
-usaddress
-bs4
