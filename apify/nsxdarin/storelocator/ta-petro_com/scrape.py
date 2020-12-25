@@ -84,6 +84,8 @@ def fetch_data():
                         typ = "TA Express"
                     else:
                         typ = "TA"
+                    if hours == "":
+                        hours = "24/7/365"
                     yield [
                         website,
                         loc,
