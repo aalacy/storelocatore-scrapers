@@ -120,7 +120,7 @@ def fetch_data():
                 if not phone:
                     phone = "<MISSING>"
                 ccode = loc["country"]
-                if not "CANADA" in ccode:
+                if "CANADA" not in ccode:
                     continue
                 location_type = loc["scat"]
                 if location_type == 1:
