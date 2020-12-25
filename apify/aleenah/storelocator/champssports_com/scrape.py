@@ -58,9 +58,9 @@ def fetch_data():
     can = uls[1].find_all("a")
 
     for a in usa:
-        # logger.info("usa")
+
         if a.get("data-count") == "(1)":
-            # logger.info(url)
+
             page_url.append(
                 "https://stores.champssports.com/" + a.get("href").replace("../", "")
             )
@@ -68,7 +68,7 @@ def fetch_data():
         else:
 
             url = "https://stores.champssports.com/" + a.get("href").replace("../", "")
-            # logger.info(url)
+
             res = requests.get(url)
             soup = BeautifulSoup(res.text, "html.parser")
             sa = soup.find("div", {"class": "Directory-content"}).find_all("a")
@@ -89,7 +89,7 @@ def fetch_data():
                     url = "https://stores.champssports.com/" + d.get("href").replace(
                         "../", ""
                     )
-                    # logger.info(url)
+
                     res = requests.get(url)
                     soup = BeautifulSoup(res.text, "html.parser")
                     sas = soup.find_all("a", {"class": "Teaser-titleLink"})
@@ -111,11 +111,11 @@ def fetch_data():
                 "https://stores.champssports.com/" + a.get("href").replace("../", "")
             )
             countries.append("CA")
-            # logger.info(url)
+
         else:
 
             url = "https://stores.champssports.com/" + a.get("href")
-            # logger.info(url)
+
             res = requests.get(url)
             soup = BeautifulSoup(res.text, "html.parser")
             sa = soup.find("div", {"class": "Directory-content"}).find_all("a")
@@ -131,7 +131,7 @@ def fetch_data():
                     url = "https://stores.champssports.com/" + d.get("href").replace(
                         "../", ""
                     )
-                    # logger.info(url)
+
                     res = requests.get(url)
                     soup = BeautifulSoup(res.text, "html.parser")
                     sas = soup.find_all("a", {"class": "Teaser-titleLink"})
@@ -147,15 +147,12 @@ def fetch_data():
                             )
                             countries.append("CA")
 
-    # page_url=set(page_url)
     logger.info(len(page_url))
 
     key_set = set([])
     for url in page_url:
         logger.info(url)
-        # if k==1:
-        #      del page_url[page_url.index(url)-1]
-        # k=0
+
         res = requests.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         div = soup.find("div", {"class": "Core-row l-row"})
@@ -199,7 +196,6 @@ def fetch_data():
         )
 
         latlng = soup.find_all("meta")[17].get("content")
-        # logger.info(latlng)
         lat.append(re.findall(r"(-?[\d\.]+);", latlng)[0])
         long.append(re.findall(r";(-?[\d\.]+)", latlng)[0])
 
@@ -224,7 +220,6 @@ def fetch_data():
         row.append(page_url[i])  # page url
 
         all.append(row)
-        # logger.info(row)
 
     return all
 
