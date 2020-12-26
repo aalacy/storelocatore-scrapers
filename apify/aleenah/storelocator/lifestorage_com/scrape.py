@@ -77,7 +77,7 @@ def fetch_data():
             )
 
             data = data.replace("[,", "[").replace("}{", "},{")
-            
+
             js = json.loads(data)["@graph"][0]
             if (
                 "coming soon" in js["image"]["name"].lower()
