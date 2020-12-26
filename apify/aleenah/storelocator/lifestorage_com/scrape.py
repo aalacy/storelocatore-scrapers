@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-import time
 from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger(logger_name="lifestorage.com")
@@ -78,7 +77,7 @@ def fetch_data():
             )
 
             data = data.replace("[,", "[").replace("}{", "},{")
-            print(data)
+            
             js = json.loads(data)["@graph"][0]
             if (
                 "coming soon" in js["image"]["name"].lower()
