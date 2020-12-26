@@ -5,24 +5,14 @@ Created on Sat Sep 14 21:43:29 2019
 @author: srek
 """
 
-from selenium import webdriver
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
 import re
-from selenium.webdriver.chrome.options import Options
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("jimmychoo_com")
-
-
-def get_driver():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920,1080")
-    return webdriver.Chrome("chromedriver", options=options)
 
 
 def fetch_data():
@@ -134,7 +124,7 @@ def fetch_data():
         "wisconsin",
         "wyoming",
     ]
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(url)
     data = []
 
