@@ -221,7 +221,7 @@ def fetch_data():
             if len(re.findall(r"\d", street_address[0])) == 0:
                 del street_address[0]
             street_address = ",".join(street_address)
-            
+
         phone = soup_1.find("span", attrs={"class": "cs-option-text"}).text
 
         if phone == "Get Directions":
@@ -295,7 +295,6 @@ def write_output(data):
         df = pd.DataFrame(list(data[d].values())).transpose()
         df.columns = list((data[d].keys()))
         df_data = df_data.append(df)
-    # df_data = df_data.fillna("<MISSING>")
     df_data = df_data.replace(r"^\s*$", "<MISSING>", regex=True)
     df_data = df_data.drop_duplicates(["location_name", "street_address"])
     df_data["zip"] = df_data.zip.astype(str)
