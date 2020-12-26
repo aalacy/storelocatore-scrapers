@@ -1,5 +1,4 @@
 import csv
-import os
 from sgselenium import SgSelenium
 
 
