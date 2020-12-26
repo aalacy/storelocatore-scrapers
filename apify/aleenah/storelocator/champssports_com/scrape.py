@@ -36,7 +36,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
+
+
 def fetch_data():
     # Your scraper here
     locs = []
