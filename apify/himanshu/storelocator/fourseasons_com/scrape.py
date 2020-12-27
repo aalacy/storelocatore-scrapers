@@ -175,8 +175,8 @@ def fetch_data():
         if "Two Dole Drive" in street_address:
             city = "Westlake Village"
         if "DC" in city:
-            city = "<MISSING>"
-            state = "Washington"
+            city = "Washington"
+            state = "DC"
 
         return_object.append(locator_domain)
         return_object.append(location_name)
