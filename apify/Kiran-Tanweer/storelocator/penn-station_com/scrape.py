@@ -4,7 +4,6 @@ import time
 import csv
 import json
 import usaddress
-import requests
 
 
 logger = SgLogSetup().get_logger("penn-station_com")
@@ -148,7 +147,7 @@ def fetch_data():
             "products": "1",
         }
         url = "https://www.penn-station.com/storefinder_responsive/index.php"
-        r = requests.post(url=url, data=data)
+        r = session.post(url=url, data=data)
         api = r.text
         success = api.split('"success":', 1)[1].split(",")[0]
         if success == "1":
