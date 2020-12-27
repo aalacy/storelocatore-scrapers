@@ -47,7 +47,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "<loc>https://locations.newks.com/" in line:
+        if "<loc>https://locations.newks.com/" in line and "index." not in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
@@ -56,7 +56,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        store = loc.rsplit("-", 1)[1]
+        store = "<MISSING>"
         phone = ""
         lat = ""
         lng = ""

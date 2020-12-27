@@ -125,7 +125,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = store_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].split("Fax:")[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = store_dom.xpath('//meta[@itemprop="latitude"]/@content')
         latitude = latitude[0] if latitude else "<MISSING>"
