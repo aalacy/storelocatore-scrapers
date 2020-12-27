@@ -20,7 +20,8 @@ def write_output(data):
 
 def fetch_data():
     alllocs = []
-    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
+    urls = ['https://www.ihg.com/crowneplaza/destinations/us/en/canada-hotels',
+            'https://www.ihg.com/crowneplaza/destinations/us/en/united-states-hotels']
     for url in urls:
         states = []
         r = session.get(url, headers=headers)
@@ -43,7 +44,7 @@ def fetch_data():
                 for line3 in r3.iter_lines(decode_unicode=True):
                     if 'https://www.ihg.com/crowneplaza/hotels/' in line3 and '{"@context":"https://www.schema.org"' in line3:
                         lurl = line3.split('"url":"')[1].split('"')[0]
-                        if lurl not in alllocs:
+                        if lurl not in alllocs and 'NoImageAvailable_RoomRates' not in line3:
                             alllocs.append(lurl)
                             website = 'crowneplaza.com'
                             typ = 'Hotel'
@@ -67,7 +68,8 @@ def fetch_data():
                             lat = line3.split(',"latitude":')[1].split(',')[0]
                             lng = line3.split('"longitude":')[1].split('}')[0]
                             store = lurl.replace('/hoteldetail','').rsplit('/',1)[1]
-                            yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            if country == 'US':
+                                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

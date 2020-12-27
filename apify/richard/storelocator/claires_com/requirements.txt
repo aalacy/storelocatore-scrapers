@@ -1,4 +1,4 @@
 requests
-sgzip
 uszipcode
 sglogging
+sgzip==0.0.55

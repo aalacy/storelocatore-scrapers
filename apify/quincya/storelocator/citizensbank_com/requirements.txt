@@ -1,4 +1,4 @@
 lxml==4.3.3
 sgselenium
 sglogging
-sgzip
+sgzip==0.0.55

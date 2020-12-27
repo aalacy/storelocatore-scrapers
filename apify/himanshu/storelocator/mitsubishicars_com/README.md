@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-1 address with no number this website,some hour is hard to parse so i haven't scraped.and, there i putting '<INACCESSIBLE>'. 
+1 address with no number,zip code not ain state this website

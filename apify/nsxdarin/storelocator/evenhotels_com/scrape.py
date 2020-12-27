@@ -56,6 +56,8 @@ def fetch_data():
                 zc = line2.split('"postalCode">')[1].split('<')[0]
             if 'itemprop="telephone"><a href="tel:+' in line2:
                 phone = line2.split('itemprop="telephone"><a href="tel:+')[1].split('"')[0]
+            if '<span itemprop="telephone">' in line2:
+                phone = line2.split('<span itemprop="telephone">')[1].split('|')[0]
             if 'place:location:latitude"  content="' in line2:
                 lat = line2.split('place:location:latitude"  content="')[1].split('"')[0]
             if 'place:location:longitude" content="' in line2:
@@ -66,6 +68,9 @@ def fetch_data():
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
         if phone == '':
             phone = '<MISSING>'
+        if phone.count('-') == 2:
+            size = len(phone)
+            phone = phone[:size - 4] + '-' + phone[-4:]
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

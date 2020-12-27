@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-from sgrequests import SgRequests
-import phonenumbers
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger('lesliespool_com')
@@ -32,59 +30,58 @@ def fetch_data():
     }
 
     base_url = "https://www.lesliespool.com"
-    r =  session.get("https://www.lesliespool.com/directory/stores.htm", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for link in soup.find("table").find_all("a"):
-        
-        if link['href'].count("/") > 2:
-            page_url = base_url + link['href']
-            # logger.info(page_url)
-            if "https://www.lesliespool.com/san-antonio-texas/san-antonio-2/stores.htm" in page_url:
-                continue
-
-            r1 = session.get(page_url)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            location_name = soup1.find("div",{"class":"name"}).text.strip()
-            addr = list(soup1.find("div",{"class":"location"}).stripped_strings)
-            street_address = re.sub(r'\s+'," "," ".join(addr[:-1]))
-            city = addr[-1].split(",")[0]
-            state = addr[-1].split(",")[1].split(" ")[1]
-            zipp = addr[-1].split(",")[1].split(" ")[2]
-            store_number = location_name.split("#")[-1]
-            phone = phonenumbers.format_number(phonenumbers.parse(soup1.find_all("div",{"class":"phone"})[-1].text.replace(".","").strip(), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-            location_type = "<MISSING>"
-            coord = soup1.find(lambda tag: (tag.name == "script" and "var stores" in tag.text)).text
-            latitude = coord.split("<br />'")[1].split("]")[0].split(",")[3].replace("'","").strip()
-            longitude = coord.split("<br />'")[1].split("]")[0].split(",")[4].replace("'","").strip()
-            hours_of_operation = " ".join(list(soup1.find("div",{"class":"hours_col"}).stripped_strings))
+    r =  session.get("https://lesliespool.com/on/demandware.store/Sites-lpm_site-Site/en_US/Stores-FindStores?showMap=false&radius=500000&pools=false&service=false&countryCode=US", headers=headers).json()
     
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            store.append(page_url)
-            store = [x.strip() if type(x) == str else x for x in store]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            # logger.info("data===="+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-            yield store
+    for dt in r['stores']:
+        page_url=''
+        if dt['contentAssetId']:
+            page_url = "https://lesliespool.com/"+dt['contentAssetId']+".html"
+        location_name = dt['name'].lower()
+        street_address =''
+        street_address1=''
+        if dt['address2']:
+            street_address1 =  dt['address2'].lower()
+        street_address = dt['address1'].lower() + ' '+street_address1
+        city = dt['city'].lower()
+        zipp = dt['postalCode']
+        state = dt['stateCode']
+        if dt['latitude']==0:
+            latitude=''
+            longitude=''
+        else:
+            latitude = dt['latitude']
+            longitude = dt['longitude']
 
-        # except:
-        #     pass
+        hours_of_operation = dt['storeHours'].replace("*",' ')
+        phone = dt['phone']
         
-       
+   
+      
+        store = []
+        store.append(base_url)
+        store.append(location_name.replace("#"+str(dt['ID']),''))
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append(dt['ID'])
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation.replace("Hours not scheduled for this gro",''))
+        store.append(page_url)
+        store = [x.strip() if type(x) == str else x for x in store]
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        store = [str(x).strip() if x else "<MISSING>" for x in store]
+        # logger.info("data===="+str(store))
+        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        yield store
+
+      
 
 
 def scrape():

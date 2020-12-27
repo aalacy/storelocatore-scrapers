@@ -64,6 +64,8 @@ def fetch_data():
                 lng = line2.split('"place:location:longitude" content="')[1].split('"')[0]
         if Found:
             loc = loc.replace('/printfactsheet','')
+            if '2341111' in phone:
+                phone = '1-850-234-1111'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -70,49 +70,47 @@ def fetch_data():
         for con in content:
             store = "store" + str(count)
             count = count + 1
-            if (("Temporarily Closed") in con.find("h4").text.split(",", 1)[1]) is True:
-                continue
-            else:
 
-                try:
-                    temp = con.find("h5").text
-                    title = con.find("h4").text
-                    title = temp + " " + title
-                except:
-                    title = con.find("h4").text
-                city = title.split(", ", 1)[0]
-                state = title.split(", ", 1)[1]
-                if (len(state)) > 3:
-                    state = state[-3:]
-                street = con.find("p").text
-                phone = con.find("a").text
+            try:
+                temp = con.find("h5").text
+                title = con.find("h4").text
+                title = temp + " " + title
+            except:
+                title = con.find("h4").text
+            temp = con.find("h4").text
+            city = temp.split(", ", 1)[0]
+            state = temp.split(", ", 1)[1]
+            if (len(state)) > 3:
+                state = state[:3]
+            street = con.find("p").text
+            phone = con.find("a").text
 
-                pcode = con.find("a", {"href": "javascript: void(false)"})["onclick"]
-                pcode = pcode[-7:]
-                pcode = pcode[:-2]
+            pcode = con.find("a", {"href": "javascript: void(false)"})["onclick"]
+            pcode = pcode[-7:]
+            pcode = pcode[:-2]
 
-                latlong = con.find("h4")["onclick"].split("(")[1].split(")")[0]
-                lat = latlong.split(",", 2)[1]
-                long = latlong.split(",")[-1]
+            latlong = con.find("h4")["onclick"].split("(")[1].split(")")[0]
+            lat = latlong.split(",", 2)[1]
+            long = latlong.split(",")[-1]
 
-                data.append(
-                    [
-                        "https://www.catofashions.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        long,
-                        "<MISSING>",  # hours,
-                    ]
-                )
+            data.append(
+                [
+                    "https://www.catofashions.com/",
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    store,
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    long,
+                    "<MISSING>",  # hours,
+                ]
+            )
     return data
 
 

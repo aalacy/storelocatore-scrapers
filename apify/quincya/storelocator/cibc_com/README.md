@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Scraper worked correctly)

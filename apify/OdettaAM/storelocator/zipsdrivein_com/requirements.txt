@@ -2,3 +2,4 @@ usaddress
 sglogging
 sgrequests
 sgselenium
+bs4

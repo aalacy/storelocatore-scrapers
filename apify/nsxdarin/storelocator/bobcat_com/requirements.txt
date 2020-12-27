@@ -1,4 +1,6 @@
 sgrequests
-sgzip
 usaddress
 sglogging
+sgzip
+bs4
+lxml

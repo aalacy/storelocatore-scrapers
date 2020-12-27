@@ -5,7 +5,6 @@ import re
 import sgzip
 import json
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,11 +20,6 @@ def fetch_data():
     addresses = []
     coords = sgzip.coords_for_radius(50)
     base_url = "https://sharis.com/"
-    headers = {
-        'authorization': "R8-Gateway App=shoplocal, key=guess, Type=SameOrigin",
-        'cache-control': "no-cache"
-    }
-    
     header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5',
               'Content-type': 'application/x-www-form-urlencoded'}
     
@@ -42,6 +36,7 @@ def fetch_data():
             for val in data:
                 locator_domain = base_url
                 location_name =  val['name']
+                page_url = val["sl_pages_url"]
                 street_address = val['address']
                 city = val['city']
                 state =  val['state']
@@ -56,6 +51,7 @@ def fetch_data():
                 longitude = val['lng']
                 hours_of_operation = val['hours'].replace("\n","").replace("\r","").replace("&lt;br /&gt;",",").replace("&amp;","&")
                 hours_of_operation = hours_of_operation.replace(",Update 11/19/2020 :","").replace("Open for Dine-In, Takeout & Delivery","").replace(",Open for Outdoor Dining, Takeout & Delivery orders only.","").replace("Open for Takeout and Delivery orders only.","").replace("Open for Takeout & Delivery orders only.","").rstrip(",").strip()
+               
                 if street_address in addresses:
                     continue
                 addresses.append(street_address)
@@ -73,7 +69,7 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation  else '<MISSING>')
-                store.append('<MISSING>')
+                store.append(page_url)
                 yield store
 def scrape():
     data = fetch_data()

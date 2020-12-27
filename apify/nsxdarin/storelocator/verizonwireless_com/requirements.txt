@@ -1,4 +1,4 @@
 sgrequests
-sgzip
 tenacity
 sglogging
+sgzip==0.0.55
