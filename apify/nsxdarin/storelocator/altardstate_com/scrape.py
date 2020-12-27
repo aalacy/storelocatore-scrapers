@@ -79,6 +79,12 @@ def fetch_data():
             hours = hours.replace("<p>", "").replace("</p>", "")
             if "details. " in hours:
                 hours = hours.split("details. ")[1]
+        if "BRIDGE STREET" in name:
+            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
+        if "WEST TOWN MALL" in name:
+            hours = "Sun-Thu: 11AM-7PM; Fri-Sat: 11AM-8PM"
+        if "THE PINNACLE AT TURKEY CREEK" in name:
+            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
         if '"storebrands": ' in line:
             yield [
                 website,
