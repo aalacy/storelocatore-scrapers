@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import us
 import lxml.html
-from sgselenium import SgChrome, SgSelenium
+from sgselenium import SgChrome
 
 website = "ruralking.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
