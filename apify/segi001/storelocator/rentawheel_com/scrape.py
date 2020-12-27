@@ -90,6 +90,30 @@ def fetch_data():
                     .strip(),
                 ]
             )
+        elif el["phone"] == "Coming Soon!":
+            result.append(
+                [
+                    locator_domain,
+                    missingString,
+                    el["title"],
+                    missingString,
+                    el["city"],
+                    el["state"],
+                    el["zip"],
+                    missingString,
+                    el["storenumber"],
+                    el["phone"],
+                    el["phone"],
+                    el["lat"],
+                    el["lng"],
+                    el["hours"]
+                    .replace("M", "Monday")
+                    .replace("F", "Friday")
+                    .replace("/", ",")
+                    .replace("SAT", "Saturday")
+                    .strip(),
+                ]
+            )
         else:
             result.append(
                 [
