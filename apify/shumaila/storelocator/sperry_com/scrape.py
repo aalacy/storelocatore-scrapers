@@ -61,7 +61,6 @@ def fetch_data():
         except:
             continue
         for div in divlist:
-            # print(div)
             title = div.find("span").text.split(".")[1].replace("\n", "")
             try:
                 hours = div.find("div", {"class": "store-hours"}).text
