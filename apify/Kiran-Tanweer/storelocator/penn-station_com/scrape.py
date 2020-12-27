@@ -150,14 +150,11 @@ def fetch_data():
         url = "https://www.penn-station.com/storefinder_responsive/index.php"
         r = requests.post(url=url, data=data)
         api = r.text
-        # print(api)
         success = api.split('"success":', 1)[1].split(",")[0]
-        # print(success)
         if success == "1":
             loclist = api.split('"stores":')[1].split("]}", 1)[0]
             loclist = loclist + "]"
             loclist = json.loads(loclist)
-            # print(loclist[0])
             for loc in loclist:
                 title = loc["name"]
                 address = loc["address"]
