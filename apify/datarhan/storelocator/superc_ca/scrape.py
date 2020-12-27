@@ -93,7 +93,9 @@ def fetch_data():
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).replace("Heures d'ouverture ", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
