@@ -61,47 +61,50 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '"name" : "' in line2:
-                name = line2.split('"name" : "')[1].split('"')[0]
-            if '"streetAddress" : "' in line2:
-                add = line2.split('"streetAddress" : "')[1].split('"')[0]
-            if '"addressLocality"  :  "' in line2:
-                city = line2.split('"addressLocality"  :  "')[1].split('"')[0]
-            if '"addressRegion" : "' in line2:
-                state = line2.split('"addressRegion" : "')[1].split('"')[0]
-            if '"postalCode" : "' in line2:
-                zc = line2.split('"postalCode" : "')[1].split('"')[0]
-            if '"telephone" : "' in line2:
-                phone = line2.split('"telephone" : "')[1].split('"')[0]
-            if 'pm"' in line2:
-                hrs = line2.split('"')[1]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if phone == "":
-            phone = "<MISSING>"
-        if hours == "":
-            hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        try:
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if '"name" : "' in line2:
+                    name = line2.split('"name" : "')[1].split('"')[0]
+                if '"streetAddress" : "' in line2:
+                    add = line2.split('"streetAddress" : "')[1].split('"')[0]
+                if '"addressLocality"  :  "' in line2:
+                    city = line2.split('"addressLocality"  :  "')[1].split('"')[0]
+                if '"addressRegion" : "' in line2:
+                    state = line2.split('"addressRegion" : "')[1].split('"')[0]
+                if '"postalCode" : "' in line2:
+                    zc = line2.split('"postalCode" : "')[1].split('"')[0]
+                if '"telephone" : "' in line2:
+                    phone = line2.split('"telephone" : "')[1].split('"')[0]
+                if 'pm"' in line2:
+                    hrs = line2.split('"')[1]
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
+            if phone == "":
+                phone = "<MISSING>"
+            if hours == "":
+                hours = "<MISSING>"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
+        except:
+            pass
 
 
 def scrape():

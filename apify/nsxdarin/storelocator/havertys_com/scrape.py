@@ -64,6 +64,7 @@ def fetch_data():
         lng = ""
         HFound = False
         hours = ""
+        CS = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -71,9 +72,9 @@ def fetch_data():
                 lat = line2.split("center: {lat: ")[1].split(",")[0]
                 lng = line2.split("lng: ")[1].split("}")[0]
             if "var address = '" in line2:
-                name = line2.split("var address = '")[1].split("'")[0]
+                add = line2.split("var address = '")[1].split("'")[0]
             if "var name = '" in line2:
-                add = line2.split("var name = '")[1].split("'")[0]
+                name = line2.split("var name = '")[1].split("'")[0]
             if "var city = '" in line2:
                 city = line2.split("var city = '")[1].split("'")[0]
             if "var state = '" in line2:
@@ -94,22 +95,25 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+            if "<span>Coming soon</span>" in line2:
+                CS = True
+        if CS is False:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
