@@ -39,7 +39,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     for x in range(1, 5000):
         print(str(x))
         try:
