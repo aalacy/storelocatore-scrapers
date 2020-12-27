@@ -1,9 +1,6 @@
 import csv
 from sgrequests import SgRequests
 
-##PROXY_URL = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-##PROXY_PASSWORD = "HKT2ZAHSvokX3hLibngLgo5nT"
-
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
