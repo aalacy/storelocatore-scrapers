@@ -1,8 +1,9 @@
+import re
 import csv
 import json
-from lxml import etree
+from w3lib.url import add_or_replace_parameter
 
-from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -36,55 +37,55 @@ def write_output(data):
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests()
 
+    # Your scraper here
     items = []
     scraped_items = []
 
-    DOMAIN = "onohawaiianbbq.com"
-    start_url = "https://www.onohawaiianbbq.com/wp-admin/admin-ajax.php?action=store_search&lat=33.99852&lng=-117.832455&max_results=25&radius=10&autoload=1"
+    DOMAIN = "sportsmans.com"
+    start_url = "https://www.sportsmans.com/store-locator?q=08854&page=0"
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
+    all_locations = []
+    with SgFirefox() as driver:
+        driver.get("https://www.sportsmans.com/store-locator")
+        driver.get(start_url)
+        data = re.findall("<body>(.+)</body>", driver.page_source.replace("\n", ""))[0]
+        data = json.loads(data)
+        all_locations += data["data"]
+        total_pages = data["total"] // 10 + 1
+        for page in range(1, total_pages):
+            driver.get(add_or_replace_parameter(start_url, "page", str(page)))
+            data = re.findall(
+                "<body>(.+)</body>", driver.page_source.replace("\n", "")
+            )[0]
+            data = json.loads(data)
+            all_locations += data["data"]
 
-    for poi in data:
+    for poi in all_locations:
         store_url = poi["url"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"]
-        street_address = poi["address"]
+        location_name = "{} {} {}".format(
+            poi["warehouseNameStart"], poi["warehouseNameEnd"], poi["name"]
+        )
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["line1"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
+        city = poi["town"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
+        zip_code = poi["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
+        country_code = "<MISSING>"
+        store_number = poi["name"]
+        store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
+        latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
+        longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = ""
-        if poi["hours"]:
-            hours_of_operation = etree.HTML(poi["hours"])
-            hours_of_operation = hours_of_operation.xpath(".//text()")
-            hours_of_operation = [
-                elem.strip() for elem in hours_of_operation if elem.strip()
-            ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
-
-        if "closed" in hours_of_operation.lower():
-            location_type = "closed"
-        if "soon" in location_name.lower():
-            location_type = "coming soon"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -102,9 +103,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
+
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
             items.append(item)
 
     return items
