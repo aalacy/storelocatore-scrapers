@@ -49,7 +49,6 @@ def fetch_data():
     with SgFirefox() as driver:
         driver.get("https://www.sportsmans.com/store-locator")
         driver.get(start_url)
-        print(driver.page_source)
         data = re.findall("<body>(.+)</body>", driver.page_source.replace("\n", ""))[0]
         data = json.loads(data)
         all_locations += data["data"]
