@@ -65,7 +65,7 @@ def fetch_data():
 
     links_list = []
     with SgChrome() as driver:
-        while len(links_list)<=0:
+        while len(links_list) <= 0:
             driver.get("https://www.ruralking.com/storelocator")
             stores = driver.find_elements_by_xpath('//a[@class="title-store"]')
             for store in stores:
