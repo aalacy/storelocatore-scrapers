@@ -36,7 +36,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.lids.com/api/stores?lat=46.5926188&long=-120.5363432&num=5000&shipToStore=false"
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
