@@ -47,7 +47,7 @@ def fetch_data():
 
     response = session.get(start_url)
     all_locations = re.findall(
-        '(\{"maxWidth":300,"content":".+?)\);', response.text.replace("\n", "")
+        r'(\{"maxWidth":300,"content":".+?)\);', response.text.replace("\n", "")
     )
 
     for poi_html in all_locations:
