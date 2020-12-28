@@ -101,6 +101,7 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        city = city.replace(",", "")
         yield [
             website,
             loc,
