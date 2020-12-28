@@ -60,9 +60,6 @@ def fetch_data():
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         street_address = address_raw[0].replace(",", "")
         city = address_raw[1].split(",")[0]
-        # if len(city.split()[0]) == 2:
-        #     city = street_address.split(', ')[-1]
-        #     street_address = street_address.split(',')[0]
         country_code = "<MISSING>"
         state = address_raw[1].split(",")[-1].split()[0]
         zip_code = address_raw[1].split(",")[-1].split()[-1]
