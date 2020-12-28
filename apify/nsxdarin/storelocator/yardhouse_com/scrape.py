@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("cornerbakerycafe_com")
+logger = SgLogSetup().get_logger("yardhouse_com")
 
 
 def write_output(data):
@@ -39,17 +39,18 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://cornerbakerycafe.com/locations/all"
+    url = "https://www.yardhouse.com/locations/all-locations?orderOnline=true"
     r = session.get(url, headers=headers)
-    website = "cornerbakerycafe.com"
+    website = "yardhouse.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '<a href="/location/' in line:
+        if '<a id="locDetailsId" href="' in line:
             locs.append(
-                "https://cornerbakerycafe.com" + line.split('href="')[1].split('"')[0]
+                "https://www.yardhouse.com"
+                + line.split('<a id="locDetailsId" href="')[1].split('"')[0]
             )
     for loc in locs:
         logger.info(loc)
@@ -58,46 +59,41 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
+        store = ""
         phone = ""
         lat = ""
         lng = ""
-        store = "<MISSING>"
         hours = ""
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
+        for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '"name": "' in line2 and name == "":
-                name = line2.split('"name": "')[1].split('"')[0]
-            if '"openingHours": [ "' in line2:
-                hours = (
-                    line2.split('"openingHours": [ "')[1]
-                    .split(" ]")[0]
-                    .replace('"', "")
-                )
-            if '"telephone": "' in line2 and phone == "":
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": ' in line2:
-                lat = line2.split('"latitude": ')[1].split(",")[0]
-            if '"longitude": ' in line2:
-                lng = (
-                    line2.split('"longitude": ')[1]
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .replace("\t", "")
-                    .strip()
-                )
-        hours = hours.replace(", ", "; ")
-        if ":" not in hours:
-            hours = "<MISSING>"
+            if '"streetAddress":"' in line2:
+                name = line2.split('"name":"')[1].split('"')[0]
+                try:
+                    hours = (
+                        line2.split('"openingHours":["')[1]
+                        .split('"]')[0]
+                        .replace('","', "; ")
+                    )
+                except:
+                    hours = "<MISSING>"
+                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                city = line2.split('"addressLocality":"')[1].split('"')[0]
+                state = line2.split('"addressRegion":"')[1].split('"')[0]
+                lat = line2.split('"latitude":"')[1].split('"')[0]
+                lng = line2.split('"longitude":"')[1].split('"')[0]
+                store = line2.split('"branchCode":"')[1].split('"')[0]
+                phone = line2.split('"telephone":"')[1].split('"')[0]
+        if "kansas-city-downtown-pl-district" in loc:
+            add = "1300 Main Street"
+            city = "Kansas City"
+            state = "MO"
+            zc = "64105"
+            phone = "(816) 527-0952"
+            hours = "Sun-Sat: 11:00AM - 10:00PM"
+            store = "8359"
+            name = "KANSAS CITY - DOWNTOWN P&L DISTRICT"
         yield [
             website,
             loc,
