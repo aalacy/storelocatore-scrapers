@@ -74,7 +74,7 @@ def fetch_data():
         .strip()
     )
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://" + store["link"].replace("https://api.", "").strip()
         locator_domain = website
         location_name = (
             store["title"]["rendered"]
