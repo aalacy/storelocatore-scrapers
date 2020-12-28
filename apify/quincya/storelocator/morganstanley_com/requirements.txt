@@ -3,3 +3,4 @@ beautifulsoup4==4.7.1
 sglogging
 sgzip==0.1.0
 sgrequests
+sgselenium
