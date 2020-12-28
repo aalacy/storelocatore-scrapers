@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
@@ -88,7 +89,14 @@ def fetch_data():
         poi_type = "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hoo = "<MISSING>"
+
+        if poi_number in scraped_items:
+            continue
+
+        store_response = session.get(poi_url)
+        store_dom = etree.HTML(store_response.text)
+        hoo = store_dom.xpath('//div[@class="hours__store"]//text()')[1:]
+        hoo = " ".join(hoo).replace("\n", "")
 
         item = [
             DOMAIN,

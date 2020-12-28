@@ -52,7 +52,6 @@ def fetch_data():
         "SK",
         "YT",
         "NU",
-        "NV",
         "BC",
     ]
     for x in range(100, 240):

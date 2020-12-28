@@ -67,9 +67,17 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store in stores:
-        page_url = "<MISSING>"  # store["link"]
+        page_url = "<MISSING>"
         locator_domain = website
-        location_name = store["title"]["rendered"]
+        location_name = (
+            store["title"]["rendered"]
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "'")
+            .strip()
+            .replace("&#8217;", "'")
+            .strip()
+        )
         if location_name == "":
             location_name = "<MISSING>"
 
