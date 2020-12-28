@@ -1,5 +1,5 @@
 sgrequests
 sglogging
 bs4 
-usaaddress
+usaddress
 
