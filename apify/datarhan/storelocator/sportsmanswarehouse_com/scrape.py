@@ -1,9 +1,9 @@
-import re
 import csv
 import json
+from lxml import etree
 from w3lib.url import add_or_replace_parameter
 
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -39,6 +39,8 @@ def write_output(data):
 def fetch_data():
 
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     items = []
     scraped_items = []
 
@@ -46,20 +48,15 @@ def fetch_data():
     start_url = "https://www.sportsmans.com/store-locator?q=08854&page=0"
 
     all_locations = []
-    with SgFirefox() as driver:
-        driver.get("https://www.sportsmans.com/store-locator")
-        driver.get(start_url)
-        data = re.findall("<body>(.+)</body>", driver.page_source.replace("\n", ""))[0]
-        data = json.loads(data)
+
+    response = session.get(start_url)
+    data = json.loads(response.text)
+    all_locations += data["data"]
+    total_pages = data["total"] // 10 + 1
+    for page in range(1, total_pages):
+        response = session.get(add_or_replace_parameter(start_url, "page", str(page)))
+        data = json.loads(response.text)
         all_locations += data["data"]
-        total_pages = data["total"] // 10 + 1
-        for page in range(1, total_pages):
-            driver.get(add_or_replace_parameter(start_url, "page", str(page)))
-            data = re.findall(
-                "<body>(.+)</body>", driver.page_source.replace("\n", "")
-            )[0]
-            data = json.loads(data)
-            all_locations += data["data"]
 
     for poi in all_locations:
         store_url = poi["url"]
@@ -85,7 +82,15 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hours_of_operation = loc_dom.xpath(
+            '//table[@class="c-location-hours-details"]//text()'
+        )
+        hours_of_operation = (
+            " ".join(hours_of_operation[2:]) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
