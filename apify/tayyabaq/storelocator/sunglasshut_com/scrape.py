@@ -48,7 +48,6 @@ def fetch_data():
     for url in urlist:
         if "/ca" in url:
             ccode = "CA"
-        # url = "https://locations.outback.com/index.html"
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
         statelist = soup.find("section", {"class": "StateList"}).findAll(
@@ -105,12 +104,8 @@ def fetch_data():
                         .split("storeId=", 1)[1]
                         .split("&", 1)[0]
                     )
-                    lat = soup.find("meta", {"itemprop": "latitude"})[
-                        "content"
-                    ]  # r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                    longt = soup.find("meta", {"itemprop": "longitude"})[
-                        "content"
-                    ]  # r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                    lat = soup.find("meta", {"itemprop": "latitude"})["content"]
+                    longt = soup.find("meta", {"itemprop": "longitude"})["content"]
                     title = (
                         soup.find("h1", {"class": "Core-name"})
                         .text.replace("\n", " ")
