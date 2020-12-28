@@ -36,6 +36,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     base_url = "https://sbarro.com"
     UsState = [
         "AL",
@@ -99,7 +100,7 @@ def fetch_data():
 
             page_url = base_url + link.find("a")["href"]
 
-            if region is not page_url.split("/")[4].upper().strip():
+            if region != page_url.split("/")[4].upper().strip():
                 continue
 
             if page_url.split("/")[-1]:
@@ -225,7 +226,9 @@ def fetch_data():
                 store.append(lng)
                 store.append(hours)
                 store.append(page_url)
-                store = [x.strip() if x else "<MISSING>" for x in store]
+                if street_address in addressess:
+                    continue
+                addressess.append(street_address)
                 yield store
 
 

@@ -43,7 +43,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "clevelandclinic.org"
+    DOMAIN = "clothesmentor.com"
     start_url = "https://clothesmentor.com/pages/locations"
     with SgChrome() as driver:
         driver.get(start_url)
