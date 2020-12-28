@@ -204,6 +204,9 @@ def fetch_data():
                 .split("Notify us of your visit!")[0]
             )
 
+        if city == "N.d.p, joliette":
+            city = "N.D.P., Joliette"
+
         store = []
         store.append(base_url)
         store.append(name)

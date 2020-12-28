@@ -106,6 +106,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if '">;' in hours:
+            hours = hours.split('">;')[1].strip()
         if add != "":
             yield [
                 website,
