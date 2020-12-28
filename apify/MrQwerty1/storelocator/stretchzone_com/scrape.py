@@ -138,7 +138,6 @@ def get_data(page_url):
     hours = tree.xpath("//div[@class='text work-hours']/p/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
 
-    # hours_of_operation = ';'.join([f'{k}: {v}' for k, v in zip(hours[::2], hours[1::2])]) or '<MISSING>'
     hours_of_operation = " ".join(hours) or "<MISSING>"
     if hours_of_operation != "<MISSING>":
         hours_of_operation = clean_hoo(hours_of_operation)
