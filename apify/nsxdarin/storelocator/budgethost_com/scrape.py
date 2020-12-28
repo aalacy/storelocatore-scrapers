@@ -99,6 +99,8 @@ def fetch_data():
         name = name.replace("&#39;", "'")
         if phone == "":
             phone = "<MISSING>"
+        if "OH" in zc:
+            zc = "<MISSING>"
         yield [
             website,
             lurl,

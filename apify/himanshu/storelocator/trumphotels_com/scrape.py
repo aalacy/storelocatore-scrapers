@@ -2,6 +2,12 @@ import csv
 from bs4 import BeautifulSoup
 import json
 from selenium import webdriver
+import time
+import os
+from selenium.webdriver import FirefoxOptions
+
+opts = FirefoxOptions()
+opts.add_argument("--headless")
 
 
 def write_output(data):
@@ -32,22 +38,24 @@ def write_output(data):
 
 
 def fetch_data():
-    DRIVER_PATH = "chromedriver"
-    driver = webdriver.Chrome(executable_path=DRIVER_PATH)
+    path = os.path.abspath("geckodriver")
+    driver = webdriver.Firefox(executable_path=path, options=opts)
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
+    driver.implicitly_wait(3)
     soup = BeautifulSoup(driver.page_source, "lxml")
     for country in soup.find("div", {"id": "ourhotels"}).find_all(
         "div", {"class": "filterlist"}
     ):
         for location in country.find_all("a"):
             driver.get(base_url + location["href"])
+            time.sleep(5)
             page_url = base_url + location["href"]
-            location_soup = BeautifulSoup(driver.page_source, "html5lib")
+            location_soup = BeautifulSoup(driver.page_source, "lxml")
             for script in location_soup.find_all(
                 "script", {"type": "application/ld+json"}
             ):
-                if "address" in json.loads(script.text):
+                if "address" in script.text:
                     store_data = json.loads(script.text)
                     if store_data["address"]["addressCountry"] not in ("USA", "Canada"):
                         continue

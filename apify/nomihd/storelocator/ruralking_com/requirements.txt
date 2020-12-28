@@ -1,0 +1,5 @@
+sgrequests
+sglogging
+sgselenium
+us
+lxml==4.5.2
