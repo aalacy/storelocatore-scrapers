@@ -81,6 +81,7 @@ def fetch_data():
 
         for loc in data2:
             location = '"fields' + loc
+            # print(loc)
             location = location.rstrip(',"')
             title = location.split('"Name":"', 1)[1].split('"')[0]
             latlng = location.split('"latLng":{', 1)[1].split("}")[0]
@@ -93,13 +94,48 @@ def fetch_data():
             city = location.split('"city":"', 1)[1].split('"')[0]
             state = location.split('"state":"', 1)[1].split('"')[0]
             postal = location.split('"postal":"', 1)[1].split('"')[0]
-            Mon = "Monday: " + location.split('"Monday":"', 1)[1].split('"')[0]
-            Tues = "Tuesday: " + location.split('"Tuesday":"', 1)[1].split('"')[0]
-            Wed = "Wednesday: " + location.split('"Wednesday":"', 1)[1].split('"')[0]
-            Thurs = "Thursday: " + location.split('"Thursday":"', 1)[1].split('"')[0]
-            fri = "Friday: " + location.split('"Friday":"', 1)[1].split('"')[0]
-            sat = "Saturday: " + location.split('"Saturday":"', 1)[1].split('"')[0]
-            sun = "Sunday: " + location.split('"Sunday":"', 1)[1].split('"')[0]
+            Monday = location.split('"Monday":"', 1)[1].split('"')[0]
+            Mon = ""
+            if Monday == "":
+                Mon = "Monday: " + "Closed"
+            else:
+                Mon = "Monday: " + Monday
+            Tuesday = location.split('"Tuesday":"', 1)[1].split('"')[0]
+            Tues = ""
+            if Tuesday == "":
+                Tues = "Tuesday: " + "Closed"
+            else:
+                Tues = "Tuesday: " + Tuesday
+            Wednesday = location.split('"Wednesday":"', 1)[1].split('"')[0]
+            Wed = ""
+            if Wednesday == "":
+                Wed = "Wednesday: " + "Closed"
+            else:
+                Wed = "Wednesday: " + Wednesday
+            Thursday = location.split('"Thursday":"', 1)[1].split('"')[0]
+            Thurs = ""
+            if Thursday == "":
+                Thurs = "Thursday: " + "Closed"
+            else:
+                Thurs = "Thursday: " + Thursday
+            friday = location.split('"Friday":"', 1)[1].split('"')[0]
+            fri = ""
+            if friday == "":
+                fri = "friday: " + "Closed"
+            else:
+                fri = "friday: " + friday
+            saturday = location.split('"Saturday":"', 1)[1].split('"')[0]
+            sat = ""
+            if saturday == "":
+                sat = "saturday: " + "Closed"
+            else:
+                sat = "saturday: " + saturday
+            sunday = location.split('"Sunday":"', 1)[1].split('"')[0]
+            sun = ""
+            if sunday == "":
+                sun = "Sunday: " + "Closed"
+            else:
+                sun = "Sunday: " + sunday
             Hours = (
                 Mon
                 + ", "
@@ -120,7 +156,19 @@ def fetch_data():
                 == "Monday: , Tuesday: , Wednesday: , Thursday: , Friday: , Saturday: , Sunday: "
             ):
                 Hours = "<MISSING>"
-
+            Hours = Hours.rstrip()
+            Hours = Hours.lstrip()
+            types = location.split('"BankShortName":"', 1)[1].split('"')[0]
+            if types == "Synovus":
+                types = "Bank"
+            if types == "Synovus Bank and ATM":
+                types = "Bank and ATM"
+            if types == "":
+                types = "<MISSING>"
+            if types == "Synovus ATM":
+                types = "ATM"
+            if types == "Synovus Mortgage":
+                types = "Mortgage"
             data.append(
                 [
                     "https://www.synovus.com/",
@@ -133,7 +181,7 @@ def fetch_data():
                     "US",
                     "<MISSING>",
                     Phone,
-                    "<MISSING>",
+                    types,
                     lat,
                     lngt,
                     Hours,
