@@ -127,7 +127,9 @@ def fetch_data():
                         "<MISSING>",
                         lat,
                         longt,
-                        hours,
+                        hours.replace("Day of the WeekHours", "").replace(
+                            "day", "day "
+                        ),
                     ]
                 )
 
