@@ -10,6 +10,8 @@ logger = SgLogSetup().get_logger("blazepizza_com")
 
 MISSING = "<MISSING>"
 session = SgRequests()
+request_count = 0
+
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
 }
@@ -32,6 +34,17 @@ FIELDS = [
 ]
 
 
+def get_session():
+    global session
+    global request_count
+
+    if request_count >= 10:
+        request_count = 0
+        session = SgRequests()
+
+    return session
+
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -50,7 +63,8 @@ def get_hours(location):
         if calendar and len(calendar) and len(calendar[0].get("ranges", [])):
             weekdays = calendar[0]["ranges"]
             for day in days:
-                hour = next(filter(lambda hour: hour["weekday"] == day, weekdays), None)
+                hour = next(
+                    filter(lambda hour: hour["weekday"] == day, weekdays), None)
                 if hour:
                     start = hour.get("start").split(" ").pop()
                     end = hour.get("end").split(" ").pop()
@@ -112,6 +126,8 @@ def log_status_every_n_coords(n, locations, completed, total):
 
 
 def fetch_locations(coord, dedup_tracker):
+    global request_count
+
     lat = coord[0]
     lng = coord[1]
     start = (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
@@ -129,7 +145,9 @@ def fetch_locations(coord, dedup_tracker):
         "nomnom_exclude_extref": 999,
     }
 
-    data = session.get(url, headers=headers, params=params).json()
+    data = get_session().get(url, headers=headers, params=params, timeout=0.5).json()
+    request_count += 1
+
     for location in data.get("restaurants", []):
         store_number = location.get("id")
         if store_number in dedup_tracker:
@@ -143,8 +161,8 @@ def fetch_locations(coord, dedup_tracker):
 def fetch_data():
     dedup_tracker = []
     completed = 0
-    coords = static_coordinate_list(50, SearchableCountries.USA)
-    coords.extend(static_coordinate_list(50, SearchableCountries.CANADA))
+    coords = static_coordinate_list(40, SearchableCountries.USA)
+    coords.extend(static_coordinate_list(25, SearchableCountries.CANADA))
 
     with ThreadPoolExecutor() as executor:
         futures = [
@@ -152,7 +170,8 @@ def fetch_data():
         ]
         for future in as_completed(futures):
             completed += 1
-            log_status_every_n_coords(50, len(dedup_tracker), completed, len(coords))
+            log_status_every_n_coords(
+                50, len(dedup_tracker), completed, len(coords))
             yield from future.result()
 
 
