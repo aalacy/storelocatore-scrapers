@@ -1,6 +1,6 @@
 import csv
 from sgrequests import SgRequests
-import sgzip
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 session = SgRequests()
 headers = {
@@ -37,7 +37,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    for code in sgzip.for_radius(50):
+    for code in static_zipcode_list(50, SearchableCountries.USA):
         print("Pulling Zip Code %s..." % code)
         website = "vpracingfuels.com"
         country = "US"

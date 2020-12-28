@@ -52,7 +52,6 @@ def fetch_data():
         "SK",
         "YT",
         "NU",
-        "NV",
         "BC",
     ]
     for x in range(100, 240):
@@ -100,7 +99,11 @@ def fetch_data():
                                 zc = addinfo.split(",")[3].strip().split(" ", 1)[1]
                         except:
                             name = "none"
-                        if "LKQ" in name[:3] and "Ireland" not in state:
+                        if (
+                            "LKQ" in name[:3]
+                            and "Ireland" not in state
+                            and "Northern" not in state
+                        ):
                             if state in canada:
                                 country = "CA"
                             else:

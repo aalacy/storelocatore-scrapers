@@ -100,7 +100,7 @@ def fetch_data():
 
         page_url = (
             "https://www.janieandjack.com/on/demandware.store/"
-            "Sites-JanieAndJack-Site/en/Stores-Details?StoreID=" + str(store)
+            "Sites-JanieAndJack-Site/en_US/Stores-Details?StoreID=" + str(store)
         )
         phone = stores[store]["phone"]
         store_number = "<MISSING>"
