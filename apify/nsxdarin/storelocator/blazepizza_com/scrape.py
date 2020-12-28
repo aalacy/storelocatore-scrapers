@@ -63,8 +63,7 @@ def get_hours(location):
         if calendar and len(calendar) and len(calendar[0].get("ranges", [])):
             weekdays = calendar[0]["ranges"]
             for day in days:
-                hour = next(
-                    filter(lambda hour: hour["weekday"] == day, weekdays), None)
+                hour = next(filter(lambda hour: hour["weekday"] == day, weekdays), None)
                 if hour:
                     start = hour.get("start").split(" ").pop()
                     end = hour.get("end").split(" ").pop()
@@ -170,8 +169,7 @@ def fetch_data():
         ]
         for future in as_completed(futures):
             completed += 1
-            log_status_every_n_coords(
-                50, len(dedup_tracker), completed, len(coords))
+            log_status_every_n_coords(50, len(dedup_tracker), completed, len(coords))
             yield from future.result()
 
 
