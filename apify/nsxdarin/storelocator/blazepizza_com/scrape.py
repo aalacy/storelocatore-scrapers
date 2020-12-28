@@ -76,8 +76,8 @@ def get_hours(location):
             hours.append("Closed")
 
         return ",".join(hours) or MISSING
-    except Exception as e:
-        print(e)
+    except:
+        pass
 
 
 def extract(location, store_number):
