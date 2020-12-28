@@ -1,4 +1,5 @@
 import csv
+import threading
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 from sglogging import SgLogSetup
@@ -6,12 +7,10 @@ from datetime import datetime
 from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+local = threading.local()
 logger = SgLogSetup().get_logger("blazepizza_com")
 
 MISSING = "<MISSING>"
-session = SgRequests()
-request_count = 0
-
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
 }
@@ -35,14 +34,15 @@ FIELDS = [
 
 
 def get_session():
-    global session
-    global request_count
+    if not hasattr(local, "session"):
+        local.request_count = 0
+        local.session = SgRequests()
 
-    if request_count >= 10:
-        request_count = 0
-        session = SgRequests()
+    if local.request_count >= 10:
+        local.request_count = 0
+        local.session = SgRequests()
 
-    return session
+    return local.session
 
 
 def write_output(data):
@@ -125,8 +125,6 @@ def log_status_every_n_coords(n, locations, completed, total):
 
 
 def fetch_locations(coord, dedup_tracker):
-    global request_count
-
     lat = coord[0]
     lng = coord[1]
     start = (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
@@ -145,7 +143,7 @@ def fetch_locations(coord, dedup_tracker):
     }
 
     data = get_session().get(url, headers=headers, params=params, timeout=0.5).json()
-    request_count += 1
+    local.request_count += 1
 
     for location in data.get("restaurants", []):
         store_number = location.get("id")
