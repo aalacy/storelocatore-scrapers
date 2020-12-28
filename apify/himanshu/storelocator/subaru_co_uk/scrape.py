@@ -43,7 +43,7 @@ def request_wrapper(url, method, headers, data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url, headers=headers)
+                r = session.get(url, headers=headers)
                 return r
                 break
             except:
@@ -56,9 +56,9 @@ def request_wrapper(url, method, headers, data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url, headers=headers, data=data)
+                    r = session.post(url, headers=headers, data=data)
                 else:
-                    r = requests.post(url, headers=headers)
+                    r = session.post(url, headers=headers)
                 return r
                 break
             except:
@@ -85,7 +85,6 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    response = ""
     base_url = "https://www.subaru.co.uk/"
     try:
         soup = session.post(url, headers=headers, data=payload).json()
