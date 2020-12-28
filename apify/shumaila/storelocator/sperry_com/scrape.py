@@ -141,6 +141,31 @@ def fetch_data():
             except:
                 pass
             try:
+                temp, city = city.split("CENTER ", 1)
+                street = street + " " + temp + " CENTER"
+            except:
+                pass
+            try:
+                temp, city = city.split("PLACE ", 1)
+                street = street + " " + temp + " PLACE"
+            except:
+                pass
+            try:
+                temp, city = city.split("BEACH ", 1)
+                street = street + " " + temp + " BEACH"
+            except:
+                pass
+            try:
+                temp, city = city.split("NORTH ", 1)
+                street = street + " " + temp + " NORTH"
+            except:
+                pass
+            try:
+                temp, city = city.split("ISLAND ", 1)
+                street = street + " " + temp + " ISLAND"
+            except:
+                pass
+            try:
                 temp = city.split(" ")
                 if temp[0] == temp[1] or temp[0] == "null":
                     city = temp[1]
