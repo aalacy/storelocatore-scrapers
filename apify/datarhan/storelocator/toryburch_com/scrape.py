@@ -53,7 +53,6 @@ def fetch_data():
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//meta[@itemprop="url"]/@content')
         store_url = store_url[0] if store_url else "<MISSING>"
-        print(store_url)
         location_name = poi_html.xpath('.//p[@class="store-name"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//meta[@itemprop="streetAddress"]/@content')[
