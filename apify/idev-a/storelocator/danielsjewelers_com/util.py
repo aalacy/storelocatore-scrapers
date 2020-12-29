@@ -1,6 +1,3 @@
-import us
-
-
 class Util:
     def parseHour(self, val):
         res = ""
