@@ -2,7 +2,6 @@ import re
 import csv
 import json
 from lxml import etree
-from w3lib.html import remove_tags
 
 from sgrequests import SgRequests
 
@@ -39,58 +38,59 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     items = []
 
-    DOMAIN = "specsonline.com"
-    start_url = "https://specsonline.com/locations/"
+    DOMAIN = "metrodiner.com"
+    start_url = "https://metrodiner.com/locations/"
 
-    response = session.get(start_url)
+    response = session.get(
+        start_url,
+    )
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath(
-        '//div[@class="instore-store "]//a[contains(text(), "location detail")]/@href'
-    )
-    all_locations += dom.xpath(
-        '//div[@class="instore-store hidden-stores"]//a[contains(text(), "location detail")]/@href'
-    )
-
-    data = dom.xpath('//script[@id="maplistko-js-extra"]/text()')[0]
-    data = re.findall("ParamsKo =(.+);", data)[0]
+    data = dom.xpath('//script[contains(text(), "window.data =")]/text()')[0]
+    data = re.findall("locations:(.+)}", data.replace("\t", "").replace("\n", ""))[0]
     data = json.loads(data)
 
-    for poi in data["KOObject"][0]["locations"]:
-        store_url = poi["locationUrl"]
-        location_name = poi["title"]
+    for poi in data:
+        store_url = poi["link"]
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        address_raw = etree.HTML(poi["address"])
-        address_raw = address_raw.xpath(".//text()")
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        if len(address_raw) == 3:
-            address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
-        street_address = address_raw[0]
-        city = address_raw[1].split(",")[0]
-        state = address_raw[1].split(",")[-1].split()[0]
-        if state.isdigit():
-            state = "<MISSING>"
-        zip_code = address_raw[1].split(",")[-1].split()[-1]
+        raw_address = etree.HTML(poi["display_address"])
+        raw_address = raw_address.xpath("//text()")
+        if len(raw_address) == 3:
+            raw_address = [", ".join(raw_address[:2]), raw_address[2]]
+        street_address = raw_address[0]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = ""
-        if poi.get("simpledescription"):
-            phone = remove_tags(poi["simpledescription"]).split()[0]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        hours_of_operation = loc_dom.xpath('//p[@class="maplist-hours"]/text()')
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        hoo = poi["hours"].split(";")[:-1]
+        hoo = [elem[2:] for elem in hoo]
+        hoo = [
+            elem.replace(",", " - ").replace("00", ":00").replace(":000", "0:00")
+            for elem in hoo
+        ]
+        hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hoo))
         hours_of_operation = (
-            hours_of_operation[0].strip() if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -108,7 +108,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items
