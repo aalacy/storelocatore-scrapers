@@ -164,7 +164,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 address = loc["address"]
                 templink = loc["slug"]
-                link = "https://phillypretzelfactory.com/locations/" + templink +"/"
+                link = "https://phillypretzelfactory.com/locations/" + templink + "/"
                 if not address:
                     street = "<MISSING>"
                     city = "<MISSING>"
