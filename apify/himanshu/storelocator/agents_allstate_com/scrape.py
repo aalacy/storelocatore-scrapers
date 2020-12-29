@@ -5,7 +5,6 @@ import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("agents_allstate_com")
-
 session = SgRequests()
 
 
@@ -32,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -64,10 +62,12 @@ def fetch_data():
         soup1 = BeautifulSoup(r1.text, "lxml")
         link_state = soup1.find_all("a", {"class": re.compile("Directory-listLink")})
         for link in link_state:
-
-            r2 = session.get(
-                "https://agents.allstate.com" + link["href"].replace("..", "")
-            )
+            try:
+                r2 = session.get(
+                    "https://agents.allstate.com" + link["href"].replace("..", "")
+                )
+            except:
+                continue
             soup2 = BeautifulSoup(r2.text, "lxml")
             try:
                 st = soup2.find_all("span", {"class": "c-address-street-1"})
