@@ -12,6 +12,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -54,14 +55,14 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     divs = driver.find_elements_by_css_selector("div.location")
+    print(len(divs))
     all_store_data = []
     for div in divs:
         content = div.text.split("\n")
         if "coming soon" in div.text.lower():
             continue
         location_name = content[0]
-        if "Elkhorn" in location_name:
-            continue
+
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
 
@@ -83,6 +84,7 @@ def fetch_data():
 
         store_data = [
             locator_domain,
+            "https://www.firstnebraska.bank/locations/",
             location_name,
             street_address,
             city,
