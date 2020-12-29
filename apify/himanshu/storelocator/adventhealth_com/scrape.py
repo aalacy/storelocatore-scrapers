@@ -20,10 +20,11 @@ def fetch_data():
                     .get_text()
                     .strip()
                 )
-                page_url = base_url + r.find(
+                link = r.find(
                     "a",
                     {"class": "location-block__name-link u-text--fw-300 notranslate"},
                 ).get("href")
+                page_url = base_url + link
             except Exception:
                 name = r.find_all("h3")[0].get_text().strip()
                 page_url = "<MISSING>"
