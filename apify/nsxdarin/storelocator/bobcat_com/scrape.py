@@ -138,18 +138,18 @@ def get_street_address(addr, address):
     return street_address.strip()
 
 
-def get_state_zip(addr, address, country_code):
-    if country_code == SearchableCountries.USA:
-        state = addr.get("StateName") or MISSING
-        zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
-        return state, zipcode
+def get_state_zip_country(addr, address):
+    zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
 
-    if country_code == SearchableCountries.CANADA:
+    if zipcode.isdigit():
+        state = addr.get("StateName") or MISSING
+        return state, zipcode, "US"
+    else:
         components = address.split(", ")
         if len(components) > 1:
             state_zip = components.pop()
             state, zipcode = state_zip.split(" ", 1)
-            return state, zipcode
+            return state, zipcode, "CA"
 
     return MISSING, MISSING
 
@@ -195,7 +195,7 @@ def get_store_number(tag):
     return match.group(1)
 
 
-def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
+def fetch_us_location(coord, country, dedup_tracker, retry_count=0):
     global request_count
 
     lat, lng = coord
@@ -216,9 +216,7 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
         res.raise_for_status()
     except Exception as e:
         if retry_count < 3:
-            return fetch_us_location(
-                coord, country_code, dedup_tracker, retry_count + 1
-            )
+            return fetch_us_location(coord, country, dedup_tracker, retry_count + 1)
         logger.error(f"unable to fetch coord: {lat} {lng} >>>> {e}")
 
     soup = BeautifulSoup(res.text, "lxml")
@@ -238,12 +236,15 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
 
         street_address = get_street_address(addr, address)
         city = addr.get("PlaceName") or MISSING
-        state, zipcode = get_state_zip(addr, address, country_code)
+        state, zipcode, country_code = get_state_zip_country(addr, address)
 
         phone = get_phone(location)
         page_url = get_page_url(location)
         location_name = get_location_name(location)
 
+        if " " in state:
+            state = state.split(" ")[0]
+            country_code = "CA"
         poi = {
             "locator_domain": "bobcat.com",
             "page_url": page_url,
@@ -254,7 +255,7 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
             "city": city,
             "state": state,
             "zip": zipcode,
-            "country_code": country_code.upper(),
+            "country_code": country_code,
             "latitude": MISSING,
             "longitude": MISSING,
             "phone": phone,
