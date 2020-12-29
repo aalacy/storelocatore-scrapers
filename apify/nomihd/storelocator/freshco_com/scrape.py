@@ -2,16 +2,14 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-from lxml import etree
-import usaddress
+import lxml.html
 
-website = "winchells.com"
+website = "freshco.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "*/*",
-    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json",
 }
 
 
@@ -63,33 +61,27 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://winchells.com/maps_xml"
+    search_url = "https://freshco.com/store-locator/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = etree.fromstring(stores_req.text)
-    stores = stores_sel.xpath("//markers/marker")
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//div[@id="list-stores-wrap"]/div')
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "".join(store.xpath('.//h4/a[@class="store-title"]/@href')).strip()
         locator_domain = website
-        location_name = "Winchells Donut House"
-        street_address = (
-            "".join(store.xpath("@Location")).strip().encode("utf-8").decode()
-        )
-        temp_address = "".join(store.xpath("@Address")).strip()
-        city = ""
-        state = ""
-        zip = ""
-        parsed_address = usaddress.parse(temp_address)
-        for index, tuple in enumerate(parsed_address):
-            if tuple[1] == "PlaceName":
-                city = city + tuple[0].strip() + " "
-            if tuple[1] == "StateName":
-                if len(state) <= 0:
-                    state = tuple[0].replace(",", "").strip()
-            if tuple[1] == "ZipCode":
-                zip = tuple[0].replace(",", "").strip()
+        location_name = "".join(
+            store.xpath('.//h4/a[@class="store-title"]/span/text()')
+        ).strip()
+        if location_name == "":
+            location_name = "<MISSING>"
 
-        city = city.replace(",", "").strip().encode("utf-8").decode()
-        country_code = "US"
+        street_address = "".join(
+            store.xpath('.//span[@class="location_address_address_1"]/text()')
+        ).strip()
+        city = "".join(store.xpath("@data-city")).strip()
+        state = "".join(store.xpath("@data-province")).strip()
+        zip = "".join(store.xpath("@data-postal-code")).strip()
+
+        country_code = "CA"
 
         if street_address == "":
             street_address = "<MISSING>"
@@ -103,16 +95,25 @@ def fetch_data():
         if zip == "":
             zip = "<MISSING>"
 
-        store_number = "<MISSING>"
-        phone = "".join(store.xpath("@Phone")).strip()
+        store_number = "".join(store.xpath("@data-id")).strip()
+        phone = "".join(store.xpath('.//span[@class="phone"]/text()')).strip()
 
-        location_type = "<MISSING>"
+        location_type = "".join(store.xpath("@data-brand")).strip()
+        if location_type == "":
+            location_type = "<MISSING>"
+
         hours_of_operation = (
-            "".join(store.xpath("@Desc")).strip().split("<br")[0].strip()
+            "".join(store.xpath("@data-hours"))
+            .strip()
+            .replace("{", "")
+            .replace("}", "")
+            .replace('"', "")
+            .replace(",", " ")
+            .strip()
         )
 
-        latitude = "".join(store.xpath("@Ycoord")).strip()
-        longitude = "".join(store.xpath("@Xcoord")).strip()
+        latitude = "".join(store.xpath("@data-lat")).strip()
+        longitude = "".join(store.xpath("@data-lng")).strip()
 
         if latitude == "":
             latitude = "<MISSING>"

@@ -2,16 +2,15 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-from lxml import etree
-import usaddress
+import us
+import lxml.html
 
-website = "winchells.com"
+website = "cousinssubs.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "*/*",
-    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json",
 }
 
 
@@ -63,33 +62,37 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://winchells.com/maps_xml"
+    search_url = "https://www.cousinssubs.com/find-a-store/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = etree.fromstring(stores_req.text)
-    stores = stores_sel.xpath("//markers/marker")
-    for store in stores:
-        page_url = "<MISSING>"
-        locator_domain = website
-        location_name = "Winchells Donut House"
-        street_address = (
-            "".join(store.xpath("@Location")).strip().encode("utf-8").decode()
-        )
-        temp_address = "".join(store.xpath("@Address")).strip()
-        city = ""
-        state = ""
-        zip = ""
-        parsed_address = usaddress.parse(temp_address)
-        for index, tuple in enumerate(parsed_address):
-            if tuple[1] == "PlaceName":
-                city = city + tuple[0].strip() + " "
-            if tuple[1] == "StateName":
-                if len(state) <= 0:
-                    state = tuple[0].replace(",", "").strip()
-            if tuple[1] == "ZipCode":
-                zip = tuple[0].replace(",", "").strip()
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//a[@class="more-info"]/@href')
+    for store_url in stores:
+        page_url = "https://www.cousinssubs.com" + store_url
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
 
-        city = city.replace(",", "").strip().encode("utf-8").decode()
-        country_code = "US"
+        locator_domain = website
+        location_name = "".join(
+            store_sel.xpath('//div[@class="row clearfix store-location"]/div/h2/text()')
+        ).strip()
+
+        if location_name == "":
+            location_name = "<MISSING>"
+
+        address = "".join(
+            store_sel.xpath(
+                '//div[@class="row clearfix store-location"]/div/div[@class="address"]/text()'
+            )
+        ).strip()
+
+        street_address = address.split(",")[0].strip()
+        city = address.split(",")[1]
+        state = address.split(",")[2].strip().split(" ")[0].strip()
+        zip = address.split(",")[2].strip().split(" ")[1].strip()
+
+        country_code = "<MISSING>"
+        if us.states.lookup(state):
+            country_code = "US"
 
         if street_address == "":
             street_address = "<MISSING>"
@@ -104,20 +107,38 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = "<MISSING>"
-        phone = "".join(store.xpath("@Phone")).strip()
+        phone = "".join(
+            store_sel.xpath(
+                '//div[@class="row clearfix store-location"]/div/div[@class="phone"]/text()'
+            )
+        ).strip()
 
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(store.xpath("@Desc")).strip().split("<br")[0].strip()
-        )
 
-        latitude = "".join(store.xpath("@Ycoord")).strip()
-        longitude = "".join(store.xpath("@Xcoord")).strip()
+        latitude = "".join(
+            store_sel.xpath('//div[@class="distance"]/@data-lat')
+        ).strip()
+        longitude = "".join(
+            store_sel.xpath('//div[@class="distance"]/@data-lon')
+        ).strip()
 
         if latitude == "":
             latitude = "<MISSING>"
         if longitude == "":
             longitude = "<MISSING>"
+
+        hours = store_sel.xpath('//table[@class="hours"]/tr')
+        hours_of_operation = ""
+        for hour in hours:
+            hours_of_operation = (
+                hours_of_operation
+                + "".join(hour.xpath("td[1]/text()")).strip()
+                + ":"
+                + "".join(hour.xpath("td[2]/div/text()")).strip()
+                + " "
+            )
+
+        hours_of_operation = hours_of_operation.strip()
 
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
