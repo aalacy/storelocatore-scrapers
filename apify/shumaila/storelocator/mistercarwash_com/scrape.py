@@ -73,7 +73,7 @@ def fetch_data():
         )
         for ph in phonelist:
             match = re.match(
-                "\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$", ph
+                "\\D?(\\d{0,3}?)\\D{0,2}(\\d{3})?\\D{0,2}(\\d{3})\\D?(\\d{4})$", ph
             )
             if match:
                 phone = ph
