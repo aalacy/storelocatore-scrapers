@@ -163,12 +163,18 @@ def fetch_data():
                 if phone == "":
                     phone = "<MISSING>"
                 time = loc["description"]
-                time = time.rstrip()
                 time = time.replace("\r\n", " ")
-                time = time.lstrip('"')
-                time = time.lstrip()
                 if time == "":
                     time = "<MISSING>"
+                time = time.lstrip()
+                time = time.rstrip()
+                time = time.lstrip('"')
+                time = time.rstrip('"')
+                time = time.lstrip()
+                time = time.rstrip()
+                time = time.replace("Mon-Sat:  ", "Mon - Sat: ")
+                time = time.replace("Mon - Sat ", "Mon - Sat: ")
+                time = time.replace("  ", " ")
                 lat = loc["lat"]
                 lngt = loc["lng"]
                 address = address.replace(",", " ")
