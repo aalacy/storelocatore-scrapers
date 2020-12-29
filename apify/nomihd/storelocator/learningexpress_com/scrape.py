@@ -132,7 +132,14 @@ def fetch_data():
         hours_of_operation = ""
         for hour in hours:
             day = "".join(hour.xpath('span[@class="schemaWeekday"]/text()')).strip()
+            if len(day) <= 0:
+                day = "".join(
+                    hour.xpath('strong/span[@class="schemaWeekday"]/text()')
+                ).strip()
+
             time = "".join(hour.xpath("text()")).strip()
+            if len(time) <= 0:
+                time = "".join(hour.xpath("strong/text()")).strip()
 
             hours_of_operation = hours_of_operation + day + ":" + time + " "
 
