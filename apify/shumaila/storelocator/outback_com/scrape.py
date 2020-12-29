@@ -1,163 +1,142 @@
-#http://outback.com/
-import requests
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('outback_com')
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    chrome_path = 'c:\\Users\\Dell\\local\\chromedriver'
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #return webdriver.Chrome(chrome_path, chrome_options=options)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-
 def fetch_data():
-    # Your scraper here
+    titlelist = []
     data = []
-    prov = []
-    p = 1
-    url = 'https://www.outback.com/locations/directory'
+    url = "https://locations.outback.com/index.html"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    statelist = soup.find("section", {"class": "StateList"}).findAll(
+        "a", {"class": "Directory-listLink"}
+    )
+    p = 0
+    for stnow in statelist:
+        check1 = 0
+        stlink = "https://locations.outback.com/" + stnow["href"]
+        r = session.get(stlink, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        try:
+            citylist = soup.find("section", {"class": "CityList"}).findAll(
+                "a", {"class": "Directory-listLink"}
+            )
+        except:
+            citylist = []
+            citylist.append(stlink)
+            check1 = 1
+        for citynow in citylist:
+            check2 = 0
+            if check1 == 0:
+                citylink = "https://locations.outback.com/" + citynow["href"]
+                r = session.get(citylink, headers=headers, verify=False)
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    branchlist = soup.find(
+                        "ul", {"class": "Directory-listTeasers"}
+                    ).findAll("a", {"class": "Teaser-titleLink"})
+                except:
+                    branchlist = []
+                    branchlist.append(citylink)
+                    check2 = 1
+            else:
+                branchlist = []
+                branchlist.append(citylink)
+                check2 = 1
+            for branch in branchlist:
+                if check2 == 0:
+                    branch = "https://locations.outback.com/" + branch["href"]
+                    branch = branch.replace("../", "")
+                    if branch in titlelist:
+                        continue
+                    titlelist.append(branch)
+                    r = session.get(branch, headers=headers, verify=False)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
+                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                title = (
+                    soup.find("h1", {"id": "location-name"})
+                    .text.replace("\n", " ")
+                    .strip()
+                )
+                street = soup.find("span", {"class": "c-address-street-1"}).text
+                city = soup.find("span", {"class": "c-address-city"}).text
+                try:
+                    state = soup.find("abbr", {"class": "c-address-state"}).text
+                except:
+                    continue
+                pcode = soup.find("span", {"class": "c-address-postal-code"}).text
+                phone = soup.find("div", {"id": "phone-main"}).text
+                hours = soup.find("table", {"class": "c-hours-details"}).text.replace(
+                    "PM", "PM "
+                )
+                try:
+                    hours = hours.split("Week", 1)[1]
+                except:
+                    pass
+                data.append(
+                    [
+                        "https://outback.com",
+                        branch,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        "US",
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours.replace("Day of the WeekHours", "")
+                        .replace("day", "day ")
+                        .replace("Hours", "")
+                        .strip(),
+                    ]
+                )
 
-    driver1 = get_driver()
-    
-    driver1.get(url)
-
-    time.sleep(10)
-    '''try:
-        closeb = driver1.find_element_by_xpath('/html/body/div[1]/div/div/div/div/div[1]/div/div/div/div[2]/span')
-        closeb.click()
-    except:
-        time.sleep(20)
-        closeb = driver1.find_element_by_xpath('/html/body/div[1]/div/div/div/div/div[1]/div/div/div/div[2]/span')
-        closeb.click()'''
-
-    province_box = driver1.find_element_by_id("mainContent")
-    poption = province_box.find_elements_by_tag_name('option')
-    check = 0
-    logger.info(len(poption))
-    for i in range(1,len(poption)):
-        s1 = Select(driver1.find_element_by_id("mainContent"))
-        s1.select_by_visible_text(poption[i].text)
-        #logger.info(poption[i].text)
-        time.sleep(2)
-        flag = True
-        while flag:
-            try:
-                maindiv = driver1.find_elements_by_class_name('displayName')
-                j=0
-                while j < len(maindiv):
-                    try:
-                        title = maindiv[j].find_element_by_tag_name('a').text
-                        link = maindiv[j].find_element_by_tag_name('a').get_attribute('href')
-                        link1 = link.replace("https://www.outback.com/locations","https://www.outback.com/partial/location/")
-                        #logger.info(link1)
-                        page = requests.get(link1)
-                        soup = BeautifulSoup(page.text,"html.parser")
-                        detail = str(soup.find('jsonpush'))
-                        #logger.info(detail)
-                        start = detail.find('Address')
-                        start = detail.find(':',start)+2
-                        end = detail.find('"', start)
-                        street = detail[start:end]
-                        start = detail.find('id=')
-                        if start != -1:
-                            start = detail.find('=', start) + 1
-                            end = detail.find('"', start)
-                            store = detail[start:end]
-                        else:
-                            store = "<MISSING>"
-                        start = detail.find('City')
-                        start = detail.find(':', start) + 2
-                        end = detail.find('"', start)
-                        city = detail[start:end]
-                        start = detail.find('"Longitude"')
-                        start = detail.find(':', start) + 2
-                        end = detail.find('"', start)
-                        longt = detail[start:end]
-                        start = detail.find('"Latitude"')
-                        start = detail.find(':', start) + 2
-                        end = detail.find('"', start)
-                        lat = detail[start:end]
-                        start = detail.find('"Phone"')
-                        if start != -1:
-                            start = detail.find(':', start) + 2
-                            end = detail.find('"', start)
-                            phone = detail[start:end]
-                        else:
-                            phone = "<MISSING>"
-                        start = detail.find('"State"')
-                        start = detail.find(':', start) + 2
-                        end = detail.find('"', start)
-                        state = detail[start:end]
-                        start = detail.find('"Zip"')
-                        start = detail.find(':', start) + 2
-                        end = detail.find('"', start)
-                        pcode = detail[start:end]
-
-                        hours = soup.find('p',{'ng-html-compile':'CurrentLocation.StoreHoursHtml'}).text
-                        hours = hours.lstrip()
-                        hours = hours.rstrip()
-                        hours = hours.replace("PM","PM ")
-                        hours = hours.replace("\n","")
-                        if len(hours) < 3:
-                            hours = "<MISSING>"
-                        #logger.info(hours)
-                        data.append([
-                            'https://www.outback.com/',
-                            link,
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            "US",
-                            store,
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours
-                        ])
-                        # logger.info(p)
-                        #logger.info(p, ",", data[p - 1])
-                        p += 1
-                        j += 1
-
-                    except:
-                        pass
-                    flag = False
-            except:
-                pass
-
-
-    driver1.quit()
+                p += 1
     return data
+
 
 def scrape():
 

@@ -64,43 +64,73 @@ def fetch_data():
                 store = line.split("','/store/")[1].split("?")[0]
                 loc = "https://www.tumi.com/store/" + store
                 typ = "<MISSING>"
-                lat = line.split("lat=")[1].split("&")[0]
-                lng = line.split("long=")[1].split("&")[0]
                 name = line.split("','")[2].split("'")[0]
                 add = line.split("','','")[1].split("'")[0]
                 city = line.split("','")[5]
                 state = line.split("','")[6]
                 zc = line.split("','")[7]
                 phone = line.split("','")[8].split("'")[0]
+            if 'id="pos_' in line:
+                lat = (
+                    line.split("','")[0]
+                    .replace("\t", "")
+                    .strip()
+                    .replace(",", "")
+                    .replace("'", "")
+                )
+                lng = line.split("','")[1].split("'")[0]
             if '<h2 class="boxTitle">HOURS</h2>' in line:
                 hours = ""
+                daycount = 0
             if 'class="day-name">' in line:
                 hrs = (
                     line.split('class="day-name">')[1].split("<")[0]
                     + ": "
                     + line.split('"store-status align-right">')[1].split("<")[0]
                 )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                daycount = daycount + 1
+                if daycount <= 7:
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
             if "Save as My Store</label>" in line:
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if (
+                    "Ontario" in state
+                    or "Alberta" in state
+                    or "British Columbia" in state
+                ):
+                    country = "CA"
+                if (
+                    "Ohio" in state
+                    or "California" in state
+                    or "Oregon" in state
+                    or "Arizona" in state
+                ):
+                    country = "US"
+                if (
+                    float(lng) < -50
+                    and float(lat) > 10
+                    and state != ""
+                    and state != "Guatemala"
+                    and state != "Distrito Federal"
+                ):
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():
