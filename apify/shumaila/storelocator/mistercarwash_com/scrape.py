@@ -1,7 +1,8 @@
 import csv
-import usaddress
+from bs4 import BeautifulSoup
 import json
 from sgrequests import SgRequests
+import re
 
 session = SgRequests()
 headers = {
@@ -44,123 +45,100 @@ def fetch_data():
     url = "https://mistercarwash.com/locations/"
     p = 0
     r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.find("ol", {"class": "search-list"}).select("a[href*=location]")
     r = r.text.split("var markers = ")[1].split("}]")[0]
     r = r + "}]"
     loclist = json.loads(r)
-    for loc in loclist:
-        title = loc["name"]
-        store = loc["loc_id"]
-        lat = loc["lat"]
-        longt = loc["lng"]
-        address = (
-            loc["address"]
-            .replace(", ", " ")
-            .replace("United States", "")
-            .replace("USA", "")
-            .replace("Rd", "Rd.")
+    for link in linklist:
+        title = link.text
+        link = link["href"]
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        street = soup.find("span", {"itemprop": "streetAddress"}).text
+        city = soup.find("span", {"itemprop": "addressLocality"}).text
+        state = soup.find("span", {"itemprop": "addressRegion"}).text
+        try:
+            state, pcode = state.strip().split(" ", 1)
+        except:
+            pcode = "<MISSING>"
+        phone = (
+            soup.find("a", {"itemprop": "telephone"})
+            .text.replace("Car Wash:", "")
+            .replace("\n", " ")
             .strip()
         )
-
-        address = usaddress.parse(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        street = street.lstrip().replace(",", "")
-        city = city.lstrip().replace(",", "")
-        state = state.lstrip().replace(",", "")
-        pcode = pcode.lstrip().replace(",", "")
-        hours = loc["loc_hours"]
+        phonelist = re.findall(
+            r"\(?\b[2-9][0-9]{2}\)?[-. ]?[2-9][0-9]{2}[-. ]?[0-9]{4}\b", phone
+        )
+        for ph in phonelist:
+            match = re.match(
+                "\\D?(\\d{0,3}?)\\D{0,2}(\\d{3})?\\D{0,2}(\\d{3})\\D?(\\d{4})$", ph
+            )
+            if match:
+                phone = ph
+                break
         try:
-            phone = str(loc["infoContent"]).split("Phone:</b>", 1)[1].split("<", 1)[0]
+            hours = (
+                soup.find("div", {"class": "hours"})
+                .text.replace("Car Wash: ", "")
+                .strip()
+            )
         except:
-            phone = "<MISSING>"
-        try:
-            state = state.strip().split(" ", 1)[0]
-        except:
-            pass
-        try:
-            state = state.split(",", 1)[0]
-        except:
-            pass
-        if len(pcode) < 3:
-            pcode = "<MISSING>"
-        if len(phone) < 3 or "Car Wash" in phone:
-            phone = "<MISSING>"
-        if len(hours) < 3 or "Car Wash:" in hours:
             hours = "<MISSING>"
-        if state == "" and "Comstock Park MI" in address:
-            state = "MI"
-            city = "Comstock Park"
-        if "Kennewick" in city:
-            state = "WA"
-        if len(state) < 2:
-            state = city.split(" ")[-1].strip()
-            if len(state) == 2:
-                city = city.replace(state, "").strip()
-            else:
-                state = "<MISSING>"
-        if "<MISSING>" in state:
-            state = street.split(" ")[-1].strip()
-            if len(state) == 2:
-                street = street.replace(state, "").strip()
-                city = street.split(" ")[-1].strip()
-                if "Land" or "Shoals" in city:
-                    city = street.split(" ")[-2].strip() + " " + city
-                street = street.replace(city, "").strip()
-            else:
-                state = "<MISSING>"
-        if len(city) < 2:
+        lat = longt = store = "<MISSING>"
+        for loc in loclist:
+            if loc["name"].strip() == title.strip():
+                lat = loc["lat"]
+                longt = loc["lng"]
+                store = loc["loc_id"]
+                break
+        if "United" in state and "TN" in city:
+            state = "TN"
             city = "<MISSING>"
+            pcode = "<MISSING>"
+        if len(phone) < 3:
+            phone = "<MISSING>"
         try:
             hours = hours.split("/", 1)[0]
         except:
             pass
+        if "Kennewick" in city:
+            state = "WA"
+        if "Buffalo Gap Rd" in pcode:
+            street = "4002 Buffalo Gap Rd"
+            city = "Abilene"
+            state = "TX"
+            pcode = "<MISSING>"
+        if "Ste 100" in city and "Austin" in state:
+            street = street + " " + city
+            city = state
+            state = "TX"
+        if "Fort Hood TX" in city:
+            city = "Fort Hood"
+            state = "TX"
         if "Georgia" in state:
             state = "GA"
-        if "Austin" in city:
-            state = "TX"
-        if title.find("Coming Soon") == -1:
-            data.append(
-                [
-                    "https://mistercarwash.com",
-                    "https://mistercarwash.com/locations/",
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
+        data.append(
+            [
+                "https://mistercarwash.com",
+                link,
+                title,
+                street.strip(),
+                city.strip(),
+                state.strip(),
+                pcode.strip(),
+                "US",
+                store,
+                phone.strip(),
+                "<MISSING>",
+                lat,
+                longt,
+                hours.strip(),
+            ]
+        )
 
-            p += 1
+        p += 1
     return data
 
 
