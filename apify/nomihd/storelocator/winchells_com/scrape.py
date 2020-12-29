@@ -72,7 +72,7 @@ def fetch_data():
         locator_domain = website
         location_name = "Winchells Donut House"
         street_address = (
-            "".join(store.xpath("@Location")).strip().encode("ascii", "ignore").decode()
+            "".join(store.xpath("@Location")).strip().encode("utf-8").decode().decode()
         )
         temp_address = "".join(store.xpath("@Address")).strip()
         city = ""
@@ -88,7 +88,7 @@ def fetch_data():
             if tuple[1] == "ZipCode":
                 zip = tuple[0].replace(",", "").strip()
 
-        city = city.replace(",", "").strip().encode("ascii", "ignore").decode()
+        city = city.replace(",", "").strip().encode("utf-8").decode().decode()
         country_code = "US"
 
         if street_address == "":
