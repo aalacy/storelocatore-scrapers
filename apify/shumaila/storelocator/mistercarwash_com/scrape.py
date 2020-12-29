@@ -4,6 +4,7 @@ import usaddress
 import json
 from sgrequests import SgRequests
 import re
+
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -65,11 +66,16 @@ def fetch_data():
         phone = (
             soup.find("a", {"itemprop": "telephone"})
             .text.replace("Car Wash:", "")
-            .replace('\n',' ').strip()
+            .replace("\n", " ")
+            .strip()
         )
-        phonelist =  re.findall(r'\(?\b[2-9][0-9]{2}\)?[-. ]?[2-9][0-9]{2}[-. ]?[0-9]{4}\b', phone)
-        for ph in phonelist:            
-            match = re.match('\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$', ph)
+        phonelist = re.findall(
+            r"\(?\b[2-9][0-9]{2}\)?[-. ]?[2-9][0-9]{2}[-. ]?[0-9]{4}\b", phone
+        )
+        for ph in phonelist:
+            match = re.match(
+                "\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$", ph
+            )
             if match:
                 phone = ph
                 break
