@@ -87,7 +87,7 @@ def extract(location, store_number):
         location_name = location.get("name", MISSING)
         location_type = MISSING
 
-        street_address = location.get("streetAddress")
+        street_address = location.get("streetaddress")
         city = location.get("city")
         state = location.get("state")
         postal = location.get("zip", MISSING)
