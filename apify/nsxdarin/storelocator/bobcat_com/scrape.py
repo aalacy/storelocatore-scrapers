@@ -242,6 +242,9 @@ def fetch_us_location(coord, country, dedup_tracker, retry_count=0):
         page_url = get_page_url(location)
         location_name = get_location_name(location)
 
+        if " " in state:
+            state = state.split(" ")[0]
+            country_code = "CA"
         poi = {
             "locator_domain": "bobcat.com",
             "page_url": page_url,
