@@ -40,13 +40,14 @@ def write_output(data):
 def fetch_data():
     ids = []
     url = ""
-    for x in range(15, 50):
+    for x in range(30, 100):
         for y in range(-60, -126, -1):
-            lats = x
-            latn = x + 1
+            xlat = float(float(x) / 2)
+            lats = xlat
+            latn = xlat + 1
             lnge = y
             lngw = y - 1
-            logger.info((str(x) + "," + str(y)))
+            logger.info((str(xlat) + "," + str(y)))
             url = (
                 "https://bpretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D="
                 + str(lats)
