@@ -57,7 +57,6 @@ def fetch_data():
         for stnow in statelist:
             check1 = 0
             stlink = "https://stores.sunglasshut.com/" + stnow["href"]
-
             r = session.get(stlink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             try:
@@ -120,9 +119,6 @@ def fetch_data():
                         )
                     except:
                         pass
-                    if branch in titlelist:
-                        continue
-                    titlelist.append(branch)
                     city = soup.find("span", {"class": "c-address-city"}).text
                     try:
                         state = soup.find("abbr", {"class": "c-address-state"}).text
@@ -146,6 +142,7 @@ def fetch_data():
                             pass
                     except:
                         hours = "Temporarily Closed"
+                    branch = r.url
                     data.append(
                         [
                             "https://sunglasshut.com/",
