@@ -81,16 +81,19 @@ def fetch_data():
                 lng = line.split("','")[1].split("'")[0]
             if '<h2 class="boxTitle">HOURS</h2>' in line:
                 hours = ""
+                daycount = 0
             if 'class="day-name">' in line:
                 hrs = (
                     line.split('class="day-name">')[1].split("<")[0]
                     + ": "
                     + line.split('"store-status align-right">')[1].split("<")[0]
                 )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                daycount = daycount + 1
+                if daycount <= 7:
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
             if "Save as My Store</label>" in line:
                 if (
                     "Ontario" in state
@@ -98,7 +101,20 @@ def fetch_data():
                     or "British Columbia" in state
                 ):
                     country = "CA"
-                if float(lng) < -50 and float(lat) > 10 and state != "":
+                if (
+                    "Ohio" in state
+                    or "California" in state
+                    or "Oregon" in state
+                    or "Arizona" in state
+                ):
+                    country = "US"
+                if (
+                    float(lng) < -50
+                    and float(lat) > 10
+                    and state != ""
+                    and state != "Guatemala"
+                    and state != "Distrito Federal"
+                ):
                     yield [
                         website,
                         loc,
