@@ -53,7 +53,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "<MISSING>"
+        store_url = "https://{}.pizzafactory.com/".format(poi["subdomain"])
         location_name = poi["name"]
         street_address = poi["address1"]
         if poi["address2"]:
