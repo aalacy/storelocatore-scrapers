@@ -141,9 +141,6 @@ def get_street_address(addr, address):
 def get_state_zip_country(addr, address):
     zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
 
-    if zipcode == MISSING:
-        print(addr, address)
-
     if zipcode.isdigit():
         state = addr.get("StateName") or MISSING
         return state, zipcode, "US"
