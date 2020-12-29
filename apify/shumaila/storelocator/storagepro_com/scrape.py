@@ -62,14 +62,15 @@ def write_output(data):
 def fetch_data():
     p = 0
     data = []
-
+    titlelist = []
     for k in range(0, 2):
         if k == 0:
-            zips = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
+            zips = static_zipcode_list(radius=70, country_code=SearchableCountries.USA)
         elif k == 1:
-            zips = static_zipcode_list(radius=50, country_code=SearchableCountries.CA)
+            zips = static_zipcode_list(
+                radius=200, country_code=SearchableCountries.CANADA
+            )
         for zip_code in zips:
-
             url = (
                 "https://tenantapi.com/v3/applications/app72d8cb0233044f5ba828421eb01e836b/v1/search/owners/own3635fb2e825d49a9a7a9f8d9bcdcd304/?&lat=&lon=&ip=&address="
                 + zip_code
@@ -80,8 +81,10 @@ def fetch_data():
             ]["app72d8cb0233044f5ba828421eb01e836b"][0]["data"]
 
             for loc in loclist:
-
                 link = loc["landing_page_url"]
+                if link in titlelist:
+                    continue
+                titlelist.append(link)
                 store = loc["id"]
                 title = loc["name"]
                 street = loc["address"]["street_address"]
