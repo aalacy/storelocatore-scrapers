@@ -79,6 +79,12 @@ def fetch_data():
                 ]
             )
         city = address_raw.split(", ")[1]
+        if len(city.split()[-1]) == 1:
+            city = " ".join(city.split()[:-1])
+        if city == "Mcdonough":
+            city = "McDonough"
+        if city == "Lake city":
+            city = "Lake City"
         street_address = address_raw.split(", ")[0].replace(city, "")
         state = address_raw.split(", ")[-1].split()[0]
         zip_code = address_raw.split(", ")[-1].split()[-1].strip()

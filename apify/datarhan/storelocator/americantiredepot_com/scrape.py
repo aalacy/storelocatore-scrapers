@@ -58,7 +58,10 @@ def fetch_data():
         city = poi_html.xpath(".//h4/a/text()")[0]
         address_raw = poi_html.xpath('.//p[i[@class="fa fa-map-marker-alt"]]//text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        count = address_raw[0].count(city)
         street_address = address_raw[0].replace(city, "")
+        if count == 2:
+            street_address += " " + city
         state = address_raw[-1].split()[0]
         zip_code = address_raw[-1].split()[-1]
         country_code = "<MISSING>"
