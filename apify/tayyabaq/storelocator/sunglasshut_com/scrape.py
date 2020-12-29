@@ -40,7 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-    titlelist = []
     data = []
     p = 0
     ccode = "US"
