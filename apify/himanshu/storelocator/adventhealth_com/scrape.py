@@ -6,33 +6,6 @@ base_url = "http://adventhealth.com/"
 session = SgRequests()
 
 
-def load_data(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     address = []
     url = "https://www.adventhealth.com/find-a-location?facility=&name=&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bdistance%5D%5Bfrom%5D=-&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&page="
@@ -42,22 +15,28 @@ def fetch_data():
         rows = soup.find_all("li", {"class": "facility-search-block__item"})
         for r in rows:
             try:
-                page_ss = ""
-                name = r.find(
-                    "span", {"class": "location-block__name-link-text"}
-                ).text.strip()
-                page_ss = r.find(
+                name = (
+                    r.find("span", {"class": "location-block__name-link-text"})
+                    .get_text()
+                    .strip()
+                )
+                link = r.find(
                     "a",
                     {"class": "location-block__name-link u-text--fw-300 notranslate"},
-                )["href"]
-                page_url = base_url + page_ss
-            except:
-                name = r.find_all("h3")[0].text.strip()
+                ).get("href")
+                page_url = base_url + link
+            except Exception:
+                name = r.find_all("h3")[0].get_text().strip()
                 page_url = "<MISSING>"
 
             try:
-                phone = r.find("a", {"class": "telephone"}).text.strip().split()[-1][2:]
-            except:
+                phone = (
+                    r.find("a", {"class": "telephone"})
+                    .get_text()
+                    .strip()
+                    .split()[-1][2:]
+                )
+            except Exception:
                 phone = "<MISSING>"
 
             street = r.find("span", {"property": "streetAddress"}).get_text().strip()
@@ -70,7 +49,7 @@ def fetch_data():
                 country_code = "CA"
             store_number = "<MISSING>"
             location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = "<INACCESIBLE>"
             lati = r.find("a", {"class": "address notranslate google-maps-link"}).get(
                 "data-lat"
             )
@@ -97,6 +76,36 @@ def fetch_data():
                 continue
             address.append(locations[2])
             yield locations
+
+
+def load_data(data):
+    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
 def scrape():

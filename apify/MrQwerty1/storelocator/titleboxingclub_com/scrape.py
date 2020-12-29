@@ -57,7 +57,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         page_url = f'https://titleboxingclub.com/locations/{j.get("url")}'
-        location_name = j.get("name") or "<MISSING>"
+        location_name = j.get("name", "").replace("&#8211;", "-") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
         phone = (
             phone.lower().replace("call or text", "").replace(":", "").upper().strip()
