@@ -5,12 +5,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -19,42 +36,59 @@ def write_output(data):
 def get_ids():
     ids = []
     session = SgRequests()
-    r = session.get('https://www.crunchfitness.ca/crunch_core/clubs')
+    r = session.get("https://www.crunchfitness.ca/crunch_core/clubs")
     js = r.json()
     for j in js:
-        ids.append(j['id'])
+        ids.append(j["id"])
 
     return ids
 
 
 def get_data(_id):
-    locator_domain = 'https://crunchfitness.ca/'
-    api_url = f'https://www.crunchfitness.ca/crunch_core/clubs/{_id}'
+    locator_domain = "https://crunchfitness.ca/"
+    api_url = f"https://www.crunchfitness.ca/crunch_core/clubs/{_id}"
 
     session = SgRequests()
     r = session.get(api_url)
     j = r.json()
 
     page_url = f'https://www.crunchfitness.ca/locations/{j.get("slug")}'
-    location_name = j.get('name').strip()
-    a = j.get('address', {})
-    street_address = f"{a.get('address_1')} {a.get('address_2') or ''}".strip() or '<MISSING>'
-    city = a.get('city') or '<MISSING>'
-    state = a.get('state') or '<MISSING>'
-    postal = a.get('zip') or '<MISSING>'
-    country_code = a.get('country_code') or '<MISSING>'
+    location_name = j.get("name").strip()
+    a = j.get("address", {})
+    street_address = (
+        f"{a.get('address_1')} {a.get('address_2') or ''}".strip() or "<MISSING>"
+    )
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("zip") or "<MISSING>"
+    country_code = a.get("country_code") or "<MISSING>"
     store_number = _id
-    phone = j.get('phone')
-    latitude = j.get('latitude') or '<MISSING>'
-    longitude = j.get('longitude') or '<MISSING>'
-    location_type = '<MISSING>'
-    hours_of_operation = j.get('hours').replace('\n', ';') or '<MISSING>'
+    phone = j.get("phone")
+    latitude = j.get("latitude") or "<MISSING>"
+    longitude = j.get("longitude") or "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = j.get("hours").replace("\n", ";") or "<MISSING>"
+    status = j.get("status") or ""
 
-    if hours_of_operation == 'Mon - Sun: Closed':
-        return
+    if status.find("coming") != -1:
+        hours_of_operation = "Coming Soon"
 
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
 
     return row
 
