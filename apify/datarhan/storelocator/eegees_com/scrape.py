@@ -56,10 +56,26 @@ def fetch_data():
             if location_name
             else "<MISSING>"
         )
-        if poi["address"]:
-            address_dict = usaddress.tag(poi["address"])[0]
-        else:
-            address_dict = usaddress.tag(poi["title"])[0]
+        # if poi["address"]:
+        #     address_dict = usaddress.tag(poi["address"])[0]
+        # else:
+        print(poi)
+        print(poi["title"], " | ", poi["address"])
+
+        try:
+            add_raw = etree.HTML(poi["sidebar_info"])
+            add_raw = " ".join(add_raw.xpath("//text()"))
+            address_dict = usaddress.tag(add_raw)[0]
+            # address_dict = usaddress.tag(poi["title"].replace('&#8211;', '').replace('Blimpie&#8217;s', ''))[0]
+            # if len(address_dict) == 1:
+            #     address_dict = usaddress.tag(poi["address"])[0]
+        except Exception:
+            if poi["address"]:
+                address_dict = usaddress.tag(poi["address"])[0]
+            else:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
         AddressNumber = address_dict.get("AddressNumber")
         AddressNumber = AddressNumber if AddressNumber else " "
         StreetNamePreDirectional = address_dict.get("StreetNamePreDirectional")
@@ -78,11 +94,37 @@ def fetch_data():
         street_address = f"{AddressNumber} {StreetNamePreDirectional} {StreetName} {StreetNamePostType} {OccupancyType} {OccupancyIdentifier}".replace(
             "  ", " "
         )
+        if not street_address.strip():
+            street_address = address_dict["BuildingName"]
         city = address_dict.get("PlaceName")
+        if not city:
+            address_dict = usaddress.tag(poi["address"])[0]
+            city = address_dict.get("PlaceName")
+            if not city:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                zip_code = address_dict.get("PlaceName")
         city = city if city else "<MISSING>"
         state = address_dict.get("StateName")
+        if not state:
+            address_dict = usaddress.tag(poi["address"])[0]
+            state = address_dict.get("StateName")
+            if not city:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                state = address_dict.get("StateName")
         state = state if state else "<MISSING>"
         zip_code = address_dict.get("ZipCode")
+        if not zip_code:
+            address_dict = usaddress.tag(poi["address"])[0]
+            zip_code = address_dict.get("ZipCode")
+            if not zip_code:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                zip_code = address_dict.get("ZipCode")
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["id"]
@@ -98,6 +140,13 @@ def fetch_data():
         hoo = hoo.xpath('//h3[contains(text(), "Store Hours")]/following::text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()][:2]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        if state == "<MISSING>":
+            if "Arizona" in location_name:
+                state = "Arizona"
+        if "Arizona" in city:
+            city = city.replace("Arizona", "")
+            state = "Arizona"
 
         item = [
             DOMAIN,
