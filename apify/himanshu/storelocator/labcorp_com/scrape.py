@@ -1,13 +1,12 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import re
 import json
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logger = SgLogSetup().get_logger("labcorp_com")
-
-
 session = SgRequests()
 
 
@@ -45,12 +44,21 @@ def fetch_data():
         max_radius_miles=84,
         max_search_results=75,
     )
+
+    MAX_RESULTS = 100
     MAX_DISTANCE = 50
+    current_results_len = 0
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+    }
 
     base_url = "https://www.labcorp.com/"
 
     for lat, long in search:
+        print(f"{(lat, long)} | remaining: {search.items_remaining()}")
         result_coords = []
+
         location_url = (
             "https://www.labcorp.com/labs-and-appointments/results?lat="
             + str(lat)
@@ -59,16 +67,22 @@ def fetch_data():
             + "&radius="
             + str(MAX_DISTANCE)
         )
+
         try:
-            r = session.get(location_url)
+            r = session.get(location_url, headers=headers)
         except:
+            r = ""
             pass
 
         soup = BeautifulSoup(r.text, "lxml")
         data = soup.find("script", {"type": "application/json"}).text
+
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
+                current_results_len = len(
+                    json_data["lc_psc_locator"]["psc_locator_app"]["settings"]["labs"]
+                )
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
                 ]:
@@ -81,15 +95,17 @@ def fetch_data():
                         .replace("SATURDAY BY APPT. ONLY", "")
                         .replace("- APOINTMENT ONLY", "")
                     )
-                    store_number = i["locatorId"]
-                    street_address = i["address"]["street"]
-                    city = i["address"]["city"]
-                    state = i["address"]["stateAbbr"]
-                    zipp = i["address"]["postalCode"]
-                    phone = i["phone"]
-                    latitude = i["address"]["lat"]
-                    longitude = i["address"]["lng"]
-                    hours_of_operation = (
+                    store_number = re.sub(r"\s+", " ", str(i["locatorId"]))
+                    street_address = re.sub(r"\s+", " ", i["address"]["street"])
+                    city = re.sub(r"\s+", " ", i["address"]["city"])
+                    state = re.sub(r"\s+", " ", i["address"]["stateAbbr"])
+                    zipp = re.sub(r"\s+", " ", str(i["address"]["postalCode"]))
+                    phone = re.sub(r"\s+", " ", str(i["phone"]))
+                    latitude = re.sub(r"\s+", " ", str(i["address"]["lat"]))
+                    longitude = re.sub(r"\s+", " ", str(i["address"]["lng"]))
+                    hours_of_operation = re.sub(
+                        r"\s+",
+                        " ",
                         i["hours"]
                         .replace("THIS PSC DOES NOT PERFORM URINE OTS COLLECTIONS", "")
                         .replace(
@@ -158,33 +174,98 @@ def fetch_data():
                         .replace(
                             "DRUG SCREENS ONLY BY APPOINTMENT NO BLOOD COLLECTION", ""
                         )
-                        .replace("NO DRUG SCREENS PERFORMED AT THIS LOCATION", "")
+                        .replace("NO DRUG SCREENS PERFORMED AT THIS LOCATION", ""),
                     )
                     result_coords.append((latitude, longitude))
+
                     store = []
                     store.append(base_url)
-                    store.append(location_name if location_name else "<MISSING>")
-                    store.append(street_address if street_address else "<MISSING>")
-                    store.append(city if city else "<MISSING>")
-                    store.append(state if state else "<MISSING>")
-                    store.append(zipp if zipp else "<MISSING>")
+                    store.append(
+                        location_name.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if location_name
+                        else "<MISSING>"
+                    )
+                    store.append(
+                        street_address.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if street_address
+                        else "<MISSING>"
+                    )
+                    store.append(
+                        city.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if city
+                        else "<MISSING>"
+                    )
+                    store.append(
+                        state.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if state
+                        else "<MISSING>"
+                    )
+                    store.append(
+                        zipp.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if zipp
+                        else "<MISSING>"
+                    )
                     store.append("US")
                     store.append(store_number if store_number else "<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append("<MISSING>")
-                    store.append(latitude if latitude else "<MISSING>")
-                    store.append(longitude if longitude else "<MISSING>")
                     store.append(
-                        hours_of_operation if hours_of_operation else "<MISSING>"
+                        phone.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if phone
+                        else "<MISSING>"
                     )
                     store.append("<MISSING>")
+                    store.append(latitude if latitude else "<MISSING>")
+                    store.append(
+                        str(longitude).replace("\n", "") if longitude else "<MISSING>"
+                    )
+                    store.append(
+                        hours_of_operation.strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        if hours_of_operation
+                        else "<MISSING>"
+                    )
+                    store.append(
+                        "<MISSING>".strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
                     yield store
             else:
+                current_results_len = 0
                 pass
         else:
+            current_results_len = 0
             pass
 
 
