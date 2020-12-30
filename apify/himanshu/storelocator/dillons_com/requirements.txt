@@ -1,4 +1,5 @@
-sgrequests
 sglogging
 sgzip
-
+sgrequests
+tenacity
+phonenumbers
