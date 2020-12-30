@@ -45,7 +45,6 @@ def fetch_data():
         max_search_results=75,
     )
 
-    MAX_RESULTS = 100
     MAX_DISTANCE = 50
     current_results_len = 0
 
