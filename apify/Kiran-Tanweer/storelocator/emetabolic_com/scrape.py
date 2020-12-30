@@ -11,8 +11,7 @@ logger = SgLogSetup().get_logger("emetabolic_com")
 
 session = SgRequests()
 headers = {
-'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 
 
@@ -58,13 +57,14 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
-    pattern = re.compile(r'\s\s+')
+    pattern = re.compile(r"\s\s+")
     data = []
     for i in range(1, 52):
         p = str(i)
-        url = "https://www.emetabolic.com/?maps_markers="+p
-        r = session.get(url, headers=headers, verify=False) 
+        url = "https://www.emetabolic.com/?maps_markers=" + p
+        r = session.get(url, headers=headers, verify=False)
         response = r.text
         loclist = response.split('"markers":')[1].split("]}", 1)[0]
         loclist = loclist + "]"
@@ -79,17 +79,17 @@ def fetch_data():
                 p = session.get(link_url, headers=headers, verify=False)
                 soup = BeautifulSoup(p.text, "html.parser")
                 div = soup.findAll("div", {"class": "location-contact-data"})
-                if (len(div) > 0):
+                if len(div) > 0:
                     add = div[0].text
-                    add = re.sub(pattern, ',', add)
-                    add = add.rstrip(' Get Directions,')
-                    add = add.replace(',', '')
+                    add = re.sub(pattern, ",", add)
+                    add = add.rstrip(" Get Directions,")
+                    add = add.replace(",", "")
                     address = usaddress.parse(add)
-                    i=0
-                    street = ''
-                    city = ''
-                    state = ''
-                    pcode = ''
+                    i = 0
+                    street = ""
+                    city = ""
+                    state = ""
+                    pcode = ""
                     while i < len(address):
                         temp = address[i]
                         if (
@@ -119,32 +119,32 @@ def fetch_data():
                     pcode = pcode.replace(",", "")
 
                 else:
-                    adrs = adrs.split(',')
+                    adrs = adrs.split(",")
                     street = adrs[0].strip()
                     city = adrs[1].strip()
                     state = adrs[2].strip()
-                    pcode = '<MISSING>'
-                    
+                    pcode = "<MISSING>"
+
                 div = soup.findAll("div", {"class": "location-contact-data"})
                 if (len(div)) == 0:
-                    phone = '<MISSING>'
+                    phone = "<MISSING>"
                 else:
                     phone = div[1].text
                     phone = phone.strip()
 
                 time = soup.findAll("div", {"class": "location-hours-info"})
-                HOO = ''
+                HOO = ""
                 for day in time:
                     hours = day.text
                     HOO = HOO + hours
-                if HOO == '':
+                if HOO == "":
                     HOO = "<MISSING>"
                 HOO = HOO.strip()
 
-                if street == '15060 Sequoia Pkwy # 6Tigard':
-                    street = '15060 Sequoia Pkwy # 6'
-                    city = 'Tigard'
-                            
+                if street == "15060 Sequoia Pkwy # 6Tigard":
+                    street = "15060 Sequoia Pkwy # 6"
+                    city = "Tigard"
+
                 data.append(
                     [
                         "https://www.emetabolic.com/",
@@ -162,7 +162,7 @@ def fetch_data():
                         longt,
                         HOO,
                     ]
-                 )
+                )
     return data
 
 
@@ -174,5 +174,3 @@ def scrape():
 
 
 scrape()
-
-
