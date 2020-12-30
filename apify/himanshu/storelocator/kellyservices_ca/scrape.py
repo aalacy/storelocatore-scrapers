@@ -92,6 +92,7 @@ def fetch_data():
             headers=headers,
             data=data,
         )
+
         soup_locations = BeautifulSoup(r_locations.text, "lxml")
 
         for location in soup_locations.find_all(
@@ -107,24 +108,40 @@ def fetch_data():
             )
 
             locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
+            location_name = "<MISSING>"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
             country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            page_url = ""
-            hours_of_operation = ""
-            store_number = location.parent.parent.find_previous_sibling(
-                "td"
-            ).text.strip()
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            page_url = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
-            phone = address_list[-2]
+            store_number = (
+                str(location.parent.parent.find_previous_sibling("td").text)
+                .strip()
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", "")
+            )
+
+            phone = re.sub(
+                r"\s+",
+                " ",
+                str(address_list[-2])
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
             ca_zip_list = re.findall(
                 r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                 str(address_list),
@@ -132,29 +149,100 @@ def fetch_data():
             us_zip_list = re.findall(
                 re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_list)
             )
-            state_list = re.findall(r"([A-Z]{2})", str(address_list))
+            state_list = re.findall(
+                r"([A-Z]{2})",
+                str(address_list)
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
 
             if state_list:
-                state = state_list[-1]
+                state = re.sub(
+                    r"\s+",
+                    " ",
+                    str(state_list[-1])
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", ""),
+                )
 
             if ca_zip_list:
-                zipp = ca_zip_list[-1]
+                zipp = re.sub(
+                    r"\s+",
+                    " ",
+                    str(ca_zip_list[-1])
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", ""),
+                )
                 country_code = "CA"
 
             if us_zip_list:
-                zipp = us_zip_list[-1]
+                zipp = re.sub(
+                    r"\s+",
+                    " ",
+                    str(us_zip_list[-1])
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", ""),
+                )
                 country_code = "US"
 
-            location_name = address_list[0]
-            street_address = " ".join(address_list[1:-5]).strip()
-            city = address_list[-5]
+            location_name = re.sub(
+                r"\s+",
+                " ",
+                str(address_list[0])
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
+            street_address = re.sub(
+                r"\s+",
+                " ",
+                str(" ".join(address_list[1:-5]).strip())
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
+            city = re.sub(r"\s+", " ", str(address_list[-5]))
 
-            latitude = geo_url.split("&sll=")[1].split(",")[0]
-            longitude = geo_url.split("&sll=")[1].split(",")[1]
+            latitude = re.sub(
+                r"\s+",
+                " ",
+                str(geo_url.split("&sll=")[1].split(",")[0])
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
+            longitude = re.sub(
+                r"\s+",
+                " ",
+                str(geo_url.split("&sll=")[1].split(",")[1])
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", ""),
+            )
             if latitude == "0":
-                latitude = ""
+                latitude = "<MISSING>"
             if longitude == "0":
-                longitude = ""
+                longitude = "<MISSING>"
 
             store = [
                 locator_domain,
@@ -172,10 +260,22 @@ def fetch_data():
                 hours_of_operation,
                 page_url,
             ]
+
             if str(store[2] + str(store[-7]) + store[1]) in addressess:
                 continue
             addressess.append(str(store[2] + str(store[-7]) + store[1]))
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
+            store = [
+                str(x)
+                .strip()
+                .strip()
+                .lstrip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", "")
+                if x
+                else "<MISSING>"
+                for x in store
+            ]
             yield store
 
 
