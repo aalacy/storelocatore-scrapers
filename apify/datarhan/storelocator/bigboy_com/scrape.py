@@ -51,12 +51,8 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        # data = loc_dom.xpath('//script[contains(text(), "latlng")]/text()')[0].replace('\n', '')
-        # data = re.findall(' settings =(.+?);var', data.replace('\t', ''))
-        # data = demjson.decode(data[0])
 
         location_name = loc_dom.xpath('//div[@class="et_pb_text_inner"]/h1/text()')
         location_name = " ".join(location_name) if location_name else "<MISSING>"
