@@ -68,7 +68,6 @@ def fetch_data():
             )
             hourslist = "[" + hourslist + "]"
             hourslist = json.loads(hourslist)
-            print(hourslist)
 
             hours = ""
             for hr in hourslist:
