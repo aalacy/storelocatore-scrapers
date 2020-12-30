@@ -100,7 +100,7 @@ def fetch_data():
                 try:
                     temp_zip = address.rsplit(",", 1)[1].strip().split(" ")[1].strip()
                     if temp_zip != "Canada":
-                        zip = temp_text
+                        zip = temp_zip
                 except:
                     pass
 
