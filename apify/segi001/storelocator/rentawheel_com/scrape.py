@@ -61,7 +61,6 @@ def fetch_data():
                     el["storenumber"],
                     el["phone"],
                     el["phone"],
-                    missingString,
                     el["lat"],
                     el["lng"],
                     missingString,
@@ -81,7 +80,6 @@ def fetch_data():
                     el["storenumber"],
                     el["phone"],
                     el["phone"],
-                    missingString,
                     el["lat"],
                     el["lng"],
                     el["hours"]

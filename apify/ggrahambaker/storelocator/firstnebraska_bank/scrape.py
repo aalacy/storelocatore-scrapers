@@ -55,7 +55,6 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     divs = driver.find_elements_by_css_selector("div.location")
-    print(len(divs))
     all_store_data = []
     for div in divs:
         content = div.text.split("\n")

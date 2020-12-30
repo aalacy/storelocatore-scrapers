@@ -94,6 +94,13 @@ def fetch_data():
             hours = "Sun-Sat: 11:00AM - 10:00PM"
             store = "8359"
             name = "KANSAS CITY - DOWNTOWN P&L DISTRICT"
+        if "san-antonio-the-shops-at-la-cantera" in loc:
+            name = "SAN ANTONIO - THE SHOPS AT LA CANTERA"
+            add = "15900 La Cantera Parkway  Bldg 23"
+            city = "San Antonio"
+            state = "TX"
+            zc = "78256"
+            phone = "(210) 691-0033"
         yield [
             website,
             loc,
