@@ -38,7 +38,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     urls = [
         "https://powerhousegym.com/locations/?country=united-states&zip_code=&radius=25",
         "https://powerhousegym.com/locations/?country=canada&zip_code=&radius=25",
