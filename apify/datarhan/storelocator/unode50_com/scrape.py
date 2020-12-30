@@ -1,7 +1,6 @@
 import csv
 import json
 from lxml import etree
-import reverse_geocoder as rg
 
 from sgrequests import SgRequests
 
