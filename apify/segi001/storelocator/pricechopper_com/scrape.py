@@ -54,7 +54,8 @@ def fetch_data():
 
     result = []
 
-    country_code = ""
+    country_code = missingString
+    store_hours = missingString
 
     def ruleset(string):
         return (
@@ -86,6 +87,39 @@ def fetch_data():
         if jsonData[0]["store_info"]["country"] == "US":
             country_code = "+1"
 
+        hours = jsonData[0]["store_info"]["store_hours"].split(";")
+
+        time = []
+
+        for h in hours:
+            hs = h.split(",")
+            if hs[0] == "":
+                pass
+            elif hs[0] == "\r\n":
+                pass
+            else:
+                day = ""
+                openingTime = hs[1][:2] + ":00"
+                closingTime = hs[2][:2] + ":00"
+                if hs[0] == "1":
+                    day = "Monday"
+                elif hs[0] == "2":
+                    day = "Tuesday"
+                elif hs[0] == "3":
+                    day = "Wednesday"
+                elif hs[0] == "4":
+                    day = "Thursday"
+                elif hs[0] == "5":
+                    day = "Friday"
+                elif hs[0] == "6":
+                    day = "Saturday"
+                elif hs[0] == "7":
+                    day = "Sunday"
+                finalTime = "{} : {}-{}".format(day, openingTime, closingTime)
+                time.append(finalTime)
+
+        store_hours = ", ".join(str(x) for x in time)
+
         result.append(
             [
                 locatorURL,
@@ -101,10 +135,9 @@ def fetch_data():
                 missingString,
                 jsonData[0]["store_info"]["latitude"],
                 jsonData[0]["store_info"]["longitude"],
-                jsonData[0]["store_info"]["store_hours"],
+                store_hours,
             ]
         )
-
     return result
 
 
