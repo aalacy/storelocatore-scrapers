@@ -1,4 +1,3 @@
-
 import csv
 import time
 import random
@@ -82,9 +81,9 @@ def get_hours(location):
 
     for day in week_days:
         if day not in hours:
-            hours[day] = 'Closed'
+            hours[day] = "Closed"
 
-    return ','.join(f"{day}: {hours[day]}" for day in week_days)
+    return ",".join(f"{day}: {hours[day]}" for day in week_days)
 
 
 def fetch_locations(coord, tracker, retry_count=0):
@@ -97,9 +96,7 @@ def fetch_locations(coord, tracker, retry_count=0):
     try:
         sleep()
         result = (
-            get_session(retry_count > 0)
-            .get(url, params=params, headers=headers)
-            .json()
+            get_session(retry_count > 0).get(url, params=params, headers=headers).json()
         )
         local.request_count += 1
         if not result["payload"] or not result["payload"]["dealers"]:
@@ -171,8 +168,7 @@ def log(locations, completed, total):
 def fetch_data():
     completed = 0
     dedup_tracker = []
-    search = static_coordinate_list(
-        radius=50, country_code=SearchableCountries.USA)
+    search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
 
     with ThreadPoolExecutor() as executor:
         logger.info(f"starting {executor._max_workers} workers")
