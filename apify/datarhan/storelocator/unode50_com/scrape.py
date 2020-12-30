@@ -1,6 +1,7 @@
 import csv
 import json
 from lxml import etree
+import reverse_geocoder as rg
 
 from sgrequests import SgRequests
 
@@ -36,6 +37,24 @@ def write_output(data):
 
 
 def fetch_data():
+    # http://en.wikipedia.org/wiki/Extreme_points_of_the_United_States#Westernmost
+
+    top = 49.3457868  # north lat
+    left = -124.7844079  # west long
+    right = -66.9513812  # east long
+    bottom = 24.7433195  # south lat
+
+    def cull(latlngs):
+        """Accepts a list of lat/lng tuples.
+        returns the list of tuples that are within the bounding box for the US.
+        NB. THESE ARE NOT NECESSARILY WITHIN THE US BORDERS!
+        """
+        inside_box = []
+        for (lat, lng) in latlngs:
+            if bottom <= lat <= top and left <= lng <= right:
+                inside_box.append((lat, lng))
+        return inside_box
+
     # Your scraper here
     session = SgRequests()
 
@@ -58,6 +77,9 @@ def fetch_data():
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         street_address = raw_address[0].strip()
         city = raw_address[1]
+        if city.isdigit():
+            city = raw_address[2]
+            street_address += ", " + raw_address[1]
         state = "<MISSING>"
         zip_code = raw_address[-1]
         country_code = "<MISSING>"
@@ -66,6 +88,9 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
+        coordinates = [(float(latitude), float(longitude))]
+        if not cull(coordinates):
+            continue
         hours_of_operation = "<MISSING>"
 
         item = [
