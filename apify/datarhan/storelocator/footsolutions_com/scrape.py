@@ -100,6 +100,7 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//p[contains(@class, "Phone")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = loc_dom.xpath(
             '//div[contains(@class, "HourBlock")]/p/text()'
