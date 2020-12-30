@@ -85,7 +85,7 @@ def fetch_data():
             )
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = re.findall("center: \[(.+?)\]", loc_response.text)[0].split(",")
+        geo = re.findall(r"center: \[(.+?)\]", loc_response.text)[0].split(",")
         latitude = geo[0]
         latitude = latitude if latitude else "<MISSING>"
         longitude = geo[-1]
