@@ -92,6 +92,8 @@ def fetch_data():
                 lng = line2.split('"longitude":"')[1].split('"')[0]
         if phone == "":
             phone = "<MISSING>"
+        if hours == "":
+            hours = "Sun-Sat: Closed"
         yield [
             website,
             loc,
