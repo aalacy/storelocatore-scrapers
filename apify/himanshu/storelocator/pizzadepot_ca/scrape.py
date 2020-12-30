@@ -1,8 +1,6 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-import os
 
 session = SgRequests()
 from sgselenium import SgSelenium
