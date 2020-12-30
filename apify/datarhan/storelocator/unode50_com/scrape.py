@@ -72,10 +72,29 @@ def fetch_data():
     ]["markers"]:
         store_url = poi["url"]
         location_name = poi["name"]
-        raw_address = poi["address"].split(", ")
+        if location_name == "g":
+            continue
+        if "., .," in poi["address"]:
+            continue
+        raw_address = poi["address"].replace("\n", ", ").replace("\t", ", ").split(", ")
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        street_address = raw_address[0].strip()
+        if len(raw_address) > 2:
+            if "#" in raw_address[2]:
+                raw_address = [", ".join(raw_address[:3])] + raw_address[3:]
+        if len(raw_address) > 3:
+            if raw_address[3] == raw_address[1]:
+                raw_address = raw_address[:3]
+            if len(raw_address) > 3:
+                if raw_address[2] == raw_address[3]:
+                    raw_address = raw_address[:2] + raw_address[3:]
+        if len(raw_address) == 5:
+            raw_address = raw_address[:2] + [
+                " ".join(raw_address[2:]).replace(" - ", "-")
+            ]
+        if len(raw_address) == 4:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
         city = raw_address[1]
+        street_address = raw_address[0].strip().replace(city, "")
         if city.isdigit():
             city = raw_address[2]
             street_address += ", " + raw_address[1]
@@ -91,6 +110,38 @@ def fetch_data():
         if not cull(coordinates):
             continue
         hours_of_operation = "<MISSING>"
+
+        # Exceptions
+
+        if len(zip_code.split()[0]) == 2:
+            state = zip_code.split()[0]
+            zip_code = zip_code.split()[-1]
+
+        state = state.split("   ")[0]
+
+        if len(zip_code.split()[-1]) == 3:
+            street_address += " " + city
+            city = zip_code.split()[0]
+            state = zip_code.split()[1]
+            zip_code = " ".join(zip_code.split()[-2:])
+
+        if state.isdigit():
+            state = "<MISSING>"
+        if len(state) == 3:
+            state = "<MISSING>"
+            city = street_address.split()[-1]
+
+        street_address = street_address.replace(city, "")
+
+        if len(city.split()) == 4:
+            street_address += ", " + city
+            city = "<MISSING>"
+
+        if zip_code.startswith("Floor"):
+            street_address += ", " + city
+            city = zip_code.split()[-2]
+            street_address += ", " + zip_code.split(city)[0]
+            zip_code = zip_code.split()[-1]
 
         item = [
             DOMAIN,
