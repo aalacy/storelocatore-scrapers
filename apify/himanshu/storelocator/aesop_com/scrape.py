@@ -40,7 +40,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -91,6 +90,7 @@ def fetch_data():
         max_radius_miles=100,
         max_search_results=100,
     )
+
     adressess = []
     for lat, lng in search:
         payload = (
@@ -438,7 +438,6 @@ def fetch_data():
                             + ", sunday-"
                             + sunday
                         )
-
                     except:
                         hours_of_operation = "<MISSING>"
 

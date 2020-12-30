@@ -44,17 +44,24 @@ def fetch_data():
 
     DOMAIN = "campingworld.com"
     start_url = "https://rv.campingworld.com/locationsbystate"
-    response = session.get(start_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    }
+    response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@class="section-content"]//li/a/@href')
 
     for url in all_locations:
         base_url = "https://rv.ganderoutdoors.com/dealer/"
         store_url = urljoin(base_url, url)
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
+        location_name = ""
+        while not location_name:
+            store_response = session.get(store_url.replace(" ", "%20"), headers=headers)
+            store_dom = etree.HTML(store_response.text)
+            location_name = store_dom.xpath(
+                '//div[@class="col-xs-12 address"]/a/h1/text()'
+            )
 
-        location_name = store_dom.xpath('//div[@class="col-xs-12 address"]/a/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         if "Camping World" not in location_name:
             continue

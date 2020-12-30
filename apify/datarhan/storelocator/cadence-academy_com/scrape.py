@@ -102,6 +102,15 @@ def fetch_data():
         store_url = store_dom.xpath(
             '//li[@itemtype="http://schema.org/LocalBusiness"]//h5[@itemprop="name"]/a/@href'
         )[0]
+
+        hdr = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+        }
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        new_street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
+        if new_street_address:
+            street_address = new_street_address[0]
         phone = store_dom.xpath('//div[@itemprop="telephone"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = store_dom.xpath("//li/@itemtype")[0].split("/")[-1]

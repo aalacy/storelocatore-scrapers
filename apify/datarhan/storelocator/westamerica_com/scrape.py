@@ -47,77 +47,97 @@ def fetch_data():
     response = session.post(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="thrv_wrapper thrv_text_element"]')
+    all_locations = dom.xpath('//div[contains(@class, "tve_faq")]')
     for city_html in all_locations:
         sub_locs_names = city_html.xpath(".//h2/text()")
-        for i, location_name in enumerate(sub_locs_names):
-            store_url = "<MISSING>"
-            street_address = city_html.xpath(".//p[%d]/a/text()" % (i + 1))
-            if not street_address:
-                street_address = city_html.xpath(".//p[%d]/a/text()" % (i + 2))
-            street_address = street_address[0] if street_address else "<MISSING>"
-            city = location_name
-            city = city if city else "<MISSING>"
-            state = "CA"
-            zip_code = "<MISSING>"
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = city_html.xpath(".//p[%d]/a/text()" % (i + 1))
-            if not phone:
-                phone = city_html.xpath(".//p[%d]/a/text()" % (i + 2))
-            phone = phone[-1].split(",")[-1] if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            if "ATM" in phone:
-                location_type = "ATM"
-                phone = "<MISSING>"
-            latitude = city_html.xpath(
-                './/h2[%d]/following-sibling::p/a[contains(@href, "sll")]/@href'
-                % (i + 1)
+        for location_name in sub_locs_names:
+            all_elements = city_html.xpath(
+                '//h2[contains(text(), "%s")]/following-sibling::*' % location_name
             )
-            if not latitude:
-                latitude = city_html.xpath(
-                    './/h2[%d]/following-sibling::p/a[contains(@href, "sll")]/@href'
-                    % (i + 2)
-                )
-            if latitude:
-                latitude = re.findall("sll=(.+)&sspn", latitude[0])[0].split(",")[0]
-                longitude = city_html.xpath(
-                    './/h2[%d]/following-sibling::p/a[contains(@href, "sll")]/@href'
-                    % (i + 1)
-                )
-                if not longitude:
-                    longitude = city_html.xpath(
-                        './/h2[%d]/following-sibling::p/a[contains(@href, "sll")]/@href'
-                        % (i + 2)
-                    )
-                longitude = re.findall("sll=(.+)&sspn", longitude[0])[0].split(",")[-1]
-            else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            hours_of_operation = city_html.xpath("./p[2]/text()")[1:]
-            hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-            )
+            all_sub_locs = []
+            for elem in all_elements:
+                if elem.tag == "h2":
+                    break
+                all_sub_locs.append(elem)
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
-                items.append(item)
+            all_sub_addresses = []
+            all_geo = []
+            for elem in all_sub_locs:
+                sub_address = elem.xpath(".//a/text()")
+                if not sub_address:
+                    continue
+                all_sub_addresses.append(sub_address)
+
+                geo = elem.xpath('.//a[contains(@href, "sll")]/@href')
+                if geo:
+                    all_geo.append(geo)
+
+            all_sub_hours = []
+            for elem in all_elements:
+                sub_hoo = elem.xpath(".//text()")
+                if not sub_hoo:
+                    continue
+                sub_hoo = " ".join(sub_hoo)
+                if "Monday" in sub_hoo:
+                    all_sub_hours.append(elem.xpath(".//text()"))
+
+            for i, sub_address in enumerate(all_sub_addresses):
+                store_url = "<MISSING>"
+                street_address = sub_address[0]
+                city = location_name
+                state = "CA"
+                zip_code = "<MISSING>"
+                country_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = sub_address[-1].split(",")[-1].split(" (")[-1]
+                if not phone.startswith("("):
+                    phone = "(" + phone
+                street_address = street_address.replace(phone, "")
+                location_type = "<MISSING>"
+                if "ATM" in phone:
+                    location_type = "ATM"
+                    phone = "<MISSING>"
+                try:
+                    latitude = (
+                        all_geo[i][-1].split("sll=")[-1].split("&")[0].split(",")[0]
+                    )
+                    longitude = (
+                        all_geo[i][-1].split("sll=")[-1].split("&")[0].split(",")[-1]
+                    )
+                except:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                try:
+                    hours_of_operation = " ".join(all_sub_hours[i])
+                    hours_of_operation = hours_of_operation.replace(
+                        "Lobby Hours:", ""
+                    ).strip()
+                    hours_of_operation = re.findall(
+                        "(.+Sunday: Closed)", hours_of_operation
+                    )[0]
+                except:
+                    hours_of_operation = "<MISSING>"
+
+                item = [
+                    DOMAIN,
+                    store_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                check = f"{location_name} {street_address}"
+                if check not in scraped_items:
+                    scraped_items.append(check)
+                    items.append(item)
 
     return items
 
