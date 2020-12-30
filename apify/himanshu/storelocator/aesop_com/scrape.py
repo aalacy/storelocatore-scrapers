@@ -40,7 +40,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -94,7 +93,6 @@ def fetch_data():
 
     adressess = []
     for lat, lng in search:
-
         payload = (
             '{"query":"\\n  \\n  fragment openingHours on StoreOpeningHoursTimesType {\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n  query {\\n    stores (\\n      query: [\\n        { key: \\"fields.storeLocation\\", Op:WITHIN, value: \\"37.887,-79.488,'
             + str(lat)
@@ -252,6 +250,7 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                         country_code = "US"
+
                     elif value["country"] is None:
                         if location_name == "Aesop UTC":
                             street_address = (
@@ -300,7 +299,6 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                             country_code = "US"
-
                     else:
                         continue
 
@@ -440,7 +438,6 @@ def fetch_data():
                             + ", sunday-"
                             + sunday
                         )
-
                     except:
                         hours_of_operation = "<MISSING>"
 
@@ -477,12 +474,6 @@ def fetch_data():
                     if store[2] in adressess:
                         continue
                     adressess.append(store[2])
-                    store = [
-                        str(x).encode("ascii", "ignore").decode("ascii").strip()
-                        if x
-                        else "<MISSING>"
-                        for x in store
-                    ]
                     yield store
 
 

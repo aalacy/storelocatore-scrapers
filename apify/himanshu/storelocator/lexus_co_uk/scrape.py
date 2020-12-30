@@ -28,12 +28,16 @@ def write_output(data):
                 "page_url",
             ]
         )
+
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     address = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+    }
     base_url = "https://www.lexus.co.uk/"
     url = "https://www.lexus.co.uk/api/dealers/all"
     headers = {
@@ -46,21 +50,18 @@ def fetch_data():
         store.append(base_url if base_url else "<MISSING>")
         store.append(i["name"] if i["name"] else "<MISSING>")
         store.append(
-            i["address"]["address1"].encode("ascii", "ignore").decode("ascii").strip()
-            if i["address"]["address1"]
-            .encode("ascii", "ignore")
-            .decode("ascii")
-            .strip()
+            i["address"]["address1"].strip().replace("&#xD;&#xA;", " ")
+            if i["address"]["address1"].strip()
             else "<MISSING>"
         )
         store.append(
-            i["address"]["city"].encode("ascii", "ignore").decode("ascii").strip()
-            if i["address"]["city"].encode("ascii", "ignore").decode("ascii").strip()
+            i["address"]["city"].strip()
+            if i["address"]["city"].strip()
             else "<MISSING>"
         )
         store.append(
-            i["address"]["region"].encode("ascii", "ignore").decode("ascii").strip()
-            if i["address"]["region"].encode("ascii", "ignore").decode("ascii").strip()
+            i["address"]["region"].strip()
+            if i["address"]["region"].strip()
             else "<MISSING>"
         )
         store.append(i["address"]["zip"] if i["address"]["zip"] else "<MISSING>")
@@ -109,6 +110,8 @@ def fetch_data():
         try:
             store.append(i["url"] if i["url"] else "<MISSING>")
         except:
+            store.append("<MISSING>")
+        if i["address"]["zip"] == "CF11 8AQ":
             store.append("<MISSING>")
         if store[2] in address:
             continue

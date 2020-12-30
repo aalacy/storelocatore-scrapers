@@ -155,6 +155,8 @@ def fetch_data():
                 .replace(":0-", ":00-")
                 .strip()
             )
+            if hours[-2:] == ":0":
+                hours = hours + "0"
 
             try:
                 page_url = loc["custUrl"]["Main"]["url"]
