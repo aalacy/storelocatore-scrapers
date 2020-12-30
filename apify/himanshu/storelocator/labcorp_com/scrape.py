@@ -46,7 +46,6 @@ def fetch_data():
     )
 
     MAX_DISTANCE = 50
-    current_results_len = 0
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -79,9 +78,6 @@ def fetch_data():
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
-                current_results_len = len(
-                    json_data["lc_psc_locator"]["psc_locator_app"]["settings"]["labs"]
-                )
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
                 ]:
@@ -261,10 +257,8 @@ def fetch_data():
                     addresses.append(store[2])
                     yield store
             else:
-                current_results_len = 0
                 pass
         else:
-            current_results_len = 0
             pass
 
 
