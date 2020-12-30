@@ -1,6 +1,8 @@
 import csv
+import requests
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+import os
 
 session = SgRequests()
 from sgselenium import SgSelenium
@@ -11,7 +13,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -30,13 +31,12 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    driver = SgSelenium().firefox("geckodriver.exe")
+    driver = SgSelenium().chrome()
     driver.get("https://pizzadepot.ca/")
     cookies_list = driver.get_cookies()
     cookies_json = {}
@@ -115,13 +115,15 @@ def fetch_data():
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(
-            hours_of_operation.replace("- - - - - - - -", "<MISSING>").replace(
-                "-", " - "
-            )
+            hours_of_operation.replace("- - - - - - - -", "<MISSING>")
+            .replace("day1", "day 1")
+            .replace("-", " - ")
         )
         store.append(page_url if page_url else "<MISSING>")
         store = [
-            x.encode("ascii", "ignore").decode("ascii").strip() if x else "<MISSING>"
+            x.encode("ascii", "replace").decode("ascii").strip().replace("?", "")
+            if x
+            else "<MISSING>"
             for x in store
         ]
         yield store
