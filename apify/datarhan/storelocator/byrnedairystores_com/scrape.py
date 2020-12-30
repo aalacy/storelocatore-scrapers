@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 from lxml import etree
@@ -6,7 +7,7 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -37,49 +38,41 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "tutoringclub.com"
-    start_url = "https://www.tutoringclub.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.71289&max_results=25&search_radius=50&autoload=1"
+    DOMAIN = "byrnedairystores.com"
+    start_url = "https://byrnedairystores.com/__locations.php"
+    formdata = {"cat": "", "count": "", "keyword": ""}
 
-    response = session.get(start_url)
+    response = session.post(start_url, data=formdata)
     data = json.loads(response.text)
 
     for poi in data:
-        if poi["country"] != "United States":
-            continue
-        store_url = poi["url"]
+        store_url = "https://byrnedairystores.com/locations/{}".format(poi["url_title"])
+        location_name = poi["title"]
+        address_raw = etree.HTML(poi["field_id_18"])
+        address_raw = address_raw.xpath("//text()")
+        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        street_address = address_raw[0]
+        city = address_raw[-1].split(", ")[0]
+        state = address_raw[-1].split(", ")[-1].split()[0]
+        zip_code = address_raw[-1].split(", ")[-1].split()[-1]
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-
-        location_name = poi["store"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"].replace(",", "")
-        state = poi["state"]
-        zip_code = poi["zip"]
-        country_code = poi["country"]
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="location-button"]/a[1]/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if loc_dom.xpath('//p[contains(text(), "COMING SOON!")]'):
-            location_type = "coming soon"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hours_of_operation = ""
-        if poi["hours"]:
-            hours_of_operation = etree.HTML(poi["hours"])
-            hours_of_operation = hours_of_operation.xpath("//text()")
-        if not hours_of_operation:
-            hours_of_operation = loc_dom.xpath(
-                '//div[@class="single-detail club-open-hours"]//div[@class="the-content"]/p/text()'
-            )[:-1]
+        location_type = location_type if location_type else "<MISSING>"
+        latitude = poi["field_id_54"]
+        longitude = poi["field_id_55"]
+        hours_of_operation = re.findall('class="hours"><p>(.+?)<', loc_response.text)
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            hours_of_operation[0] if hours_of_operation else "<MISSING>"
         )
 
         item = [
