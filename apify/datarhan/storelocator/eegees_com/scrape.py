@@ -56,19 +56,11 @@ def fetch_data():
             if location_name
             else "<MISSING>"
         )
-        # if poi["address"]:
-        #     address_dict = usaddress.tag(poi["address"])[0]
-        # else:
-        print(poi)
-        print(poi["title"], " | ", poi["address"])
 
         try:
             add_raw = etree.HTML(poi["sidebar_info"])
             add_raw = " ".join(add_raw.xpath("//text()"))
             address_dict = usaddress.tag(add_raw)[0]
-            # address_dict = usaddress.tag(poi["title"].replace('&#8211;', '').replace('Blimpie&#8217;s', ''))[0]
-            # if len(address_dict) == 1:
-            #     address_dict = usaddress.tag(poi["address"])[0]
         except Exception:
             if poi["address"]:
                 address_dict = usaddress.tag(poi["address"])[0]
@@ -76,6 +68,7 @@ def fetch_data():
                 address_dict = usaddress.tag(
                     poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
                 )[0]
+
         AddressNumber = address_dict.get("AddressNumber")
         AddressNumber = AddressNumber if AddressNumber else " "
         StreetNamePreDirectional = address_dict.get("StreetNamePreDirectional")
