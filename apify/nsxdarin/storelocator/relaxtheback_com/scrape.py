@@ -64,7 +64,7 @@ def fetch_data():
                     state = item.split('"prov_state":"')[1].split('"')[0]
                     country = item.split('"country":"')[1].split('"')[0]
                     loc = (
-                        item.split("Website: <\/span><a href='")[1]
+                        item.split("Website: <\\/span><a href='")[1]
                         .split("'")[0]
                         .replace("\\", "")
                     )
