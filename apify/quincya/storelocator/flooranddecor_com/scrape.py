@@ -44,20 +44,22 @@ def fetch_data():
 
     base_link = "https://www.flooranddecor.com/view-all-stores"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    all_scripts = base.find_all('script')
+    all_scripts = base.find_all("script")
     for script in all_scripts:
         if "openingHours" in str(script):
             script = str(script)
             break
 
-    all_links = re.findall(r'https://www.flooranddecor.com/store\?StoreID=[0-9]+', script)
+    all_links = re.findall(
+        r"https://www.flooranddecor.com/store\?StoreID=[0-9]+", script
+    )
 
     data = []
 
@@ -116,7 +118,9 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
 
         latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"].strip()
-        longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"].strip()
+        longitude = item.find("meta", attrs={"itemprop": "longitude"})[
+            "content"
+        ].strip()
 
         data.append(
             [
