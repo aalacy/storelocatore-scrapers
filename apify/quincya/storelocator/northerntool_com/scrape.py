@@ -1,9 +1,8 @@
 import csv
-import json
 
 from bs4 import BeautifulSoup
 
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -38,35 +37,33 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://api-2.freshop.com/1/stores?app_key=grants_supermarket&has_address=true&is_selectable=true&limit=100"
+    base_link = "https://www.northerntool.com/stores/stores.xml"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    driver = SgChrome().chrome()
 
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    driver.get(base_link)
+
+    base = BeautifulSoup(driver.page_source, "lxml")
+
+    store_data = base.find_all("row")
 
     data = []
+    locator_domain = "northerntool.com"
 
-    locator_domain = "shopatgrants.com"
-
-    stores = json.loads(base.text)["items"]
-
-    for store in stores:
-        link = store["url"]
-        location_name = store["name"]
-        street_address = store["address_1"].strip()
-        city = store["city"]
-        state = store["state"]
-        zip_code = store["postal_code"]
+    for store in store_data:
+        location_name = store.h1.text
+        street_address = store.address.text.replace("<br>", " ").strip()
+        city = store.city.text.strip()
+        state = store.state.text.strip()
+        zip_code = store.zipcode.text.strip()
         country_code = "US"
-        store_number = store["id"]
+        store_number = "<MISSING>"
         location_type = "<MISSING>"
-        phone = store["phone"]
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-        hours_of_operation = store["hours_md"].replace("\n", " ")
+        phone = store.phone.text.strip()
+        hours_of_operation = store.storehours.text.replace("<br/>", " ")
+        latitude = store.coordinates.text.split(",")[0].strip()
+        longitude = store.coordinates.text.split(",")[1].strip()
+        link = "https://www.northerntool.com/stores/" + store.url.text
 
         data.append(
             [
@@ -87,6 +84,7 @@ def fetch_data():
             ]
         )
 
+    driver.close()
     return data
 
 
