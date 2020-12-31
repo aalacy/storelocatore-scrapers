@@ -2,6 +2,7 @@ import csv
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import os
+import json
 
 
 def write_output(data):
@@ -33,11 +34,6 @@ def write_output(data):
 
 def fetch_data():
     driver = SgSelenium().firefox(executable_path=os.path.abspath("geckodriver"))
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
-    addresses = []
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
     soup = BeautifulSoup(driver.page_source, "lxml")
