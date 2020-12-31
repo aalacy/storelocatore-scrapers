@@ -63,11 +63,12 @@ def fetch_data():
         hours_of_operation = store.storehours.text.replace("<br/>", " ")
         latitude = store.coordinates.text.split(",")[0].strip()
         longitude = store.coordinates.text.split(",")[1].strip()
+        link = "https://www.northerntool.com/stores/" + store.url.text
 
         data.append(
             [
                 locator_domain,
-                "https://qualitymartnc.com/locations/",
+                link,
                 location_name,
                 street_address,
                 city,
