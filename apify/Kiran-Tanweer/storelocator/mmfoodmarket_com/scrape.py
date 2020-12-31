@@ -164,15 +164,11 @@ def fetch_data():
             storeid = storeid.split("/")[1]
 
             scr = locdata.findAll("script")
-            print(scr)
-            print(store)
             scr = scr[1]
             scr = str(scr)
             scr = scr.split('"latitude": ')[1].split("},")[0]
             lat = scr.split(",")[0].strip()
             longt = scr.split('"longitude": ')[1].strip()
-            print(lat)
-            print(longt)
 
             data.append(
                 [
