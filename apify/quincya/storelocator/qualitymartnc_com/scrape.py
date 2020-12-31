@@ -70,7 +70,7 @@ def fetch_data():
 
         raw_types = store["description"]
         location_type = (
-            raw_types[raw_types.rfind("strong>") + 7:raw_types.rfind("</p>")]
+            raw_types[raw_types.rfind("strong>") + 7 : raw_types.rfind("</p>")]
             .replace("<br />", ",")
             .replace(",,", "")
         )
