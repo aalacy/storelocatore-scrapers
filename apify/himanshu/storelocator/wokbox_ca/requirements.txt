@@ -1,4 +1,3 @@
-lxml
 sgrequests
 bs4
-
+lxml
