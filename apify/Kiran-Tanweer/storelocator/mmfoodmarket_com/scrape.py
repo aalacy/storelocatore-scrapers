@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import time
 import csv
 import re
-import json
 
 logger = SgLogSetup().get_logger("mmfoodmarket_com")
 
