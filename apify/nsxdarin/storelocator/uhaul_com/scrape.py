@@ -1,4 +1,3 @@
-import random
 import re
 import csv
 import json
@@ -8,7 +7,6 @@ from sglogging import SgLogSetup
 from urllib.parse import urljoin
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
 
 logger = SgLogSetup().get_logger("uhaul_com")
 
@@ -76,8 +74,7 @@ def get_city_urls(state_urls):
     cities = []
     with ThreadPoolExecutor() as executor:
         logger.info(f"scrape cities with {executor._max_workers} workers")
-        futures = [executor.submit(get_cities_in_state, url)
-                   for url in state_urls]
+        futures = [executor.submit(get_cities_in_state, url) for url in state_urls]
         for future in as_completed(futures):
             cities.extend(future.result())
 
@@ -101,8 +98,7 @@ def get_cities_in_state(state_url, retry_count=0):
 def get_location_urls(city_urls):
     with ThreadPoolExecutor() as executor:
         logger.info(f"scrape locations with {executor._max_workers} workers")
-        futures = [executor.submit(get_locations_in_city, url)
-                   for url in city_urls]
+        futures = [executor.submit(get_locations_in_city, url) for url in city_urls]
         for future in as_completed(futures):
             yield from future.result()
 
@@ -113,23 +109,20 @@ def get_locations_in_city(city_url, retry_count=0):
         soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.select("script")
         location_script = next(
-            filter(lambda script: re.search(
-                "entityNum", script.string or ""), scripts),
+            filter(lambda script: re.search("entityNum", script.string or ""), scripts),
             None,
         )
         if not location_script:
             return []
 
-        matched = re.search(
-            r"mapPins\s=\s*(\[\{.*\}\])", location_script.string)
+        matched = re.search(r"mapPins\s=\s*(\[\{.*\}\])", location_script.string)
         data = json.loads(matched.group(1))
         locations = [loc for loc in data if loc["entityNum"]]
 
         links = soup.select(".sub-nav a")
         for loc in locations:
             link = next(
-                filter(lambda link: re.search(
-                    loc["entityNum"], link["href"]), links)
+                filter(lambda link: re.search(loc["entityNum"], link["href"]), links)
             )
             href = link["href"]
             loc["url"] = (
@@ -234,8 +227,7 @@ def get_location(loc, retry_count=0):
         soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.find_all("script", type="application/ld+json")
         location_script = next(
-            filter(lambda script: re.search(
-                '"address"', script.string or ""), scripts),
+            filter(lambda script: re.search('"address"', script.string or ""), scripts),
             None,
         )
 
@@ -253,8 +245,7 @@ def get_location(loc, retry_count=0):
         country_code = get_country_code(address.get("addressCountry"), postal)
 
         phone = get_phone(data)
-        hours = get_hours_from_page(soup) or get_hours(
-            data.get("openingHours"))
+        hours = get_hours_from_page(soup) or get_hours(data.get("openingHours"))
 
         return [
             locator_domain,
@@ -304,10 +295,8 @@ def fetch_data():
 
 
 def scrape():
-    start = datetime.now()
     data = fetch_data()
     write_output(data)
-    logger.info(f"duration: {datetime.now() - start}")
 
 
 if __name__ == "__main__":
