@@ -53,7 +53,7 @@ def fetch_data():
     loclist = soup.findAll("p")
     if True:
         for loc in loclist:
-            if loc.find("a") == None:
+            if loc.find("a") is None:
                 continue
             templist = loc.text.splitlines()
             title = templist[0]
