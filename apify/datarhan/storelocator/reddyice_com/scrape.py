@@ -73,12 +73,12 @@ def fetch_data():
         zip_code = raw_address[-1].split()[-1]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = re.findall("\d+", store_url)[0]
+        store_number = re.findall(r"\d+", store_url)[0]
         store_number = store_number if store_number else "<MISSING>"
         phone = "<MISSING>"
         location_type = "<MISSING>"
         geo = (
-            re.findall('LatLng\((.+)"\);', loc_response.text)[0]
+            re.findall(r'LatLng\((.+)"\);', loc_response.text)[0]
             .replace('"', "")
             .split(",")
         )
