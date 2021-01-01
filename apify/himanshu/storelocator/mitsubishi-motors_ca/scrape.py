@@ -1,7 +1,6 @@
 import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
 import unicodedata
 from google_trans_new import google_translator
 
