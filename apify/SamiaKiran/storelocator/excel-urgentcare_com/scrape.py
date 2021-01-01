@@ -121,7 +121,7 @@ def fetch_data():
                     "US",
                     "<MISSING>",
                     phone,
-                    "<MISSING>",
+                    location_type,
                     "<MISSING>",
                     "<MISSING>",
                     hours,
