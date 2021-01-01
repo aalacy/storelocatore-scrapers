@@ -69,7 +69,6 @@ def fetch_data():
             continue
         if "Response" in k and "Dealer" in k["Response"]:
             if list == type(k["Response"]["Dealer"]):
-                x = len(k["Response"]["Dealer"])
                 for i in k["Response"]["Dealer"]:
                     if i["ldlrcalltrk_lad"]:
                         phone = i["ldlrcalltrk_lad"]
@@ -154,7 +153,6 @@ def fetch_data():
 
         if "Response" in k and "Dealer" in k["Response"]:
             if dict == type(k["Response"]["Dealer"]):
-                y = len(k["Response"]["Dealer"])
 
                 if "Street1" in k["Response"]["Dealer"]["Address"]:
                     street_address = k["Response"]["Dealer"]["Address"]["Street1"]
