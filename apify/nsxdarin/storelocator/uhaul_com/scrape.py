@@ -1,3 +1,4 @@
+import random
 import re
 import csv
 import json
@@ -7,9 +8,9 @@ from sglogging import SgLogSetup
 from urllib.parse import urljoin
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 
 logger = SgLogSetup().get_logger("uhaul_com")
-
 
 thread_local = threading.local()
 
@@ -47,17 +48,25 @@ def write_output(data):
 
 
 def get_session(reset=False):
+    global thread_local
     # give each thread its own session object
     # if using proxy, each thread's session should have a unique IP
-    if (not hasattr(thread_local, "session")) or (reset is True):
-        thread_local.session = SgRequests()
+    if not hasattr(thread_local, "session") or reset or thread_local.request_count > 10:
+        thread_local.session = SgRequests().requests_retry_session(retries=0)
+        thread_local.request_count = 0
+
     return thread_local.session
 
 
+def fetch(url, reset=False):
+    global thread_local
+    response = get_session(reset).get(url, headers=headers)
+    thread_local.request_count += 1
+    return response
+
+
 def get_state_urls():
-    session = get_session()
-    url = "https://www.uhaul.com/Locations/US_and_Canada/"
-    r = session.get(url, headers=headers)
+    r = fetch("https://www.uhaul.com/Locations/US_and_Canada/")
     soup = BeautifulSoup(r.text, "html.parser")
     states = soup.select("#mainRow li.cell a")
     return [urljoin("https://www.uhaul.com", state["href"]) for state in states]
@@ -65,61 +74,62 @@ def get_state_urls():
 
 def get_city_urls(state_urls):
     cities = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(get_cities_in_state, url) for url in state_urls]
-        for result in as_completed(futures):
-            cities.extend(result.result())
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"scrape cities with {executor._max_workers} workers")
+        futures = [executor.submit(get_cities_in_state, url)
+                   for url in state_urls]
+        for future in as_completed(futures):
+            cities.extend(future.result())
+
     return cities
 
 
-def get_cities_in_state(state_url, retry_count=0, reset_session=False):
+def get_cities_in_state(state_url, retry_count=0):
     try:
-        session = get_session(reset_session)
-        r = session.get(state_url, headers=headers)
+        r = fetch(state_url, retry_count > 0)
         soup = BeautifulSoup(r.text, "html.parser")
         cities = soup.select("#mainRow li.cell a")
         return [urljoin("https://www.uhaul.com", city["href"]) for city in cities]
     except Exception as e:
-        logger.error(e)
         if retry_count < 3:
-            return get_cities_in_state(state_url, retry_count + 1, True)
-        else:
-            return []
+            return get_cities_in_state(state_url, retry_count + 1)
+
+        logger.error(e)
+        return []
 
 
 def get_location_urls(city_urls):
-    locations = []
-
-    with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(get_locations_in_city, url) for url in city_urls]
-        for result in as_completed(futures):
-            locations.extend(result.result())
-
-    return locations
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"scrape locations with {executor._max_workers} workers")
+        futures = [executor.submit(get_locations_in_city, url)
+                   for url in city_urls]
+        for future in as_completed(futures):
+            yield from future.result()
 
 
-def get_locations_in_city(city_url, retry_count=0, reset_session=False):
+def get_locations_in_city(city_url, retry_count=0):
     try:
-        session = get_session(reset_session)
-        r = session.get(city_url, headers=headers)
-
-        soup = BeautifulSoup(r.text)
+        r = fetch(city_url, retry_count > 0)
+        soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.select("script")
         location_script = next(
-            filter(lambda script: re.search("entityNum", script.string or ""), scripts),
+            filter(lambda script: re.search(
+                "entityNum", script.string or ""), scripts),
             None,
         )
         if not location_script:
             return []
 
-        matched = re.search(r"mapPins\s=\s*(\[\{.*\}\])", location_script.string)
+        matched = re.search(
+            r"mapPins\s=\s*(\[\{.*\}\])", location_script.string)
         data = json.loads(matched.group(1))
         locations = [loc for loc in data if loc["entityNum"]]
 
         links = soup.select(".sub-nav a")
         for loc in locations:
             link = next(
-                filter(lambda link: re.search(loc["entityNum"], link["href"]), links)
+                filter(lambda link: re.search(
+                    loc["entityNum"], link["href"]), links)
             )
             href = link["href"]
             loc["url"] = (
@@ -130,36 +140,88 @@ def get_locations_in_city(city_url, retry_count=0, reset_session=False):
 
         return locations
     except Exception as e:
-        logger.error(e)
         if retry_count < 3:
-            return get_locations_in_city(city_url, retry_count + 1, True)
-        else:
-            return []
+            return get_locations_in_city(city_url, retry_count + 1)
+
+        logger.error(e)
+        return []
 
 
 MISSING = "<MISSING>"
 
 
-def get_country_code(country):
-    if country == "United States":
-        return "US"
-    elif country == "Canada":
-        return "CA"
-    else:
+def get_street_address(address):
+    street_address = address.get("streetAddress")
+    if not street_address:
         return MISSING
+
+    cleaned = re.sub(r"\s*\(.*\)\s*", "", street_address)
+    if not cleaned:
+        return MISSING
+
+    return cleaned
+
+
+def get_country_code(country, postal):
+    if country == "United States" or re.search("us", country, re.I):
+        return "US"
+
+    if re.search("ca", country, re.I):
+        return "CA"
+
+    return MISSING
+
+
+def get_phone(data):
+    phone = data.get("telephone")
+    if phone:
+        return phone
+
+    contact = data.get("contactPoint") or data.get("ContactPoint")
+    if not contact:
+        return MISSING
+
+    if isinstance(contact, list):
+        if not len(contact):
+            return MISSING
+        return get(contact[0], "telephone")
+
+    return get(contact, "telephone")
 
 
 def get_hours(hours):
     if not hours or not len(hours):
         return MISSING
-    return ",".join(hours)
+
+    if isinstance(hours, list):
+        return ",".join(hours)
+
+    return hours
+
+
+def get_hours_from_page(soup):
+    hours = soup.find_all("li", itemprop="openingHours")
+    if not hours or not len(hours):
+        title = soup.find("h4", id="hoursTitle")
+        if not title:
+            return None
+
+        ul = title.find_next("ul")
+        if not ul:
+            return None
+
+        hours = ul.find_all("li", recursive=False)
+
+    hours_of_operations = [hour.getText().strip() for hour in hours]
+
+    return ",".join(hour for hour in hours_of_operations if hour)
 
 
 def get(location, key):
     return location.get(key, MISSING) or MISSING
 
 
-def get_location(loc, retry_count=0, reset_session=False):
+def get_location(loc, retry_count=0):
     locator_domain = "uhaul.com"
     page_url = loc.get("url")
     store_number = loc.get("entityNum")
@@ -168,14 +230,15 @@ def get_location(loc, retry_count=0, reset_session=False):
     lng = loc.get("long")
 
     try:
-        session = get_session(reset_session)
-        r = session.get(page_url, headers=headers, timeout=5)
-        soup = BeautifulSoup(r.text)
+        r = fetch(page_url, retry_count > 0)
+        soup = BeautifulSoup(r.text, "html.parser")
         scripts = soup.find_all("script", type="application/ld+json")
         location_script = next(
-            filter(lambda script: re.search('"address"', script.string or ""), scripts),
+            filter(lambda script: re.search(
+                '"address"', script.string or ""), scripts),
             None,
         )
+
         if not location_script:
             return None
 
@@ -183,13 +246,15 @@ def get_location(loc, retry_count=0, reset_session=False):
         location_name = get(data, "name")
 
         address = get(data, "address")
-        street_address = address.get("streetAddress").strip()
+        street_address = get_street_address(address)
         city = address.get("addressLocality")
         state = address.get("addressRegion")
         postal = address.get("postalCode")
-        country_code = get_country_code(address.get("addressCountry"))
-        phone = get(data, "telephone")
-        hours = get_hours(data.get("openingHours"))
+        country_code = get_country_code(address.get("addressCountry"), postal)
+
+        phone = get_phone(data)
+        hours = get_hours_from_page(soup) or get_hours(
+            data.get("openingHours"))
 
         return [
             locator_domain,
@@ -209,31 +274,41 @@ def get_location(loc, retry_count=0, reset_session=False):
         ]
 
     except Exception as e:
-        logger.error(e)
         if retry_count < 3:
-            return get_location(loc, retry_count + 1, True)
-        else:
-            return []
+            return get_location(loc, retry_count + 1)
+
+        logger.error(e)
+        return []
 
 
 def fetch_data():
     states = get_state_urls()
+    logger.info(f"states: {len(states)}")
     cities = get_city_urls(states)
+    logger.info(f"cities: {len(cities)}")
+
+    completed = 0
     locs = get_location_urls(cities)
-
-    logger.info(f"number of locations: {len(locs)}")
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in locs]
-        for result in as_completed(futures):
-            record = result.result()
+        for future in as_completed(futures):
+            record = future.result()
             if record:
+                completed += 1
+                if completed % 100 == 0:
+                    logger.info(f"locations found: {completed}")
+
                 yield record
+
+    logger.info(f"locations found: {completed}")
 
 
 def scrape():
+    start = datetime.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {datetime.now() - start}")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

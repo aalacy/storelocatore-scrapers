@@ -80,7 +80,14 @@ def fetch_data():
                 loc = item["LocationParentWebsite"]
                 if phone == "":
                     phone = "<MISSING>"
+                if "." not in loc:
+                    loc = "<MISSING>"
                 hours = "<MISSING>"
+                try:
+                    if "-" not in phone:
+                        phone = "<MISSING>"
+                except:
+                    phone = "<MISSING>"
                 if store not in sids:
                     if (
                         state == "ON"
@@ -92,6 +99,9 @@ def fetch_data():
                         or state == "PEI"
                         or state == "BC"
                         or state == "SK"
+                        or state == "Alberta"
+                        or state == "Quebec"
+                        or state == "Ontario"
                     ):
                         country = "CA"
                     if (
