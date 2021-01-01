@@ -1,17 +1,12 @@
 import csv
 from bs4 import BeautifulSoup
-import json
-from selenium import webdriver
-import time
+from sgselenium import SgSelenium
 import os
-from selenium.webdriver import FirefoxOptions
-
-opts = FirefoxOptions()
-opts.add_argument("--headless")
+import json
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", newline="", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -38,24 +33,22 @@ def write_output(data):
 
 
 def fetch_data():
-    path = os.path.abspath("geckodriver")
-    driver = webdriver.Firefox(executable_path=path, options=opts)
+    driver = SgSelenium().firefox(executable_path=os.path.abspath("geckodriver"))
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
-    driver.implicitly_wait(3)
     soup = BeautifulSoup(driver.page_source, "lxml")
+
     for country in soup.find("div", {"id": "ourhotels"}).find_all(
         "div", {"class": "filterlist"}
     ):
         for location in country.find_all("a"):
             driver.get(base_url + location["href"])
-            time.sleep(5)
             page_url = base_url + location["href"]
             location_soup = BeautifulSoup(driver.page_source, "lxml")
             for script in location_soup.find_all(
                 "script", {"type": "application/ld+json"}
             ):
-                if "address" in script.text:
+                if "address" in json.loads(script.text):
                     store_data = json.loads(script.text)
                     if store_data["address"]["addressCountry"] not in ("USA", "Canada"):
                         continue
@@ -68,7 +61,7 @@ def fetch_data():
                     store.append(address["streetAddress"])
                     store.append(address["addressLocality"].split(",")[0])
                     store.append(
-                        address["addressRegion"]
+                        address["addressRegion"].strip()
                         if "addressRegion" in address
                         else address["addressLocality"].split(",")[1]
                     )
@@ -86,6 +79,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(page_url)
                     yield store
+    driver.quit()
 
 
 def scrape():

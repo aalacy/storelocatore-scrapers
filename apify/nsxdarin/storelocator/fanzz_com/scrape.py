@@ -42,11 +42,6 @@ def fetch_data():
         store = item["storeId"]
         name = item["name"]
         add = item["address1"]
-        try:
-            add = add + " " + item["address2"]
-            add = add.strip()
-        except:
-            pass
         city = item["city"]
         state = item["state"]
         country = item["country"]
