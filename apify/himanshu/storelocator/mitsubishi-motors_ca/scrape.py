@@ -5,9 +5,6 @@ from sglogging import SgLogSetup
 import unicodedata
 from google_trans_new import google_translator
 
-logger = SgLogSetup().get_logger("mitsubishi-motors_ca")
-
-
 translator = google_translator()
 session = SgRequests()
 
@@ -203,10 +200,9 @@ def fetch_data():
                 .strip()
                 .split("Notify us of your visit!")[0]
             )
-
         if city == "N.d.p, joliette":
-            city = "N.D.P., Joliette"
-
+            city = "Joliette"
+            address = address + str(", N.D.P")
         store = []
         store.append(base_url)
         store.append(name)
@@ -225,7 +221,6 @@ def fetch_data():
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-
         store = [x.replace("  to  ", " - ") if type(x) == str else x for x in store]
         store = [x.replace("  a  ", " - ") if type(x) == str else x for x in store]
         store = [x.replace(" a ", " - ") if type(x) == str else x for x in store]
