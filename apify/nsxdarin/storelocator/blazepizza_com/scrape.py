@@ -87,7 +87,7 @@ def extract(location, store_number):
         location_name = location.get("name", MISSING)
         location_type = MISSING
 
-        street_address = location.get("streetAddress")
+        street_address = location.get("streetaddress")
         city = location.get("city")
         state = location.get("state")
         postal = location.get("zip", MISSING)
@@ -96,7 +96,8 @@ def extract(location, store_number):
         lng = location.get("longitude", MISSING)
         phone = location.get("phone", MISSING)
         hours_of_operation = get_hours(location)
-
+        if ":" not in hours_of_operation:
+            hours_of_operation = ""
         return {
             "locator_domain": locator_domain,
             "page_url": page_url,
