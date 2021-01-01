@@ -48,7 +48,6 @@ def fetch_data():
     for url in urllist:
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        checkflag = 0
         mycheck = 0
         statelist = soup.findAll("a", {"class": "c-directory-list-content-item-link"})
         if len(statelist) == 0:
