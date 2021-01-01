@@ -65,14 +65,9 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    url = (
-        "https://www.1stnb.com/locator?field_locator_type_tid[]=21"
-        "&field_city_value=&field_state_tid=All&field_zip_code_value=&page=0"
-    )
     os.environ[
         "PROXY_URL"
     ] = "http://groups-BUYPROXIES94952:HKT2ZAHSvokX3hLibngLgo5nT@proxy.apify.com:8000/"
-    # os.environ["PROXY_PASSWORD"] = ""
     session = SgRequests()
     stores_req = session.get("https://www.1stnb.com/locator")
     status = "Please solve this CAPTCHA to request unblock to the website"
