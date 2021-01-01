@@ -5,7 +5,6 @@ from sglogging import SgLogSetup
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("subaru_co_uk")
-
 session = SgRequests()
 
 
@@ -14,7 +13,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -33,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -43,7 +40,7 @@ def request_wrapper(url, method, headers, data=None):
     if method == "get":
         while True:
             try:
-                r = session.get(url, headers=headers)
+                r = requests.get(url, headers=headers)
                 return r
                 break
             except:
@@ -56,9 +53,9 @@ def request_wrapper(url, method, headers, data=None):
         while True:
             try:
                 if data:
-                    r = session.post(url, headers=headers, data=data)
+                    r = requests.post(url, headers=headers, data=data)
                 else:
-                    r = session.post(url, headers=headers)
+                    r = requests.post(url, headers=headers)
                 return r
                 break
             except:
@@ -73,9 +70,7 @@ def request_wrapper(url, method, headers, data=None):
 
 def fetch_data():
     adressessess = []
-
     url = "https://subaru.co.uk/wp-admin/admin-ajax.php"
-
     payload = "action=get_stores_by_name&name=&categories%5B0%5D=&filter%5B161%5D=161"
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -85,12 +80,12 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
+    response = ""
     base_url = "https://www.subaru.co.uk/"
     try:
         soup = session.post(url, headers=headers, data=payload).json()
     except:
         pass
-
     for mp1 in soup:
         location_name = soup[mp1]["na"].replace("#038;", " ")
         street_address = soup[mp1]["st"].replace("#038;", " ")
