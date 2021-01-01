@@ -54,7 +54,6 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         address_raw = poi["data"]["address"].split(", ")
-        print(address_raw)
         if len(address_raw) == 5:
             street_address = address_raw[0]
             street_address = street_address if street_address else "<MISSING>"
