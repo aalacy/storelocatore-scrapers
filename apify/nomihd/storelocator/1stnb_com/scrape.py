@@ -74,29 +74,28 @@ def fetch_data():
     ] = "http://groups-BUYPROXIES94952:HKT2ZAHSvokX3hLibngLgo5nT@proxy.apify.com:8000/"
     # os.environ["PROXY_PASSWORD"] = ""
     session = SgRequests()
-    home_resp = session.get("https://www.1stnb.com/locator")
+    stores_req = session.get("https://www.1stnb.com/locator")
     status = "Please solve this CAPTCHA to request unblock to the website"
-    if status in home_resp.text:
-        while status in home_resp.text:
+    if status in stores_req.text:
+        while status in stores_req.text:
             try:
                 log.info("Retrying due to CAPTCHA")
                 session = SgRequests()
-                home_resp = session.get("https://www.1stnb.com/locator")
+                stores_req = session.get("https://www.1stnb.com/locator")
             except:
                 pass
 
     count = 0
-    store_req = None
     while True:
         if count == 0:
             theme_token = (
-                home_resp.text.split('"theme_token":"')[1]
+                stores_req.text.split('"theme_token":"')[1]
                 .strip()
                 .split('",')[0]
                 .strip()
             )
             view_dom_id = (
-                home_resp.text.split('"view_dom_id":"')[1]
+                stores_req.text.split('"view_dom_id":"')[1]
                 .strip()
                 .split('",')[0]
                 .strip()
