@@ -10,8 +10,7 @@ logger = SgLogSetup().get_logger("goop_com")
 
 session = SgRequests()
 headers = {
-'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 
 
@@ -57,33 +56,33 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
     data = []
-    pattern = re.compile(r'\s\s+')
-    url = 'https://goop.com/goop-retail-store-locations/'
+    url = "https://goop.com/goop-retail-store-locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    locations = soup.findAll("div", {"class":"goop-retail-locations"})
+    locations = soup.findAll("div", {"class": "goop-retail-locations"})
     for loc in locations:
-        title = loc.find('h3').text.strip()
-        address = loc.find("p", {"class":"goop-retail-location-desc"}).text.strip()
-        address = address.split('\n')
+        title = loc.find("h3").text.strip()
+        address = loc.find("p", {"class": "goop-retail-location-desc"}).text.strip()
+        address = address.split("\n")
         street = address[0]
         csp = address[1]
-        csp = csp.split(',')
+        csp = csp.split(",")
         city = csp[0]
         sp = csp[1].strip()
-        sp = sp.split(' ')
+        sp = sp.split(" ")
         state = sp[0].strip()
         pcode = sp[1].strip()
         phone = address[2]
-        hours = loc.find("p", {"class":"goop-retail-location-hours"}).text.strip()
-        if hours == 'Closed until further notice':
-            hours = 'Closed'
-        if hours.find('Daily') != -1:
-            hours = hours.replace('Daily', 'Monday-Sunday')
-        hours = hours.replace('\n', ' ').strip()
-          
+        hours = loc.find("p", {"class": "goop-retail-location-hours"}).text.strip()
+        if hours == "Closed until further notice":
+            hours = "Closed"
+        if hours.find("Daily") != -1:
+            hours = hours.replace("Daily", "Monday-Sunday")
+        hours = hours.replace("\n", " ").strip()
+
         data.append(
             [
                 "https://goop.com/",
@@ -113,5 +112,3 @@ def scrape():
 
 
 scrape()
-
-
