@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    HOO = ""
     pattern = re.compile(r"\s\s+")
     url = "https://credobeauty.com/blogs/credo-stores"
     r = session.get(url, headers=headers, verify=False)
@@ -83,7 +82,6 @@ def fetch_data():
                 lat = points[0]
                 longt = points[1]
             else:
-                s = ptag
                 if addr == " 552 Hayes StreetSan Francisco, CA 94102":
                     lat = "<MISSING>"
                     longt = "<MISSING>"
