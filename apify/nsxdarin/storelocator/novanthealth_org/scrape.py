@@ -89,6 +89,8 @@ def fetch_data():
                         .replace('"', "")
                         .replace(",", "; ")
                     )
+                    if "Breast Imaging Center" in name and "Greensboro" in name:
+                        loc = "https://www.novanthealthimaging.com/locations/greensboro/greensboro-breast-center/"
                     yield [
                         website,
                         loc,
