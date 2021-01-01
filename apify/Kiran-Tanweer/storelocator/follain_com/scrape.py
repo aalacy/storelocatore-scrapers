@@ -11,8 +11,7 @@ logger = SgLogSetup().get_logger("follain_com")
 
 session = SgRequests()
 headers = {
-'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 
 
@@ -58,31 +57,32 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
     data = []
-    pattern = re.compile(r'\s\s+')
-    url = 'https://follain.com/pages/store-locations'
+    pattern = re.compile(r"\s\s+")
+    url = "https://follain.com/pages/store-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    locations = soup.findAll("div", {"class":"store-listing"})
+    locations = soup.findAll("div", {"class": "store-listing"})
     for loc in locations:
         loclink = loc.find("a")
         title = loclink.text
-        loclink = loclink['href']
+        loclink = loclink["href"]
 
         p = session.get(loclink, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
-        address = soup.find("div", {"class":"store-address"}).text
-        address = re.sub(pattern, ' ',address).strip()
-        address = address.lstrip('Address ')
-        address = re.sub(pattern, '\n',address).rstrip('Get Directions')
-        address = address.replace(',', '')
+        address = soup.find("div", {"class": "store-address"}).text
+        address = re.sub(pattern, " ", address).strip()
+        address = address.lstrip("Address ")
+        address = re.sub(pattern, "\n", address).rstrip("Get Directions")
+        address = address.replace(",", "")
         address = usaddress.parse(address)
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -110,14 +110,13 @@ def fetch_data():
         state = state.replace(",", "")
         pcode = pcode.lstrip()
         pcode = pcode.replace(",", "")
-        hours = soup.find("div", {"class":"store-hours"}).text
-        hours = re.sub(pattern, ' ',hours).strip()
-        hours = hours.lstrip('Hours').strip()
-        hours = re.sub(pattern, '\n',hours)
-        phone = soup.find("div", {"class":"store-contact-text"}).text.strip()
-        phone = phone.replace('\n', '@').split('@')[0]
+        hours = soup.find("div", {"class": "store-hours"}).text
+        hours = re.sub(pattern, " ", hours).strip()
+        hours = hours.lstrip("Hours").strip()
+        hours = re.sub(pattern, "\n", hours)
+        phone = soup.find("div", {"class": "store-contact-text"}).text.strip()
+        phone = phone.replace("\n", "@").split("@")[0]
 
-             
         data.append(
             [
                 "https://follain.com/",
@@ -147,4 +146,3 @@ def scrape():
 
 
 scrape()
-
