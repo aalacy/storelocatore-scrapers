@@ -70,6 +70,17 @@ def fetch_data():
                             typ = item.split('"brand_name":"')[1].split('"')[0]
                             store = item.split('"corporate_id":"')[1].split('"')[0]
                             add = item.split('"address":"')[1].split('"')[0]
+                            try:
+                                add = (
+                                    add
+                                    + " "
+                                    + item.split('"address_extended":"')[1].split('"')[
+                                        0
+                                    ]
+                                )
+                                add = add.strip()
+                            except:
+                                pass
                             city = item.split('"locality":"')[1].split('"')[0]
                             state = item.split('"region":"')[1].split('"')[0]
                             zc = item.split('"postcode":"')[1].split('"')[0]
@@ -94,6 +105,9 @@ def fetch_data():
                                 phone = "<MISSING>"
                             if store not in ids:
                                 ids.append(store)
+                                if "Sun" not in hours:
+                                    hours = hours + " Sun: Closed"
+                                    hours = hours.replace("  ", " ")
                                 yield [
                                     website,
                                     purl,
