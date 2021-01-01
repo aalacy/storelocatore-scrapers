@@ -158,6 +158,7 @@ def fetch_data():
 
         hours = soup.find("div", {"class": "store-hours"}).text
         hours = re.sub(pattern, " ", hours).strip()
+        hours = hours.split("Store Hours ")[1].split(" SPECIAL")[0]
 
         data.append(
             [
