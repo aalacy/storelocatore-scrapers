@@ -34,23 +34,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    urls = []
-    session = SgRequests()
-    r = session.get("http://www.memorialhermann.org/mh-sitemap.xml")
-    tree = html.fromstring(r.content)
-    links = tree.xpath(
-        "//loc[contains(text(), 'http://www.memorialhermann.org/locations/')]/text()"
-    )
-
-    for l in links:
-        if l.count("/") != 5:
-            continue
-        urls.append(l)
-
-    return urls
-
-
 def clean_phone(phone):
     _tmp = []
     for p in phone:
@@ -63,100 +46,109 @@ def clean_phone(phone):
     return "".join(_tmp)
 
 
-def get_data(page_url):
-    locator_domain = "http://www.memorialhermann.org/"
-
+def get_hours(url):
+    slug = url.split("/")[-1]
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(url, timeout=10)
+        tree = html.fromstring(r.text)
 
-    check = "".join(tree.xpath("//div[@class='shadowbox-top-orange']/text()")).strip()
-    if check:
-        location_name = (
-            "".join(
-                tree.xpath(
-                    "//p[@id='ctl00_ContentBody_uxBreadCrumbAddTitle_pLargeTopHeader']/text()"
-                )
-            )
-            or "<MISSING>"
-        )
-        if location_name == "Locations":
-            location_name = "".join(tree.xpath("//title/text()")).strip() or "<MISSING>"
-        line = tree.xpath(
-            "//div[.//div[contains(text(), 'Location ')]]/div[@class='shadowbox-bottom-orange']/p[1]//text()"
-        )
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line[0]
-        if page_url.find("/cypress/") != -1:
-            street_address = line[1]
-            location_name = line[0]
-        phone = clean_phone(line[-1])
-        line = line[-2]
-    else:
-        location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
-        line = tree.xpath("//li[@id='map']/p/text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line[0]
-        phone = (
-            tree.xpath("//li[@id='contact']/p[contains(text(), 'tel')]/text()")[-1]
-            or ""
-        )
-        if not phone:
-            phone = "".join(tree.xpath("//li[@id='contact']/p[1]/text()")) or ""
-        phone = clean_phone(phone)
-        line = line[-1]
+        _tmp = []
+        li = tree.xpath("//ul[@class='hours-list']/li")
+        for l in li:
+            day = "".join(l.xpath("./span[1]/text()")).strip()
+            time = "".join(l.xpath("./span[2]/text()")).strip()
+            _tmp.append(f"{day}: {time}")
 
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0].strip()
-    postal = line.split()[1].strip()
+        hours = ";".join(_tmp) or "<MISSING>"
+        if hours.find("Open 24") != -1:
+            hours = hours.replace(":", "").strip()
+    except:
+        hours = "<MISSING>"
 
-    country_code = "US"
-    store_number = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        ";".join(tree.xpath("//div[./a[@id='exit']]//li/text()")) or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return {slug: hours}
 
 
 def fetch_data():
     out = []
+    urls = []
+    hours = []
     s = set()
-    urls = get_urls()
+    locator_domain = "https://memorialhermann.org/"
+
+    headers = {
+        "Connection": "keep-alive",
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWRtaW4iLCJleHAiOjIxMjcwNDQ1MTcsImlzcyI6Imh0dHBzOi8vZGV2ZWxvcGVyLmhlYWx0aHBvc3QuY29tIiwiYXVkIjoiaHR0cHM6Ly9kZXZlbG9wZXIuaGVhbHRocG9zdC5jb20ifQ.zNvR3WpI17CCMC7rIrHQCrnJg_6qGM21BvTP_ed_Hj8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36 OPR/73.0.3856.284",
+        "Content-Type": "application/json;charset=UTF-8",
+    }
+
+    data = '{"query":"","start":0,"rows":10000,"selectedFilters":{"distance":[20],"hasOnlineScheduling":false,"locationType":[],"lonlat":[-95.36,29.76],"service":[],"specialty":[]}}'
+    session = SgRequests()
+    r = session.post(
+        "https://api.memorialhermann.org/api/locationsearch", headers=headers, data=data
+    )
+    js = r.json()["locations"]
+
+    for j in js:
+        urls.append("https://memorialhermann.org" + j.get("Url"))
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_hours, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            try:
-                row = future.result()
-            except:
-                row = []
-            if row:
-                check = tuple(row[2:6])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
+            hours.append(future.result())
+
+    hours = {k: v for elem in hours for (k, v) in elem.items()}
+
+    for j in js:
+        suite = j.get("Suite") or ""
+        if suite:
+            street_address = (
+                f"{j.get('StreetNumber')} {j.get('StreetName')}, Suite {suite}".strip()
+                or "<MISSING>"
+            )
+        else:
+            street_address = (
+                f"{j.get('StreetNumber')} {j.get('StreetName')}".strip() or "<MISSING>"
+            )
+        city = j.get("City") or "<MISSING>"
+        state = j.get("State") or "<MISSING>"
+        postal = j.get("PostalCode") or "<MISSING>"
+        country_code = "US"
+        store_number = "<MISSING>"
+        page_url = f'https://memorialhermann.org{j.get("Url")}'
+        location_name = j.get("Name")
+        phone = j.get("Telephone") or "<MISSING>"
+        phone = clean_phone(phone)
+        loc = j.get("lonlat") or ["<MISSING>", "<MISSING>"]
+        latitude = loc[1]
+        longitude = loc[0]
+        location_type = j.get("LocationType") or "<MISSING>"
+        slug = page_url.split("/")[-1]
+        hours_of_operation = hours.get(slug)
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        check = tuple(row[2:8])
+        if check not in s:
+            s.add(check)
+            out.append(row)
 
     return out
 

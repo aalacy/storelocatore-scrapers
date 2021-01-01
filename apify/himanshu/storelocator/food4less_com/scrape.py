@@ -13,8 +13,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -33,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -97,7 +94,7 @@ def fetch_data():
                             hr["displayName"] + ": " + hr["displayHours"] + ", "
                         )
                 else:
-                    hours_of_operation = "<MISSING>"
+                    hours_of_operation = "<INACCESSIBLE>"
                 page_url = (
                     "https://www.food4less.com/stores/details/"
                     + str(key["divisionNumber"])
