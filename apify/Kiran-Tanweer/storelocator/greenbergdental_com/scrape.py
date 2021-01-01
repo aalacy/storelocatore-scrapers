@@ -113,7 +113,6 @@ def fetch_data():
         soup = BeautifulSoup(p.text, "html.parser")
         info2 = soup.find("div", {"id": "office-info"})
         phone = info2.find("p", {"class": "tel"}).text.lstrip("Call: ")
-        landmark_info = info2.find("p", {"class": "adr"}).find("strong")
         hours = soup.find("div", {"class": "hours"})
         if hours is None:
             hrs = "Coming soon"
