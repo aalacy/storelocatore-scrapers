@@ -11,8 +11,7 @@ logger = SgLogSetup().get_logger("greenbergdental_com")
 
 session = SgRequests()
 headers = {
-'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 
 
@@ -58,25 +57,26 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
     data = []
-    HOO = ''
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.greenbergdental.com/map/#all'
+    HOO = ""
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.greenbergdental.com/map/#all"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     office_div = soup.find("div", {"class": "office-list"})
     lists = office_div.find("ul", {"class": "list"})
-    office_list = lists.findAll('li')
+    office_list = lists.findAll("li")
     for li in office_list:
-        add = li['data-address']
-        add = add.replace(',', '')
+        add = li["data-address"]
+        add = add.replace(",", "")
         address = usaddress.parse(add)
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -104,30 +104,29 @@ def fetch_data():
         state = state.replace(",", "")
         pcode = pcode.lstrip()
         pcode = pcode.replace(",", "")
-        lat = li['data-lat']
-        longt = li['data-lng']
-        info = li.find('a')
-        page_link = info['href']
+        lat = li["data-lat"]
+        longt = li["data-lng"]
+        info = li.find("a")
+        page_link = info["href"]
         title = info.text
         p = session.get(page_link, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
-        info2= soup.find("div", {"id": "office-info"})
-        phone = info2.find('p', {"class":"tel"}).text.lstrip('Call: ')
-        landmark_info = info2.find('p', {"class":"adr"}).find('strong')
+        info2 = soup.find("div", {"id": "office-info"})
+        phone = info2.find("p", {"class": "tel"}).text.lstrip("Call: ")
+        landmark_info = info2.find("p", {"class": "adr"}).find("strong")
         hours = soup.find("div", {"class": "hours"})
         if hours is None:
-            hrs = 'Coming soon'
+            hrs = "Coming soon"
         else:
-            schedule = hours.findAll('span')
+            schedule = hours.findAll("span")
             for hour in schedule:
                 time = hour.text.strip()
-                time = re.sub(pattern, '\n', time)
-                time = time.replace('\n', ' ')
-                HOO = HOO + time + ', '
-            hrs = HOO.rstrip(', ')
-            HOO = ''
+                time = re.sub(pattern, "\n", time)
+                time = time.replace("\n", " ")
+                HOO = HOO + time + ", "
+            hrs = HOO.rstrip(", ")
+            HOO = ""
 
-                            
         data.append(
             [
                 "https://www.greenbergdental.com/",
@@ -157,4 +156,3 @@ def scrape():
 
 
 scrape()
-
