@@ -44,8 +44,7 @@ def fetch_data():
     url = "https://www.campbowwow.com/locations/?CallAjax=GetLocations"
     loclist = session.get(url, headers=headers, verify=False).json()
     for loc in loclist:
-        if str(loc["ComingSoon"]) == "1":
-            continue
+
         link = "https://www.campbowwow.com" + loc["Path"]
         store = loc["FranchiseLocationID"]
         title = loc["FranchiseLocationName"]
