@@ -82,6 +82,10 @@ def fetch_data():
         hours_of_operation = poi_html.xpath(
             './/p[@class="wysiwyg-text-align-left"]/text()'
         )
+        if not hours_of_operation:
+            hours_of_operation = poi_html.xpath(
+                './/h4[contains(text(), "Store Hours")]/following-sibling::div[1]//text()'
+            )
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
