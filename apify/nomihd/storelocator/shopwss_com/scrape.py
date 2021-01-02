@@ -109,19 +109,13 @@ def fetch_data():
                 phone = "<MISSING>"
 
             hours_of_operation = (
-                store["monOpenTimes"]
-                + " "
-                + store["tueOpenTimes"]
-                + " "
-                + store["wedOpenTimes"]
-                + " "
-                + store["thuOpenTimes"]
-                + " "
-                + store["friOpenTimes"]
-                + " "
-                + store["satOpenTimes"]
-                + " "
-                + store["sunOpenTimes"]
+                "Mon:" + store["monOpenTimes"] + " "
+                "Tue:" + store["tueOpenTimes"] + " "
+                "Wed:" + store["wedOpenTimes"] + " "
+                "Thu:" + store["thuOpenTimes"] + " "
+                "Fri:" + store["friOpenTimes"] + " "
+                "Sat:" + store["satOpenTimes"] + " "
+                "Sun:" + store["sunOpenTimes"]
             )
 
             if hours_of_operation == "" or hours_of_operation is None:
