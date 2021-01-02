@@ -1,5 +1,6 @@
 import csv
 import json
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -62,7 +63,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = poi["url_key"]
+        store_url = urljoin(start_url, poi["url_key"])
         location_name = poi["name"]
         street_address = poi["address"]
         city = poi["city"]
@@ -86,7 +87,9 @@ def fetch_data():
             closes = "{}:{}".format(hours["to"]["hours"], hours["to"]["minutes"])
             hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).replace("00:00 - 00:00", "closed")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
