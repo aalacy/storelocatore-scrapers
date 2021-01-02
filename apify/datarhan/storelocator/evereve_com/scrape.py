@@ -63,7 +63,7 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = urljoin(start_url, poi["url_key"])
+        store_url = "https://evereve.com/stores/" + poi["url_key"]
         location_name = poi["name"]
         street_address = poi["address"]
         city = poi["city"]
