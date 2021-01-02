@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 
-logger = SgLogSetup().get_logger("credobeauty_com")
+logger = SgLogSetup().get_logger("follain_com")
 
 session = SgRequests()
 headers = {
@@ -61,68 +61,23 @@ def write_output(data):
 def fetch_data():
     data = []
     pattern = re.compile(r"\s\s+")
-    url = "https://credobeauty.com/blogs/credo-stores"
+    url = "https://follain.com/pages/store-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    loc_div = soup.find("div", {"class": "sixteen columns store-row"})
-    loc = loc_div.findAll("div", {"class": "one-third"})
-    for info in loc:
-        address = info.find("div", {"class": "address-store"})
-        addr = address.text
-        ptag = address.findAll("p")
-        if len(ptag) > 1:
-            lat = "<MISSING>"
-            longt = "<MISSING>"
-            coord_link = "<MISSING>"
-        else:
-            coord = info.find("a", {"class": "sign_up_btn"})
-            if coord is not None:
-                coord_link = coord["href"]
-                points = coord_link.split("/@")[1].split(",")
-                lat = points[0]
-                longt = points[1]
-            else:
-                if addr == " 552 Hayes StreetSan Francisco, CA 94102":
-                    lat = "<MISSING>"
-                    longt = "<MISSING>"
-                    coord_link = "<MISSING>"
-                if (
-                    addr == " 1659 N Damen AveChicago, IL 60647"
-                    or addr == " 9 Prince Street New York, NY 10012"
-                ):
-                    coord_link = ptag[0].find("a")["href"]
-                    points = coord_link.split("/@")[1].split(",")
-                    lat = points[0]
-                    longt = points[1]
-                if addr == " 99 N. 6th St.Brooklyn, NY 11249":
-                    coord_link = ptag[0].findAll("a")[0]
-                    coord_link = coord_link["href"]
-                    points = coord_link.split("/@")[1].split(",")
-                    lat = points[0]
-                    longt = points[1]
+    locations = soup.findAll("div", {"class": "store-listing"})
+    for loc in locations:
+        loclink = loc.find("a")
+        title = loclink.text
+        loclink = loclink["href"]
 
-        atags = info.findAll("a")
-        tag1 = atags[0]
-        loclink = tag1["href"]
-        phone = atags[-1].text
-        loclink = "https://credobeauty.com" + loclink
         p = session.get(loclink, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
-        location = soup.find("div", {"class": "location__content"})
-        title = location.find("h2").text.strip()
-        addr = addr.strip()
-        addr = addr.replace("\n", " ")
-        addr = addr.lstrip("The Shops At Legacy West")
-        if addr.find("Street") != -1:
-            addr = addr.replace("Street", "Street ")
-        if addr.find("Damen Ave") != -1:
-            addr = addr.replace("Ave", "Ave ")
-        if addr.find("G160") != -1:
-            addr = addr.replace("G160", "G160 ")
-        if addr.find("Street  New York") != -1:
-            addr = addr.replace("Street  New York", "Street New York")
-        addr = addr.replace(",", "")
-        address = usaddress.parse(addr)
+        address = soup.find("div", {"class": "store-address"}).text
+        address = re.sub(pattern, " ", address).strip()
+        address = address.lstrip("Address ")
+        address = re.sub(pattern, "\n", address).rstrip("Get Directions")
+        address = address.replace(",", "")
+        address = usaddress.parse(address)
         i = 0
         street = ""
         city = ""
@@ -155,14 +110,16 @@ def fetch_data():
         state = state.replace(",", "")
         pcode = pcode.lstrip()
         pcode = pcode.replace(",", "")
-
         hours = soup.find("div", {"class": "store-hours"}).text
         hours = re.sub(pattern, " ", hours).strip()
-        hours = hours.split("Store Hours ")[1].split(" SPECIAL")[0]
+        hours = hours.lstrip("Hours").strip()
+        hours = re.sub(pattern, "\n", hours)
+        phone = soup.find("div", {"class": "store-contact-text"}).text.strip()
+        phone = phone.replace("\n", "@").split("@")[0]
 
         data.append(
             [
-                "https://credobeauty.com/",
+                "https://follain.com/",
                 loclink,
                 title,
                 street,
@@ -173,8 +130,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                lat,
-                longt,
+                "<MISSING>",
+                "<MISSING>",
                 hours,
             ]
         )
