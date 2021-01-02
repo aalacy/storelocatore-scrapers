@@ -93,7 +93,9 @@ def fetch_data():
                 except:
                     hours_of_operation = store["store_hours"]
 
-                hours_of_operation = hours_of_operation.strip()
+                hours_of_operation = " ".join(
+                    hours_of_operation.strip().split("\n")
+                ).strip()
 
                 latitude = store["address"]["lat"]
                 longitude = store["address"]["lng"]
@@ -164,6 +166,11 @@ def fetch_data():
 
                 if us.states.lookup(state):
                     country_code = "US"
+
+                if city == "<MISSING>":
+                    city = location_name
+                    if "-" in city:
+                        city = city.split("-")[0].strip()
 
                 curr_list = [
                     locator_domain,
