@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import csv
 import json
 from sgrequests import SgRequests
@@ -78,7 +77,7 @@ def fetch_data():
                 continue
             data.append(
                 [
-                    "https://hotdogonastick.olo.com//",
+                    "https://hotdogonastick.olo.com/",
                     link,
                     title,
                     street,
