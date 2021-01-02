@@ -78,7 +78,6 @@ def fetch_data():
             city, state = content["addressLine2"].split(", ", 1)
             state, pcode = state.lstrip().split(" ", 1)
             state = state.replace(",", "")
-            ccode = "US"
 
             data.append(
                 [
