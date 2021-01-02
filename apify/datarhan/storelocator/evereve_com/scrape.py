@@ -1,6 +1,5 @@
 import csv
 import json
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
