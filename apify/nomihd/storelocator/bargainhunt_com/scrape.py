@@ -138,7 +138,9 @@ def fetch_data():
         location_type = "<MISSING>"
 
         latitude = "".join(str(markers[index])).split(",")[1].strip()
-        longitude = "".join(str(markers[index])).split(",")[2].strip().replace(']','').strip()
+        longitude = (
+            "".join(str(markers[index])).split(",")[2].strip().replace("]", "").strip()
+        )
 
         if latitude == "":
             latitude = "<MISSING>"
