@@ -129,7 +129,7 @@ def fetch_data():
         result.append(
             [
                 locator_domain,
-                all_stores,
+                missingString,
                 store["title"],
                 addressJSON["address"],
                 addressJSON["city"],
