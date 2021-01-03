@@ -69,7 +69,7 @@ def fetch_data():
                 [
                     meta["openingHoursSpecification"][1]["dayOfWeek"],
                     meta["openingHoursSpecification"][1]["opens"],
-                    meta["openingHoursSpecification"][0]["closes"],
+                    meta["openingHoursSpecification"][1]["closes"],
                 ]
             )
         hours = ", ".join(
