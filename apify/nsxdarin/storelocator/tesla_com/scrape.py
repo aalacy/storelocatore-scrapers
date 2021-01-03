@@ -193,6 +193,9 @@ def fetch_data():
             add = "<MISSING>"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,
@@ -234,6 +237,7 @@ def fetch_data():
         lng = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
@@ -357,6 +361,9 @@ def fetch_data():
             lng = "<MISSING>"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,
@@ -398,7 +405,8 @@ def fetch_data():
         HFound = True
         hours = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
@@ -550,6 +558,9 @@ def fetch_data():
             lng = "-79.5496246"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,
