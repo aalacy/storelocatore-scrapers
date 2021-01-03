@@ -47,8 +47,14 @@ def fetch_data():
         name = s["name"]
         address = s["address"].split(",")[0]
         city = s["address"].split(",")[1]
-        state = s["address"].split(",")[2]
-        zipc = s["address"].split(",")[3]
+        state = s["address"].split(",")[2].split(" ")[1]
+        zipc = ""
+        if len(s["address"].split(",")[2].split(" ")) == 3:
+            zipc = s["address"].split(",")[2].split(" ")[2]
+        else:
+            zipc = s["address"].split(",")[3]
+        if "USA" in zipc:
+            zipc = missingString
         phone = ""
         if s["phone"]:
             phone = s["phone"]
