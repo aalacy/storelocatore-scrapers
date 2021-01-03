@@ -89,6 +89,15 @@ def fetch_data():
                 )
         if hours == "":
             hours = "<MISSING>"
+        if "/troy/" in loc:
+            name = "Troy"
+            add = "2800 West Big Beaver Rd"
+            city = "Troy"
+            state = "MI"
+            zc = "48084"
+            phone = "(248) 649-5300"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
             yield [
                 website,
