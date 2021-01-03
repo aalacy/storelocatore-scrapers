@@ -86,6 +86,10 @@ def fetch_data():
                 "View Our Sips & Sweets Café Menu",
                 "",
             )
+            .replace(
+                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STORESTORE HOURS (WEEK OF 12/28 - 1/4)",
+                "",
+            )
             .replace("CLOSED", "Closed, ")
             .replace("MT", "M, T")
             .replace("MW", "M, W")
