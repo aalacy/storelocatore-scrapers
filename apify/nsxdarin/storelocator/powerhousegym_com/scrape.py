@@ -80,6 +80,8 @@ def fetch_data():
                 if "Coming" not in phone:
                     if phone == "":
                         phone = "<MISSING>"
+                    if "aldergrove" in name.lower():
+                        loc = "https://powerhousegym.com/locations/aldergrove-bc/"
                     yield [
                         website,
                         loc,
