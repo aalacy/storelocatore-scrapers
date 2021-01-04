@@ -1,6 +1,7 @@
 import csv
 import sgrequests
 import bs4
+import re
 
 
 def write_output(data):
@@ -68,6 +69,16 @@ def fetch_data():
 
     result = []
 
+    def getLatLng(html):
+        latlng = (
+            re.search(r"center: {(.*?)},", str(html))
+            .group(1)
+            .replace("lat:", "")
+            .replace(", lng:", "")
+            .strip()
+        )
+        return latlng.split(" ")
+
     for uri in setToList:
         finalStoreURL = "{}{}".format(locator_domain, uri.replace("/", "", 1))
         soup = bs4.BeautifulSoup(sess.get(finalStoreURL).text, features="lxml")
@@ -88,8 +99,8 @@ def fetch_data():
                     "".join(filter(str.isdigit, name.text)),
                     soup.find("span", {"itemprop": "telephone"}).text,
                     missingString,
-                    missingString,
-                    missingString,
+                    getLatLng(soup)[0],
+                    getLatLng(soup)[1],
                     missingString,
                 ]
             )
