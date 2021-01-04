@@ -43,7 +43,7 @@ def fetch_data():
     website = "sprintmart.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
+    loc = "https://www.sprintmart.com/locations"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
