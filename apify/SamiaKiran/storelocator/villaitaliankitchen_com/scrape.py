@@ -165,7 +165,7 @@ def fetch_data():
                             "<MISSING>",
                         ]
                     )
-        except Exception as e:
+        except:
             pass
     return data
 
