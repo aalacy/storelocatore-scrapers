@@ -87,7 +87,8 @@ def fetch_data():
                     zc = addinfo.split(" ")[0] + " " + addinfo.split(" ")[1]
             if '<span class="type">' in line2:
                 typ = line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0].strip()
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
@@ -257,7 +258,8 @@ def fetch_data():
                 zc = line2.split("</span>")[0].rsplit(" ", 1)[1]
             if '<span class="type">' in line2:
                 typ = line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0]
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
@@ -432,7 +434,8 @@ def fetch_data():
                 )
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0]
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
