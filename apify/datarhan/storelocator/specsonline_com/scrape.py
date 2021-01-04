@@ -92,6 +92,10 @@ def fetch_data():
         )
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+            phone = phone[0] if phone else "<MISSING>"
+
         item = [
             DOMAIN,
             store_url,

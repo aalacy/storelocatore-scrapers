@@ -30,13 +30,11 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -44,15 +42,14 @@ def fetch_data():
         "x-dtpc": "5$166255767_949h2vRTJTKPSCMONMCTUNVCWWPPPMGGWKCFFO-0e36",
         "X-Requested-With": "XMLHttpRequest",
     }
+    base_url = "https://www.lincoln.com"
     addresses = []
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
         max_radius_miles=200,
     )
-
     for zip_code in zipcodes:
-
         street_address = ""
         city = ""
         state = ""
@@ -66,14 +63,12 @@ def fetch_data():
             + str(zip_code)
             + "&api_key=0d571406-82e4-2b65-cc885011-048eb263"
         )
-
         try:
             k = session.get(get_u, headers=headers).json()
         except:
             continue
         if "Response" in k and "Dealer" in k["Response"]:
-            x = type(k["Response"]["Dealer"])
-            if isinstance(x, list):
+            if isinstance(k["Response"]["Dealer"], list):
                 for i in k["Response"]["Dealer"]:
                     if i["ldlrcalltrk_lad"]:
                         phone = i["ldlrcalltrk_lad"]
@@ -127,9 +122,8 @@ def fetch_data():
                     )
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
-
                     store = []
-                    store.append("https://www.lincoln.com/")
+                    store.append(base_url)
                     store.append(i["Name"])
                     store.append(street_address)
                     store.append(city)
@@ -158,8 +152,8 @@ def fetch_data():
                     yield store
 
         if "Response" in k and "Dealer" in k["Response"]:
-            y = type(k["Response"]["Dealer"])
-            if isinstance(y, dict):
+            if isinstance(k["Response"]["Dealer"], dict):
+
                 if "Street1" in k["Response"]["Dealer"]["Address"]:
                     street_address = k["Response"]["Dealer"]["Address"]["Street1"]
                 else:
@@ -215,7 +209,7 @@ def fetch_data():
                 longitude = k["Response"]["Dealer"]["Longitude"]
 
                 store = []
-                store.append("https://www.lincoln.com/")
+                store.append(base_url)
                 store.append(k["Response"]["Dealer"]["Name"])
                 store.append(street_address)
                 store.append(city)
