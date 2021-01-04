@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.lacoste.com/us/stores/unitedstates"
+    url = "https://global.lacoste.com/us/stores/unitedstates"
     r = session.get(url, headers=headers)
     website = "lacoste.com"
     typ = "<MISSING>"
@@ -51,7 +51,7 @@ def fetch_data():
             for item in items:
                 if '"url":"/unitedstates/' in item:
                     locs.append(
-                        "https://www.lacoste.com/us/stores?country=unitedstates&city="
+                        "https://global.lacoste.com/us/stores?country=unitedstates&city="
                         + item.split('"url":"/unitedstates/')[1].split('"')[0]
                         + "&json=true"
                     )
@@ -81,36 +81,63 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(",")[0]
                         lng = item.split('"longitude":')[1].split(",")[0]
                         store = item.split('"')[0]
-                        hours = item.split('"hours":"')[1].split('"')[0]
-                        hours = (
-                            hours.replace("1-6", "Mon-Sat: ")
-                            .replace("7:", "Sun: ")
-                            .replace(",", "; ")
-                        )
-                        hours = hours.replace("1-Sun", "Mon-Sun").replace(": :", ":")
-                        hours = hours.replace("6-Sun", "Sat-Sun").replace("6:", "Sat:")
+                        try:
+                            hours = item.split('"hours":"')[1].split('"')[0]
+                            hours = (
+                                hours.replace("1-6", "Mon-Sat: ")
+                                .replace("7:", "Sun: ")
+                                .replace(",", "; ")
+                            )
+                            hours = hours.replace("1-Sun", "Mon-Sun").replace(
+                                ": :", ":"
+                            )
+                            hours = hours.replace("6-Sun", "Sat-Sun").replace(
+                                "6:", "Sat:"
+                            )
+                        except:
+                            hours = "<MISSING>"
                         lurl = (
-                            "https://www.lacoste.com/us/stores"
+                            "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        yield [
-                            website,
-                            lurl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        name = name.replace("&#39;", "'").replace("&amp;", "&")
+                        add = add.replace("&#39;", "'").replace("&amp;", "&")
+                        hours = (
+                            hours.replace("5:", "Fri:")
+                            .replace("1-", "Mon-")
+                            .replace("4-", "Thu-")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("1:", "Mon:")
+                            .replace("2:", "Tue:")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("4:", "Thu:")
+                            .replace("5-", "Fri-")
+                            .replace("3-", "Wed-")
+                            .replace("2-", "Tue-")
+                        )
+                        if "closed" not in lurl:
+                            yield [
+                                website,
+                                lurl,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
     locs = []
-    url = "https://www.lacoste.com/us/stores/canada"
+    url = "https://global.lacoste.com/us/stores/canada"
     r = session.get(url, headers=headers)
     website = "lacoste.com"
     typ = "<MISSING>"
@@ -122,7 +149,7 @@ def fetch_data():
             for item in items:
                 if '"url":"/canada/' in item:
                     locs.append(
-                        "https://www.lacoste.com/us/stores?country=canada&city="
+                        "https://global.lacoste.com/us/stores?country=canada&city="
                         + item.split('"url":"/canada/')[1].split('"')[0]
                         + "&json=true"
                     )
@@ -152,34 +179,61 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(",")[0]
                         lng = item.split('"longitude":')[1].split(",")[0]
                         store = item.split('"')[0]
-                        hours = item.split('"hours":"')[1].split('"')[0]
-                        hours = (
-                            hours.replace("1-6", "Mon-Sat: ")
-                            .replace("7:", "Sun: ")
-                            .replace(",", "; ")
-                        )
-                        hours = hours.replace("1-Sun", "Mon-Sun").replace(": :", ":")
-                        hours = hours.replace("6-Sun", "Sat-Sun").replace("6:", "Sat:")
+                        try:
+                            hours = item.split('"hours":"')[1].split('"')[0]
+                            hours = (
+                                hours.replace("1-6", "Mon-Sat: ")
+                                .replace("7:", "Sun: ")
+                                .replace(",", "; ")
+                            )
+                            hours = hours.replace("1-Sun", "Mon-Sun").replace(
+                                ": :", ":"
+                            )
+                            hours = hours.replace("6-Sun", "Sat-Sun").replace(
+                                "6:", "Sat:"
+                            )
+                        except:
+                            hours = "<MISSING>"
                         lurl = (
-                            "https://www.lacoste.com/us/stores"
+                            "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        yield [
-                            website,
-                            lurl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        name = name.replace("&#39;", "'").replace("&amp;", "&")
+                        add = add.replace("&#39;", "'").replace("&amp;", "&")
+                        hours = (
+                            hours.replace("5:", "Fri:")
+                            .replace("1-", "Mon-")
+                            .replace("4-", "Thu-")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("1:", "Mon:")
+                            .replace("2:", "Tue:")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("4:", "Thu:")
+                            .replace("5-", "Fri-")
+                            .replace("3-", "Wed-")
+                            .replace("2-", "Tue-")
+                        )
+                        if "closed" not in lurl:
+                            yield [
+                                website,
+                                lurl,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():
