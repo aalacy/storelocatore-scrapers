@@ -40,6 +40,7 @@ def fetch_data():
     locator_domain = "https://www.labelshopper.com/"
     all_stores = "https://www.labelshopper.com/wp-json/wpgmza/v1/marker-listing/"
     missingString = "<MISSING>"
+    pageURL = "https://www.labelshopper.com/find-stores/"
 
     s = SgRequests()
 
@@ -129,7 +130,7 @@ def fetch_data():
         result.append(
             [
                 locator_domain,
-                all_stores,
+                pageURL,
                 store["title"],
                 addressJSON["address"],
                 addressJSON["city"],
