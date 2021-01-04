@@ -45,7 +45,7 @@ def fetch_data():
 
     state_response = session.get(start_url)
     dom = etree.HTML(state_response.text)
-    all_locations = dom.xpath('//li[@class="loc"]')
+    all_locations = dom.xpath('//li[contains(@class, "loc")]')
 
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//h4/a/@href")
@@ -55,6 +55,8 @@ def fetch_data():
         address_raw = poi_html.xpath(
             './/p[@class="btn-menu"]/following-sibling::p[1]/text()'
         )
+        if not address_raw:
+            continue
         street_address = address_raw[0]
         city = address_raw[1].split(", ")[0]
         state = address_raw[1].split(", ")[-1].split()[0]

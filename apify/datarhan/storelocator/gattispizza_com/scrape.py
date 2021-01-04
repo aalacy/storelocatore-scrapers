@@ -54,7 +54,19 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         address_raw = poi["data"]["address"].split(", ")
-        print(address_raw)
+        street_address = "<MISSING>"
+        city = "<MISSING>"
+        state = "<MISSING>"
+        zip_code = "<MISSING>"
+        country_code = address_raw[-1]
+        if len(address_raw) == 4:
+            if "US" not in address_raw[-1]:
+                address_raw = [", ".join(address_raw[:2])] + address_raw[2:] + ["US"]
+            street_address = address_raw[0]
+            city = address_raw[1]
+            state = address_raw[2].split()[0]
+            zip_code = address_raw[2].split()[-1]
+            country_code = address_raw[-1]
         if len(address_raw) == 5:
             street_address = address_raw[0]
             street_address = street_address if street_address else "<MISSING>"
