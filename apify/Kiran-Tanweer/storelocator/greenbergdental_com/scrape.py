@@ -114,6 +114,9 @@ def fetch_data():
         info2 = soup.find("div", {"id": "office-info"})
         phone = info2.find("p", {"class": "tel"}).text.lstrip("Call: ")
         hours = soup.find("div", {"class": "hours"})
+        if city == "Richey":
+            city = "Port Richey"
+            street = "8631 US-19"
         if hours is None:
             hrs = "Coming soon"
         else:

@@ -87,7 +87,7 @@ def fetch_data():
                         "<MISSING>",
                         lat,
                         longt,
-                        hours,
+                        hours.replace("am", " am ").replace("pm", " pm ").strip(),
                     ]
                 )
 
