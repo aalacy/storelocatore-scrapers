@@ -70,6 +70,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        daycount = 0
         try:
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
@@ -113,32 +114,24 @@ def fetch_data():
                         .split("<")[0]
                     )
                 if '<time itemprop="opens" content="' in line2:
-                    day = (
-                        day
-                        + ": "
-                        + line2.split('<time itemprop="opens" content="')[1].split(
-                            ':00"'
-                        )[0]
-                    )
+                    day = day + ": " + line2.split('">')[1].split("<")[0].strip()
                 if '<time itemprop="closes" content="' in line2:
-                    day = (
-                        day
-                        + "-"
-                        + line2.split('<time itemprop="closes" content="')[1].split(
-                            ':00"'
-                        )[0]
-                    )
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
+                    day = day + "-" + line2.split('">')[1].split("<")[0].strip()
+                    daycount = daycount + 1
+                    if daycount <= 7:
+                        if hours == "":
+                            hours = day
+                        else:
+                            hours = hours + "; " + day
                 if "Closed</time>" in line2:
-                    day = day + ": Closed"
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
+                    daycount = daycount + 1
+                    if daycount <= 7:
+                        if hours == "":
+                            hours = day
+                        else:
+                            hours = hours + "; " + day
             if add != "":
+                phone = phone.replace("Phone:", "").strip()
                 yield [
                     website,
                     loc,
