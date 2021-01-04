@@ -1,5 +1,4 @@
 import csv
-import sgzip
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -61,7 +60,6 @@ def fetch_data():
         )
         try:
             r = session.get(url, headers=headers)
-            array = []
             website = "goodwill.org"
             for item in json.loads(r.content):
                 store = item["LocationId"]
