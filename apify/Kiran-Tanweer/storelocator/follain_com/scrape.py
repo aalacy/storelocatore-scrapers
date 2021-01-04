@@ -116,6 +116,8 @@ def fetch_data():
         hours = re.sub(pattern, "\n", hours)
         phone = soup.find("div", {"class": "store-contact-text"}).text.strip()
         phone = phone.replace("\n", "@").split("@")[0]
+        pcode = pcode.lstrip()
+        pcode = pcode.rstrip()
 
         data.append(
             [

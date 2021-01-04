@@ -100,12 +100,16 @@ def fetch_data():
                     or temp[1].find("USPSBoxID") != -1
                 ):
                     street = street + " " + temp[0]
+                    street = street.strip()
                 if temp[1].find("PlaceName") != -1:
                     city = city + " " + temp[0]
+                    city = city.strip()
                 if temp[1].find("StateName") != -1:
                     state = state + " " + temp[0]
+                    state = state.strip()
                 if temp[1].find("ZipCode") != -1:
                     pcode = pcode + " " + temp[0]
+                    pcode = pcode.strip()
                 i += 1
             if not city:
                 city = "<MISSING>"
