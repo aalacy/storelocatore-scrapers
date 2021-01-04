@@ -78,6 +78,8 @@ def fetch_data():
                     loc = "<MISSING>"
             if "new google.maps.InfoWindow({" in line:
                 if "Coming" not in phone:
+                    if phone == "":
+                        phone = "<MISSING>"
                     yield [
                         website,
                         loc,

@@ -69,7 +69,7 @@ def fetch_data():
     for store in stores:
         page_url = search_url
         locator_domain = website
-        location_name = store["StoreName"]
+        location_name = store["AddressLine2"]
         if location_name == "":
             location_name = "<MISSING>"
 
