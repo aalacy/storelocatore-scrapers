@@ -59,7 +59,10 @@ def fetch_data():
 
     for postcode in search:
 
-        base_link = "https://www.geico.com/public/php/geo_map.php?address=%s&language=en&type=Sales&captcha=false" % postcode
+        base_link = (
+            "https://www.geico.com/public/php/geo_map.php?address=%s&language=en&type=Sales&captcha=false"
+            % postcode
+        )
 
         try:
             res_json = session.get(base_link, headers=headers).json()[1:]
@@ -85,7 +88,7 @@ def fetch_data():
             city = loc["city"]
             state = raw_address.split(",")[-1].split()[0].strip()
             zip_code = raw_address.split(",")[-1].split()[-1].strip()
-            street_address = raw_address[:raw_address.rfind(city):].strip()
+            street_address = raw_address[: raw_address.rfind(city) :].strip()
             if street_address[-1:] == ",":
                 street_address = street_address[:-1].strip()
             country_code = "US"
@@ -95,7 +98,9 @@ def fetch_data():
             if "day" not in hours.lower():
                 req = session.get(page_url, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
-                hours = " ".join(list(base.find_all(class_="box gfr_margin")[1].stripped_strings)[1:])
+                hours = " ".join(
+                    list(base.find_all(class_="box gfr_margin")[1].stripped_strings)[1:]
+                )
                 if "day" not in hours.lower():
                     hours = "<MISSING>"
             store_data = [
