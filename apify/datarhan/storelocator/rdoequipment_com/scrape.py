@@ -58,7 +58,7 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["street"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
+        city = poi["address"]["city"].replace(",", "").strip()
         city = city if city else "<MISSING>"
         state = poi["address"]["stateCode"]
         state = state if state else "<MISSING>"
@@ -84,7 +84,9 @@ def fetch_data():
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).replace("Days Hours ", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [
