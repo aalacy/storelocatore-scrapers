@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.tempurpedic.com/tempur-pedic-stores/tempur-pedic-Alpharetta/"]
     url = "https://www.tempurpedic.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "tempurpedic.com"
@@ -98,6 +98,7 @@ def fetch_data():
         if add != "":
             if '""' in name:
                 name = name.split('""')[0].strip()
+            add = add.replace(",", "").strip()
             yield [
                 website,
                 loc,
