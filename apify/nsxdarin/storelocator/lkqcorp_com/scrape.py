@@ -54,7 +54,7 @@ def fetch_data():
         "NU",
         "BC",
     ]
-    for x in range(100, 240):
+    for x in range(1, 240):
         url = (
             "https://www.lkqcorp.com/wp-json/cf-elementor-modules/v1/location-finder/search?category_id=0&lat=&lng=&page="
             + str(x)
