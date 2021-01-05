@@ -108,7 +108,7 @@ def fetch_data():
                                 country = "CA"
                             else:
                                 country = "US"
-                            if 'keystone' in name.lower():
+                            if "keystone" in name.lower():
                                 yield [
                                     website,
                                     lurl,
