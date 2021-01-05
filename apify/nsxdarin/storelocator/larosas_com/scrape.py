@@ -42,47 +42,55 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://www.larosas.com/api/locations?handler=GetLocationsByStoreID"
-    payload = {"id": "50", "pizzeriasOnly": "true"}
-    r = session.post(url, headers=headers, data=payload)
-    website = "larosas.com"
-    typ = "<MISSING>"
-    country = "US"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '"id":' in line:
-            items = line.split('"id":')
-            for item in items:
-                if "metaUrl" in item:
-                    loc = item.split('"metaUrl":"')[1].split('"')[0]
-                    store = item.split(",")[0]
-                    name = item.split('"name":"')[1].split('"')[0]
-                    add = item.split('"streetAddress":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    state = item.split('"state":"')[1].split('"')[0]
-                    zc = item.split('"zip":"')[1].split('"')[0]
-                    lat = item.split('latitude":')[1].split(",")[0]
-                    lng = item.split('longitude":')[1].split(",")[0]
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    hours = item.split('"diningRoomHours":"')[1].split('"')[0]
-                    hours = hours.replace("\\u003Cbr/\\u003E", "; ")
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+    allids = []
+    for pid in range(1, 100):
+        logger.info(pid)
+        url = "https://www.larosas.com/api/locations?handler=GetLocationsByStoreID"
+        payload = {"id": pid, "pizzeriasOnly": "true"}
+        r = session.post(url, headers=headers, data=payload)
+        website = "larosas.com"
+        typ = "<MISSING>"
+        country = "US"
+        logger.info("Pulling Stores")
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"id":' in line:
+                items = line.split('"id":')
+                for item in items:
+                    if "metaUrl" in item:
+                        loc = item.split('"metaUrl":"')[1].split('"')[0]
+                        store = item.split(",")[0]
+                        name = item.split('"name":"')[1].split('"')[0]
+                        add = item.split('"streetAddress":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        lat = item.split('latitude":')[1].split(",")[0]
+                        lng = item.split('longitude":')[1].split(",")[0]
+                        phone = item.split('"phone":"')[1].split('"')[0]
+                        hours = item.split('"diningRoomHours":"')[1].split('"')[0]
+                        hours = hours.replace("\\u003Cbr/\\u003E", "; ")
+                        if store not in allids:
+                            allids.append(store)
+                            if hours == "":
+                                hours = "<MISSING>"
+                            if "closed" not in name.lower():
+                                yield [
+                                    website,
+                                    loc,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():
