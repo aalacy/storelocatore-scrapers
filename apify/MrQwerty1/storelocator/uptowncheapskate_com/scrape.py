@@ -69,7 +69,7 @@ def fetch_data():
         if "".join(hours).lower().find("coming soon") != -1:
             _tmp = ["Coming Soon"]
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp) or "Coming Soon"
 
         row = [
             locator_domain,
