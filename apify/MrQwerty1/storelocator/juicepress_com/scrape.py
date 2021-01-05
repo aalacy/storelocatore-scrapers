@@ -35,7 +35,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://impark.com/"
+    locator_domain = "https://juicepress.com/"
     api_url = "https://api2.storepoint.co/v1/15d4897d596fbd/locations"
     tag = {
         "Recipient": "recipient",

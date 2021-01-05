@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("petermillar_com")
 
 
 def write_output(data):
-    with open("data.csv", "w") as output_file:
+    with open("data.csv", "w", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=",")
         writer.writerow(
             [
@@ -61,7 +61,7 @@ def getplace(lat, lon):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().firefox("geckodriver")
     getcountrygeo()
     return_main_object = []
     addresses = []
@@ -319,12 +319,6 @@ def fetch_data():
             page_url2,
         ]
         store = ["<MISSING>" if x == "" or x is None else x for x in store]
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
         if street_address in addresses:
             continue
         addresses.append(street_address)
