@@ -76,6 +76,13 @@ def fetch_data():
                 except:
                     lat = "<MISSING>"
                     lng = "<MISSING>"
+            if ">GET DIRECTIONS<" in line2 and "ll=" in line2 and lat == "":
+                try:
+                    lat = line2.split("ll=")[1].split(",")[0]
+                    lng = line2.split("ll=")[1].split(",")[1].split("&")[0]
+                except:
+                    lat = line2.split("ll=")[1].split("%")[0]
+                    lng = line2.split("ll=")[1].split("%2C")[1].split("&")[0]
             if 'height="22" src="img/locationicon.png">' in line2:
                 addinfo = line2.split('height="22" src="img/locationicon.png">')[
                     1
