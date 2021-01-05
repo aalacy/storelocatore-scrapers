@@ -79,9 +79,10 @@ def fetch_data():
         )
         latitude = geo[0]
         longitude = geo[1]
-        hours_of_operation = poi_html.xpath(
-            './/p[@class="wysiwyg-text-align-left"]/text()'
-        )
+        hours_of_operation = poi_html.xpath('.//div[@class="store"]//text()')
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if "p.m." in elem
+        ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

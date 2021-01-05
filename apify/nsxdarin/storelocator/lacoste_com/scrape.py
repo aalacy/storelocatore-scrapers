@@ -100,22 +100,50 @@ def fetch_data():
                             "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        yield [
-                            website,
-                            lurl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        name = (
+                            name.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        add = (
+                            add.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        hours = (
+                            hours.replace("5:", "Fri:")
+                            .replace("1-", "Mon-")
+                            .replace("4-", "Thu-")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("1:", "Mon:")
+                            .replace("2:", "Tue:")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("4:", "Thu:")
+                            .replace("5-", "Fri-")
+                            .replace("3-", "Wed-")
+                            .replace("2-", "Tue-")
+                        )
+                        if "closed" not in lurl:
+                            yield [
+                                website,
+                                lurl,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
     locs = []
     url = "https://global.lacoste.com/us/stores/canada"
     r = session.get(url, headers=headers)
@@ -178,22 +206,50 @@ def fetch_data():
                             "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        yield [
-                            website,
-                            lurl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        name = (
+                            name.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        add = (
+                            add.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        hours = (
+                            hours.replace("5:", "Fri:")
+                            .replace("1-", "Mon-")
+                            .replace("4-", "Thu-")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("1:", "Mon:")
+                            .replace("2:", "Tue:")
+                            .replace("3:", "Wed:")
+                        )
+                        hours = (
+                            hours.replace("4:", "Thu:")
+                            .replace("5-", "Fri-")
+                            .replace("3-", "Wed-")
+                            .replace("2-", "Tue-")
+                        )
+                        if "closed" not in lurl:
+                            yield [
+                                website,
+                                lurl,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

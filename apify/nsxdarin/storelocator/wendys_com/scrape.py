@@ -93,6 +93,7 @@ def fetch_data():
                             else:
                                 cities.append(lurl)
         for city in cities:
+            logger.info(city)
             r2 = session.get(city, headers=headers)
             if r2.encoding is None:
                 r2.encoding = "utf-8"
@@ -104,6 +105,9 @@ def fetch_data():
                             lurl = "https://locations.wendys.com/" + item.split('"')[0]
                             locs.append(lurl)
         for loc in locs:
+            loc = loc.replace("&#39;", "'")
+            logger.info(loc)
+            Closed = False
             website = "wendys.com"
             typ = "Restaurant"
             name = ""
@@ -120,6 +124,8 @@ def fetch_data():
             if r2.encoding is None:
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
+                if "<span>Closed Temporarily.</span>" in line2:
+                    Closed = True
                 if 'itemprop="name">' in line2 and name == "":
                     name = line2.split('itemprop="name">')[1].split("<")[0]
                 if "'dimension4', '" in line2:
@@ -139,36 +145,34 @@ def fetch_data():
                         '"'
                     )[0]
                 if hours == "" and "data-days='[{" in line2:
-                    try:
-                        days = (
-                            line2.split("data-days='[{")[1]
-                            .split("]}]'")[0]
-                            .split('"day":"')
-                        )
-                        for day in days:
-                            if '"intervals"' in day:
-                                if '"intervals":[]' not in day:
-                                    hrs = (
-                                        day.split('"')[0]
-                                        + ": "
-                                        + day.split(',"start":')[1].split("}")[0]
-                                        + "-"
-                                        + day.split('"end":')[1].split(",")[0]
-                                    )
-                                else:
-                                    hrs = day.split('"')[0] + ": Closed"
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
-                    except:
-                        hours = "<MISSING>"
+                    days = (
+                        line2.split("data-days='[{")[1].split("}]'")[0].split('"day":"')
+                    )
+                    for day in days:
+                        if '"intervals"' in day:
+                            if (
+                                '"intervals":[]' not in day
+                                and '"intervals":null' not in day
+                            ):
+                                hrs = (
+                                    day.split('"')[0]
+                                    + ": "
+                                    + day.split(',"start":')[1].split("}")[0]
+                                    + "-"
+                                    + day.split('"end":')[1].split(",")[0]
+                                )
+                            else:
+                                hrs = day.split('"')[0] + ": Closed"
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             if hours == "":
                 hours = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
             infotext = name + "|" + add + "|" + city
-            if infotext not in alllocs:
+            if infotext not in alllocs and Closed is False and add != "":
                 alllocs.append(infotext)
                 yield [
                     website,

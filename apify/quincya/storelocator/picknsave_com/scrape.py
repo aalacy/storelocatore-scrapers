@@ -108,127 +108,73 @@ def fetch_data():
 
         locator_domain = "picknsave.com"
 
-        for store in store_data:
-            store_number = store["storeNumber"]
-            if store_number in found_poi:
-                continue
-            found_poi.append(store_number)
+        for i, store_data in enumerate([store_data, fuel_data]):
+            for store in store_data:
+                store_number = store["storeNumber"]
+                if store_number in found_poi:
+                    continue
+                found_poi.append(store_number)
 
-            link = "https://www.picknsave.com/stores/details/%s/%s" % (
-                store["divisionNumber"],
-                store_number,
-            )
-            location_name = store["vanityName"]
-            try:
-                street_address = (
-                    store["address"]["addressLine1"]
-                    + " "
-                    + store["address"]["addressLine2"]
-                ).strip()
-            except:
-                street_address = store["address"]["addressLine1"].strip()
-            city = store["address"]["city"]
-            state = store["address"]["stateCode"]
-            zip_code = store["address"]["zip"]
-            country_code = "US"
-            location_type = "Store"
-
-            phone = store["phoneNumber"]
-            if not phone:
-                phone = "<MISSING>"
-
-            hours_of_operation = ""
-            raw_hours = store["ungroupedFormattedHours"]
-            for hours in raw_hours:
-                day = hours["displayName"]
-                opens = day + " " + hours["displayHours"]
-                hours_of_operation = (hours_of_operation + " " + opens).strip()
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
-
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-            search.mark_found([latitude, longitude])
-
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
+                link = "https://www.picknsave.com/stores/details/%s/%s" % (
+                    store["divisionNumber"],
                     store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
+                )
+                location_name = store["vanityName"]
+                try:
+                    street_address = (
+                        store["address"]["addressLine1"]
+                        + " "
+                        + store["address"]["addressLine2"]
+                    ).strip()
+                except:
+                    street_address = store["address"]["addressLine1"].strip()
+                city = store["address"]["city"]
+                state = store["address"]["stateCode"]
+                zip_code = store["address"]["zip"]
+                country_code = "US"
 
-        for store in fuel_data:
-            store_number = store["storeNumber"]
-            if store_number in found_poi:
-                continue
-            found_poi.append(store_number)
+                if i == 0:
+                    location_type = store["banner"]
+                else:
+                    location_type = "Fuel"
+                if not location_type:
+                    location_type = "<MISSING>"
 
-            link = "https://www.picknsave.com/stores/details/%s/%s" % (
-                store["divisionNumber"],
-                store_number,
-            )
-            location_name = store["vanityName"]
-            try:
-                street_address = (
-                    store["address"]["addressLine1"]
-                    + " "
-                    + store["address"]["addressLine2"]
-                ).strip()
-            except:
-                street_address = store["address"]["addressLine1"].strip()
-            city = store["address"]["city"]
-            state = store["address"]["stateCode"]
-            zip_code = store["address"]["zip"]
-            country_code = "US"
-            location_type = "Fuel"
+                phone = store["phoneNumber"]
+                if not phone:
+                    phone = "<MISSING>"
 
-            phone = store["phoneNumber"]
-            if not phone:
-                phone = "<MISSING>"
+                hours_of_operation = ""
+                raw_hours = store["ungroupedFormattedHours"]
+                for hours in raw_hours:
+                    day = hours["displayName"]
+                    opens = day + " " + hours["displayHours"]
+                    hours_of_operation = (hours_of_operation + " " + opens).strip()
+                if not hours_of_operation:
+                    hours_of_operation = "<MISSING>"
 
-            hours_of_operation = ""
-            raw_hours = store["ungroupedFormattedHours"]
-            for hours in raw_hours:
-                day = hours["displayName"]
-                opens = day + " " + hours["displayHours"]
-                hours_of_operation = (hours_of_operation + " " + opens).strip()
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
+                latitude = store["latitude"]
+                longitude = store["longitude"]
+                search.mark_found([latitude, longitude])
 
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-            search.mark_found([latitude, longitude])
-
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
+                data.append(
+                    [
+                        locator_domain,
+                        link,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip_code,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                )
 
     driver.close()
     return data
