@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    website = "lkqcorp.com/keystoneautomotive"
+    website = "lkqcorp.com"
     typ = "<MISSING>"
     canada = [
         "QC",
