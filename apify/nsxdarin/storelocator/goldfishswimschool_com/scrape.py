@@ -71,13 +71,16 @@ def fetch_data():
             if 'mob-loc" href="tel:' in line2:
                 phone = line2.split('mob-loc" href="tel:')[1].split('"')[0]
             if 'data-address="' in line2:
-                name = line2.split('businessname="')[1].split('"')[0]
-                add = line2.split('data-address="')[1].split('"')[0]
-                city = line2.split('data-city="')[1].split('"')[0]
-                state = line2.split('data-state="')[1].split('"')[0]
-                zc = line2.split('data-zip="')[1].split('"')[0]
-                lat = line2.split('data-latitude="')[1].split('"')[0]
-                lng = line2.split('data-longitude="')[1].split('"')[0]
+                try:
+                    name = line2.split('data-businessname="')[1].split('"')[0]
+                    add = line2.split('data-address="')[1].split('"')[0]
+                    city = line2.split('data-city="')[1].split('"')[0]
+                    state = line2.split('data-state="')[1].split('"')[0]
+                    zc = line2.split('data-zip="')[1].split('"')[0]
+                    lat = line2.split('data-latitude="')[1].split('"')[0]
+                    lng = line2.split('data-longitude="')[1].split('"')[0]
+                except:
+                    name = ""
             if "day:" in line2:
                 daycount = daycount + 1
                 if 'class="closed">' in line2:
@@ -89,22 +92,25 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if hours == "":
+            hours = "<MISSING>"
+        if name != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
