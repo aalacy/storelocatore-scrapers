@@ -16,7 +16,7 @@ DOMAIN = 'pressedjuicery.com'
 session = SgRequests()
 
 HEADERS = {
-    'Host': 'api.greggs.co.uk',
+    'Host': 'api.pressedjuicery.com',
     'Origin': 'https://api.pressedjuicery.com/stores?sort=name',
     'Accept': 'application/json, text/plain, */*',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
