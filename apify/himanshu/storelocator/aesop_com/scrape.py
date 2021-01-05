@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
-import usaddress as usd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import usaddress as usd
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("aesop_com")
@@ -40,6 +40,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+
         writer.writerow(
             [
                 "locator_domain",
@@ -58,7 +59,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -299,6 +299,7 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                             country_code = "US"
+
                     else:
                         continue
 
@@ -445,6 +446,7 @@ def fetch_data():
                         page_url = "https://www.aesop.com/hk/en/r/" + value["id"]
                     else:
                         page_url = "<MISSING>"
+
                     store = []
                     if street_address == "Space":
                         street_address = "Space 2118, Westfield, 4545 La Jolla"
@@ -457,6 +459,13 @@ def fetch_data():
                         street_address.replace(
                             "630 Old Country Rd", "630 Old Country Rd Space, 1101D"
                         )
+                        .replace("International Market Place, Space 116, ", "")
+                        .replace("NorthPark Center, ", "")
+                        .replace("Space 2118, ", "")
+                        .replace("Space K02 - ", "")
+                        .replace("The Village at Corte Madera, Space D207, ", "")
+                        .replace("Tysons Corner Center, Suite O008U, ", "")
+                        .replace("Westfield, ", "")
                     )
                     store.append(city.replace("Space, 1101D ", ""))
                     store.append(state)
