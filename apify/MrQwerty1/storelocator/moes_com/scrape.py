@@ -38,24 +38,26 @@ def get_data(coord):
     rows = []
     lat, lon = coord
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0'}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
+    }
 
     locator_domain = "https://www.moes.com/"
     api_url = f"https://www.moes.com/sitecore/api/v0.1/storelocator/locations?lat={lat}&lng={lon}"
 
     session = SgRequests()
     r = session.get(api_url, headers=headers)
-    js = r.json()['Locations']
+    js = r.json()["Locations"]
 
     for j in js:
-        page_url = 'https://www.moes.com' + j.get("Url")
+        page_url = "https://www.moes.com" + j.get("Url")
         location_name = j.get("LocationName").strip()
-        street_address = j.get('StreetAddress') or '<MISSING>'
+        street_address = j.get("StreetAddress") or "<MISSING>"
         city = j.get("City") or "<MISSING>"
         state = j.get("Region") or "<MISSING>"
         postal = j.get("PostalCode") or "<MISSING>"
         country_code = j.get("CountryName") or "<MISSING>"
-        if country_code == 'GU':
+        if country_code == "GU":
             continue
 
         store_number = j.get("StoreNumber") or "<MISSING>"
@@ -65,24 +67,24 @@ def get_data(coord):
         location_type = "<MISSING>"
 
         _tmp = []
-        hours = j.get('Hours', [])
+        hours = j.get("Hours", [])
 
         for h in hours:
-            day = h.get('FormattedDayOfWeek')
-            if day == 'today':
+            day = h.get("FormattedDayOfWeek")
+            if day == "today":
                 continue
 
-            start = h.get('Open')
-            close = h.get('Close')
+            start = h.get("Open")
+            close = h.get("Close")
             if start == close:
-                _tmp.append(f'{day}: Closed')
+                _tmp.append(f"{day}: Closed")
             else:
-                _tmp.append(f'{day}: {start} - {close}')
+                _tmp.append(f"{day}: {start} - {close}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
-        if hours_of_operation.count('Closed') == 7:
-            hours_of_operation = 'Closed'
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,
@@ -112,15 +114,9 @@ def fetch_data():
     coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, coord): coord for coord in coords
-        }
+        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
-            try:
-                rows = future.result()
-            except:
-                print(future_to_url[future])
-                rows = []
+            rows = future.result()
             for row in rows:
                 _id = row[8]
                 if _id not in s:
