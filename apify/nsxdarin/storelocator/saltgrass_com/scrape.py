@@ -90,6 +90,12 @@ def fetch_data():
             name = "San Antonio Riverwalk"
         if "saltgrass-downtown-houston" in loc:
             hours = "Mon: Closed; Tues - Sun: Open at 11:00 AM"
+        if "saltgrass-oklahoma-city" in loc:
+            name = "Oklahoma City"
+            add = "1445 West I-240 Service Rd, Suite 13"
+            city = "Oklahoma City"
+            state = "OK"
+            zc = "73159"
         yield [
             website,
             loc,
