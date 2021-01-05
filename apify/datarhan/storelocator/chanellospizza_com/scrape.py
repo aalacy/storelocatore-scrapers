@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -73,6 +74,21 @@ def fetch_data():
         state = "<MISSING>"
         zip_code = "<MISSING>"
         country_code = "<MISSING>"
+        if "chanellospizza.com" in store_url:
+            with SgFirefox() as driver:
+                driver.get(
+                    store_url.replace(
+                        "#content=/Menu/ViewMenu/", "Menu.aspx?T=t&RestaurantID="
+                    )
+                )
+                loc_dom = etree.HTML(driver.page_source)
+            raw_data = loc_dom.xpath('//div[@class="sidebarSelectedLocation"]/p/text()')
+            raw_data = [elem.strip() for elem in raw_data]
+            if len(raw_data) == 4:
+                raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
+            raw_data = raw_data[1].strip().split(", ")[-1].split()
+            state = raw_data[0]
+            zip_code = raw_data[1]
         store_number = poi["id"]
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/@href')
         phone = phone[0].split(":")[-1] if phone else "<MISSING>"
