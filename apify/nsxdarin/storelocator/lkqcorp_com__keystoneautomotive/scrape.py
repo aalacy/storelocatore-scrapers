@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("lkqcorp_com")
+logger = SgLogSetup().get_logger("lkqcorp_com__keystoneautomotive")
 
 
 def write_output(data):
@@ -108,22 +108,23 @@ def fetch_data():
                                 country = "CA"
                             else:
                                 country = "US"
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            if "keystone" in name.lower():
+                                yield [
+                                    website,
+                                    lurl,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():
