@@ -57,7 +57,7 @@ def parse_hours(store):
     ]
     for i in range(7):
         start_time = store[days[i]]["start"]
-        if start_time != None:
+        if start_time is not None:
             if int(str(start_time)[:2]) > 12:
                 start = (
                     "0"
@@ -80,7 +80,7 @@ def parse_hours(store):
 
 
 def handle_missing(field):
-    if field == None or (type(field) == type("x") and len(field.strip()) == 0):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
         return "<MISSING>"
     return field
 
