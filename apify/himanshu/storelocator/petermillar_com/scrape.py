@@ -66,7 +66,6 @@ def fetch_data():
     return_main_object = []
     addresses = []
     locator_domain = "https://www.petermillar.com/"
-    page_url = "<MISSING>"
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -78,7 +77,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     driver.get("https://www.petermillar.com/f/about-us/our-stores.html")
     cookies_list = driver.get_cookies()
@@ -298,7 +296,7 @@ def fetch_data():
                     zipp = "<MISSING>"
             street_address = street_address.replace(">", "").capitalize().strip()
             phone_list = re.findall(
-                re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
+                re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
             )
             if phone_list != []:
                 phone = phone_list[0].strip()
