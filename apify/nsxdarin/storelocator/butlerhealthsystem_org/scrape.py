@@ -74,7 +74,8 @@ def fetch_data():
         hours = ""
         HFound = False
         r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<h3>Hours" in line2:
                 HFound = True
@@ -95,8 +96,27 @@ def fetch_data():
                     hours = hours + "; " + hrs
             if "<h1><span>" in line2:
                 name = line2.split("<h1><span>")[1].split("<")[0]
-            if 'address: "' in line2:
-                add = line2.split('address: "')[1].split('"')[0]
+            if add == "" and '<span itemprop="streetAddress">' in line2:
+                add = (
+                    line2.split('<span itemprop="streetAddress">')[1]
+                    .replace("\t", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .strip()
+                )
+                g = next(lines)
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "<br>" in g:
+                    add = (
+                        add
+                        + " "
+                        + g.split("<br>")[1]
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .strip()
+                    )
             if 'state: "' in line2:
                 state = line2.split('state: "')[1].split('"')[0]
             if 'city: "' in line2:
@@ -118,6 +138,7 @@ def fetch_data():
             .replace("</span>", "")
             .strip()
         )
+        add = add.replace("Rose E. Schneider Family YMCA<br>", "")
         yield [
             website,
             lurl,
