@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("petermillar_com")
 
 
 def write_output(data):
-    with open("data.csv", "w") as output_file:
+    with open("data.csv", "w", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=",")
         writer.writerow(
             [
@@ -61,11 +61,12 @@ def getplace(lat, lon):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox()
+    driver = SgSelenium().firefox("geckodriver")
     getcountrygeo()
     return_main_object = []
     addresses = []
     locator_domain = "https://www.petermillar.com/"
+    page_url = "<MISSING>"
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -77,6 +78,7 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
+    raw_address = ""
     hours_of_operation = "<MISSING>"
     driver.get("https://www.petermillar.com/f/about-us/our-stores.html")
     cookies_list = driver.get_cookies()
@@ -296,7 +298,7 @@ def fetch_data():
                     zipp = "<MISSING>"
             street_address = street_address.replace(">", "").capitalize().strip()
             phone_list = re.findall(
-                re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
+                re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
             )
             if phone_list != []:
                 phone = phone_list[0].strip()
@@ -319,12 +321,6 @@ def fetch_data():
             page_url2,
         ]
         store = ["<MISSING>" if x == "" or x is None else x for x in store]
-        store = [
-            str(x).encode("ascii", "ignore").decode("ascii").strip()
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
         if street_address in addresses:
             continue
         addresses.append(street_address)
