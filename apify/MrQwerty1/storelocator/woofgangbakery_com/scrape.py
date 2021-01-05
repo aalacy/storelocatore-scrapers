@@ -86,9 +86,9 @@ def fetch_data():
             street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
             if street_address == "None":
                 street_address = "<MISSING>"
-            city = a.get("city") or "<MISSING>"
-            state = a.get("state") or "<MISSING>"
-            postal = a.get("postal") or "<MISSING>"
+            city = a.get("city") or "<INACCESSIBLE>"
+            state = a.get("state") or "<INACCESSIBLE>"
+            postal = a.get("postal") or "<INACCESSIBLE>"
             if city.find(",") != -1:
                 state = city.split(",")[-1].strip()
                 city = city.split(",")[0].strip()
