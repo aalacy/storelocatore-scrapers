@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 
 session = SgRequests()
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -38,7 +39,10 @@ def fetch_data():
     base_url = "https://www.heightsfinance.com/"
     data = []
 
-    api_urls = ["https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=1", "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=2"]
+    api_urls = [
+        "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=1",
+        "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=2",
+    ]
 
     for api_url in api_urls:
         r = session.get(api_url)
@@ -47,9 +51,15 @@ def fetch_data():
         for store in store_list:
             page_url = "https://www.heightsfinance.com/find-a-branch/"
             location_name = store["slug"]
-            street_address = store["acf"]["branch_address_1"] + store["acf"]["branch_address_2"]
+            street_address = (
+                store["acf"]["branch_address_1"] + store["acf"]["branch_address_2"]
+            )
             store_number = store["acf"]["branch_id"]
-            hours_of_operation = store["acf"]["branch_normal_hours"] + " " + store["acf"]["branch_special_hours"]
+            hours_of_operation = (
+                store["acf"]["branch_normal_hours"]
+                + " "
+                + store["acf"]["branch_special_hours"]
+            )
             hours_of_operation = hours_of_operation.replace("<br />", "")
             city = store["acf"]["branch_city"]
             state = store["acf"]["branch_state"]
