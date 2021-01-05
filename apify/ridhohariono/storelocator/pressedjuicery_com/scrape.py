@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -9,6 +10,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 
 URL = 'https://api.pressedjuicery.com/stores?sort=name'
 DOMAIN = 'pressedjuicery.com'
@@ -22,14 +24,15 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
 }
 
+
 def parse_hours(store):
     ret = []
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     for i in range(7):
         start_time = store[days[i]]['start']
         if start_time != None:
-            if int(str(start_time)[:2]) > 12: 
-                start = '0'+str(store[days[i]]['start'])[:1] + ':' + str(store[days[i]]['start'])[1:] 
+            if int(str(start_time)[:2]) > 12:
+                start = '0' + str(store[days[i]]['start'])[:1] + ':' + str(store[days[i]]['start'])[1:]
             else:
                 start = str(store[days[i]]['start'])[:2] + ':' + str(store[days[i]]['start'])[2:]
             close = str(store[days[i]]['end'])[:2] + ':' + str(store[days[i]]['end'])[2:]
@@ -37,10 +40,12 @@ def parse_hours(store):
             ret.append("{}: {}-{}".format(day, start, close))
     return ', '.join(ret)
 
+
 def handle_missing(field):
     if field == None or (type(field) == type('x') and len(field.strip()) == 0):
         return '<MISSING>'
     return field
+
 
 def fetch_data():
     stores = session.get(URL, headers=HEADERS).json()['stores']
@@ -67,8 +72,10 @@ def fetch_data():
         locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
     return locations
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
