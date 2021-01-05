@@ -1,7 +1,10 @@
+import re
 import csv
+import json
+from urllib.parse import urljoin
 from lxml import etree
 
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -36,77 +39,77 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     items = []
 
     DOMAIN = "salsaritas.com"
     start_url = "https://salsaritas.com/locations/"
 
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-    all_locations = dom.xpath('//div[@class="wpgmp_locations"]')
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    for poi_html in all_locations:
-        store_url = poi_html.xpath('.//div[@class="wpgmp_location_title_2"]/a/@href')
-        store_url = (
-            "https://salsaritas.com" + store_url[0] if store_url else "<MISSING>"
-        )
-        location_name = poi_html.xpath('.//div[@class="wpgmp_location_title"]/a/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        if poi_html.xpath('.//div[@class="wpgmp_locations_list_map"]/a/@href'):
-            raw_address = poi_html.xpath(
-                './/div[@class="wpgmp_locations_address"]/text()'
-            )[0].split(", ")
-            if len(raw_address) < 3:
-                raw_address = (
-                    poi_html.xpath('.//div[@class="wpgmp_locations_list_map"]/a/@href')[
-                        0
-                    ]
-                    .split("//")[-1]
-                    .split("/@")[0]
-                    .replace("+", " ")
-                    .split(", ")
-                )
-        else:
-            raw_address = poi_html.xpath('.//a[@class="get-directions "]/@href')[
-                0
-            ].split(", ")
-        for elem in ["Suit", "Court", "%"]:
-            if elem in raw_address[1]:
-                raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
-        street_address = raw_address[0].split("=")[-1].replace("%", " ")
-        city = raw_address[1]
-        state = raw_address[2].split()[0]
-        zip_code = raw_address[2].split()[-1]
-        country_code = "<MISSING>"
-        store_number = poi_html.xpath('.//div[@class="wpgmp_location_id"]/text()')
-        store_number = store_number[0] if store_number else "<MISSING>"
-        phone = poi_html.xpath('.//div[@class="wpgmp_locations_phone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi_html.xpath('.//div[@class="wpgmp_locations_list_map"]/a/@href'):
-            geo = (
-                poi_html.xpath('.//div[@class="wpgmp_locations_list_map"]/a/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
-            )
-            if len(geo) == 2:
-                if "https" not in geo[0]:
-                    latitude = geo[0]
-                    longitude = geo[1]
-        hours_of_operation = poi_html.xpath(
-            './/div[@class="wpgmp_locations_opening_hours"]/span/text()'
-        )
-        hours_of_operation = (
-            " ".join(hours_of_operation).replace("<", "")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+    data = dom.xpath('//script[contains(text(), ".maps")]/text()')[0]
+    data = re.findall(r"maps\((.+?)\).data", data.replace("\\n", "").replace("\\", ""))[
+        0
+    ]
+    data = re.sub(r'list-map":"(.+?)","location-id', 'list-map":"","location-id', data)
+    data = re.sub(
+        r'infowindow_setting":"(.+?)","infowindow_bounce',
+        'infowindow_setting":"","infowindow_bounce',
+        data,
+    )
+    data = re.sub(
+        r'order-catering":"(.+?)","phone-catering',
+        'order-catering":"","phone-catering',
+        data,
+    )
+    data = re.sub(
+        r'infowindow_content":"(.+?)","content', 'infowindow_content":"","content', data
+    )
+    data = re.sub(
+        r'%_wpgmp_map_id%":"(.+?)","%_wpgmp_metabox_marker_id',
+        '%_wpgmp_map_id%":"","%_wpgmp_metabox_marker_id',
+        data,
+    )
+    data = re.sub(
+        r'wpgmp_metabox_marker_id%":"(.+?)","taxonomy',
+        'wpgmp_metabox_marker_id%":"","taxonomy',
+        data,
+    )
+    data = re.sub(
+        r'ting_placeholder":"(.+?)"},"map_property',
+        'ting_placeholder":""},"map_property',
+        data,
+    )
+    data = json.loads(data.replace('[data-container="wpgmp-filters-container"]', ""))
 
-        if len(zip_code.strip()) == 2:
-            zip_code = "<MISSING>"
+    for poi in data["places"]:
+        if poi.get("source"):
+            if poi["source"] == "post":
+                continue
+        if poi.get("post_excerpt"):
+            continue
+        store_url = "<MISSING>"
+        if poi["location"]["extra_fields"].get("landing"):
+            store_url = urljoin(start_url, poi["location"]["extra_fields"]["landing"])
+        location_name = poi["title"]
+        street_address = poi["address"].split(", " + poi["location"]["city"])[0]
+        city = poi["location"]["city"]
+        city = city if city else "<MISSING>"
+        if "Suit" not in street_address:
+            street_address = street_address.split(", ")[0]
+        street_address = street_address.replace(city, "")
+        state = poi["location"]["state"]
+        zip_code = poi["location"]["postal_code"]
+        country_code = poi["location"]["country"]
+        store_number = poi["id"]
+        phone = poi["location"]["extra_fields"]["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = poi["categories"][0]["name"]
+        latitude = poi["location"]["lat"]
+        longitude = poi["location"]["lng"]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
