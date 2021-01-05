@@ -69,7 +69,6 @@ def fetch_data():
     stores = json.loads(stores_req.text)["Clubs"]
     for store in stores:
         if store["Status"] != "Inactive":
-            page_url = "https://youfit.com/gym/" + store["URL_Name"]
             locator_domain = website
             location_name = store["Club_Name"]
             if location_name == "":
@@ -96,6 +95,10 @@ def fetch_data():
                 zip = "<MISSING>"
 
             store_number = str(store["ABC_Club_ID"])
+            page_url = (
+                "https://youfit.com/gym/" + store["URL_Name"] + "-" + store_number
+            )
+
             phone = store["Phone_Number"]
 
             location_type = "<MISSING>"

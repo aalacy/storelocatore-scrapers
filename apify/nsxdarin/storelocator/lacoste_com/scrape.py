@@ -100,8 +100,16 @@ def fetch_data():
                             "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        name = name.replace("&#39;", "'").replace("&amp;", "&")
-                        add = add.replace("&#39;", "'").replace("&amp;", "&")
+                        name = (
+                            name.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        add = (
+                            add.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
                         hours = (
                             hours.replace("5:", "Fri:")
                             .replace("1-", "Mon-")
@@ -198,8 +206,16 @@ def fetch_data():
                             "https://global.lacoste.com/us/stores"
                             + item.split('"url":"')[1].split('"')[0]
                         )
-                        name = name.replace("&#39;", "'").replace("&amp;", "&")
-                        add = add.replace("&#39;", "'").replace("&amp;", "&")
+                        name = (
+                            name.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
+                        add = (
+                            add.replace("&#39;", "'")
+                            .replace("&amp;", "&")
+                            .replace("&#35;", "#")
+                        )
                         hours = (
                             hours.replace("5:", "Fri:")
                             .replace("1-", "Mon-")

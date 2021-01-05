@@ -49,6 +49,8 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["permalink"]
+        if "6150-ramey-ave/" in store_url:
+            continue
         location_type = "<MISSING>"
         hours_of_operation = poi["hours"]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
