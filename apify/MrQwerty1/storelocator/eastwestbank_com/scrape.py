@@ -49,7 +49,7 @@ def fetch_data():
         postal = j.get("ZipCode") or "<MISSING>"
         country_code = "US"
         store_number = j.get("BranchNo") or "<MISSING>"
-        page_url = "<MISSING>"
+        page_url = f"https://www.eastwestbank.com/en/branch-locator/branch-details?id={j.get('Id')}"
         location_name = j.get("Name")
         phone = j.get("PhoneNumber") or "<MISSING>"
         latitude = j.get("Latitude") or "<MISSING>"

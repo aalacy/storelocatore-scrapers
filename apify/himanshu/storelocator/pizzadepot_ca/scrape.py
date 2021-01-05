@@ -1,17 +1,16 @@
 import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgselenium import SgSelenium
 
 session = SgRequests()
-from sgselenium import SgSelenium
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -30,13 +29,12 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    driver = SgSelenium().firefox("geckodriver.exe")
+    driver = SgSelenium().firefox("geckodriver")
     driver.get("https://pizzadepot.ca/")
     cookies_list = driver.get_cookies()
     cookies_json = {}
@@ -56,7 +54,8 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36",
     }
     base_url = "https://pizzadepot.ca/"
-    for i in range(11, 44):
+
+    for i in list(range(11, 45)) + list(range(51, 53)):
         page_url = "https://pizzadepot.ca/locationDetails/" + str(i)
         r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
@@ -101,6 +100,7 @@ def fetch_data():
                 lng = map_url[0]
         except:
             continue
+
         store = []
         store.append(base_url)
         store.append(location_name if location_name else "<MISSING>")
@@ -115,15 +115,21 @@ def fetch_data():
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(
-            hours_of_operation.replace("- - - - - - - -", "<MISSING>").replace(
-                "-", " - "
-            )
+            hours_of_operation.replace("- - - - - - - -", "<MISSING>")
+            .replace("day1", "day 1")
+            .replace("-", " - ")
+            .replace("Monday - Thursday  -  - ,  -  - ,  -  - ,  -  - ", "<MISSING>")
         )
         store.append(page_url if page_url else "<MISSING>")
         store = [
-            x.encode("ascii", "ignore").decode("ascii").strip() if x else "<MISSING>"
+            x.replace("\xa0", "").replace(
+                "Monday - Thursday  -  - ,  -  - ,  -  - ,  -  - ", "<MISSING>"
+            )
+            if type(x) == str
+            else x
             for x in store
         ]
+
         yield store
 
 
