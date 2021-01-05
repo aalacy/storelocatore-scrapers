@@ -81,6 +81,9 @@ def fetch_data():
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
+        if store_url == "broken link":
+            store_url = "<MISSING>"
+
         item = [
             DOMAIN,
             store_url,
