@@ -125,6 +125,7 @@ def fetch_data():
                             hours = hours + "; " + day
                 if "Closed</time>" in line2:
                     daycount = daycount + 1
+                    day = day + ": Closed"
                     if daycount <= 7:
                         if hours == "":
                             hours = day
