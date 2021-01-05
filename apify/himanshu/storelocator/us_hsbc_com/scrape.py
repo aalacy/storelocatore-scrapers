@@ -1,7 +1,7 @@
 import csv
 from bs4 import BeautifulSoup as bs
 import time
-from selenium import webdriver
+from selenium import webdriver #ignore_check
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import os
