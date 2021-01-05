@@ -77,6 +77,9 @@ def fetch_data():
             hours_of_operation.append("{} {}".format(day, poi[day]))
         hours_of_operation = " ".join(hours_of_operation)
 
+        if "Temporarily Closed" in location_name:
+            hours_of_operation = "Temporarily Closed"
+
         item = [
             DOMAIN,
             store_url,
