@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "newhorizonacademy.net"
     start_url = "https://www.newhorizonacademy.net/wp-admin/admin-ajax.php?action=nha_get_locations"
