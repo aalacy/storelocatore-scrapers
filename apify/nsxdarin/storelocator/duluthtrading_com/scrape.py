@@ -60,8 +60,8 @@ def fetch_data():
         zc = ""
         store = loc.split("StoreID=")[1]
         phone = ""
-        lat = ""
-        lng = ""
+        lat = "<MISSING>"
+        lng = "<MISSING>"
         hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
@@ -73,8 +73,6 @@ def fetch_data():
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
                 phone = line2.split('"telephone":"')[1].split('"')[0]
             if "day</div>" in line2:
                 day = line2.split(">")[1].split("<")[0]
