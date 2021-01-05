@@ -71,11 +71,14 @@ def fetch_data():
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'name="twitter:title" content="' in line2:
-                name = (
-                    line2.split('name="twitter:title" content="')[1]
-                    .split("|")[0]
-                    .strip()
-                )
+                if "|" in line2:
+                    name = (
+                        line2.split('name="twitter:title" content="')[1]
+                        .split("|")[0]
+                        .strip()
+                    )
+                else:
+                    name = line2.split('"twitter:title" content="')[1].split('"')[0]
             if '"latitude": "' in line2:
                 lat = line2.split('"latitude": "')[1].split('"')[0]
                 lng = line2.split('"longitude": "')[1].split('"')[0]
