@@ -65,8 +65,14 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         days = loc_dom.xpath("//table/tbody/tr/td[1]/text()")[1:]
+        if not days:
+            days = loc_dom.xpath('//td[contains(text(), "Hours:")]/text()')[1:]
         days = [elem.strip() for elem in days]
         hours = loc_dom.xpath("//table/tbody/tr/td[2]/text()")[1:]
+        if not hours:
+            hours = loc_dom.xpath(
+                '//td[contains(text(), "Hours:")]/following-sibling::td/text()'
+            )[1:]
         hours = [elem.strip() for elem in hours]
         hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hours))
         hours_of_operation = (
