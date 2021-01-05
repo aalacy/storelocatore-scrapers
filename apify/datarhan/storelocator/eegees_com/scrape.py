@@ -49,17 +49,30 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "<MISSING>"
+        hoo = etree.HTML(poi["info_popup"])
+        all_text = hoo.xpath('//div[@id="maps-popup"]//text()')
+        all_text = [elem.strip() for elem in all_text if elem.strip()]
+
+        store_url = "https://eegees.com/locations/"
         location_name = poi["title"]
         location_name = (
             location_name.replace("&#8211;", "").replace("&#8217;", "'")
             if location_name
             else "<MISSING>"
         )
-        if poi["address"]:
-            address_dict = usaddress.tag(poi["address"])[0]
-        else:
-            address_dict = usaddress.tag(poi["title"])[0]
+
+        try:
+            add_raw = etree.HTML(poi["sidebar_info"])
+            add_raw = " ".join(add_raw.xpath("//text()"))
+            address_dict = usaddress.tag(add_raw)[0]
+        except Exception:
+            if poi["address"]:
+                address_dict = usaddress.tag(poi["address"])[0]
+            else:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+
         AddressNumber = address_dict.get("AddressNumber")
         AddressNumber = AddressNumber if AddressNumber else " "
         StreetNamePreDirectional = address_dict.get("StreetNamePreDirectional")
@@ -78,15 +91,47 @@ def fetch_data():
         street_address = f"{AddressNumber} {StreetNamePreDirectional} {StreetName} {StreetNamePostType} {OccupancyType} {OccupancyIdentifier}".replace(
             "  ", " "
         )
+        if not street_address.strip():
+            street_address = address_dict["BuildingName"]
         city = address_dict.get("PlaceName")
+        if not city:
+            address_dict = usaddress.tag(poi["address"])[0]
+            city = address_dict.get("PlaceName")
+            if not city:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                zip_code = address_dict.get("PlaceName")
         city = city if city else "<MISSING>"
         state = address_dict.get("StateName")
+        if not state:
+            address_dict = usaddress.tag(poi["address"])[0]
+            state = address_dict.get("StateName")
+            if not city:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                state = address_dict.get("StateName")
+            if not state:
+                state = usaddress.tag(all_text[2])[0].get("StateName")
         state = state if state else "<MISSING>"
         zip_code = address_dict.get("ZipCode")
+        if not zip_code:
+            address_dict = usaddress.tag(poi["address"])[0]
+            zip_code = address_dict.get("ZipCode")
+            if not zip_code:
+                address_dict = usaddress.tag(
+                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
+                )[0]
+                zip_code = address_dict.get("ZipCode")
+            if not zip_code:
+                zip_code = usaddress.tag(all_text[2])[0].get("ZipCode")
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = poi["id"]
         phone = poi["phone"]
+        if not phone:
+            phone = all_text[3]
         phone = phone if phone else "<MISSING>"
         location_type = poi["category_name"]
         location_type = location_type if location_type else "<MISSING>"
@@ -94,10 +139,29 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = etree.HTML(poi["info_popup"])
+
         hoo = hoo.xpath('//h3[contains(text(), "Store Hours")]/following::text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()][:2]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        if state == "<MISSING>":
+            if "Arizona" in location_name:
+                state = "Arizona"
+        if "Arizona" in city:
+            city = city.replace("Arizona", "")
+            state = "Arizona"
+
+        street_address = street_address.split("Offers")[0].strip()
+        if "Get" in phone:
+            phone = "<MISSING>"
+        if len(phone.split()) > 2:
+            phone = "<MISSING>"
+        if "," in phone:
+            phone = "<MISSING>"
+
+        street_address = street_address.replace(
+            "Courtney Page Way Courtney Page Way", "Courtney Page Way"
+        )
 
         item = [
             DOMAIN,
