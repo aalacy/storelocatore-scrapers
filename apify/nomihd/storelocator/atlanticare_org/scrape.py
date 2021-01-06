@@ -83,7 +83,6 @@ def fetch_data():
             location_name = "<MISSING>"
 
         address = store["LocationAddress"]
-        # print(address)
         street_address = "".join(address.split(",")[:-2]).strip()
         city = address.split(",")[-2].strip()
         state = address.split(",")[-1].strip().rsplit(" ", 1)[0].strip()
@@ -95,7 +94,7 @@ def fetch_data():
                 is_digit = False
                 break
 
-        if is_digit == False:
+        if is_digit is False:
             state = state + " " + zip
             zip = "<MISSING>"
 
@@ -133,7 +132,6 @@ def fetch_data():
         location_type = ""
         hours_of_operation = ""
 
-        # page_url = "https://www.atlanticare.org/location/atlanticare-health-park-at-manahawkin"
         store_req = session.get(page_url, headers=headers)
         store_json_text = (
             store_req.text.split("var moduleInstanceData_IH_PublicDetailView")[-1]
@@ -145,8 +143,6 @@ def fetch_data():
             + "}"
         )
         store_json_data = json.loads(store_json_text)
-        # open("page_source.html",'w+b').write(store_json_data["SettingsData"].encode("utf-8"))
-
         store_json = json.loads(store_json_data["SettingsData"].encode("utf-8"))
 
         temp_fields = store_json["StaticPageZones"][0]["Value"]["FieldColumns"]
