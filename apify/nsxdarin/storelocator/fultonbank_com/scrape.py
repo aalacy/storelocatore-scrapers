@@ -49,6 +49,7 @@ def fetch_data():
     website = "fultonbank.com"
     typ = "<MISSING>"
     country = "US"
+    addlist = []
     loc = "<MISSING>"
     hours = "<MISSING>"
     store = "<MISSING>"
@@ -82,27 +83,34 @@ def fetch_data():
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                     try:
-                        phone = (
-                            item.split("Phone: ")[1].split("\\")[0].replace(".", "-")
-                        )
+                        phone = item.split("tel:")[1].split("\\")[0]
                     except:
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    try:
+                        hours = item.split(
+                            'cspan class=\\"hours lobby-hours info-text\\"\\u003e'
+                        )[1].split("\\")[0]
+                    except:
+                        hours = "<MISSING>"
+                    addcity = add + "|" + city
+                    if addcity not in addlist:
+                        addlist.append(addcity)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
