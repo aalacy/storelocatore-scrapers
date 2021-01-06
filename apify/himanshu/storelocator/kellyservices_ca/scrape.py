@@ -9,6 +9,7 @@ from sglogging import SgLogSetup
 logger = SgLogSetup().get_logger("kellyservices_ca")
 session = SgRequests()
 
+
 def write_output(data):
     with open("data.csv", newline="", mode="w") as output_file:
         writer = csv.writer(
@@ -34,6 +35,7 @@ def write_output(data):
         )
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     addressess = []
