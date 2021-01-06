@@ -132,7 +132,9 @@ def fetch_data():
                     driver.switch_to.frame(map_frame)
                     time.sleep(randint(1, 2))
                     map_str = driver.page_source
-                    geo = re.findall(r'[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+', map_str)[0].split(",")
+                    geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
+                        0
+                    ].split(",")
                     latitude = geo[0]
                     longitude = geo[1]
                 except:
