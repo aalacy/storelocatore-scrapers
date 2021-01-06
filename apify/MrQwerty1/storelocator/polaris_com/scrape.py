@@ -44,7 +44,9 @@ def get_data(coord):
     r = session.get(api_url)
     js = r.json()
     for j in js:
-        page_url = "<MISSING>"
+        page_url = j.get("webSite") or "<MISSING>"
+        if page_url.lower().count("http") > 1:
+            page_url = page_url.replace("http://", "", 1)
         location_name = j.get("businessName").strip()
         street_address = (
             f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"

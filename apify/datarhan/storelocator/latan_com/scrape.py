@@ -52,8 +52,13 @@ def fetch_data():
         response = session.get(url)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//a[@class="btn location-btn"]/@href')
+        pages = dom.xpath('//a[@class="page-numbers"]/@href')
+        for page_url in pages:
+            response = session.get(page_url)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@class="btn location-btn"]/@href')
 
-    for store_url in all_locations:
+    for store_url in list(set(all_locations)):
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -64,7 +69,7 @@ def fetch_data():
         city = location_name
         city = city if city else "<MISSING>"
         state = address_raw[1].split()[0]
-        state = state if state else "<MISSING>"
+        state = state.strip() if state else "<MISSING>"
         zip_code = address_raw[1].split()[-1]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
@@ -78,6 +83,13 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+
+        street_address = street_address.split(state)[0].strip()
+        city = city.split("–")[0].strip()
+        if "(" not in phone:
+            phone = "<MISSING>"
+        if len(state) != 2:
+            state = "<MISSING>"
 
         item = [
             DOMAIN,

@@ -35,6 +35,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addresses = []
     base_url = "https://freemanhealth.com"
     url = "https://freemanhealth.com/all-locations"
     r = session.get(url)
@@ -141,6 +142,9 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(hours_of_operation)
             store.append(med_url)
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
             yield store
 
         if int(counts) > 10:
@@ -241,6 +245,9 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(hours_of_operation)
                     store.append(med_url)
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
                     yield store
 
 
