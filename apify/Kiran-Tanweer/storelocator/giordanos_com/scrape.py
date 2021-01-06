@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 import time
 import usaddress
 from sgrequests import SgRequests
@@ -49,20 +48,20 @@ def fetch_data():
     url = "https://giordanos.com/all-locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find("div", {"class": "locationsection"}).findAll('a')
+    linklist = soup.find("div", {"class": "locationsection"}).findAll("a")
     for link in linklist:
-        page = 'https://giordanos.com' + link['href']
+        page = "https://giordanos.com" + link["href"]
         p = session.get(page, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
         address = soup.find("div", {"class": "address"}).text
-        address = address.replace(',', '').strip()
+        address = address.replace(",", "").strip()
         address = usaddress.parse(address)
 
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -94,7 +93,7 @@ def fetch_data():
         phone = soup.find("div", {"class": "phone my-2"}).text.strip()
 
         hours = soup.find("div", {"class": "hours"}).text.strip()
-        hours = hours.replace('\n', ', ')
+        hours = hours.replace("\n", ", ")
 
         title = soup.find("h1", {"class": "text-center"}).text.strip()
 
@@ -127,4 +126,3 @@ def scrape():
 
 
 scrape()
-
