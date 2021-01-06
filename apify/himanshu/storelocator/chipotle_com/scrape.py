@@ -1,5 +1,4 @@
 import csv
-import re
 import datetime
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -44,7 +43,6 @@ def fetch_data():
 
     today = datetime.date.today().strftime("%Y-%m-%d")
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    return_main_object = []
     addresses = []
     coords = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
