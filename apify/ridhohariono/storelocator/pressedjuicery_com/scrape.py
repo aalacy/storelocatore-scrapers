@@ -57,7 +57,8 @@ def parse_hours(store):
     ]
     for i in range(7):
         start_time = store[days[i]]["start"]
-        if start_time is not None:
+        end_time = store[days[i]]["end"]
+        if start_time is not None and end_time is not None:
             if int(str(start_time)[:2]) > 12:
                 start = (
                     "0"
@@ -76,6 +77,10 @@ def parse_hours(store):
             )
             day = days[i]
             ret.append("{}: {}-{}".format(day, start, close))
+        else:
+            day = days[i]
+            ret.append("{}: CLOSED".format(day))
+
     return ", ".join(ret)
 
 
@@ -90,14 +95,14 @@ def fetch_data():
     locations = []
     for store in stores:
         locator_domain = DOMAIN
-        page_url = "<MISSING>"
+        page_url = "https://pressedjuicery.com/pages/juice-bar-locations"
         location_name = handle_missing(store["name"])
         street_address = handle_missing(store["streetAddress"])
         city = handle_missing(store["locality"])
         state = handle_missing(store["region"])
         zip_code = handle_missing(store["postal"])
         country_code = handle_missing(store["country"])
-        store_number = "<MISSING>"
+        store_number = handle_missing(store["number"])
         phone = handle_missing(store["phone"])
         location_type = "<MISSING>"
         latitude = handle_missing(store["geometry"]["coordinates"][1])
