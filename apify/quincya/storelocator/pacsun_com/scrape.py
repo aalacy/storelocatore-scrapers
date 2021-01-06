@@ -1,4 +1,5 @@
 import csv
+import json
 import time
 
 from bs4 import BeautifulSoup
@@ -83,6 +84,14 @@ def fetch_data():
 
         locator_domain = "pacsun.com"
 
+        all_scripts = base.find_all("script")
+        for script in all_scripts:
+            if "storeList" in str(script):
+                script = str(script)
+                break
+        js = script.split("=")[1].split("}]")[0] + "}]"
+        store_json = json.loads(js)
+
         for store in stores:
             location_name = store.h2.text.strip()
             if "CLOSED" in location_name.upper():
@@ -108,9 +117,14 @@ def fetch_data():
             location_type = "<MISSING>"
 
             hours_of_operation = store.find(class_="storehours").get_text(" ").strip()
-
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+
+            for j in store_json:
+                if j["ID"] == store_number:
+                    latitude = j["lat"]
+                    longitude = j["long"]
+                    break
 
             data.append(
                 [
