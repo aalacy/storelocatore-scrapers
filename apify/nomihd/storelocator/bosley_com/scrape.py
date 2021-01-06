@@ -104,7 +104,7 @@ def fetch_data():
 
         city_state_zip_index = -1
         for add in range(0, len(add_list)):
-            if ", " in add_list[add] and not "Suite" in add_list[add]:
+            if ", " in add_list[add] and "Suite" not in add_list[add]:
                 city_state_zip = add_list[add]
                 city_state_zip_index = add
                 break
