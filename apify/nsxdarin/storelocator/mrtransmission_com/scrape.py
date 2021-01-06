@@ -59,7 +59,10 @@ def fetch_data():
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"lng":')[1].split(",")[0]
                     phone = item.split('"phone":"')[1].split('"')[0]
-                    store = item.split(" #")[1].split('"')[0].strip()
+                    try:
+                        store = item.split("#")[1].split('"')[0].strip()
+                    except:
+                        store = "<MISSING>"
                     loc = item.split('"url":"')[1].split('"')[0]
                     hours = item.split(',"text":"')[1].split('"')[0]
                     name = item.split('"title":"')[1].split('"')[0]
@@ -77,6 +80,7 @@ def fetch_data():
                         .replace("  ", " ")
                         .replace("  ", " ")
                     )
+                    hours = hours.replace("\\n", "")
                     if country == "US" or country == "CA":
                         yield [
                             website,
