@@ -81,7 +81,9 @@ def fetch_data():
         else:
             city = location_name.split("-")[-2].strip()
 
-        street_address = raw_address[0][: raw_address[0].rfind(city)].replace("Norwic", "").strip()
+        street_address = (
+            raw_address[0][: raw_address[0].rfind(city)].replace("Norwic", "").strip()
+        )
         state = raw_address[1].strip()[:-6].strip()
         zip_code = raw_address[-1][-6:].strip()
 
