@@ -43,7 +43,7 @@ def fetch_data():
     website = "englishcolor.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
+    loc = "http://www.englishcolor.com/locations/"
     store = "<MISSING>"
     hours = "<MISSING>"
     lat = "<MISSING>"
