@@ -39,58 +39,40 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
-    DOMAIN = "twinpeaksrestaurant.com"
-    start_url = "https://twinpeaksrestaurant.com/api/locations"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
-    }
-
-    response = session.get(start_url, headers=headers)
+    DOMAIN = "olympiasports.net"
+    start_url = "https://www.olympiasports.net/on/demandware.store/Sites-OlympiaSports-Site/en_US/Stores-FindStores?showMap=false&radius=50000&lat=34.1571232&long=-118.4913086"
+    response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = poi["link"]
-        location_name = poi["acf"]["city"]
+    for poi in data["stores"]:
+        store_url = "<MISSING>"
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["acf"]["address"]
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += ", " + poi["address2"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["acf"]["city"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = "<MISSING>"
-        if poi["acf"]["state"]:
-            state = poi["acf"]["state"]["value"]
+        state = poi["stateCode"]
         state = state if state else "<MISSING>"
-        zip_code = poi["acf"]["postal"]
+        zip_code = poi["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["acf"]["country"]["value"]
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code != "US":
-            continue
-        store_number = poi["id"]
+        country_code = poi["countryCode"]
+        store_number = poi["ID"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi["acf"]["phone_number"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if poi["acf"]["market"]:
-            location_type = poi["acf"]["market"]["post_type"]
-        if poi["acf"]["status"] == "coming_soon":
-            location_type = "coming soon"
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["acf"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["acf"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        if poi["acf"]["hours"]:
-            for elem in poi["acf"]["hours"]:
-                day = elem["day"]["label"]
-                opens = elem["opens"]
-                closes = elem["closes"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        latitude = poi["latitude"]
+        longitude = poi["longitude"]
+        hours_of_operation = "<MISSING>"
+
+        if len(city) == 2:
+            state = city
+            city = poi["stateCode"]
 
         item = [
             DOMAIN,
@@ -108,8 +90,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if location_name not in scraped_items:
+            scraped_items.append(location_name)
+            items.append(item)
 
     return items
 
