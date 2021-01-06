@@ -4,7 +4,6 @@ from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("aspendental_com")
 
-
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -26,11 +25,6 @@ FIELDS = [
     "longitude",
     "hours_of_operation",
 ]
-
-
-def get_session():
-    session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=3)
-    return session
 
 
 def write_output(data):
@@ -129,18 +123,12 @@ def extract(location):
 
 def validate_dup(location, tracker):
     data = location.get("data")
-    if not data:
-        return True, None
-
     id = data.get("id")
-    if not id:
-        return True, None
 
     return id in tracker, id
 
 
 def query_locations(page=0, dedup_tracker=[]):
-    session = get_session()
     url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query"
     params = {
         "v": "20190101",
@@ -156,7 +144,7 @@ def query_locations(page=0, dedup_tracker=[]):
         "locale": "en",
     }
 
-    data = session.get(url, params=params, headers=headers).json()
+    data = session.request(url, params=params, headers=headers).json()
     results = data.get("response").get("results")
 
     for location in results:
@@ -180,4 +168,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
