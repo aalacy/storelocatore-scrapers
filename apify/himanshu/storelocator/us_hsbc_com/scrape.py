@@ -1,7 +1,7 @@
 import csv
 from bs4 import BeautifulSoup as bs
 import time
-from selenium import webdriver
+from selenium import webdriver #ignore_check
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import os
@@ -28,11 +28,11 @@ def setUp():
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("hsbc.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -51,7 +51,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 

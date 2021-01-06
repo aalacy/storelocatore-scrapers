@@ -39,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
@@ -66,9 +66,13 @@ def fetch_data():
         address_raw = etree.HTML(poi["address"])
         address_raw = address_raw.xpath(".//text()")
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        if len(address_raw) == 3:
+            address_raw = [", ".join(address_raw[:2])] + address_raw[2:]
         street_address = address_raw[0]
         city = address_raw[1].split(",")[0]
         state = address_raw[1].split(",")[-1].split()[0]
+        if state.isdigit():
+            state = "<MISSING>"
         zip_code = address_raw[1].split(",")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
@@ -87,6 +91,10 @@ def fetch_data():
             hours_of_operation[0].strip() if hours_of_operation else "<MISSING>"
         )
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+            phone = phone[0] if phone else "<MISSING>"
 
         item = [
             DOMAIN,

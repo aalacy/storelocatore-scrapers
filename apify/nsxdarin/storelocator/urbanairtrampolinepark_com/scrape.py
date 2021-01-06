@@ -89,23 +89,25 @@ def fetch_data():
                     city = line2.split('"addressLocality":"')[1].split('"')[0]
                     state = line2.split('"addressRegion":"')[1].split('"')[0]
                     zc = line2.split('"postalCode":"')[1].split('"')[0]
-                    if '<div class="time">' in line2:
-                        days = line2.split('<div class="time">')
-                        for day in days:
-                            if "CONTACT US</a>" not in day:
-                                hrs = (
-                                    day.split("</div>")[0]
-                                    .replace("<strong>", "")
-                                    .replace("</strong>", "")
-                                    .strip()
-                                    .replace("  ", " ")
-                                )
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
+            if '<div class="time">' in line2:
+                days = line2.split('<div class="time">')
+                for day in days:
+                    if "CONTACT US</a>" not in day:
+                        hrs = (
+                            day.split("</div>")[0]
+                            .replace("<strong>", "")
+                            .replace("</strong>", "")
+                            .strip()
+                            .replace("  ", " ")
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if '">;' in hours:
+            hours = hours.split('">;')[1].strip()
         if add != "":
             yield [
                 website,

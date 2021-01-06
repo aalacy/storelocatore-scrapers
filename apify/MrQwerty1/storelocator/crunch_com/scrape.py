@@ -72,7 +72,7 @@ def get_data(_id):
     hours_of_operation = j.get("hours").replace("\n", ";") or "<MISSING>"
     status = j.get("status") or ""
 
-    if hours_of_operation == "Open 24/7" or status.find("coming") != -1:
+    if status.find("coming") != -1:
         hours_of_operation = "Coming Soon"
     elif hours_of_operation == "Mon - Sun: Closed":
         hours = j.get("special_hours") or ""
