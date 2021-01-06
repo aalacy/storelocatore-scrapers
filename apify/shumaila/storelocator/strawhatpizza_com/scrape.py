@@ -93,6 +93,30 @@ def fetch_data():
             )[0]
         except:
             pass
+        try:
+            hours = hours.split(
+                "We ",
+            )[0]
+        except:
+            pass
+        try:
+            hours = hours.split(
+                "NOW ",
+            )[0]
+        except:
+            pass
+        try:
+            hours = hours.split(
+                "Fax ",
+            )[0]
+        except:
+            pass
+        try:
+            hours = hours.split(
+                "ORDER ",
+            )[0]
+        except:
+            pass
         data.append(
             [
                 "https://www.strawhatpizza.com/",
