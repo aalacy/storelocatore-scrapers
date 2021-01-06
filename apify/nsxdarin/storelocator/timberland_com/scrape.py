@@ -60,7 +60,7 @@ def fetch_data():
         if "<address1>" in line:
             add = line.split("<address1>")[1].split("<")[0]
         if "<address2>" in line:
-            line.split("<address2>")[1].split("<")[0]
+            add = add + " " + line.split("<address2>")[1].split("<")[0]
             add = add.strip()
         if "<city>" in line:
             city = line.split("<city>")[1].split("<")[0]
@@ -107,6 +107,15 @@ def fetch_data():
                 + hours7
             )
             if state != "":
+                if "0" not in hours or ":" not in hours:
+                    hours = "<MISSING>"
+                name = name.replace("Timberland", "Timberland ").replace("  ", " ")
+                loc = (
+                    "https://locations.timberland.com/"
+                    + state.lower()
+                    + "/"
+                    + city.lower().replace(" ", "-")
+                )
                 yield [
                     website,
                     loc,
