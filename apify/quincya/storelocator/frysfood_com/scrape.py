@@ -35,7 +35,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.picknsave.com/storelocator-sitemap.xml"
+    base_link = "https://www.frysfood.com/storelocator-sitemap.xml"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -48,7 +48,7 @@ def fetch_data():
     items = base.find_all("loc")
 
     data = []
-    locator_domain = "picknsave.com"
+    locator_domain = "frysfood.com"
 
     for item in items:
         link = item.text
@@ -72,6 +72,8 @@ def fetch_data():
             store_number = link.split("/")[-1]
             location_type = "<MISSING>"
             phone = store["telephone"]
+            if not phone:
+                phone = "<MISSING>"
             hours_of_operation = store["openingHours"][0]
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
