@@ -39,6 +39,11 @@ def write_output(data):
             writer.writerow(row)
 
 
+def pull_content(url):
+    soup = bs(session.get(url).content, "html.parser")
+    return soup
+
+
 def handle_missing(field):
     if field is None or (isinstance(field, str) and len(field.strip()) == 0):
         return "<MISSING>"
@@ -123,11 +128,9 @@ def fetch_data():
     return locations
 
 
-def pull_content(url):
-    soup = bs(session.get(url).content, "html.parser")
-    return soup
-
-
-if __name__ == "__main__":
+def scrape():
     data = fetch_data()
     write_output(data)
+
+
+scrape()
