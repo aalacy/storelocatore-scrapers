@@ -65,7 +65,9 @@ def fetch_data():
         store_url = urljoin(start_url, url[0])
         location_name = poi_html.xpath('.//span[@class="red"]/text()')
         location_name = (
-            location_name[0].replace(",", "").strip() if location_name else "<MISSING>"
+            location_name[0].replace(",", "").strip().split("Please")[0]
+            if location_name
+            else "<MISSING>"
         )
         try:
             loc_response = session.get(store_url)
@@ -97,7 +99,9 @@ def fetch_data():
                 elem.strip() for elem in hours_of_operation if elem.strip()
             ]
             hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                " ".join(hours_of_operation).split("Call")[0].split("Please")[0]
+                if hours_of_operation
+                else "<MISSING>"
             )
         except Exception:
             raw_address = poi_html.xpath('.//div[@class="locationAddress"]/a/text()')
@@ -124,10 +128,17 @@ def fetch_data():
                 elem.strip() for elem in hours_of_operation if elem.strip()
             ]
             hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                " ".join(hours_of_operation).split("Call")[0]
+                if hours_of_operation
+                else "<MISSING>"
             )
 
+        # Exceptions
         street_address = street_address.replace("Two locations to serve you!, ", "")
+        hours_of_operation = (
+            "00 pm".join(hours_of_operation.split("00 pm")[:-1]) + "00 pm"
+        )
+        hours_of_operation = hours_of_operation.split("Closed Thanksgiving")[0]
 
         item = [
             DOMAIN,

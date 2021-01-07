@@ -83,6 +83,8 @@ def fetch_data():
         longitude = geo[1]
         hoo = loc_dom.xpath('//div[@class="hrs"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="col hours"]/p//text()')[:6]
         hours_of_operation = " ".join(hoo[1:]) if hoo else "<MISSING>"
 
         item = [
