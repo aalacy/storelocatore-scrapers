@@ -1,7 +1,6 @@
 import csv
 from urllib.parse import urljoin
 from lxml import etree
-from requests.models import HTTPBasicAuth
 
 from sgrequests import SgRequests
 
