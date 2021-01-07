@@ -64,6 +64,11 @@ def fetch_data():
         raw_address = loc_dom.xpath(
             '//div[a[@style="text-decoration: underline;"]]/following-sibling::div[1]/text()'
         )[0].split(",")
+        if len(raw_address) == 1:
+            street_address += ", " + raw_address[0]
+            raw_address = loc_dom.xpath(
+                '//div[a[@style="text-decoration: underline;"]]/following-sibling::div[2]/text()'
+            )[0].split(",")
         city = raw_address[0]
         state = raw_address[-1].split()[0]
         zip_code = raw_address[-1].split()[-1]
