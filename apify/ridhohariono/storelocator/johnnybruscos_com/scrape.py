@@ -105,7 +105,6 @@ def fetch_data():
                 ]
             )
             hours_content = store_content.find("div", {"class": "hours"})
-            day = hours_content.find_all("div", {"class": "h-label"})
             hours = hours_content.get_text(strip=True, separator=",")
             hours_of_operation = handle_missing(parse_hours(hours))
             locations.append(
