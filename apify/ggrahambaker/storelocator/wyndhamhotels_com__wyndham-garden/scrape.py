@@ -62,7 +62,6 @@ def fetch_data():
             location_url = base_url + k
             if "mexico" in location_url:
                 break
-            print(location_url)
             try:
                 r1 = session.get(location_url, headers=headers, allow_redirects=False)
             except:
