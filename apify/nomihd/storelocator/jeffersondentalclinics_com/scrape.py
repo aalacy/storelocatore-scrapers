@@ -3,9 +3,9 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import lxml.html
 
-website = "bestwayrto.com"
+website = "jeffersondentalclinics.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -62,79 +62,67 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://www.bestwayrto.com/wp-admin/admin-ajax.php"
+    search_url = "https://www.jeffersondentalclinics.com/locations"
+    stores_req = session.get(search_url, headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores_list = stores_sel.xpath('//ul[@class="all-city"]/li/a/@href')
+    for store_url in stores_list:
+        page_url = store_url
 
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-        max_search_results=25,
-    )
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
+        json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
 
-    data = {
-        "address": "",
-        "formdata": "addressInput=",
-        "name": "",
-        "options[distance_unit]": "miles",
-        "options[dropdown_style]": "none",
-        "options[ignore_radius]": "0",
-        "options[immediately_show_locations]": "1",
-        "options[initial_radius]": "500",
-        "options[label_directions]": "",
-        "options[label_email]": "Email",
-        "options[label_fax]": "Fax: ",
-        "options[label_phone]": "Phone: ",
-        "options[label_website]": "View Store Page",
-        "options[loading_indicator]": "",
-        "options[map_center]": "United States",
-        "options[map_domain]": "maps.google.com",
-        "options[map_end_icon]": "https://www.bestwayrto.com/wp-content/plugins/store-locator-le/images/icons/bulb_purple-dot.png",
-        "options[map_home_icon]": "https://www.bestwayrto.com/wp-content/plugins/store-locator-le/images/icons/blank.png",
-        "options[map_region]": "us",
-        "options[map_type]": "roadmap",
-        "options[message_bad_address]": "Could not locate this address. Please try a different location.",
-        "options[message_no_results]": "No locations found.",
-        "options[no_autozoom]": "0",
-        "options[use_sensor]": "0",
-        "options[zoom_level]": "9",
-        "options[zoom_tweak]": "1",
-        "radius": "50",
-        "tags": "",
-        "action": "csl_ajax_onload",
-    }
-    for lat, long in search:
-        log.info(f"{(lat, long)} | remaining: {search.items_remaining()}")
-        data["lat"] = lat
-        data["lng"] = long
-        data["options[map_center_lat]"] = lat
-        data["options[map_center_lng]"] = long
+        hours_of_operation = ""
+        store_json = None
+        for js in json_list:
+            if "openingHours" in js:
+                hours_of_operation = (
+                    ";".join(
+                        js.split('"openingHours": ')[1]
+                        .strip()
+                        .split('"contactPoint"')[0]
+                        .strip()
+                        .replace('",', "")
+                        .replace('"', "")
+                        .strip()
+                        .split("\n")
+                    )
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                )
 
-        stores_req = session.post(search_url, data=data, headers=headers)
-        stores = json.loads(stores_req.text)["response"]
+                store_json = json.loads(
+                    js.split('"openingHours": ')[0].strip()
+                    + '"contactPoint"'
+                    + js.split('"openingHours": ')[1]
+                    .strip()
+                    .split('"contactPoint"')[1]
+                    .strip()
+                )
+                break
 
-        for store in stores:
-
-            latitude = store["lat"]
-            longitude = store["lng"]
-
-            latlng_tuple = (latitude, longitude)
-            latlng_list = [latlng_tuple]
-            search.mark_found(latlng_list)
-
-            page_url = "<MISSING>"
-
+        if store_json is not None:
             locator_domain = website
-            location_name = store["name"]
+            location_name = store_json["name"]
             if location_name == "":
                 location_name = "<MISSING>"
 
-            street_address = store["address"]
-            if store["address2"] is not None and len(store["address2"]) > 0:
-                street_address = street_address + ", " + store["address2"]
-            city = store["city"]
-            state = store["state"]
-            zip = store["zip"]
+            street_address = store_json["address"]["streetAddress"].strip()
+            city = store_json["address"]["addressLocality"].strip()
+            state = (
+                store_json["address"]["addressRegion"].strip().replace(",", "").strip()
+            )
+            zip = store_json["address"]["postalCode"].strip()
 
-            country_code = "<MISSING>"
+            if state.isdigit():
+                zip = state
+                state = "<MISSING>"
+
+            country_code = store_json["address"]["addressCountry"]
 
             if street_address == "" or street_address is None:
                 street_address = "<MISSING>"
@@ -148,11 +136,26 @@ def fetch_data():
             if zip == "" or zip is None:
                 zip = "<MISSING>"
 
-            store_number = str(store["id"])
-            phone = store["phone"]
+            temp_address = "".join(
+                store_sel.xpath('//span[@class="location-address"]/text()')
+            ).strip()
+            if state == "<MISSING>":
+                state = temp_address.split(",", 1)[1].strip().split(" ")[0].strip()
+                if state.isdigit():
+                    state = temp_address.split(",", 1)[0].strip().split(" ")[-1].strip()
 
-            location_type = "<MISSING>"
-            hours_of_operation = store["hours"]
+            if city == "<MISSING>":
+                city = temp_address.split(",")[1].strip().replace(state, "").strip()
+
+            store_number = "<MISSING>"
+            phone = store_json["contactPoint"]["telephone"]
+
+            location_type = store_json["@type"]
+            if location_type == "" or location_type is None:
+                location_type = "<MISSING>"
+
+            latitude = store_json["geo"]["latitude"]
+            longitude = store_json["geo"]["longitude"]
 
             if latitude == "" or latitude is None:
                 latitude = "<MISSING>"
