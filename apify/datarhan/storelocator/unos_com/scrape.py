@@ -1,5 +1,6 @@
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -42,31 +43,42 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "unos.com"
-    start_url = "https://www.unos.com/select-restaurant.php"
+    start_url = "https://restaurants.unos.com/locations/restaurants.html"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//a[contains(@href, "locations/")]/@href')
 
-    for poi_html in dom.xpath('//div[@class="location-info"]'):
-        store_url = "<MISSING>"
-        location_name = poi_html.xpath('.//span[@class="location-name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath('.//div[@class="location-address"]/text()')
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        if len(raw_address) == 3:
-            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//div[@id="page-header"]/h1/text()')
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath(
+            '//div[@class="kw-detail-info"]/div/div[@style="margin-bottom: 10px"]/span/text()'
+        )
         city = raw_address[1].split(", ")[0]
         street_address = raw_address[0]
         state = raw_address[1].split(", ")[1].split()[0]
         zip_code = raw_address[1].split(", ")[1].split()[-1]
         country_code = "<MISSING>"
         location_type = "<MISSING>"
-        if poi_html.xpath(".//a/@onclick"):
-            store_number = poi_html.xpath(".//a/@onclick")[0].split("'")[-2]
-        phone = poi_html.xpath('.//span[@class="location-phone"]/text()')[0]
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="kw-detail-info"]/div/div/span/text()')
+        if len(phone) > 2:
+            phone = phone[2]
+        else:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = loc_dom.xpath(
+            '//div[contains(text(), " Hours of Operation: ")]/p[1]/text()'
+        )
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

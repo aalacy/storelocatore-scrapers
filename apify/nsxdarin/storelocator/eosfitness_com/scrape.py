@@ -92,12 +92,18 @@ def fetch_data():
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
             if 'club-info__info club-info__info--phone">' in line2:
-                phone = (
-                    line2.split('club-info__info club-info__info--phone">')[1]
-                    .split("<")[0]
-                    .strip()
-                )
+                if '<a href="tel:' not in line2:
+                    phone = (
+                        line2.split('club-info__info club-info__info--phone">')[1]
+                        .split("<")[0]
+                        .strip()
+                    )
+                else:
+                    phone = (
+                        line2.split('<a href="tel:')[1].split('"')[0].replace("+1", "")
+                    )
         hours = "Sun-Sat: 24 Hours"
+        name = name.replace("&#8211;", "-")
         if add != "":
             yield [
                 website,
