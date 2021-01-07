@@ -104,7 +104,9 @@ def fetch_data():
         location_type = poi["categories"][0]["name"]
         latitude = poi["location"]["lat"]
         longitude = poi["location"]["lng"]
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = poi["location"]["extra_fields"]["opening-hours"].replace(
+            "<br>", ""
+        )
 
         item = [
             DOMAIN,
