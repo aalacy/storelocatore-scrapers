@@ -49,7 +49,7 @@ def fetch_data():
     location_url1 = "https://www.wyndhamhotels.com/ramada/locations"
     try:
         r = session.get(location_url1, headers=headers, allow_redirects=False)
-    except Exception as e:
+    except:
         pass
     soup = BeautifulSoup(r.text, "lxml")
     a = soup.find("div", {"class": "aem-rendered-content"}).find_all(
@@ -63,7 +63,7 @@ def fetch_data():
             location_url = base_url + k
             try:
                 r1 = session.get(location_url, headers=headers, allow_redirects=False)
-            except Exception as e:
+            except:
                 pass
             soup1 = BeautifulSoup(r1.text, "lxml")
             b1 = soup1.find("script", {"type": "application/ld+json"})
