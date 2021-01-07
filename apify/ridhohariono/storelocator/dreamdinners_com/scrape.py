@@ -130,6 +130,7 @@ def pull_content(url):
 
     return soup
 
+
 if __name__ == "__main__":
     data = fetch_data()
     write_output(data)
