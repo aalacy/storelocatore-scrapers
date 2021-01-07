@@ -87,7 +87,7 @@ def fetch_data():
                 name = line2.split('"@id": "')[1].split('"name": "')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
+                state = "<MISSING>"
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 lat = line2.split(',"latitude":')[1].split(",")[0]
                 lng = line2.split('"longitude":')[1].split("}")[0]
@@ -98,6 +98,7 @@ def fetch_data():
                     .split('"]')[0]
                     .replace('","', "; ")
                 )
+        hours = hours.replace("24 HRS RETURN;", "").strip()
         yield [
             website,
             loc,
@@ -193,6 +194,7 @@ def fetch_data():
             lat = "51.155784606934"
             lng = "-0.15942700207233"
             hours = "24 HRS RETURN; MO - FR: 08:00 - 18:00; SA - SU: 08:00 - 13:00; BANK HOLIDAY: 08:00 - 13:00"
+        hours = hours.replace("24 HRS RETURN;", "").strip()
         yield [
             website,
             loc,
