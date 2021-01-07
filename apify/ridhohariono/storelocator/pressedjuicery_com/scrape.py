@@ -102,7 +102,7 @@ def fetch_data():
         state = handle_missing(store["region"])
         zip_code = handle_missing(store["postal"])
         country_code = handle_missing(store["country"])
-        store_number = handle_missing(store["number"])
+        store_number = store["id"]
         phone = handle_missing(store["phone"])
         location_type = "<MISSING>"
         latitude = handle_missing(store["geometry"]["coordinates"][1])
