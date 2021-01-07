@@ -1,8 +1,10 @@
+import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 
 
 def write_output(data):
@@ -76,15 +78,12 @@ def fetch_data():
         phone = store_dom.xpath('//span[@itemprop="telephone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = store_dom.xpath("//div/@itemtype")[0].split("/")[-1]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = store_dom.xpath('//div[@class="store_hrs"]//text()')
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        geo = re.findall(
+            "!2d(.+?)!2m", store_dom.xpath('//div[@itemprop="hasMap"]/iframe/@src')[0]
+        )[0].split("!3d")
+        latitude = geo[1]
+        longitude = geo[0]
+        hours_of_operation = "<INACCESSIBLE>"
 
         item = [
             DOMAIN,
