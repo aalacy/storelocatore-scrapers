@@ -3,6 +3,7 @@ import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
+
 DOMAIN = "dreamdinners.com"
 BASE_URL = "https://dreamdinners.com"
 LOCATION_URL = "https://dreamdinners.com/main.php?page=locations"
@@ -86,7 +87,6 @@ def fetch_data():
                             .rstrip()
                             .strip()
                         )
-                        print(street_address)
                         parse_addr = usaddress.tag(address)
                         city = handle_missing(parse_addr[0]["PlaceName"])
                         state = handle_missing(parse_addr[0]["StateName"])
@@ -120,14 +120,11 @@ def fetch_data():
                                 hours_of_operation,
                             ]
                         )
-
     return locations
 
 
 def pull_content(url):
-
     soup = bs(session.get(url).content, "html.parser")
-
     return soup
 
 
