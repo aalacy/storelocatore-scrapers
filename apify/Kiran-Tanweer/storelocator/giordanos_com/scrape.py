@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
+import re
 import time
 import usaddress
 from sgrequests import SgRequests
@@ -97,6 +98,17 @@ def fetch_data():
 
         title = soup.find("h1", {"class": "text-center"}).text.strip()
 
+        coords = soup.find("body").find("script")
+        coords = str(coords)
+        if page == "https://giordanos.com/locations/las-vegas-nv/":
+            coords = soup.find("body").findAll("script")[2]
+            coords = str(coords)
+            coords = coords.split("center: {")[1].split("}")[0]
+        else:
+            coords = coords.split("center: {")[1].split("}")[0]
+        lat = coords.split("lat: ")[1].split(",")[0]
+        lng = coords.split("lng: ")[1]
+
         data.append(
             [
                 "https://giordanos.com/",
@@ -110,8 +122,8 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                lat,
+                lng,
                 hours,
             ]
         )
