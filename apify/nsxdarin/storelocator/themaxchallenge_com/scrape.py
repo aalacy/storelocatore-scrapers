@@ -81,7 +81,48 @@ def fetch_data():
                 lat = line2.split('"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
+            if "saddr=&daddr=" in line2 and add == "":
+                if "477 NJ-10" in line2:
+                    add = "477 NJ-10"
+                    city = "Randolph"
+                    state = "NJ"
+                    zc = "07869"
+                elif "6401 Jericho Turnpike" in line2:
+                    add = "6401 Jericho Turnpike 105"
+                    city = "Commack"
+                    state = "NY"
+                    zc = "11725"
+                elif "mill-basin" in loc:
+                    add = "<MISSING>"
+                    city = "Mill Basin"
+                    state = "NY"
+                    zc = "11234"
+                elif "houston-tx" in loc:
+                    add = "84 N Braeswood Blvd"
+                    city = "Houston"
+                    state = "TX"
+                    zc = "77096"
+                else:
+                    addinfo = line2.split("saddr=&daddr=")[1].split('"')[0]
+                    add = addinfo.split(",")[0]
+                    city = addinfo.split(",")[1].strip()
+                    state = addinfo.split(",")[2].strip().split(" ")[0]
+                    zc = addinfo.split(",")[2].rsplit(" ", 1)[1]
+            if lat == "" and "new google.maps.LatLng(" in line2:
+                lat = line2.split("new google.maps.LatLng(")[1].split(",")[0]
+                lng = (
+                    line2.split("new google.maps.LatLng(")[1]
+                    .split(",")[1]
+                    .strip()
+                    .split(")")[0]
+                )
         if add != "":
+            if phone == "":
+                phone = "<MISSING>"
+            if zc == "":
+                zc = "<MISSING>"
+            if "170 S Main" in add:
+                zc = "10956"
             yield [
                 website,
                 loc,
