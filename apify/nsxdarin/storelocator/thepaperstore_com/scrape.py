@@ -72,7 +72,6 @@ def fetch_data():
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 phone = line2.split('"telephone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":')[1].split(",")[0]
@@ -91,22 +90,25 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+            if '"province":"' in line2:
+                state = line2.split('"province":"')[2].split('"')[0]
+        if "435 Boston" not in add:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
