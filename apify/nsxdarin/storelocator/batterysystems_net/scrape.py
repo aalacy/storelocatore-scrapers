@@ -63,18 +63,24 @@ def fetch_data():
             g = next(lines)
             g = str(g.decode("utf-8"))
             csz = g.split("<")[0].strip().replace("  ", " ")
-            if g.count(" ") == 2:
-                city = g.split(" ")[0]
-                state = g.split(" ")[1]
-                zc = g.split(" ")[2]
+            if csz.count(" ") == 2:
+                city = csz.split(" ")[0]
+                state = csz.split(" ")[1]
+                zc = csz.split(" ")[2]
             elif g.count(" ") == 3:
-                city = g.split(" ")[0] + " " + g.split(" ")[1]
-                state = g.split(" ")[2]
-                zc = g.split(" ")[3]
+                city = csz.split(" ")[0] + " " + csz.split(" ")[1]
+                state = csz.split(" ")[2]
+                zc = csz.split(" ")[3]
             else:
-                city = g.split(" ")[0] + " " + g.split(" ")[1] + " " + g.split(" ")[2]
-                state = g.split(" ")[3]
-                zc = g.split(" ")[4]
+                city = (
+                    csz.split(" ")[0]
+                    + " "
+                    + csz.split(" ")[1]
+                    + " "
+                    + csz.split(" ")[2]
+                )
+                state = csz.split(" ")[3]
+                zc = csz.split(" ")[4]
             g = next(lines)
             g = str(g.decode("utf-8"))
             try:
