@@ -4,7 +4,6 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
 
 
 def write_output(data):
