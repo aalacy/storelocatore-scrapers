@@ -1,6 +1,7 @@
 import csv
 from urllib.parse import urljoin
 from lxml import etree
+from requests.models import HTTPBasicAuth
 
 from sgrequests import SgRequests
 
@@ -133,7 +134,12 @@ def fetch_data():
                 else "<MISSING>"
             )
 
+        # Exceptions
         street_address = street_address.replace("Two locations to serve you!, ", "")
+        hours_of_operation = (
+            "00 pm".join(hours_of_operation.split("00 pm")[:-1]) + "00 pm"
+        )
+        hours_of_operation = hours_of_operation.split("Closed Thanksgiving")[0]
 
         item = [
             DOMAIN,
