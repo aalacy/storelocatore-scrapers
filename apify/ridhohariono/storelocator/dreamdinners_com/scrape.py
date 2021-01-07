@@ -86,6 +86,7 @@ def fetch_data():
                             .rstrip()
                             .strip()
                         )
+                        print(street_address)
                         parse_addr = usaddress.tag(address)
                         city = handle_missing(parse_addr[0]["PlaceName"])
                         state = handle_missing(parse_addr[0]["StateName"])
@@ -129,10 +130,6 @@ def pull_content(url):
 
     return soup
 
-
-def scrape():
+if __name__ == "__main__":
     data = fetch_data()
     write_output(data)
-
-
-scrape()
