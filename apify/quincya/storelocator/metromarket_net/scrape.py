@@ -37,8 +37,8 @@ def fetch_data():
 
     base_link = "https://www.metromarket.net/storelocator-sitemap.xml"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
@@ -56,7 +56,11 @@ def fetch_data():
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
+            script = (
+                base.find("script", attrs={"type": "application/ld+json"})
+                .text.replace("\n", "")
+                .strip()
+            )
             store = json.loads(script)
 
             location_name = store["name"]
