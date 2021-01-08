@@ -203,6 +203,8 @@ def clean_hours(x):
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
         )
     except Exception:
         return (
@@ -211,6 +213,8 @@ def clean_hours(x):
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
         )
 
 
