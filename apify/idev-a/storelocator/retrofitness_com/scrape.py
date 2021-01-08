@@ -53,7 +53,7 @@ def fetch_data():
     )["places"]
     data = []
     for store in store_list:
-        page_url = "https://retrofitness.com/find-a-gym-near-me/"
+        page_url = store["location"]["extra_fields"]["website"]
         location_name = store["title"]
         street_address = store["address"].split(",")[0]
         city = store["location"]["city"]
