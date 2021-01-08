@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    for x in range(1, 100):
+    for x in range(1, 130):
         url = "https://www.bigy.com/rs/storelocator/detail/" + str(x)
         r = session.get(url, headers=headers)
         website = "bigy.com"

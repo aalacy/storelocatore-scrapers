@@ -63,7 +63,7 @@ def fetch_data():
                     i = 1
                     while i < len(templist):
                         title = templist[i].text
-                        title = title.split("Less", 1)[0]
+                        title = title.split("Less", 1)[0].strip()
                         phone = templist[i + 2]
                         phone = phone.find("p", {"class": "fp-el"}).text
                         phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
