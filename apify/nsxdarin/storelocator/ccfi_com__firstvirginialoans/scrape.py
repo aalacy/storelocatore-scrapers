@@ -35,8 +35,8 @@ def write_output(data):
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=10,
+    max_radius_miles=100,
+    max_search_results=100,
 )
 
 session = SgRequests()
