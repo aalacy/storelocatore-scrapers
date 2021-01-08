@@ -103,6 +103,17 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
+        if "Suit" in street_address:
+            phone = loc_dom.xpath(
+                '//div[a[@style="text-decoration: underline;"]]/following-sibling::div[3]/text()'
+            )[0]
+            hours_of_operation = loc_dom.xpath(
+                '//div[a[@style="text-decoration: underline;"]]/following-sibling::div[5]/text()'
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            )
+
         item = [
             DOMAIN,
             store_url,
