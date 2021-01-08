@@ -1,6 +1,6 @@
 There are some potential issues when running the validate.py
 
-# Error in parding address
+# Error in parsing address
 
 All locations are parsed directly from the HTML page and count is correct. So I ignored location count check.
 

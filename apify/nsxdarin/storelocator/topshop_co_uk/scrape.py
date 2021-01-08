@@ -81,7 +81,7 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
-        hours = "Sun-Sat: Closed"
+        hours = ""
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -99,13 +99,32 @@ def fetch_data():
                 days = line2.split('details-row-day">')
                 for day in days:
                     if 'c-hours-details-row-intervals">' in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('c-hours-details-row-intervals">')[1].split(
-                                "<"
-                            )[0]
-                        )
+                        if (
+                            '<span class="c-hours-details-row-intervals-instance-open">'
+                            in day
+                        ):
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split(
+                                    '<span class="c-hours-details-row-intervals-instance-open">'
+                                )[1].split("<")[0]
+                            )
+                            hrs = (
+                                hrs
+                                + "-"
+                                + day.split(
+                                    '<span class="c-hours-details-row-intervals-instance-close">'
+                                )[1].split("<")[0]
+                            )
+                        else:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split('c-hours-details-row-intervals">')[1].split(
+                                    "<"
+                                )[0]
+                            )
                         if hours == "":
                             hours = hrs
                         else:

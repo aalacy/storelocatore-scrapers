@@ -107,6 +107,7 @@ def fetch_data():
         hours_of_operation = poi["location"]["extra_fields"]["opening-hours"].replace(
             "<br>", ""
         )
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,

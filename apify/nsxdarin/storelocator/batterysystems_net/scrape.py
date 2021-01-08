@@ -67,7 +67,7 @@ def fetch_data():
                 city = csz.split(" ")[0]
                 state = csz.split(" ")[1]
                 zc = csz.split(" ")[2]
-            elif g.count(" ") == 3:
+            elif csz.count(" ") == 3:
                 city = csz.split(" ")[0] + " " + csz.split(" ")[1]
                 state = csz.split(" ")[2]
                 zc = csz.split(" ")[3]
