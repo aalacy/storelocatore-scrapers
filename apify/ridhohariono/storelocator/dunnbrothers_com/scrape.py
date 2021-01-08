@@ -104,7 +104,7 @@ def fetch_data():
         state = handle_missing(data["address"]["addressRegion"])
         zip_code = handle_missing(data["address"]["postalCode"])
         country_code = "US"
-        store_number = re.findall("\d+", name[1])[0]
+        store_number = re.findall(r"\d+", name[1])[0]
         phone = handle_missing(data["address"]["telephone"])
         location_type = "<MISSING>"
         latitude = handle_missing(data["geo"]["latitude"])
