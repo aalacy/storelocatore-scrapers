@@ -57,6 +57,8 @@ def fetch_data():
         title = loc["name"]
         if "&#8211;" in title:
             title = title.replace("&#8211;", " - ")
+        if "&#038;" in title:
+            title = title.replace("&#038;", " - ")
         store = loc["id"]
         lat = loc["lat"]
         longt = loc["lng"]
@@ -111,6 +113,9 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
+        city = city.strip()
+        state = state.strip()
+        street = street.strip()
         if not pcode:
             pcode = "<MISSING>"
         if "USA" in state:

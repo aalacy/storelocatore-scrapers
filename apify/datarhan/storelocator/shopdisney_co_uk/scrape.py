@@ -50,7 +50,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    body = '{"request":{"appkey":"D5871172-8772-11E2-9B36-44EFA858831C","formdata":{"geoip":"start","dataview":"store_default","limit":500,"geolocs":{"geoloc":[{"addressline":"10001","country":"","latitude":"","longitude":""}]},"searchradius":"5000","radiusuom":"km","where":{"and":{"storetype":{"eq":""}}}},"geoip":1}}'
+    body = '{"request":{"appkey":"D5871172-8772-11E2-9B36-44EFA858831C","formdata":{"geoip":"start","dataview":"store_default","limit":500,"geolocs":{"geoloc":[{"addressline":"","country":"UK","latitude":"","longitude":""}]},"searchradius":"5000","radiusuom":"km","where":{"and":{"storetype":{"eq":""}}}},"geoip":""}}'
     response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
 
