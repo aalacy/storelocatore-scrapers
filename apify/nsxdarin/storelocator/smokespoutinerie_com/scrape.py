@@ -104,6 +104,9 @@ def fetch_data():
             phone = "<MISSING>"
         if "0" not in hours:
             hours = "<MISSING>"
+        if "Centennial College Progress" in name:
+            state = "Ontario"
+            zc = "M1K 5E9"
         yield [
             website,
             lurl,
