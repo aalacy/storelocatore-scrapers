@@ -3,7 +3,8 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import us
-import lxml.html
+import json
+from bs4 import BeautifulSoup
 
 website = "unionbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,121 +63,85 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
+    url = (
+        "https://drupal-prd.unionbank.com/rest/branch-locator"
+        "?field_geocoordinates_proximity-lat=35.4516124"
+        "&field_geocoordinates_proximity-lng=-118.7897558"
+        "&field_geocoordinates_proximity=10000"
+        "&field_geocoordinates_proximity_1-lat=35.4516124"
+        "&field_geocoordinates_proximity_1-lng=-118.7897558"
+        "&field_geocoordinates_proximity_1=10000"
+    )
     stores_req = session.get(
-        "https://www.unionbank.com/locations/all",
+        url,
         headers=headers,
     )
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath(
-        '//div[@class="accordion__expansion-panel"]'
-        '//div[@class="component__container"]/div/p'
-    )
-    for store in stores:
-        locator_domain = website
-        page_url = ""
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zip = ""
-        country_code = ""
-        store_number = "<MISSING>"
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        hours_of_operation = ""
+    json_data = json.loads(stores_req.text)
+    for data in json_data:
+        if "branchLocations" in data:
+            stores = data["branchLocations"]
+            for store in stores:
+                locator_domain = website
+                page_url = "<MISSING>"
+                location_name = store["branchInfo"]["branchName"]
+                street_address = store["branchInfo"]["address"]["addressLine"][0]
+                city = store["branchInfo"]["address"]["city"]
+                state = store["branchInfo"]["address"]["state"]
+                zip = store["branchInfo"]["address"]["zipcode"]
+                country_code = ""
+                if us.states.lookup(state):
+                    country_code = "US"
 
-        raw_text = store.xpath("text()")
-        if len(raw_text) > 0:
-            street_address = raw_text[0].strip()
-        if street_address == "":
-            street_address = "<MISSING>"
+                phone = ""
+                store_number = store["branchInfo"]["branchId"]
+                if "phone" in store["branchInfo"]:
+                    phone = store["branchInfo"]["phone"].replace("\xa0", "").strip()
+                else:
+                    phone = "<MISSING>"
 
-        city_state_zip = ""
-        if len(raw_text) > 1:
-            city_state_zip = raw_text[1]
-
-        city = city_state_zip.split(",")[0].strip()
-        state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
-        zip = city_state_zip.split(",")[1].strip().split(" ")[1].strip()
-
-        if len(raw_text) > 2:
-            if "Tel:" in raw_text[2]:
-                phone = raw_text[2].replace("Tel:", "").strip()
-            else:
-                if len(raw_text) > 3:
-                    if "Tel:" in raw_text[3]:
-                        phone = raw_text[3].replace("Tel:", "").strip()
-
-                location_type = raw_text[2].strip()
-
-        if location_type == "":
-            location_type = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-
-        if us.states.lookup(state):
-            country_code = "US"
-
-        if country_code == "":
-            country_code = "<MISSING>"
-
-        if len(store.xpath(".//a/@href")) > 0:
-            page_url = "".join(store.xpath(".//a/@href")).strip()
-            if "unionbank.com" not in page_url:
-                page_url = "https://www.unionbank.com" + page_url
-
-            s_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(s_req.text)
-            location_name = "".join(store.xpath(".//a//text()")).strip()
-            map_url = "".join(
-                store_sel.xpath(
-                    '//div[@class="btn btn--transparentWhiteText"]' "/a/@href"
-                )
-            ).strip()
-            if len(map_url) > 0 and "@" in map_url:
-                latitude = map_url.split("@")[1].strip().split(",")[0].strip()
-                longitude = map_url.split("@")[1].strip().split(",")[1].strip()
-            else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-
-            hours_of_operation = (
-                " ".join(
-                    store_sel.xpath(
-                        '//div[@class="text-block-with-list__list"]' "/ul/li/p//text()"
+                location_type = "<MISSING>"
+                latitude = store["branchInfo"]["latitude"]
+                longitude = store["branchInfo"]["longitude"]
+                hours_of_operation = ""
+                hours = store["branchHours"]
+                for hour in hours:
+                    hours_of_operation = (
+                        hours_of_operation
+                        + hour["displayLabel"]
+                        + ":"
+                        + hour["displayHours"]
+                        + " "
                     )
-                )
-                .strip()
-                .replace("\xa0", "")
-            )
 
-        else:
-            page_url = "<MISSING>"
-            location_name = "".join(store.xpath("strong/text()")).strip()
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+                if hours_of_operation == "":
+                    hours_of_operation = "<MISSING>"
+                hours_of_operation = BeautifulSoup(
+                    hours_of_operation.strip(), "html.parser"
+                ).getText()
+                if phone == "":
+                    phone = "<MISSING>"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+                if country_code == "":
+                    country_code = "<MISSING>"
 
-        loc_list.append(curr_list)
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+
+                loc_list.append(curr_list)
 
     return loc_list
 

@@ -1,0 +1,2 @@
+(--ignore StreetAddressHasNumber) Failing because the address has an address number but the validation library can not detect the number
+(--ignore StoreNumberColumnValidator) Using id as store number and Failing because the id have a special characters

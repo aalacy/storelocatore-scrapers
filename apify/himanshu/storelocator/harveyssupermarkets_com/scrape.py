@@ -11,7 +11,7 @@ now = datetime.datetime.today().strftime("%A")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("harvery.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -68,10 +68,10 @@ def fetch_data():
         )
         phone = soup1.find("label", {"class": "mob_num"}).text.strip()
         latitude = (
-            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[3]
+            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[-3]
         )
         longitude = (
-            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[4]
+            str(soup1).split("var locations  = [")[1].split("];")[0].split(",")[-2]
         )
         hours_of_operation = " ".join(
             list(
@@ -108,10 +108,7 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        store = [
-            x.encode("ascii", "ignore").decode("ascii").strip() if type(x) == str else x
-            for x in store
-        ]
+                store[i] = store[i].replace(" ", " ")
         yield store
 
 

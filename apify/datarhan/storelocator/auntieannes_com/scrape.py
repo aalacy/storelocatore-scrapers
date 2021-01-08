@@ -1,5 +1,4 @@
 import csv
-import json
 import urllib.parse
 from lxml import etree
 from sglogging import SgLogSetup
@@ -68,8 +67,6 @@ def fetch_data():
             store_url = urllib.parse.urljoin(start_url, store_url)
             location_name = poi_data.xpath('.//a[@class="generic-link"]/text()')[0]
             location_name = str(location_name) if location_name else "<MISSING>"
-            if "temporarily closed" in location_name.lower():
-                continue
             street_address = poi_data.xpath(
                 './/div[@class="city-details"]/span[1]/text()'
             )
@@ -131,8 +128,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            check = f"{store_number} {location_name}"
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items
