@@ -137,6 +137,26 @@ def fetch_data():
             .replace("  ", " ")
             .replace("::", ":")
         )
+        if hours == "" and "Northern 144" in name:
+            hours = "Coming Soon"
+        if "/58" in loc:
+            zc = "21702"
+        if "/34" in loc:
+            zc = "08003"
+        if "/53" in loc:
+            zc = "11753"
+        if "Carrollton" in name:
+            add = "2625 Old Denton Rd. #200"
+            city = "Carrollton"
+            state = "TX"
+        if "Duluth" in name:
+            add = "2550 Pleasant Hill Rd. Bldg. 300"
+            city = "Duluth"
+            state = "GA"
+        if "Doraville" in name:
+            city = "Doraville"
+            state = "GA"
+            add = "6035 Peachtree Rd. Bldg B"
         yield [
             website,
             loc,
