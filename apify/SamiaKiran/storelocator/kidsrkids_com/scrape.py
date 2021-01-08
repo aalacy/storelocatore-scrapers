@@ -56,6 +56,7 @@ def fetch_data():
         if "COMING SOON" in title:
             continue
         title = html.unescape(title)
+        link = loc["link"]
         store = loc["ID"]
         if not store:
             store = "<MISSING>"
@@ -99,7 +100,7 @@ def fetch_data():
         final_data.append(
             [
                 "https://kidsrkids.com/",
-                "https://kidsrkids.com/locations/",
+                link,
                 title,
                 street,
                 city,

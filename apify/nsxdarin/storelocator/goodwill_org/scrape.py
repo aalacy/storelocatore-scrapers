@@ -1,21 +1,21 @@
 import csv
-import sgzip
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import json
 
 logger = SgLogSetup().get_logger("goodwill_org")
-
-search = sgzip.ClosestNSearch()
-search.initialize()
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-MAX_RESULTS = 10
-MAX_DISTANCE = 5
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=5,
+    max_search_results=10,
+)
 
 
 def write_output(data):
@@ -47,10 +47,9 @@ def write_output(data):
 
 def fetch_data():
     sids = []
-    coord = search.next_coord()
-    while coord:
-        llat = coord[0]
-        llng = coord[1]
+    for lat, lng in search:
+        llat = lat
+        llng = lng
         logger.info("%s-%s..." % (llat, llng))
         url = (
             "https://www.goodwill.org/GetLocAPI.php?lat="
@@ -61,7 +60,6 @@ def fetch_data():
         )
         try:
             r = session.get(url, headers=headers)
-            array = []
             website = "goodwill.org"
             for item in json.loads(r.content):
                 store = item["LocationId"]
@@ -80,7 +78,7 @@ def fetch_data():
                 loc = item["LocationParentWebsite"]
                 if phone == "":
                     phone = "<MISSING>"
-                if loc == "":
+                if "." not in loc:
                     loc = "<MISSING>"
                 hours = "<MISSING>"
                 try:
@@ -126,12 +124,6 @@ def fetch_data():
                             lng,
                             hours,
                         ]
-            if len(array) <= MAX_RESULTS:
-                logger.info("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-            else:
-                raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-            coord = search.next_coord()
         except:
             pass
 
