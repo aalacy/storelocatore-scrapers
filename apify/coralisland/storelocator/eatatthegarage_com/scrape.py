@@ -48,7 +48,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
 
     divlist = soup.findAll("div", {"class": "location-listing-info"})
-    # print("states = ",len(state_list))
     p = 0
     for div in divlist:
         link = div.select_one('a:contains("More Info")')["href"]
