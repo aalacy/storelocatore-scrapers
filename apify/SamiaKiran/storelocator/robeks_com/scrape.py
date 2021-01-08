@@ -49,7 +49,7 @@ def fetch_data():
     # Your scraper here
     data = []
     if True:
-        url = 'https://robeks.com/ajax/get_gmap_locations.html?is_mobile=&lat=39.11553139999999&lng=-94.62678729999999&radius=3000'
+        url = "https://robeks.com/ajax/get_gmap_locations.html?is_mobile=&lat=39.11553139999999&lng=-94.62678729999999&radius=3000"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("markers").findAll("marker")
@@ -62,15 +62,15 @@ def fetch_data():
             hours = hours.replace("<br />", " ")
             if not hours:
                 hours = "<MISSING>"
-            templist = loc["contentdesc"].rsplit("<BR />",1)
+            templist = loc["contentdesc"].rsplit("<BR />", 1)
             phone = templist[1]
             if not phone:
                 phone = "<MISSING>"
             street = loc["address"]
             address = templist[0]
             address = address.replace("<BR />", " ")
-            address = address.split(street.upper(),1)[1].strip()
-            address = address.split(",",1)
+            address = address.split(street.upper(), 1)[1].strip()
+            address = address.split(",", 1)
             city = address[0]
             temp = address[1].split()
             state = temp[0]
@@ -90,7 +90,7 @@ def fetch_data():
                     "<MISSING>",
                     lat,
                     longt,
-                    hours
+                    hours,
                 ]
             )
     return data
