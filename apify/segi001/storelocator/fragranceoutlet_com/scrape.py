@@ -137,7 +137,6 @@ def fetch_data():
                                         )
                                         for ele in e
                                     ]
-                                    print(es)
                                 else:
                                     e[0] = "{} {}".format(e[0], e[1])
                                     e[2] = "{}{}".format(e[2], e[3])
