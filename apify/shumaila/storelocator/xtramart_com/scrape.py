@@ -45,7 +45,7 @@ def fetch_data():
     loclist = session.get(url, headers=headers, verify=False).json()
     for loc in loclist:
 
-        street = loc["address"] +' '+str(loc["address2"])
+        street = loc["address"] + " " + str(loc["address2"])
         city = loc["city"]
         state = loc["state"]
         pcode = loc["zip"]
@@ -87,7 +87,7 @@ def fetch_data():
 
 
 def scrape():
-  
+
     data = fetch_data()
     write_output(data)
 
