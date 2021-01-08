@@ -150,6 +150,10 @@ def fetch_data():
                             hours = day
                         else:
                             hours = hours + "; " + day
+        if "3948 S Peoria" in add:
+            hours = "Monday-Friday: 7:00AM-1:00PM, Saturday and Sunday: 6:00AM-2:00PM"
+        if "1616 N May Ave" in add:
+            hours = "Monday - Sunday: 6:30 AM - 2:00 PM"
         yield [
             website,
             loc,
@@ -166,6 +170,58 @@ def fetch_data():
             lng,
             hours,
         ]
+    loc = "<MISSING>"
+    name = "Midland, TX"
+    add = "1910 N Loop 250 West, Suite C"
+    city = "Midland"
+    state = "TX"
+    zc = "79707"
+    phone = "432-247-5451"
+    hours = "Sun-Sat: 6am-2pm"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    loc = "<MISSING>"
+    name = "McAllen, TX"
+    add = "4100 N. 10th St."
+    city = "McAllen"
+    state = "TX"
+    zc = "78504"
+    phone = "<MISSING>"
+    hours = "Sun-Sat: 6am-2pm"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
 
 
 def scrape():
