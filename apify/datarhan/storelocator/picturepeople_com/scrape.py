@@ -120,7 +120,6 @@ def fetch_data():
         eventval = dom.xpath('//input[@name="__EVENTVALIDATION"]/@value')[0]
 
         all_locations += dom.xpath('//div[@class="LocationDiv"]')
-        print(len(all_locations))
 
     for poi_html in all_locations:
         store_url = "<MISSING>"
