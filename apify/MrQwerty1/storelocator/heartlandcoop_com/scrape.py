@@ -50,7 +50,6 @@ def fetch_data():
         line = t.xpath("./p")[-1]
         line = line.xpath("./span//text()")
         line = list(filter(None, [l.strip() for l in line]))
-        print(line)
         street_address = line[line.index("Heartland Co-op") + 1]
         line = line[-1]
         city = line.split(",")[0].strip()
