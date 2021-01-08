@@ -5,10 +5,8 @@ import re
 import json
 from shapely.prepared import prep
 from shapely.geometry import Point
-from shapely.geometry import mapping, shape
+from shapely.geometry import shape
 from sgselenium import SgSelenium
-import time
-from selenium.webdriver.support.wait import WebDriverWait
 
 session = SgRequests()
 from sglogging import SgLogSetup
@@ -79,7 +77,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     driver.get("https://www.petermillar.com/f/about-us/our-stores.html")
     cookies_list = driver.get_cookies()
@@ -321,7 +318,7 @@ def fetch_data():
 
             street_address = street_address.replace(">", "").capitalize().strip()
             phone_list = re.findall(
-                re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
+                re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
             )
             if phone_list != []:
                 phone = phone_list[0].strip()
