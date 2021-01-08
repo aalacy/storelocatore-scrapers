@@ -1,4 +1,3 @@
-# coding=UTF-8
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
@@ -12,7 +11,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,7 +29,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -76,6 +74,7 @@ def fetch_data():
             page_url = dt["data-url"]
         else:
             page_url = "<MISSING>"
+        hours_of_operation = "<INACCESIBLE>"
 
         store = []
         store.append(base_url)
@@ -90,7 +89,7 @@ def fetch_data():
         store.append("Restaurant")
         store.append(latitude)
         store.append(longitude)
-        store.append("<MISSING>")
+        store.append(hours_of_operation)
         store.append(page_url)
         if store[2] in addresses:
             continue

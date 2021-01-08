@@ -58,6 +58,10 @@ def fetch_data():
     for loc in all_poi:
         if not loc:
             continue
+        location_type = "<MISSING>"
+        if " Opening Soon!" in loc:
+            loc = loc.replace(" Opening Soon!", "")
+            location_type = "opening soon"
         loc = loc.replace("\n", "").strip()
         store_url = "<MISSING>"
         location_name = re.findall("(.+ Exxon)", loc)
@@ -91,7 +95,6 @@ def fetch_data():
         store_number = store_number[0] if store_number else "<MISSING>"
         phone = address_raw.get("OccupancyIdentifier")
         phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
@@ -120,6 +123,10 @@ def fetch_data():
         if city.startswith("SR"):
             city = city.replace("SR", "R")
             street_address += " S"
+
+        if "soon" in zip_code.lower():
+            zip_code = "<MISSING>"
+            location_type = "opening soon"
 
         item = [
             DOMAIN,
