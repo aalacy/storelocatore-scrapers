@@ -89,7 +89,7 @@ def fetch_data():
         ).strip()
         city = "".join(
             store.xpath('.//span[@itemprop="addressLocality"]/text()')
-        ).strip()
+        ).strip().replace(',','').strip()
         state = "".join(
             store.xpath('.//span[@itemprop="addressRegion"]/text()')
         ).strip()
