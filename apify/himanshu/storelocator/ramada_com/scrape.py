@@ -55,7 +55,11 @@ def fetch_data():
     a = soup.find("div", {"class": "aem-rendered-content"}).find_all(
         "div", {"class": "state-container"}
     )[0:53]
-    a.append(soup.find_all("div", {"class": "state-container"})[109])
+    a.append(
+        soup.find_all("div", {"class": "aem-rendered-content"})[-3].find_all(
+            "div", {"class": "state-container"}
+        )[-1]
+    )
     for y in a:
         e = y.find_all("li", {"class": "property"})
         for b in e:
@@ -119,8 +123,6 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append("<MISSING>")
                 store.append(location_url)
-                if store[2] in addresses:
-                    continue
                 addresses.append(store[2])
                 yield store
 
