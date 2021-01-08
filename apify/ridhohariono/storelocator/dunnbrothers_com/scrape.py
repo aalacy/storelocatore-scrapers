@@ -1,7 +1,6 @@
 import re
 import json
 import csv
-import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
