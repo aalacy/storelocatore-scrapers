@@ -76,6 +76,11 @@ def fetch_data():
 
         address = json.loads(store["store_address"])
         street_address = address["street"].strip()
+        if "street_2" in address:
+            street_2 = address["street_2"]
+            if len(street_2) > 0:
+                street_address = street_address + ", " + street_2
+
         city = address["city"].strip()
         state = address["region"].strip().replace(",", "").strip()
         zip = address["postal_code"].strip()
