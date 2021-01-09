@@ -68,24 +68,20 @@ def fetch_data():
                         hrs = item.split(',"storeHours":"')[1].split(
                             '","storeEvents":'
                         )[0]
-                        hours = "Sun: " + hrs.split("Sunday ")[1].split("<")[0]
+                        hours = "Sun: " + hrs.split("Sunday")[1].split("<")[0]
+                        hours = hours + "; Mon: " + hrs.split("Monday")[1].split("<")[0]
                         hours = (
-                            hours + "; Mon: " + hrs.split("Monday ")[1].split("<")[0]
+                            hours + "; Tue: " + hrs.split("Tuesday")[1].split("<")[0]
                         )
                         hours = (
-                            hours + "; Tue: " + hrs.split("Tuesday ")[1].split("<")[0]
+                            hours + "; Wed: " + hrs.split("Wednesday")[1].split("<")[0]
                         )
                         hours = (
-                            hours + "; Wed: " + hrs.split("Wednesday ")[1].split("<")[0]
+                            hours + "; Thu: " + hrs.split("Thursday")[1].split("<")[0]
                         )
+                        hours = hours + "; Fri: " + hrs.split("Friday")[1].split("<")[0]
                         hours = (
-                            hours + "; Thu: " + hrs.split("Thursday ")[1].split("<")[0]
-                        )
-                        hours = (
-                            hours + "; Fri: " + hrs.split("Friday ")[1].split("<")[0]
-                        )
-                        hours = (
-                            hours + "; Sat: " + hrs.split("Saturday ")[1].split("<")[0]
+                            hours + "; Sat: " + hrs.split("Saturday")[1].split("<")[0]
                         )
                     except:
                         hours = "<MISSING>"
@@ -95,22 +91,26 @@ def fetch_data():
                             phone = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        add = add.replace("International Market Place", "").strip()
+                        if "El Paseo Village" in add:
+                            add = add.split("Paseo Village")[1].strip()
+                        if "Draycott Avenue" not in add:
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():
