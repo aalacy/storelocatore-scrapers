@@ -12,13 +12,24 @@ jobs:
             check_diffs
 
   python-lint-updates:
-    executor: python/default
+    executor:
+      name: python/default
+      tag: <<parameters.python-version>>
+    parameters:
+      cache-prefix:
+        default: 'v1'
+        description: Cache prefix (increment to clear)
+        type: string
+      python-version:
+        default: '3.8'
+        description: Python version
+        type: string
     steps:
       - checkout
       - restore_cache:
           keys:
-            - venv-{{ .Branch }}-{{ checksum "setup.py" }}
-            - venv-{{ .Branch }}
+            - '<<parameters.cache-prefix>>-<<parameters.python-version>>-{{ checksum "setup.py" }}'
+            - '<<parameters.cache-prefix>>-<<parameters.python-version>>'
       - run:
           name: Install dependencies
           command: |
@@ -28,7 +39,7 @@ jobs:
       - save_cache:
           paths:
             - venv
-          key: venv-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: '<<parameters.cache-prefix>>-<<parameters.python-version>>-{{ checksum "setup.py" }}'
       - run:
           name: Check formatting
           command: |
