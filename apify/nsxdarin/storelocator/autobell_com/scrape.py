@@ -98,6 +98,11 @@ def fetch_data():
                     hours = day
                 else:
                     hours = hours + "; " + day
+        if "608-pavilion-dr" in loc:
+            city = "Chesapeake"
+            state = "VA"
+            zc = "23322"
+            add = "608 Pavilion Dr"
         yield [
             website,
             loc,
