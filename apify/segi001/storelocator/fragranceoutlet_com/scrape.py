@@ -2,6 +2,7 @@ import csv
 import sgrequests
 import bs4
 import itertools
+import re
 
 
 def write_output(data):
@@ -175,6 +176,14 @@ def fetch_data():
 
                 hours_of_operation = " ".join(itertools.chain.from_iterable(time))
 
+                cc = urlsoup.find("script", {"id": "apple-pay-shop-capabilities"})
+
+                countryCode = (
+                    re.search(r'"countryCode":(.*?),', str(cc))
+                    .group(1)
+                    .replace('"', "")
+                )
+
                 result.append(
                     [
                         locator_domain,
@@ -184,7 +193,7 @@ def fetch_data():
                         JSON["city"],
                         JSON["state"],
                         JSON["zip"],
-                        missingString,
+                        countryCode,
                         missingString,
                         JSON["phone"],
                         missingString,

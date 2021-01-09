@@ -1,15 +1,14 @@
 import csv
 from bs4 import BeautifulSoup as bs
 import time
-from selenium import webdriver #ignore_check
+from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import os
 
 
 def setUp():
     options = webdriver.FirefoxOptions()
-    headless = False
+    headless = True
     options.headless = headless
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.formfill.enable", False)
@@ -23,7 +22,7 @@ def setUp():
         options=options,
         capabilities=capabilities,
         firefox_profile=profile,
-        executable_path=os.path.abspath("geckodriver"),
+        executable_path="geckodriver.exe",
     )
 
 
