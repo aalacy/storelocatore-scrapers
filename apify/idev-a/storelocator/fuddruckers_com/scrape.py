@@ -100,7 +100,7 @@ def fetch_data():
         longitude = store["lng"]
         store_number = store["id"]
         location_type = "<MISSING>"
-        phone = store["phone"]
+        phone = store["phone"].replace("x35063", "")
         hours_of_operation = soup.select_one(".store-hours").text.replace("\n", "")
 
         data.append(
