@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -53,8 +54,11 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("markers").findAll("marker")
         for loc in loclist:
+            if "Coming" in loc["loc_text"]:
+                continue
             title = loc["name"]
             link = loc["loc_page_url"]
+            link = "https://robeks.com/" + link
             lat = loc["lat"]
             longt = loc["lng"]
             hours = loc["hours"]
@@ -73,7 +77,6 @@ def fetch_data():
             city = address[0]
             temp = address[1].split()
             state = temp[0]
-            ccode = temp[1]
             data.append(
                 [
                     "https://robeks.com/",
@@ -83,7 +86,7 @@ def fetch_data():
                     city,
                     state,
                     "<MISSING>",
-                    ccode,
+                    "US",
                     "<MISSING>",
                     phone,
                     "<MISSING>",
