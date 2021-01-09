@@ -38,10 +38,8 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(Row._fields)
 
-        # Body
         for row in data:
             writer.writerow(row)
 
