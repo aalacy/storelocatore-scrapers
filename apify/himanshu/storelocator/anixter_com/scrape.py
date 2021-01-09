@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("anixter_com")
