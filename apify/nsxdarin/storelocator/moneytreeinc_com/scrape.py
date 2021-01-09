@@ -64,12 +64,23 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '"c-address-street-1">' in line2:
+                add = line2.split('"c-address-street-1">')[1].split("<")[0]
+                try:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('"c-address-street-2">')[1].split("<")[0]
+                    )
+                    add = add.strip()
+                except:
+                    pass
+            if 'lp-param-locationName">' in line2:
+                name = line2.split('lp-param-locationName">')[1].split("<")[0]
             if '"@id":"' in line2:
-                name = line2.split('"@id":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
                 lat = line2.split('"latitude":')[1].split(",")[0]
                 lng = line2.split('"longitude":')[1].split("}")[0]
                 days = line2.split('"@type":"OpeningHoursSpecification"')

@@ -48,6 +48,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
+        print(line)
         if 'States</span> </div> <div class="content"> <ul class="list">' in line:
             info = line.split(
                 'States</span> </div> <div class="content"> <ul class="list">'
@@ -83,8 +84,9 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "<h1>" in line2:
+                name = line2.split("<h1>")[1].split("<")[0].strip()
             if '"@id": "' in line2:
-                name = line2.split('"@id": "')[1].split('"name": "')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 state = "<MISSING>"
