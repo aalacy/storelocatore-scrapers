@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -65,7 +66,14 @@ def fetch_data():
         poi_type = "<MISSING>"
         latitude = poi["geoLocation"]["lat"]
         longitude = poi["geoLocation"]["lng"]
-        hoo = "<MISSING>"
+
+        loc_response = session.get(poi_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        hoo = loc_dom.xpath('//div[@class="header-worktime"]//text()')
+        hoo = " ".join(hoo) if hoo else "<MISSING>"
+        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')
+        city = city[0] if city else poi["postalAddress"]["city"]
 
         item = [
             DOMAIN,
