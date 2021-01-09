@@ -73,7 +73,9 @@ def fetch_data():
             store_hours = "<MISSING>"
         output = []
         output.append(base_url)  # url
-        output.append(get_value(store["store"]).replace("&#8211;", "-").replace("&#8217;", "'"))  # location name
+        output.append(
+            get_value(store["store"]).replace("&#8211;", "-").replace("&#8217;", "'")
+        )  # location name
         output.append(get_value(store["address"]))  # address
         output.append(get_value(store["city"]))  # city
         output.append(get_value(store["state"]))  # state
