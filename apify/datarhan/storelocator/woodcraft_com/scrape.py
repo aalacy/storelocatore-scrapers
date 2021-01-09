@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "winsupplyinc.com"
+    DOMAIN = "woodcraft.com"
     start_url = "https://www.woodcraft.com/store_locations"
 
     response = session.get(start_url)
