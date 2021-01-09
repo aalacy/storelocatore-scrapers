@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-
+from bs4 import BeautifulSoup
 
 website = "robeks_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
