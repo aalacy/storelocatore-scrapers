@@ -124,7 +124,9 @@ def fetch_data():
         output.append(get_value(store["geometry"]["coordinates"][0]))  # latitude
         output.append(get_value(store["geometry"]["coordinates"][1]))  # longitude
         output.append("<MISSING>")  # opening hours
-        output.append("https://rockytopstores.com" + get_value(store["properties"]["url"]))
+        output.append(
+            "https://rockytopstores.com" + get_value(store["properties"]["url"])
+        )
         output_list.append(output)
     return output_list
 
