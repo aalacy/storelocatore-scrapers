@@ -60,6 +60,7 @@ def fetch_data():
         for key in regions.keys():
             if key == "Mexico" or key == "Panama":
                 continue
+
             region = regions[key]
             store_numbers += region
 
