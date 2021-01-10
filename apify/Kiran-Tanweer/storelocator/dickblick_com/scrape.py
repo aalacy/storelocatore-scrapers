@@ -61,29 +61,28 @@ def write_output(data):
             writer.writerow(row)
 
 
-
 def fetch_data():
     data = []
     hoo = ""
     url = "https://api.dickblick.com/contentprovider/api/v2.0/StorePage/"
     r = session.get(url, headers=headers, verify=False).json()
     for store in r:
-        page = 'https://www.dickblick.com' + store['storeUrl']
-        if page != 'https://www.dickblick.com/stores/california/san-francisco-soma/': 
-            phone = store['store']['phoneNumber']
-        else: 
+        page = "https://www.dickblick.com" + store["storeUrl"]
+        if page != "https://www.dickblick.com/stores/california/san-francisco-soma/":
+            phone = store["store"]["phoneNumber"]
+        else:
             phone == "<MISSING>"
-        storeid = store['storeNumber']
-        storename = store['storeName']
-        street = store['store']['addressLine1']
-        city = store['store']['city']
-        state = store['store']['statePicker']['stateAbbreviation']
-        pcode = store['store']['zipCode']
-        lat = store['store']['coordinates']['lat']
-        lng = store['store']['coordinates']['lon']
+        storeid = store["storeNumber"]
+        storename = store["storeName"]
+        street = store["store"]["addressLine1"]
+        city = store["store"]["city"]
+        state = store["store"]["statePicker"]["stateAbbreviation"]
+        pcode = store["store"]["zipCode"]
+        lat = store["store"]["coordinates"]["lat"]
+        lng = store["store"]["coordinates"]["lon"]
         p = session.get(page, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
-        hours = soup.find("div", {"class": "storelocation__top__hours"}).findAll('li')
+        hours = soup.find("div", {"class": "storelocation__top__hours"}).findAll("li")
         for h in hours:
             h = h.text
             hoo = hoo + " " + h
