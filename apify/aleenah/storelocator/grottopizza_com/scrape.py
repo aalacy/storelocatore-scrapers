@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("grottopizza_com")
@@ -48,14 +47,12 @@ def fetch_data():
     res = session.get("https://grottopizza.com/locations/")
     soup = BeautifulSoup(res.text, "html.parser")
     sa = soup.find("ul", {"class": "sub-nav grid-parent"}).find_all("a")
-    # ('') #pensalvania locations
     logger.info(len(sa))
     for a in sa:
         print(a.get("href"))
         res = session.get(a.get("href"))
         soup = BeautifulSoup(res.text, "html.parser")
         loc = soup.find("span", {"class": "italia white-text blocked"}).text
-        # print(str(soup).replace('\n','').replace('\r',''))
         addr = re.findall(
             r'<h4>[ ]+Address</h4><p>([^<]+)<span class="blocked">([^<]+)',
             str(soup).replace("\n", "").replace("\r", ""),
@@ -116,7 +113,6 @@ def fetch_data():
         .replace("</strong>", "")
         .replace("<strong>", ""),
     )
-    # logger.info(str(soup).replace('\n', '').replace('\r', '').replace('&amp; ','').replace('</strong>','').replace('<strong>',''))
     for add in addr:
         loc = add[0]
         tim = add[-1]
