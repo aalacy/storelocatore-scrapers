@@ -57,10 +57,7 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath(
-            '//div[@class="basic-container-col-content position-relative text-white"]//h1/text()'
-        )
-        location_name = " ".join(location_name) if location_name else "<MISSING>"
+        location_name = "Store " + loc_dom.xpath('//span[@class="number"]/text()')[0]
         raw_address = loc_dom.xpath('//p[@class="address"]/text()')
         raw_address = [elem.strip() for elem in raw_address]
         street_address = raw_address[0]
@@ -76,7 +73,7 @@ def fetch_data():
         location_type = "<MISSING>"
         geo = loc_dom.xpath('//script[contains(text(), "LOCATIONS = ")]/text()')[0]
         geo = json.loads(re.findall(" = (.+?);", geo)[0])
-        latitude = geo[0]["longitude"]
+        latitude = geo[0]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = geo[0]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
