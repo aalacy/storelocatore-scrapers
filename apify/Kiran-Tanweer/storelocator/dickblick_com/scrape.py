@@ -3,7 +3,6 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
 
 logger = SgLogSetup().get_logger("dickblick_com")
 
