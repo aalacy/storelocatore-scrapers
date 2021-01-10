@@ -1,9 +1,7 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
