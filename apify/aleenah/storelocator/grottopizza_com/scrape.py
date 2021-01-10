@@ -49,7 +49,6 @@ def fetch_data():
     sa = soup.find("ul", {"class": "sub-nav grid-parent"}).find_all("a")
     logger.info(len(sa))
     for a in sa:
-        print(a.get("href"))
         res = session.get(a.get("href"))
         soup = BeautifulSoup(res.text, "html.parser")
         loc = soup.find("span", {"class": "italia white-text blocked"}).text
