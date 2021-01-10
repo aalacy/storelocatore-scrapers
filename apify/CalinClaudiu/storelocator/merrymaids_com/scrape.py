@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import time
 
 
 def para(url):
@@ -176,6 +177,7 @@ def fetch_data():
                 (By.XPATH, '//*[@id="LocationList"]/div/ul')
             )
         )
+        time.sleep(60)
         soup = BeautifulSoup(driver.page_source, "lxml")
     links = soup.find_all(
         "a", {"class": "btn", "href": lambda x: x and x.endswith("?L=true")}

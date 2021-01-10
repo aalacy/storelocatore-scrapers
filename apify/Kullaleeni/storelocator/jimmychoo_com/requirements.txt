@@ -1,4 +1,4 @@
 pandas==0.23.4
-selenium==3.141.0
+sgselenium
 beautifulsoup4==4.8.1
 sglogging

@@ -1,0 +1,1 @@
+--ignore LatLngDuplicationValidator (Confirmed on website)
