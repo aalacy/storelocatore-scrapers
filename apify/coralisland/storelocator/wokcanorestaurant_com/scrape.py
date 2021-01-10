@@ -45,7 +45,6 @@ def fetch_data():
     p = 0
     data = []
     pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://wokcanorestaurant.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
