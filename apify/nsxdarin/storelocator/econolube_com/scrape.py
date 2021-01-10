@@ -95,6 +95,8 @@ def fetch_data():
                 lng = line2.split("longitude: ")[1].split("}")[0].strip()
             if 'data-storeid="' in line2 and store == "":
                 store = line2.split('data-storeid="')[1].split('"')[0]
+        if store == "":
+            store = "<MISSING>"
         yield [
             website,
             loc,

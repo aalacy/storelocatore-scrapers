@@ -171,12 +171,12 @@ def fetch_data():
             hours,
         ]
     loc = "<MISSING>"
-    name = "Midland, TX"
-    add = "1910 N Loop 250 West, Suite C"
-    city = "Midland"
+    name = "McAllen, TX"
+    add = "4100 N. 10th St."
+    city = "McAllen"
     state = "TX"
-    zc = "79707"
-    phone = "432-247-5451"
+    zc = "78504"
+    phone = "<MISSING>"
     hours = "Sun-Sat: 6am-2pm"
     lat = "<MISSING>"
     lng = "<MISSING>"
@@ -197,11 +197,11 @@ def fetch_data():
         hours,
     ]
     loc = "<MISSING>"
-    name = "McAllen, TX"
-    add = "4100 N. 10th St."
-    city = "McAllen"
+    name = "Mission, TX"
+    add = "614 N. Shary Road"
+    city = "Mission"
     state = "TX"
-    zc = "78504"
+    zc = "78572"
     phone = "<MISSING>"
     hours = "Sun-Sat: 6am-2pm"
     lat = "<MISSING>"
