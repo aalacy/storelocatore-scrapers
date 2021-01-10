@@ -80,24 +80,25 @@ def fetch_data():
                         .replace("  ", " ")
                         .replace("  ", " ")
                     )
-                    hours = hours.replace("\\n", "")
+                    hours = hours.replace("\\n", "").replace("<br/>", "; ")
                     if country == "US" or country == "CA":
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        if add != "":
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

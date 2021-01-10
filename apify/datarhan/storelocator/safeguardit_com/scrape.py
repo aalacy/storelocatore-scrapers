@@ -4,7 +4,6 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -44,25 +43,23 @@ def fetch_data():
     items = []
 
     DOMAIN = "safeguardit.com"
-    start_url = "https://www.safeguardit.com/DesktopModules/sgDataAccess/API/Locations/LandingArgs?locale={}"
+    start_urls = [
+        "https://www.safeguardit.com/florida-storage",
+        "https://www.safeguardit.com/illinois-storage",
+        "https://www.safeguardit.com/louisiana-storage",
+        "https://www.safeguardit.com/new-jersey-storage",
+        "https://www.safeguardit.com/new-york-storage",
+        "https://www.safeguardit.com/pennsylvania-storage",
+    ]
 
     all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-        max_search_results=None,
-    )
-    for code in all_codes:
-        response = session.get(start_url.format(code))
-        if "0||" in response.text:
-            continue
-        results_url = "https://www.safeguardit.com" + response.text.split("|")[1]
-        response = session.get(results_url)
+    for url in start_urls:
+        response = session.get(url)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//div[@class="storeAddress"]/h4/a/@href')
 
     for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
+        store_url = urljoin(start_urls[0], url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[1]

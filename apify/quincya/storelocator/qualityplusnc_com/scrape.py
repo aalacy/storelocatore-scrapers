@@ -89,7 +89,7 @@ def fetch_data():
         try:
             phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", store["description"])[0]
         except:
-            phone = "<MISSING>"
+            phone = store["description"].split(">")[1].split("<")[0]
 
         hours_of_operation = "<MISSING>"
         latitude = store["lat"]

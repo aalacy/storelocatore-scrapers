@@ -59,7 +59,9 @@ def fetch_data():
 
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//a[@title="View Store Details"]/@href')
-        store_url = store_url[0] if store_url else "<MISSING>"
+        store_url = (
+            "https://www.haggar.com" + store_url[0] if store_url else "<MISSING>"
+        )
         location_name = poi_html.xpath('.//div[@class="store-name"]/span/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//td[@class="store-address"]/text()')
