@@ -94,7 +94,6 @@ def fetch_data():
             address_raw = address_raw[0].split(", ")
         if "Suit" in address_raw[1]:
             address_raw = [", ".join(address_raw)[:2]] + address_raw[2:]
-        print(store_url, address_raw)
         if not address_raw:
             street_address = "<MISSING>"
             city = "<MISSING>"
