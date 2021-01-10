@@ -51,7 +51,10 @@ def fetch_data():
         if '"name":"' in line:
             items = line.split('"name":"')
             for item in items:
+                CS = False
                 if '"storeSecondaryName":"' in item:
+                    if "Coming Soon" in item:
+                        CS = True
                     loc = "<MISSING>"
                     store = "<MISSING>"
                     name = item.split('"')[0]
@@ -94,23 +97,26 @@ def fetch_data():
                         add = add.replace("International Market Place", "").strip()
                         if "El Paseo Village" in add:
                             add = add.split("Paseo Village")[1].strip()
+                        if "587 Newport" in add:
+                            hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
                         if "Draycott Avenue" not in add:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            if CS is False:
+                                yield [
+                                    website,
+                                    loc,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():

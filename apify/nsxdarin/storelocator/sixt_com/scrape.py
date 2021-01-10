@@ -48,7 +48,6 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        print(line)
         if 'States</span> </div> <div class="content"> <ul class="list">' in line:
             info = line.split(
                 'States</span> </div> <div class="content"> <ul class="list">'
