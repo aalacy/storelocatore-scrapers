@@ -51,7 +51,10 @@ def fetch_data():
         if '"name":"' in line:
             items = line.split('"name":"')
             for item in items:
+                CS = False
                 if '"storeSecondaryName":"' in item:
+                    if "Coming Soon" in item:
+                        CS = True
                     loc = "<MISSING>"
                     store = "<MISSING>"
                     name = item.split('"')[0]
@@ -68,24 +71,20 @@ def fetch_data():
                         hrs = item.split(',"storeHours":"')[1].split(
                             '","storeEvents":'
                         )[0]
-                        hours = "Sun: " + hrs.split("Sunday ")[1].split("<")[0]
+                        hours = "Sun: " + hrs.split("Sunday")[1].split("<")[0]
+                        hours = hours + "; Mon: " + hrs.split("Monday")[1].split("<")[0]
                         hours = (
-                            hours + "; Mon: " + hrs.split("Monday ")[1].split("<")[0]
+                            hours + "; Tue: " + hrs.split("Tuesday")[1].split("<")[0]
                         )
                         hours = (
-                            hours + "; Tue: " + hrs.split("Tuesday ")[1].split("<")[0]
+                            hours + "; Wed: " + hrs.split("Wednesday")[1].split("<")[0]
                         )
                         hours = (
-                            hours + "; Wed: " + hrs.split("Wednesday ")[1].split("<")[0]
+                            hours + "; Thu: " + hrs.split("Thursday")[1].split("<")[0]
                         )
+                        hours = hours + "; Fri: " + hrs.split("Friday")[1].split("<")[0]
                         hours = (
-                            hours + "; Thu: " + hrs.split("Thursday ")[1].split("<")[0]
-                        )
-                        hours = (
-                            hours + "; Fri: " + hrs.split("Friday ")[1].split("<")[0]
-                        )
-                        hours = (
-                            hours + "; Sat: " + hrs.split("Saturday ")[1].split("<")[0]
+                            hours + "; Sat: " + hrs.split("Saturday")[1].split("<")[0]
                         )
                     except:
                         hours = "<MISSING>"
@@ -95,22 +94,29 @@ def fetch_data():
                             phone = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        add = add.replace("International Market Place", "").strip()
+                        if "El Paseo Village" in add:
+                            add = add.split("Paseo Village")[1].strip()
+                        if "587 Newport" in add:
+                            hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
+                        if "Draycott Avenue" not in add:
+                            if CS is False:
+                                yield [
+                                    website,
+                                    loc,
+                                    name,
+                                    add,
+                                    city,
+                                    state,
+                                    zc,
+                                    country,
+                                    store,
+                                    phone,
+                                    typ,
+                                    lat,
+                                    lng,
+                                    hours,
+                                ]
 
 
 def scrape():
