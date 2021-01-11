@@ -39,9 +39,12 @@ def write_output(data):
 
 
 def fetch_data():
+    infos = []
     urls = [
-        "https://d2ez0zkh6r5hup.cloudfront.net/v2/locations?group_ids=bQ2rmQ&origin=react_mobile_app&filters=locations.is_test_location:false;&page=2",
-        "https://d2ez0zkh6r5hup.cloudfront.net/v2/locations?group_ids=bQ2rmQ&origin=react_mobile_app&filters=locations.is_test_location:false;",
+        "https://www.prohealthcare.com/bin/optumcare/findlocations?businessName=&fullName=&search=&latitude=40.75368539999999&longitude=-73.9991637&radius=100mi&network=ProHEALTHCare&isAcceptingNewPatients=true",
+        "https://www.prohealthcare.com/bin/optumcare/findlocations?businessName=&fullName=&search=&latitude=42.75368539999999&longitude=-71.9991637&radius=100mi&network=ProHEALTHCare&isAcceptingNewPatients=true",
+        "https://www.prohealthcare.com/bin/optumcare/findlocations?businessName=&fullName=&search=&latitude=38.75368539999999&longitude=-72.9991637&radius=100mi&network=ProHEALTHCare&isAcceptingNewPatients=true",
+        "https://www.prohealthcare.com/bin/optumcare/findlocations?businessName=&fullName=&search=&latitude=40.75368539999999&longitude=-74.9991637&radius=100mi&network=ProHEALTHCare&isAcceptingNewPatients=true",
     ]
     for url in urls:
         r = session.get(url, headers=headers)
@@ -54,38 +57,73 @@ def fetch_data():
         logger.info("Pulling Stores")
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
-            if '"accepted_insurances":' in line:
-                items = line.split('"accepted_insurances":')
+            if '"individualProviderId":"' in line:
+                items = line.split('"individualProviderId":"')
                 for item in items:
-                    if "accepted_insurers" in item:
-                        name = item.split('"name": "')[1].split('"')[0]
-                        add = item.split('"address": "')[1].split('"')[0]
-                        city = item.split('"city": "')[1].split('"')[0]
-                        state = item.split('"state": "')[1].split('"')[0]
-                        zc = item.split('"zip_code": "')[1].split('"')[0]
-                        lat = item.split('"lat_long": "(')[1].split(",")[0]
-                        lng = (
-                            item.split('"lat_long": "(')[1].split(",")[1].split(")")[0]
+                    if "providerRole" in item:
+                        hours = ""
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        typ = item.split('{"specialty":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        lat = item.split('"lat_lon":"')[1].split('"')[0].split(",")[0]
+                        lng = item.split('"lat_lon":"')[1].split('"')[0].split(",")[1]
+                        add = item.split('"line1":"')[1].split('"')[0]
+                        name = item.split('"businessName":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('","telephoneUsage":"Office Phone"')[
+                                0
+                            ].rsplit('"', 1)[1]
+                            phone = phone.replace("+1 ", "")
+                        except:
+                            phone = "<MISSING>"
+                        days = item.split('"dayOfWeek":"')
+                        for day in days:
+                            if '"fromHour":"' in day:
+                                hrs = (
+                                    day.split('One"')[0]
+                                    + ": "
+                                    + day.split('"fromHour":"')[1].split('"')[0]
+                                    + "-"
+                                    + day.split('"toHour":"')[1].split('"')[0]
+                                )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                        if hours == "":
+                            hours = "<MISSING>"
+                        addinfo = (
+                            add
+                            + "|"
+                            + city
+                            + "|"
+                            + name
+                            + "|"
+                            + state
+                            + "|"
+                            + lat
+                            + "|"
+                            + phone
                         )
-                        phone = (
-                            item.split('"phone": "')[1].split('"')[0].replace("+1", "")
-                        )
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        if addinfo not in infos:
+                            infos.append(addinfo)
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

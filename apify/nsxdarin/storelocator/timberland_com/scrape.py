@@ -115,6 +115,9 @@ def fetch_data():
                     + state.lower()
                     + "/"
                     + city.lower().replace(" ", "-")
+                    + "/"
+                    + store
+                    + "/"
                 )
                 yield [
                     website,
