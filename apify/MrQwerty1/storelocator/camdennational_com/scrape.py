@@ -36,7 +36,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://www.camdennational.com/"
-    api_url = "https://www.camdennational.com/_/api/branches/44.209537/-69.064723/100"
+    api_url = "https://www.camdennational.com/_/api/branches/44.209537/-69.064723/500"
 
     session = SgRequests()
     r = session.get(api_url)
