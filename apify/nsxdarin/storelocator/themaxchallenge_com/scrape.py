@@ -80,11 +80,10 @@ def fetch_data():
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '<a href="tel:' in line2:
+            if '<a href="tel:' in line2 and phone == "":
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "saddr=&daddr=" in line2 and add == "":
                 if "477 NJ-10" in line2:
@@ -138,6 +137,8 @@ def fetch_data():
                 city = "Staten Island"
                 state = "NY"
                 zc = "10309"
+            if "seminole-fl" in loc:
+                zc = "33772"
             yield [
                 website,
                 loc,
