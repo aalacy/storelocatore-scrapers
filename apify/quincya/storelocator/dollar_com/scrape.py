@@ -41,6 +41,7 @@ def fetch_data():
     stores = session.get(base_link, headers=headers).json()["objects"]
 
     data = []
+    found = []
     locator_domain = "dollar.com"
 
     for store in stores:
@@ -74,7 +75,9 @@ def fetch_data():
         link = store["location_url"].replace(
             "test.dollar.com", "https://www.dollar.com"
         )
-
+        if link in found:
+            continue
+        found.append(link)
         # Store data
         data.append(
             [
