@@ -83,7 +83,7 @@ def fetch_data():
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                     try:
-                        phone = item.split("tel:")[1].split("\\")[0]
+                        phone = item.split("Phone:")[1].split("\\")[0].strip()
                     except:
                         phone = "<MISSING>"
                     days = item.split('"hours-row\\"\\u003e')
@@ -100,6 +100,8 @@ def fetch_data():
                     addcity = add + "|" + city
                     if addcity not in addlist:
                         addlist.append(addcity)
+                    if hours == "":
+                        hours = "<MISSING>"
                     else:
                         yield [
                             website,

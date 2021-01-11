@@ -110,10 +110,17 @@ def fetch_data():
             location_name = handle_missing(
                 soup.find("div", {"class", "span8"}).find("div").find("h1").text
             )
-            street_address = handle_missing(address.split(",")[0])
+            parse_street = address.split(",")
+            if len(parse_street) == 4:
+                street_address = ",".join(parse_street[:2])
+            else:
+                street_address = parse_street[0]
             city = handle_missing(parse_addr[0]["PlaceName"])
             state = handle_missing(parse_addr[0]["StateName"])
             zip_code = handle_missing(parse_addr[0]["ZipCode"])
+            # check city inside address
+            if city in street_address:
+                street_address = street_address.replace(city, "")
             country_code = "US"
             store_number = "<MISSING>"
             phone = handle_missing(content[2].find_all("td")[1].text)
