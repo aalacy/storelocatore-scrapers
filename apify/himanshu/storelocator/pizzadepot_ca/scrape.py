@@ -2,7 +2,6 @@ import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgselenium import SgSelenium
-import os
 
 session = SgRequests()
 
@@ -35,7 +34,7 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox(executable_path=os.path.abspath("geckodriver"))
+    driver = SgSelenium().firefox()
     driver.get("https://pizzadepot.ca/")
     cookies_list = driver.get_cookies()
     cookies_json = {}
@@ -127,13 +126,24 @@ def fetch_data():
         except:
             continue
 
+        if "3373 28A Ave NW" in street_address:
+            city = "Edmonton"
+            state = "Alberta"
+
+        if "2114 Albert St, Regina, SK" in street_address:
+            city = "Regina"
+            state = "SK"
+
+        if "Regina" in location_name:
+            street_address = street_address.split(",")[0]
+
         store = []
         store.append(base_url)
         store.append(location_name if location_name else "<MISSING>")
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
         store.append("ON")
-        store.append(zipp if zipp else "<MISSING>")
+        store.append(zipp.replace("ON N2H 1H5", "N2H 1H5") if zipp else "<MISSING>")
         store.append("CA")
         store.append(store_number if store_number else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
@@ -155,7 +165,7 @@ def fetch_data():
                 " -  - ,  - 10:30am - ,  - 10:30am - ,  - 10:30am - 11:00pm",
                 "<MISSING>",
             )
-            if type(x) == str
+            if isinstance(x, str)
             else x
             for x in store
         ]
