@@ -38,7 +38,10 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.mayoclinichealthsystem.org/locations/albert-lea",
+        "https://www.mayoclinichealthsystem.org/locations/la-crosse",
+    ]
     url = "https://www.mayoclinichealthsystem.org/HealthSystemInternet/LocationAddress/GetLocationMapRailResults?page=1&pageSize=100&sourceLat=44.02209&sourceLong=-92.46997&activeSite=hsinternet"
     r = session.get(url, headers=headers)
     infos = []
@@ -88,7 +91,7 @@ def fetch_data():
                     state = line2.split(",")[2].strip().split(" ")[0]
                     name = city + ", " + state
                     zc = line2.split(",")[2].strip().split(" ")[1].split("<")[0]
-                else:
+                elif addinfo.count(",") == 3:
                     add = line2.split('<address class="list-item-address">')[1].split(
                         ","
                     )[0]
@@ -96,6 +99,16 @@ def fetch_data():
                     city = line2.split(",")[2].strip()
                     state = line2.split(",")[3].strip().split(" ")[0]
                     zc = line2.split(",")[3].strip().split(" ")[1].split("<")[0]
+                else:
+                    add = line2.split('<address class="list-item-address">')[1].split(
+                        ","
+                    )[0]
+                    add = add + " " + line2.split(",")[1].strip()
+                    add = add + " " + line2.split(",")[2].strip()
+                    city = line2.split(",")[3].strip()
+                    state = line2.split(",")[4].strip().split(" ")[0]
+                    zc = line2.split(",")[4].strip().split(" ")[1].split("<")[0]
+
             if "href='tel://" in line2:
                 phone = line2.split("href='tel://")[1].split("'")[0]
             if "Hours:</li><li><span>" in line2:
@@ -110,6 +123,8 @@ def fetch_data():
                     hours = hours.split("<li>")[0].strip()
                 if add != "":
                     addinfo = add + "|" + city + "|" + typ
+                    if phone == "":
+                        phone = "<MISSING>"
                     if addinfo not in infos:
                         infos.append(addinfo)
                         yield [
