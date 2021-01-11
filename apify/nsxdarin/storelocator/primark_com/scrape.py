@@ -89,7 +89,7 @@ def fetch_data():
                 except:
                     pass
                 try:
-                    add = add + " " + line3.split('"line3":"')[1].split('"')[0]
+                    add = add + " " + line2.split('"line3":"')[1].split('"')[0]
                 except:
                     pass
                 add = add.strip()
