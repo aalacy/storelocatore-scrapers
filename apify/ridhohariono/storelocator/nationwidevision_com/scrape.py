@@ -120,8 +120,8 @@ def fetch_data():
     for row in store_info:
         page_url = row["link"]
         data = pull_content(page_url)
-        geo_content = data.find("div", {"class": "location--map"})
-        store_content = data.find("div", {"class": "location--detail"})
+        geo_content = data.find("div", {"class": re.compile(".*-map")})
+        store_content = data.find("div", {"class": re.compile(".*-detail")})
         lat_long = geo_content.find("h2", {"class": "location-title"}).text.split(",")
         latitude = handle_missing(lat_long[0])
         longitude = handle_missing(lat_long[1])

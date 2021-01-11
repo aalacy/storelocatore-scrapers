@@ -81,6 +81,10 @@ def fetch_data():
         city = a.get("city") or "<INACCESSIBLE>"
         state = a.get("state") or "<INACCESSIBLE>"
         postal = a.get("postal") or "<INACCESSIBLE>"
+
+        if city == "<INACCESSIBLE>":
+            city = street_address.split()[-1]
+            street_address = " ".join(street_address.split()[:-1])
         country_code = "US"
         location_name = "".join(m.xpath("./name/text()")).strip()
         store_number = location_name.replace("#", "")
