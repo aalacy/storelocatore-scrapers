@@ -72,16 +72,17 @@ def fetch_data():
         citylist = soup.find("div", {"class": "Directory"}).findAll(
             "a", {"class": "c-directory-list-content-item-link Link--main"}
         )
+
         for citynow in citylist:
             citylink = "https://locations.dangelos.com/" + citynow["href"]
             r = session.get(citylink, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             try:
-                branchlist = soup.find("ul", {"class": "c-LocationGrid"}).findAll(
-                    "div", {"class": "Teaser-details"}
-                )
+                branchlist = soup.find("ul", {"class": "c-LocationGrid"}).findAll("li")
                 for branch in branchlist:
-                    branch = branch.find("a", {"class": "Link--main"})
+                    branch = branch.find("div", {"class": "Teaser-details"}).find(
+                        "a", {"class": "Link--main"}
+                    )
                     branch = "https://locations.dangelos.com/" + branch["href"]
                     branch = branch.replace("../", "")
                     r = session.get(branch, headers=headers, verify=False)
@@ -107,6 +108,24 @@ def fetch_data():
                         "span", {"class": "c-address-postal-code"}
                     ).text.strip()
                     phone = soup.find("span", {"id": "telephone"}).text.strip()
+                    data.append(
+                        [
+                            "https://dangelos.com/",
+                            branch,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            "US",
+                            store,
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours,
+                        ]
+                    )
             except:
                 branch = citylink
                 store = r.text.split('"id":', 1)[1].split(",", 1)[0].strip()
@@ -137,24 +156,24 @@ def fetch_data():
                     .replace("PM", "PM ")
                     .strip()
                 )
-            data.append(
-                [
-                    "https://dangelos.com/",
-                    branch,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
+                data.append(
+                    [
+                        "https://dangelos.com/",
+                        branch,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        "US",
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours,
+                    ]
+                )
     return data
 
 
