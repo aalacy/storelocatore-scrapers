@@ -125,10 +125,8 @@ def fetch_data():
         lat_long = geo_content.find("h2", {"class": "location-title"}).text.split(",")
         latitude = handle_missing(lat_long[0])
         longitude = handle_missing(lat_long[1])
-        get_hours = (
-            store_content.find("div", {"class": "detail--secondary"})
-            .find("div", {"class": "office-hours"})
-            .get_text(strip=True, separator=" ")
+        get_hours = store_content.find("div", {"class": "office-hours"}).get_text(
+            strip=True, separator=" "
         )
         hours_of_operation = handle_missing(parse_hours(get_hours))
         locator_domain = DOMAIN
