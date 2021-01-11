@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.themaxchallenge.com/locations/new-albany-oh/"]
     url = "https://www.themaxchallenge.com/max-challenge-locations/"
     r = session.get(url, headers=headers)
     website = "themaxchallenge.com"
