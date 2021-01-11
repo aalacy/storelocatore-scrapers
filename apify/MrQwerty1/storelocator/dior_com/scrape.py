@@ -80,7 +80,7 @@ def get_data(url):
         )
         street_address = " ".join(street_address.split())
         city = j.get("defaultCity") or "<MISSING>"
-        state = "<MISSING>"
+        state = j.get("state") or "<MISSING>"
         postal = j.get("defaultZipCode", "").strip() or "<MISSING>"
         country_code = j.get("countryCode") or "<MISSING>"
 

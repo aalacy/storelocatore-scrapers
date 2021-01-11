@@ -49,7 +49,7 @@ def fetch_data():
         postal = j.get("Zip") or "<MISSING>"
         country_code = "US"
         store_number = j.get("Id") or "<MISSING>"
-        page_url = "<MISSING>"
+        page_url = "https://order.smokeybones.com/#!/"
         location_name = j.get("LocationName")
         phone = j.get("Phone") or "<MISSING>"
         latitude = j.get("Lat") or "<MISSING>"
