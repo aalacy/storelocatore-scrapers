@@ -66,7 +66,6 @@ def fetch_data():
         "a", {"class": "c-directory-list-content-item-link Link--main"}
     )
     for stnow in statelist:
-        check1 = 0
         stlink = "https://locations.dangelos.com/" + stnow["href"]
         r = session.get(stlink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
