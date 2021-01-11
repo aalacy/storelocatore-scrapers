@@ -65,6 +65,14 @@ def fetch_data():
         address_raw = loc_dom.xpath('//div[@id="MapAddress"]/p/text()')
         if not address_raw:
             address_raw = loc_dom.xpath('//div[@id="MapDescription"]/p/text()')
+        if not address_raw:
+            address_raw = loc_dom.xpath(
+                '//p[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
+            )
+        if len(address_raw) == 1:
+            address_raw = address_raw[0].split(", ")
+        if len(address_raw) == 4:
+            address_raw = [" ".join(address_raw[:2])] + address_raw[2:]
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         if not address_raw:
             address_raw = etree.HTML(poi["description"])
@@ -92,8 +100,9 @@ def fetch_data():
             address_raw = address_raw[:-1]
         if len(address_raw) == 1:
             address_raw = address_raw[0].split(", ")
-        if "Suit" in address_raw[1]:
-            address_raw = [", ".join(address_raw)[:2]] + address_raw[2:]
+        if len(address_raw) > 1:
+            if "Suit" in address_raw[1]:
+                address_raw = [", ".join(address_raw)[:2]] + address_raw[2:]
         if not address_raw:
             street_address = "<MISSING>"
             city = "<MISSING>"
@@ -142,6 +151,28 @@ def fetch_data():
             state = "<MISSING>"
             if ", " in street_address:
                 state = street_address.split(", ")[-1]
+        if city.isdigit():
+            city = location_name.split(",")[0].split("Cleaning")[-1]
+
+        street_address = street_address.split("\n")[0]
+        if ", " in location_name:
+            state = location_name.split(",")[-1].strip()
+            city = (
+                location_name.split(",")[0].strip().replace("Lapels Dry Cleaning ", "")
+            )
+        state = state.split()[0]
+        city = city.split("(")[0].strip()
+        if len(city) == 2:
+            if "Tampa" in street_address:
+                city = "Tampa"
+                street_address = street_address.replace(city, "")
+                state = "FL"
+        if len(street_address.strip()) == 2:
+            street_address = ", ".join(
+                loc_dom.xpath(
+                    '//div[a[contains(@href, "tel")]]/following-sibling::p[1]/text()'
+                )[0].split(", ")[:2]
+            )
 
         item = [
             DOMAIN,

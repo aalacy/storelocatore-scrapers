@@ -82,12 +82,15 @@ def fetch_data():
                     "</div>", 1
                 )[0]
                 title = title.split("  ", 1)[0]
+
                 templist = temploc.split("<br>")[1:5]
                 if "US" not in templist[2]:
                     continue
-                street = templist[0] + " " + templist[1]
+                street = templist[0]
                 city = templist[2].split(",", 1)[0]
-                state = templist[2].split(",", 1)[1].replace("US", "")
+                state = templist[2].split(",", 1)[1].replace("US", "").strip()
+                tempzip = "+" + state + "," + "+"
+                pcode = temploc.split(tempzip, 1)[1].split(",+US", 1)[0]
                 phone = templist[3].split("Phone:", 1)[1].strip()
                 data.append(
                     [
@@ -97,7 +100,7 @@ def fetch_data():
                         street,
                         city,
                         state,
-                        "<MISSING>",
+                        pcode,
                         "US",
                         "<MISSING>",
                         phone,
