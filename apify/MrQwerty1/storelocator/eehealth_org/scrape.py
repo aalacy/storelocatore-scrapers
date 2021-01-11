@@ -94,6 +94,13 @@ def get_data(page_url):
     )
     if phone.find(":") != -1:
         phone = phone.split(":")[1].strip()
+    if phone == "<MISSING>":
+        phone = (
+            "".join(
+                tree.xpath("//p[./strong[contains(text(), 'Main Phone')]]/text()")
+            ).strip()
+            or "<MISSING>"
+        )
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     location_type = "<MISSING>"
@@ -107,6 +114,7 @@ def get_data(page_url):
             _tmp.append(p)
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
     if hours_of_operation.lower().find("call") != -1:
         hours_of_operation = "<MISSING>"
 
