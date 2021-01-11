@@ -222,9 +222,6 @@ def fetch_data():
                 coord_dict[page_url].split("lng:")[1].strip().split("}")[0].strip()
             )
 
-        else:
-            continue
-
         if latitude == "":
             latitude = "<MISSING>"
         if longitude == "":
