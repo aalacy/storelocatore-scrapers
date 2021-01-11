@@ -46,7 +46,7 @@ def get_data(coord):
     js = r.json()["response"]
 
     for j in js:
-        page_url = j.get("sl_pages_url") or "<MISSING>"
+        page_url = "<MISSING>"
         location_name = j.get("name").replace("&#039;", "'")
         street_address = (
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
