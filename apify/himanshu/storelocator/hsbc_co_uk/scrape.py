@@ -34,7 +34,6 @@ def write_output(data):
 
 
 def fetch_data():
-    addresses = []
     r = session.get("https://api.hsbc.com/open-banking/v2.2/atms").json()
     attr = r["data"][0]["Brand"][0]["ATM"]
 
