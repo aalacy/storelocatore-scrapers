@@ -108,6 +108,15 @@ def fetch_data():
                         "span", {"class": "c-address-postal-code"}
                     ).text.strip()
                     phone = soup.find("span", {"id": "telephone"}).text.strip()
+                    hours = soup.find(
+                        "table", {"class": "c-location-hours-details"}
+                    ).text.strip()
+                    hours = (
+                        hours.replace("Day of the WeekHours", "")
+                        .replace("day", "day ")
+                        .replace("PM", "PM ")
+                        .strip()
+                    )
                     data.append(
                         [
                             "https://dangelos.com/",
