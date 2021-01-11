@@ -49,7 +49,7 @@ def write_output(data):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "html.parser")
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
