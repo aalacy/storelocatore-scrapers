@@ -161,8 +161,6 @@ def fetch_data():
                             state = state_zip
                             zip = "<MISSING>"
 
-                    # page_url = "<MISSING>"
-
                 if us.states.lookup(state):
                     country_code = "US"
 
