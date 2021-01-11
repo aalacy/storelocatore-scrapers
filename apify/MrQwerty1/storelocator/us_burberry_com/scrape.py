@@ -39,7 +39,7 @@ def fetch_data():
 
     session = SgRequests()
     r = session.get(
-        f"https://api.burberry.com/services/sites/v1?language=en&country=US&limit=100"
+        "https://api.burberry.com/services/sites/v1?language=en&country=US&limit=100"
     )
     js = r.json()["data"]
 
