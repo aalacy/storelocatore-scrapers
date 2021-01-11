@@ -1,9 +1,9 @@
 import csv
 import json
-import sgzip
-from sgzip import SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
+from itertools import chain
 
 
 def write_output(data):
@@ -36,40 +36,47 @@ def write_output(data):
             writer.writerow(row)
 
 
+def country_name(country):
+    if country == SearchableCountries.USA:
+        return "US"
+    elif country == SearchableCountries.CANADA:
+        return "CA"
+    else:
+        raise Exception("unexpected country")
+
+
 def fetch_data():
-    # Your scraper here
+    return chain(
+        scrape_country(SearchableCountries.USA),
+        scrape_country(SearchableCountries.CANADA),
+    )
+
+
+def scrape_country(country):
     session = SgRequests()
 
-    items = []
     scrape_items = []
 
     DOMAIN = "dhl.com"
-    start_url_us = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode=US&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
-    start_url_ca = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode=CA&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
+    api_url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode={}&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
 
-    all_requests = []
-    us_coords = sgzip.coords_for_radius(radius=50, country_code=SearchableCountries.USA)
-    for coord in us_coords:
-        lat, lng = coord
-        all_requests.append(start_url_us.format(lat, lng))
-    ca_coords = sgzip.coords_for_radius(
-        radius=50, country_code=SearchableCountries.CANADA
+    search = DynamicGeoSearch(
+        country_codes=[country], max_radius_miles=50, max_search_results=None
     )
-    for coord in ca_coords:
-        lat, lng = coord
-        all_requests.append(start_url_ca.format(lat, lng))
 
-    for url in all_requests:
+    for lat, lng in search:
+        url = api_url.format(country_name(country), str(lat), str(lng))
         response = session.get(url)
-        # if not response.text:
-        #     continue
+        if not response.text:
+            continue
 
         data = json.loads(response.text)
 
         if not data.get("servicePoints"):
             continue
 
+        coords = []
         for poi in data["servicePoints"]:
             store_url = ""
             store_url = store_url if store_url else "<MISSING>"
@@ -96,8 +103,10 @@ def fetch_data():
             location_type = poi["servicePointType"]
             location_type = location_type if location_type else "<MISSING>"
             latitude = poi["geoLocation"]["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["geoLocation"]["longitude"]
+            if latitude and longitude:
+                coords.append((latitude, longitude))
+            latitude = latitude if latitude else "<MISSING>"
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             for elem in poi["openingHours"]["openingHours"]:
@@ -128,9 +137,8 @@ def fetch_data():
             check = "{} {}".format(store_number, street_address)
             if check not in scrape_items:
                 scrape_items.append(check)
-                items.append(item)
-
-    return items
+                yield item
+        search.mark_found(coords)
 
 
 def scrape():

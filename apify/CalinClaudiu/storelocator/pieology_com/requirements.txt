@@ -1,6 +1,4 @@
 sgscrape
 sglogging
 sgselenium
-selenium.webdriver.support
-selenium.webdriver.support.ui
-selenium.webdriver.common.by
+selenium

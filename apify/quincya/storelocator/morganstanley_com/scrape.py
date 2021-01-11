@@ -1,153 +1,179 @@
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
-import re
-import json
-from sgselenium import SgChrome
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+
 from sglogging import sglog
+
+from sgrequests import SgRequests
+
+from sgselenium import SgChrome
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="morganstanley.com")
 
 
 def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
 
-	base_link = "https://advisor.morganstanley.com/search?profile=16348&profile=16350&q=Morgan%20Stanley&r=2500"
+    driver = SgChrome().chrome(
+        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    )
 
-	driver = SgChrome().chrome()
-	time.sleep(2)
-	
-	driver.get(base_link)
-	element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-		(By.CLASS_NAME, "Teaser-title")))
-	time.sleep(2)
+    base_link = "https://advisor.morganstanley.com/search?profile=16348&q=19125&r=2500"
 
-	while True:
+    driver.get(base_link)
 
-		print ("Scrolling to load full page ...")
+    cookies = driver.get_cookies()
+    cookie = ""
+    for cook in cookies:
+        if cook["name"] in ["ak_bmsc", "_ga", "_gid", "_gat_yext"]:
+            cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
+    cookie = cookie.strip()[:-1]
 
-		# Get scroll height
-		last_height = driver.execute_script("return document.body.scrollHeight")
+    if "_gat_yext" not in cookie:
+        cookie = cookie + "; _gat_yext=1"
 
-		# Scroll down to bottom
-		try:
-			next_page = driver.find_element_by_css_selector(".Results-seeMore.Button--hollow.js-locator-seeMore")
-			driver.execute_script('arguments[0].click();', next_page)
-		except:
-			break
+    session = SgRequests()
 
-		# Wait to load page
-		time.sleep(randint(3,5))
+    data = []
+    found_poi = []
 
-		# Calculate new scroll height and compare with last scroll height
-		new_height = driver.execute_script("return document.body.scrollHeight")
+    locator_domain = "morganstanley.com"
 
-		if new_height == last_height:
+    max_results = 600
+    max_distance = 2500
 
-			# Try again to confirm 
-			try:
-				next_page = driver.find_element_by_css_selector(".Results-seeMore.Button--hollow.js-locator-seeMore")
-				driver.execute_script('arguments[0].click();', next_page)
-			except:
-				break
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=max_distance,
+        max_search_results=max_results,
+    )
 
-			# Wait to load page
-			time.sleep(randint(4,6))
+    for postcode in search:
+        base_link = (
+            "https://advisor.morganstanley.com/search?profile=16348&q=%s&r=%s"
+            % (postcode, max_distance)
+        )
 
-			# Calculate new scroll height and compare with last scroll height
-			new_height = driver.execute_script("return document.body.scrollHeight")
+        headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            "Cookie": cookie,
+            "Host": "advisor.morganstanley.com",
+            "Referer": "https://advisor.morganstanley.com/search?profile=16348&q=%s&r=%s"
+            % (postcode, max_distance),
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        }
 
-			# Check if the page height has remained the same
-			if new_height == last_height:
-				# if so, you are done
-				print ("Done scrolling!")
-				break
-			# If not, move on to the next loop
-			else:
-				print ("Scroll again ...")
-				last_height = new_height
+        log.info(base_link)
+        req = session.get(base_link, headers=headers).json()
+        stores = req["response"]["entities"]
+        count = req["response"]["count"]
 
-	base = BeautifulSoup(driver.page_source,"lxml")
-	items = base.find_all(class_="ResultList-item")
+        total = int(count / 10) + (count % 10 > 0)
+        for page_num in range(1, total + 1):
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+            for i in stores:
+                store = i["profile"]
 
-	session = SgRequests()
+                try:
+                    street_address = (
+                        store["address"]["line1"] + " " + store["address"]["line2"]
+                    ).strip()
+                except TypeError:
+                    street_address = store["address"]["line1"].strip()
+                city = store["address"]["city"]
+                location_name = "Morgan Stanley " + city + " Branch"
+                state = store["address"]["region"]
+                zip_code = store["address"]["postalCode"]
+                country_code = store["address"]["countryCode"]
+                store_number = "<MISSING>"
+                location_type = "<MISSING>"
+                phone = store["mainPhone"]["display"]
 
-	data = []
-	found_poi = []
+                street_city = street_address + city
+                if street_city in found_poi:
+                    continue
+                found_poi.append(street_city)
 
-	locator_domain = "morganstanley.com"
+                hours_of_operation = "<MISSING>"
+                latitude = store["yextDisplayCoordinate"]["lat"]
+                longitude = store["yextDisplayCoordinate"]["long"]
 
-	log.info("Processing " + str(len(items)) + " links..")
-	for item in items:
+                try:
+                    link = store["websiteUrl"]
+                except KeyError:
+                    link = "<MISSING>"
+                if not link:
+                    link = "<MISSING>"
 
-		location_name = item.span.text.strip()
+                search.mark_found([latitude, longitude])
 
-		try:
-			street_address = item.find(class_="c-address-street-1").text.strip() + " " + item.find(class_="c-address-street-2").text.strip()
-		except:
-			street_address = item.find(class_="c-address-street-1").text.strip()
+                data.append(
+                    [
+                        locator_domain,
+                        link,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip_code,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                )
 
-		city = item.find(class_="c-address-city").text.strip()
-		state = item.find(class_="c-address-state").text.strip()
-		zip_code = item.find(class_="c-address-postal-code").text.strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = item.find(id="telephone").text.strip()
-		hours_of_operation = "<MISSING>"
+            offset = page_num * 10
+            next_link = base_link + "&offset=" + str(offset)
+            log.info(next_link)
+            stores = session.get(next_link, headers=headers).json()["response"][
+                "entities"
+            ]
+    driver.close()
+    return data
 
-		try:
-			link = item.find(class_="Teaser-titleLink Link Link--primaryPlain")["href"]
-		except:
-			link = "<MISSING>"
-			if location_name in ["Morgan Stanley Pasadena Branch","Morgan Stanley Austin Branch", "Morgan Stanley Wichita Branch","Morgan Stanley Short Hills Branch"]:
-				continue
-
-		if location_name in found_poi:
-			continue
-
-		print(location_name)
-		found_poi.append(location_name)
-		try:
-			map_link = item.find(class_="c-address").a["href"]
-			req = session.get(map_link, headers = HEADERS)
-			maps = BeautifulSoup(req.text,"lxml")
-
-			try:
-				raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-				latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-				longitude = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-			except:
-				latitude = "<MISSING>"
-				longitude = "<MISSING>"
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

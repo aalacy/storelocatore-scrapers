@@ -1,8 +1,6 @@
 import csv
 import json
-import sgzip
-from sgzip import SearchableCountries
-
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 
 
@@ -38,17 +36,19 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=3, backoff_factor=0.3)
 
     items = []
     scraped_items = []
 
     DOMAIN = "bbt.com"
+    start_url = "https://www.bbt.com/clocator/searchLocations.do?quickZip={}&type=branch&services="
 
-    all_codes = ["20001"]
-    us_zips = sgzip.for_radius(radius=5, country_code=SearchableCountries.USA)
-    for zip_code in us_zips:
-        all_codes.append(zip_code)
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=5,
+        max_search_results=None,
+    )
 
     hdr = {
         "Accept": "text/plain, */*; q=0.01",
@@ -60,9 +60,6 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
     }
 
-    start_url = (
-        "https://www.bbt.com/clocator/searchLocations.do?quickZip={}&type=&services="
-    )
     for code in all_codes:
         passed = False
         while not passed:
@@ -97,11 +94,7 @@ def fetch_data():
             store_number = store_number if store_number else "<MISSING>"
             phone = poi["phone"]
             phone = phone if phone else "<MISSING>"
-            location_type = ""
-            if poi["atmAvailable"] == "Y":
-                location_type = "atm"
-            else:
-                location_type = "branch"
+            location_type = "branch"
             location_type = location_type if location_type else "<MISSING>"
             latitude = poi["latitude"]
             latitude = latitude if latitude else "<MISSING>"
@@ -109,7 +102,9 @@ def fetch_data():
             longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = poi["lobbyHours"]
             hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                ", ".join(hours_of_operation).replace("  ", " ")
+                if hours_of_operation
+                else "<MISSING>"
             )
 
             item = [

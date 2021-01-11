@@ -2,7 +2,6 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
-from sgscrape.simple_scraper_pipeline import MissingField
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
@@ -34,6 +33,9 @@ def fetch_data():
                 )
 
     for i in son["pointsData"]:
+        temp = pretty_hours(i["permalink"])
+        i["horas"] = temp[0]
+        i["country"] = temp[1]
         yield i
     son = "Finished grabbing data!!"
     logzilla.info(f"{son}")
@@ -55,6 +57,15 @@ def fix_comma(x):
     if len(h) < 2:
         h = "<MISSING>"
 
+    backup = h
+    if "P.O." in h:
+        h = h.split("P.O.")[0].strip()
+        if len(h) > 3:
+            return fix_comma(h)
+        else:
+            h = backup
+            h = h.split("P.O.")[1].strip()
+            return fix_comma(h)
     return h
 
 
@@ -73,7 +84,13 @@ def pretty_hours(url):
     h = []
     for i in son["openingHoursSpecification"]:
         h.append(i["dayOfWeek"][0] + ": " + i["opens"] + "-" + i["closes"])
-    return "; ".join(h)
+
+    try:
+        country = son["address"]["addressCountry"]
+    except:
+        country = "<MISSING>"
+
+    return ["; ".join(h), country]
 
 
 def scrape():
@@ -105,16 +122,14 @@ def scrape():
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        country_code=MissingField(),
+        country_code=MappingField(mapping=["country"], is_required=False),
         phone=MappingField(
             mapping=["phone_number"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
         store_number=MappingField(mapping=["branch_number"]),
-        hours_of_operation=MappingField(
-            mapping=["permalink"], value_transform=pretty_hours, is_required=False
-        ),
+        hours_of_operation=MappingField(mapping=["horas"], is_required=False),
         location_type=MappingField(mapping=["type"], is_required=False),
     )
 
