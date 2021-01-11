@@ -63,7 +63,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     loc_list = []
-
     session = SgRequests()
     stores_req = session.get("https://www.1stnb.com/locator")
     status = "Please solve this CAPTCHA to request unblock to the website"
