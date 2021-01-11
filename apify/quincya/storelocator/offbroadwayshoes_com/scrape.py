@@ -52,7 +52,6 @@ def fetch_data():
             "https://www.offbroadwayshoes.com/store-finder?q=&page=%s&latitude=25.790654&longitude=-80.130045"
             % (i)
         )
-        print(base_link)
         driver.get(base_link)
         base = BeautifulSoup(driver.page_source, "lxml")
 
