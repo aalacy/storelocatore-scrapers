@@ -97,7 +97,7 @@ def get_data(page_url, geo):
         if time:
             _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp) or "Closed"
 
     row = [
         locator_domain,

@@ -137,6 +137,8 @@ def fetch_data():
                 city = "Staten Island"
                 state = "NY"
                 zc = "10309"
+            if "seminole-fl" in loc:
+                zc = "33772"
             yield [
                 website,
                 loc,
