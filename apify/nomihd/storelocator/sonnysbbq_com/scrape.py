@@ -70,8 +70,7 @@ def fetch_data():
         stores = states_dict[state]
         for store in stores:
             if store["post_status"] == "publish":
-                page_url = store["_yoast_wpseo_canonical"]
-
+                page_url = "https://www.sonnysbbq.com/locations/" + store["slug"]
                 locator_domain = website
                 location_name = store["post_title"]
                 if location_name == "":
@@ -161,8 +160,6 @@ def fetch_data():
                         else:
                             state = state_zip
                             zip = "<MISSING>"
-
-                    page_url = "<MISSING>"
 
                 if us.states.lookup(state):
                     country_code = "US"
