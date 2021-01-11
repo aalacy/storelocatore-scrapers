@@ -38,7 +38,10 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.mayoclinichealthsystem.org/locations/albert-lea",
+        "https://www.mayoclinichealthsystem.org/locations/la-crosse",
+    ]
     url = "https://www.mayoclinichealthsystem.org/HealthSystemInternet/LocationAddress/GetLocationMapRailResults?page=1&pageSize=100&sourceLat=44.02209&sourceLong=-92.46997&activeSite=hsinternet"
     r = session.get(url, headers=headers)
     infos = []
@@ -120,6 +123,8 @@ def fetch_data():
                     hours = hours.split("<li>")[0].strip()
                 if add != "":
                     addinfo = add + "|" + city + "|" + typ
+                    if phone == "":
+                        phone = "<MISSING>"
                     if addinfo not in infos:
                         infos.append(addinfo)
                         yield [
