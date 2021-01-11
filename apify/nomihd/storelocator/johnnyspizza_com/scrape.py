@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
-import json
 
 website = "johnnyspizza.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
