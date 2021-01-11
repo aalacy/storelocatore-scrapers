@@ -59,7 +59,7 @@ def fetch_data():
         loc_response = session.get(loc_url, headers=headers)
         poi = json.loads(loc_response.text)
 
-        store_url = poi["website"]
+        store_url = "https://www.atwoods.com/storelocator"
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"

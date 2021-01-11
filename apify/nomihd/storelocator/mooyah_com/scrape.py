@@ -97,6 +97,9 @@ def fetch_data():
                 add_list.append("".join(add).strip())
 
         street_address = add_list[0].strip()
+        if "Suite" in "".join(add_list).strip():
+            street_address = street_address + ", " + add_list[1].strip()
+
         city_state_zip = add_list[-1].strip()
         city = city_state_zip.split(",")[0].strip()
         state = city_state_zip.split(",")[1].strip().split(" ", 1)[0].strip()

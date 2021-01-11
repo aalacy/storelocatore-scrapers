@@ -1,4 +1,5 @@
 import csv
+from time import sleep
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -46,10 +47,15 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
+        sleep(2)
         driver.find_element_by_id("dwfrm_storelocator_maxdistance").click()
+        sleep(2)
         driver.find_element_by_xpath('//option[@label="USA"]').click()
+        sleep(2)
         driver.find_element_by_id("dwfrm_storelocator_postalCode").send_keys("10001")
+        sleep(2)
         driver.find_element_by_name("dwfrm_storelocator_findbyzip").click()
+        sleep(2)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//a[@class="store-link"]/@href')
@@ -69,6 +75,8 @@ def fetch_data():
         zip_code = zip_code[0] if zip_code else "<MISSING>"
         country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')
         country_code = country_code[0] if country_code else "<MISSING>"
+        if country_code == "Italy":
+            continue
         store_number = loc_dom.xpath('//input[@name="storeid"]/@value')
         store_number = store_number[0] if store_number else "<MISSING>"
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
