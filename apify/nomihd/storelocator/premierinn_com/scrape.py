@@ -75,52 +75,32 @@ def fetch_data():
 
         county = "".join(county.xpath("text()")).strip()
 
+        county_url = "https://www.premierinn.com/gb/en/hotels/england/oxfordshire.html"
         stores_req = session.get(county_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//article[@class="seo-hotel-card"]/a/@href')
-        for store_url in stores:
-            if "https://www.premierinn.com" not in store_url:
-                page_url = domain + store_url
-            else:
-                page_url = store_url
-
-            locator_domain = website
-            if page_url not in done_url:
-                done_url.append(page_url)
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
-
-                sub_stores = store_sel.xpath(
-                    '//article[@class="seo-hotel-card"]/a/@href'
-                )
-
-                if len(sub_stores) > 0:
-                    continue
-
+        stores = stores_sel.xpath('//article[@class="seo-hotel-card"]')
+        for store in stores:
+            store_url = "".join(store.xpath("a/@href")).strip()
+            if store_url == "https://www.premierinn.com/gb/en/hotels.html":
+                # fetch from this page
+                page_url = "<MISSING>"
+                locator_domain = website
                 location_name = "".join(
-                    store_sel.xpath(
-                        '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
-                    )
+                    store.xpath('.//h3[@class="seo-hotel-card-title"]/text()')
                 ).strip()
+
                 if location_name == "":
                     location_name = "<MISSING>"
 
-                street_address = "".join(
-                    store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
+                address = "".join(
+                    store.xpath('.//address[@itemprop="address"]/text()')
                 ).strip()
-                add_2 = "".join(
-                    store_sel.xpath('//span[@itemprop="addressLocality"][1]/text()')
-                ).strip()
-                if len(add_2) > 0:
-                    street_address = street_address + ", " + add_2
 
-                city = "".join(
-                    store_sel.xpath('//span[@itemprop="addressLocality"][2]/text()')
-                ).strip()
+                street_address = address.split("\n")[0].strip()
+
+                city = "<MISSING>"
                 state = county.replace("Hotels", "").strip()
-                zip = "".join(
-                    store_sel.xpath('//span[@itemprop="postalCode"]/text()')
-                ).strip()
+                zip = address.split("\n")[1].strip()
 
                 country_code = "GB"
 
@@ -136,39 +116,16 @@ def fetch_data():
                 if zip == "":
                     zip = "<MISSING>"
 
-                store_number = "".join(
-                    store_sel.xpath('//meta[@itemprop="hotelCode"]/@content')
-                ).strip()
+                store_number = "<MISSING>"
 
-                if store_number == "":
-                    store_number = "<MISSING>"
-
-                phone = "".join(
-                    store_sel.xpath("//contact-module-responsive/@hotel-phone-number")
-                ).strip()
+                phone = "<MISSING>"
                 location_type = "<MISSING>"
                 hours_of_operation = "<MISSING>"
 
-                latitude = "".join(
-                    store_sel.xpath(
-                        '//div[@itemprop="geo"]/meta[@itemprop="latitude"]/@content'
-                    )
-                ).strip()
-                longitude = "".join(
-                    store_sel.xpath(
-                        '//div[@itemprop="geo"]/meta[@itemprop="longitude"]/@content'
-                    )
-                ).strip()
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
-                if latitude == "":
-                    latitude = "<MISSING>"
-                if longitude == "":
-                    longitude = "<MISSING>"
-
-                if hours_of_operation == "":
-                    hours_of_operation = "<MISSING>"
-                if phone == "":
-                    phone = "<MISSING>"
+                hours_of_operation = "<MISSING>"
 
                 curr_list = [
                     locator_domain,
@@ -187,6 +144,118 @@ def fetch_data():
                     hours_of_operation,
                 ]
                 loc_list.append(curr_list)
+
+            else:
+                if "https://www.premierinn.com" not in store_url:
+                    page_url = domain + store_url
+                else:
+                    page_url = store_url
+
+                locator_domain = website
+                if page_url not in done_url:
+                    done_url.append(page_url)
+                    store_req = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_req.text)
+
+                    sub_stores = store_sel.xpath(
+                        '//article[@class="seo-hotel-card"]/a/@href'
+                    )
+
+                    if len(sub_stores) > 0:
+                        continue
+
+                    location_name = "".join(
+                        store_sel.xpath(
+                            '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
+                        )
+                    ).strip()
+                    if location_name == "":
+                        location_name = "<MISSING>"
+
+                    street_address = "".join(
+                        store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
+                    ).strip()
+                    add_2 = "".join(
+                        store_sel.xpath('//span[@itemprop="addressLocality"][1]/text()')
+                    ).strip()
+                    if len(add_2) > 0:
+                        street_address = street_address + ", " + add_2
+
+                    city = "".join(
+                        store_sel.xpath('//span[@itemprop="addressLocality"][2]/text()')
+                    ).strip()
+                    state = county.replace("Hotels", "").strip()
+                    zip = "".join(
+                        store_sel.xpath('//span[@itemprop="postalCode"]/text()')
+                    ).strip()
+
+                    country_code = "GB"
+
+                    if street_address == "":
+                        street_address = "<MISSING>"
+
+                    if city == "":
+                        city = "<MISSING>"
+
+                    if state == "":
+                        state = "<MISSING>"
+
+                    if zip == "":
+                        zip = "<MISSING>"
+
+                    store_number = "".join(
+                        store_sel.xpath('//meta[@itemprop="hotelCode"]/@content')
+                    ).strip()
+
+                    if store_number == "":
+                        store_number = "<MISSING>"
+
+                    phone = "".join(
+                        store_sel.xpath(
+                            "//contact-module-responsive/@hotel-phone-number"
+                        )
+                    ).strip()
+                    location_type = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
+
+                    latitude = "".join(
+                        store_sel.xpath(
+                            '//div[@itemprop="geo"]/meta[@itemprop="latitude"]/@content'
+                        )
+                    ).strip()
+                    longitude = "".join(
+                        store_sel.xpath(
+                            '//div[@itemprop="geo"]/meta[@itemprop="longitude"]/@content'
+                        )
+                    ).strip()
+
+                    if latitude == "":
+                        latitude = "<MISSING>"
+                    if longitude == "":
+                        longitude = "<MISSING>"
+
+                    if hours_of_operation == "":
+                        hours_of_operation = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
+
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                    loc_list.append(curr_list)
 
     return loc_list
 
