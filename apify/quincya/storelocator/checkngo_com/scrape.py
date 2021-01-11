@@ -104,11 +104,11 @@ def fetch_data():
         try:
             sat = " Saturday " + store["SaturdayOpen"] + "-" + store["SaturdayClose"]
         except:
-            sat = " Saturday Closed"
+            sat = " Saturday INACCESSIBLE"
         try:
             sun = " Sunday " + store["SundayOpen"] + "-" + store["SundayClose"]
         except:
-            sun = " Sunday Closed"
+            sun = " Sunday INACCESSIBLE"
 
         hours_of_operation = hours_of_operation + sat + sun
 

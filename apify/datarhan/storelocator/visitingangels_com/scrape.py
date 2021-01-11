@@ -111,12 +111,12 @@ def fetch_data():
 
     for poi_html in all_locations:
         store_url = urljoin(start_url, poi_html.xpath(".//a/@href")[0])
-        location_name = poi_html.xpath("text()")[0]
-        street_address = poi_html.xpath("text()")[2]
+        location_name = poi_html.xpath("text()")[0].strip()
+        street_address = poi_html.xpath("text()")[2].strip()
         city = poi_html.xpath("text()")[3].split()[:-2]
-        city = " ".join(city) if city else "<MISSING>"
-        state = poi_html.xpath("text()")[3].split()[-2]
-        zip_code = poi_html.xpath("text()")[3].split()[-1]
+        city = " ".join(city).strip() if city else "<MISSING>"
+        state = poi_html.xpath("text()")[3].split()[-2].strip()
+        zip_code = poi_html.xpath("text()")[3].split()[-1].strip()
         country_code = "<MISSING>"
         store_number = store_url.split("_")[-1]
         phone = "<MISSING>"

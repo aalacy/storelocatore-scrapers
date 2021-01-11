@@ -17,7 +17,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -36,7 +35,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -54,6 +52,7 @@ def fetch_data():
     url = "https://www.choicehotels.com/webapi/location/hotels"
 
     for lat, long in search:
+
         payload = (
             "adults=%201&checkInDate=%20"
             + check_in
@@ -79,7 +78,7 @@ def fetch_data():
             street_address = addr["address"]["line1"]
             city = addr["address"]["city"]
             state = addr["address"]["subdivision"]
-            zip = addr["address"]["postalCode"]
+            zipp = addr["address"]["postalCode"]
             country_code = addr["address"]["country"]
             store_number = "<MISSING>"
             phone = addr["phone"]
@@ -98,7 +97,7 @@ def fetch_data():
             store.append(street_address if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
             store.append(country_code)
             store.append(store_number)
             store.append(phone if phone else "<MISSING>")

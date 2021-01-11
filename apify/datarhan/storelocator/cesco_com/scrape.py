@@ -63,6 +63,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
         state = state if state else "<MISSING>"
+        if state == "CENTER":
+            continue
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
@@ -75,7 +77,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["hasMap"].split("=")[-1].split(",")[-1]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = poi["openingHours"]
         store_url = "https://www.cesco.com/electrical-supply-store-{}-{}".format(
             city.replace(" ", "-"), state
         )
