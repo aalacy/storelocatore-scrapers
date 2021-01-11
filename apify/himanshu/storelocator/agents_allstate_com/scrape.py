@@ -5,7 +5,6 @@ import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("agents_allstate_com")
-
 session = SgRequests()
 
 
@@ -32,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -57,17 +55,18 @@ def fetch_data():
     for i in k:
 
         try:
-
             r1 = session.get("https://agents.allstate.com/" + i["href"])
         except:
             continue
         soup1 = BeautifulSoup(r1.text, "lxml")
         link_state = soup1.find_all("a", {"class": re.compile("Directory-listLink")})
         for link in link_state:
-
-            r2 = session.get(
-                "https://agents.allstate.com" + link["href"].replace("..", "")
-            )
+            try:
+                r2 = session.get(
+                    "https://agents.allstate.com" + link["href"].replace("..", "")
+                )
+            except:
+                continue
             soup2 = BeautifulSoup(r2.text, "lxml")
             try:
                 st = soup2.find_all("span", {"class": "c-address-street-1"})
@@ -86,7 +85,6 @@ def fetch_data():
                     store_link = "https://agents.allstate.com/" + a[loc][
                         "href"
                     ].replace("../../", "")
-
                     r3 = session.get(store_link)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     phone = soup3.find("span", {"class": "Core-phoneText"}).text
@@ -101,34 +99,97 @@ def fetch_data():
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                     try:
-                        day = soup3.find(
-                            "div", {"class": "c-hours-details-wrapper js-hours-table"}
-                        ).find_all("tr")
+                        day = soup3.find("table", {"class": "c-hours-details"}).text
+
                         hours_of_operation = ""
-                        for d in day[1:]:
-                            hours_of_operation = (
-                                hours_of_operation + " " + d.attrs["content"]
-                            )
+                        hours_of_operation = (
+                            day.replace("Day of the WeekHours", "")
+                            .replace("Available by appointment", "")
+                            .replace("Mon", " Mon ")
+                            .replace("Tue", " Tue ")
+                            .replace("Wed", " Wed ")
+                            .replace("Thu", " Thu ")
+                            .replace("Fri", " Fri ")
+                            .replace("Sat", " Sat ")
+                            .replace("Sun", " Sun ")
+                            .strip()
+                        )
                     except:
                         hours_of_operation = "<MISSING>"
 
                     tem_var.append("https://agents.allstate.com")
-                    tem_var.append(name[loc].text.strip())
+                    tem_var.append(re.sub(r"\s+", " ", name[loc].text.strip()))
                     try:
                         new1 = st1[loc].text.strip()
                     except:
                         new1 = ""
-                    tem_var.append(st[loc].text.strip() + " " + new1)
-                    tem_var.append(city[loc].text.strip())
-                    tem_var.append(state[loc].text.strip())
-                    tem_var.append(zip1[loc].text.strip())
+                    tem_var.append(
+                        re.sub(r"\s+", " ", st[loc].text.strip() + " " + new1)
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
+                    tem_var.append(
+                        re.sub(r"\s+", " ", city[loc].text.strip())
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
+                    tem_var.append(
+                        re.sub(r"\s+", " ", state[loc].text.strip())
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
+                    tem_var.append(
+                        re.sub(r"\s+", " ", (zip1[loc]).text.strip())
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
-                    tem_var.append(phone)
+                    tem_var.append(
+                        re.sub(r"\s+", " ", str(phone))
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
                     tem_var.append("<MISSING>")
-                    tem_var.append(lat)
-                    tem_var.append(lng)
-                    tem_var.append(hours_of_operation)
+                    tem_var.append(
+                        re.sub(r"\s+", " ", str(lat))
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
+                    tem_var.append(
+                        re.sub(r"\s+", " ", str(lng))
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
+                    tem_var.append(
+                        re.sub(r"\s+", " ", hours_of_operation)
+                        .strip()
+                        .lstrip()
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", "")
+                    )
                     tem_var.append(
                         "https://agents.allstate.com/"
                         + a[loc]["href"].replace("../../", "")
@@ -160,6 +221,24 @@ def fetch_data():
                     ).text.strip()
                 except:
                     continue
+                try:
+                    day = soup2.find("table", {"class": "c-hours-details"}).text
+
+                    hours_of_operation = ""
+                    hours_of_operation = (
+                        day.replace("Day of the WeekHours", "")
+                        .replace("Available by appointment", "")
+                        .replace("Mon", " Mon ")
+                        .replace("Tue", " Tue ")
+                        .replace("Wed", " Wed ")
+                        .replace("Thu", " Thu ")
+                        .replace("Fri", " Fri ")
+                        .replace("Sat", " Sat ")
+                        .replace("Sun", " Sun ")
+                        .strip()
+                    )
+                except:
+                    hours_of_operation = "<MISSING>"
                 zip1 = soup2.find(
                     "span", {"class": "c-address-postal-code"}
                 ).text.strip()
@@ -167,18 +246,81 @@ def fetch_data():
                 lat = soup2.find("meta", {"itemprop": "latitude"}).attrs["content"]
                 lng = soup2.find("meta", {"itemprop": "longitude"}).attrs["content"]
                 tem_var.append("https://agents.allstate.com")
-                tem_var.append(name.text.strip())
-                tem_var.append(st + " " + st1)
-                tem_var.append(city)
-                tem_var.append(state)
-                tem_var.append(zip1)
+                tem_var.append(
+                    re.sub(r"\s+", " ", name.text.strip())
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", st + " " + st1)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", city)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", state)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", zip1)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
-                tem_var.append(phone)
+                tem_var.append(
+                    re.sub(r"\s+", " ", phone)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
                 tem_var.append("<MISSING>")
-                tem_var.append(lat)
-                tem_var.append(lng)
-                tem_var.append(hours_of_operation)
+                tem_var.append(
+                    re.sub(r"\s+", " ", lat)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", lng)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
+                tem_var.append(
+                    re.sub(r"\s+", " ", hours_of_operation)
+                    .strip()
+                    .lstrip()
+                    .replace("\n", "")
+                    .replace("\t", "")
+                    .replace("\r", "")
+                )
                 tem_var.append(
                     "https://agents.allstate.com" + link["href"].replace("..", "")
                 )

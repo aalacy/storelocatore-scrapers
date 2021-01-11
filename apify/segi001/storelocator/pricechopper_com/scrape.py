@@ -99,8 +99,8 @@ def fetch_data():
                 pass
             else:
                 day = ""
-                openingTime = hs[1][:2] + ":" + hs[1][:2]
-                closingTime = hs[2][:2] + ":" + hs[2][:2]
+                openingTime = hs[1][:2] + ":00"
+                closingTime = hs[2][:2] + ":00"
                 if hs[0] == "1":
                     day = "Monday"
                 elif hs[0] == "2":
@@ -138,7 +138,6 @@ def fetch_data():
                 store_hours,
             ]
         )
-
     return result
 
 

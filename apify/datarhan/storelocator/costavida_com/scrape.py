@@ -68,6 +68,8 @@ def fetch_data():
         zip_code = poi["zipCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]["label"]
+        if country_code == "Select a Country":
+            country_code = "<MISSING>"
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeId"]
         store_number = store_number if store_number else "<MISSING>"

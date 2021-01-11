@@ -62,12 +62,14 @@ def write_output(data):
 def fetch_data():
     p = 0
     data = []
-
+    titlelist = []
     for k in range(0, 2):
         if k == 0:
             zips = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
         elif k == 1:
-            zips = static_zipcode_list(radius=50, country_code=SearchableCountries.CA)
+            zips = static_zipcode_list(
+                radius=100, country_code=SearchableCountries.CANADA
+            )
         for zip_code in zips:
 
             url = (
@@ -80,8 +82,10 @@ def fetch_data():
             ]["app72d8cb0233044f5ba828421eb01e836b"][0]["data"]
 
             for loc in loclist:
-
                 link = loc["landing_page_url"]
+                if link in titlelist:
+                    continue
+                titlelist.append(link)
                 store = loc["id"]
                 title = loc["name"]
                 street = loc["address"]["street_address"]
@@ -114,6 +118,10 @@ def fetch_data():
                     pass
                 else:
                     ccode = "CA"
+                if len(hours) < 3:
+                    hours = "<MISSING>"
+                if len(phone) < 3:
+                    phone = "<MISSING>"
                 data.append(
                     [
                         "https://www.storagepro.com/",
