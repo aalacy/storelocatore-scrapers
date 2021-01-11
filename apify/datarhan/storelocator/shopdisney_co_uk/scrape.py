@@ -72,7 +72,7 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = poi["clientkey"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
@@ -107,6 +107,11 @@ def fetch_data():
                 closes = hours["closes"]
                 hoo.append(f"{day} {opens} - {closes}")
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        store_url = "https://stores.shopdisney.co.uk/{}/{}/{}/?utm_source=Disney+Store&utm_medium=Website&utm_campaign=Store+Locator"
+        store_url = store_url.format(
+            poi["analytics_city"], poi["analytics_store_name"], poi["clientkey"]
+        )
 
         item = [
             DOMAIN,

@@ -43,7 +43,7 @@ def get_urls():
 
 
 def get_data(page_url):
-    locator_domain = "https://crunch.com/"
+    locator_domain = "https://acfp.com/"
 
     session = SgRequests()
     r = session.get(page_url)
@@ -79,6 +79,10 @@ def get_data(page_url):
         "".join(tree.xpath("//div[@class='hours formatted']/p//text()")).strip()
         or "<MISSING>"
     )
+
+    check = "".join(tree.xpath("//div[@class='address formatted']/p/text()"))
+    if check.find("soon") != -1:
+        hours_of_operation = "Coming Soon"
 
     row = [
         locator_domain,
