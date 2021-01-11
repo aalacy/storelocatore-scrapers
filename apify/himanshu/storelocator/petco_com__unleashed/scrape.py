@@ -68,7 +68,6 @@ def fetch_data():
                 st = address.find_all("span")[1].text.split(",")[1].split()[0]
                 zip_code = address.find_all("span")[1].text.split(",")[1].split()[1]
                 phone = store_soup.find("a", {"class": "phone gaq-link"}).text.strip()
-                country_code = "US"
                 lat_lng = store_soup.find("a", {"class": "directions"})["href"].split(
                     "="
                 )[-1]
