@@ -84,6 +84,8 @@ def fetch_data():
                 poi_html = etree.HTML(loc_data["t"])
                 phone = poi_html.xpath('//span[@class="phone"]/text()')
                 phone = phone[0] if phone else "<MISSING>"
+                poi_url = poi_html.xpath("//a/@href")
+                poi_url = poi_url[0] if poi_url else "<MISSING>"
             poi_type = "<MISSING>"
             latitude = loc_data["lat"]
             longitude = loc_data["lng"]

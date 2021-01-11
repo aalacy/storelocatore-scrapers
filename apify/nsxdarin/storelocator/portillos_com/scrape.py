@@ -84,8 +84,10 @@ def fetch_data():
         lat = loc.split("|")[2]
         lng = loc.split("|")[3]
         hours = ""
+        HFound = False
         r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<h2>" in line2:
                 name = line2.split("<h2>")[1].split("<")[0]
@@ -105,59 +107,23 @@ def fetch_data():
                     .split(">")[1]
                     .split("<")[0]
                 )
-            if '"hours-sunday" data-yext-id="4">' in line2:
-                h1 = (
-                    "Sun: "
-                    + line2.split('"hours-sunday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if '"hours-monday" data-yext-id="4">' in line2:
-                h2 = (
-                    "Mon: "
-                    + line2.split('"hours-monday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if '"hours-tuesday" data-yext-id="4">' in line2:
-                h3 = (
-                    "Tue: "
-                    + line2.split('"hours-tuesday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if '"hours-wednesday" data-yext-id="4">' in line2:
-                h4 = (
-                    "Wed: "
-                    + line2.split('"hours-wednesday" data-yext-id="4">')[1].split("<")[
-                        0
-                    ]
-                )
-            if '"hours-thursday" data-yext-id="4">' in line2:
-                h5 = (
-                    "Thu: "
-                    + line2.split('"hours-thursday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if '"hours-friday" data-yext-id="4">' in line2:
-                h6 = (
-                    "Fri: "
-                    + line2.split('"hours-friday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if '"hours-saturday" data-yext-id="4">' in line2:
-                h7 = (
-                    "Sat: "
-                    + line2.split('"hours-saturday" data-yext-id="4">')[1].split("<")[0]
-                )
-            if "</html>" in line2:
-                hours = (
-                    h1
-                    + "; "
-                    + h2
-                    + "; "
-                    + h3
-                    + "; "
-                    + h4
-                    + "; "
-                    + h5
-                    + "; "
-                    + h6
-                    + "; "
-                    + h7
-                )
+            if "ocation Hours</span>" in line2:
+                HFound = True
+            if HFound and '<div class="results-buttons">' in line2:
+                HFound = False
+            if HFound and '<div class="td-hours-left">' in line2:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                day = g.replace("\r", "").replace("\t", "").replace("\n", "").strip()
+            if HFound and 'data-yext-field="hours-' in line2:
+                day = day + ": " + line2.split('">')[1].split("<")[0]
+                if hours == "":
+                    hours = day
+                else:
+                    hours = hours + "; " + day
+        if "7715" in add:
+            hours = "Coming Soon"
+        city = city.replace(",", "").strip()
         yield [
             website,
             lurl,

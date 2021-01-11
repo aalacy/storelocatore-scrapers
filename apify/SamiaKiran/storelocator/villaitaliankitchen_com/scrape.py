@@ -58,11 +58,12 @@ def fetch_data():
                 and loc.find("h4").text
             ):
                 templist = loc.findAll("div", {"class", "row js-group-row"})
+
                 if len(templist) > 5:
                     i = 1
                     while i < len(templist):
-                        title = templist[i]
-                        title = title.find("h4").text
+                        title = templist[i].text
+                        title = title.split("Less", 1)[0].strip()
                         phone = templist[i + 2]
                         phone = phone.find("p", {"class": "fp-el"}).text
                         phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
@@ -94,10 +95,12 @@ def fetch_data():
                             if temp[1].find("ZipCode") != -1:
                                 pcode = pcode + " " + temp[0]
                             j += 1
+                        city = city.strip()
+                        state = state.strip()
                         data.append(
                             [
                                 "https://www.villaitaliankitchen.com/",
-                                "https://www.villaitaliankitchen.com/",
+                                "<MISSING>",
                                 title,
                                 street,
                                 city,
@@ -114,13 +117,16 @@ def fetch_data():
                         )
                         i += 3
                 else:
-                    title = templist[1]
-                    title = title.find("h4").text
+                    title = templist[1].text
+                    title = title.split("Less", 1)[0]
                     address = templist[2]
                     address = address.find("p", {"class": "fp-el"}).text.strip()
                     phone = templist[3]
-                    phone = phone.find("p", {"class": "fp-el"}).text
-                    phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
+                    try:
+                        phone = phone.find("p", {"class": "fp-el"}).text
+                        phone = phone.split("Call", 1)[1].split("for", 1)[0].strip()
+                    except:
+                        phone = "<MISSING>"
                     i = 0
                     street = ""
                     city = ""
@@ -147,10 +153,12 @@ def fetch_data():
                         if temp[1].find("ZipCode") != -1:
                             pcode = pcode + " " + temp[0]
                         i += 1
+                    city = city.strip()
+                    state = state.strip()
                     data.append(
                         [
                             "https://www.villaitaliankitchen.com/",
-                            "https://www.villaitaliankitchen.com/",
+                            "<MISSING>",
                             title,
                             street,
                             city,
