@@ -49,7 +49,15 @@ def get_phone(data):
 
 
 def get_hours(data):
-    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
     hours = data.get("hours")
     if not hours or not len(hours):
         return MISSING
