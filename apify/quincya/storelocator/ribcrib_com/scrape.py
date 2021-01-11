@@ -47,7 +47,9 @@ def fetch_data():
     for store in stores:
         location_name = store["name"]
         try:
-            street_address = (store["address_line_1"] + " " + store["address_line_2"]).strip()
+            street_address = (
+                store["address_line_1"] + " " + store["address_line_2"]
+            ).strip()
         except:
             street_address = store["address_line_1"].strip()
 
