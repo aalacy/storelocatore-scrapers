@@ -144,7 +144,7 @@ def fetch_data():
         store.append(city if city else "<MISSING>")
         store.append("ON")
         store.append(zipp.replace("ON N2H 1H5", "N2H 1H5") if zipp else "<MISSING>")
-        store.append("CA")
+        store.append(state)
         store.append(store_number if store_number else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
         store.append("Pizza Depot")
