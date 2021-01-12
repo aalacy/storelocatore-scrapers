@@ -1,4 +1,4 @@
 sgrequests
-lxml==4.3.4
-beautifulsoup4==4.7.1
+lxml
+bs4
 sglogging
