@@ -49,7 +49,7 @@ def fetch_data():
 
     for poi_html in all_locations:
         store_url = "<MISSING>"
-        location_name = "<MISSING>"
+        location_name = "George Webb"
         street_address = poi_html.xpath(".//td/strong/text()")[0]
         city = poi_html.xpath(".//td/text()")[0]
         state = "<MISSING>"
