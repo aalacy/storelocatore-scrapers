@@ -53,6 +53,15 @@ def fetch_data():
         "https://www.zeemaps.com/emarkers?g=991008&k=REGULAR&e=true",
     ]
 
+    cat_dict = {
+        "991008": "Campus Map",
+        "995509": "Hospitals & Affiliates",
+        "988466": "HH Phycisian Offices",
+        "985453": "Imaging Locations",
+        "988421": "Lab Patient Service Centers",
+        "995996": "Other Locations",
+    }
+
     for url in start_urls:
         response = session.get(url)
         data = json.loads(response.text)
@@ -86,7 +95,7 @@ def fetch_data():
                 phone = phone[0] if phone else "<MISSING>"
                 poi_url = poi_html.xpath("//a/@href")
                 poi_url = poi_url[0] if poi_url else "<MISSING>"
-            poi_type = "<MISSING>"
+            poi_type = cat_dict[cat_id]
             latitude = loc_data["lat"]
             longitude = loc_data["lng"]
 
@@ -94,7 +103,7 @@ def fetch_data():
             hoo = []
             if poi_html:
                 hoo = [elem for elem in poi_html.xpath("//text()") if "p.m" in elem]
-            hoo = " ".join(hoo) if hoo else "<MISSING>"
+            hoo = " ".join(hoo).replace("\n", " ") if hoo else "<MISSING>"
 
             item = [
                 DOMAIN,
