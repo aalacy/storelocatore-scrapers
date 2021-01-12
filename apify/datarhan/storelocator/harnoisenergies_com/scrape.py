@@ -40,7 +40,6 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "hardwarestore.com"
     start_url = (
