@@ -1,5 +1,5 @@
 import csv
-from lxml import etree
+import json
 
 from sgrequests import SgRequests
 
@@ -36,33 +36,39 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests()
 
     items = []
 
-    DOMAIN = "georgewebb.com"
-    start_url = "https://georgewebb.com/hwstorelocation/storesearch?lat=43.05328249999999&lng=-88.1584129&radius=5000&units=Miles&cat=All%20Categories"
+    DOMAIN = "abraauto.com"
+    start_url = "https://www.abraauto.com/api/get_store_locators?lat=45.086882&long=-93.398222&radio=-1&state=&page=1"
 
     response = session.get(start_url)
-    dom = etree.XML(response.text)
-    all_locations = dom.xpath("//marker")
+    data = json.loads(response.text)
 
-    for poi_html in all_locations:
+    for poi in data["data"]:
         store_url = "<MISSING>"
-        location_name = poi_html.xpath("@name")
-        location_name = location_name[0] if location_name else "<MISSSING>"
-        street_address = poi_html.xpath("@address")[0]
-        city = poi_html.xpath("@city")[0]
-        state = poi_html.xpath("@state")[0]
-        zip_code = poi_html.xpath("@zip")[0]
-        country_code = poi_html.xpath("@country")[0]
-        store_number = "<MISSING>"
-        phone = poi_html.xpath("@phone")[0]
-        phone = phone if phone.strip() else "<MISSING>"
+        store_url = store_url if store_url else "<MISSING>"
+        location_name = poi["post_title"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["street"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["zipcode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = poi["id"]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi_html.xpath("@lat")[0]
-        longitude = poi_html.xpath("@lng")[0]
-        hours_of_operation = "<MISSING>"
+        latitude = poi["lat"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["lng"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = "{} {}".format(poi["weekday"], poi["weekend"])
 
         item = [
             DOMAIN,
