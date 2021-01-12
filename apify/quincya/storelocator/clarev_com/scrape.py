@@ -64,7 +64,9 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = item.find_all("p")[1].a.text.strip()
-        hours_of_operation = item.find_all(class_="store__info-item")[1].p.get_text(" ").strip()
+        hours_of_operation = (
+            item.find_all(class_="store__info-item")[1].p.get_text(" ").strip()
+        )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
