@@ -70,95 +70,100 @@ def fetch_data():
     loc_list = []
 
     url = (
-        "https://api.momentfeed.com/v1/analytics/api/llp.json?"
-        "auth_token=KVLEXDNMCBPBAVVH&center=36.01250306220004"
-        ",-86.76655100000012&coordinates=33.21547567618785,-83.80024240625018,"
-        "38.80953044821223,-89.73285959375006&multi_account=false&page=1"
-        "&pageSize=100000000"
+        "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token"
+        "=KVLEXDNMCBPBAVVH&multi_account=false&page={}&pageSize=100"
     )
-    stores_req = session.get(
-        url,
-        headers=headers,
-    )
-    stores = json.loads(stores_req.text)
-    for store in stores:
-        locator_domain = website
-        location_name = store["store_info"]["name"]
-        street_address = store["store_info"]["address"]
-        if len(store["store_info"]["address_extended"]) > 0:
-            street_address = (
-                street_address + ", " + store["store_info"]["address_extended"]
-            )
-        city = store["store_info"]["locality"]
-        state = store["store_info"]["region"]
-        zip = store["store_info"]["postcode"]
-        country_code = store["store_info"]["country"]
-        page_url = "https://locations.logansroadhouse.com" + store["llp_url"]
-        phone = store["store_info"]["phone"]
-        store_number = "<MISSING>"
+    page_no = 1
+    while True:
+        stores_req = session.get(
+            url.format(str(page_no)),
+            headers=headers,
+        )
+        stores = json.loads(stores_req.text)
+        if "message" in stores:
+            if stores["message"] == "No matching locations found":
+                break
 
-        location_type = store["store_info"]["status"]
-        if location_type == "":
-            location_type = "<MISSING>"
-
-        latitude = store["store_info"]["latitude"]
-        longitude = store["store_info"]["longitude"]
-        hours = store["store_info"]["store_hours"]
-        hours_of_operation = ""
-        if len(hours) > 0:
-            hours = hours.split(";")
-            for index in range(0, len(hours) - 1):
-                day_val = hours[index].split(",")[0].strip()
-                day = ""
-                if day_val == "1":
-                    day = "Monday:"
-                if day_val == "2":
-                    day = "Tuesday:"
-                if day_val == "3":
-                    day = "Wednesday:"
-                if day_val == "4":
-                    day = "Thursday:"
-                if day_val == "5":
-                    day = "Friday:"
-                if day_val == "6":
-                    day = "Saturday:"
-                if day_val == "7":
-                    day = "Sunday:"
-
-                hours_of_operation = (
-                    hours_of_operation
-                    + day
-                    + hours[index].split(",", 1)[1].replace(",", " - ").strip()
-                    + " "
+        for store in stores:
+            locator_domain = website
+            location_name = store["store_info"]["name"]
+            street_address = store["store_info"]["address"]
+            if len(store["store_info"]["address_extended"]) > 0:
+                street_address = (
+                    street_address + ", " + store["store_info"]["address_extended"]
                 )
+            city = store["store_info"]["locality"]
+            state = store["store_info"]["region"]
+            zip = store["store_info"]["postcode"]
+            country_code = store["store_info"]["country"]
+            page_url = "https://locations.logansroadhouse.com" + store["llp_url"]
+            phone = store["store_info"]["phone"]
+            store_number = "<MISSING>"
 
-        hours_of_operation = hours_of_operation.strip()
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
+            location_type = store["store_info"]["status"]
+            if location_type == "":
+                location_type = "<MISSING>"
 
-        if country_code == "":
-            country_code = "<MISSING>"
+            latitude = store["store_info"]["latitude"]
+            longitude = store["store_info"]["longitude"]
+            hours = store["store_info"]["store_hours"]
+            hours_of_operation = ""
+            if len(hours) > 0:
+                hours = hours.split(";")
+                for index in range(0, len(hours) - 1):
+                    day_val = hours[index].split(",")[0].strip()
+                    day = ""
+                    if day_val == "1":
+                        day = "Monday:"
+                    if day_val == "2":
+                        day = "Tuesday:"
+                    if day_val == "3":
+                        day = "Wednesday:"
+                    if day_val == "4":
+                        day = "Thursday:"
+                    if day_val == "5":
+                        day = "Friday:"
+                    if day_val == "6":
+                        day = "Saturday:"
+                    if day_val == "7":
+                        day = "Sunday:"
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+                    hours_of_operation = (
+                        hours_of_operation
+                        + day
+                        + hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                        + " "
+                    )
 
-        loc_list.append(curr_list)
+            hours_of_operation = hours_of_operation.strip()
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+
+            if country_code == "":
+                country_code = "<MISSING>"
+
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+
+            loc_list.append(curr_list)
+
+        page_no = page_no + 1
 
     return loc_list
 

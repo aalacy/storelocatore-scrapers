@@ -8,7 +8,7 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("gabesstore.csv", mode="w", encoding="utf-8", newline="") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -45,10 +45,11 @@ def fetch_data():
 
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
+        max_radius_miles=100,
         max_search_results=100,
     )
     for zipcode in zipcodes:
+
         locator_domain = base_url
         location_name = ""
         street_address = ""
@@ -84,7 +85,7 @@ def fetch_data():
             if "landingPageUrl" in i:
                 page_url = i["landingPageUrl"]
                 k1 = session.get(page_url, headers=headers)
-                soup2 = BeautifulSoup(k1.text, "html.parser")
+                soup2 = BeautifulSoup(k1.text, "lxml")
                 time = " ".join(
                     list(soup2.find("tbody", {"class": "hours-body"}).stripped_strings)
                 )

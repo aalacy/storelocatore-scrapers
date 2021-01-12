@@ -99,6 +99,10 @@ def fetch_data():
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if "soon" in hours_of_operation.lower():
+            location_type = "Coming Soon"
+        if poi["coding"] == "N":
+            location_type = "Coming Soon"
 
         item = [
             DOMAIN,

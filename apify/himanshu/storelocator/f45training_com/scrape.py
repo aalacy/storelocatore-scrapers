@@ -3,80 +3,154 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('f45training_com')
-
-
-
+from random import choice
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address"])
-        # Body
+def get_proxy():
+    url = "https://www.sslproxies.org/"
+    r = session.get(url)
+    soup = BeautifulSoup(r.content, "lxml")
+    return {
+        "https": (
+            choice(
+                list(
+                    map(
+                        lambda x: x[0] + ":" + x[1],
+                        list(
+                            zip(
+                                map(lambda x: x.text, soup.findAll("td")[::8]),
+                                map(lambda x: x.text, soup.findAll("td")[1::8]),
+                            )
+                        ),
+                    )
+                )
+            )
+        )
+    }
+
+
+def proxy_request(url, **kwargs):
+    while 1:
+        try:
+            proxy = get_proxy()
+            r = session.get(url, proxies=proxy, timeout=5, **kwargs)
+            break
+        except:
+            pass
+    return r
+
+
+def write_output(data):
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://f45training.com"
-    r = session.get("https://f45training.com/find-a-studio/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
 
-    scripts = soup.find_all("script")
-    return_main_object = []
-    for script in scripts:
-        if "window.domains" in script.text:
-            location_list = json.loads(script.text.split("window.studios = ")[1].split("}]};")[0] + "}]}")["hits"]
-            for i in range(len(location_list)):
-                current_store = location_list[i]
-                store = []
-                store.append("https://f45training.com")
-                store.append(current_store["name"])
-                logger.info(current_store["slug"])
-                if current_store["location"] == "":
-                    continue
-                if current_store["country"] == "United States":
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("US")
-                elif current_store["country"] == "Canada":
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append("CA")
-                else:
-                    continue
-                store.append(current_store["id"])
-                location_request = session.get("https://f45training.com/" + current_store["slug"],headers=headers)
-                location_soup = BeautifulSoup(location_request.text,"lxml")
-                if location_soup.find("a",{"href":re.compile('tel:')}) == None:
-                    phone = "<MISSING>"
-                else:
-                    phone = location_soup.find("a",{"href":re.compile('tel:')}).text
-                logger.info(phone)
-                store.append(phone.split("/")[0].split(",")[0].replace("(JF45)","") if phone != "" else "<MISSING>")
-                store.append("f45")
-                store.append(current_store["_geoloc"]["lat"])
-                store.append(current_store["_geoloc"]["lng"])
-                store.append("<MISSING>")
-                store.append(current_store["location"])
-                return_main_object.append(store)
-    return return_main_object
+def fetch_data():
+    addresses = []
+    r = session.get("https://f45training.com/find-a-studio/").text
+    soup = BeautifulSoup(r, "lxml")
+    script = str(soup.find(text=re.compile("window.studios")))
+    jsondata = json.loads(
+        script.split("window.studios = ")[1]
+        .split("window.country_name")[0]
+        .replace("};", "}")
+    )["hits"]
+
+    location_name = "<MISSING>"
+    street_address = "<INACCESSIBLE>"
+    city = "<INACCESSIBLE>"
+    state = "<INACCESSIBLE>"
+    zipp = "<INACCESSIBLE>"
+    country_code = "<INACCESSIBLE>"
+    store_number = "<INACCESSIBLE>"
+    phone = "<INACCESSIBLE>"
+    latitude = "<INACCESSIBLE>"
+    longitude = "<INACCESSIBLE>"
+
+    for i in jsondata:
+        if i["country"] == "United States":
+            location_name = i["name"]
+            street_address = i["location"]
+            state = i["state"]
+            country_code = "US"
+            store_number = i["id"]
+            latitude = i["_geoloc"]["lat"]
+            longitude = i["_geoloc"]["lng"]
+        elif i["country"] == "Canada":
+            location_name = i["name"]
+            street_address = i["location"]
+            state = i["state"]
+            country_code = "CA"
+            store_number = i["id"]
+            latitude = i["_geoloc"]["lat"]
+            longitude = i["_geoloc"]["lng"]
+        else:
+            continue
+
+        page_url = "https://f45training.com/" + i["slug"]
+        location_request = proxy_request(page_url)
+        location_soup = BeautifulSoup(location_request.text, "lxml")
+        if location_soup.find("a", {"href": re.compile("tel:")}) is None:
+            phone = "<MISSING>"
+        else:
+            phone = (
+                location_soup.find("a", {"href": re.compile("tel:")})
+                .text.split("/")[0]
+                .split(",")[0]
+                .replace("(JF45)", "")
+            )
+
+        print(street_address)
+
+        store = []
+        store.append("https://f45training.com/")
+        store.append(location_name if location_name else "<MISSING>")
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country_code if country_code else "<MISSING>")
+        store.append(store_number if store_number else "<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append("f45")
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append("<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        yield store
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

@@ -53,10 +53,6 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += ", " + poi["address2"]
-        if poi["address3"]:
-            street_address += ", " + poi["address3"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
@@ -96,7 +92,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items

@@ -16,7 +16,7 @@ def fetch_data():
     rows = container.find_all("tr")
     del rows[0]
     for row in rows:
-        locator_domain = "https://wokbox.ca/locations"
+        locator_domain = "https://wokbox.ca/"
         name = row.find(class_="wpgmza_table_title all").get_text()
         address = row.find(class_="wpgmza_table_address").get_text().split()
         if (
@@ -56,6 +56,11 @@ def fetch_data():
             city = address[-4].replace(",", "")
         else:
             city = address[-3].replace(",", "")
+
+        if "Red Deer" in street or "St. John's" in street:
+            city = " ".join(street.split(" ")[-2:])
+            street = " ".join(street.split(" ")[:-2])
+
         state = row.find(class_="wpgmza_table_category").get_text()
         pin = address[-2] + " " + address[-1]
         country_code = "CA"
@@ -113,7 +118,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 

@@ -55,7 +55,7 @@ def fetch_data():
         country_code = "US"
         store_number = store["Id"]
         location_type = "<MISSING>"
-        phone = store["PhoneNo"]
+        phone = store["PhoneNo"].replace("Call to make an appointment", "").strip()
         try:
             mon_fri = "Mon-Fri " + store["HoursMFNew"]
         except:

@@ -64,13 +64,22 @@ def fetch_data():
                     hours = ""
                     for day in days:
                         if '"MORNING_FROM":"' in day:
-                            hrs = (
-                                day.split('"')[0]
-                                + ": "
-                                + day.split('"MORNING_FROM":"')[1].split('"')[0]
-                                + "-"
-                                + day.split('"AFTERNOON_TO":"')[1].split('"')[0]
-                            )
+                            try:
+                                hrs = (
+                                    day.split('"')[0]
+                                    + ": "
+                                    + day.split('"MORNING_FROM":"')[1].split('"')[0]
+                                    + "-"
+                                    + day.split('"AFTERNOON_TO":"')[1].split('"')[0]
+                                )
+                            except:
+                                hrs = (
+                                    day.split('"')[0]
+                                    + ": "
+                                    + day.split('"MORNING_FROM":"')[1].split('"')[0]
+                                    + "-"
+                                    + day.split('"MORNING_TO":"')[1].split('"')[0]
+                                )
                             if hours == "":
                                 hours = hrs
                             else:
@@ -79,6 +88,8 @@ def fetch_data():
                         loc = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if hours == "":
+                        hours = "<MISSING>"
                     yield [
                         website,
                         loc,
