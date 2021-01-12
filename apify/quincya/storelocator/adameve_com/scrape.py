@@ -97,12 +97,14 @@ def fetch_data():
         maps = BeautifulSoup(req.text, "lxml")
 
         try:
-            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-            latitude = raw_gps[raw_gps.find("=") + 1:raw_gps.find("%")].strip()
-            longitude = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
+            raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
+            latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find("%")].strip()
+            longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
 
             if not longitude:
-                geo = re.findall(r'[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+', raw_gps)[0].split(",")
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", raw_gps)[
+                    0
+                ].split(",")
                 latitude = geo[0]
                 longitude = geo[1]
         except:
