@@ -39,7 +39,6 @@ def fetch_data():
     p = 0
     data = []
     pattern = re.compile(r"\s\s+")
-    cookie = {"PHPSESSID": "o4to3hi0sg7bf2qepj5casic44"}
     session = SgRequests()
     HEADERS = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
