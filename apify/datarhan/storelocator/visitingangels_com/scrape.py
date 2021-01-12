@@ -55,7 +55,6 @@ def fetch_data():
 
     all_locations = []
     for state, abr in us_state_abbrev.items():
-        print(start_url.format(state.replace(" ", "-"), abr))
         response = session.get(start_url.format(state.replace(" ", "-"), abr))
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//div[@class="franInfo"]')
