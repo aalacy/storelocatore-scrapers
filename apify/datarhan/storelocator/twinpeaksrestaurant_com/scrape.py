@@ -74,6 +74,8 @@ def fetch_data():
         location_type = "<MISSING>"
         if poi["acf"]["market"]:
             location_type = poi["acf"]["market"]["post_type"]
+        if poi["acf"]["status"] == "coming_soon":
+            location_type = "coming soon"
         location_type = location_type if location_type else "<MISSING>"
         latitude = poi["acf"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"

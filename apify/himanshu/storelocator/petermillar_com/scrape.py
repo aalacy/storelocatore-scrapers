@@ -61,7 +61,7 @@ def getplace(lat, lon):
 
 
 def fetch_data():
-    driver = SgSelenium().firefox("geckodriver")
+    driver = SgSelenium().firefox()
     getcountrygeo()
     return_main_object = []
     addresses = []
@@ -91,6 +91,7 @@ def fetch_data():
         .replace(": ", "=")
         .replace(",", ";")
     )
+
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -106,6 +107,7 @@ def fetch_data():
     soup = BeautifulSoup(data.text, "lxml")
     data = soup.find_all("a", {"class": "primary"})
     for link in data:
+
         if "/f/store-locator" in link["href"]:
             if (
                 "https://www.petermillar.com/f/store-locator/dallas-tx-peter-millar-mens-clothing-store.html"
@@ -113,7 +115,9 @@ def fetch_data():
             ):
                 data2 = session.get(link["href"], headers=headers)
                 page_url1.append(link["href"])
+
                 soup3 = BeautifulSoup(data2.text, "lxml")
+
                 add.append(
                     soup3.find_all("div", {"class": "col col-text"})[1]
                     .text.strip()
@@ -132,6 +136,7 @@ def fetch_data():
                     "https://www.petermillar.com" + link["href"], headers=headers
                 )
                 page_url1.append("https://www.petermillar.com" + link["href"])
+
                 soup2 = BeautifulSoup(data2.text, "lxml")
                 add.append(
                     soup2.find_all("div", {"class": "col col-text"})[1]
@@ -146,16 +151,20 @@ def fetch_data():
                 hours.append(
                     soup2.find_all("div", {"class": "col col-text"})[-1].text.strip()
                 )
+
     r = session.get(
         "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/2295/stores.js?callback=SMcallback2",
         headers=headers,
     )
+
     script = "".join(r.text.split("SMcallback2(")[1].split(")"))
     json_data = json.loads(script)
     for x in json_data["stores"]:
+
         latitude = x["latitude"]
         longitude = x["longitude"]
         country_name = getplace(latitude, longitude)
+
         if "United States of America" != country_name and "Canada" != country_name:
             continue
         else:
@@ -163,6 +172,7 @@ def fetch_data():
             page_url2 = ""
             for q in range(len(hours)):
                 if x["phone"] is not None:
+
                     if (
                         x["phone"]
                         .strip()
@@ -174,11 +184,13 @@ def fetch_data():
                         .strip()
                         == add[q].strip()
                     ):
+
                         hours_of_operation = hours[q].replace(
                             "Store Manager: Lachan Medley",
                             "Mon - Fri: 9 am - 6 pm, Sat: 9 am - 5 pm, Sun: 1 pm - 5 pm Christmas Eve: 9 am - 3 pm Christmas Day: Closed December 26th: Closed  New Year's Eve: 9 am - 3 pm New Year's Day: Closed",
                         )
                         page_url2 = page_url1[q]
+
             store_number = x["id"]
             location_name = (
                 x["name"].replace("&AMP;", "and").replace("(", "").capitalize()
@@ -197,12 +209,14 @@ def fetch_data():
                 zipp = ca_zip_list[0]
                 country_code = "CA"
             else:
+
                 if "United States of America" == country_name:
                     zipp = "<MISSING>"
                     country_code = "US"
                 else:
                     zipp = "<MISSING>"
                     country_code = "CA"
+
             address = x["address"].split(",")
             if " United States" in address:
                 address.remove(" United States")
@@ -214,6 +228,7 @@ def fetch_data():
                 street_address = address[1] + " " + address[2]
                 city = address[3]
                 state = address[-2]
+
             elif len(address) == 5:
                 if " Vero Beach" not in address:
                     street_address = (
@@ -221,6 +236,7 @@ def fetch_data():
                         + " "
                         + address[1].replace("&amp;Amp;", "and")
                     )
+
                     city = address[2].replace(" Suite X21", "")
                     state = address[3]
                 else:
@@ -236,13 +252,16 @@ def fetch_data():
                         .strip()
                     )
                     city = address[1]
+
                     state_list = re.findall(
                         r" ([A-Z]{2}) ", str(" ".join(address[1:]).strip())
                     )
                     if state_list == []:
                         state = address[-1].strip()
+
                     else:
                         state = "".join(state_list).strip()
+
                 else:
                     street_address = " ".join(address[:2])
                     city = address[2]
@@ -262,6 +281,7 @@ def fetch_data():
                     city = address[-2].split()[-1]
                     state = address[-1].split()[0]
             elif len(address) == 2:
+
                 street_address = (
                     address[0]
                     .replace("\n", " ")
@@ -286,6 +306,7 @@ def fetch_data():
                     city = st_address[-1].split()[0]
                     state = st_address[-1].split()[1]
                     zipp = st_address[-1].split()[-1]
+
                 else:
                     street_address = " ".join(st_address)
                     if "Scottsdale" in street_address:
@@ -294,6 +315,7 @@ def fetch_data():
                         city = "<MISSING>"
                     state = "<MISSING>"
                     zipp = "<MISSING>"
+
             street_address = street_address.replace(">", "").capitalize().strip()
             phone_list = re.findall(
                 re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x["phone"])
@@ -319,9 +341,12 @@ def fetch_data():
             page_url2,
         ]
         store = ["<MISSING>" if x == "" or x is None else x for x in store]
+        store = [x.replace("–", "-") if type(x) == str else x for x in store]
+
         if street_address in addresses:
             continue
         addresses.append(street_address)
+
         return_main_object.append(store)
     return return_main_object
 

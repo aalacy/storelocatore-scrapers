@@ -35,8 +35,10 @@ def write_output(data):
 
 
 def fetch_data():
+    addresses = []
     base_url = "https://freemanhealth.com"
     url = "https://freemanhealth.com/all-locations"
+
     r = session.get(url)
     soup = BeautifulSoup(r.text, "lxml")
     loc_types = soup.find_all("li", {"class": "facet-item"})[:-3]
@@ -69,17 +71,19 @@ def fetch_data():
             street2 = med.find_all("p", {"class": "coh-paragraph coh-ce-e013c31a"})[1]
             if street2:
                 street1 = street1 + street2.text
-            city = (
+            city = med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"}).text.split(
+                ","
+            )[0]
+            state = (
                 med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
-                .text.split()[0]
-                .replace(",", "")
+                .text.split(",")[1]
+                .split()[0]
             )
-            state = med.find(
-                "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
-            ).text.split()[1]
-            zip_code = med.find(
-                "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
-            ).text.split()[2]
+            zip_code = (
+                med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                .text.split(",")[1]
+                .split()[-1]
+            )
             if len(zip_code) == 5:
                 country_code = "US"
             else:
@@ -141,10 +145,12 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(hours_of_operation)
             store.append(med_url)
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
             yield store
 
         if int(counts) > 10:
-            i = 1
             while True:
                 try:
                     next_page = soup2.find("a", {"rel": "next"}).get("href")
@@ -162,7 +168,6 @@ def fetch_data():
                             "class": "coh-heading coh-style-heading-3-size coh-ce-4da6d1f4"
                         },
                     ).text
-                    i += 1
                     street1 = med.find_all(
                         "p", {"class": "coh-paragraph coh-ce-e013c31a"}
                     )[0].text
@@ -171,18 +176,20 @@ def fetch_data():
                     )[1]
                     if street2:
                         street1 = street1 + street2.text
-                    city = (
+                    city = med.find(
+                        "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
+                    ).text.split(",")[0]
+                    state = (
                         med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
-                        .text.split()[0]
-                        .replace(",", "")
+                        .text.split(",")[1]
+                        .split()[0]
                     )
-                    state = med.find(
-                        "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
-                    ).text.split()[1]
-                    zip_code = med.find(
-                        "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
-                    ).text.split()[2]
-                    if len(zip_code) == 5:
+                    zip_code = (
+                        med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                        .text.split(",")[1]
+                        .split()[-1]
+                    )
+                    if len(zip_code.strip()) == 5:
                         country_code = "US"
                     else:
                         country_code = "CA"
@@ -241,6 +248,9 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(hours_of_operation)
                     store.append(med_url)
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
                     yield store
 
 
