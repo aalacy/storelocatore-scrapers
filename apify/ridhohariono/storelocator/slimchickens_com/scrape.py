@@ -57,7 +57,7 @@ def handle_missing(field):
 
 
 def parse_json(link_url, js_variable):
-    log.info("Pull content => " + link_url)
+    # log.info("Pull content => " + link_url)
     soup = pull_content(link_url)
     pattern = re.compile(
         r"var\s+" + js_variable + "\\s*=\\s*(\\{.*?\\});", re.MULTILINE | re.DOTALL
@@ -164,18 +164,19 @@ def fetch_data():
                 store_number = data["cssClass"].split("loc-", 1)[1]
                 if country_code == "US":
                     soup = bs(data["description"], "html.parser")
-                    content = soup.find_all("p")
-                    get_phone = handle_missing(
-                        content[0].get_text(strip=True).replace("Phone:", "")
-                    )
-                    phone = "<MISSING>" if len(get_phone) > 15 else get_phone
-                    get_hours = content[1].get_text(strip=True).replace("Hours:", "")
-                    if not get_hours:
-                        get_hours = (
-                            content[2].get_text(strip=True).replace("Hours:", "")
+                    phone_pattren = r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"
+                    get_phone = soup.find(text=re.compile(phone_pattren))
+                    if get_phone:
+                        phone = get_phone.strip()
+                    else:
+                        content = soup.find_all("p")
+                        get_phone = (
+                            content[0].get_text(strip=True).replace("Phone:", "")
                         )
+                        phone = "<MISSING>" if len(get_phone) > 15 else get_phone
+                    hours = soup.find(text=re.compile(r".*([0-9]+)am.*", re.IGNORECASE))
                     hours_of_operation = handle_missing(
-                        re.sub(r".?(7 days/week).*", "", get_hours)
+                        re.sub(r".?(7 days/week).*", "", hours.strip())
                     )
                 else:
                     if "location" in page_url:
