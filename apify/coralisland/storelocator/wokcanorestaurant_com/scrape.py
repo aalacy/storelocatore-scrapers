@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
 import usaddress
-import re
 
 from sgrequests import SgRequests
 
@@ -44,7 +43,6 @@ def write_output(data):
 def fetch_data():
     p = 0
     data = []
-    pattern = re.compile(r"\s\s+")
     url = "https://wokcanorestaurant.com/page-sitemap.xml"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
