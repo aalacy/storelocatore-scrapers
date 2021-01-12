@@ -1,11 +1,12 @@
 import csv
-import re
+
+from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -36,41 +37,43 @@ def write_output(data):
 
 def fetch_data():
 
+    base_link = "https://www.clarev.com/pages/locations"
+
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://api.cpk.com/api/v1.0/restaurants/cpk-stores"
-
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["data"]["restaurants"]
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     data = []
-    locator_domain = "cpk.com"
 
-    for store in stores:
-        location_name = store["name"]
-        street_address = store["address"].strip()
+    items = base.find_all(class_="store-content")
+    locator_domain = "clarev.com"
 
-        digit = re.search(r"\d", street_address).start(0)
-        if digit != 0:
-            street_address = street_address[digit:]
+    for item in items:
 
-        city = store["city"]
-        state = store["state"]
-        zip_code = store["zip"]
+        location_name = item.h3.text.strip()
+        raw_address = list(item.p.stripped_strings)
+        street_address = raw_address[0].strip()
+        city_line = raw_address[1].split(",")
+        city = city_line[0].strip()
+        state = city_line[1].strip()[:2].strip()
+        zip_code = city_line[1][3:9].strip()
         country_code = "US"
-        store_number = store["id"]
+        store_number = "<MISSING>"
         location_type = "<MISSING>"
-        phone = store["telephone"]
-        hours_of_operation = "<INACCESSIBLE>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-        link = "<MISSING>"
-        # Store data
+        phone = item.find_all("p")[1].a.text.strip()
+        hours_of_operation = (
+            item.find_all(class_="store__info-item")[1].p.get_text(" ").strip()
+        )
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+
         data.append(
             [
                 locator_domain,
-                link,
+                base_link,
                 location_name,
                 street_address,
                 city,
@@ -85,6 +88,7 @@ def fetch_data():
                 hours_of_operation,
             ]
         )
+
     return data
 
 
