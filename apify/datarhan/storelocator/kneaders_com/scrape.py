@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_stores = []
 
     DOMAIN = "kneaders.com"
     start_url = "https://wordpress.kneadersdw.com/wp-json/kneaders/v1/locations/{}"
