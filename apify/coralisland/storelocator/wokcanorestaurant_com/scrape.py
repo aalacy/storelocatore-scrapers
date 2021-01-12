@@ -45,35 +45,29 @@ def fetch_data():
     p = 0
     data = []
     pattern = re.compile(r"\s\s+")
-    url = "https://wokcanorestaurant.com/locations/"
+    url = "https://wokcanorestaurant.com/page-sitemap.xml"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("div", {"class": "et_pb_post_content_0_tb_body"}).findAll(
-        "div", {"class": "et_pb_text_inner"}
-    )
+    divlist = soup.select('loc:contains("locations")')
     for div in divlist:
-        if "Online Ordering" in div.text:
+        link = div.text
+        if len(link.replace("https://wokcanorestaurant.com/locations", "")) < 5:
             continue
-        content = re.sub(pattern, "\n", div.text).strip()
-        title = content.split("\n", 1)[0]
-        address = (
-            content.split("Address", 1)[1].split("\n", 1)[0].replace(":", "").strip()
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        content = soup.find("div", {"class": "et_pb_code_inner"}).findAll(
+            "div", {"class": "rank-math-gear-snippet-content"}
         )
-        phone = content.split("Phone", 1)[1].split("\n", 1)[0].replace(":", "").strip()
-        try:
-            hours = content.split("Hours", 1)[1].split("\n", 1)[0]
-        except:
-            try:
-                hours = content.split("Hrs", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
-            except:
-                if "Temporarily Closed" in div.text:
-                    hours = "Temporarily Closed"
-        try:
-            hours = hours.split(":", 1)[1]
-        except:
-            pass
-        address = usaddress.parse(address)
 
+        address = content[0].text
+        hours = content[1].text
+        try:
+            phone = content[2].text
+        except:
+            phone = content[1].text
+            hours = "Temporarily Closed"
+        title = soup.find("title").text.strip()
+        address = usaddress.parse(address)
         i = 0
         street = ""
         city = ""
@@ -106,7 +100,7 @@ def fetch_data():
         data.append(
             [
                 "https://wokcanorestaurant.com/",
-                "https://wokcanorestaurant.com/locations/",
+                link,
                 title,
                 street,
                 city,
@@ -114,13 +108,14 @@ def fetch_data():
                 pcode,
                 "US",
                 "<MISSING>",
-                phone,
+                phone.replace("+1-", ""),
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
                 hours.replace("pm", "pm ").replace("am", "am ").strip(),
             ]
         )
+
         p += 1
     return data
 
