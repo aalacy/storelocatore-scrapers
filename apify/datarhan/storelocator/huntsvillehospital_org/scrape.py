@@ -102,7 +102,9 @@ def fetch_data():
             poi_html = etree.HTML(loc_data["t"])
             hoo = []
             if poi_html:
-                hoo = [elem for elem in poi_html.xpath("//text()") if "p.m" in elem]
+                hoo = [
+                    elem.strip() for elem in poi_html.xpath("//text()") if "p.m" in elem
+                ]
             hoo = " ".join(hoo).replace("\n", " ") if hoo else "<MISSING>"
 
             item = [
