@@ -1,5 +1,4 @@
 import csv
-from urllib.parse import urljoin
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,43 +36,31 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
-    DOMAIN = "visitingangels.com"
-    start_url = "https://www.visitingangels.com/senior-home-care-{}-{}"
+    DOMAIN = "georgewebb.com"
+    start_url = "https://georgewebb.com/locations-currently-open"
 
-    response = session.get("https://www.visitingangels.com/office-locator")
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
-    us_state_abbrev = {}
-    for state_html in dom.xpath('//select[@id="StateCode"]/option')[1:]:
-        state_name = state_html.xpath("text()")[0]
-        state_abr = state_html.xpath("@value")[0]
-        us_state_abbrev[state_name] = state_abr
-
-    all_locations = []
-    for state, abr in us_state_abbrev.items():
-        response = session.get(start_url.format(state.replace(" ", "-"), abr))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="franInfo"]')
+    all_locations = dom.xpath('//div[@class="table-phone"]//tr')[1:]
 
     for poi_html in all_locations:
-        store_url = urljoin(start_url, poi_html.xpath(".//a/@href")[0])
-        location_name = poi_html.xpath("text()")[0].strip()
-        street_address = poi_html.xpath("text()")[2].strip()
-        city = poi_html.xpath("text()")[3].split()[:-2]
-        city = " ".join(city).strip() if city else "<MISSING>"
-        state = poi_html.xpath("text()")[3].split()[-2].strip()
-        zip_code = poi_html.xpath("text()")[3].split()[-1].strip()
+        store_url = "<MISSING>"
+        location_name = "<MISSING>"
+        street_address = poi_html.xpath(".//td/strong/text()")[0]
+        city = poi_html.xpath(".//td/text()")[0]
+        state = "<MISSING>"
+        zip_code = "<MISSING>"
         country_code = "<MISSING>"
-        store_number = store_url.split("_")[-1]
-        phone = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath(".//td/a/text()")[0]
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = poi_html.xpath(".//td/text()")[1]
 
         item = [
             DOMAIN,
@@ -91,9 +78,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
