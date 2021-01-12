@@ -57,7 +57,7 @@ def handle_missing(field):
 
 
 def parse_json(link_url, js_variable):
-    # log.info("Pull content => " + link_url)
+    log.info("Pull content => " + link_url)
     soup = pull_content(link_url)
     pattern = re.compile(
         r"var\s+" + js_variable + "\\s*=\\s*(\\{.*?\\});", re.MULTILINE | re.DOTALL
