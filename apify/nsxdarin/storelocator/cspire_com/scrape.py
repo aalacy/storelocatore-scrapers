@@ -71,6 +71,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '"telephone": "' in line2:
+                phone = line2.split('"telephone": "')[1].split('"')[0]
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '"streetAddress": "' in line2:
@@ -93,7 +95,8 @@ def fetch_data():
                 )
         if hours == "":
             hours = "<MISSING>"
-        phone = "1-855-277-4735"
+        if phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             loc,

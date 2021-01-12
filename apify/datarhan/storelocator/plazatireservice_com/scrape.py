@@ -74,12 +74,15 @@ def fetch_data():
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["mainPhone"]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["meta"]["entityType"]
+        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if poi.get("displayCoordinate"):
             latitude = poi["displayCoordinate"]["latitude"]
             longitude = poi["displayCoordinate"]["longitude"]
+        if poi.get("yextDisplayCoordinate"):
+            latitude = poi["yextDisplayCoordinate"]["latitude"]
+            longitude = poi["yextDisplayCoordinate"]["longitude"]
         hours_of_operation = []
         for day, hours in poi["hours"].items():
             if day == "holidayHours":

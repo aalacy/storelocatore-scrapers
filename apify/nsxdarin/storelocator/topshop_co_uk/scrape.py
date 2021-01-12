@@ -81,11 +81,17 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
-        hours = "Sun-Sat: Closed"
+        hours = ""
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
+                if '"geo.region" content="United Kingdom-' in line2:
+                    state = (
+                        line2.split('"geo.region" content="United Kingdom-')[1]
+                        .split('"')[0]
+                        .replace("-", " ")
+                    )
                 name = line2.split("<title>")[1].split(" |")[0]
                 add = line2.split('"streetAddress" content="')[1].split('"')[0]
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
@@ -96,20 +102,16 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
-                days = line2.split('details-row-day">')
+                days = line2.split('itemprop="openingHours" content="')
                 for day in days:
-                    if 'c-hours-details-row-intervals">' in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('c-hours-details-row-intervals">')[1].split(
-                                "<"
-                            )[0]
-                        )
+                    if '<td class="c-hours-details' in day:
+                        hrs = day.split('"')[0]
                         if hours == "":
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if state == "":
+            state = "<MISSING>"
         yield [
             website,
             lurl,

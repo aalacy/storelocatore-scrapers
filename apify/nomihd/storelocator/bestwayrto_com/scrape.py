@@ -102,7 +102,7 @@ def fetch_data():
         "action": "csl_ajax_onload",
     }
     for lat, long in search:
-        print(f"{(lat, long)} | remaining: {search.items_remaining()}")
+        log.info(f"{(lat, long)} | remaining: {search.items_remaining()}")
         data["lat"] = lat
         data["lng"] = long
         data["options[map_center_lat]"] = lat

@@ -41,6 +41,7 @@ def fetch_data():
     locs = []
     url = "https://www.mayoclinichealthsystem.org/HealthSystemInternet/LocationAddress/GetLocationMapRailResults?page=1&pageSize=100&sourceLat=44.02209&sourceLong=-92.46997&activeSite=hsinternet"
     r = session.get(url, headers=headers)
+    infos = []
     website = "mayoclinichealthsystem.org"
     typ = "<MISSING>"
     country = "US"
@@ -67,7 +68,35 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if typ == "" and '<h5 class="list-item-name">' in line2:
+            if '<h5 class="list-item-name">' in line2 and "</h5>" in line2:
+                if add != "":
+                    addinfo = add + "|" + city + "|" + typ
+                    if phone == "":
+                        phone = "<MISSING>"
+                    if addinfo not in infos:
+                        infos.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                hours = ""
+                phone = ""
                 typ = line2.split('<h5 class="list-item-name">')[1].split("<")[0]
             if '<address class="list-item-address">' in line2 and add == "":
                 addinfo = line2.split('<address class="list-item-address">')[1].split(
@@ -79,8 +108,9 @@ def fetch_data():
                     )[0]
                     city = line2.split(",")[1].strip()
                     state = line2.split(",")[2].strip().split(" ")[0]
+                    name = city + ", " + state
                     zc = line2.split(",")[2].strip().split(" ")[1].split("<")[0]
-                else:
+                elif addinfo.count(",") == 3:
                     add = line2.split('<address class="list-item-address">')[1].split(
                         ","
                     )[0]
@@ -88,6 +118,15 @@ def fetch_data():
                     city = line2.split(",")[2].strip()
                     state = line2.split(",")[3].strip().split(" ")[0]
                     zc = line2.split(",")[3].strip().split(" ")[1].split("<")[0]
+                else:
+                    add = line2.split('<address class="list-item-address">')[1].split(
+                        ","
+                    )[0]
+                    add = add + " " + line2.split(",")[1].strip()
+                    add = add + " " + line2.split(",")[2].strip()
+                    city = line2.split(",")[3].strip()
+                    state = line2.split(",")[4].strip().split(" ")[0]
+                    zc = line2.split(",")[4].strip().split(" ")[1].split("<")[0]
             if "href='tel://" in line2:
                 phone = line2.split("href='tel://")[1].split("'")[0]
             if "Hours:</li><li><span>" in line2:
@@ -98,23 +137,31 @@ def fetch_data():
                     .replace("</li>", "")
                 )
                 hours = hours.replace("::", ":")
-        name = city + ", " + state
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+                if "<li>" in hours:
+                    hours = hours.split("<li>")[0].strip()
+            if "</html>" in line2:
+                if add != "":
+                    addinfo = add + "|" + city + "|" + typ
+                    if phone == "":
+                        phone = "<MISSING>"
+                    if addinfo not in infos:
+                        infos.append(addinfo)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
