@@ -75,7 +75,6 @@ def fetch_data():
 
         county = "".join(county.xpath("text()")).strip()
 
-        county_url = "https://www.premierinn.com/gb/en/hotels/england/oxfordshire.html"
         stores_req = session.get(county_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath('//article[@class="seo-hotel-card"]')
@@ -127,23 +126,25 @@ def fetch_data():
 
                 hours_of_operation = "<MISSING>"
 
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
+                if "https://www.premierinn.com/gb/en/hotels/england/" in page_url:
+
+                    curr_list = [
+                        locator_domain,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                    loc_list.append(curr_list)
 
             else:
                 if "https://www.premierinn.com" not in store_url:
@@ -239,23 +240,24 @@ def fetch_data():
                     if phone == "":
                         phone = "<MISSING>"
 
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    loc_list.append(curr_list)
+                    if "https://www.premierinn.com/gb/en/hotels/england/" in page_url:
+                        curr_list = [
+                            locator_domain,
+                            page_url,
+                            location_name,
+                            street_address,
+                            city,
+                            state,
+                            zip,
+                            country_code,
+                            store_number,
+                            phone,
+                            location_type,
+                            latitude,
+                            longitude,
+                            hours_of_operation,
+                        ]
+                        loc_list.append(curr_list)
 
     return loc_list
 
