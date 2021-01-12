@@ -83,7 +83,7 @@ def fetch_data():
             state = a.get("state") or "<MISSING>"
             postal = a.get("postal") or "<MISSING>"
             country_code = "US"
-            page_url = "<MISSING>"
+            page_url = "https://www.holidayoil.com/our-stores"
             location_name = j.get("infoTitle")
             if location_name.find("(") != -1:
                 location_name = location_name.split("(")[0].strip()
