@@ -39,7 +39,6 @@ def write_output(data):
             ]
         )
         # Body
-        temp_list = []  # ignoring duplicates
         for row in data:
             writer.writerow(row)
         log.info(f"No of records being processed: {len(data)}")
