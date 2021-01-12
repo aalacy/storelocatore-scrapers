@@ -37,7 +37,6 @@ def write_output(data):
 
 
 def fetch_data():
-    output_list = []
     url = "https://pacsys.marriott.com/data/marriott_properties_SI_en-US.json"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
