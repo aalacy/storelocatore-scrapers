@@ -58,7 +58,7 @@ def fetch_data():
         country_code = poi_html.xpath("@country")[0]
         store_number = "<MISSING>"
         phone = poi_html.xpath("@phone")[0]
-        phone = phone if phone.strip() else '<MISSING>'
+        phone = phone if phone.strip() else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi_html.xpath("@lat")[0]
         longitude = poi_html.xpath("@lng")[0]
