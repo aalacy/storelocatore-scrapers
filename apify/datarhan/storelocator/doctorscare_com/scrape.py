@@ -49,7 +49,6 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
     response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
     urls = re.findall("window.location='(.+?)'", response.text)
     urls = [url for url in urls if "http" not in url]
 
