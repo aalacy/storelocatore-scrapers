@@ -75,8 +75,10 @@ def fetch_data():
                 phone = "<MISSING>"
 
             hours = " ".join(raw_data[10:])
-            hours = (re.sub(' +', ' ', hours)).strip()
-            hours_of_operation = hours[hours.find("Mon"):hours.find("pm") + 2] + " " + raw_data[11]
+            hours = (re.sub(" +", " ", hours)).strip()
+            hours_of_operation = (
+                hours[hours.find("Mon") : hours.find("pm") + 2] + " " + raw_data[11]
+            )
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
