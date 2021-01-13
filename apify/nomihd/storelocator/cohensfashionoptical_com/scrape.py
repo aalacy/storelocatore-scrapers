@@ -70,7 +70,7 @@ def fetch_data():
         page_url = "".join(store.xpath('.//div[@class="fs-loc"]/h5/a/@href')).strip()
         locator_domain = website
         location_name = (
-            "".join(store.xpath('div[@class="fs-state"]/h5/text()'))
+            "".join(store.xpath('.//div[@class="fs-loc"]/h5/a/text()'))
             .strip()
             .encode("ascii", "replace")
             .decode("utf-8")

@@ -5,6 +5,7 @@ from sgselenium import SgSelenium
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 import re
+import os
 import json
 import time
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
@@ -46,7 +47,7 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgSelenium().chrome()
+    driver = SgSelenium().firefox(executable_path=os.path.abspath("geckodriver"))
     driver.get("https://www.la-z-boy.com/storeLocator/storeLocator.jsp")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
@@ -59,9 +60,12 @@ def fetch_data():
     )
     temp_zip = ""
     for zip in search:
-        WebDriverWait(driver, 10).until(
-            lambda x: x.find_element_by_xpath("//input[@id='locator']")
-        )
+        try:
+            WebDriverWait(driver, 10).until(
+                lambda x: x.find_element_by_xpath("//input[@id='locator']")
+            )
+        except:
+            pass
         try:
             elem = driver.find_element_by_xpath('//*[@id="fsrFocusFirst"]')
             if elem.is_displayed():
@@ -71,10 +75,13 @@ def fetch_data():
             pass
 
         if temp_zip == "":
-            inputElement = driver.find_element_by_xpath("//input[@id='locator']")
-            inputElement.clear()
-            inputElement.send_keys(str(zip))
-            inputElement.send_keys(Keys.ENTER)
+            try:
+                inputElement = driver.find_element_by_xpath("//input[@id='locator']")
+                inputElement.clear()
+                inputElement.send_keys(str(zip))
+                inputElement.send_keys(Keys.ENTER)
+            except:
+                continue
         else:
             WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath(
@@ -106,7 +113,7 @@ def fetch_data():
             lambda x: x.find_element_by_xpath("//a[text()='Home']")
         )
         try:
-            soup = BeautifulSoup(driver.page_source, "html5lib")
+            soup = BeautifulSoup(driver.page_source, "lxml")
         except:
             temp_zip = ""
             driver.get("https://www.la-z-boy.com/storeLocator/storeLocator.jsp")
@@ -138,7 +145,7 @@ def fetch_data():
                         street_address = street_address + " " + store_data["address3"]
                     if street_address == "":
                         continue
-                    store.append(street_address)
+                    store.append(street_address.strip())
                     if store[-1] in addresses:
                         continue
                     addresses.append(store[-1])
@@ -158,7 +165,7 @@ def fetch_data():
                     if store_data["website"]:
                         page_url = "https://www.la-z-boy.com" + store_data["website"]
                         hours_request = session.get(page_url, headers=headers)
-                        hours_soup = BeautifulSoup(hours_request.text, "html5lib")
+                        hours_soup = BeautifulSoup(hours_request.text, "lxml")
                         if hours_soup.find("a", text=re.compile("Store Hours")):
                             hours_details_request = session.get(
                                 "https://www.la-z-boy.com"
@@ -199,12 +206,7 @@ def fetch_data():
                     store = [
                         x.replace("–", "-") if type(x) == str else x for x in store
                     ]
-                    store = [
-                        x.encode("ascii", "ignore").decode("ascii").strip()
-                        if type(x) == str
-                        else x
-                        for x in store
-                    ]
+
                     yield store
 
 

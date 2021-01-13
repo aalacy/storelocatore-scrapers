@@ -157,6 +157,16 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
+            store = [
+                str(x)
+                .encode("ascii", "replace")
+                .decode("ascii")
+                .strip()
+                .replace("?", "")
+                if x
+                else "<MISSING>"
+                for x in store
+            ]
             yield store
 
 
