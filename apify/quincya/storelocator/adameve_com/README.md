@@ -1,1 +1,1 @@
---ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
+--ignore GeoConsistencyValidator --ignore CountryValidator --ignore StoreNumberColumnValidator (Confirmed on website)

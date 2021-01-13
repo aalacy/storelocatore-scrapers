@@ -70,7 +70,7 @@ def fetch_data():
             ].text
             street2 = med.find_all("p", {"class": "coh-paragraph coh-ce-e013c31a"})[1]
             if street2:
-                street1 = street1 + street2.text
+                street1 = street1 + " " + street2.text
             city = med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"}).text.split(
                 ","
             )[0]
@@ -175,7 +175,7 @@ def fetch_data():
                         "p", {"class": "coh-paragraph coh-ce-e013c31a"}
                     )[1]
                     if street2:
-                        street1 = street1 + street2.text
+                        street1 = street1 + " " + street2.text
                     city = med.find(
                         "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
                     ).text.split(",")[0]
