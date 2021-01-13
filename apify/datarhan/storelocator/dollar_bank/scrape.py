@@ -43,16 +43,16 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "dollar.bank"
-    start_url = "https://locations.dollar.bank/api/locations/allpoint"
+    start_url = "https://locations.dollar.bank/api/locations/dollar"
 
     all_locations = []
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=5,
+        max_radius_miles=50,
         max_search_results=None,
     )
     for lat, lng in all_coordinates:
-        body = '{"radius":5,"center":{"latitude":%s,"longitude":%s},"branchTypeFilters":[{"image":null,"title":"Branches","value":"office","isChecked":true},{"image":null,"title":"Drive-Thru","value":"drivethru_hours","isChecked":true},{"image":null,"title":"Loan Centers","value":"loan_center_hours","isChecked":true}],"branchFeatures":[{"image":null,"title":"Private Banking","value":"private_banking_office","isChecked":true}],"atmFilter":[{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/3bbf253d-da17-4295-96cc-b4c0a236598c/DB-icon.png?width=35&height=35","title":"Dollar Bank ATM","value":"has_atm","isChecked":true},{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/2f0f570a-868b-48b6-a453-dde7a81b9279/freedom-atm-icon.png?width=35&height=35","title":"Freedom ATM","value":"freedom_atm","isChecked":false},{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/88dec82d-e724-419d-a662-218ce911ada3/allpoint-icon.png?width=35&height=35","title":"Allpoint ATM","value":"Allpoint","isChecked":false}]}'
+        body = '{"radius":50,"center":{"latitude":%s,"longitude":%s},"branchTypeFilters":[{"image":null,"title":"Branches","value":"office","isChecked":true},{"image":null,"title":"Drive-Thru","value":"drivethru_hours","isChecked":true},{"image":null,"title":"Loan Centers","value":"loan_center_hours","isChecked":true}],"branchFeatures":[{"image":null,"title":"Private Banking","value":"private_banking_office","isChecked":true}],"atmFilter":[{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/3bbf253d-da17-4295-96cc-b4c0a236598c/DB-icon.png?width=35&height=35","title":"Dollar Bank ATM","value":"has_atm","isChecked":true},{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/2f0f570a-868b-48b6-a453-dde7a81b9279/freedom-atm-icon.png?width=35&height=35","title":"Freedom ATM","value":"freedom_atm","isChecked":false},{"image":"https://assets-us-01.kc-usercontent.com/d7f410bf-ce32-001c-8d9a-4f99a8804c0d/88dec82d-e724-419d-a662-218ce911ada3/allpoint-icon.png?width=35&height=35","title":"Allpoint ATM","value":"Allpoint","isChecked":false}]}'
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Accept-Encoding": "gzip, deflate, br",
