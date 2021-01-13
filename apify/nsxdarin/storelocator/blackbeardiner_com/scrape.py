@@ -67,6 +67,9 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
+                if "<" in name:
+                    name = name.split("<")[0]
+                name = name.replace("Black Bear Diner Location", "").strip()
             if "<address>" in line2:
                 g = next(lines)
                 h = next(lines)
@@ -82,17 +85,25 @@ def fetch_data():
             if "center: {lat: " in line2:
                 lat = line2.split("center: {lat: ")[1].split(",")[0]
                 lng = line2.split("lng:")[1].split("}")[0].strip()
-            if "<div class='store_hours'>" in line2:
-                hours = (
-                    line2.split("<div class='store_hours'>")[1]
-                    .split("</div>")[0]
+            if "day:<" in line2 or "Daily:" in line2:
+                hrs = (
+                    line2.replace("<div class='store_hours'>", "")
+                    .replace("</div>", "")
                     .replace("<br />", "")
                     .replace("<p>", "")
                     .replace("</span>", "")
                     .replace("</p>", "")
                     .replace("</span>", "")
                     .replace('<span class="hours-split-2">', "")
+                    .strip()
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .replace("\t", "")
                 )
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
         yield [
             website,
             loc,

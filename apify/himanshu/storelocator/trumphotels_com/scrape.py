@@ -1,11 +1,12 @@
 import csv
 from bs4 import BeautifulSoup
+from sgselenium import SgSelenium
+import os
 import json
-from selenium import webdriver
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", newline="", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -32,17 +33,18 @@ def write_output(data):
 
 
 def fetch_data():
-    driver = webdriver.Chrome(executable_path="chromedriver")
+    driver = SgSelenium().firefox(executable_path=os.path.abspath("geckodriver"))
     base_url = "https://www.trumphotels.com"
     driver.get("https://www.trumphotels.com/")
     soup = BeautifulSoup(driver.page_source, "lxml")
+
     for country in soup.find("div", {"id": "ourhotels"}).find_all(
         "div", {"class": "filterlist"}
     ):
         for location in country.find_all("a"):
             driver.get(base_url + location["href"])
             page_url = base_url + location["href"]
-            location_soup = BeautifulSoup(driver.page_source, "html5lib")
+            location_soup = BeautifulSoup(driver.page_source, "lxml")
             for script in location_soup.find_all(
                 "script", {"type": "application/ld+json"}
             ):
@@ -59,7 +61,7 @@ def fetch_data():
                     store.append(address["streetAddress"])
                     store.append(address["addressLocality"].split(",")[0])
                     store.append(
-                        address["addressRegion"]
+                        address["addressRegion"].strip()
                         if "addressRegion" in address
                         else address["addressLocality"].split(",")[1]
                     )
@@ -77,6 +79,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(page_url)
                     yield store
+    driver.quit()
 
 
 def scrape():

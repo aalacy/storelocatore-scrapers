@@ -52,7 +52,6 @@ def fetch_data():
             )
             locs.append(lurl)
     for loc in locs:
-        print(loc)
         time.sleep(3)
         session = SgRequests()
         website = "anthropologie.com"

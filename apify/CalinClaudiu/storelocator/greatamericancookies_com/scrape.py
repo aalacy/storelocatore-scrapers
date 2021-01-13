@@ -26,10 +26,11 @@ def fetch_data():
         )
         soup = b4(driver.page_source, "lxml")
         son = json.loads(soup.find("div", {"id": "mapCanvas"})["data-locations"])
+        comingSoon = ["oon", "OON"]
         for i in son:
             i["type"] = "<MISSING>"
             i["hours"] = fix_hours(i["hours"])
-            if "oon" in i["hours"]:
+            if any(j in i["hours"] or j in i["title"] for j in comingSoon):
                 i["type"] = "Coming Soon!"
                 i["hours"] = "<MISSING>"
             yield i
@@ -159,6 +160,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        post_process_filter=lambda rec: rec["location_type"] != "Coming Soon!",
     )
 
     pipeline.run()

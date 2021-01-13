@@ -115,14 +115,14 @@ def fetch_data():
             )
             state = raw_address[-2].strip()
             if not state:
-                if city == "Miami":
-                    state = "Florida"
-                elif city == "San Francisco":
-                    state = "California"
-                elif city == "New York":
-                    state = "New York"
-                elif city == "Las Vegas":
-                    state = "Nevada"
+                raw_state = (
+                    base.find(class_="storelocator-bread-subtitle")
+                    .text.replace("\n", " ")
+                    .strip()
+                )
+                state = raw_state[
+                    raw_state.rfind(",") + 1 : raw_state.rfind(" ")
+                ].strip()
 
             zip_code = raw_address[-1].strip()
 
