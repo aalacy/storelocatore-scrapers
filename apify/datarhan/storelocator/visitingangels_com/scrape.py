@@ -37,7 +37,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
     scraped_items = []
@@ -45,64 +45,14 @@ def fetch_data():
     DOMAIN = "visitingangels.com"
     start_url = "https://www.visitingangels.com/senior-home-care-{}-{}"
 
-    us_state_abbrev = {
-        "Alabama": "AL",
-        "Alaska": "AK",
-        "American Samoa": "AS",
-        "Arizona": "AZ",
-        "Arkansas": "AR",
-        "California": "CA",
-        "Colorado": "CO",
-        "Connecticut": "CT",
-        "Delaware": "DE",
-        "District of Columbia": "DC",
-        "Florida": "FL",
-        "Georgia": "GA",
-        "Guam": "GU",
-        "Hawaii": "HI",
-        "Idaho": "ID",
-        "Illinois": "IL",
-        "Indiana": "IN",
-        "Iowa": "IA",
-        "Kansas": "KS",
-        "Kentucky": "KY",
-        "Louisiana": "LA",
-        "Maine": "ME",
-        "Maryland": "MD",
-        "Massachusetts": "MA",
-        "Michigan": "MI",
-        "Minnesota": "MN",
-        "Mississippi": "MS",
-        "Missouri": "MO",
-        "Montana": "MT",
-        "Nebraska": "NE",
-        "Nevada": "NV",
-        "New Hampshire": "NH",
-        "New Jersey": "NJ",
-        "New Mexico": "NM",
-        "New York": "NY",
-        "North Carolina": "NC",
-        "North Dakota": "ND",
-        "Northern Mariana Islands": "MP",
-        "Ohio": "OH",
-        "Oklahoma": "OK",
-        "Oregon": "OR",
-        "Pennsylvania": "PA",
-        "Puerto Rico": "PR",
-        "Rhode Island": "RI",
-        "South Carolina": "SC",
-        "South Dakota": "SD",
-        "Tennessee": "TN",
-        "Texas": "TX",
-        "Utah": "UT",
-        "Vermont": "VT",
-        "Virgin Islands": "VI",
-        "Virginia": "VA",
-        "Washington": "WA",
-        "West Virginia": "WV",
-        "Wisconsin": "WI",
-        "Wyoming": "WY",
-    }
+    response = session.get("https://www.visitingangels.com/office-locator")
+    dom = etree.HTML(response.text)
+    us_state_abbrev = {}
+    for state_html in dom.xpath('//select[@id="StateCode"]/option')[1:]:
+        state_name = state_html.xpath("text()")[0]
+        state_abr = state_html.xpath("@value")[0]
+        us_state_abbrev[state_name] = state_abr
+
     all_locations = []
     for state, abr in us_state_abbrev.items():
         response = session.get(start_url.format(state.replace(" ", "-"), abr))
