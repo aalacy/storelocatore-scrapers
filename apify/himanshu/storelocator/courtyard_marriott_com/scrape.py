@@ -1,11 +1,8 @@
 import csv
-import re
 from sgrequests import SgRequests
 
 session = SgRequests()
-from lxml import etree
 import json
-import csv
 from bs4 import BeautifulSoup
 import unicodedata
 
