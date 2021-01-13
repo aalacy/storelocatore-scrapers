@@ -84,7 +84,7 @@ def fetch_data():
         zip_code = address_raw[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         poi_number = "<MISSING>"
-        phone = address_raw[-1]
+        phone = address_raw[-1].split("(")[0].strip()
         poi_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
