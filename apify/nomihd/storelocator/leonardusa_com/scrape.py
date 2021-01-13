@@ -2,7 +2,6 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 import lxml.html
 import us
 
