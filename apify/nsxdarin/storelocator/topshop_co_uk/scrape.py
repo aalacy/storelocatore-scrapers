@@ -95,6 +95,12 @@ def fetch_data():
                         .split('"')[0]
                         .replace("-", " ")
                     )
+                if 'name="geo.region" content="Ireland-' in line2:
+                    state = (
+                        line2.split('name="geo.region" content="Ireland-')[1]
+                        .split('"')[0]
+                        .replace("-", " ")
+                    )
                 name = line2.split("<title>")[1].split(" |")[0]
                 add = line2.split('"streetAddress" content="')[1].split('"')[0]
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
