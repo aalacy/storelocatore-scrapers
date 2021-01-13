@@ -52,7 +52,7 @@ def fetch_data():
             continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
+
         location_name = loc_dom.xpath('//div[@id="content"]/h1/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         address_raw = loc_dom.xpath('//td[strong[contains(text(), "Address")]]/text()')
