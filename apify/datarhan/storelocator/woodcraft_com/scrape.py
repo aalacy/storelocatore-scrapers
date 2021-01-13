@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "winsupplyinc.com"
+    DOMAIN = "woodcraft.com"
     start_url = "https://www.woodcraft.com/store_locations"
 
     response = session.get(start_url)
@@ -119,17 +119,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
-
-hdr = {
-    "authority": "www.winsupplyinc.com",
-    "accept": "application/json, text/plain, */*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-    "content-type": "application/json",
-    "cookie": "BIGipServerorigin_prod=303169802.20480.0000; rxVisitor=16071916149854JST89CK49VG5PBOCK7134ILNF7TFJVC; _ga=GA1.2.80294118.1607191617; __auc=c84dd6231763415e7b3c3d1188e; dtSa=-; _gid=GA1.2.1487140172.1607334507; JSESSIONID=TSE8zklXws_EJ1-s-8-S-98D4tMSnndgvYjE2XIU4BpYzOq4L27B!793648615; _gat=1; __asc=57314b9a1763cce50c75056b9da; dtCookie=v_4_srv_3_sn_C36FEEFA25E4840B524DB33205FD55E7_perc_100000_ol_0_mul_1; dtLatC=4; rxvt=1607339756231|1607336305512; dtPC=3$537927365_149h11vTNMKEAFMCQELCPNSKUMIOCTWARMDFODC-0e3",
-    "origin": "https://www.winsupplyinc.com",
-    "referer": "https://www.winsupplyinc.com/location-finder",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    "x-dtpc": "3$537927365_149h11vTNMKEAFMCQELCPNSKUMIOCTWARMDFODC-0e3",
-}
