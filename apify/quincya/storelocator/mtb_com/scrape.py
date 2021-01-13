@@ -130,7 +130,6 @@ def fetch_data():
                         hours_of_operation,
                     ]
                 )
-
     return data
 
 
