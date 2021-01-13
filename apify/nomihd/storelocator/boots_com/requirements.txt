@@ -1,0 +1,4 @@
+sgrequests
+sglogging
+lxml==4.5.2
+tenacity
