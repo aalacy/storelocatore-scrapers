@@ -65,8 +65,14 @@ def parse_phone(element):
 
 
 def parse_hours(element):
-    hours = element.find(text=re.compile(r".*([0-9]+)am.*", re.IGNORECASE))
-    hours_of_operation = handle_missing(re.sub(r".?(7 days/week).*", "", hours.strip()))
+    hours = (
+        element.find("p")
+        .get_text(strip=True, separator=",")
+        .replace("\xa0", " ")
+        .split(",")
+    )
+    pattern = r",Closed:\s+.*\d{1,2}/\d{2}/\d{2,4}"
+    hours_of_operation = re.sub(pattern, "", ",".join(hours[4:])).strip()
     return hours_of_operation
 
 
