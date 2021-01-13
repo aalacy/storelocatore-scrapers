@@ -60,12 +60,13 @@ def fetch_data():
         else:
             r = bs4.BeautifulSoup(sess.get(url, headers=headers).text, features="lxml")
             l = r.find("div", {"class": "StoreListResult"})
-            name = l.find("h4").text.title()
+            name = l.find("h1").text.title()
             address_list = l.findAll("span")
             street = address_list[0].text
             city = address_list[1].text.split(",")[0]
             state = address_list[1].text.split(" ")
             zipc = address_list[1].text.split(" ")
+            hours = missingString
             if (
                 "SUITE" in city
                 or "SPACE" in city
@@ -109,6 +110,14 @@ def fetch_data():
                 zipc = address_list[1].text.split(" ")[-1]
             store_num = l.find("input")["value"]
             phone = address_list[-1].text
+            timeArray = []
+            if r.find("strong", {"class": "store-hours"}):
+                h = r.findAll("strong", {"class": "store-hours"})
+                for hs in h:
+                    timeArray.append(
+                        " {} : {} ".format(hs["data-day"], hs["data-hours"])
+                    )
+                hours = ", ".join(timeArray)
             result.append(
                 [
                     locator_domain,
@@ -124,7 +133,7 @@ def fetch_data():
                     missingString,
                     missingString,
                     missingString,
-                    missingString,
+                    hours,
                 ]
             )
     return result
