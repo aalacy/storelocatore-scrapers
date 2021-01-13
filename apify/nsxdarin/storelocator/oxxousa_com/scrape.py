@@ -50,12 +50,12 @@ def fetch_data():
             items = line.split('{"address":"')
             for item in items:
                 if '"description":"' in item:
-                    loc = item.split('"permalink":"')[1].split('"')[0].replace('\\','')
-                    if loc == '':
+                    loc = item.split('"permalink":"')[1].split('"')[0].replace("\\", "")
+                    if loc == "":
                         loc = "<MISSING>"
                     add = item.split('"')[0]
                     store = item.split('"id":"')[1].split('"')[0]
-                    add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
+                    add = add + " " + item.split('"address2":"')[1].split('"')[0]
                     add = add.strip()
                     city = item.split('"city":"')[1].split('"')[0]
                     state = item.split('"state":"')[1].split('"')[0]
@@ -63,27 +63,31 @@ def fetch_data():
                     lat = item.split('"lat":"')[1].split('"')[0]
                     lng = item.split('"lng":"')[1].split('"')[0]
                     phone = item.split('"phone":"')[1].split('"')[0]
-                    if phone == '':
+                    if phone == "":
                         phone = "<MISSING>"
                     name = item.split('"store":"')[1].split('","thumb')[0]
                     if '\\">' in name:
                         name = name.split('\\">')[1]
-                    name = name.replace('&#8211;','-')
-                    if '<' in name:
-                        name = name.split('<')[0].strip()
-                    hours = item.split('"wpsl-opening-hours\\"><tr><td>')[1].split('<\\/table>"')[0]
-                    hours = hours.replace('<\\/td><td><time>',': ').replace('<\\/time><\\/td><\\/tr><tr><td>','; ')
-                    hours = hours.replace('<\\/td><td>Closed<\\/td><\\/tr>',': Closed')
-                    if 'oxxo-care-cleaners-aventura' in loc:
-                        name = 'OXXO Care Cleaners - Aventura'
-                    if city == 'Doral':
-                        state = 'FL'
-                    if zc == '' and city == 'North Miami':
-                        zc = '33181'
-                    if zc == '':
+                    name = name.replace("&#8211;", "-")
+                    if "<" in name:
+                        name = name.split("<")[0].strip()
+                    hours = item.split('"wpsl-opening-hours\\"><tr><td>')[1].split(
+                        '<\\/table>"'
+                    )[0]
+                    hours = hours.replace("<\\/td><td><time>", ": ").replace(
+                        "<\\/time><\\/td><\\/tr><tr><td>", "; "
+                    )
+                    hours = hours.replace("<\\/td><td>Closed<\\/td><\\/tr>", ": Closed")
+                    if "oxxo-care-cleaners-aventura" in loc:
+                        name = "OXXO Care Cleaners - Aventura"
+                    if city == "Doral":
+                        state = "FL"
+                    if zc == "" and city == "North Miami":
+                        zc = "33181"
+                    if zc == "":
                         zc = "<MISSING>"
-                    name = name.replace('\\u2013','-')
-                    name = name.replace('\\u00a0','')
+                    name = name.replace("\\u2013", "-")
+                    name = name.replace("\\u00a0", "")
                     yield [
                         website,
                         loc,
