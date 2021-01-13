@@ -3,6 +3,7 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
+from tenacity import retry, stop_after_attempt
 
 website = "boots.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,8 +58,13 @@ def write_output(data):
         log.info(f"No of records being processed: {len(temp_list)}")
 
 
+@retry(stop=stop_after_attempt(5))
+def get_page(page_url):
+    session = SgRequests()
+    return session.get(page_url, headers=headers)
+
+
 def fetch_data():
-    # Your scraper here
     loc_list = []
 
     search_url = "https://www.boots.com/store-a-z"
@@ -67,11 +73,11 @@ def fetch_data():
     stores = stores_sel.xpath('//div[@class="brand_list_viewer"]//ul/li/a/@href')
 
     for store_url in stores:
+        log.info(store_url)
         page_url = "https://www.boots.com" + store_url
-        print(page_url)
         locator_domain = website
 
-        store_req = session.get(page_url, headers=headers)
+        store_req = get_page(page_url)
         store_sel = lxml.html.fromstring(store_req.text)
         location_name = "".join(
             store_sel.xpath('//h2[@class="store_name"]/text()')
