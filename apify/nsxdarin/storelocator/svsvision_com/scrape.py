@@ -62,7 +62,7 @@ def fetch_data():
             except:
                 lat = "<MISSING>"
                 lng = "<MISSING>"
-            hours = line.split('<div class="span3">')[1].split("<")[0]
+            hours = line.split('<div class="span6">')[1].split("<")[0]
             HFound = True
             while HFound:
                 g = next(lines)
