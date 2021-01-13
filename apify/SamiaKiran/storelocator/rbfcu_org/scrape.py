@@ -1,10 +1,10 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
 
-website = "vanheusen_com"
+
+website = "rbfcu_org"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -39,75 +39,67 @@ def write_output(data):
             ]
         )
         # Body
-        temp_list = []  # ignoring duplicates
         for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
+            writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     # Your scraper here
     data = []
-    zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
-    if True:
-        for zip_code in zips:
-            url = "https://secure.gotwww.com/gotlocations.com/vanheusendev/index.php"
-            myobj = {"address": zip_code}
-            r = session.post(url, data=myobj, headers=headers)
-            if "L.marker" not in r.text:
-                continue
-            loclist = r.text.split("L.marker(")[1:]
-            for loc in loclist:
-                coords = loc.split(", {icon: customIcon}", 1)[0]
-                coords = coords.split(",")
-                lat = coords[0].split("[", 1)[1]
-                longt = coords[1].split("]", 1)[0]
-                temploc = (
-                    loc.split("numtoshow.push", 1)[0]
-                    .split(".bindPopup('", 1)[1]
-                    .split("');", 1)[0]
-                )
-                title = temploc.split('<div class="maptexthead">', 1)[1].split(
-                    "</div>", 1
-                )[0]
-                title = title.split("  ", 1)[0]
-                templist = temploc.split("<br>")[1:5]
-                if "US" not in templist[2]:
-                    continue
-                street = templist[0] + " " + templist[1]
-                city = templist[2].split(",", 1)[0]
-                state = templist[2].split(",", 1)[1].replace("US", "")
-                phone = templist[3].split("Phone:", 1)[1].strip()
-                data.append(
-                    [
-                        "https://vanheusen.partnerbrands.com/en",
-                        "https://vanheusen.partnerbrands.com/en/customerservice/store-locator",
-                        title,
-                        street,
-                        city,
-                        state,
-                        "<MISSING>",
-                        "US",
-                        "<MISSING>",
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        "<MISSING>",
-                    ]
-                )
-        return data
+    url = "https://www.rbfcu.org/locations"
+    r = session.get(url, headers=headers, verify=False)
+    loclist = r.text.split("var locationRecord = ")[1:]
+    pattern = re.compile(r"\s\s+")
+    for loc in loclist:
+        loc = (
+            loc.split("additionalOptions: {", 1)[0]
+            .replace("},", "")
+            .replace("{", "")
+            .replace("'", "")
+            .strip()
+        )
+        loc = re.sub(pattern, "\n", loc)
+        store = loc.split("recordId:", 1)[1].split(",", 1)[0].strip()
+        title = loc.split("locationName:", 1)[1].split(",", 1)[0].strip()
+        location_type = (
+            loc.split("locationType:", 1)[1].split(",", 1)[0].split(".", 1)[0].strip()
+        )
+        lat = loc.split("latitude:", 1)[1].split(",", 1)[0].strip()
+        longt = loc.split("longitude:", 1)[1].split(",", 1)[0].strip()
+        hours = loc.split("lobbyHours:", 1)[1].split("driveThruHours:", 1)[0].strip()
+        hours = hours.split("\n")
+        try:
+            hours = (
+                hours[1].split("weekday: ", 1)[1].replace(",", "")
+                + " "
+                + hours[2].split("weekend: ", 1)[1]
+            )
+        except:
+            hours = "<MISSING>"
+        street = loc.split("street:", 1)[1].split(",", 1)[0].strip()
+        city = loc.split("city:", 1)[1].split(",", 1)[0].strip()
+        state = loc.split("state:", 1)[1].split(",", 1)[0].strip()
+        pcode = loc.split("zipcode:", 1)[1].split(",", 1)[0].strip()
+        data.append(
+            [
+                "https://rbfcu.org/",
+                "https://www.rbfcu.org/locations",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                store,
+                "<MISSING>",
+                location_type,
+                lat,
+                longt,
+                hours,
+            ]
+        )
+    return data
 
 
 def scrape():

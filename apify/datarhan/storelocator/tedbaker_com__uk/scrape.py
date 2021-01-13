@@ -55,7 +55,12 @@ def fetch_data():
         city = poi["address"].get("town")
         if not city:
             city = poi["address"].get("line3")
+        if not city:
+            if ", " in street_address:
+                city = street_address.split(", ")[-1]
+                street_address = street_address.split(", ")[0]
         city = city if city else "<MISSING>"
+        city = city.split(",")[0]
         state = "<MISSING>"
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["country"]["isocode"]
