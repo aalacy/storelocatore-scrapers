@@ -1,9 +1,10 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 session = SgRequests()
 
@@ -39,64 +40,55 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "http://www.batterysource.com/find_store.php"
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text, "lxml")
+    base_url = "https://www.zoogym.com/wp-admin/admin-ajax.php?action=store_search&lat=26.101509&lng=-80.26195999999999&max_results=25&search_radius=50&autoload=1"
+    r = session.get(base_url, headers=headers)
+    soup = json.loads(r.text)
+    store_name = []
+    store_detail = []
     return_main_object = []
-    data = soup.find_all("div", {"class": "address_block"})
-
-    for d in data:
+    for i in soup:
         tem_var = []
-        # print(list(d.stripped_strings))
-        name = list(d.stripped_strings)[0]
-        st = list(d.stripped_strings)[1]
-        if st == "Coming Soon" or st == "New Store":
-            st = list(d.stripped_strings)[2]
-            city = list(d.stripped_strings)[3].split(",")[0]
-            if list(d.stripped_strings)[3].find(",") != -1:
-                state = list(d.stripped_strings)[3].split(",")[1].split(" ")[1]
-            else:
-                state = "<MISSING>"
-            if list(d.stripped_strings)[3].find(",") != -1:
-                zip1 = list(d.stripped_strings)[3].split(",")[1].split(" ")[2]
-            else:
-                zip1 = "<MISSING>"
-            phone = list(d.stripped_strings)[4].replace("Now Open!", "")
-            hours = list(d.stripped_strings)[5]
+        street_address = i["address"]
+        city = i["city"]
+        state = i["state"]
+        zipcode = i["zip"]
+        country_code = "US"
+        phone = i["phone"]
+        if len(phone) < 1:
+            phone = "<MISSING>"
+        location_type = "zoogym"
+        latitude = i["lat"]
+        longitude = i["lng"]
+        hours_of_operation = "<MISSING>"
+        name = (
+            i["store"]
+            .replace("<br>", " ")
+            .replace("<br />", "")
+            .replace("(Visit Our Site)", "")
+            .replace("</a>", "")
+        )
+        store_name.append(name.rstrip())
 
-            if phone.find("Mon") != -1:
-                hours = phone
-                phone = "<MISSING>"
-        else:
-            city = list(d.stripped_strings)[2].split(",")[0]
-            if list(d.stripped_strings)[2].find(",") != -1:
-                state = list(d.stripped_strings)[2].split(",")[1].split(" ")[1]
-            else:
-                state = "<MISSING>"
-            if list(d.stripped_strings)[2].find(",") != -1:
-                zip1 = list(d.stripped_strings)[2].split(",")[1].split(" ")[2]
-            else:
-                zip1 = "<MISSING>"
-            phone = list(d.stripped_strings)[3].replace("Now Open!", "")
-            hours = list(d.stripped_strings)[4]
-            if phone.find("Mon") != -1:
-                hours = phone
-                phone = "<MISSING>"
-        tem_var.append("https://www.batterysource.com")
-        tem_var.append("https://www.batterysource.com/find_store.php")
-        tem_var.append(name)
-        tem_var.append(st)
+        tem_var.append(street_address)
         tem_var.append(city)
         tem_var.append(state)
-        tem_var.append(zip1)
-        tem_var.append("US")
+        tem_var.append(zipcode)
+        tem_var.append(country_code)
         tem_var.append("<MISSING>")
         tem_var.append(phone)
-        tem_var.append("batterysource")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
-        tem_var.append(hours)
-        return_main_object.append(tem_var)
+        tem_var.append(location_type)
+        tem_var.append(latitude)
+        tem_var.append(longitude)
+        tem_var.append(hours_of_operation)
+        store_detail.append(tem_var)
+    return_main_object = []
+    for i in range(len(store_name)):
+        store = list()
+        store.append("https://www.zoogym.com")
+        store.append("https://zoogym.com/locations-2/")
+        store.append(store_name[i])
+        store.extend(store_detail[i])
+        return_main_object.append(store)
     return return_main_object
 
 
