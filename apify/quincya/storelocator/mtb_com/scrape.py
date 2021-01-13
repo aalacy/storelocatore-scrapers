@@ -102,7 +102,6 @@ def fetch_data():
                 except:
                     pass
 
-                print(link)
                 hours_of_operation = parse_hours(base)
 
                 latitude = base.find("meta", attrs={"property": "og:latitude"})[
