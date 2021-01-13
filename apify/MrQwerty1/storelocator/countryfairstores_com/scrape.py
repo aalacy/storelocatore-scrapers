@@ -87,7 +87,7 @@ def fetch_data():
         state = a.get("state") or "<INACCESSIBLE>"
         postal = a.get("postal") or "<INACCESSIBLE>"
         country_code = "US"
-        page_url = "<MISSING>"
+        page_url = "http://countryfairstores.com/stores/"
         location_name = "".join(i.xpath("./location/text()"))
         store_number = location_name.split()[-1]
         phone = "".join(i.xpath("./telephone/text()")) or "<MISSING>"

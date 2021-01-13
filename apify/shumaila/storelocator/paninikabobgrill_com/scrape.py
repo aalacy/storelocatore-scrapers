@@ -1,119 +1,105 @@
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('paninikabobgrill_com')
-
-
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
     data = []
-    pattern = re.compile(r'\s\s+') 
-    linklist = []
-    cleanr = re.compile(r'<[^>]+>')    
-    url = 'https://paninikabobgrill.com/wp-admin/admin-ajax.php?action=store_search&lat=34.05223&lng=-118.24368&max_results=25&search_radius=50&autoload=1'
+    url = "https://paninikabobgrill.com/wp-admin/admin-ajax.php?action=store_search&lat=34.05223&lng=-118.24368&max_results=25&search_radius=50&autoload=1"
     p = 0
-    r = session.get(url, headers=headers, verify=False)
-    loclist = r.json()
-    url = 'https://paninikabobgrill.com/locations/'
-    r = session.get(url, headers=headers, verify=False)
-    soup= BeautifulSoup(r.text,'html.parser')
-    storelist = soup.findAll('div',{'class':'location-item'})
-   
-        
-    coordlist = r.text.split('locArray.push(',1)[1].split('let actualLon')[0]
-    coordlist = '['+re.sub(pattern, ' ', coordlist).replace('); locArray.push(',',').replace(');','').replace(', }','}').replace("'",'"').rstrip() +']'
-    coordlist = json.loads(coordlist)
-    
-    #logger.info(coordlist)
-    for div in storelist:
-        
-        link = div.find('a',{'class':'location-url'})['href'].strip()
-        title = div.find('h3').text.strip()
-        phone = div.find('div',{'class':'location-phone'}).text.replace('\t','').replace('\n','').strip()
-        address = div.find('div',{'class':'locations-footer'}).find('a')['href'].split('dir//')[1].replace('Panini Kabob Grill','').lstrip()
-        #logger.info(address)
-        street,city,state= address.split(', ')
-        state,pcode = state.lstrip().split(' ',1)
-        if city.find('Ste. 101 ') > -1:
-            city = city.replace('Ste. 101 ','').lstrip()
-            street = street + ' Ste. 101'
-        lat = '<MISSING>'
-        longt = '<MISSING>'        
-        
-        hours = '<MISSING>'
-        store = '<MISSING>'
-        for loc in loclist:
-            if loc['store'] == title:
-                #hourlist = BeautifulSoup(loc['hours'],'html.parser')
-                #hours = re.sub(cleanr,' ',str(hourlist)).replace('  ',' ').strip()
-                store = loc["id"]
-                lat = loc['lat']
-                longt = loc['lng']
-                #logger.info('Yes')
-                break
-
-        if lat ==  '<MISSING>':        
-            for coord in coordlist:            
-                if title.lower().find(coord['name'].lower().replace('-',' ')) > -1:
-                    #logger.info(title,coord['name'])
-                    lat = coord['latitude']
-                    longt = coord['longitude']
-                    break
-        if hours == '<MISSING>':             
-            r1 = session.get(link, headers=headers, verify=False)
-            soup1= BeautifulSoup(r1.text,'html.parser')
-            hours = soup1.find('div',{'id':'hours'}).text.replace('\n','').replace('Hours:','').strip()
-            #logger.info('No')
-            
-        data.append([
-                'https://paninikabobgrill.com/',
-                link,                   
+    loclist = session.get(url, headers=headers, verify=False).json()
+    for loc in loclist:
+        title = loc["store"]
+        store = loc["id"]
+        street = loc["address"] + " " + str(loc["address2"])
+        city = loc["city"]
+        state = loc["state"]
+        pcode = loc["zip"]
+        phone = str(loc["phone"])
+        if len(phone) < 2:
+            phone = "<MISSING>"
+        lat = loc["lat"]
+        longt = loc["lng"]
+        link = "https://paninikabobgrill.com" + loc["url"]
+        hours = BeautifulSoup(loc["hours"], "html.parser").text
+        data.append(
+            [
+                "https://paninikabobgrill.com/",
+                link,
                 title,
                 street,
                 city,
                 state,
                 pcode,
-                'US',
+                "US",
                 store,
                 phone,
-                '<MISSING>',
+                "<MISSING>",
                 lat,
                 longt,
-                hours
-            ])
-        #logger.info(p,data[p])
+                hours.replace("PM", "PM ").replace("day", "day "),
+            ]
+        )
         p += 1
-        
-        
+    data.append(
+        [
+            "https://paninikabobgrill.com/",
+            "https://paninikabobgrill.com/locations/riverside/",
+            "Riverside",
+            "1298 Galleria at Tyler G121",
+            "Riverside",
+            "CA",
+            "92503",
+            "US",
+            "<MISSING>",
+            "(951) 352-6318",
+            "<MISSING>",
+            "33.90923",
+            "-117.45734",
+            "Mon – Sun: 10:00am to 9:00pm",
+        ]
+    )
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()
-

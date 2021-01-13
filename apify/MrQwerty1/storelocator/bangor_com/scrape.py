@@ -35,18 +35,25 @@ def write_output(data):
 
 
 def get_urls():
+    urls = []
     session = SgRequests()
     r = session.get("https://www.bangor.com/locations")
     tree = html.fromstring(r.text)
+    aa = tree.xpath("//a[@class='location-title']")
+    for a in aa:
+        url = "".join(a.xpath("./@href"))
+        if not url:
+            slug = "".join(a.xpath("./text()")).strip().lower()
+            url = f"/locations/{slug}"
 
-    return tree.xpath("//a[@class='location-title']/@href")
+        urls.append(url)
+
+    return urls
 
 
 def get_data(url):
     locator_domain = "https://www.bangor.com/"
     page_url = f"https://www.bangor.com{url}"
-    if not url.strip():
-        return
 
     session = SgRequests()
     r = session.get(page_url)
