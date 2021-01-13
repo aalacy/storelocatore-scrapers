@@ -39,6 +39,7 @@ def write_output(data):
             ]
         )
         # Body
+        temp_list = []  # ignoring duplicates
         for row in data:
             writer.writerow(row)
         log.info(f"No of records being processed: {len(data)}")
@@ -47,6 +48,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    pattern = re.compile(r"\s\s+")
     url = "https://www.rbfcu.org/locations"
     r = session.get(url, headers=headers, verify=False)
     loclist = r.text.split("var locationRecord = ")[1:]
@@ -61,7 +63,12 @@ def fetch_data():
         )
         loc = re.sub(pattern, "\n", loc)
         store = loc.split("recordId:", 1)[1].split(",", 1)[0].strip()
-        title = loc.split("locationName:", 1)[1].split(",", 1)[0].strip()
+        title = (
+            loc.split("locationName:", 1)[1]
+            .split(",", 1)[0]
+            .replace("&amp;", " ")
+            .strip()
+        )
         location_type = (
             loc.split("locationType:", 1)[1].split(",", 1)[0].split(".", 1)[0].strip()
         )
@@ -69,13 +76,27 @@ def fetch_data():
         longt = loc.split("longitude:", 1)[1].split(",", 1)[0].strip()
         hours = loc.split("lobbyHours:", 1)[1].split("driveThruHours:", 1)[0].strip()
         hours = hours.split("\n")
-        try:
-            hours = (
-                hours[1].split("weekday: ", 1)[1].replace(",", "")
-                + " "
-                + hours[2].split("weekend: ", 1)[1]
-            )
-        except:
+        weekday = hours[1].replace(",", "").replace("\n", "").strip()
+        weekend = hours[2].replace(",", "").replace("\n", "").strip()
+        if len(weekday) > 9:
+            if len(weekend) < 9:
+                weekend = ""
+                weekday = weekday.split("weekday: ", 1)[1]
+                hours = weekday + " " + weekend
+            else:
+                weekday = weekday.split("weekday: ", 1)[1]
+                weekend = weekend.split("weekend: ", 1)[1]
+                hours = weekday + " " + weekend
+        elif len(weekend) > 9:
+            if len(weekday) < 9:
+                weekday = ""
+                weekend = weekend.split("weekend: ", 1)[1]
+                hours = weekday + " " + weekend
+            else:
+                weekday = weekday.split("weekday: ", 1)[1]
+                weekend = weekend.split("weekend: ", 1)[1]
+                hours = weekday + " " + weekend
+        else:
             hours = "<MISSING>"
         street = loc.split("street:", 1)[1].split(",", 1)[0].strip()
         city = loc.split("city:", 1)[1].split(",", 1)[0].strip()
