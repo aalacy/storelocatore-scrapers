@@ -48,7 +48,9 @@ def fetch_data():
 
     data = []
 
-    items = base.find_all('div', attrs={'data-testid': 'mesh-container-content'})[2].find_all('div', attrs={'data-testid': 'mesh-container-content'})
+    items = base.find_all("div", attrs={"data-testid": "mesh-container-content"})[
+        2
+    ].find_all("div", attrs={"data-testid": "mesh-container-content"})
     locator_domain = "leesdeli.com"
 
     for item in items:
@@ -70,7 +72,9 @@ def fetch_data():
         hours_of_operation = ""
         raw_hours = item.find_all("p")[2:]
         for hour in raw_hours:
-            hours_of_operation = (hours_of_operation + " " + hour.text.replace("\xa0", " ")).strip()
+            hours_of_operation = (
+                hours_of_operation + " " + hour.text.replace("\xa0", " ")
+            ).strip()
         hours_of_operation = hours_of_operation.split("*")[0].strip()
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
