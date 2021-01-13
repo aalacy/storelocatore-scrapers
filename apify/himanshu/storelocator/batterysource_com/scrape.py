@@ -45,7 +45,6 @@ def fetch_data():
 
     for d in data:
         tem_var = []
-        # print(list(d.stripped_strings))
         name = list(d.stripped_strings)[0]
         st = list(d.stripped_strings)[1]
         if st == "Coming Soon" or st == "New Store":
