@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 
 session = SgRequests()
 import json
-import csv
 from bs4 import BeautifulSoup
 import unicodedata
 
