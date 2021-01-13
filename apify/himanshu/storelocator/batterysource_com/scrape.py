@@ -38,12 +38,13 @@ def write_output(data):
 def fetch_data():
     base_url = "http://www.batterysource.com/find_store.php"
     r = session.get(base_url)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     return_main_object = []
     data = soup.find_all("div", {"class": "address_block"})
 
     for d in data:
         tem_var = []
+        # print(list(d.stripped_strings))
         name = list(d.stripped_strings)[0]
         st = list(d.stripped_strings)[1]
         if st == "Coming Soon" or st == "New Store":
