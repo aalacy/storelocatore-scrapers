@@ -38,7 +38,7 @@ def write_output(data):
 def fetch_data():
     base_url = "http://www.batterysource.com/find_store.php"
     r = session.get(base_url)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     return_main_object = []
     data = soup.find_all("div", {"class": "address_block"})
 
