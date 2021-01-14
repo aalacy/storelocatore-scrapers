@@ -63,7 +63,6 @@ def fetch_data():
             store = temp[1].strip()
             address = loc.find("address").text.replace("Map", "").strip()
             phone = loc.findAll("a")[2].text.strip()
-            # hours = loc.find("p").text.strip()
             link = loc.find("div", {"class": "column is-3"}).find("a")["href"]
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
