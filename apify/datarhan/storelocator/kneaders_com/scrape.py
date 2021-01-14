@@ -46,7 +46,7 @@ def fetch_data():
     start_url = "https://wordpress.kneadersdw.com/wp-json/kneaders/v1/locations/{}"
 
     all_locations = []
-    states = ["AZ", "ID", "NV", "TX", "UT"]
+    states = ["AZ", "ID", "NV", "TX", "UT", "CO"]
     for state in states:
         response = session.get(start_url.format(state))
         data = json.loads(response.text)
