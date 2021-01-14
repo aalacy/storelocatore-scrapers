@@ -114,12 +114,13 @@ def fetch_data():
         store_number = el[12]
         phone = el[7]
         location_type = missingString
-        hours_of_operation = (
+        hours = (
             el[4]
             .replace("<span class=blackfontIndi></span>", "")
             .replace("to", "-")
             .strip()
         )
+        hours_of_operation = "Mon-Fri: {}, Sat: {}, Sun: {}".format(hours, hours, hours)
         result.append(
             [
                 locator_domain,

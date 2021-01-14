@@ -87,7 +87,8 @@ def fetch_data():
                     zc = addinfo.split(" ")[0] + " " + addinfo.split(" ")[1]
             if '<span class="type">' in line2:
                 typ = line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0].strip()
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
@@ -193,6 +194,9 @@ def fetch_data():
             add = "<MISSING>"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,
@@ -234,6 +238,7 @@ def fetch_data():
         lng = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
@@ -253,7 +258,8 @@ def fetch_data():
                 zc = line2.split("</span>")[0].rsplit(" ", 1)[1]
             if '<span class="type">' in line2:
                 typ = line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0]
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
@@ -357,6 +363,9 @@ def fetch_data():
             lng = "<MISSING>"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,
@@ -398,7 +407,8 @@ def fetch_data():
         HFound = True
         hours = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
@@ -424,7 +434,8 @@ def fetch_data():
                 )
             if '<span class="type">' in line2 and typ == "":
                 typ = typ + "; " + line2.split('<span class="type">')[1].split("<")[0]
-                phone = line2.split('<span class="value">')[1].split("<")[0]
+                if phone == "":
+                    phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:
                 lat = line2.split('<a href="https://maps.google.com/maps?daddr=')[
                     1
@@ -550,6 +561,9 @@ def fetch_data():
             lng = "-79.5496246"
         if "</p>" in hours:
             hours = hours.split("</p>")[0].strip()
+        typ = typ.replace("; ", "")
+        if typ == "":
+            typ = "Store"
         yield [
             website,
             loc,

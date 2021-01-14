@@ -7,6 +7,7 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("whitscustard_com")
 
@@ -61,13 +62,18 @@ def fetch_data():
 
     final_links = []
     for main_link in main_links:
-        req = session.get(main_link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        items = base.find_all(class_="summary-thumbnail-outer-container")
+        if "ohio" not in main_link:
+            req = session.get(main_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+        else:
+            driver = SgChrome().chrome()
+            driver.get(main_link)
+            base = BeautifulSoup(driver.page_source, "lxml")
+            driver.close()
+        items = base.find_all(class_="summary-title-link")
         for i in items:
             if "Opening%2Bsoon" not in str(i):
-                final_links.append("https://whitscustard.com" + i.a["href"])
+                final_links.append("https://whitscustard.com" + i["href"])
 
     data = []
     locator_domain = "whitscustard.com"
@@ -77,6 +83,8 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        if "Opening%2Bsoon" in str(base):
+            continue
         location_name = (
             base.find(class_="entry-title")
             .text.encode("ascii", "replace")
@@ -127,7 +135,11 @@ def fetch_data():
             city = city_line[0]
             state = city_line[1]
             zip_code = city_line[2]
-
+        elif "ORANGE PARK" in location_name:
+            street_address = "10 Blanding Blvd, Ste A"
+            city = "Orange Park"
+            state = "FL"
+            zip_code = "32073"
         else:
             raise
 
@@ -153,6 +165,7 @@ def fetch_data():
             .replace("Drive-thru only", "")
             .replace("losed", "losed ")
             .replace("LOSED", "LOSED ")
+            .replace("HOURS", "")
             .strip()
         )
         hours_of_operation = (

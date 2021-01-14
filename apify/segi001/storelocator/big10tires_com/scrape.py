@@ -68,6 +68,17 @@ def fetch_data():
                         )
         return res
 
+    def parseHour(string, char):
+        reverse = str(string)[::-1]
+        count = 0
+        new = ""
+        for num in reverse:
+            count += 1
+            new += num
+            if count == 2:
+                new += char
+        return new[::-1]
+
     stores = allStores()
 
     s = SgRequests()
@@ -99,16 +110,29 @@ def fetch_data():
             if not time["intervals"]:
                 t.append("{} : Closed".format(time["day"]))
             else:
+                day = ""
+                if time["day"] == "MONDAY":
+                    day = "Mon"
+                elif time["day"] == "TUESDAY":
+                    day = "Tue"
+                elif time["day"] == "WEDNESDAY":
+                    day = "Wed"
+                elif time["day"] == "THURSDAY":
+                    day = "Thu"
+                elif time["day"] == "FRIDAY":
+                    day = "Fri"
+                elif time["day"] == "SATURDAY":
+                    day = "Sat"
+                elif time["day"] == "SUNDAY":
+                    day = "Sun"
                 t.append(
-                    [
-                        "{} : {}AM - {}PM".format(
-                            time["day"],
-                            str(time["intervals"][0]["start"]),
-                            str(time["intervals"][0]["end"]),
-                        )
-                    ]
+                    "{} : {}AM - {}PM".format(
+                        day,
+                        parseHour(time["intervals"][0]["start"], ":"),
+                        parseHour(time["intervals"][0]["end"], ":"),
+                    )
                 )
-        hours_of_operation = ", ".join(str(x) for x in t)
+        hours_of_operation = ", ".join(t)
         result.append(
             [
                 locator_domain,
