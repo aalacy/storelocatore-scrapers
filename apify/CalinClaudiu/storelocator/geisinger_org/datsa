@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta content="" name="description"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="IE=Edge" http-equiv="x-ua-compatible"/>
+<title>Find a Location</title>
+<link href="//www.geisinger.org/Assets/OG/css/vendor.css" rel="stylesheet"/>
+<link href="//www.geisinger.org/Assets/OG/css/main.css" rel="stylesheet"/>
+<script src="/common/jquery/jquery-3.5.1.min.js"></script>
+<style>
+			.alert span {
+				color: #ffffff !important;
+			}
+		</style>
+<script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-7395697-13', 'auto');
+            ga('send', 'pageview');
+		</script>
+<script src="//www.geisinger.org/bundle/beacon"></script>
+<title>Geisinger Bloomsburg Lows Road | Geisinger Health System</title>
+<meta content="true" name="HandheldFriendly"/>
+<meta content="initial-scale=1.0, width=device-width" name="viewport"/>
+<meta content="Geisinger Bloomsburg Lows Road | Geisinger Health System&lt;PRE&gt;&lt;p&gt;Geisinger Specialty Services at Lows Road offers the convenience of open appointments and nearby parking.  This multispecialty practice provides cardiology and sleep medicine services for kids and adults as well as the new Geisinger Women &amp;amp; Children's Clinic in Suite 328.&lt;/p&gt;
+&lt;p&gt;Geisinger's Women&amp;nbsp;&amp;amp; Children&amp;rsquo;s Clinic at Lows Road offers the convenience of open appointments and nearby parking. This multispecialty practice located in Suite 328 provides pediatric and adolescent sleep clinic services as well as women&amp;rsquo;s health services, urogynecology and obstetrics/gynecology.&amp;nbsp; Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.&lt;/p&gt;
+&lt;p&gt;Geisinger Bloomsburg Lows Road offers a full array of diagnostic equipment and an on-site sleep laboratory.  Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.&lt;/p&gt;
+&lt;p&gt;Talk to your physician about going to Lows Road for your next cardiology, sleep medicine or women's health appointment, or call Geisinger Specialty Services at 570-416-0437.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Not feeling well? Call your primary care provider first*&lt;br /&gt;
+&lt;/b&gt;With  same-day care, including evening and weekend hours, we are  your resource  for non-emergency illnesses and injuries for the entire  family. &lt;br /&gt;
+We offer several options to provide care when you need it. &lt;br /&gt;
+*Call 911 in an emergency.&lt;/p&gt;&lt;/PRE&gt;" name="description"/>
+<meta content="Geisinger Bloomsburg Lows Road | Geisinger Health System&lt;PRE&gt;&lt;p&gt;Geisinger Specialty Services at Lows Road offers the convenience of open appointments and nearby parking.  This multispecialty practice provides cardiology and sleep medicine services for kids and adults as well as the new Geisinger Women &amp;amp; Children's Clinic in Suite 328.&lt;/p&gt;
+&lt;p&gt;Geisinger's Women&amp;nbsp;&amp;amp; Children&amp;rsquo;s Clinic at Lows Road offers the convenience of open appointments and nearby parking. This multispecialty practice located in Suite 328 provides pediatric and adolescent sleep clinic services as well as women&amp;rsquo;s health services, urogynecology and obstetrics/gynecology.&amp;nbsp; Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.&lt;/p&gt;
+&lt;p&gt;Geisinger Bloomsburg Lows Road offers a full array of diagnostic equipment and an on-site sleep laboratory.  Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.&lt;/p&gt;
+&lt;p&gt;Talk to your physician about going to Lows Road for your next cardiology, sleep medicine or women's health appointment, or call Geisinger Specialty Services at 570-416-0437.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Not feeling well? Call your primary care provider first*&lt;br /&gt;
+&lt;/b&gt;With  same-day care, including evening and weekend hours, we are  your resource  for non-emergency illnesses and injuries for the entire  family. &lt;br /&gt;
+We offer several options to provide care when you need it. &lt;br /&gt;
+*Call 911 in an emergency.&lt;/p&gt;&lt;/PRE&gt;" name="keywords"/>
+<meta content="Geisinger Bloomsburg Lows Road | Geisinger Health System" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="http://10.230.102.158/details.cfm?id=15" property="og:url"/>
+<meta content="http://10.230.102.158/locator/clinicimages/default.jpg" property="og:image"/>
+<meta content="Geisinger Health System Find-A-Location" property="og:site_name"/>
+</head>
+<body class="">
+<div id="overlay"></div>
+<!-- SVG Icons -->
+<div class="svg-sprite"></div>
+<!-- // SVG Icons -->
+<!--Start Header -->
+<style>
+    /* this inline css will be taken away once the cleanup happens as a part of another PBI */
+    .global-navigation .global-nav ul > li:nth-last-child(2) {
+        margin-left: 0;
+    }
+
+    .global-nav ul > .global-nav__item-right {
+        margin-left: auto;
+    }
+
+        .global-nav ul > .global-nav__item-right ~ .global-nav__item-right {
+            margin-left: 0;
+        }
+</style>
+<header aria-label="global navigation container" class="global-navigation">
+<div class="row">
+<nav aria-label="global navigation" class="global-nav">
+<ul>
+<li class=""><a href="/">Home</a></li>
+<li class=""><a href="/patient-care">Patient Care</a></li>
+<li class=""><a href="/health-plan">Health Plan</a></li>
+<li class=""><a href="/research">Research</a></li>
+<li class=""><a href="/education-jump">Education</a></li>
+<li class="global-nav__item-right"></li>
+<li class="global-nav__item-right"><a href="/get-care-now">Get Care Now</a></li>
+<li class=""><a href="https://jobs.geisinger.org">Careers</a></li>
+<li>
+<a class="account-toggle" href="/sites/sign-in" target="">
+                                    Select Account
+                                </a>
+</li>
+</ul>
+</nav>
+</div>
+</header>
+<header aria-label="Geisinger Logo" class="header--main" role="banner">
+<div class="row">
+<div class="header--column-1">
+<div class="logo--no-caring" id="logo">
+<a href="/">
+<img alt="Geisinger" src="/-/media/OneGeisinger/Images/Logos/geisingerlogo.png?h=72&amp;la=en&amp;w=200&amp;hash=9B8D1EE6B5F9F996E4A48E305E73599774F13E3F"/>
+</a>
+</div>
+<!-- MOBILE BUTTONS -->
+<nav aria-label="mobile navigation" id="mobile-buttons">
+<a class="account-toggle" href="#">
+<span class="nav-item__icon">
+<svg aria-labelledby="account-title account-desc" class="icon">
+<title id="account-title">Select Account</title>
+<desc id="account-desc">Select Account Icon</desc>
+<use xlink:href="#gmd-ic-lock-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</span>
+<span>Select Account</span>
+</a>
+<a href="#" id="search-toggle">
+<span class="nav-item__icon">
+<svg aria-labelledby="search-title search-desc" class="icon">
+<title id="search-title">Search</title>
+<desc id="search-desc">Search Icon</desc>
+<use xlink:href="#gmd-ic-search-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</span>
+<span>Search</span>
+</a>
+<a href="#primary-nav" id="nav-toggle">
+<span class="nav-item__icon">
+<svg class="icon">
+<use xlink:href="#gmd-ic-menu-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</span>
+<span>Menu</span>
+</a>
+</nav>
+<!-- /MOBILE BUTTONS -->
+</div>
+<div class="header--column-2">
+<!-- SEARCH BOX CONTAINER -->
+<script type="text/javascript">
+
+    document.addEventListener('DOMContentLoaded',
+        function() {
+            SearchText();
+
+        });
+
+    var postUrl = "/api/Search/AutoComplete";
+
+    function SearchText() {
+        $("#headersearchtext").autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    url: postUrl,
+                    data: "{'term':'" + document.getElementById('headersearchtext').value + "'}",
+                    dataType: "json",
+                    success: function(data) {
+                        response($.map(data,
+                            function(item) {
+                                return { label: item, value: item };
+                            }));
+                    },
+                    error: function(result) {
+                        return;
+                    }
+                });
+            },
+            select: function(event, ui) {
+                $("#searchtext").val(ui.item.label);
+                return true;
+
+
+            }
+        });
+    }
+</script>
+<div class="dropdown-menu search-box-container">
+<form action="/sites/search-result" aria-label="site search" class="search-form" name="search-form">
+<div class="search-input--container">
+<div class="search-input">
+<input class="search-input" id="headersearchtext" maxlength="275" name="q" placeholder="Search" role="searchbox" title="Global search input" type="text"/>
+</div>
+<label class="search-icon">
+<span>Search</span>
+<input id="headerSubmit" type="submit"/>
+<svg aria-labelledby="search-box-title" class="icon">
+<title id="search-box-title">Search</title>
+<use xlink:href="#gmd-ic-search-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</label>
+</div>
+</form>
+</div>
+<!-- /SEARCH BOX CONTAINER -->
+<!-- ACCOUNT BOX CONTAINER -->
+<div class="dropdown-menu account-box-container">
+<ul>
+<li>
+<a class="button-primary" href="https://mygeisinger.geisinger.org" target="">
+                MyGeisinger Users
+            </a>
+</li>
+<li>
+<a class="button-primary" href=" https://login.geisinger.org/idp/startSLO.ping?TargetResource=https%3A%2F%2Fwww.geisinger.org%2Fhealth-plan%2Fsign-in&amp;InErrorResource=https%3A%2F%2Fwww.geisinger.org%2Fhealth-plan%2Fsign-in" target="">
+                Health Plan Members
+            </a>
+</li>
+<li>
+<a class="" href="/sites/sign-in" target="">
+                Additional sign in options
+            </a>
+</li>
+</ul>
+</div>
+<!-- /ACCOUNT BOX CONTAINER -->
+</div>
+<div class="header--column-3">
+</div>
+</div>
+<div class="row">
+<nav aria-label="primary navigation" class="dropdown-menu" id="primary-nav">
+<ul class="nav-menu">
+<li class="nav-item">
+<a href="/patient-care">Patient Care</a>
+</li>
+<li class="nav-item">
+<a href="https://providers.geisinger.org" target="_blank">Find a Provider</a>
+</li>
+<li class="nav-item">
+<a href="/patient-care/find-a-location">Find a Location</a>
+</li>
+<li class="nav-item">
+<a href="/patient-care/conditions-treatments-specialty">Conditions &amp; Specialties</a>
+</li>
+<li class="nav-item">
+<a href="https://www.geisinger.org/billpay" target="_blank">Pay Bill</a>
+</li>
+<li class="nav-item">
+<a href="/patient-care/patients-and-visitors">Patients &amp; Visitors</a>
+<span class="nav-item__icon">
+<svg class="icon icon-gmd-keyboard-arrow-down">
+<use xlink:href="#gmd-ic-keyboard-arrow-right-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</span>
+<div class="sub-nav">
+<ul class="sub-nav-group">
+<li>
+<a href="/patient-care/patients-and-visitors/billing-and-insurance">Patient Billing Services</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/make-an-appointment">Make an Appointment</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/medical-records">Medical Records</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/prepare-for-your-appointment-or-hospital-stay">Prepare for Your Appointment or Hospital Stay</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/advance-care-planning">Advanced Care Planning</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/community-health-library">Community Health Library</a>
+</li>
+<li>
+<a href="/patient-care/patients-and-visitors/gift-shop-referral">Online gift shops</a>
+</li>
+</ul>
+</div>
+</li>
+<li class="nav-item">
+<a href="/patient-care/institutes">Geisinger Institutes</a>
+</li>
+<li class="nav-item">
+<a href="/patient-care/for-professionals">For Professionals</a>
+<span class="nav-item__icon">
+<svg class="icon icon-gmd-keyboard-arrow-down">
+<use xlink:href="#gmd-ic-keyboard-arrow-right-24px" xmlns:xlink="http://www.w3.org/1999/xlink"></use>
+</svg>
+</span>
+<div class="sub-nav">
+<ul class="sub-nav-group">
+<li>
+<a href="/patient-care/for-professionals/refer-your-patient">Helping you care for your patients</a>
+</li>
+<li>
+<a href="/patient-care/for-professionals/nursing-at-geisinger">Nursing at Geisinger</a>
+</li>
+<li>
+<a href="/patient-care/for-professionals/professional-resources">Professional Resources</a>
+</li>
+</ul>
+</div>
+</li>
+<li class="nav-item global-nav-item">
+<a href="/">Home</a>
+</li>
+<li class="nav-item global-nav-item">
+<a href="/patient-care">Patient Care</a>
+</li>
+<li class="nav-item global-nav-item">
+<a href="/health-plan">Health Plan</a>
+</li>
+<li class="nav-item global-nav-item">
+<a href="/research">Research</a>
+</li>
+<li class="nav-item global-nav-item">
+<a href="/education-jump">Education</a>
+</li>
+<li class="nav-item global-nav-item">
+</li>
+<li class="nav-item global-nav-item">
+<a href="/get-care-now">Get Care Now</a>
+</li>
+<li class="nav-item global-nav-item">
+<a href="https://jobs.geisinger.org">Careers</a>
+</li>
+</ul>
+</nav>
+</div>
+</header>
+<header aria-label="separator ribbon" class="ribbon unstuck" role="complementary">
+<hgroup class="row ribbon--inner">
+<h1 id="subnav-toggle">
+
+Patient Care
+                </h1>
+<ul class="language-contact-menu">
+<li>
+<section aria-label="contact dropdown menu" class="ribbon--drop-down">
+<div class="ribbon--drop-down--inner">
+<h2>Make an Appointment</h2>
+<div class="ribbon--drop-down-contact">
+<div class="ribbon--card">
+<div class="ribbon--card--heading">
+<h3>
+                                        Get care now
+                                    </h3>
+</div>
+<p><a href="/patient-care/find-a-location/urgent-care-wait-times">Urgent care wait times &amp; check-in online</a></p>
+</div>
+<div class="ribbon--card">
+<div class="ribbon--card--heading">
+<h3>
+                                        Find and schedule a provider
+                                    </h3>
+</div>
+<a href="http://providers.geisinger.org">Find a provider</a><a href="http://providers.geisinger.org"><br/>
+</a><a href="providers.geisinger.org">
+</a>
+<a href="/patient-care/find-a-location">Find a location</a><br/>
+<a href="tel:800-275-6401">Call 800-275-6401</a><br/>
+<a href="https://www.geisinger.org/mygeisinger/appointment?utm_source=myGeisinger%20SC&amp;utm_medium=Website&amp;utm_campaign=Schedule%20appointment">Schedule online</a>
+</div>
+<div class="ribbon--card">
+<div class="ribbon--card--heading">
+<h3>
+                                        MyGeisinger Patient Portal
+                                    </h3>
+</div>
+<p><a href="https://mygeisinger.geisinger.org/mygeisinger/login.cfm" target="_blank">Sign in to MyGeisinger</a><br/>
+<a href="https://mygeisinger.geisinger.org/mygeisinger/registration/" target="_blank">Create a MyGeisinger account</a></p>
+</div>
+</div>
+<div class="ribbon--card-links--bottom">
+</div>
+</div>
+</section>
+</li>
+</ul>
+</hgroup>
+</header>
+<main role="main">
+<div class="page-layout page-layout--full water-back">
+<div class="page-section--full" role="definition">
+<div class="main-col">
+<div>
+<div id="sizetext">
+	Text Size: <a href="javascript:setActiveStyleSheet('csstemplate');"><span class="st1">A</span></a>
+<a href="javascript:setActiveStyleSheet('csstemplateMedium');"><span class="st2">A</span></a>
+<a href="javascript:setActiveStyleSheet('csstemplateLarge');"><span class="st3">A</span></a>
+</div>
+<div class="sidecontent" id="sidecontent">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td></td></tr></table>
+</div>
+<div id="main-sidebox">
+<div id="sidebox">
+<div style="padding-left:10px; margin:5px auto;">
+<h4>Specialties:</h4>
+<div style="padding-top:10px">
+<strong>Cardiovascular Disease</strong>
+<ul style="margin-top:0px">
+</ul>
+<strong>Obstetrics - Gynecology</strong>
+<ul style="margin-top:0px">
+</ul>
+<strong>Pediatric Cardiology</strong>
+<ul style="margin-top:0px">
+</ul>
+<strong>Urogynecology</strong>
+<ul style="margin-top:0px">
+</ul>
+</div>
+<div class="clear"> </div>
+</div>
+<div style="padding-left:10px; margin:5px auto;">
+<h4>Services:</h4>
+<div style="padding-left:10px;">
+<p>Adult congenital cardiology<br/>
+Adult echo<br/>
+Echo lab <br/>
+EKG <br/>
+Holter monitors <br/>
+Pediatric echo<br/>
+Pediatric cardiology<br/>
+Heart surgery<br/>
+Heart rhythm disorders<br/>
+Diagnostic testing&lt;&gt;br/&gt;
+Women &amp; Children’s Clinic<br/>
+Pediatric &amp; adolescent sleep clinic<br/>
+Urogynecology<br/>
+Obstetrics/gynecology<br/>
+Urology<br/>
+</p></div>
+</div>
+<div class="clear"> </div>
+</div>
+<style>
+		a.myg-cta{
+			background-color:#006dbf !important;
+			border:2px solid #fff !important;
+			transition: all .5s ease-in-out;
+			border-top-left-radius:.5rem;
+			border-bottom-right-radius:.5rem;
+			width:100%;
+			padding:6px;
+			color:#ffffff;
+			text-align:center !important;
+			float:left;
+			font-weight:bold;
+		}
+		a.myg-cta:hover{
+			text-decoration:underline !important;
+			background-color:#006dbf !important;
+			transition: all .5s ease-in-out;
+			border-top-left-radius:.5rem;
+			border-bottom-right-radius:.5rem;
+		}
+		.myg-p{color:#fff;font-size:17px !important;}
+		#myg-cta-desktop{
+			background-color:#006dbf;
+			border-top-left-radius:1.5rem;
+			border-bottom-right-radius:1.5rem;
+			padding:.5rem 1.25rem .8rem 1.25rem;
+			width:100%;
+			float:right;
+			clear:both;
+			margin-top:30px;
+		}
+		#myg-cta-mobile{
+			background-color:#006dbf;
+			border-top-left-radius:1.5rem;
+			border-bottom-right-radius:1.5rem;
+			padding:.5rem 1.25rem .8rem 1.25rem;
+			width:100%;
+			float:right;
+			clear:both;
+			margin-top:30px;
+			display:none;
+		}
+		#main-sidebox {overflow:hidden;width:30%;float:right;}
+		#sidebox {width:100% !important;}
+		@media screen and (max-width:1024px){#myg-cta-desktop{display:none;}#myg-cta-mobile{display:block !important;}}
+		</style>
+<div id="myg-cta-desktop">
+<p class="myg-p">Sign up for myGeisinger to securely view your lab results, message your doctor, schedule appointments and more!</p>
+<a class="myg-cta myg-p" href="https://apps.mygeisinger.geisinger.org/registration/?utm_campaign=Locations%20Page%20SC&amp;utm_source=Locations%20Page&amp;utm_medium=Sign%20Up%20now%20CTA" target="_blank">Sign up now</a>
+</div>
+</div>
+<!-- Matomo -->
+<script type="text/javascript">
+  var _paq = window._paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  
+		_paq.push(['resetUserId']);
+	
+	
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="https://ghswa1/";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '41']);	
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code -->
+<!--link rel="stylesheet" type="text/css" href="https://www.geisinger.org/sebin/h/i/findaclinic.css" /-->
+<link href="/css/smhf-fal.css" rel="stylesheet" type="text/css"/>
+<div class="header">Geisinger Bloomsburg Lows Road</div>
+<div class="content">
+<div id="picDiv">
+<div style="position:relative;">
+<img alt="" src="/CFFileServlet/_cf_image/_cfimg599162033886760036.jpg"/>
+</div>
+</div>
+<div id="general">
+<div class="address">
+	                Geisinger Bloomsburg Lows Road<br/>
+	                6850 Lows Rd.<br/>
+	                Bloomsburg, PA 17815
+	           	</div>
+<div class="clear"> </div>
+<br/>
+<p><b>To schedule an appointment</b></p>
+<p>Patients call: 1-800-275-6401</p>
+<p>Physicians call: 1-800-332-8901</p>
+<p> </p>
+<p>Cardiovascular Disease - 570-416-0437</p>
+<p>Sleep Medicine - 1-877-507-4957</p>
+<p>Urology - 570-416-1025</p>
+<p>Laboratory Services - 570-416-0527</p>
+<p> </p>
+<p><b>Women &amp; Children’s Clinic, Suite 328</b></p>
+<p>Obstetrics - Gynecology</p>
+<p>Urogynecology</p>
+<p>570-416-1008</p>
+<p>Fax: 570-416-1020</p>
+<div class="clear"> </div>
+<div class="clear"> </div>
+<h4>Office Hours:</h4>
+<div class="officeHours"><p>Monday - Friday: 8 a.m. - 4 p.m.</p>
+<p><b>Women &amp; Children’s Clinic, Suite 328</b><br/>
+Monday - Friday: hours vary, call in advance</p>
+<p><b>Laboratory</b><br/>
+Monday - Friday: 7:30 a.m. - 3:15 p.m.</p></div>
+<div class="clear"> </div>
+</div>
+<iframe frameborder="0" height="300px" marginheight="0" marginwidth="0" scrolling="no" src="https://maps.google.com/maps?f=q&amp;z=17&amp;q=Geisinger%20Bloomsburg%20Lows%20Road%2B6850%20Lows%20Rd%2E%2B%2BBloomsburg%2BPA%2B17815&amp;output=embed" width="100%"></iframe>
+<div class="clear"> </div>
+<h4>About us</h4>
+<p></p><p>Geisinger Specialty Services at Lows Road offers the convenience of open appointments and nearby parking.  This multispecialty practice provides cardiology and sleep medicine services for kids and adults as well as the new Geisinger Women &amp; Children's Clinic in Suite 328.</p>
+<p>Geisinger's Women &amp; Children’s Clinic at Lows Road offers the convenience of open appointments and nearby parking. This multispecialty practice located in Suite 328 provides pediatric and adolescent sleep clinic services as well as women’s health services, urogynecology and obstetrics/gynecology.  Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.</p>
+<p>Geisinger Bloomsburg Lows Road offers a full array of diagnostic equipment and an on-site sleep laboratory.  Best of all, our experienced specialists will ensure that you get expert interpretation of your tests and fast, friendly follow up on your test results.</p>
+<p>Talk to your physician about going to Lows Road for your next cardiology, sleep medicine or women's health appointment, or call Geisinger Specialty Services at 570-416-0437.</p>
+<p><b>Not feeling well? Call your primary care provider first*<br/>
+</b>With  same-day care, including evening and weekend hours, we are  your resource  for non-emergency illnesses and injuries for the entire  family. <br/>
+We offer several options to provide care when you need it. <br/>
+*Call 911 in an emergency.</p>
+<hr/><br/>
+<!--
+	        <p>Geisinger has been nationally recognized for its technology initiatives, 
+	        which include its implementation of electronic health records and an e-prescription system.</p>
+	        <p>Patients also can request appointments, renew prescriptions and review their medical records online 
+	        with the convenience of MyGeisinger, Geisinger's online health-management tool. Visit 
+	        <a href="http://www.mygeisinger.org" target="_blank">www.mygeisinger.org</a> to begin the easy registration process.
+	        </p>
+	        -->
+<!--
+	        <p>Geisinger physicians accept most major health insurance plans. 
+	        Please check to be certain we accept yours. 
+	        Patients are responsible for determining services covered by their insurance provider.
+	        </p>
+	        -->
+</div>
+<!-- Put this after .content closing tag -->
+<div id="myg-cta-mobile" styhle="display:none;">
+<p class="myg-p">Sign up for myGeisinger to securely view your lab results, message your doctor, schedule appointments and more!</p>
+<a class="myg-cta" href="https://apps.mygeisinger.geisinger.org/registration/?utm_campaign=Locations%20Page%20SC&amp;utm_source=Locations%20Page&amp;utm_medium=Sign%20Up%20now%20CTA" target="_blank">Sign up now</a>
+</div>
+<!-- Put this after .content closing tag -->
+<div class="clear"> </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!--start footer -->
+<section class="footer-container--primary" role="contentinfo">
+<div class="row footer--primary">
+<div class="footer--primary-nav-container">
+<span class="footer--primary-link-label">Patient Care Quick Links </span>
+<nav aria-label="find more navigation">
+<ul>
+<li><a href="/patient-care/patients-and-visitors/make-an-appointment">Make an Appointment</a> </li>
+<li><a href="https://mygeisinger.geisinger.org/mygeisinger/login.cfm" target="_blank">Access MyGeisinger Portal</a> </li>
+<li><a href="/patient-care/patients-and-visitors/billing-and-insurance">Pay or View My Bill</a> </li>
+</ul>
+<ul>
+<li><a href="https://providers.geisinger.org" target="_blank">Find a Provider</a> </li>
+<li><a href="https://events.geisinger.org/events.cfm" target="_blank">View Classes and Support Groups</a> </li>
+<li><a href="/patient-care/patients-and-visitors/billing-and-insurance/need-help">Get Help Paying Medical Bills</a> </li>
+</ul>
+<ul>
+<li><a href="/patient-care/find-a-location">Find a Location</a> </li>
+<li><a href="/health-and-wellness/signup-for-our-enewsletter">Sign up for eNewsletter</a> </li>
+</ul>
+<div class="social">
+<div class="social-item">
+<a href="https://www.facebook.com/geisingerhealth"><img alt="facebook social icon" src="/-/media/OneGeisinger/Images/Social-Icons/facebook.png?h=100&amp;la=en&amp;w=100&amp;hash=D08784BCC95FCC1949C5EC8BFD8F029D3CD2D141"/> <small></small></a>
+</div>
+<div class="social-item">
+<a href="https://twitter.com/geisingerhealth" target="_blank"><img alt="twitter social icon" src="/-/media/OneGeisinger/Images/Social-Icons/twitter.png?h=100&amp;la=en&amp;w=100&amp;hash=DFC8C440D3882AAE5E0D1B64D1155808151131CB"/> <small></small></a>
+</div>
+<div class="social-item">
+<a href="https://www.instagram.com/geisingerhealth/" target="_blank" title="geisinger instagram"><img alt="instagram social icon" src="/-/media/OneGeisinger/Images/Social-Icons/instagram.png?h=100&amp;la=en&amp;w=100&amp;hash=DA3734D9D2EA669F4A736FF79ACC8865B4C52970"/> <small></small></a>
+</div>
+<div class="social-item">
+<a href="https://www.linkedin.com/company/geisinger"><img alt="linkedin social icon" src="/-/media/OneGeisinger/Images/Social-Icons/linkedin.png?h=100&amp;la=en&amp;w=100&amp;hash=0A37799172CDF9201897CAA0B39980BCFCC6A788"/> <small></small></a>
+</div>
+<div class="social-item">
+<a href="https://www.youtube.com/channel/UC8ZVDJGuyxXQU5bcuDOc1rg" target="_blank" title="Geisinger YouTube"><img alt="youtube social icon" src="/-/media/OneGeisinger/Images/Social-Icons/youtube.png?h=100&amp;la=en&amp;w=100&amp;hash=0B206751F07110DFE6FE21E2625D1BE66A081CAA"/> <small></small></a>
+</div>
+</div>
+</nav>
+</div>
+</div>
+</section>
+<footer aria-label="information navigation" class="footer-container">
+<div class="footer-container--inner">
+<div class="footer-global-links">
+<div class="footer-global-links--items">
+<span class="footer-global-link-label"><a>About</a></span>
+<nav aria-label="global links About">
+<ul>
+<li><a href="/about-geisinger">About Geisinger</a></li>
+<li><a href="/about-geisinger/news-and-media">News &amp; Media</a></li>
+<li><a href="https://jobs.geisinger.org" target="_blank">Careers</a></li>
+<li><a href="https://www.geisinger.org/security" title="Security Alerts">Security Alerts</a></li>
+</ul>
+</nav>
+</div>
+<div class="footer-global-links--items">
+<span class="footer-global-link-label"><a>Connect</a></span>
+<nav aria-label="global links Connect">
+<ul>
+<li><a href="/about-geisinger/connect/contact-us" title="Contact us - Geisinger">Contact Us</a></li>
+<li><a href="http://donations.geisinger.org/site/Donation2?df_id=1740&amp;mfc_pref=T&amp;1740.donation=form1">Make a Gift</a></li>
+<li><a href="/about-geisinger/connect/volunteer">Volunteer</a></li>
+<li><a href="/health-and-wellness">Health &amp; Wellness</a></li>
+<li><a href="/pa-health-magazine">PA Health magazine</a></li>
+</ul>
+</nav>
+</div>
+<div class="footer-global-links--items">
+<span class="footer-global-link-label"><a>Explore</a></span>
+<nav aria-label="global links Explore">
+<ul>
+<li><a href="/patient-care">Patient Care</a></li>
+<li><a href="/health-plan">Health Plan</a></li>
+<li><a href="/education-jump">Education</a></li>
+<li><a href="/research">Research</a></li>
+</ul>
+</nav>
+</div>
+<div class="footer-global-links--items">
+<a class="button-primary" href="/sites/sign-in">Select Account</a>
+</div>
+</div>
+</div>
+</footer>
+<footer aria-label="contentinfo navigation" class="footer-container">
+<div class="footer-container--inner">
+<div class="footer-container--inner-top">
+<div class="footer-container--logo">
+<img alt="Geisinger Caring Logo" class="footer-logo" src="/-/media/OneGeisinger/Images/Logos/geisingerlogo-white.png?h=90&amp;la=en&amp;w=246&amp;hash=BF2840FB5965FD03A0B62E7EC62F66EC19283CA7"/>
+<span class="copyright">2020 Geisinger Health</span>
+</div>
+<div class="footer-terms-container">
+<ul>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/terms-of-use">Terms &amp; Conditions</a> </li>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/hipaa">HIPAA (New)</a> </li>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/website-privacy-policy">Privacy Policy</a> </li>
+<li><a href="/-/media/OneGeisinger/Files/PDFs/GHP-Family/GHP_Family_NondiscriminationNotice.pdf?la=en" target="_blank">Non-Discrimination Notice</a> </li>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/social-media-guidelines">Social Media Guidelines</a> </li>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/corporate-compliance-reporting">Corporate Compliance Reporting</a> </li>
+<li><a href="https://www.geisinger.org/about-geisinger/corporate/corporate-policies/report-fraud">Report Fraud</a> </li>
+<li><a href="https://employee.geisinger.org/" target="_blank">Employee Login</a> </li>
+<li><a href="https://www.geisinger.org/patient-care/for-professionals/epic-haiku-and-canto-mobile-apps">Provider Resources</a> </li>
+<li><a href="http://geisinger.artcraftpromos.com/geisingerlandingpage.aspx" target="_blank">Geisinger Store</a> </li>
+</ul>
+<small>Geisinger Health Plan may refer collectively to Geisinger Health Plan, Geisinger Quality Options Inc., and Geisinger Indemnity Insurance Company, unless otherwise noted. Geisinger Gold Medicare Advantage HMO, PPO, and HMO D-SNP plans are offered by Geisinger Health Plan/Geisinger Indemnity Insurance Company, health plans with a Medicare contract. Continued enrollment in Geisinger Gold depends on annual contract renewal. Geisinger Health Plan Kids (Children’s Health Insurance Program) and Geisinger Health Plan Family (Medical Assistance) are offered by Geisinger Health Plan in conjunction with the Pennsylvania Department of Human Services (DHS). Geisinger Health Plan is part of Geisinger, an integrated health care delivery and coverage organization.</small>
+</div>
+</div>
+</div>
+</footer>
+<!-- end footer -->
+<script src="//www.geisinger.org/Assets/OG/js/applyHost.js"></script>
+<script>
+			function setRibbonText(text) {
+    			$("header.ribbon hgroup h1").html(text);
+			}		
+		</script>
+<script src="//www.geisinger.org/Assets/OG/js/vendor.js"></script>
+<script src="//www.geisinger.org/Assets/OG/js/sitecoreCorrections.js"></script>
+<script src="//www.geisinger.org/Assets/OG/js/main.js"></script>
+<script>
+            setRibbonText('Find a Location');
+			applyHost($(".footer-container--primary a[href]").not("[href*='//'], [href^='javascript:']"), 'href');
+		</script>
+</body>
+</html> 
