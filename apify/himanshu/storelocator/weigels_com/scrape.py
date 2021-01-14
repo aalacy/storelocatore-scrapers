@@ -115,7 +115,7 @@ def fetch_data():
             else:
                 city = madd[0].split()[-1].strip()
 
-        street_address = (re.sub(' +', ' ', street_address)).strip()
+        street_address = (re.sub(" +", " ", street_address)).strip()
         try:
             phone = re.findall(r"[\d]{3}.[\d]{3}-[\d]{4}", str(loc.text))[0]
         except:
