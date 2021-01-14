@@ -1,5 +1,4 @@
 import csv
-import re
 
 from sgrequests import SgRequests
 
