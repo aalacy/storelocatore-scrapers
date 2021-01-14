@@ -57,6 +57,8 @@ def fetch_data():
 
         location_name = loc_dom.xpath('//span[@itemprop="name"]//text()')[1:]
         location_name = "".join(location_name) if location_name else "<MISSING>"
+        if "eBranch" in location_name:
+            continue
         street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
         street_address = street_address[0] if street_address else "<MISSING>"
         city = loc_dom.xpath('//span[@class="c-address-city"]/text()')

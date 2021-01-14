@@ -51,7 +51,9 @@ def fetch_data():
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["post_title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["street"]
+        street_address = " ".join(
+            sorted(set(poi["street"].split()), key=poi["street"].split().index)
+        )
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
@@ -59,7 +61,7 @@ def fetch_data():
         state = state if state else "<MISSING>"
         zip_code = poi["zipcode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = "US"
         store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
