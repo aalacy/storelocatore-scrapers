@@ -74,6 +74,18 @@ def parse_json(link_url, js_variable):
     return data
 
 
+def get_hours(page_url):
+    soup = pull_content(page_url)
+    hours = soup.find("p", {"class": "hours"}).get_text(strip=True, separator=",")
+    check_hours_exist = re.search(r".*\d{1,2}(am|pm)(.*?)", hours)
+    if not check_hours_exist:
+        hours_of_operation = "<MISSING>"
+    else:
+        hours_of_operation = hours
+
+    return hours_of_operation
+
+
 def fetch_data():
     data = parse_json(LOCATION_URL, "site_info")
     store_info = json.loads(data["locations"])
@@ -93,7 +105,7 @@ def fetch_data():
         lat_long = row["latitude_longitude"].split(";")
         latitude = handle_missing(lat_long[0])
         longitude = handle_missing(lat_long[1])
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = get_hours(page_url)
         log.info(
             "Append info to locations: {} : {}".format(location_name, street_address)
         )
