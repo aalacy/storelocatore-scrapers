@@ -3,8 +3,8 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.static import static_zipcode_list
 from sgzip.dynamic import SearchableCountries
+from tenacity import retry, stop_after_attempt
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -72,6 +72,12 @@ def handle_missing(x):
     return x
 
 
+@retry(stop=stop_after_attempt(5))
+def get_url(url):
+    session = SgRequests()
+    return session.get(url, headers=headers).json()
+
+
 def fetch_data():
     ids = set()
     codes = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
@@ -81,7 +87,7 @@ def fetch_data():
             "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
             + code
         )
-        r = session.get(url, headers=headers).json()
+        r = get_url(url)
         if "error" in r:
             continue
         dealers = r["dealer"]

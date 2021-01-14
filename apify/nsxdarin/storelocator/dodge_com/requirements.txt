@@ -1,3 +1,4 @@
 sglogging
 sgrequests
 sgzip
+tenacity
