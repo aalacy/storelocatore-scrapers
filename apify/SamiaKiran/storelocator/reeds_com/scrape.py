@@ -104,7 +104,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                hours
+                hours,
             ]
         )
     return data
@@ -115,5 +115,6 @@ def scrape():
     data = fetch_data()
     write_output(data)
     log.info("Finished")
+
 
 scrape()
