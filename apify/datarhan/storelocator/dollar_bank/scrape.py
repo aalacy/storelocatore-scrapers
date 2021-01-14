@@ -90,6 +90,9 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
 
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
+
         item = [
             DOMAIN,
             store_url,
