@@ -65,7 +65,6 @@ def fetch_data():
     search_url = "https://www.tubbys.com/locations"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    # open("page_source.html",'w+b').write(stores_req.text.encode('utf-8'))
     stores = stores_sel.xpath('//div[@role="gridcell"]')
     for store in stores:
         page_url = "<MISSING>"
