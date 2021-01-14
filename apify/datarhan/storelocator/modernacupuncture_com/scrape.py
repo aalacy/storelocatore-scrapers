@@ -87,6 +87,8 @@ def fetch_data():
 
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')
+        country_code = country_code[0] if country_code else "<MISSING>"
         hours_of_operation = loc_dom.xpath('//div[@id="new_location"]//text()')
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
