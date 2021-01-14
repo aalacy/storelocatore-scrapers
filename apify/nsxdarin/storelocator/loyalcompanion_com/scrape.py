@@ -93,9 +93,13 @@ def fetch_data():
                     .replace("+1", "")
                 )
             if '<div itemprop="openingHours" content="' in line2:
-                hours = line2.split('<div itemprop="openingHours" content="')[1].split(
+                hrs = line2.split('<div itemprop="openingHours" content="')[1].split(
                     '"'
                 )[0]
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
         if phone == "":
             phone = "<MISSING>"
         yield [

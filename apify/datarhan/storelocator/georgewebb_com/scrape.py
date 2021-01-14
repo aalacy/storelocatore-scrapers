@@ -41,26 +41,28 @@ def fetch_data():
     items = []
 
     DOMAIN = "georgewebb.com"
-    start_url = "https://georgewebb.com/locations-currently-open"
+    start_url = "https://georgewebb.com/hwstorelocation/storesearch?lat=43.05328249999999&lng=-88.1584129&radius=5000&units=Miles&cat=All%20Categories"
 
     response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="table-phone"]//tr')[1:]
+    dom = etree.XML(response.text)
+    all_locations = dom.xpath("//marker")
 
     for poi_html in all_locations:
         store_url = "<MISSING>"
-        location_name = "<MISSING>"
-        street_address = poi_html.xpath(".//td/strong/text()")[0]
-        city = poi_html.xpath(".//td/text()")[0]
-        state = "<MISSING>"
-        zip_code = "<MISSING>"
-        country_code = "<MISSING>"
+        location_name = poi_html.xpath("@name")
+        location_name = location_name[0] if location_name else "<MISSSING>"
+        street_address = poi_html.xpath("@address")[0]
+        city = poi_html.xpath("@city")[0]
+        state = poi_html.xpath("@state")[0]
+        zip_code = poi_html.xpath("@zip")[0]
+        country_code = poi_html.xpath("@country")[0]
         store_number = "<MISSING>"
-        phone = poi_html.xpath(".//td/a/text()")[0]
+        phone = poi_html.xpath("@phone")[0]
+        phone = phone if phone.strip() else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = poi_html.xpath(".//td/text()")[1]
+        latitude = poi_html.xpath("@lat")[0]
+        longitude = poi_html.xpath("@lng")[0]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
