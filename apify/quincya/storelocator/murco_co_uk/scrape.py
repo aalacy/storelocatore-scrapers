@@ -41,8 +41,8 @@ def write_output(data):
 
 def fetch_data():
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
@@ -87,7 +87,9 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        raw_address = list(base.find(class_="col-lg-3 col-md-3 col-sm-3").p.stripped_strings)
+        raw_address = list(
+            base.find(class_="col-lg-3 col-md-3 col-sm-3").p.stripped_strings
+        )
         city = raw_address[-3]
         state = raw_address[-2]
 
