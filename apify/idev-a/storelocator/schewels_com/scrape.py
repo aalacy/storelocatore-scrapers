@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 
 session = SgRequests()
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
