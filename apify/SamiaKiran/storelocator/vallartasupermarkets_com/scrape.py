@@ -1,4 +1,5 @@
 import csv
+import re
 import usaddress
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -47,6 +48,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
+    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://vallartasupermarkets.com/en/store-locations/"
         r = session.get(url, headers=headers, verify=False)
@@ -61,8 +63,12 @@ def fetch_data():
             store = temp[1].strip()
             address = loc.find("address").text.replace("Map", "").strip()
             phone = loc.findAll("a")[2].text.strip()
-            hours = loc.find("p").text.strip()
+            # hours = loc.find("p").text.strip()
             link = loc.find("div", {"class": "column is-3"}).find("a")["href"]
+            r = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hours = soup.find("div", {"class": "hours-open has-text-centered"}).text
+            hours = re.sub(pattern, "\n", hours).replace("\n", " ").strip()
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -89,6 +95,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     pcode = pcode + " " + temp[0]
                 i += 1
+            city = city.strip()
             final_data.append(
                 [
                     "https://vallartasupermarkets.com/en/store-locations/",
