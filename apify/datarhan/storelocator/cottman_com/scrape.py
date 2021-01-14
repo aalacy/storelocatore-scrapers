@@ -51,7 +51,6 @@ def fetch_data():
     for store_url in all_locations:
         if store_url == "https://www.cottman.com/location/":
             continue
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
