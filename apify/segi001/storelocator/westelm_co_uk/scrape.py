@@ -62,7 +62,6 @@ def fetch_data():
         url = "{}{}".format(locator_domain, s[0].replace("/", ""))
         r = sess.get(url).text
         st = bs4.BeautifulSoup(r, features="lxml")
-        name = st.find("div", {"class": "pull-left"}).text
         td = st.find("td", {"class": "bondi-junction-table-big-padding-cell"})
         phone = td.find("a").text
         ad = (
@@ -72,6 +71,7 @@ def fetch_data():
             .split("$")
         )
         ad = list(filter(None, ad))
+        name = ad[0]
         street = missingString
         if " Unit SU1233 " in ad:
             street = "{} {}".format(ad[1].strip(), ad[2].strip())
@@ -85,6 +85,9 @@ def fetch_data():
             city = "London"
         else:
             city = missingString
+        if street == "Kingston upon Thames":
+            city = street
+            street = missingString
         hours = "{}, {}, {}, {}, {}, {}, {}".format(
             tr[3].text,
             tr[4].text,
@@ -103,7 +106,7 @@ def fetch_data():
                 city,
                 state,
                 zp,
-                missingString,
+                state,
                 missingString,
                 phone,
                 missingString,
