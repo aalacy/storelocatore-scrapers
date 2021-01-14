@@ -188,7 +188,7 @@ def extract(loc):
         "latitude": latitude,
         "longitude": longitude,
         "phone": phone,
-        "ho[-urs_of_operation": hours_of_operation,
+        "hours_of_operation": hours_of_operation,
     }
 
     return [location[field] for field in FIELDS]
@@ -200,7 +200,7 @@ def fetch_data():
     zips = static_zipcode_list(50, SearchableCountries.USA)
 
     logger.info(f"total zips: {len(zips)}")
-    workers = min([os.cpu_count() + 4, 40])
+    workers = min([os.cpu_count() + 4, 10])
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         logger.info(f"initialize executor with {workers} workers")
