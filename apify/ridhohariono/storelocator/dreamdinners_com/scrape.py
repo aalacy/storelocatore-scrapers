@@ -86,12 +86,20 @@ def fetch_data():
                         street_address = handle_missing(
                             content_info.find("p").contents[0].strip()
                         )
-                        address = (
-                            content_info.find("p")
-                            .text.replace("\n", "")
-                            .rstrip()
-                            .strip()
-                        )
+
+                        addr_content = content_info.find("p").contents
+                        street_address = addr_content[0].strip()
+                        if len(addr_content) == 3:
+                            address = handle_missing(
+                                content_info.find("p").contents[0].strip()
+                                + ","
+                                + content_info.find("p").contents[2].strip()
+                            )
+                        elif len(addr_content) > 3 and len(addr_content) <= 5:
+                            address = handle_missing(
+                                addr_content[0].strip() + "," + addr_content[4].strip()
+                            )
+
                         parse_addr = usaddress.tag(address)
                         city = handle_missing(parse_addr[0]["PlaceName"])
                         state = handle_missing(parse_addr[0]["StateName"])

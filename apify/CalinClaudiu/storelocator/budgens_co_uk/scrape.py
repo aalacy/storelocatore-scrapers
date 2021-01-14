@@ -153,7 +153,10 @@ def scrape():
             part_of_record_identity=True,
         ),
         city=sp.MappingField(
-            mapping=["city"], is_required=False, part_of_record_identity=True
+            mapping=["city"],
+            is_required=False,
+            value_transform=lambda x: x.replace("NULL", "<MISSING>"),
+            part_of_record_identity=True,
         ),
         state=sp.MappingField(
             mapping=["state"], is_required=False, part_of_record_identity=True

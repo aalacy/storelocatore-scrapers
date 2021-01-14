@@ -39,6 +39,15 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_soup(location_url, headers):
+    try:
+        r1 = session.get(location_url, headers=headers, allow_redirects=False)
+    except:
+        pass
+    soup1 = BeautifulSoup(r1.text, "lxml")
+    return soup1
+
+
 def fetch_data():
     addresses = []
     headers = {
@@ -55,74 +64,88 @@ def fetch_data():
     a = soup.find("div", {"class": "aem-rendered-content"}).find_all(
         "div", {"class": "state-container"}
     )[0:53]
-    a.append(soup.find_all("div", {"class": "state-container"})[109])
+    a.append(
+        soup.find_all("div", {"class": "aem-rendered-content"})[-3].find_all(
+            "div", {"class": "state-container"}
+        )[-1]
+    )
+
+    all_links = []
+    found = []
     for y in a:
         e = y.find_all("li", {"class": "property"})
         for b in e:
             k = b.find("a")["href"]
             location_url = base_url + k
-            try:
-                r1 = session.get(location_url, headers=headers, allow_redirects=False)
-            except:
-                pass
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            b1 = soup1.find("script", {"type": "application/ld+json"})
-            if not b1:
-                continue
-            b = str(b1).split('ld+json">')[1].split("</script>")[0]
-            if b != [] and b is not None:
-                h = json.loads(b)
-                location_name = h["name"].strip()
-                street_address = h["address"]["streetAddress"].strip()
-                latitude = h["geo"]["latitude"]
-                longitude = h["geo"]["longitude"]
-                city = h["address"]["addressLocality"].strip()
-                if "postalCode" in h["address"]:
-                    zipp = h["address"]["postalCode"].strip()
-                else:
-                    zipp = "<MISSING>"
-                ca_zip_list = re.findall(
-                    r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}", str(zipp)
-                )
-                us_zip_list = re.findall(
-                    re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp)
-                )
-                if ca_zip_list:
-                    zipp = ca_zip_list[-1]
-                    country_code = "CA"
-                if us_zip_list:
-                    zipp = us_zip_list[-1]
-                    country_code = "US"
-                if len(zipp) == 6 or len(zipp) == 7:
-                    country_code = "CA"
-                else:
-                    country_code = "US"
-                if "united-kingdom" in location_url:
-                    country_code = "UK"
-                if "addressRegion" in h["address"]:
-                    state = h["address"]["addressRegion"]
-                else:
-                    state = "<MISSING>"
-                phone = h["telephone"]
-                store = []
-                store.append(base_url)
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address.strip() if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append(country_code)
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(location_url)
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-                yield store
+            all_links.append(location_url)
+    all_links.extend(
+        [
+            "https://www.wyndhamhotels.com/ramada/rockville-maryland/the-rockville-hotel-a-ramada/overview",
+            "https://www.wyndhamhotels.com/ramada/whitecourt-alberta/ramada-whitecourt/overview",
+        ]
+    )
+
+    for location_url in all_links:
+        if location_url in found:
+            continue
+        found.append(location_url)
+        soup1 = get_soup(location_url, headers)
+
+        b1 = soup1.find("script", {"type": "application/ld+json"})
+        if not b1:
+            continue
+        b = str(b1).split('ld+json">')[1].split("</script>")[0]
+        if b != [] and b is not None:
+            h = json.loads(b)
+            location_name = h["name"].strip()
+            street_address = h["address"]["streetAddress"].strip()
+            latitude = h["geo"]["latitude"]
+            longitude = h["geo"]["longitude"]
+            city = h["address"]["addressLocality"].strip()
+            if "postalCode" in h["address"]:
+                zipp = h["address"]["postalCode"].strip()
+            else:
+                zipp = "<MISSING>"
+            ca_zip_list = re.findall(
+                r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}", str(zipp)
+            )
+            us_zip_list = re.findall(
+                re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp)
+            )
+            if ca_zip_list:
+                zipp = ca_zip_list[-1]
+                country_code = "CA"
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
+            if len(zipp) == 6 or len(zipp) == 7:
+                country_code = "CA"
+            else:
+                country_code = "US"
+            if "united-kingdom" in location_url:
+                country_code = "UK"
+            if "addressRegion" in h["address"]:
+                state = h["address"]["addressRegion"]
+            else:
+                state = "<MISSING>"
+            phone = h["telephone"]
+            store = []
+            store.append(base_url)
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address.strip() if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code)
+            store.append("<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(location_url)
+            addresses.append(store[2])
+            yield store
 
 
 def scrape():

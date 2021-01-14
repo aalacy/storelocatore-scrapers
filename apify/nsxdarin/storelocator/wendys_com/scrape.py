@@ -70,6 +70,7 @@ def fetch_data():
                             0
                         ]
                         lurl = "https://locations.wendys.com/" + item.split('"')[0]
+                        lurl = lurl.replace("&#39;", "'").replace("&amp;", "&")
                         if count == "1":
                             locs.append(lurl)
                         else:
@@ -88,6 +89,7 @@ def fetch_data():
                                 1
                             ].split(")")[0]
                             lurl = "https://locations.wendys.com" + item.split('"')[0]
+                            lurl = lurl.replace("&#39;", "'").replace("&amp;", "&")
                             if count == "1":
                                 locs.append(lurl)
                             else:
@@ -103,6 +105,7 @@ def fetch_data():
                     for item in items:
                         if "Visit Store Page</a>" in item:
                             lurl = "https://locations.wendys.com/" + item.split('"')[0]
+                            lurl = lurl.replace("&#39;", "'").replace("&amp;", "&")
                             locs.append(lurl)
         for loc in locs:
             loc = loc.replace("&#39;", "'")
@@ -124,8 +127,6 @@ def fetch_data():
             if r2.encoding is None:
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
-                if "<span>Closed Temporarily.</span>" in line2:
-                    Closed = True
                 if 'itemprop="name">' in line2 and name == "":
                     name = line2.split('itemprop="name">')[1].split("<")[0]
                 if "'dimension4', '" in line2:
