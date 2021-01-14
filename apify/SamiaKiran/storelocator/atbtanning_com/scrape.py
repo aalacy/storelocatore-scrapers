@@ -59,7 +59,6 @@ def fetch_data():
         longt = loc["longitude"]
         if not longt:
             longt = "<MISSING>"
-        title = loc["name"]
         link = loc["url"]
         link = "https://www.atbtanning.com/" + link
         phone = loc["phone_numbers"]
