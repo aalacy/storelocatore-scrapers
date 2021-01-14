@@ -163,6 +163,8 @@ def fetch_data():
                 except:
                     hours = "<MISSING>"
                 address = loc["address"]
+                templink = loc["slug"]
+                link = "https://phillypretzelfactory.com/locations/" + templink + "/"
                 if not address:
                     street = "<MISSING>"
                     city = "<MISSING>"
@@ -203,6 +205,12 @@ def fetch_data():
                     city = "Virginia Beach"
                     street = temp_list[0]
                     state = temp_list[1]
+                if "Neptune New" in city:
+                    city = city.split()
+                    tempstate = city[1]
+                    city = city[0]
+                    state = tempstate + state
+                    state = state.strip()
                 if not pcode:
                     pcode = "<MISSING>"
                 if not city:
@@ -214,7 +222,7 @@ def fetch_data():
                 data.append(
                     [
                         "https://phillypretzelfactory.com/",
-                        "https://phillypretzelfactory.com/store-locator/",
+                        link,
                         title,
                         street,
                         city,

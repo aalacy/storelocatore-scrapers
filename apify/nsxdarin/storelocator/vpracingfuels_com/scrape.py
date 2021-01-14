@@ -38,7 +38,6 @@ def write_output(data):
 def fetch_data():
     locs = []
     for code in static_zipcode_list(50, SearchableCountries.USA):
-        print("Pulling Zip Code %s..." % code)
         website = "vpracingfuels.com"
         country = "US"
         typ = "Gas Station"

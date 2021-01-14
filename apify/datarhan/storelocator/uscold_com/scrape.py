@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 
@@ -42,6 +43,10 @@ def fetch_data():
 
     DOMAIN = "uscold.com"
     start_url = "https://www.uscold.com/wp-json/wpgmza/v1/datatables/"
+
+    response = session.get("https://www.uscold.com/facilitiesmap/")
+    re.findall('restnonce":"(.+?)",', response.text)
+
     body = "columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=true&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=true&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=true&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=true&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=true&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=true&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B6%5D%5Bdata%5D=6&columns%5B6%5D%5Bname%5D=&columns%5B6%5D%5Bsearchable%5D=true&columns%5B6%5D%5Borderable%5D=true&columns%5B6%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B6%5D%5Bsearch%5D%5Bregex%5D=false&order%5B0%5D%5Bcolumn%5D=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=-1&search%5Bvalue%5D=&search%5Bregex%5D=false&phpClass=WPGMZA%5CMarkerListing%5CAdvancedTable&map_id=1"
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -52,8 +57,8 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "X-DataTables-Draw": "2",
         "X-Requested-With": "XMLHttpRequest",
-        "X-WP-Nonce": "a3953ff85c",
-        "X-WPGMZA-Action-Nonce": "4b5131b42e",
+        "X-WP-Nonce": re.findall('restnonce":"(.+?)",', response.text)[0],
+        "X-WPGMZA-Action-Nonce": re.findall('datatables":"(.+?)",', response.text)[0],
     }
     response = session.post(start_url, data=body, headers=headers)
     data = json.loads(response.text)
@@ -79,6 +84,12 @@ def fetch_data():
                 ]
             )
         city = address_raw.split(", ")[1]
+        if len(city.split()[-1]) == 1:
+            city = " ".join(city.split()[:-1])
+        if city == "Mcdonough":
+            city = "McDonough"
+        if city == "Lake city":
+            city = "Lake City"
         street_address = address_raw.split(", ")[0].replace(city, "")
         state = address_raw.split(", ")[-1].split()[0]
         zip_code = address_raw.split(", ")[-1].split()[-1].strip()

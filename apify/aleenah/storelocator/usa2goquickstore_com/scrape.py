@@ -1,5 +1,5 @@
 import csv
-from sgrequests import SgRequests
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
@@ -36,34 +36,21 @@ def write_output(data):
             writer.writerow(row)
 
 
-session = SgRequests()
+driver = SgSelenium().chrome()
 
 
 def fetch_data():
 
     all = []
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate",
-        "accept-language": "en-US,en;q=0.9,ms;q=0.8,ur;q=0.7,lb;q=0.6",
-        "cache-control": "max-age=0",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    }
-    res = session.get("https://usa2goquickstore.com/locations/", headers=headers)
-    soup = BeautifulSoup(res.text, "html.parser")
+
+    driver.get("https://usa2goquickstore.com/locations/")
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     stores = soup.find_all("div", {"class": "fusion-column-content"})
 
     if len(stores) == 0:
         for i in range(5):
-            res = session.get(
-                "https://usa2goquickstore.com/locations/", headers=headers
-            )
-            soup = BeautifulSoup(res.text, "html.parser")
+            driver.get("https://usa2goquickstore.com/locations/")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             stores = soup.find_all("div", {"class": "fusion-column-content"})
             if len(stores) != 0:
                 break
@@ -111,7 +98,7 @@ def fetch_data():
                 "https://usa2goquickstore.com/locations/",
             ]
         )
-
+    driver.quit()
     return all
 
 
