@@ -10,12 +10,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 import json
 import time
 
 
 def fetch_data():
-    driver = webdriver.Chrome()
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    driver = webdriver.Chrome(options=chrome_options)
+    
     with driver as driver:
     #with SgChrome() as driver:
         url = "https://locations.geisinger.org/?clinicName%3D%26specialty%3D%26distance%3D30000%26zip%3D10004"
