@@ -2,45 +2,24 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
-from sgselenium import SgChrome
-from selenium import webdriver
 from bs4 import BeautifulSoup as b4
 from sgrequests import SgRequests
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 import json
-import time
 
 
 def fetch_data():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    driver = webdriver.Chrome(options=chrome_options)
-    
-    with driver as driver:
-    #with SgChrome() as driver:
-        url = "https://locations.geisinger.org/?clinicName%3D%26specialty%3D%26distance%3D30000%26zip%3D10004"
-        driver.get(url)
+
+    with SgRequests() as session:
+        url = "https://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
+        soup = session.get(url)
         # json location
-        k = (
-            WebDriverWait(driver, 120)
-            .until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="bottom"]/script'))
-            )
-            .get_attribute("innerHTML")
-        )
+        soup = b4(soup.text, "lxml")
+        k = soup.find("div", {"id": "bottom"}).find("script").text.strip()
         k = k.split("var results= ")[1]
         k = k.split("[", 1)[1]
         k = k.split("}];")[0]
         k = '{"stores":[' + k + "}]}"
         son = json.loads(k)
-        headers = {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-        }
-        session = SgRequests()
         for i in son["stores"]:
             soup = session.get(
                 str(
@@ -75,8 +54,6 @@ def fetch_data():
 
             try:
                 coords = soup.find("", {"href": lambda x: x and "maps" in x})["href"]
-                print(coords)
-                print("suc")
                 coords = coords.split("/@", 1)[1].split("/", 1)[0].split(",")
             except Exception:
                 coords = ["<MISSING>", "<MISSING>"]
@@ -108,7 +85,9 @@ def scrape():
         city=MappingField(mapping=["CITY"]),
         state=MappingField(mapping=["STATE"]),
         zipcode=MappingField(
-            mapping=["ZIPCODE"], value_transform=lambda x: x.replace(" ", "")
+            mapping=["ZIPCODE"],
+            value_transform=lambda x: x.replace(" ", ""),
+            is_required=False,
         ),
         country_code=MissingField(),
         phone=MappingField(mapping=["PHONE"], is_required=False),
