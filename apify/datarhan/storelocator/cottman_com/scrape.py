@@ -46,11 +46,12 @@ def fetch_data():
 
     response = session.get(start_url, verify=False)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath(
-        '//div[@class="fusion-panel panel-default"]//strong/a/@href'
-    )
+    all_locations = dom.xpath('//a[contains(@href, "/location/")]/@href')
 
     for store_url in all_locations:
+        if store_url == "https://www.cottman.com/location/":
+            continue
+        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
