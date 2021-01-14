@@ -71,15 +71,19 @@ def fetch_data():
             log.info(page_url)
             store_resp = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_resp.text)
-            json_text = "".join(store_sel.xpath('//script[@type="application/ld+json"]/text()')).strip()
-            if len(json_text)>0:
+            json_text = "".join(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            ).strip()
+            if len(json_text) > 0:
                 store_json = json.loads(json_text)
 
-                
                 locator_domain = website
 
                 store_number = (
-                    store_resp.text.split('"externalId":"')[1].strip().split('"')[0].strip()
+                    store_resp.text.split('"externalId":"')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
                 )
 
                 page_url = "https://www.diy.com/store/" + store_number
