@@ -2,9 +2,8 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
 
-website = "atlanticare.org"
+website = "hurricanewings.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -61,45 +60,26 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://www.atlanticare.org/find-a-location/?page=1&count=10000"
+    search_url = "https://locations.hurricanewings.com/locations.json"
     stores_req = session.get(search_url, headers=headers)
-    json_text = (
-        stores_req.text.split("var moduleInstanceData_IH_PublicDetailView")[-1]
-        .strip()
-        .split("=", 1)[1]
-        .strip()
-        .split("};")[0]
-        .strip()
-        + "}"
-    )
-    json_data = json.loads(json_text)
-    stores = json.loads(json_data["SettingsData"].encode("utf-8"))["MapItems"]
+    stores = stores_req.json()["locations"]
     for store in stores:
-        page_url = "https://www.atlanticare.org" + store["DirectUrl"]
+        page_url = "https://locations.hurricanewings.com/" + store["url"]
 
         locator_domain = website
-        location_name = store["Title"].split(",")[0].strip()
+        location_name = store["loc"]["name"]
         if location_name == "":
             location_name = "<MISSING>"
 
-        address = store["LocationAddress"]
-        street_address = "".join(address.split(",")[:-2]).strip()
-        city = address.split(",")[-2].strip()
-        state = address.split(",")[-1].strip().rsplit(" ", 1)[0].strip()
-        zip = address.split(",")[-1].strip().rsplit(" ", 1)[1].strip()
+        street_address = store["loc"]["address1"]
+        if store["loc"]["address2"] is not None:
+            street_address = street_address + ", " + store["loc"]["address2"]
 
-        is_digit = True
-        for z in zip:
-            if z.isalpha():
-                is_digit = False
-                break
+        city = store["loc"]["city"]
+        state = store["loc"]["state"]
+        zip = store["loc"]["postalCode"]
 
-        if is_digit is False:
-            state = state + " " + zip
-            zip = "<MISSING>"
-
-        zip = zip.encode("ascii", "replace").decode("utf-8").replace("?", "").strip()
-        country_code = "<MISSING>"
+        country_code = store["loc"]["country"]
 
         if street_address == "" or street_address is None:
             street_address = "<MISSING>"
@@ -113,58 +93,33 @@ def fetch_data():
         if zip == "" or zip is None:
             zip = "<MISSING>"
 
-        store_number = "<MISSING>"
-        phone = store["LocationPhoneNum"]
+        if country_code == "" or country_code is None:
+            country_code = "<MISSING>"
 
-        latitude = ""
-        longitude = ""
-        if "Latitude" in store:
-            latitude = store["Latitude"]
+        store_number = str(store["loc"]["id"])
+        phone = store["loc"]["phone"]
 
-        if "Longitude" in store:
-            longitude = store["Longitude"]
+        location_type = "<MISSING>"
+
+        latitude = store["loc"]["latitude"]
+        longitude = store["loc"]["longitude"]
 
         if latitude == "" or latitude is None:
             latitude = "<MISSING>"
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        location_type = ""
+        hours = store["loc"]["hours"]["days"]
         hours_of_operation = ""
+        hours_list = []
+        for hour in hours:
+            day = hour["day"]
+            if len(hour["intervals"]) > 0:
+                start = hour["intervals"][0]["start"]
+                end = hour["intervals"][0]["end"]
+                hours_list.append(day + ":" + str(start) + ":" + str(end))
 
-        store_req = session.get(page_url, headers=headers)
-        store_json_text = (
-            store_req.text.split("var moduleInstanceData_IH_PublicDetailView")[-1]
-            .strip()
-            .split("=", 1)[1]
-            .strip()
-            .split("};")[0]
-            .strip()
-            + "}"
-        )
-        store_json_data = json.loads(store_json_text)
-        store_json = json.loads(store_json_data["SettingsData"].encode("utf-8"))
-
-        temp_fields = store_json["StaticPageZones"][0]["Value"]["FieldColumns"]
-        loc_type_list = []
-        for field in temp_fields:
-            sub_fields = field["Fields"]
-            for s in sub_fields:
-                if "Services" == s["FieldName"]:
-                    FieldColumns = s["FieldColumns"]
-                    for col in FieldColumns:
-                        fields = col["Fields"]
-                        for f in fields:
-                            if "ServiceName" == f["FieldName"]:
-                                loc_type_list.append(f["Value"])
-
-                if "LocationHours" == s["FieldName"]:
-                    hours_of_operation = ";".join(s["Values"]).strip()
-
-        location_type = ";".join(loc_type_list).strip()
-
-        if location_type == "":
-            location_type = "<MISSING>"
+        hours_of_operation = "; ".join(hours_list).strip()
 
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
@@ -188,10 +143,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         loc_list.append(curr_list)
 
-        # break
     return loc_list
 
 
