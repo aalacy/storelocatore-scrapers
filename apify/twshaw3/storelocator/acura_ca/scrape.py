@@ -58,6 +58,8 @@ def handle_missing(field):
 
 
 def fetch_data():
+    from postal.parser import parse_address
+    print(parse_address('The Book Club 100-106 Leonard St, Shoreditch, London, Greater London, EC2A 4RH, United Kingdom'))
     keys = set()
     locations = []
     coord = search.next_coord()
