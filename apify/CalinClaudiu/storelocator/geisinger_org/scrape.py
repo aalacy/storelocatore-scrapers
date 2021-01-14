@@ -17,7 +17,7 @@ import time
 def fetch_data():
     driver = webdriver.Chrome()
     with driver as driver:
-        # with SgChrome() as driver:
+    #with SgChrome() as driver:
         url = "https://locations.geisinger.org/?clinicName%3D%26specialty%3D%26distance%3D30000%26zip%3D10004"
         driver.get(url)
         # json location
