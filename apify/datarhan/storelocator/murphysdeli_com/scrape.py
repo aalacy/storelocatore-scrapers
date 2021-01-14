@@ -1,11 +1,13 @@
 import csv
 import json
+from urllib.parse import urljoin
+from lxml import etree
 
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -40,48 +42,42 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "99ranch.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=99_ranch_market&has_address=true&is_selectable=true&token=2115d87c0f8326694b5748bfba5a499c"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    }
-    response = session.get(start_url, headers=headers)
+    DOMAIN = "murphysdeli.com"
+    start_url = "http://murphysdeli.com/wp-admin/admin-ajax.php?action=store_search&lat=33.103853&lng=-96.823795&max_results=25&search_radius=50&autoload=1"
+
+    response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data["items"]:
-        store_url = poi["url"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        if poi.get("address_0"):
-            street_address = poi["address_0"]
-            if poi.get("address_1"):
-                street_address += ", " + poi["address_1"]
-            if poi.get("address_2"):
-                street_address += ", " + poi["address_2"]
-        else:
-            street_address = poi["address_1"]
-            if poi.get("address_2"):
-                street_address += ", " + poi["address_2"]
-        street_address = street_address if street_address else "<MISSING>"
+    for poi in data:
+        store_url = "<MISSING>"
+        if poi["url"]:
+            store_url = urljoin(start_url, poi["url"])
+        location_name = poi["store"]
+        street_address = poi["address"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["postal_code"]
+        zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = poi["number"]
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["id"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone"].split("\n")[0]
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
+        latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
+        longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = poi["hours_md"].split("\n")
-        hoo = [elem for elem in hoo if "am -" in elem]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = ""
+        if poi["hours"]:
+            hours_of_operation = etree.HTML(poi["hours"])
+            hours_of_operation = hours_of_operation.xpath("//text()")
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
