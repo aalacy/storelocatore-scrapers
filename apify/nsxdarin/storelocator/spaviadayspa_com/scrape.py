@@ -48,20 +48,22 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if 'locationcols"><a target="_blank" href="' in line:
-            locs.append(line.split('locationcols"><a target="_blank" href="')[1].split('"')[0])
+            locs.append(
+                line.split('locationcols"><a target="_blank" href="')[1].split('"')[0]
+            )
     for loc in locs:
         logger.info(loc)
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        store = '<MISSING>'
-        phone = ''
-        hours = ''
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode('utf-8'))
+            line2 = str(line2.decode("utf-8"))
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -74,12 +76,12 @@ def fetch_data():
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
-            if 'day:' in line2:
-                hrs = line2.split('>')[1].split('<')[0]
-                if hours == '':
+            if "day:" in line2:
+                hrs = line2.split(">")[1].split("<")[0]
+                if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + '; ' + hrs
+                    hours = hours + "; " + hrs
         lng = "<MISSING>"
         lat = "<MISSING>"
         yield [
