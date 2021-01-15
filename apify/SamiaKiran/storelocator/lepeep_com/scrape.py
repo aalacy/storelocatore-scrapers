@@ -47,7 +47,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
-    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://lepeep.com/locations/"
         r = session.get(url, headers=headers, verify=False)
