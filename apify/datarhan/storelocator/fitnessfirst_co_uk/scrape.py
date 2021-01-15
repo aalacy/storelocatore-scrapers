@@ -72,7 +72,7 @@ def fetch_data():
             "https://www.fitnessfirst.co.uk/find-a-gym/basingstoke/"
         )
         loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath('//dl[@class="d-flex upper mb-20 times"]//text()')
+        hoo = loc_dom.xpath('.//dl[@class="d-flex upper mb-20 times"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
