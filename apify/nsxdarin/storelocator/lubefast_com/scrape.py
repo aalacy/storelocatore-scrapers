@@ -121,8 +121,9 @@ def fetch_data():
                 if " " in state:
                     state = state.split(" ")[0]
                 if "3250 W." in add:
-                    name = "American Lube Fast"
+                    phone = "8509412235"
                 hours = hours + "; Sunday: Closed"
+                name = "American Lube Fast"
                 yield [
                     website,
                     loc,
