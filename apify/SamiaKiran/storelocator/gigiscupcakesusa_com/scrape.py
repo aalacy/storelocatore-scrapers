@@ -58,7 +58,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
-    titlelist = []
     if True:
         url = "https://easylocator.net/ajax/search_by_lat_lon_geojson/gigiscupcakesusa/24.9056/67.0822/0/50"
         loclist = session.get(url, headers=headers, verify=False).json()["physical"]
