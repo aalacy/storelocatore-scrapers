@@ -4,7 +4,6 @@ from sgselenium import SgChrome
 from sglogging import sglog
 import json
 import us
-import lxml.html
 from tenacity import retry, retry_if_exception_type
 
 website = "fleetfarm.com"
