@@ -1,6 +1,5 @@
 import csv
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,40 +40,37 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "fitnessfirst.co.uk"
-    start_url = "https://www.fitnessfirst.co.uk/find-a-gym/"
+    DOMAIN = "gfb.org"
+    start_url = "https://www.gfb.org/about-us/contact-us.cms"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="club-card cf"]')
+    all_locations = dom.xpath("//div[@data-county]")
 
     for poi_html in all_locations:
-        store_url = poi_html.xpath('.//a[contains(text(), "View More")]/@href')
-        store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//div[@class="content"]/span[1]/text()')
+        store_url = "<MISSING>"
+        location_name = poi_html.xpath(".//h2//text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath(".//address/span[1]//text()")
-        street_address = ", ".join(street_address) if street_address else "<MISSING>"
-        city = poi_html.xpath(".//address/span[2]/text()")
-        city = city[0] if city else "<MISSING>"
-        state = "<MISSING>"
-        zip_code = poi_html.xpath(".//address/span[3]/text()")
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        address_raw = poi_html.xpath(
+            './/h3[contains(text(), "Street Address")]/following-sibling::p/text()'
+        )
+        address_raw = [elem.strip() for elem in address_raw]
+        street_address = address_raw[1]
+        city = address_raw[2].split()[0]
+        state = address_raw[2].split()[-1]
+        zip_code = address_raw[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//span[@class="gym-phone text-teal"]/text()')
+        phone = poi_html.xpath(
+            './/h3[contains(text(), "Phone")]/following-sibling::p[1]/text()'
+        )
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi_html.xpath("@data-lat")[0]
-        longitude = poi_html.xpath("@data-lng")[0]
-
-        loc_response = session.get(
-            "https://www.fitnessfirst.co.uk/find-a-gym/basingstoke/"
-        )
-        loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath('.//dl[@class="d-flex upper mb-20 times"]//text()')
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = poi_html.xpath(
+            './/h3[contains(text(), "Hours")]/following-sibling::p[1]/text()'
+        )[0].strip()
 
         item = [
             DOMAIN,
