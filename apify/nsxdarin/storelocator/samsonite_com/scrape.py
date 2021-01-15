@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import time
 
 session = SgRequests()
 headers = {
@@ -61,6 +62,7 @@ def fetch_data():
             )
     for loc in locs:
         logger.info(loc)
+        time.sleep(5)
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
