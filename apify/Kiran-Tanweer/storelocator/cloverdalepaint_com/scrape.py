@@ -68,14 +68,12 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    i = 0
     j = 0
     url = "https://www.cloverdalepaint.com/store-locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.find("ul", {"class": "nav L4 active"}).findAll("li")
     for link in linklist:
-        pagename = link.text
         page = link.find("a")["href"]
         pagelink = "https://www.cloverdalepaint.com" + page
         headers2 = {
