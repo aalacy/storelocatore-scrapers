@@ -58,7 +58,7 @@ def fetch_data():
             title = temp2.text
             link = temp2["href"]
             if len(temp) > 4:
-                if  "(Catering)" not in temp[4].find("a").text:
+                if "(Catering)" not in temp[4].find("a").text:
                     address = temp[2].text + " " + temp[3].text
                     phone = temp[4].find("a").text
                 else:
