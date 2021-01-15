@@ -63,7 +63,7 @@ def fetch_data():
         latitude = store["lat"]
         longitude = store["lng"]
         store_number = "<MISSING>"
-        link = "<MISSING>"
+        link = "https://www.lindtusa.com/AjaxStoreLocatorDisplayView?catalogId=13251&langId=-1&storeId=11001"
         if store["web"] and "events" not in store["web"]:
             link = "https://www.lindtusa.com" + store["web"]
             store_number = link.split("-")[-1]
