@@ -54,6 +54,8 @@ def fetch_data():
             store_url = urljoin(start_url, poi["url"])
         location_name = poi["store"]
         street_address = poi["address"]
+        if poi.get("address2"):
+            street_address = poi["address2"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]

@@ -72,6 +72,7 @@ def fetch_data():
                 .pop()
                 .replace("\u202d", "")[:-10]
                 .replace("\u202c", "")
+                .replace("Phone: ", "")
             )
             hours_of_operation = "<MISSING>"
             for geo_code in geo_data:
