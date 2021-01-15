@@ -146,6 +146,13 @@ def fetch_data():
                             loc = "<MISSING>"
                             country = "GB"
                             ids.append(store)
+                            add = (
+                                add.replace("Barclays Wealth", "")
+                                .replace("Ground Floor", "")
+                                .replace("Level 11", "")
+                                .replace("Donegal House", "")
+                                .replace("Wytham Court", "")
+                            )
                             yield [
                                 website,
                                 loc,
