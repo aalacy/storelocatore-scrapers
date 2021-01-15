@@ -12,7 +12,7 @@ async function scrape() {
   });
   let data = res.data;
 
-  locations = [];
+  const locations = [];
   for (let store of data) {
     let s = {
       locator_domain: 'https://momentfeed-prod.apigee.net/',
@@ -39,7 +39,7 @@ async function scrape() {
 function formatHours(hours) {
   const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   let res = [];
-  for (hour of hours.split(';')) {
+  for (let hour of hours.split(';')) {
     const parts = hour.split(',');
     if (parts.length == 3) {
       const day = parseInt(parts[0]) - 1;
