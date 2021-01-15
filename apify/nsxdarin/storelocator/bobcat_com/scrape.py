@@ -48,7 +48,7 @@ def write_output(data):
 
 
 def get_session(reset=False):
-    if not hasattr(local, 'session') or reset or local.request_count == 3:
+    if not hasattr(local, "session") or reset or local.request_count == 3:
         local.session = SgRequests()
         local.request_count = 0
 
