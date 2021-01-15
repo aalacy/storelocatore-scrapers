@@ -55,9 +55,11 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
         if poi["address1"]:
-            street_address += ", " + poi["address1"]
+            if poi["address1"] not in street_address:
+                street_address += ", " + poi["address1"]
         if poi["address2"]:
-            street_address += ", " + poi["address2"]
+            if poi["address2"] not in street_address:
+                street_address += ", " + poi["address2"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["county"]
@@ -82,7 +84,9 @@ def fetch_data():
             '//div[@class="addr3"]//div[@class="arrange-margin"]/p//text()'
         )[:10]
         hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            ", ".join(hours_of_operation).split(", CHRISTMAS")[0].replace(": ,", ":")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [

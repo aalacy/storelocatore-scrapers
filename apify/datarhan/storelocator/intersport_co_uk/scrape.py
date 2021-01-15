@@ -1,12 +1,11 @@
 import csv
 import json
-from lxml import etree
 
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -40,48 +39,37 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
-    DOMAIN = "itsugar.com"
-    start_url = "https://itsugar.com/amlocator/index/ajax/"
-    formdata = {
-        "lat": "0",
-        "lng": "0",
-        "radius": "0",
-        "product": "0",
-        "category": "0",
-        "sortByDistance": "1",
-    }
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
-    response = session.post(start_url, data=formdata, headers=headers)
+    DOMAIN = "intersport.co.uk"
+    start_url = "https://www.intersport.co.uk/index.php?option=com_ajax&plugin=istorelocator&tmpl=component&format=json&showDirections=primary&lat=0&lng=0&maxdistance=50&limit=100&source=csv&file=intersport-stores-040920.csv&category="
+
+    response = session.post(start_url)
     data = json.loads(response.text)
 
-    for poi in data["items"]:
-        poi_html = etree.HTML(poi["popup_html"])
-        store_url = poi_html.xpath('//a[@class="amlocator-link"]/@href')
-        store_url = store_url[0] if store_url else "<MISSING>"
-        raw_state = poi_html.xpath("//text()")
-        raw_state = [elem.strip() for elem in raw_state if elem.strip()]
-        location_name = poi_html.xpath('//a[@class="amlocator-link"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = raw_state[1]
-        city = raw_state[2].split(", ")[0]
-        state = raw_state[2].split(", ")[1]
-        zip_code = raw_state[2].split(", ")[2]
-        country_code = "<MISSING>"
+    for poi in data["data"][0]["locations"]:
+        store_url = "<MISSING>"
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["postcode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["id"]
-        phone = raw_state[3]
-        if "AM" in phone:
-            phone = "<MISSING>"
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = raw_state[-1]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -99,9 +87,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_url not in scraped_items:
-            scraped_items.append(store_url)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
