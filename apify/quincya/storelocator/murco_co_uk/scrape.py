@@ -70,7 +70,7 @@ def fetch_data():
 
     for i in stores:
         store = stores[i]
-        location_name = store["name"].replace("#038;", "")
+        location_name = store["name"].replace("#038;", "").replace("&#8217;", "'")
         street_address = store["address_1"]
         zip_code = store["postcode"]
         country_code = "UK"
