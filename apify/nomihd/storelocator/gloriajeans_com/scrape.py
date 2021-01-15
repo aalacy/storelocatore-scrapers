@@ -63,7 +63,6 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    links_list = []
     with SgChrome() as driver:
         driver.get("https://www.gloriajeans.com/pages/store-locator")
         stores_sel = lxml.html.fromstring(driver.page_source)
