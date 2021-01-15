@@ -130,7 +130,7 @@ def fetch_data():
                 typ = "Timberland Outlet Store"
             else:
                 typ = "Timberland Store"
-            if "TBC" not in phone:
+            if "TBC" in phone:
                 phone = "<MISSING>"
             if Closed is True:
                 hours = "Temp Closed"
