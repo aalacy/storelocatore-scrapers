@@ -81,7 +81,6 @@ def fetch_data():
             hours_of_operation = ""
             for hour in hours:
                 day_hours = hour.contents
-                day_data = ""
                 for day in day_hours:
                     hours_of_operation += day.string.strip() + " "
         except:
