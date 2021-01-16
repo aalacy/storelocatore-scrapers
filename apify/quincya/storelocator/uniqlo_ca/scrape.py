@@ -92,10 +92,7 @@ def fetch_data():
             ).strip()
 
         if hours_of_operation == "Mon - Tue - Wed - Thu - Fri - Sat - Sun -":
-            if "for in-person shopping" in store["open_hours"]:
-                hours_of_operation = "Pickup by appointment"
-            else:
-                hours_of_operation = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
         latitude = store["lat"]
         longitude = store["lon"]
