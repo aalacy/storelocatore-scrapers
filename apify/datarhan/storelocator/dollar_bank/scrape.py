@@ -70,7 +70,6 @@ def fetch_data():
         response = session.post(start_url, data=body % (lat, lng), headers=headers)
         data = json.loads(response.text)
         all_locations += data
-        print(len(all_locations))
 
     for poi in all_locations:
         store_url = "<MISSING>"
@@ -89,6 +88,9 @@ def fetch_data():
         longitude = poi["position"]["longitude"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
+
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
 
         item = [
             DOMAIN,
