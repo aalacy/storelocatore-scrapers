@@ -71,6 +71,8 @@ def fetch_data():
                 store_number = "<MISSING>"
                 phone = poi_html.xpath(".//td/a/text()")
                 phone = phone[0] if phone else "<MISSING>"
+                if "menu" in phone.lower():
+                    phone = "<MISSING>"
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
                 hours_of_operation = "<MISSING>"
