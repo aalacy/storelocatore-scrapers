@@ -78,7 +78,7 @@ def fetch_data():
         store.append("mary's pizza shack")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
-        store.append(hours if hours is not "" else "<MISSING>")
+        store.append(hours if hours != "" else "<MISSING>")
         store.append(location.find("a")["href"] if location.find("a") else "<MISSING>")
         return_main_object.append(store if store else "<MISSING>")
     return return_main_object
