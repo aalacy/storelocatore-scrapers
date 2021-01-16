@@ -124,7 +124,7 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
 
                 store_number = (
-                    tr(location.parent.parent.find_previous_sibling("td").text)
+                    str(location.parent.parent.find_previous_sibling("td").text)
                     .strip()
                     .strip()
                     .lstrip()
