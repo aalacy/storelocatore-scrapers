@@ -57,7 +57,9 @@ def fetch_data():
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     }
+
     base_url = "https://www.kellyservices.ca"
+
     loc_search_url = "https://branchlocator.kellyservices.com/default.aspx?s=&l="
     r_loc_search = session.get(loc_search_url, headers=headers)
     soup_loc_search = BeautifulSoup(r_loc_search.text, "lxml")
@@ -122,7 +124,7 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
 
                 store_number = (
-                    str(location.parent.parent.find_previous_sibling("td").text)
+                    tr(location.parent.parent.find_previous_sibling("td").text)
                     .strip()
                     .strip()
                     .lstrip()
@@ -130,6 +132,7 @@ def fetch_data():
                     .replace("\t", "")
                     .replace("\r", "")
                 )
+
                 phone = re.sub(
                     r"\s+",
                     " ",
@@ -258,6 +261,7 @@ def fetch_data():
                     hours_of_operation,
                     page_url,
                 ]
+
                 if str(store[2] + str(store[-7]) + store[1]) in addressess:
                     continue
                 addressess.append(str(store[2] + str(store[-7]) + store[1]))
