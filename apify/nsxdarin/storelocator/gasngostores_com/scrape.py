@@ -8,7 +8,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -28,6 +28,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "page_url",
             ]
         )
         for row in data:
@@ -89,8 +90,6 @@ def fetch_data():
                         add = add.replace(" Fort", "")
                     if city == "Montezuma":
                         zc = "31063"
-                    if city == "Richland":
-                        phone = "229-665-2620"
                     yield [
                         website,
                         loc,
@@ -106,6 +105,7 @@ def fetch_data():
                         lat,
                         lng,
                         hours,
+                        url,
                     ]
 
 
