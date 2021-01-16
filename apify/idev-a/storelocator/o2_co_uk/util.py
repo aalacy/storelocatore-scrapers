@@ -53,3 +53,23 @@ class Util:
             return val.strip()
         else:
             return "<MISSING>"
+
+    def _check_duplicate_by_loc(self, data, _item):
+        is_duplicated = False
+        for item in data:
+            if item[11] == _item[11] and item[12] == _item[12]:
+                is_duplicated = True
+                break
+
+        if not is_duplicated:
+            data.append(_item)
+
+    def _valid_uk(self, val):
+        if val:
+            if "TBC" in val:
+                return "<MISSING>"
+            else:
+                return val.strip()
+
+        else:
+            return "<MISSING>"

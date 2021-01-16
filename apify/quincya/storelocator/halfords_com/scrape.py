@@ -92,6 +92,16 @@ def fetch_data():
             hours_of_operation = (
                 hours_of_operation + " " + hour + ": " + time_str
             ).strip()
+        try:
+            msg = str(store["custom"]["emergencyMessage"])
+            if "now closed" in msg:
+                continue
+            if "currently closed" in msg:
+                hours_of_operation = "Currently Closed"
+            if "temporarily closed" in msg:
+                hours_of_operation = "Temporarily Closed"
+        except:
+            pass
 
         # Store data
         data.append(
