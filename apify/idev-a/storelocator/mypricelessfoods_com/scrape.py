@@ -53,7 +53,9 @@ def fetch_data():
         )
         location_name = store["name"]
         street_address = (
-            store["address_1"] if "address_1" in store.keys() else "<MISSING>"
+            store["address_1"]
+            if "address_1" in store.keys()
+            else (store["address_0"] if "address_0" in store.keys() else "<MISSING>")
         )
         zip = store["postal_code"]
         country_code = store["country"] if "country" in store.keys() else "<MISSING>"
