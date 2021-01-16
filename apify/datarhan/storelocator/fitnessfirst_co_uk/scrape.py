@@ -68,9 +68,7 @@ def fetch_data():
         latitude = poi_html.xpath("@data-lat")[0]
         longitude = poi_html.xpath("@data-lng")[0]
 
-        loc_response = session.get(
-            "https://www.fitnessfirst.co.uk/find-a-gym/basingstoke/"
-        )
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath('.//dl[@class="d-flex upper mb-20 times"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
