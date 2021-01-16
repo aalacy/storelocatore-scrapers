@@ -1,6 +1,13 @@
 import csv
-import json
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from urllib.parse import urljoin
+import json
+
+from util import Util  # noqa: I900
+
+myutil = Util()
+
 
 session = SgRequests()
 
@@ -36,34 +43,31 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.amatos.com/"
-    res = session.post(
-        "https://www.amatos.com/wp-admin/admin-ajax.php?action=store_search&lat=43.6541567&lng=-70.2802294&max_results=75&search_radius=500&autoload=1",
-    )
-    store_list = json.loads(res.text)
+    base_url = "https://www.tapi.co.uk/stores/search"
+    r = session.get(base_url)
+    soup = bs(r.text, "lxml")
+    links = soup.select("div.stores-list.stores-list-all a")
     data = []
+    for link in links:
+        page_url = urljoin("https://www.tapi.co.uk/", link["href"])
+        r1 = session.get(page_url)
+        soup1 = bs(r1.text, "lxml")
+        scripts = soup1.find_all("script", type="application/ld+json")
+        json_data = json.loads(scripts[0].contents[0])
+        location_name = json_data["name"]
+        street_address = json_data["address"]["streetAddress"]
+        state = "<MISSING>"
+        city = json_data["address"]["addressRegion"]
+        zip = json_data["address"]["postalCode"]
+        country_code = json_data["address"]["addressCountry"]
+        store_number = json_data["branchCode"]
+        phone = json_data["telephone"]
+        location_type = json_data["@type"]
+        hours_of_operation = "; ".join(json_data["openingHours"])
 
-    for store in store_list:
-        store_number = store["id"]
-        city = store["city"]
-        state = store["state"]
-        page_url = store["permalink"]
-        hours_of_operation = " ".join(store["wpsl_hours"].split('"')[1::2])
-
-        street_address = store["address"]
-        location_name = (
-            store["store"].replace("&#8217;", "'").replace(store["state"], "").strip()
-        )
-        location_name = (
-            location_name[:-1] if location_name.endswith(",") else location_name
-        )
-        zip = store["zip"]
-        country_code = store["country"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"]
-
+        json_data = json.loads(scripts[1].contents[0])
+        latitude = json_data["geo"]["latitude"]
+        longitude = json_data["geo"]["longitude"]
         data.append(
             [
                 base_url,

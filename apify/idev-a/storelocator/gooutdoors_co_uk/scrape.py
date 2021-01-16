@@ -1,5 +1,6 @@
 import csv
 import json
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -36,33 +37,43 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.amatos.com/"
-    res = session.post(
-        "https://www.amatos.com/wp-admin/admin-ajax.php?action=store_search&lat=43.6541567&lng=-70.2802294&max_results=75&search_radius=500&autoload=1",
-    )
-    store_list = json.loads(res.text)
+    base_url = "https://www.gooutdoors.co.uk"
+    payload = {
+        "postcode": "",
+        "submit": "Find stores",
+        "radius": "500",
+        "ac_store_limit": "300",
+        "current_view": "list",
+        "fascias[]": "GO",
+    }
+    r = session.post("https://www.gooutdoors.co.uk/google/store-locator", data=payload)
+    soup = bs(r.text, "lxml")
+    store_list = soup.select("ul.store-list li")
     data = []
-
     for store in store_list:
-        store_number = store["id"]
-        city = store["city"]
-        state = store["state"]
-        page_url = store["permalink"]
-        hours_of_operation = " ".join(store["wpsl_hours"].split('"')[1::2])
-
-        street_address = store["address"]
-        location_name = (
-            store["store"].replace("&#8217;", "'").replace(store["state"], "").strip()
+        page_url = (
+            base_url
+            + store.select("div.store-details div.more_info p")
+            .pop()
+            .select_one("a")["href"]
         )
-        location_name = (
-            location_name[:-1] if location_name.endswith(",") else location_name
+        location_name = store.select_one("div.store-details h3 a").string
+        res = session.get(page_url)
+        detail = json.loads(
+            res.text.split('type="application/ld+json">')[1].split("</script>")[0]
         )
-        zip = store["zip"]
-        country_code = store["country"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"]
+        street_address = detail["address"]["streetAddress"]
+        country_code = detail["address"]["addressCountry"]
+        phone = detail["telephone"]
+        city = detail["address"]["addressLocality"]
+        state = "<MISSING>"
+        zip = detail["address"]["postalCode"]
+        hours_of_operation = ", ".join(detail["openingHours"])
+        geo = res.text.split("maps.LatLng(")[1].split(");")[0]
+        latitude = geo.split(", ")[0]
+        longitude = geo.split(", ")[1]
+        store_number = "<MISSING>"
+        location_type = detail["@type"]
 
         data.append(
             [
@@ -75,7 +86,7 @@ def fetch_data():
                 zip,
                 country_code,
                 store_number,
-                phone,
+                '="' + phone + '"',
                 location_type,
                 latitude,
                 longitude,

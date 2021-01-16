@@ -36,33 +36,31 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.amatos.com/"
-    res = session.post(
-        "https://www.amatos.com/wp-admin/admin-ajax.php?action=store_search&lat=43.6541567&lng=-70.2802294&max_results=75&search_radius=500&autoload=1",
+    base_url = "https://www.mypricelessfoods.com/"
+    res = session.get(
+        "https://api.freshop.com/1/stores?app_key=priceless&has_address=true&limit=-1&token=08689a1502a6edf9abdb039719f9c7cb",
     )
-    store_list = json.loads(res.text)
+    store_list = json.loads(res.text)["items"]
     data = []
 
     for store in store_list:
-        store_number = store["id"]
+        store_number = store["store_number"]
         city = store["city"]
         state = store["state"]
-        page_url = store["permalink"]
-        hours_of_operation = " ".join(store["wpsl_hours"].split('"')[1::2])
-
-        street_address = store["address"]
-        location_name = (
-            store["store"].replace("&#8217;", "'").replace(store["state"], "").strip()
+        page_url = store["url"] if "url" in store.keys() else "<MISSING>"
+        hours_of_operation = (
+            store["hours_md"] if "hours_md" in store.keys() else "<MISSING>"
         )
-        location_name = (
-            location_name[:-1] if location_name.endswith(",") else location_name
+        location_name = store["name"]
+        street_address = (
+            store["address_1"] if "address_1" in store.keys() else "<MISSING>"
         )
-        zip = store["zip"]
-        country_code = store["country"]
-        phone = store["phone"]
+        zip = store["postal_code"]
+        country_code = store["country"] if "country" in store.keys() else "<MISSING>"
+        phone = store["phone"] if "phone" in store.keys() else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
 
         data.append(
             [

@@ -36,9 +36,9 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.amatos.com/"
-    res = session.post(
-        "https://www.amatos.com/wp-admin/admin-ajax.php?action=store_search&lat=43.6541567&lng=-70.2802294&max_results=75&search_radius=500&autoload=1",
+    base_url = "https://billysimsbbq.com"
+    res = session.get(
+        "https://billysimsbbq.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=e8904e9c7a&load_all=1&layout=1",
     )
     store_list = json.loads(res.text)
     data = []
@@ -46,18 +46,15 @@ def fetch_data():
     for store in store_list:
         store_number = store["id"]
         city = store["city"]
-        state = store["state"]
-        page_url = store["permalink"]
-        hours_of_operation = " ".join(store["wpsl_hours"].split('"')[1::2])
-
-        street_address = store["address"]
-        location_name = (
-            store["store"].replace("&#8217;", "'").replace(store["state"], "").strip()
-        )
-        location_name = (
-            location_name[:-1] if location_name.endswith(",") else location_name
-        )
-        zip = store["zip"]
+        state = store["state"].split(",")[0]
+        page_url = store["website"]
+        hours = json.loads(store["open_hours"])
+        hours_of_operation = ""
+        for x in hours:
+            hours_of_operation += x + " " + ", ".join(hours[x]) + " "
+        location_name = store["title"]
+        street_address = store["street"]
+        zip = store["postal_code"]
         country_code = store["country"]
         phone = store["phone"]
         location_type = "<MISSING>"
