@@ -2,6 +2,7 @@ import csv
 from bs4 import BeautifulSoup
 import json
 from sgrequests import SgRequests
+import time
 
 session = SgRequests()
 
