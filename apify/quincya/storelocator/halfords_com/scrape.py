@@ -40,8 +40,8 @@ def fetch_data():
 
     base_link = "https://www.halfords.com/locations"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
@@ -84,7 +84,9 @@ def fetch_data():
         raw_hours = store["storeHours"]["workingHours"][0]
         for hour in raw_hours:
             try:
-                time_str = raw_hours[hour][0]["Start"] + "-" + raw_hours[hour][0]["Finish"]
+                time_str = (
+                    raw_hours[hour][0]["Start"] + "-" + raw_hours[hour][0]["Finish"]
+                )
             except:
                 time_str = "Closed"
             hours_of_operation = (
