@@ -63,7 +63,7 @@ def fetch_data():
         if "No Results" in res.text:
             continue
         store_list = json.loads(
-            json.loads(res.text.replace("'", "\/'").replace('\\"', "'"))["d"]
+            json.loads(res.text.replace("'", "\\/'").replace('\\"', "'"))["d"]
             .replace("'", '"')
             .replace('/"', "'")
         )
@@ -74,7 +74,7 @@ def fetch_data():
                 json=payload,
             )
             detail = json.loads(
-                json.loads(res1.text.replace("'", "\/'").replace('\\"', "'"))["d"]
+                json.loads(res1.text.replace("'", "\\/'").replace('\\"', "'"))["d"]
                 .replace("'", '"')
                 .replace('/"', "'")
             )
