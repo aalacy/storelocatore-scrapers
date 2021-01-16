@@ -60,6 +60,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
+        if country_code != "UK":
+            continue
         store_number = poi["id"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
