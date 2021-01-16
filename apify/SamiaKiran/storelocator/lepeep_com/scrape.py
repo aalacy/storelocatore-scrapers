@@ -56,7 +56,7 @@ def fetch_data():
             temp = loc.find("div", {"class": "store-address"}).findAll("span")
             temp2 = temp[0].find("a")
             title = temp2.text
-            if "Closed" in title:
+            if "Temporarily Closed" in title:
                 title = title.replace("Temporarily Closed", " Temporarily Closed")
             link = temp2["href"]
             if len(temp) > 4:
