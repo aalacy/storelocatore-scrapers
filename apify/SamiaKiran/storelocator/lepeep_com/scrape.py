@@ -56,6 +56,8 @@ def fetch_data():
             temp = loc.find("div", {"class": "store-address"}).findAll("span")
             temp2 = temp[0].find("a")
             title = temp2.text
+            if "Temporarily Closed" in title:
+                title = title.replace("Temporarily Closed", " Temporarily Closed")
             link = temp2["href"]
             if len(temp) > 4:
                 if "(Catering)" not in temp[4].find("a").text:
@@ -104,18 +106,18 @@ def fetch_data():
                 [
                     "https://lepeep.com/",
                     link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
+                    title.strip(),
+                    street.strip(),
+                    city.strip(),
+                    state.strip(),
+                    pcode.strip(),
                     "US",
                     "<MISSING>",
-                    phone,
+                    phone.strip(),
                     "<MISSING>",
                     "<MISSING>",
                     "<MISSING>",
-                    hours,
+                    hours.strip(),
                 ]
             )
         return final_data
