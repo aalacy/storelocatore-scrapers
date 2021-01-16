@@ -248,7 +248,7 @@ def fetch_data():
             allstores.append(store)
             if state == "":
                 state = "PR"
-            name = name.replace("\u0026#39;", "'")
+            name = name.replace("\\u0026#39;", "'")
             hours = (
                 hours.replace("00", ":00")
                 .replace("30", ":30")
