@@ -64,7 +64,8 @@ def get_hours(page_url):
     soup = pull_content(page_url)
     content = soup.find("div", {"id": "open_hour"})
     hours = content.find("table").get_text(strip=True, separator=",")
-    return hours
+    result = re.sub(r":,", ": ", hours)
+    return result
 
 
 def parse_json(link_url, js_variable):

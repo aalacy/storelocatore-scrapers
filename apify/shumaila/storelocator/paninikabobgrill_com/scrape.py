@@ -76,6 +76,24 @@ def fetch_data():
             ]
         )
         p += 1
+    data.append(
+        [
+            "https://paninikabobgrill.com/",
+            "https://paninikabobgrill.com/locations/riverside/",
+            "Riverside",
+            "1298 Galleria at Tyler G121",
+            "Riverside",
+            "CA",
+            "92503",
+            "US",
+            "<MISSING>",
+            "(951) 352-6318",
+            "<MISSING>",
+            "33.90923",
+            "-117.45734",
+            "Mon – Sun: 10:00am to 9:00pm",
+        ]
+    )
     return data
 
 
