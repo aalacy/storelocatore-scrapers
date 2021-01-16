@@ -62,8 +62,14 @@ def fetch_data():
         )
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         street_address = raw_address[0]
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = raw_address[1]
+        if city.endswith(","):
+            city = city[:-1]
         state = raw_address[2]
+        if state.endswith(","):
+            state = state[:-1]
         zip_code = raw_address[3]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
