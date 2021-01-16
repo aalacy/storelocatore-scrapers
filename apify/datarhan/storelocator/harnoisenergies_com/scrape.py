@@ -42,9 +42,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "harnoisenergies.com"
-    start_url = (
-        "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=harnois"
-    )
+    start_url = "https://harnoisenergies.com/fr/nos-stations-service/?fwp_station_banners=harnois"
     formdata = {
         "action": "facetwp_refresh",
         "data[facets]": '{"station_banners":["harnois"],"station_area":[],"station_main_services":[],"station_restauration":[],"station_promotions":[],"station_alternate_energy":[]}',
@@ -65,7 +63,6 @@ def fetch_data():
     headers = {
         "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
@@ -78,7 +75,8 @@ def fetch_data():
     page_dom = etree.HTML(data["template"])
     all_locations = page_dom.xpath('//div[@class="item"]')
     for page in range(2, int(total_pages) + 2):
-        url = "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=harnois&fwp_paged={}"
+        url = "https://harnoisenergies.com/fr/nos-stations-service/?fwp_station_banners=harnois&fwp_paged={}"
+        formdata["data[paged]"] = str(page)
         response = session.post(url.format(str(page)), data=formdata, headers=headers)
         data = json.loads(response.text)
         page_dom = etree.HTML(data["template"])
