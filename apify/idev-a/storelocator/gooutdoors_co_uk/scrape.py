@@ -41,7 +41,6 @@ def fetch_data():
     payload = {
         "postcode": "",
         "submit": "Find stores",
-        "submit": "1",
         "radius": "500",
         "ac_store_limit": "300",
         "current_view": "list",
