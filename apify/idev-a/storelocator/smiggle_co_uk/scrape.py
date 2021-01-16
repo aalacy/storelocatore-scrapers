@@ -54,6 +54,10 @@ def fetch_data():
 
     for store in store_list:
         page_url = store["storeURL"]
+        country_code = store["country"]
+
+        if country_code != "GB":
+            continue
 
         location_name = store["storeName"]
         shop_address = store["shopAddress"].replace("&amp;", "&").replace("&#039;", "'")
@@ -74,7 +78,6 @@ def fetch_data():
         zip = store["zipcode"].strip()
         zip = "<MISSING>" if zip == "." or zip == "" else zip
         state = store["state"].strip()
-        country_code = store["country"]
         latitude = store["latitude"]
         longitude = store["longitude"]
         store_number = store["locId"]
