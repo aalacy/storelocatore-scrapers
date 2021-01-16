@@ -86,6 +86,7 @@ def fetch_data():
             soup1.select_one("li.sl__store.sl__store--noborder dl")
             .text.replace("\n", "")
             .replace("Opening hours:", "")
+            .replace("  ", "")
             .strip()
         )
         country_code = soup1.select_one("input#defaultCountryCode")["value"]
