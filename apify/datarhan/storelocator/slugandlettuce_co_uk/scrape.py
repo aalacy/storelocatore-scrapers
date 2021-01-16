@@ -61,7 +61,6 @@ def fetch_data():
         max_search_results=None,
     )
     for code in all_codes:
-        print(code)
         formdata = {
             "postcode": code,
         }
