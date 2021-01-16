@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 session = SgRequests()
 import json
 from bs4 import BeautifulSoup
-import unicodedata
 
 base_url = "https://residence-inn.marriott.com/"
 
@@ -68,13 +67,20 @@ def fetch_data():
                             page_url = "https://www.marriott.com/hotels/travel/" + str(
                                 key
                             )
+                            if "Tuscaloosa" in city:
+                                street_address = "211 Rice Mine Road"
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
                                 location_name if location_name else "<MISSING>"
                             )
                             output.append(
-                                street_address if street_address else "<MISSING>"
+                                street_address.replace(
+                                    "211&nbsp;Rice&nbsp;Mine&nbsp;Road&nbsp;",
+                                    "211 Rice Mine Road",
+                                )
+                                if street_address
+                                else "<MISSING>"
                             )
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
@@ -90,27 +96,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i1 in data_8:
         for j1 in i1["region_countries"]:
@@ -131,13 +116,20 @@ def fetch_data():
                             page_url = "https://www.marriott.com/hotels/travel/" + str(
                                 key
                             )
+                            if "Tuscaloosa" in city:
+                                street_address = "211 Rice Mine Road"
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
                                 location_name if location_name else "<MISSING>"
                             )
                             output.append(
-                                street_address if street_address else "<MISSING>"
+                                street_address.replace(
+                                    "211&nbsp;Rice&nbsp;Mine&nbsp;Road&nbsp;",
+                                    "211 Rice Mine Road",
+                                )
+                                if street_address
+                                else "<MISSING>"
                             )
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
@@ -153,27 +145,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i2 in data_8:
         for j2 in i2["region_countries"]:
@@ -194,13 +165,20 @@ def fetch_data():
                             page_url = "https://www.marriott.com/hotels/travel/" + str(
                                 key
                             )
+                            if "Tuscaloosa" in city:
+                                street_address = "211 Rice Mine Road"
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
                                 location_name if location_name else "<MISSING>"
                             )
                             output.append(
-                                street_address if street_address else "<MISSING>"
+                                street_address.replace(
+                                    "211&nbsp;Rice&nbsp;Mine&nbsp;Road&nbsp;",
+                                    "211 Rice Mine Road",
+                                )
+                                if street_address
+                                else "<MISSING>"
                             )
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
@@ -216,27 +194,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
 
 
