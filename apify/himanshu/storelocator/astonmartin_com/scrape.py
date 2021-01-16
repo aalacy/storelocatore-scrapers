@@ -46,7 +46,6 @@ def fetch_data():
     country_code = "<MISSING>"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "Aston Martin"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     hours_of_operation = "<MISSING>"
