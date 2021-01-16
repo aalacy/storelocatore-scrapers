@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -114,7 +115,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        name = name.replace("&#39;", "'")
+        name = name.replace("&#39;", "'").replace("’", "'").replace("&amp;", "&")
         yield [
             website,
             loc,

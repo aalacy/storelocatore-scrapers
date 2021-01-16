@@ -63,7 +63,12 @@ def fetch_data():
         logger.info(page_url)
         location_name = in_semi_part.find("a").text
         city = in_semi_part.find("a").text.split(",")[-1].strip()
-        city = city.split("(")[0].strip()
+        city = (
+            city.split("(")[0]
+            .replace("Downtown", "")
+            .replace("at Embarcadero", "")
+            .strip()
+        )
         store_re = session.get(page_url)
         main_store_soup = BeautifulSoup(store_re.text, "lxml")
 
@@ -138,7 +143,7 @@ def fetch_data():
             state = address[-2].strip()
         street_address = street_address.replace("  ", " ")
         if zipp != "<MISSING>":
-            if len(zipp) > 5:
+            if " " in zipp:
                 country_code = "CA"
             else:
                 country_code = "US"
@@ -165,6 +170,13 @@ def fetch_data():
             continue
         if "xico" in city.lower() or "xico" in city.lower() or "Nevis" in city:
             continue
+        if "9500 Wilshire" in street_address:
+            city = "Beverly Hills"
+        if "Two Dole Drive" in street_address:
+            city = "Westlake Village"
+        if "DC" in city:
+            city = "Washington"
+            state = "DC"
 
         return_object.append(locator_domain)
         return_object.append(location_name)
