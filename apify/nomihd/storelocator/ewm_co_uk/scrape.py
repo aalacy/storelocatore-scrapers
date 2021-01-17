@@ -108,7 +108,6 @@ def fetch_data():
         add_list = []
         try:
             temp_addr = address.split(",")
-            print(temp_addr)
             for add in temp_addr:
                 if len("".join(add).strip()) > 0:
                     if add.strip() == city:
