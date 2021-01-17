@@ -36,16 +36,13 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def get_json_data(html):
     re_get_json = "var location_data[\s\S]*?=[\s\S]*?(.+?);$"
     match = re.search(re_get_json, html, re.MULTILINE)
     json_text = match.group(1)
     return json.loads(json_text)
 
-
 driver = SgSelenium().chrome()
-
 
 def fetch_data():
 
