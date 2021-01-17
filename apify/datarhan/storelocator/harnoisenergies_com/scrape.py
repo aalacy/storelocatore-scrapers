@@ -41,7 +41,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "https://harnoisenergies.com/en/brands/petro-t/"
+    DOMAIN = "harnoisenergies.com"
     start_url = (
         "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=harnois"
     )
