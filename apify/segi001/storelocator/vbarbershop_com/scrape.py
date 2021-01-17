@@ -54,6 +54,7 @@ def fetch_data():
         zc = s["streetaddress"].split(",")[-1].split(" ")[-1].strip()
         city = s["streetaddress"].split(",")[-2].strip()
         phone = s["phone"]
+        location_type = missingString
 
         hours = ", ".join(
             [
@@ -70,6 +71,7 @@ def fetch_data():
         if "COMING SOON" in s["tags"]:
             hours = missingString
             phone = missingString
+            location_type = "Coming Soon"
 
         if zc == "FL":
             zc = missingString
@@ -97,7 +99,7 @@ def fetch_data():
                 missingString,
                 missingString,
                 phone,
-                missingString,
+                location_type,
                 s["loc_lat"],
                 s["loc_long"],
                 hours,
