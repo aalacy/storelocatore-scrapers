@@ -1,11 +1,9 @@
 import re
 import csv
-import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def write_output(data):
@@ -43,57 +41,33 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "slugandlettuce.co.uk"
-    start_url = "https://www.slugandlettuce.co.uk/heremapssearch"
-    headers = {
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-        "x-newrelic-id": "UgACU15WGwIDXVVbBAICVQ==",
-        "x-requested-with": "XMLHttpRequest",
-    }
+    start_url = "https://www.slugandlettuce.co.uk/find-a-bar"
 
-    all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BRITAIN],
-        max_radius_miles=200,
-        max_search_results=None,
-    )
-    for code in all_codes:
-        formdata = {
-            "postcode": code,
-        }
-        response = session.post(start_url, data=formdata, headers=headers)
-        data = json.loads(response.text)
-        dom = etree.HTML(data["results"])
-        all_locations += dom.xpath('//div[@class="result"]')
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//div[@class="sites-by-region"]//a/@href')
+    all_locations = [elem for elem in all_locations if elem != "#"]
 
-    for poi_html in all_locations:
-        store_url = poi_html.xpath('.//a[contains(text(), "Visit Website")]/@href')
-        store_url = urljoin(start_url, store_url[0])
-        location_name = poi_html.xpath('.//h3[@class="section-title"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = poi_html.xpath(
-            './/ul[@class="menu vertical venue-details"]/li[1]/div//text()'
-        )
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[0]
-        city = address_raw[1].split("-")[0].strip()
-        state = address_raw[2]
-        zip_code = address_raw[-1]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-
-        check = f"{location_name} {street_address}"
-        if check in scraped_items:
-            continue
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//h1[@class="section-heading"]/text()')
+        location_name = location_name[-1] if location_name else "<MISSING>"
+        address_raw = loc_dom.xpath('//ul[@class="menu vertical address"]/li/text()')
+        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
+        street_address = " ".join(address_raw[:-2])
+        city = address_raw[-2].split("-")[0].strip()
+        state = "<MISSING>"
+        zip_code = address_raw[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
         latitude = re.findall(r"lat: (.+?),", loc_response.text)
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = re.findall(r"lng: (.+?) }", loc_response.text)
@@ -121,9 +95,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        items.append(item)
 
     return items
 
