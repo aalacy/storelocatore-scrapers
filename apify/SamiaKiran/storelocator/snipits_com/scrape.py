@@ -1,8 +1,8 @@
 import csv
 import json
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
+from bs4 import BeautifulSoup
 
 website = "snipits_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -72,9 +72,13 @@ def fetch_data():
             pcode = loc["address"]["postalCode"]
             ccode = loc["address"]["addressCountry"]
             location_type = loc["@type"]
-            hourlist = loc["openingHours"]
+            soup = BeautifulSoup(r.text, "html.parser")
+            hourlist = soup.find("div", {"class": "div-block-26"}).findAll(
+                "div", {"class": "r-nav-label"}
+            )
             hours = ""
             for hour in hourlist:
+                hour = hour.text
                 hours = hours + " " + hour
             final_data.append(
                 [
