@@ -63,7 +63,6 @@ def fetch_data():
         url = "https://www.bobaguys.com" + url["href"]
 
         res = session.get(url)
-        # logger.info(url)
         soup = BeautifulSoup(res.text, "html.parser")
         divs = soup.find_all("div", {"class": "col sqs-col-4 span-4"})
         if len(divs) == 0:
