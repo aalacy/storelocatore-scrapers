@@ -58,6 +58,8 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
+        if state.isdigit():
+            state = "<MISSING>"
         zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
