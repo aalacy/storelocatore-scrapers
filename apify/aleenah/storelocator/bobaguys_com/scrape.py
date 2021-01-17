@@ -52,13 +52,11 @@ def fetch_data():
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://www.bobaguys.com/"
-    print(url)
     r = session.get(url, headers=headers, verify=False)
 
     soup = BeautifulSoup(r.text, "html.parser")
-    # logger.info(soup.find('li', {'class': 'folder'}))
     urls = soup.find("li", {"class": "folder"}).find_all("a")
-    print(urls)
+
     del urls[0]
 
     for url in urls:
@@ -73,7 +71,7 @@ def fetch_data():
 
         for div in divs:
             try:
-                ps = div.find(
+                div.find(
                     "div", {"class": "sqs-block html-block sqs-block-html"}
                 ).find_all("p")
             except:
