@@ -48,7 +48,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for item in json.loads(r.content):
-        raw_address = item["address"]
+        rawadd = item["address"]
         loc = "<MISSING>"
         store = "<MISSING>"
         lat = item["lat"]
@@ -57,14 +57,14 @@ def fetch_data():
         phone = "<MISSING>"
         hours = "<MISSING>"
         try:
-            tagged = usaddress.tag(raw_address)[0]
+            tagged = usaddress.tag(rawadd)[0]
             city = tagged.get("PlaceName", "<MISSING>")
             state = tagged.get("StateName", "<MISSING>")
             zc = tagged.get("ZipCode", "<MISSING>")
             if city != "<MISSING>":
-                add = raw_address.split(city)[0].strip()
+                add = rawadd.split(city)[0].strip()
             else:
-                add = raw_address.split(",")[0]
+                add = rawadd.split(",")[0]
         except:
             zc = "<MISSING>"
             add = "<MISSING>"
@@ -74,6 +74,7 @@ def fetch_data():
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,
