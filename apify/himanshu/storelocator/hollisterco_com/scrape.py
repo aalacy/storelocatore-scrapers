@@ -57,11 +57,11 @@ def fetch_data():
     for link in data:
 
         if (
-            "/shop/wd/clothing-stores/CA/" in link.find("a")["href"]
-            or "/shop/wd/clothing-stores/US/" in link.find("a")["href"]
-            or "/shop/wd/clothing-stores/GB/" in link.find("a")["href"]
+            "/clothing-stores/CA/" in link.a["href"]
+            or "/clothing-stores/US/" in link.a["href"]
+            or "/clothing-stores/GB/" in link.a["href"]
         ):
-            page_url = base_url + link.find("a")["href"]
+            page_url = base_url + link.a["href"]
             r = requests.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "lxml")
             if (
