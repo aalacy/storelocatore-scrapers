@@ -1,6 +1,6 @@
+import re
 import csv
-import json
-from lxml import etree
+import demjson
 
 from sgrequests import SgRequests
 
@@ -41,43 +41,35 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "myfoodcity.com"
-    start_url = "https://myfoodcity.com/wp-admin/admin-ajax.php?action=store_search&lat=33.448377&lng=-112.074037&max_results=25&search_radius=50&autoload=1"
+    DOMAIN = "tacomayo.com"
+    start_url = "http://tacomayo.com/locations.aspx#.YAQPXZNKgWp"
 
-    response = session.post(start_url)
-    data = json.loads(response.text)
+    response = session.get(start_url)
+    data = re.findall("locations =(.+?);", response.text.replace("\n", ""))[0]
+    data = (
+        data.replace("\r", "").replace("  ", " ").replace("  ", " ").replace("  ", " ")
+    )
+    data = re.findall(r's\d+?" :(.+?),* "s\d+?"', data)
 
-    for poi in data:
-        store_url = poi["url"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"].replace("&#8211;", "-")
-        location_name = location_name if location_name else "<MISSING>"
+    for elem in data:
+        poi = demjson.decode(
+            elem.replace("new google.maps.LatLng(", '"').replace("),", '",')
+        )
+        store_url = "<MISSING>"
+        location_name = poi["name"]
         street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
-        city = city if city else "<MISSING>"
         state = poi["state"]
-        state = state if state else "<MISSING>"
-        if state.isdigit():
-            state = "<MISSING>"
         zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = location_name.split("#")[-1]
-        store_number = store_number if store_number else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        types = {0: "Classic Menu", 1: "Fresh Mex"}
+        location_type = types[poi["type"]]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_html = etree.HTML(poi["hours"])
-        hours_of_operation = hours_html.xpath("//td//text()")
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        latitude = poi["point"].split(",")[0]
+        longitude = poi["point"].split(",")[1]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
@@ -95,7 +87,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items
