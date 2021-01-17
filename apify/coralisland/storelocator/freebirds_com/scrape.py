@@ -69,8 +69,8 @@ def fetch_data():
         output.append("<MISSING>")  # location type
         output.append("<MISSING>")  # latitude
         output.append("<MISSING>")  # longitude
-        output.append("<MISSING>")  # opening hours
-        output.append("<MISSING>")  # page url
+        output.append("<INACCESSIBLE>")  # opening hours
+        output.append(store["rio_url"])  # page url
         output_list.append(output)
     return output_list
 
