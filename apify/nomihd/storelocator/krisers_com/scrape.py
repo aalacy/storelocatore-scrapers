@@ -119,12 +119,6 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        map_link = "".join(
-            store_sel.xpath(
-                '//a[@class="fa fa-google location-external-link location-google-link"]/@href'
-            )
-        ).strip()
-
         latitude = store_req.text.split("lat: ")[1].strip().split(",")[0].strip()
         longitude = store_req.text.split("lng: ")[1].strip().split("}")[0].strip()
 
