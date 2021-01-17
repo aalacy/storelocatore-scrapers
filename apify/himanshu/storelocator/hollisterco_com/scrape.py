@@ -79,9 +79,7 @@ def fetch_data():
                 .split(");}")[0]
             )
             location_name = json_data["name"]
-            street_address = json_data["addressLine"][
-                0
-            ]
+            street_address = json_data["addressLine"][0]
             city = json_data["city"]
             state = json_data["stateOrProvinceName"]
             zipp = json_data["postalCode"]
