@@ -36,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.anthropologie.com/stores"
+    url = "https://www.anthropologie.com/stores#?viewAll=true"
     session = SgRequests()
     r = session.get(url, headers=headers)
     Found = True
@@ -106,27 +106,49 @@ def fetch_data():
                 lat = line2.split(
                     '<meta property="place:location:longitude" content="'
                 )[1].split('"')[0]
+        if state == "England" or state == "Wales" or state == "Scotland":
+            country = "GB"
+        canada = [
+            "MB",
+            "AB",
+            "QC",
+            "PE",
+            "PEI",
+            "NL",
+            "NS",
+            "NT",
+            "NU",
+            "YK",
+            "BC",
+            "ON",
+        ]
+        if state in canada:
+            country = "CA"
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
         hours = hours.replace("CLOSED - CLOSED", "CLOSED")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        Closed = False
+        if "Closed" in name and "Temp" not in name:
+            Closed = True
+        if Closed is False:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
