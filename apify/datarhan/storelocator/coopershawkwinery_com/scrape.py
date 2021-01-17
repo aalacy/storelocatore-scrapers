@@ -73,6 +73,8 @@ def fetch_data():
         )
         phone = phone[-1].split(":")[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if street_address == "<MISSING>":
+            location_type = "coming soon"
         geo = re.findall(r"coords\((.+?)\),", loc_response.text)[0].split(",")
         latitude = geo[0]
         latitude = latitude if latitude else "<MISSING>"
