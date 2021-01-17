@@ -52,13 +52,15 @@ def fetch_data():
             continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
+
         location_name = loc_dom.xpath('//div[@id="content"]/h1/text()')
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         address_raw = loc_dom.xpath('//td[strong[contains(text(), "Address")]]/text()')
         addres_raw = [elem.strip() for elem in address_raw if elem.strip()]
         if addres_raw[1].split()[0][0].isdigit():
             addres_raw = [", ".join(addres_raw[:2])] + addres_raw[2:]
+        if "The Shops" in addres_raw[0]:
+            addres_raw = addres_raw[1:]
         street_address = addres_raw[0]
         city = addres_raw[1].split(", ")[0]
         state = addres_raw[1].split(", ")[-1].split()[0]
