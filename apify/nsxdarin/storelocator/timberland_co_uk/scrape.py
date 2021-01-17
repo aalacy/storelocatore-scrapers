@@ -99,7 +99,6 @@ def fetch_data():
     loc = "<MISSING>"
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["response"]["collection"]:
-        Closed = False
         phone = item["phone"]
         store = "<MISSING>"
         add = (
@@ -109,8 +108,6 @@ def fetch_data():
             + " "
             + str(item["address3"])
         )
-        if item["temp_closed"] == "1":
-            Closed = True
         add = add.strip()
         city = item["city"]
         state = item["province"]
@@ -132,8 +129,6 @@ def fetch_data():
                 typ = "Timberland Store"
             if "TBC" in phone:
                 phone = "<MISSING>"
-            if Closed is True:
-                hours = "Temp Closed"
             yield [
                 website,
                 loc,
