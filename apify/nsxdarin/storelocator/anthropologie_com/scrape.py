@@ -41,8 +41,10 @@ def fetch_data():
     r = session.get(url, headers=headers)
     Found = True
     for line in r.iter_lines(decode_unicode=True):
-        if "Scotland" in line:
+        if "Paris" in line:
             Found = False
+        if "England" in line:
+            Found = True
         if (
             'itemprop="url" content="https://www.anthropologie.com/stores">' in line
             and Found
@@ -50,7 +52,8 @@ def fetch_data():
             lurl = (
                 "https://www.anthropologie.com" + line.split('href="')[1].split('"')[0]
             )
-            locs.append(lurl)
+            if lurl != "https://www.anthropologie.com/stores":
+                locs.append(lurl)
     for loc in locs:
         time.sleep(3)
         session = SgRequests()
