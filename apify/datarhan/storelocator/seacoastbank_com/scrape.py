@@ -85,25 +85,31 @@ def fetch_data():
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
         hours_of_operation = " ".join(hours_of_operation).replace("Drive Thru", "")
-        if re.findall("M-Th (.+?) ", hours_of_operation):
-            hoo_p1 = "{} {}".format(
-                "M-Th", re.findall("M-Th (.+?) ", hours_of_operation)[0]
-            )
-            hoo_p2 = "{} {}".format(
-                "Fri", re.findall("Fri (.+?) ?", hours_of_operation)[0]
-            )
-            hours_of_operation = f"{hoo_p1} {hoo_p2}"
-        if re.findall("M-Fri (.+?) ", hours_of_operation):
-            hoo_p1 = "{} {}".format(
-                "M-Fri", re.findall("M-Fri (.+?) ", hours_of_operation)[0]
-            )
-            hours_of_operation = f"{hours_of_operation} {hoo_p1}"
-        if re.findall("Sat (.+?) ", hours_of_operation):
-            hoo_p3 = "{} {}".format(
-                "Sat", re.findall("Sat (.+?) ?", hours_of_operation)[0]
-            )
-            hours_of_operation = f"{hours_of_operation} {hoo_p3}"
-        hours_of_operation = hours_of_operation.replace("Lobby ", "")
+        p_1_1 = loc_dom.xpath(
+            '//table[@class="c-info-table"]/tbody/tr[1]/td[1]/text()'
+        )[0].strip()
+        p_1_2 = loc_dom.xpath(
+            '//table[@class="c-info-table"]/tbody/tr[1]/td[2]/text()'
+        )[0].strip()
+        p_2_1 = ""
+        p_2_2 = ""
+        if loc_dom.xpath('//table[@class="c-info-table"]/tbody/tr[2]/td[1]/text()'):
+            p_2_1 = loc_dom.xpath(
+                '//table[@class="c-info-table"]/tbody/tr[2]/td[1]/text()'
+            )[0].strip()
+            p_2_2 = loc_dom.xpath(
+                '//table[@class="c-info-table"]/tbody/tr[2]/td[2]/text()'
+            )[0].strip()
+        p_3_1 = ""
+        p_3_2 = ""
+        if loc_dom.xpath('//table[@class="c-info-table"]/tbody/tr[3]/td[1]/text()'):
+            p_3_1 = loc_dom.xpath(
+                '//table[@class="c-info-table"]/tbody/tr[3]/td[1]/text()'
+            )[0].strip()
+            p_3_2 = loc_dom.xpath(
+                '//table[@class="c-info-table"]/tbody/tr[3]/td[2]/text()'
+            )[0].strip()
+        hours_of_operation = f"{p_1_1} {p_1_2} {p_2_1} {p_2_2} {p_3_1} {p_3_2}".strip()
 
         item = [
             DOMAIN,
