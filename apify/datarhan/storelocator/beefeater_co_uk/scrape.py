@@ -51,6 +51,8 @@ def fetch_data():
 
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
+        if len(store_url.split("/")) == 6:
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
