@@ -46,7 +46,6 @@ def fetch_data():
     start_url = "http://tacomayo.com/locations.aspx#.YAQPXZNKgWp"
 
     response = session.get(start_url)
-    dom = etree.HTML(response.text)
     data = re.findall("locations =(.+?);", response.text.replace("\n", ""))[0]
     data = (
         data.replace("\r", "").replace("  ", " ").replace("  ", " ").replace("  ", " ")
