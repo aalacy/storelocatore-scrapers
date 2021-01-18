@@ -65,7 +65,7 @@ def fetch_data():
         ccode = loc["country"]
         if "/" in title:
             link = title.replace(" / ", "-").replace(" ", "-").lower()
-            link = "https://rxoptical.com/locations" + link + "/"
+            link = "https://rxoptical.com/locations/" + link + "/"
         else:
             link = (
                 title.replace(" ", "-").replace("&#8217;", "").replace(".", "").lower()
