@@ -61,9 +61,12 @@ def fetch_data():
         store = "<MISSING>"
         phone = ""
         hours = ""
+        CS = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if 'class="coming-soon">coming soon' in line2:
+                CS = True
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -84,22 +87,23 @@ def fetch_data():
                     hours = hours + "; " + hrs
         lng = "<MISSING>"
         lat = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if CS is False:
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

@@ -120,12 +120,12 @@ def fetch_data():
                     .strip()
                     .split(")")[0]
                 )
+        if "new-albany-oh" in loc:
+            add = "<MISSING>"
+            city = "New Albany"
+            state = "OH"
+            zc = "<MISSING>"
         if add != "" and state != "USA" and CS is False:
-            if "new-albany-oh" in loc:
-                add = "<MISSING>"
-                city = "New Albany"
-                state = "OH"
-                zc = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
             if zc == "":
