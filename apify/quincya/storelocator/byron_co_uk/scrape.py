@@ -61,9 +61,9 @@ def fetch_data():
         zip_code = raw_address.split()[-1]
         if len(zip_code) < 5:
             zip_code = " ".join(raw_address.split()[-2:])
-        raw_address = raw_address[:raw_address.rfind(zip_code)].strip()
+        raw_address = raw_address[: raw_address.rfind(zip_code)].strip()
         city = raw_address.split()[-1]
-        street_address = raw_address[:raw_address.rfind(city)].strip()
+        street_address = raw_address[: raw_address.rfind(city)].strip()
 
         if city == "Edmunds":
             city = "Bury St Edmunds"
