@@ -99,12 +99,8 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                latitude = (
-                    store_resp.text.split("lat: ")[1].strip().split(",")[0].strip()
-                )
-                longitude = (
-                    store_resp.text.split("lng: ")[1].strip().split("}")[0].strip()
-                )
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
                 if us.states.lookup(state):
                     country_code = "US"
