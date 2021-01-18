@@ -82,6 +82,11 @@ def fetch_data():
         else:
             phone = d[s]["te"]
 
+        location_type = missingString
+
+        if "Coming Soon" in name:
+            location_type = "Coming Soon"
+
         result.append(
             [
                 locator_domain,
@@ -94,7 +99,7 @@ def fetch_data():
                 missingString,
                 store_num,
                 phone,
-                missingString,
+                location_type,
                 lat,
                 lng,
                 hours,
