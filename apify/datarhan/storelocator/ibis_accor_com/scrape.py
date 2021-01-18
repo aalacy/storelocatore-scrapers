@@ -77,11 +77,12 @@ def fetch_data():
         if not poi:
             continue
         poi = json.loads(poi[0])
+        add_data = loc_dom.xpath('//script[contains(text(), "hotelName")]/text()')[0]
+        add_data = json.loads(add_data)
 
         poi_name = poi["name"]
         poi_name = poi_name if poi_name else "<MISSING>"
-        street = loc_dom.xpath('//meta[@property="og:street-address"]/@content')
-        street = street[0] if street else "<MISSING>"
+        street = add_data["streetAddress"]
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = "<MISSING>"
