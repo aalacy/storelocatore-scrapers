@@ -115,15 +115,19 @@ def get_data(url, geo):
     postal = a.get("postal") or "<MISSING>"
     country_code = "US"
     store_number = url.split("=")[-1]
-    try:
-        phone = (
-            tree.xpath("//div[./strong[contains(text(), 'Contact')]]/text()")[
-                -1
-            ].strip()
-            or "<MISSING>"
-        )
-    except IndexError:
-        phone = "<MISSING>"
+    phone = tree.xpath("//div[./strong[contains(text(), 'Contact')]]/text()")
+    phone = list(filter(None, [p.strip() for p in phone]))
+    if phone:
+        phone = phone[-1]
+    else:
+        try:
+            phone = (
+                tree.xpath("//span[contains(text(), ' - ')]/text()")[0]
+                .replace("-", "")
+                .strip()
+            )
+        except IndexError:
+            phone = "<MISSING>"
     latitude = geo[store_number]["lat"]
     longitude = geo[store_number]["lng"]
     location_type = "<MISSING>"
