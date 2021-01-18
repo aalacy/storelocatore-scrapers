@@ -79,7 +79,6 @@ def fetch_data():
         if len(sections) > 0:
             address = sections[0].xpath("text()")
 
-        print(address)
         add_list = []
         for add in address:
             if len("".join(add).strip()) > 0:
