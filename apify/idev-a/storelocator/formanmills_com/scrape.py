@@ -66,10 +66,7 @@ def fetch_data():
         state = address.split(", ")[1].split(" ")[0]
         street_address = ""
         for x in details:
-            if x.string == None:
-                continue
-            else:
-                street_address += x.string + " "
+            street_address += " " if x.string is None else x.string + " "
         street_address = street_address.strip()
         country_code = "US"
         store_number = store[3]
