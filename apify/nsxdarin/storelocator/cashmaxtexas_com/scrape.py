@@ -38,7 +38,6 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
     url = "https://www.cashmaxtexas.com/locations.html"
     r = session.get(url, headers=headers)
     website = "cashmaxtexas.com"
