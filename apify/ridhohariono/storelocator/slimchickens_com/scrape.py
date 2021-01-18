@@ -56,14 +56,6 @@ def handle_missing(field):
     return field
 
 
-def parse_hours(hour_elements):
-    hours = []
-    for row in hour_elements:
-        hours.append(handle_missing(row.get_text(strip=True, separator=" ")))
-
-    return hours
-
-
 def parse_json(link_url, js_variable):
     log.info("Pull content => " + link_url)
     soup = pull_content(link_url)
@@ -102,6 +94,8 @@ def get_address(full_address, country_code):
     split_addr = data.split(",")
     if country_code == "US":
         zip_code = get_postal(full_address, country_code)
+        if not zip_code:
+            zip_code = re.findall(r"\d+", split_addr[-1])[0]
         if len(split_addr) > 4:
             street_address = ",".join(split_addr[2:4])
             city = split_addr[0]
@@ -160,71 +154,80 @@ def fetch_data():
                 country_code = check_country[0]["CountryName"]
             else:
                 country_code = "US"
-            parsed_addr = get_address(location_name, country_code)
-            street_address = handle_missing(parsed_addr["street_address"])
-            city = handle_missing(parsed_addr["city"])
-            state = handle_missing(data["categories"][0]["title"])
-            zip_code = handle_missing(parsed_addr["zip_code"])
-            location_type = "<MISSING>"
-            store_number = data["cssClass"].split("loc-", 1)[1]
-            if country_code == "US":
-                soup = bs(data["description"], "html.parser")
-                content = soup.find_all("p")
-                get_phone = handle_missing(
-                    content[0].get_text(strip=True).replace("Phone:", "")
-                )
-                phone = "<MISSING>" if len(get_phone) > 15 else get_phone
-                get_hours = content[1].get_text(strip=True).replace("Hours:", "")
-                hours_of_operation = handle_missing(
-                    re.sub(r".?(7 days/week).*", "", get_hours)
-                )
-            else:
-                if "location" in page_url:
-                    soup = pull_content(page_url)
-                    content = soup.find_all(
-                        "div", {"class": "wpb_column vc_column_container vc_col-sm-4"}
-                    )
-                    if content:
-                        hours_of_operation = handle_missing(
-                            content[0]
-                            .find("div", {"class": "vc_column-inner"})
-                            .find(
-                                "div", {"class": "wpb_text_column wpb_content_element"}
-                            )
-                            .get_text(strip=True)
-                            .replace("HOURS:", "")
-                        )
-                        phone = handle_missing(
-                            content[1]
-                            .find("div", {"class": "vc_column-inner"})
-                            .find(
-                                "div", {"class": "wpb_text_column wpb_content_element"}
-                            )
-                            .get_text(strip=True)
-                            .replace("PHONE:", "")
-                        )
+            if "Kuwait" not in country_code:
+                parsed_addr = get_address(location_name, country_code)
+                street_address = handle_missing(parsed_addr["street_address"])
+                city = handle_missing(parsed_addr["city"])
+                state = handle_missing(data["categories"][0]["title"])
+                zip_code = handle_missing(parsed_addr["zip_code"])
+                location_type = "<MISSING>"
+                store_number = data["cssClass"].split("loc-", 1)[1]
+                if country_code == "US":
+                    soup = bs(data["description"], "html.parser")
+                    phone_pattren = r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"
+                    get_phone = soup.find(text=re.compile(phone_pattren))
+                    if get_phone:
+                        phone = get_phone.strip()
                     else:
-                        hours_of_operation = "<MISSING>"
-                        phone = "<MISSING>"
-            log.info("Append info to locations => " + location_name)
-            locations.append(
-                [
-                    DOMAIN,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
+                        content = soup.find_all("p")
+                        get_phone = (
+                            content[0].get_text(strip=True).replace("Phone:", "")
+                        )
+                        phone = "<MISSING>" if len(get_phone) > 15 else get_phone
+                    hours = soup.find(text=re.compile(r".*([0-9]+)am.*", re.IGNORECASE))
+                    hours_of_operation = handle_missing(
+                        re.sub(r".?(7 days/week).*", "", hours.strip())
+                    )
+                else:
+                    if "location" in page_url:
+                        soup = pull_content(page_url)
+                        content = soup.find_all(
+                            "div",
+                            {"class": "wpb_column vc_column_container vc_col-sm-4"},
+                        )
+                        if content:
+                            hours_of_operation = handle_missing(
+                                content[0]
+                                .find("div", {"class": "vc_column-inner"})
+                                .find(
+                                    "div",
+                                    {"class": "wpb_text_column wpb_content_element"},
+                                )
+                                .get_text(strip=True)
+                                .replace("HOURS:", "")
+                            )
+                            phone = handle_missing(
+                                content[1]
+                                .find("div", {"class": "vc_column-inner"})
+                                .find(
+                                    "div",
+                                    {"class": "wpb_text_column wpb_content_element"},
+                                )
+                                .get_text(strip=True)
+                                .replace("PHONE:", "")
+                            )
+                        else:
+                            hours_of_operation = "<MISSING>"
+                            phone = "<MISSING>"
+                log.info("Append info to locations => " + location_name)
+                locations.append(
+                    [
+                        DOMAIN,
+                        page_url,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip_code,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
+                )
     return locations
 
 

@@ -1,6 +1,7 @@
 import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -43,7 +44,9 @@ def fetch_data():
 
     DOMAIN = "santander.com"
     start_url = "https://back-scus.azurewebsites.net/branch-locator/find/gb?config=%7B%22coords%22%3A%5B51.5150432%2C-0.1020399%5D%7D&northEast=51.559354602729734%2C0.11768666250002724&southWest=51.47068864934726%2C-0.32176646249999274&callback=angular.callbacks._2"
-
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    }
     response = session.get(start_url)
     data = re.findall(r"._2\((.+?)\);", response.text)[0]
     data = json.loads(data)
@@ -52,7 +55,7 @@ def fetch_data():
         store_url = poi["urlDetailPage"]
         location_name = poi["name"]
         city = poi["location"]["city"]
-        street_address = poi["location"]["address"].split(city)[0][:-2]
+        street_address = poi["location"]["address"].rsplit(city, 1)[0][:-2]
         state = poi["location"]["address"].split(", ")[-2]
         zip_code = poi["location"]["zipcode"]
         country_code = poi["location"]["country"]
@@ -63,7 +66,18 @@ def fetch_data():
         location_type = poi["objectType"]["code"]
         latitude = poi["location"]["coordinates"][1]
         longitude = poi["location"]["coordinates"][0]
-        hours_of_operation = "<MISSING>"
+
+        loc_response = session.get(store_url, headers=headers)
+        loc_dom = etree.HTML(loc_response.text)
+        hours_of_operation = loc_dom.xpath(
+            '//div[@class="timetable deployable deployed"]//text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

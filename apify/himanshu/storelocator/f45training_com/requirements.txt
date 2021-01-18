@@ -1,4 +1,4 @@
 sgrequests
+sglogging
 bs4
 lxml
-
