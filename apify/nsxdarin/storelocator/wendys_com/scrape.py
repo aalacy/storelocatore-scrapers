@@ -127,8 +127,6 @@ def fetch_data():
             if r2.encoding is None:
                 r2.encoding = "utf-8"
             for line2 in r2.iter_lines(decode_unicode=True):
-                if "<span>Closed Temporarily.</span>" in line2:
-                    Closed = True
                 if 'itemprop="name">' in line2 and name == "":
                     name = line2.split('itemprop="name">')[1].split("<")[0]
                 if "'dimension4', '" in line2:

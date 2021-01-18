@@ -54,7 +54,6 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36",
     }
     base_url = "https://pizzadepot.ca/"
-
     for i in list(range(11, 45)) + list(range(51, 53)):
         page_url = "https://pizzadepot.ca/locationDetails/" + str(i)
         r = session.get(page_url, headers=headers)
@@ -63,9 +62,10 @@ def fetch_data():
         store_number = str(i)
         if name == "":
             continue
+        state = ""
         lst = list(soup.find("div", {"class": "fadeInLeft"}).stripped_strings)
-
         try:
+            state = "ON"
             if len(lst) == 11:
                 location_name = lst[0]
                 street_address = lst[1].split(",")[0]
@@ -91,7 +91,6 @@ def fetch_data():
                 except:
                     lat = "<MISSING>"
                     lng = "<MISSING>"
-
             else:
                 if i > 50:
                     location_name = lst[0]
@@ -125,26 +124,21 @@ def fetch_data():
                     lng = map_url[0]
         except:
             continue
-
         if "3373 28A Ave NW" in street_address:
             city = "Edmonton"
-            state = "Alberta"
-
+            state = "AB"
         if "2114 Albert St, Regina, SK" in street_address:
             city = "Regina"
             state = "SK"
-
-        if "Regina" in location_name:
-            street_address = street_address.split(",")[0]
-
+            street_address = "2114 Albert St"
         store = []
         store.append(base_url)
         store.append(location_name if location_name else "<MISSING>")
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
-        store.append("ON")
+        store.append(state if state else "<MISSING>")
         store.append(zipp.replace("ON N2H 1H5", "N2H 1H5") if zipp else "<MISSING>")
-        store.append(state)
+        store.append("CA")
         store.append(store_number if store_number else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
         store.append("Pizza Depot")
@@ -169,7 +163,6 @@ def fetch_data():
             else x
             for x in store
         ]
-
         yield store
 
 

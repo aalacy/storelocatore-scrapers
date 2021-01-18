@@ -133,7 +133,7 @@ def fetch_data():
 
         data.append(
             [
-                "https://giordanos.com/",
+                "https://www.calicocorners.com/",
                 "https://www.calicocorners.com/storelocator.aspx",
                 title,
                 street,
@@ -144,8 +144,8 @@ def fetch_data():
                 storeid,
                 phone,
                 "Design Shops",
-                "<MISSING>",
-                "<MISSING>",
+                "<INACCESSIBLE>",
+                "<INACCESSIBLE>",
                 HOO,
             ]
         )
