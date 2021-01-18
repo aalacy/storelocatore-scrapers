@@ -76,7 +76,7 @@ def fetch_data():
         phone = adr1[0].replace("Call ", "")
         tem_var = []
         tem_var.append("https://www.firstbankonline.com/")
-        tem_var.append(name)
+        tem_var.append(name.replace("�", ""))
         tem_var.append(street_address)
         tem_var.append(city)
         tem_var.append(state.strip())
@@ -90,7 +90,7 @@ def fetch_data():
         tem_var.append(hours.replace("Hours: ", ""))
         tem_var.append(page_url)
         for i in range(len(tem_var)):
-            if isinstance(tem_var[i], str):
+            if type(tem_var[i]) == str:
                 tem_var[i] = "".join(
                     (
                         c
@@ -98,7 +98,7 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        tem_var = [x.replace("–", "-") if isinstance(x, str) else x for x in tem_var]
+        tem_var = [x.replace("–", "-") if type(x) == str else x for x in tem_var]
         tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         yield tem_var
     base_url = "https://www.firstbankonline.com/location/?type=atm"
@@ -119,7 +119,7 @@ def fetch_data():
         page_url = "<MISSING>"
         tem_var = []
         tem_var.append("https://www.firstbankonline.com/")
-        tem_var.append(name)
+        tem_var.append(name.replace("�", ""))
         tem_var.append(street_address)
         tem_var.append(city)
         tem_var.append(state.strip())
@@ -133,7 +133,7 @@ def fetch_data():
         tem_var.append(hours.replace("Hours: ", ""))
         tem_var.append(page_url)
         for i in range(len(tem_var)):
-            if isinstance(tem_var[i], str):
+            if type(tem_var[i]) == str:
                 tem_var[i] = "".join(
                     (
                         c
@@ -141,7 +141,7 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        tem_var = [x.replace("–", "-") if isinstance(x, str) else x for x in tem_var]
+        tem_var = [x.replace("–", "-") if type(x) == str else x for x in tem_var]
         tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         yield tem_var
 
