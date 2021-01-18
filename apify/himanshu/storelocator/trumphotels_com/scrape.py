@@ -1,8 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox, SgChrome
-import os
+from sgselenium import SgChrome
 import json
 
 logger = SgLogSetup().get_logger("trumphotels.com")
