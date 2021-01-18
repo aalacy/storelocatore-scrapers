@@ -78,7 +78,6 @@ def fetch_data():
             + "&searchFilter%5BIncludeAtms%5D=false&searchFilter%5BIncludeBranches%5D=true&searchFilter%5BIncludeVoiceAssistedAtms%5D=false&searchFilter%5BIncludeSuperMarketBranches%5D=true&searchFilter%5BIncludeOpenNow%5D=false&searchFilter%5BRadius%5D="
             + str(max_distance)
         )
-        # print(lat, lng)
         req = session.get(base_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
