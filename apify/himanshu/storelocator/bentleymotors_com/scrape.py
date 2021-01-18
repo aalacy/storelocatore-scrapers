@@ -101,7 +101,14 @@ def fetch_data():
                             + "-"
                             + hour["periods"][0]["close"]
                         )
-            store.append(hours if hours else "<MISSING>")
+            store.append(
+                hours.split("pre-owned")[0]
+                .replace("sales", "")
+                .split("  service")[0]
+                .replace("0 Sunday  ", "0 Sunday closed")
+                if hours
+                else "<MISSING>"
+            )
             try:
                 page_url = "https://www." + addresses[0]["departments"][0][
                     "website"
@@ -111,6 +118,7 @@ def fetch_data():
                     page_url = "https://www." + store_data["website"]
                 except:
                     page_url = "<MISSING>"
+
             store.append(page_url)
 
             for i in range(len(store)):

@@ -58,7 +58,7 @@ def fetch_data():
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = j.get("hours", "") or ""
+        hours = j.get("hours", "") or j.get("hours_md")
         if hours.find("Store") != -1:
             hours = hours.split("\n")[0].replace("Store:", "").strip()
 
