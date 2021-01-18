@@ -181,6 +181,8 @@ def fetch_data():
                         phone = phone.encode("ascii", errors="ignore").decode()
                         if phone == "":
                             phone = "<MISSING>"
+                        if '"diningRoomHours":{"_type":"hoursOfOperation"}' in item:
+                            hours = "Sun-Sat: Closed"
                         if "Closed" not in hours:
                             yield [
                                 website,
