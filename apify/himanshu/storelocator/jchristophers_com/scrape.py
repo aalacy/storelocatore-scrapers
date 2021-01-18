@@ -44,7 +44,6 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     data = []
-    # base_url = "http://www.jchristophers.com/find-a-j-christophers/"
     base_url = "https://jchristophers.com/locations"
     r = session.get(base_url, headers=headers, timeout=5)
     soup = BeautifulSoup(r.text, "html.parser")
