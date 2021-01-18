@@ -50,8 +50,13 @@ def fetch_data():
         page_url = store["permalink"]
         hours_of_operation = " ".join(store["wpsl_hours"].split('"')[1::2])
 
-        location_name = store["store"].replace("&#8217;", "'")
         street_address = store["address"]
+        location_name = (
+            store["store"].replace("&#8217;", "'").replace(store["state"], "").strip()
+        )
+        location_name = (
+            location_name[:-1] if location_name.endswith(",") else location_name
+        )
         zip = store["zip"]
         country_code = store["country"]
         phone = store["phone"]

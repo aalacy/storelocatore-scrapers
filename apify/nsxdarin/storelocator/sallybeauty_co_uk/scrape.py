@@ -61,6 +61,9 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "" or hours is None:
             hours = "<MISSING>"
+        addinfo = item["formattedAddress"]
+        if addinfo.count(",") == 4:
+            add = addinfo.split(",")[0] + " " + addinfo.split(",")[1]
         yield [
             website,
             loc,

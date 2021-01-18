@@ -70,10 +70,14 @@ def get_data(page_url):
     location_type = "<MISSING>"
 
     _tmp = []
-    hours = j.get("working_hours") or {}
+    tr = tree.xpath(
+        "//table[@class='table' and .//*[contains(text(), 'Hours')]]//tr[./td]"
+    )
 
-    for k, v in hours.items():
-        _tmp.append(f'{k}: {" - ".join(v.get("open") or ["Closed"])}')
+    for t in tr:
+        day = "".join(t.xpath("./td[1]/text()")).strip()
+        time = "".join(t.xpath("./td[2]/text()")).strip()
+        _tmp.append(f"{day}: {time}")
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
