@@ -87,6 +87,8 @@ def get_data(_id):
     )
     if country_code == "United Kingdom":
         country_code = "GB"
+    else:
+        return
     store_number = _id
     phone = (
         "".join(tree.xpath("//span[@itemprop='telephone']/text()")).strip()
