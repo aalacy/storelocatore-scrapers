@@ -47,7 +47,9 @@ def fetch_data():
     url = "https://www.stopandgostores.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select('a:contains("Store Profile")')
+    linklist = soup.find_all("a", string="Store Profile ") + soup.find_all(
+        "a", string="Store Profile"
+    )
     p = 0
     for link in linklist:
         link = link["href"]
@@ -72,7 +74,7 @@ def fetch_data():
         if street == "":
             street = city
         street = street.replace("( In& Out)", "")
-        if phone.find("--") > -1 or "X" in phone:
+        if phone.find("--") > -1 or "X" in phone or len(phone) < 10:
             phone = "<MISSING>"
         data.append(
             [
