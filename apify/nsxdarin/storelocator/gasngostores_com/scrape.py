@@ -89,6 +89,8 @@ def fetch_data():
                         add = add.replace(" Fort", "")
                     if city == "Montezuma":
                         zc = "31063"
+                    if city == "Richland":
+                        phone = "229-665-2620"
                     yield [
                         website,
                         loc,

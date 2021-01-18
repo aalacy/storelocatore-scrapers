@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 from lxml import etree
@@ -83,9 +84,26 @@ def fetch_data():
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = " ".join(hours_of_operation).replace("Drive Thru", "")
+        if re.findall("M-Th (.+?) ", hours_of_operation):
+            hoo_p1 = "{} {}".format(
+                "M-Th", re.findall("M-Th (.+?) ", hours_of_operation)[0]
+            )
+            hoo_p2 = "{} {}".format(
+                "Fri", re.findall("Fri (.+?) ?", hours_of_operation)[0]
+            )
+            hours_of_operation = f"{hoo_p1} {hoo_p2}"
+        if re.findall("M-Fri (.+?) ", hours_of_operation):
+            hoo_p1 = "{} {}".format(
+                "M-Fri", re.findall("M-Fri (.+?) ", hours_of_operation)[0]
+            )
+            hours_of_operation = f"{hours_of_operation} {hoo_p1}"
+        if re.findall("Sat (.+?) ", hours_of_operation):
+            hoo_p3 = "{} {}".format(
+                "Sat", re.findall("Sat (.+?) ?", hours_of_operation)[0]
+            )
+            hours_of_operation = f"{hours_of_operation} {hoo_p3}"
+        hours_of_operation = hours_of_operation.replace("Lobby ", "")
 
         item = [
             DOMAIN,
