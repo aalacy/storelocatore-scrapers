@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-import json
 
 from util import Util  # noqa: I900
 
