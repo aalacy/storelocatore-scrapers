@@ -78,7 +78,7 @@ def fetch_data():
         page_url = "https://www.atlanticare.org" + store["DirectUrl"]
 
         locator_domain = website
-        location_name = store["Title"]
+        location_name = store["Title"].split(",")[0].strip()
         if location_name == "":
             location_name = "<MISSING>"
 

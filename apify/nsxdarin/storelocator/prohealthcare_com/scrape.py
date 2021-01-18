@@ -73,7 +73,7 @@ def fetch_data():
                         try:
                             phone = item.split('","telephoneUsage":"Office Phone"')[
                                 0
-                            ].rsplit('"', 1)[1]
+                            ].rsplit('telephoneNumber":"', 1)[1]
                             phone = phone.replace("+1 ", "")
                         except:
                             phone = "<MISSING>"
@@ -108,6 +108,8 @@ def fetch_data():
                         )
                         if addinfo not in infos:
                             infos.append(addinfo)
+                            if "100-33 4th Ave" in add:
+                                phone = "347-909-7044"
                             yield [
                                 website,
                                 loc,

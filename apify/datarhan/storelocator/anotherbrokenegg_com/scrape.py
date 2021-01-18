@@ -79,6 +79,8 @@ def fetch_data():
         )
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if "Coming Soon" in location_name:
+            location_type = "coming soon"
         geo = (
             loc_dom.xpath('//a[@class="googlepluss"]/@href')[0]
             .split("@")[-1]
@@ -94,12 +96,15 @@ def fetch_data():
         if geo:
             latitude = geo[0]
             longitude = geo[1]
-        hours_of_operation = loc_dom.xpath(
-            '//div[@class="views-field views-field-field-closed-times"]/div/text()'
-        )
+        hours_of_operation = loc_dom.xpath('//div[contains(@class,"-time")]//text()')
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ][1:]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if location_type == "coming soon":
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
