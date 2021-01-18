@@ -54,7 +54,7 @@ def fetch_data():
                 .replace("&#39;", "'")
                 .replace("&amp;", "&")
             )
-            if lurl.count("/") == 4:
+            if lurl.count("/") == 4 and "events/search" not in lurl:
                 locs.append(lurl)
     for loc in locs:
         logger.info(loc)
@@ -105,22 +105,23 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

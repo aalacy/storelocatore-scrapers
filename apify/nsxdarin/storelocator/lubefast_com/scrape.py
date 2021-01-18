@@ -100,7 +100,10 @@ def fetch_data():
                     csz = h.split("<")[0].strip()
                 city = csz.split(",")[0]
                 state = csz.split(",")[1].strip().split(" ")[0]
+                state = state[:2]
                 zc = csz.split(",")[1].strip()[-5:]
+                if "-" in zc:
+                    zc = csz.split(",")[1].strip()[-10:]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "day<" in line2:
@@ -115,6 +118,12 @@ def fetch_data():
                 lng = line2.split("!2d")[1].split("!")[0]
                 if phone == "":
                     phone = "<MISSING>"
+                if " " in state:
+                    state = state.split(" ")[0]
+                if "3250 W." in add:
+                    phone = "8509412235"
+                hours = hours + "; Sunday: Closed"
+                name = "American Lube Fast"
                 yield [
                     website,
                     loc,

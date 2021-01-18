@@ -52,17 +52,17 @@ def fetch_data():
     loclist = r.text.split('{"locationsjson":')[1].split(',"num_location"', 1)[0]
     loclist = json.loads(loclist)
     for loc in loclist:
-        title = loc["location_name"]
-        store = loc["location_id"]
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        link = loc["rewrite_request_path"]
+        title = loc["location_name"].strip()
+        store = loc["location_id"].strip()
+        lat = loc["latitude"].strip()
+        longt = loc["longitude"].strip()
+        link = loc["rewrite_request_path"].strip()
         link = "https://www.reeds.com/" + link
         phone = loc["phone"]
         if not phone:
             phone = "<MISSING>"
-        hours = loc["hours"].replace("\r\n", "")
-        address = loc["address"]
+        hours = loc["hours"].replace("\r\n", "").strip()
+        address = loc["address"].strip()
         address = address.replace(",", " ")
         address = usaddress.parse(address)
         i = 0
@@ -89,6 +89,10 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
+            city = city.strip()
+            street = state.strip()
+            state = state.strip()
+            pcode = pcode.strip()
         data.append(
             [
                 "https://www.reeds.com/",
