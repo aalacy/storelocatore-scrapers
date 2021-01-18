@@ -51,7 +51,10 @@ def fetch_data():
         hours = json.loads(store["open_hours"])
         hours_of_operation = ""
         for x in hours:
-            hours_of_operation += x + " " + ", ".join(hours[x]) + " "
+            if hours[x] == "0":
+                hours_of_operation += x + " Closed "
+            else:
+                hours_of_operation += x + " " + ", ".join(hours[x]) + " "
         location_name = store["title"]
         street_address = store["street"]
         zip = store["postal_code"]
