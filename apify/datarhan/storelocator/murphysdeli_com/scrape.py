@@ -52,7 +52,7 @@ def fetch_data():
         store_url = "<MISSING>"
         if poi["url"]:
             store_url = urljoin(start_url, poi["url"])
-        location_name = poi["store"]
+        location_name = poi["store"].replace("#038;", "").replace("&#8211;", "")
         street_address = poi["address"]
         if poi.get("address2"):
             street_address = poi["address2"]
