@@ -1,5 +1,4 @@
 import csv
-import re
 import usaddress
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -61,7 +60,6 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
-    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://www.shortstopfoodmarts.com/locations/"
         r = session.get(url, headers=headers, verify=False)
