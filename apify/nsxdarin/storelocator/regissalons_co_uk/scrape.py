@@ -83,7 +83,7 @@ def fetch_data():
                     city = addinfo.split("|")[3]
                     state = "<MISSING>"
                     zc = addinfo.split("|")[4]
-            if 'href="tel:' in line2:
+            if 'href="tel:' in line2 and phone == "":
                 phone = line2.split('href="tel:')[1].split('"')[0]
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
