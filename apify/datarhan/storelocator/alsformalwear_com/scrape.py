@@ -77,6 +77,8 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = poi["@type"]
         location_type = location_type if location_type else "<MISSING>"
+        if not poi["openingHoursSpecification"]:
+            location_type = "coming soon"
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
         hoo = loc_dom.xpath('//div[@class="uael-table-wrapper"]/table//text()')
