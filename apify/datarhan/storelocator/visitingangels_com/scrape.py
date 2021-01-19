@@ -74,6 +74,11 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         phone = loc_dom.xpath('//div[@class="fran-info"]/text()')
         phone = phone[-1] if phone else "<MISSING>"
+        phone = (
+            phone.split()[0]
+            if len(phone.split()[0]) > 10
+            else " ".join(phone.split()[:2])
+        )
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"

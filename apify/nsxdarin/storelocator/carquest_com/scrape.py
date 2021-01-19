@@ -209,6 +209,12 @@ def fetch_loc_data(loc, allstores):
         allstores.append(store)
         if state == "":
             state = "PR"
+        if store == "":
+            store = "<MISSING>"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
         yield [
             website,
             loc,
