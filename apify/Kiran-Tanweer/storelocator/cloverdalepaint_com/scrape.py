@@ -68,6 +68,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    i = 0
     j = 0
     url = "https://www.cloverdalepaint.com/store-locations"
     r = session.get(url, headers=headers, verify=False)
@@ -115,8 +116,13 @@ def fetch_data():
             loc = loc.rstrip("></marker>")
             if len(loc) > 0:
                 title = loc.split('name="')[1].split('"')[0]
+                title = title.replace("\\", "")
+                title = title.replace("&amp;", "&")
                 title = title.strip()
                 street = loc.split('street="')[1].split('"')[0]
+                street = street.replace("&amp;", "&")
+                street = street.replace("\\", "")
+                street = street.replace("â€“", "-")
                 street = street.strip()
                 city = loc.split('city="')[1].split('"')[0]
                 city = city.strip()
@@ -134,17 +140,60 @@ def fetch_data():
                 lng = lng.strip()
                 storeid = loc.split('storeid="')[1].split('"')[0]
                 storeid = storeid.strip()
-                hoursMF = loc.split('hoursMF="')[1].split('"')[0]
-                hoursMF = hoursMF.strip()
-                hoursS = loc.split('hoursS="')[1].split('"')[0]
-                hoursS = hoursS.strip()
                 cat = loc.split('category="')[1].split('"')[0]
                 cat = cat.strip()
+                name = title
+                name = name.replace(" ", "-")
+                name = name.replace("(", "")
+                name = name.replace(")", "")
+                loclink = pagelink + "/location-detail/" + storeid + "/" + name
+                loclink = loclink.rstrip(".")
+                loclink = loclink.replace("-&-", "-")
+                loclink = loclink.replace("&", "-")
 
-                if hoursMF == "":
-                    hoursMF = "<MISSING>"
-                if hoursS == "":
-                    hoursS = "<MISSING>"
+                s = session.get(loclink, headers=headers, verify=False)
+                soup = BeautifulSoup(s.text, "html.parser")
+                div = soup.findAll("div", {"class": "loc-cell"})[1]
+                hours = div.text
+                hours = hours.strip()
+                hours = hours.replace("\n", " ")
+                hours = hours.lstrip("Hours")
+                hours = hours.strip()
+                hours = hours.replace("M2F:", "Mon-Fri:")
+                if hours == "Sun:":
+                    hours = "<MISSING>"
+                if (
+                    hours
+                    == "Mon-Fri: Tuesday-Friday 8:30 AM - 5:30 PM Sat: 9:00 AM - 5:00 PM Sun: CLOSED"
+                ):
+                    hours = (
+                        "Tues-Fri: 8:30 AM - 5:30 PM Sat: 9:00 AM - 5:00 PM Sun: CLOSED"
+                    )
+                if (
+                    hours
+                    == "Mon-Fri: Monday: 10:00am - 6:00pm / Tuesday & Wednesday: 8:00am - 6:00pm / Thursday & Friday: 10:00am - 7:00pm Sat: 8:00am - 6:00pm Sun: Closed"
+                ):
+                    hours = "Mon: 10:00am - 6:00pm Tues & Wed: 8:00am - 6:00pm Thurs & Fri: 10:00am - 7:00pm Sat: 8:00am - 6:00pm Sun: Closed"
+                if (
+                    hours
+                    == "Mon-Fri: 8:00am - 5:30pm Monday to Thursday / 8:00am - 5:00pm Friday Sat: 8:00am - 12:00pm Sun: Closed"
+                ):
+                    hours = "Mon-Thurs: 8:00am - 5:30pm Fri: 8:00am - 5:00pm Sat: 8:00am - 12:00pm Sun: Closed"
+                if (
+                    hours
+                    == "Mon-Fri: Mon: Closed | Tues-Thurs: 9am - 6pm | Fri: 9am - 5pm Sat: 10:00am - 3:00pm Sun: Closed"
+                ):
+                    hours = "Mon: Closed Tues-Thurs: 9am - 6pm Fri: 9am - 5pm Sat: 10:00am - 3:00pm Sun: Closed"
+                if (
+                    hours
+                    == "Mon-Fri: Closed Mondays | Tues-Fri: 10:00am-4:00pm Sat: 9:00am - 1:00pm Sun: Closed"
+                ):
+                    hours = "Mon: Closed Tues-Fri: 10:00am-4:00pm Sat: 9:00am - 1:00pm Sun: Closed"
+                if (
+                    hours
+                    == "Mon-Fri: 8:00am - 5:30pm (Mon-Wed) 8:00am - 8:00pm (Thurs-Fri) Sat: 9:00am - 4:00pm Sun: Closed"
+                ):
+                    hours = "Mon-Wed: 8:00am - 5:30pm Thurs-Fri: 8:00am - 8:00pm Sat: 9:00am - 4:00pm Sun: Closed"
                 if storeid == "":
                     storeid = "<MISSING>"
                 if phone == "":
@@ -153,73 +202,14 @@ def fetch_data():
                     lat = "<MISSING>"
                 if lng == "":
                     lng = "<MISSING>"
-
-                if hoursS == "<MISSING>":
-                    hours = "Mon-Fri: " + hoursMF + " " + "Sun: " + hoursS
-                else:
-                    hours = "Mon-Fri: " + hoursMF
-
-                if hoursMF == "8:00am - 5:30pm (Mon-Wed) 8:00am - 8:00pm (Thurs-Fri)":
-                    hours = (
-                        "Mon-Wed: 8:00am - 5:30pm Thurs-Fri: 8:00am - 8:00pm "
-                        + "Sun: "
-                        + hoursS
-                    )
-
-                if (
-                    hours
-                    == "Mon-Fri: Closed Mondays | Tues-Fri: 10:00am-4:00pm Sun: 9:00am - 1:00pm"
-                ):
-                    hours = "Mon: Closed Tues-Fri: 10:00am-4:00pm " + "Sun: " + hoursS
-
-                if (
-                    hours
-                    == "Mon-Fri: Mon: Closed | Tues-Thurs: 9am - 6pm | Fri: 9am - 5pm Sun: 10:00am - 3:00pm"
-                ):
-                    hours = (
-                        "Mon: Closed Tues-Thurs: 9am - 6pm Fri: 9am - 5pm "
-                        + "Sun: "
-                        + hoursS
-                    )
-
-                if (
-                    hours
-                    == "Mon-Fri: 8:00am - 5:30pm Monday to Thursday / 8:00am - 5:00pm Friday Sun: 8:00am - 12:00pm"
-                ):
-                    hours = (
-                        "Mon-Thurs: 8:00am - 5:30pm Fri: 8:00am - 5:00pm "
-                        + "Sun: "
-                        + hoursS
-                    )
-
-                if (
-                    hours
-                    == "Mon-Fri: Monday: 10:00am - 6:00pm / Tuesday &amp; Wednesday: 8:00am - 6:00pm / Thursday &amp; Friday: 10:00am - 7:00pm Sun: 8:00am - 6:00pm"
-                ):
-                    hours = (
-                        "Mon: 10:00am - 6:00pm Tues-Wed: 8:00am - 6:00pm Thurs-Fri: 10:00am - 7:00pm "
-                        + "Sun: "
-                        + hoursS
-                    )
-
-                if (
-                    hours
-                    == "Mon-Fri: Tuesday-Friday 8:30 AM - 5:30 PM Sun: 9:00 AM - 5:00 PM"
-                ):
-                    hours = "Tues-Fri 8:30 AM - 5:30 PM " + "Sun: " + hoursS
-
-                if hours == "Mon-Fri: <MISSING> Sun: <MISSING>":
-                    hours = "<MISSING>"
-
                 if country == "Canada":
                     country = "CAN"
                 if country == "United States":
                     country = "US"
-
                 data.append(
                     [
                         "https://www.cloverdalepaint.com/",
-                        pagelink,
+                        loclink,
                         title,
                         street,
                         city,
@@ -234,9 +224,7 @@ def fetch_data():
                         hours,
                     ]
                 )
-
         j = j + 1
-
     return data
 
 
