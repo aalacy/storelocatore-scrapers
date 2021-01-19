@@ -79,7 +79,20 @@ def fetch_data():
         name = res["data-store-name"]
         street = res["data-store-address1"]
         city = res["data-store-city"]
-        zp = s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+        zp = missingString
+        if (
+            s.find("div", {"class": "city-zip-code"})
+            .text.split(" ")[-1]
+            .strip()
+            .isdigit()
+        ):
+            zp = s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+        else:
+            zp = (
+                s.find("div", {"class": "city-zip-code"}).text.split(" ")[-2].strip()
+                + " "
+                + s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+            )
         if "data-store-postalCode" in res:
             zp = res["data-store-postalCode"]
         store_num = res["data-store-resultitem"]
@@ -95,24 +108,32 @@ def fetch_data():
 
         for ps in p:
             if "Monday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Tuesday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Wednesday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Thursday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Friday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Saturday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Sunday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
 
-        hours = ", ".join(timeArr)
+        hours = ", ".join(timeArr).strip("\n")
 
         if hours == "":
-            hours = missingString
+            for el in s.findAll("div", {"class": "details-info"}):
+                if "Monday" in el.text.strip():
+                    h = el.text
+                    t = []
+                    for l in h.splitlines():
+                        t.append(l.strip())
+                    hours = ", ".join(t).replace(",", "", 1)[:-2]
+                else:
+                    pass
 
         if loc_type == "":
             loc_type = missingString
@@ -134,7 +155,7 @@ def fetch_data():
                 loc_type,
                 lat,
                 lng,
-                hours,
+                hours.strip("\n").strip(),
             ]
         )
     return result

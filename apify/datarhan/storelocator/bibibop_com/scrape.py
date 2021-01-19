@@ -44,7 +44,7 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//p[@class="store-info"]')
+    all_locations = dom.xpath('//p[contains(@class, "store-info")]')
 
     for poi_html in all_locations:
         store_url = poi_html.xpath('.//a[@class="location-order-button"]/@href')
@@ -67,6 +67,10 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+
+        if store_url == "<MISSING>":
+            location_type = "coming soon"
+            hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
