@@ -9,6 +9,7 @@ myutil = Util()
 session = SgRequests()
 
 start_url = "https://www.cenex.com/locations"
+locator_domain = "https://www.cenex.com/locations"
 base_url = "https://www.cenex.com/Common/Services/InteractiveMap.svc/GetLocations"
 
 
@@ -118,7 +119,7 @@ def fetch_data():
 
         location_types = res.json()["SearchResponse"]["Facets"]["LocationTypes"]
         for location in locations:
-            page_url = base_url
+            page_url = locator_domain
             location_name = location["Name"]
             street_address = myutil._valid(
                 location["Address1"] + " " + location["Address2"]
@@ -137,7 +138,7 @@ def fetch_data():
                 if location["Amenities"][0]["Name"].lower() == "24-hour fueling":
                     hours_of_operation = "24 hours"
             _item = [
-                base_url,
+                locator_domain,
                 page_url,
                 location_name,
                 street_address,
