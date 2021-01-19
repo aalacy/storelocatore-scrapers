@@ -3,7 +3,21 @@ import pandas as pd
 
 session = SgRequests()
 
-canada_state_codes = ["NL", "PE", "NS", "NB", "QC", "ON", "MB", "SK", "AB", "BC", "YT", "NT", "NU"]
+canada_state_codes = [
+    "NL",
+    "PE",
+    "NS",
+    "NB",
+    "QC",
+    "ON",
+    "MB",
+    "SK",
+    "AB",
+    "BC",
+    "YT",
+    "NT",
+    "NU",
+]
 # Declare needed lists
 locator_domains = []
 page_urls = []
