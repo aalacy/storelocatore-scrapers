@@ -132,9 +132,10 @@ def fetch_data():
             location_type = _type(location["TypeId"], location_types)
             latitude = location["Lat"]
             longitude = location["Long"]
-            hours_of_operation = "<INACCESSIBLE>"
+            hours_of_operation = "<MISSING>"
             if location["Amenities"]:
-                hours_of_operation = location["Amenities"][0]["Name"]
+                if location["Amenities"][0]["Name"].lower() == "24-hour fueling":
+                    hours_of_operation = "24 hours"
             _item = [
                 base_url,
                 page_url,
