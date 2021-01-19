@@ -56,8 +56,12 @@ def fetch_data():
         data = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         poi = json.loads(data)
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = loc_dom.xpath('//h1[@class="f-h1"]/text()')
+        location_name = (
+            location_name[0].split(" (")[0].split(" - ")[0]
+            if location_name
+            else "<MISSING>"
+        )
         if poi.get("address"):
             street_address = poi["address"]["streetAddress"]
             street_address = street_address if street_address else "<MISSING>"
