@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 session = SgRequests()
 import json
 from bs4 import BeautifulSoup
-import unicodedata
 
 base_url = "https://courtyard.marriott.com/"
 
