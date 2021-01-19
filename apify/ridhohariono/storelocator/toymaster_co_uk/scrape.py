@@ -55,48 +55,50 @@ def fetch_data():
     store_info = session.get(LOCATION_URL, headers=HEADERS).json()
     locations = []
     for row in store_info:
-        page_url = row["link"]
-        locator_domain = DOMAIN
-        location_name = handle_missing(row["acf"]["shop_name"])
-        if len(row["acf"]["address_line_2"]) > 0:
-            street_address = "{}, {}".format(
-                row["acf"]["address_line_1"], row["acf"]["address_line_2"]
+        if row["acf"]["county"] != "Ireland" and row["acf"]["post_code"] != "Ireland":
+            print(row["acf"]["county"])
+            page_url = row["link"]
+            locator_domain = DOMAIN
+            location_name = handle_missing(row["acf"]["shop_name"])
+            if len(row["acf"]["address_line_2"]) > 0:
+                street_address = "{}, {}".format(
+                    row["acf"]["address_line_1"], row["acf"]["address_line_2"]
+                )
+            else:
+                street_address = row["acf"]["address_line_1"]
+            city = handle_missing(row["acf"]["town"])
+            state = row["acf"]["county"] if len(row["acf"]["county"]) > 0 else "UK"
+            zip = row["acf"]["post_code"]
+            if "Ireland" in zip or len(zip) < 3:
+                zip_code = "<MISSING>"
+            else:
+                zip_code = zip
+            country_code = "UK"
+            store_number = handle_missing(row["acf"]["account_number"])
+            phone = handle_missing(row["acf"]["r&r_phone_number"])
+            location_type = "<MISSING>"
+            latitude = handle_missing(row["acf"]["latitude"])
+            longitude = handle_missing(row["acf"]["longitude"])
+            hours_of_operation = "<MISSING>"
+            log.info("Append {} => {}".format(location_name, street_address))
+            locations.append(
+                [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
             )
-        else:
-            street_address = row["acf"]["address_line_1"]
-        city = handle_missing(row["acf"]["town"])
-        state = row["acf"]["county"] if len(row["acf"]["county"]) > 0 else "UK"
-        zip = row["acf"]["post_code"]
-        if "Ireland" in zip or len(zip) < 3:
-            zip_code = "<MISSING>"
-        else:
-            zip_code = zip
-        country_code = "UK"
-        store_number = handle_missing(row["acf"]["account_number"])
-        phone = handle_missing(row["acf"]["r&r_phone_number"])
-        location_type = "<MISSING>"
-        latitude = handle_missing(row["acf"]["latitude"])
-        longitude = handle_missing(row["acf"]["longitude"])
-        hours_of_operation = "<MISSING>"
-        log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
     return locations
 
 
