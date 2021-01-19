@@ -125,7 +125,10 @@ for location in all_locations:
     latitudes.append(str(location["Latitude"]))
     longitudes.append(str(location["Longitude"]))
     hours_of_operations.append("<MISSING>")
-    country_codes.append("CA")
+    if state in canada_state_codes:
+        country_codes.append("CA")
+    else:
+        country_codes.append("<MISSING>")
     location_types.append("<MISSING>")
 
 all_location_df = pd.DataFrame(
