@@ -77,6 +77,8 @@ def fetch_data():
                 next(lines)
                 g = next(lines)
                 g = str(g.decode("utf-8"))
+                if "T: <strong>" in g:
+                    phone = g.split("T: <strong>")[1].split("<")[0]
                 if "bexleyheath" not in loc:
                     rawadd = g.split("<p>")[1].split("</p>")[0]
                     if "<br" in rawadd:
