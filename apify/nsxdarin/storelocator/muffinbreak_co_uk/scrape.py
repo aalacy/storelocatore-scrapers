@@ -95,7 +95,7 @@ def fetch_data():
             phone = "<MISSING>"
         if "bexleyheath-broadway" in loc:
             rawadd = "Unit 2, 131 Broadway Bexleyheath Kent"
-        if add != "":
+        if name != "":
             add = add.replace("&#8217;", "'")
             if lat == "":
                 lat = "<MISSING>"
