@@ -1,224 +1,170 @@
 import csv
-import json
-import re
-import time
-import sys
-from datetime import datetime
-import random
-import numpy as np
-import threading
-import math
-import requests_random_user_agent  # noqa
-from bs4 import BeautifulSoup
+from sgselenium import SgChrome
+from sgzip.static import static_coordinate_list, SearchableCountries
 from sglogging import SgLogSetup
-from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sgzip.static import static_zipcode_list, SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
 
-logger = SgLogSetup().get_logger("gnc_com")
-thread_local = threading.local()
+logger = SgLogSetup().get_logger("gamestop_com")
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-}
-
-MISSING = "<MISSING>"
-FIELDS = [
-    "locator_domain",
-    "page_url",
-    "location_name",
-    "street_address",
-    "city",
-    "state",
-    "zip",
-    "country_code",
-    "store_number",
-    "phone",
-    "location_type",
-    "latitude",
-    "longitude",
-    "hours_of_operation",
-]
-
-
-def sleep(min=0, max=2):
-    duration = random.randint(min, max)
-    time.sleep(duration)
+base_url = "https://www.gamestop.com/"
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        writer.writerow(FIELDS)
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for rows in data:
             writer.writerows(rows)
 
 
-def get_session():
-    # give each thread its own session object.
-    # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
-    if not hasattr(thread_local, "session") or thread_local.request_count > 3:
-        thread_local.session = SgRequests(
-            retry_behavior=None, proxy_rotation_failure_threshold=6
-        )
-        thread_local.request_count = 0
-
-    return thread_local.session
+def extract_csrf_token(driver):
+    driver.refresh()
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    csrf_input = soup.find("input", class_="csrf-protection")
+    return csrf_input["value"]
 
 
-def increment_request_count():
-    thread_local.request_count += 1
+MISSING = "<MISSING>"
 
 
-def get_json_data(html):
-    match = re.search(r"eqfeed_callback\((.+?)\)\s*\)\s*\)", html)
-    if not match:
-        return None
-    json_text = match.group(1)
-    return json.loads(json_text)
+def get(store, key):
+    return store.get(key, MISSING) or MISSING
 
 
-def get_phone(soup):
-    phone = soup.find("a", class_="store-phone")
-    return re.sub("(|)", "", phone.getText()) or "<MISSING>" if phone else "<MISSING>"
+def fetch_stores(driver, data):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[arguments.length - 1];
+        var formData = new FormData()
+        formData.append('radius', "{data["radius"]}")
+        formData.append('lat', "{data["lat"]}")
+        formData.append('long', "{data["long"]}")
+        formData.append('csrf_token', "{data["csrf_token"]}")
+
+        fetch('https://www.gamestop.com/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius={data["radius"]}&lat={data["lat"]}&long={data["long"]}', {{
+            method: 'POST',
+            body: formData
+        }})
+            .then(res => res.json())
+            .then(data => done(data))
+    """
+    )
 
 
-def extract_hours(node):
-    return node.getText().strip().replace("\n", " ")
+def fetch_locations(coord, csrf_token, driver, tracker):
+    lat, lng = coord
 
-
-def get_hours(soup):
-    storeHours = soup.find("div", class_="storeLocatorHours")
-    if not storeHours:
-        return "<MISSING>"
-
-    openingHours = storeHours.findChildren("span")
-    return ",".join(extract_hours(day) for day in openingHours)
-
-
-def find_node(entityNum, soup):
-    link = soup.find("a", id=entityNum)
-    node = link.find_parent("td")
-    return node
-
-
-def search_zip(postal, tracker, retry_count=0):
-    url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
-    payload = {
-        "dwfrm_storelocator_countryCode": "US",
-        "dwfrm_storelocator_distanceUnit": "mi",
-        "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "50",
-        "dwfrm_storelocator_findbyzip": "Search",
-    }
-    try:
-        with get_session() as session:
-            # get the home page before each search to avoid captcha
-            session.get("https://www.gnc.com/stores",
-                        headers=headers)
-            sleep()
-            res = session.post(url, data=payload, headers=headers)
-            res.raise_for_status()
-
-        data = get_json_data(res.text)
-        locations = data.get("features", []) if data else []
-        soup = BeautifulSoup(res.text, "html.parser")
-
-        pois = []
-        for location in locations:
-            store_id = location["properties"]["storenumber"]
-            if store_id in tracker:
+    data = fetch_stores(
+        driver, {"radius": 100, "lat": lat, "long": lng, "csrf_token": csrf_token}
+    )
+    stores = []
+    if "stores" in data:
+        for store in data["stores"]:
+            store_number = store["ID"]
+            if store_number in tracker:
                 continue
-            tracker.append(store_id)
+            tracker.append(store_number)
 
-            node = find_node(store_id, soup)
-            location["properties"]["phone"] = get_phone(node)
-            location["properties"]["hours"] = get_hours(node)
-            pois.append(extract(location))
+            location_name = get(store, "name")
+            location_type = MISSING
 
-        return pois
+            street_address = get(store, "address1")
+            if street_address:
+                street_address = street_address.replace(" None", "")
 
-    except Exception as e:
-        logger.error(f"error fetching {postal} >>> {e}")
-        return []
+            if get(store, "address2") != MISSING:
+                street_address += f', {get(store, "address2")}'
+
+            city = get(store, "city")
+            state = get(store, "stateCode")
+            postal = get(store, "postalCode")
+            country_code = get(store, "countryCode")
+            latitude = get(store, "latitude")
+            longitude = get(store, "longitude")
+
+            phone = get(store, "phone")
+            hours_of_operation = get(store, "storeHours")
+
+            try:
+                page_url = (
+                    f"https://www.gamestop.com/store/us/{state}/{city}/{store_number}"
+                )
+            except:
+                page_url = "<MISSING>"
+
+            store = []
+            store.append("gamestop.com")
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(postal)
+            store.append(country_code)
+            store.append(store_number)
+            store.append(phone)
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(page_url)
+
+            stores.append(store)
+
+    return stores
 
 
-def get(obj, key):
-    return obj.get(key, MISSING) or MISSING
-
-
-def extract(loc):
-    props = loc["properties"]
-    locator_domain = "gnc.com"
-    store_number = props["storenumber"]
-    location_type = "<MISSING>"
-    location_name = get(props, "title")
-    page_url = f"https://www.gnc.com/store-details?StoreID={store_number}"
-
-    street_address = get(props, "address1")
-    if props["address2"]:
-        street_address += f", {props['address2']}"
-    street_address = street_address.strip() if street_address else MISSING
-
-    city = get(props, "city").strip()
-    state = get(props, "state")
-    postal = get(props, "postalCode")
-    country_code = "US"
-
-    geometry = loc["geometry"]
-    latitude = geometry["coordinates"][1]
-    longitude = geometry["coordinates"][0]
-
-    hours_of_operation = get(props, "hours")
-    phone = get(props, "phone")
-
-    location = {
-        "locator_domain": locator_domain,
-        "store_number": store_number,
-        "location_type": location_type,
-        "location_name": location_name,
-        "page_url": page_url,
-        "street_address": street_address,
-        "city": city,
-        "state": state,
-        "zip": postal,
-        "country_code": country_code,
-        "latitude": latitude,
-        "longitude": longitude,
-        "phone": phone,
-        "hours_of_operation": hours_of_operation,
+def get_driver():
+    headers = {
+        "accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+        "referer": "https://www.gamestop.com/stores/?showMap=true&horizontalView=true&isForm=true",
     }
 
-    return [location[field] for field in FIELDS]
+    driver = SgChrome(user_agent=headers["User-Agent"]).driver()
+    driver.set_script_timeout(300)
+    return driver
 
 
 def fetch_data():
-    dedup_tracker = []
-    zip_searched = 0
-    zips = static_zipcode_list(10, SearchableCountries.USA)
+    tracker = []
 
-    logger.info(f"total zips: {len(zips)}")
+    search = static_coordinate_list(100, SearchableCountries.USA)
+    search.extend(static_coordinate_list(100, SearchableCountries.CANADA))
+
+    driver = get_driver()
+    driver.get(
+        "https://www.gamestop.com/stores/?showMap=true&horizontalView=true&isForm=true"
+    )
+    csrf_token = extract_csrf_token(driver)
 
     with ThreadPoolExecutor() as executor:
-        logger.info(
-            f"initialize executor with {executor._max_workers} workers")
-        futures = as_completed(
-            [
-                executor.submit(search_zip, zipcode, dedup_tracker)
-                for zipcode in zips
-            ]
-        )
+        futures = [
+            executor.submit(fetch_locations, coord, csrf_token, driver, tracker)
+            for coord in search
+        ]
 
-        for future in futures:
+        for future in as_completed(futures):
             yield future.result()
-            zip_searched += 1
-
-            logger.info(
-                f"found: {len(dedup_tracker)} | zipcodes: {zip_searched}/{len(zips)}"
-            )
 
 
 def scrape():
