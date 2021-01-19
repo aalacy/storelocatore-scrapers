@@ -58,6 +58,15 @@ def fetch_data():
             r = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("h1").text
+            coords = (
+                soup.find("a", {"class": "directions gtm_directions open_pixel"})[
+                    "href"
+                ]
+                .split("&daddr=", 1)[1]
+                .split(",")
+            )
+            lat = coords[0]
+            longt = coords[1]
             address = soup.find("span", {"class": "addr"})
             temp = address.find("strong").text
             address = address.text.replace(temp, "")
@@ -115,8 +124,8 @@ def fetch_data():
                     "<MISSING>",
                     phone.strip(),
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
+                    lat,
+                    longt,
                     hours,
                 ]
             )
