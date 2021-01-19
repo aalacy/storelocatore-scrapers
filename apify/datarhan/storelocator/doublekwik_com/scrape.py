@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "doublekwik.com"
     start_url = "https://www.doublekwik.com/wp-admin/admin-ajax.php"
