@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import json
 import pandas as pd
 
 session = SgRequests()
@@ -31,8 +30,11 @@ for serve in services_resp:
 
 # Loop through services offerred to create lists of all location types
 for key in serve_dict:
-    
-    serve_url = "https://webapp3.sallynet.org/api.locator/api/Locations/search/?countToReturn=999&serviceId=" + str(serve_dict[key])
+
+    serve_url = (
+        "https://webapp3.sallynet.org/api.locator/api/Locations/search/?countToReturn=999&serviceId="
+        + str(serve_dict[key])
+    )
     serve_resp = session.get(serve_url).json()
 
     for location in serve_resp:
@@ -47,25 +49,28 @@ for key in serve_dict:
         phones.append(location["Phone"])
         latitudes.append(str(location["Latitude"]))
         longitudes.append(str(location["Longitude"]))
-        hours_of_operations.append(["<MISSING>"])
+        hours_of_operations.append("<MISSING>")
         country_codes.append("CA")
         location_types.append(key)
 
-location_types_df = pd.DataFrame({"locator_domain": locator_domains,
-                   "page_url": page_urls,
-                   "location_name": location_names,
-                   "street_address": street_addresses,
-                   "city": citys,
-                   "state": states,
-                   "zip": zips,
-                   "store_number": store_numbers,
-                   "phone": phones,
-                   "latitude": latitudes,
-                   "longitude": longitudes,
-                   "hours_of_operation": hours_of_operations,
-                   "country_code": country_codes,
-                   "location_type": location_types
-                   })
+location_types_df = pd.DataFrame(
+    {
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "store_number": store_numbers,
+        "phone": phones,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hours_of_operation": hours_of_operations,
+        "country_code": country_codes,
+        "location_type": location_types,
+    }
+)
 
 # 81 locations have no declared location type, gather all here to then fit those 81 in
 all_url = "https://webapp3.sallynet.org/api.locator/api/Locations/search/?countToReturn=999&serviceId=0"
@@ -98,25 +103,28 @@ for location in all_locations:
     phones.append(location["Phone"])
     latitudes.append(str(location["Latitude"]))
     longitudes.append(str(location["Longitude"]))
-    hours_of_operations.append(["<MISSING>"])
+    hours_of_operations.append("<MISSING>")
     country_codes.append("CA")
     location_types.append("<MISSING>")
 
-all_location_df = pd.DataFrame({"locator_domain": locator_domains,
-                   "page_url": page_urls,
-                   "location_name": location_names,
-                   "street_address": street_addresses,
-                   "city": citys,
-                   "state": states,
-                   "zip": zips,
-                   "store_number": store_numbers,
-                   "phone": phones,
-                   "latitude": latitudes,
-                   "longitude": longitudes,
-                   "hours_of_operation": hours_of_operations,
-                   "country_code": country_codes,
-                   "location_type": location_types
-                   })
+all_location_df = pd.DataFrame(
+    {
+        "locator_domain": locator_domains,
+        "page_url": page_urls,
+        "location_name": location_names,
+        "street_address": street_addresses,
+        "city": citys,
+        "state": states,
+        "zip": zips,
+        "store_number": store_numbers,
+        "phone": phones,
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hours_of_operation": hours_of_operations,
+        "country_code": country_codes,
+        "location_type": location_types,
+    }
+)
 
 all_location_list = all_location_df["store_number"].to_list()
 location_types_list = location_types_df["store_number"].to_list()
@@ -127,7 +135,6 @@ for store_id in all_location_list:
         location_types_df = location_types_df.append(store_row)
 
 location_types_df = location_types_df.fillna("<MISSING>")
-location_types_df = location_types_df.replace("          ", "<MISSING>")
-location_types_df = location_types_df.replace("", "<MISSING>")
+location_types_df = location_types_df.replace(r'^\s*$', "<MISSING>", regex=True)
 
 location_types_df.to_csv("data.csv", index=False)
