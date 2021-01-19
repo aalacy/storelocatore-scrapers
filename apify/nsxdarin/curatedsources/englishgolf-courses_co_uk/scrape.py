@@ -204,6 +204,12 @@ def fetch_data():
             state = "<MISSING>"
         if zc == "":
             zc = "<MISSING>"
+        if zc.count(" ") == 2:
+            zc = zc.split(" ")[1] + " " + zc.split(" ")[2]
+        if zc.count(" ") == 3:
+            zc = zc.split(" ")[2] + " " + zc.split(" ")[3]
+        if zc.count(" ") == 4:
+            zc = zc.split(" ")[3] + " " + zc.split(" ")[4]
         yield [
             website,
             loc,
