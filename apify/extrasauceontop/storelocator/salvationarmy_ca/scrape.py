@@ -135,6 +135,6 @@ for store_id in all_location_list:
         location_types_df = location_types_df.append(store_row)
 
 location_types_df = location_types_df.fillna("<MISSING>")
-location_types_df = location_types_df.replace(r'^\s*$', "<MISSING>", regex=True)
+location_types_df = location_types_df.replace(r"^\s*$", "<MISSING>", regex=True)
 
 location_types_df.to_csv("data.csv", index=False)
