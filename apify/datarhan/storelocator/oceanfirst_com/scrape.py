@@ -94,7 +94,9 @@ def fetch_data():
             if phone:
                 phone = phone[0]
         phone = phone if phone else "<MISSING>"
-        location_type = poi["@type"]
+        location_type = "<MISSING>"
+        if loc_dom.xpath("//div[@data-permalink]"):
+            location_type = "Branch"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = loc_dom.xpath(
