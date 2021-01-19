@@ -79,7 +79,19 @@ def fetch_data():
         name = res["data-store-name"]
         street = res["data-store-address1"]
         city = res["data-store-city"]
-        zp = s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+        zp = missingString
+        if (
+            s.find("div", {"class": "city-zip-code"})
+            .text.split(" ")[-1]
+            .strip()
+            .isdigit()
+        ):
+            zp = s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+        else:
+            zp = (
+                s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
+                + s.find("div", {"class": "city-zip-code"}).text.split(" ")[-2].strip()
+            )
         if "data-store-postalCode" in res:
             zp = res["data-store-postalCode"]
         store_num = res["data-store-resultitem"]
@@ -112,7 +124,11 @@ def fetch_data():
         hours = ", ".join(timeArr)
 
         if hours == "":
-            hours = missingString
+            for el in s.findAll("div", {"class": "details-info"}):
+                if "Monday" in el.text.strip():
+                    hours = el.get_text(separator=", ")
+                else:
+                    pass
 
         if loc_type == "":
             loc_type = missingString
@@ -134,7 +150,7 @@ def fetch_data():
                 loc_type,
                 lat,
                 lng,
-                hours,
+                hours.strip("\n").strip(),
             ]
         )
     return result
