@@ -71,7 +71,9 @@ def fetch_data():
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
-                                location_name if location_name else "<MISSING>"
+                                location_name.replace("®", "")
+                                if location_name
+                                else "<MISSING>"
                             )
                             output.append(
                                 street_address if street_address else "<MISSING>"
@@ -90,27 +92,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i1 in data_8:
         for j1 in i1["region_countries"]:
@@ -134,7 +115,9 @@ def fetch_data():
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
-                                location_name if location_name else "<MISSING>"
+                                location_name.replace("®", "")
+                                if location_name
+                                else "<MISSING>"
                             )
                             output.append(
                                 street_address if street_address else "<MISSING>"
@@ -153,27 +136,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i2 in data_8:
         for j2 in i2["region_countries"]:
@@ -197,10 +159,16 @@ def fetch_data():
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
-                                location_name if location_name else "<MISSING>"
+                                location_name.replace("®", "")
+                                if location_name
+                                else "<MISSING>"
                             )
                             output.append(
-                                street_address if street_address else "<MISSING>"
+                                street_address.replace(
+                                    "1 – 3 Baxter’s Place", "1 - 3 Baxter's Place"
+                                )
+                                if street_address
+                                else "<MISSING>"
                             )
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
@@ -216,27 +184,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
 
 
