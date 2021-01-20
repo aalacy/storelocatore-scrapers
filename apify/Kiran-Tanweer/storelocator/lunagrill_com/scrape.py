@@ -5,33 +5,13 @@ import usaddress
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("cloverdalepaint_com")
+logger = SgLogSetup().get_logger("lunagrill_com")
 
 session = SgRequests()
-##headers2 = {
-##    'authority': 'locations.lunagrill.com',
-##    'method': 'GET',
-##    'path': '/site-map/US',
-##    'scheme': 'https',
-##    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-##    'accept-encoding': 'gzip, deflate, br',
-##    'accept-language': 'en-US,en;q=0.9',
-##    'cache-control': 'max-age=0',
-##    'cookie': '__cfduid=df372926b9684d323a3d887bac097d0021610610095',
-##    'if-modified-since': 'Thu, 07 Jan 2021 10:30:34 GMT',
-##    'if-none-match': '"828d852a84c566d20bdce9e67c41f3b6"-gzip',
-##    'sec-fetch-dest': 'document',
-##    'sec-fetch-mode': 'navigate',
-##    'sec-fetch-site': 'cross-site',
-##    'sec-fetch-user': '?1',
-##    'upgrade-insecure-requests': '1',
-##    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-##}
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
-
 
 
 def write_output(data):
@@ -59,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -76,7 +56,6 @@ def write_output(data):
         logger.info(f"No of records being processed: {len(temp_list)}")
 
 
-
 def fetch_data():
     data = []
     linklist = []
@@ -85,174 +64,200 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     info = soup.text
     links = str(soup)
-    alldata = links.split('<script defer=""')[1].split('Yext.analyticsEvent = yext.analytics.getYextAnalytics(')[0]
-    coords = alldata.split('Get Directions')
+    alldata = links.split('<script defer=""')[1].split(
+        "Yext.analyticsEvent = yext.analytics.getYextAnalytics("
+    )[0]
+    coords = alldata.split("Get Directions")
     for i in coords:
         coordslink = i.split('"drivingdirection" href="')
-        if (len(coordslink) == 2):
+        if len(coordslink) == 2:
             link = coordslink[1].split('" rel="')[0]
             linklist.append(link)
-
-    info = info.split('Get Directions')
+    info = info.split("Get Directions")
     for j, k in zip(info, linklist):
-        title = 'Luna Grill'
+        title = "Luna Grill"
         hours = j.split('"normalHours"')
         if len(hours) == 2:
             hours = hours[1].split(',"utcOffsets"')[0]
-            mon = hours.split('"MONDAY","intervals":[{')[1].split('}],')[0]
+            mon = hours.split('"MONDAY","intervals":[{')[1].split("}],")[0]
             mon_start = mon.split('"start":')[1]
-            mon_end = mon.split('"end":')[1].split(',')[0]
-            
-            tues = hours.split('"TUESDAY","intervals":[{')[1].split('}],')[0]
+            mon_end = mon.split('"end":')[1].split(",")[0]
+
+            tues = hours.split('"TUESDAY","intervals":[{')[1].split("}],")[0]
             tues_start = tues.split('"start":')[1]
-            tues_end = tues.split('"end":')[1].split(',')[0]
-            
-            wed = hours.split('"WEDNESDAY","intervals":[{')[1].split('}],')[0]
+            tues_end = tues.split('"end":')[1].split(",")[0]
+
+            wed = hours.split('"WEDNESDAY","intervals":[{')[1].split("}],")[0]
             wed_start = wed.split('"start":')[1]
-            wed_end = wed.split('"end":')[1].split(',')[0]
-            
-            thurs = hours.split('"THURSDAY","intervals":[{')[1].split('}],')[0]
+            wed_end = wed.split('"end":')[1].split(",")[0]
+
+            thurs = hours.split('"THURSDAY","intervals":[{')[1].split("}],")[0]
             thurs_start = thurs.split('"start":')[1]
-            thurs_end = thurs.split('"end":')[1].split(',')[0]
-            
-            fri = hours.split('"FRIDAY","intervals":[{')[1].split('}],')[0]
+            thurs_end = thurs.split('"end":')[1].split(",")[0]
+
+            fri = hours.split('"FRIDAY","intervals":[{')[1].split("}],")[0]
             fri_start = fri.split('"start":')[1]
-            fri_end = fri.split('"end":')[1].split(',')[0]
-            
-            sat = hours.split('"SATURDAY","intervals":[{')[1].split('}],')[0]
+            fri_end = fri.split('"end":')[1].split(",")[0]
+
+            sat = hours.split('"SATURDAY","intervals":[{')[1].split("}],")[0]
             sat_start = sat.split('"start":')[1]
-            sat_end = sat.split('"end":')[1].split(',')[0]
-            
-            sun = hours.split('"SUNDAY","intervals":[{')[1].split('}],')[0]
+            sat_end = sat.split('"end":')[1].split(",")[0]
+
+            sun = hours.split('"SUNDAY","intervals":[{')[1].split("}],")[0]
             sun_start = sun.split('"start":')[1]
-            sun_end = sun.split('"end":')[1].split(',')[0]
+            sun_end = sun.split('"end":')[1].split(",")[0]
 
-            if (mon_start == '1100'):
-                mon_start = '11:00 AM'
-            if (tues_start == '1100'):
-                tues_start = '11:00 AM'
-            if (wed_start == '1100'): 
-                wed_start = '11:00 AM'
-            if (thurs_start == '1100'):
-                thurs_start = '11:00 AM'
-            if (fri_start == '1100'):
-                fri_start = '11:00 AM'
-            if (sat_start == '1100'):
-                sat_start = '11:00 AM'
-            if (sun_start == '1100'):
-                sun_start = '11:00 AM'
-
-            if (mon_start == '1030'):
-                mon_start = '10:30 AM'
-            if (tues_start == '1030'):
-                tues_start = '10:30 AM'
-            if (wed_start == '1030'): 
-                wed_start = '10:30 AM'
-            if (thurs_start == '1030'):
-                thurs_start = '10:30 AM'
-            if (fri_start == '1030'):
-                fri_start = '10:30 AM'
-            if (sat_start == '1030'):
-                sat_start = '10:30 AM'
-            if (sun_start == '1030'):
-                sun_start = '10:30 AM'
-                
-            if (sun_start == '1200'):
-                sun_start = '12:00 PM'
-            if (sun_start == '0'):
-                sun_start = '12:00 AM'
-
-            if (mon_end == '2100'):
-                mon_end = '9:00 PM'
-            if (tues_end == '2100'):
-                tues_end = '9:00 PM'
-            if (wed_end == '2100'): 
-                wed_end = '9:00 PM'
-            if (thurs_end == '2100'):
-                thurs_end = '9:00 PM'
-            if (fri_end == '2100'):
-                fri_end = '9:00 PM'
-            if (sat_end == '2100'):
-                sat_end = '9:00 PM'
-            if (sun_end == '2100'):
-                sun_end = '9:00 PM'
-
-            if (mon_end == '2030'):
-                mon_end = '8:30 PM'
-            if (tues_end == '2030'):
-                tues_end = '8:30 PM'
-            if (wed_end == '2030'): 
-                wed_end = '8:30 PM'
-            if (thurs_end == '2030'):
-                thurs_end = '8:30 PM'
-            if (fri_end == '2030'):
-                fri_end = '8:30 PM'
-            if (sat_end == '2030'):
-                sat_end = '8:30 PM'
-            if (sun_end == '2030'):
-                sun_end = '8:30 PM'
-
-            if (mon_end == '2000'):
-                mon_end = '8:00 PM'
-            if (tues_end == '2000'):
-                tues_end = '8:00 PM'
-            if (wed_end == '2000'): 
-                wed_end = '8:00 PM'
-            if (thurs_end == '2000'):
-                thurs_end = '8:00 PM'
-            if (fri_end == '2000'):
-                fri_end = '8:00 PM'
-            if (sat_end == '2000'):
-                sat_end = '8:00 PM'
-            if (sun_end == '2000'):
-                sun_end = '8:00 PM'
-            if (sun_end == '1900'):
-                sun_end = '7:00 PM'
-
-            if (mon_end == '1900'):
-                mon_end = '7:00 PM'
-            if (tues_end == '1900'):
-                tues_end = '7:00 PM'
-            if (wed_end == '1900'): 
-                wed_end = '7:00 PM'
-            if (thurs_end == '1900'):
-                thurs_end = '7:00 PM'
-            if (fri_end == '1900'):
-                fri_end = '7:00 PM'
-            if (sat_end == '1900'):
-                sat_end = '7:00 PM'
-            if (sun_end == '1800'):
-                sun_end = '6:00 PM'
-
-
-            if (mon_end == '1930'):
-                mon_end = '7:30 PM'
-            if (tues_end == '1930'):
-                tues_end = '7:30 PM'
-            if (wed_end == '1930'): 
-                wed_end = '7:30 PM'
-            if (thurs_end == '1930'):
-                thurs_end = '7:30 PM'
-            if (fri_end == '1930'):
-                fri_end = '7:30 PM'
-            if (sat_end == '1930'):
-                sat_end = '7:30 PM'
-            if (sun_end == '1930'):
-                sun_end = '7:30 PM'
-
-            HOO = 'Monday: ' + mon_start + ' - ' + mon_end + ' ' + 'Tuesday: ' + tues_start + ' - ' + tues_end + ' ' +'Wednesday: ' + wed_start + ' - ' + wed_end + ' ' +'Thursday: ' + thurs_start + ' - ' + thurs_end + ' ' +'Friday: ' + fri_start + ' - ' + fri_end + ' ' +'Saturday: ' + sat_start + ' - ' + sat_end + ' ' +'Sunday: ' + sun_start + ' - ' + sun_end
-            
-        address = j.split('}]}')
+            if mon_start == "1100":
+                mon_start = "11:00 AM"
+            if tues_start == "1100":
+                tues_start = "11:00 AM"
+            if wed_start == "1100":
+                wed_start = "11:00 AM"
+            if thurs_start == "1100":
+                thurs_start = "11:00 AM"
+            if fri_start == "1100":
+                fri_start = "11:00 AM"
+            if sat_start == "1100":
+                sat_start = "11:00 AM"
+            if sun_start == "1100":
+                sun_start = "11:00 AM"
+            if mon_start == "1030":
+                mon_start = "10:30 AM"
+            if tues_start == "1030":
+                tues_start = "10:30 AM"
+            if wed_start == "1030":
+                wed_start = "10:30 AM"
+            if thurs_start == "1030":
+                thurs_start = "10:30 AM"
+            if fri_start == "1030":
+                fri_start = "10:30 AM"
+            if sat_start == "1030":
+                sat_start = "10:30 AM"
+            if sun_start == "1030":
+                sun_start = "10:30 AM"
+            if sun_start == "1200":
+                sun_start = "12:00 PM"
+            if sun_start == "0":
+                sun_start = "12:00 AM"
+            if mon_end == "2100":
+                mon_end = "9:00 PM"
+            if tues_end == "2100":
+                tues_end = "9:00 PM"
+            if wed_end == "2100":
+                wed_end = "9:00 PM"
+            if thurs_end == "2100":
+                thurs_end = "9:00 PM"
+            if fri_end == "2100":
+                fri_end = "9:00 PM"
+            if sat_end == "2100":
+                sat_end = "9:00 PM"
+            if sun_end == "2100":
+                sun_end = "9:00 PM"
+            if mon_end == "2030":
+                mon_end = "8:30 PM"
+            if tues_end == "2030":
+                tues_end = "8:30 PM"
+            if wed_end == "2030":
+                wed_end = "8:30 PM"
+            if thurs_end == "2030":
+                thurs_end = "8:30 PM"
+            if fri_end == "2030":
+                fri_end = "8:30 PM"
+            if sat_end == "2030":
+                sat_end = "8:30 PM"
+            if sun_end == "2030":
+                sun_end = "8:30 PM"
+            if mon_end == "2000":
+                mon_end = "8:00 PM"
+            if tues_end == "2000":
+                tues_end = "8:00 PM"
+            if wed_end == "2000":
+                wed_end = "8:00 PM"
+            if thurs_end == "2000":
+                thurs_end = "8:00 PM"
+            if fri_end == "2000":
+                fri_end = "8:00 PM"
+            if sat_end == "2000":
+                sat_end = "8:00 PM"
+            if sun_end == "2000":
+                sun_end = "8:00 PM"
+            if sun_end == "1900":
+                sun_end = "7:00 PM"
+            if mon_end == "1900":
+                mon_end = "7:00 PM"
+            if tues_end == "1900":
+                tues_end = "7:00 PM"
+            if wed_end == "1900":
+                wed_end = "7:00 PM"
+            if thurs_end == "1900":
+                thurs_end = "7:00 PM"
+            if fri_end == "1900":
+                fri_end = "7:00 PM"
+            if sat_end == "1900":
+                sat_end = "7:00 PM"
+            if sun_end == "1800":
+                sun_end = "6:00 PM"
+            if mon_end == "1930":
+                mon_end = "7:30 PM"
+            if tues_end == "1930":
+                tues_end = "7:30 PM"
+            if wed_end == "1930":
+                wed_end = "7:30 PM"
+            if thurs_end == "1930":
+                thurs_end = "7:30 PM"
+            if fri_end == "1930":
+                fri_end = "7:30 PM"
+            if sat_end == "1930":
+                sat_end = "7:30 PM"
+            if sun_end == "1930":
+                sun_end = "7:30 PM"
+            HOO = (
+                "Monday: "
+                + mon_start
+                + " - "
+                + mon_end
+                + " "
+                + "Tuesday: "
+                + tues_start
+                + " - "
+                + tues_end
+                + " "
+                + "Wednesday: "
+                + wed_start
+                + " - "
+                + wed_end
+                + " "
+                + "Thursday: "
+                + thurs_start
+                + " - "
+                + thurs_end
+                + " "
+                + "Friday: "
+                + fri_start
+                + " - "
+                + fri_end
+                + " "
+                + "Saturday: "
+                + sat_start
+                + " - "
+                + sat_end
+                + " "
+                + "Sunday: "
+                + sun_start
+                + " - "
+                + sun_end
+            )
+        address = j.split("}]}")
         if len(address) == 2:
-            address = address[1].split('USPhone:')[0]
-            address = address.replace(',', '')
+            address = address[1].split("USPhone:")[0]
+            address = address.replace(",", "")
             address = address.strip()
             address = usaddress.parse(address)
-            i=0
-            street = ''
-            city = ''
-            state = ''
-            pcode = ''
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
             while i < len(address):
                 temp = address[i]
                 if (
@@ -280,36 +285,32 @@ def fetch_data():
             state = state.replace(",", "")
             pcode = pcode.lstrip()
             pcode = pcode.replace(",", "")
-            phone = j.split('Phone: ')
+            phone = j.split("Phone: ")
         if len(phone) == 3:
-            phone = phone[1].split('Details:')[0]
+            phone = phone[1].split("Details:")[0]
             phone = phone.strip()
         coordsurl = k
-        lat = coordsurl.split('q=')[1].split(',')[0]
-        lng = coordsurl.split(',')[1]
-
-
+        lat = coordsurl.split("q=")[1].split(",")[0]
+        lng = coordsurl.split(",")[1]
 
         data.append(
-        [
-            "https://www.lunagrill.com/",
-            "https://locations.lunagrill.com/",
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            'US',
-            "<MISSING>",
-            phone,
-            "<MISSING>",
-            lat,
-            lng,
-            HOO,
-        ]
+            [
+                "https://www.lunagrill.com/",
+                "https://locations.lunagrill.com/",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                lat,
+                lng,
+                HOO,
+            ]
         )
-
-
     return data
 
 
@@ -321,4 +322,3 @@ def scrape():
 
 
 scrape()
-
