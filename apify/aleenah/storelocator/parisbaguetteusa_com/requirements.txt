@@ -1,3 +1,6 @@
 sgselenium
 beautifulsoup4==4.8.0
 sglogging
+selenium.webdriver.common.by 
+selenium.webdriver.support.ui 
+selenium.webdriver.support
