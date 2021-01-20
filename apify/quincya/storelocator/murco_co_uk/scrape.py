@@ -4,6 +4,10 @@ import time
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
 from sgrequests import SgRequests
 
 from sgselenium import SgChrome
@@ -51,7 +55,11 @@ def fetch_data():
     driver = SgChrome().chrome()
 
     driver.get(base_link)
-    time.sleep(8)
+    time.sleep(2)
+    WebDriverWait(driver, 50).until(
+        ec.presence_of_element_located((By.ID, "map-canvas"))
+    )
+    time.sleep(4)
     base = BeautifulSoup(driver.page_source, "lxml")
 
     data = []
@@ -70,7 +78,7 @@ def fetch_data():
 
     for i in stores:
         store = stores[i]
-        location_name = store["name"].replace("#038;", "")
+        location_name = store["name"].replace("#038;", "").replace("&#8217;", "'")
         street_address = store["address_1"]
         zip_code = store["postcode"]
         country_code = "UK"

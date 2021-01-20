@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import lxml.html
-import requests
+from urllib.parse import quote
 
 website = "game_co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -71,10 +71,7 @@ def fetch_data():
         stores = res["stores"]
         for store in stores:
             page_url = str(store["StoreNumber"]) + "/" + store["StoreName"]
-            page_url = (
-                "https://storefinder.game.co.uk/game/stores/"
-                + requests.utils.quote(page_url)
-            )
+            page_url = "https://storefinder.game.co.uk/game/stores/" + quote(page_url)
 
             log.info(page_url)
 
