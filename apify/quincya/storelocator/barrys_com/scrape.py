@@ -146,7 +146,7 @@ def fetch_data():
             class_="grid__item wysiwyg two-up__item two-up__item--content"
         ).text
         try:
-            phone = re.findall("[\d]{1}.+[\d]{3}.+[\d]{4}", raw_text)[0]
+            phone = re.findall(r"[\d]{1}.+[\d]{3}.+[\d]{4}", raw_text)[0]
         except:
             phone = "<MISSING>"
 
