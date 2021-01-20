@@ -1,4 +1,5 @@
 import csv
+from time import sleep
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -50,9 +51,10 @@ def fetch_data():
     }
     with SgFirefox() as driver:
         driver.get(start_url)
+        sleep(10)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//a[@id="lnkStoreUrl"]/@href')
+    all_locations = dom.xpath('//div[@class="letItems"]/a/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url.lower())
         loc_response = session.get(store_url, headers=headers)
@@ -86,11 +88,8 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//div[@class="col-xs-12 col-md-6 Storesecondcollum"]/text()'
+            '//meta[@itemprop="openingHours"]/following-sibling::span/text()'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
