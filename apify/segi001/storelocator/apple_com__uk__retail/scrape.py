@@ -71,7 +71,12 @@ def fetch_data():
         hours = missingString
         timeArr = []
         loc_type = missingString
-        if "Closed" in s.findAll("td", {"class": "store-hours-time"}):
+        if (
+            "We’re temporarily closed."
+            in s.find(
+                "div", {"class": "special-message typography-intro-elevated"}
+            ).text
+        ):
             hours = missingString
             loc_type = "Temporarily closed"
         else:
@@ -82,7 +87,7 @@ def fetch_data():
                         e.find("td", {"class": "store-hours-time"}).text,
                     )
                 )
-        hours = ", ".join(timeArr)
+            hours = ", ".join(timeArr)
 
         result.append(
             [
