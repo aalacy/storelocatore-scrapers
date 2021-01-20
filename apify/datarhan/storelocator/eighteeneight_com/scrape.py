@@ -1,6 +1,5 @@
 import csv
 import json
-import usaddress
 from lxml import etree
 
 from sgrequests import SgRequests
