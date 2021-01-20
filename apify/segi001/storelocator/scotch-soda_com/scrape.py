@@ -101,12 +101,15 @@ def fetch_data():
         s = soup[1]
         name = f"{s.find('span',{'class':'Nap-name Heading Heading--4'}).text} {s.find('span',{'class':'Nap-geomod Heading Heading--1'}).text}"
         street = f"{s.find('span',{'class':'c-address-street-1'}).text}"
+        if s.find("span", {"class": "c-address-street-2"}):
+            street = f"{s.find('span',{'class':'c-address-street-1'}).text} {s.find('span',{'class':'c-address-street-2'}).text}"
         city = f"{s.find('span',{'class':'c-address-city'}).text}"
         zp = f"{s.find('span',{'class':'c-address-postal-code'}).text}"
         phone = f"{s.find('a',{'class':'c-phone-number-link c-phone-main-number-link'}).text}"
         lat = f"{s.find('meta',{'itemprop':'latitude'})['content']}"
         lng = f"{s.find('meta',{'itemprop':'longitude'})['content']}"
-        state = f"{s.find('address',{'id':'address'})['data-country']}"
+        state = f"{s.find('abbr',{'itemprop':'addressCountry'})['title']}"
+        code = f"{s.find('address',{'id':'address'})['data-country']}"
         time = s.findAll("tr", {"data-day-of-week-start-index": True})
         timeArr = []
         for t in time:
@@ -125,7 +128,7 @@ def fetch_data():
                 city,
                 state,
                 zp,
-                state,
+                code,
                 store_num,
                 phone,
                 location_type,

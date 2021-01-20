@@ -1,8 +1,11 @@
 import re
 import csv
+from time import sleep
+from lxml import etree
 import demjson
 
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -42,33 +45,52 @@ def fetch_data():
     items = []
 
     DOMAIN = "tacomayo.com"
-    start_url = "http://tacomayo.com/locations.aspx#.YAQPXZNKgWp"
-
+    start_url = "http://tacomayo.com/locations.aspx#.YAa2opNKgWq"
     response = session.get(start_url)
-    data = re.findall("locations =(.+?);", response.text.replace("\n", ""))[0]
-    data = (
-        data.replace("\r", "").replace("  ", " ").replace("  ", " ").replace("  ", " ")
-    )
-    data = re.findall(r's\d+?" :(.+?),* "s\d+?"', data)
 
-    for elem in data:
-        poi = demjson.decode(
-            elem.replace("new google.maps.LatLng(", '"').replace("),", '",')
+    with SgFirefox() as driver:
+        driver.get("http://tacomayo.com/locations.aspx#.YAa2opNKgWq")
+        driver.find_element_by_id("map_radius").click()
+        driver.find_element_by_xpath('//option[@value="0"]').click()
+        driver.find_element_by_id("map_address_button").click()
+        sleep(2)
+        dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//tr[@class="map_locationsTableRow"]')
+
+    for poi_html in all_locations:
+        store_url = poi_html.xpath('.//td[@class="locations_phone"]//a/@href')
+        store_url = store_url[0] if store_url else "<MISSING>"
+        location_name = poi_html.xpath(".//h3/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = poi_html.xpath(
+            './/td[@class="map_locationsTableAddress"]/p/text()'
         )
-        store_url = "<MISSING>"
-        location_name = poi["name"]
-        street_address = poi["address"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["zip"]
+        street_address = raw_address[0]
+        street_address = (
+            street_address[:-1] if street_address.endswith(",") else street_address
+        )
+        city = raw_address[1].split(", ")[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        types = {0: "Classic Menu", 1: "Fresh Mex"}
-        location_type = types[poi["type"]]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        store_number = poi_html.xpath("@id")[0][1:]
+        location_type = poi_html.xpath('.//td[@class="locations_store"]/text()')
+        location_type = location_type[0] if location_type else "<MISSING>"
+        poi = re.findall(
+            r's%s" ?:(.+?),* ?"s\d+?"' % store_number, response.text.replace("\n", "")
+        )
+        if not poi:
+            poi = poi = re.findall(
+                r's%s" ?:(.+?);' % store_number, response.text.replace("\n", "")
+            )
+        poi = poi[0]
+        poi = demjson.decode(
+            poi.strip()[:-1].replace("new google.maps.LatLng(", '"').replace("),", '",')
+        )
+
+        phone = "<MISSING>"
         latitude = poi["point"].split(",")[0]
-        longitude = poi["point"].split(",")[1]
+        longitude = poi["point"].split(",")[-1]
         hours_of_operation = "<MISSING>"
 
         item = [
