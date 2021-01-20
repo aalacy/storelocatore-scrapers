@@ -64,11 +64,6 @@ def fetch_data():
             lat = item["lat"]
             lng = item["lng"]
             phone = item["phone"]
-            hours = (
-                item["hours"]
-                .replace("<\/td><td><time>", "; ")
-                .replace("<\/time><\/td><\/tr><tr><td>", ": ")
-            )
             hours = hours.replace(
                 '<table role="presentation" class="wpsl-opening-hours"><tr><td>', ""
             )
