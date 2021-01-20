@@ -213,11 +213,11 @@ def fetch_data():
                         loc = "<MISSING>"
                         store = "<MISSING>"
                         hours = "<MISSING>"
-                        if "joi-south" in loc:
+                        if "14985 Old" in add:
                             phone = "904.288.9491"
-                        if "joi-beaches" in loc:
+                        if "1577 Roberts Drive" in add:
                             phone = "904.247.3324"
-                        if "medical-imaging/baptist-south" in loc:
+                        if "14540 Old St" in add:
                             phone = "904.202.2222"
                         yield [
                             website,
