@@ -1,4 +1,2 @@
-requests==2.23.0
-pout==0.8.13
-sgvalidator==0.0.70
 sglogging
+sgrequests
