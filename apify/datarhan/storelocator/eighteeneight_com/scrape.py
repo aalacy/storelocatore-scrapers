@@ -45,13 +45,6 @@ def fetch_data():
     DOMAIN = "eighteeneight.com"
     start_url = "https://eighteeneight.com/wp-admin/admin-ajax.php?action=store_search&lat=33.68457&lng=-117.8265&max_results=50&search_radius=150&autoload=1"
 
-    headers = {
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
     response = session.get(start_url)
     data = json.loads(response.text)
 
