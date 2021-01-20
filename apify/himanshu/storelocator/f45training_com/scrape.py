@@ -71,6 +71,7 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
+
     r = session.get("https://f45training.com/find-a-studio/").text
     soup = BeautifulSoup(r, "lxml")
     script = str(soup.find(text=re.compile("window.studios")))
@@ -112,7 +113,7 @@ def fetch_data():
             continue
 
         page_url = "https://f45training.com/" + i["slug"]
-        location_request = proxy_request(page_url)
+        location_request = proxy_request(page_url, headers={})
         location_soup = BeautifulSoup(location_request.text, "lxml")
         if location_soup.find("a", {"href": re.compile("tel:")}) is None:
             phone = "<MISSING>"
@@ -123,8 +124,6 @@ def fetch_data():
                 .split(",")[0]
                 .replace("(JF45)", "")
             )
-
-        print(street_address)
 
         store = []
         store.append("https://f45training.com/")
