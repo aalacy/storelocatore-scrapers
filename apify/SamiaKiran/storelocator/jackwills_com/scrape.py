@@ -1,4 +1,5 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -46,6 +47,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
+    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://www.jackwills.com/stores/search?countryName=United%20Kingdom&countryCode=GB&lat=0&long=0&sd=500"
         r = session.get(url, headers=headers, verify=False)
