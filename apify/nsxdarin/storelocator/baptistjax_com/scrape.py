@@ -101,6 +101,9 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if add != "":
+            name = name.replace("\\u0026", "&")
+            if " - " in name:
+                typ = name.split(" - ")[0]
             yield [
                 website,
                 loc,
@@ -117,6 +120,121 @@ def fetch_data():
                 lng,
                 hours,
             ]
+    url = "https://www.baptistjax.com/doctors/baptist-primary-care/locations"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        typ = "Primary Care"
+        if '{"guid":"' in line:
+            items = line.split('{"guid":"')
+            for item in items:
+                if '"name":"' in item:
+                    name = item.split('"name":"')[1].split('"')[0]
+                    add = item.split('"address1":"')[1].split('"')[0]
+                    try:
+                        add = add + " " + item.split('"address2":"')[1].split('"')[0]
+                    except:
+                        pass
+                    try:
+                        add = add + " " + item.split('"address3":"')[1].split('"')[0]
+                    except:
+                        pass
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0]
+                    zc = item.split('"zip":"')[1].split('"')[0]
+                    lat = item.split('"lat":')[1].split(",")[0]
+                    lng = item.split('"lng":')[1].split(",")[0]
+                    try:
+                        phone = item.split('"text":"Main:","number":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
+                    loc = "<MISSING>"
+                    store = "<MISSING>"
+                    hours = "<MISSING>"
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
+    urls = [
+        "https://www.baptistjax.com/locations/sleep-centers",
+        "https://www.baptistjax.com/locations/rehabilitation-centers",
+        "https://www.baptistjax.com/locations/surgery-centers",
+        "https://www.baptistjax.com/locations/wound-care",
+        "https://www.baptistjax.com/locations/medical-imaging",
+        "https://www.baptistjax.com/locations/labs",
+        "https://www.baptistjax.com/locations/heart-and-vascular-testing-centers",
+    ]
+    for url in urls:
+        typ = url.rsplit("/", 1)[1].replace("-", " ").title()
+        r2 = session.get(url, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if '{"guid":"' in line2:
+                items = line2.split('{"guid":"')
+                for item in items:
+                    if '"name":"' in item:
+                        name = item.split('"name":"')[1].split('"')[0]
+                        add = item.split('"address1":"')[1].split('"')[0]
+                        try:
+                            add = (
+                                add + " " + item.split('"address2":"')[1].split('"')[0]
+                            )
+                        except:
+                            pass
+                        try:
+                            add = (
+                                add + " " + item.split('"address3":"')[1].split('"')[0]
+                            )
+                        except:
+                            pass
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        lat = item.split('"lat":')[1].split(",")[0]
+                        lng = item.split('"lng":')[1].split(",")[0]
+                        try:
+                            phone = item.split('"text":"Main:","number":"')[1].split(
+                                '"'
+                            )[0]
+                        except:
+                            phone = "<MISSING>"
+                        loc = "<MISSING>"
+                        store = "<MISSING>"
+                        hours = "<MISSING>"
+                        if "14985 Old" in add:
+                            phone = "904.288.9491"
+                        if "1577 Roberts Drive" in add:
+                            phone = "904.247.3324"
+                        if "14540 Old St" in add:
+                            phone = "904.202.2222"
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

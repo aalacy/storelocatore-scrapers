@@ -63,41 +63,48 @@ def fetch_data():
             hours_of_operation = "Temporarily Closed"
         else:
             hours_of_operation = (
-                "Mon "
-                + store["mon_open_at"]
-                + "-"
-                + store["mon_close_at"]
-                + " Tue "
-                + store["tue_open_at"]
-                + "-"
-                + store["tue_close_at"]
-                + " Wed "
-                + store["wed_open_at"]
-                + "-"
-                + store["wed_close_at"]
-                + " Thu "
-                + store["thu_open_at"]
-                + "-"
-                + store["thu_close_at"]
-                + " Fri "
-                + store["fri_open_at"]
-                + "-"
-                + store["fri_close_at"]
-                + " Sat "
-                + store["sat_open_at"]
-                + "-"
-                + store["sat_close_at"]
-                + " Sun "
-                + store["sun_open_at"]
-                + "-"
-                + store["sun_close_at"]
-            ).strip()
+                (
+                    "Mon "
+                    + store["mon_open_at"]
+                    + "-"
+                    + store["mon_close_at"]
+                    + " Tue "
+                    + store["tue_open_at"]
+                    + "-"
+                    + store["tue_close_at"]
+                    + " Wed "
+                    + store["wed_open_at"]
+                    + "-"
+                    + store["wed_close_at"]
+                    + " Thu "
+                    + store["thu_open_at"]
+                    + "-"
+                    + store["thu_close_at"]
+                    + " Fri "
+                    + store["fri_open_at"]
+                    + "-"
+                    + store["fri_close_at"]
+                    + " Sat "
+                    + store["sat_open_at"]
+                    + "-"
+                    + store["sat_close_at"]
+                    + " Sun "
+                    + store["sun_open_at"]
+                    + "-"
+                    + store["sun_close_at"]
+                )
+                .replace("Mon -", "")
+                .replace("Tue -", "")
+                .replace("Wed -", "")
+                .replace("Thu -", "")
+                .replace("Fri -", "")
+                .replace("Sat -", "")
+                .replace("Sun -", "")
+                .strip()
+            )
 
-        if hours_of_operation == "Mon - Tue - Wed - Thu - Fri - Sat - Sun -":
-            if "for in-person shopping" in store["open_hours"]:
-                hours_of_operation = "Pickup by appointment"
-            else:
-                hours_of_operation = "<MISSING>"
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
         latitude = store["lat"]
         longitude = store["lon"]
