@@ -71,9 +71,6 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
 
     r = session.get("https://f45training.com/find-a-studio/").text
     soup = BeautifulSoup(r, "lxml")
