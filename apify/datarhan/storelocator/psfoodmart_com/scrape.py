@@ -59,7 +59,6 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//div[@class="location-inner"]/h3/text()')
         raw_address = " ".join([elem.strip() for elem in raw_address])
-        print(raw_address)
         street_address = raw_address.split(", ")[0].split("\n")[0]
         city = raw_address.split(", ")[0].split("\n")[-1]
         state = raw_address.split(", ")[-1].split()[0]
@@ -69,7 +68,6 @@ def fetch_data():
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        print(store_url)
         data = loc_dom.xpath('//script[contains(text(), "properties = ")]/text()')[0]
         latitude = re.findall(
             r"properties =(.+?)],", data.replace("\n", "").replace("\t", "")
