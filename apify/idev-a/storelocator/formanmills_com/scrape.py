@@ -58,6 +58,11 @@ def fetch_data():
         detail = bs(store[0], "lxml")
         page_url = detail.select_one("h3 a")["href"]
         location_name = detail.select_one("h3 a").string
+        location_name = (
+            location_name.split(":")[0]
+            if ":" in location_name
+            else location_name.split("*")[0]
+        )
         phone = detail.select_one("div.telephone").string
         details = detail.select("ul li")
         address = details.pop().string

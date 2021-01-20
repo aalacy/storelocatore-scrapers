@@ -56,7 +56,6 @@ def fetch_data():
     locations = []
     for row in store_info:
         if row["acf"]["county"] != "Ireland" and row["acf"]["post_code"] != "Ireland":
-            print(row["acf"]["county"])
             page_url = row["link"]
             locator_domain = DOMAIN
             location_name = handle_missing(row["acf"]["shop_name"])
