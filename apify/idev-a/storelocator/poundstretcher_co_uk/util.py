@@ -75,4 +75,4 @@ class Util:
             return "<MISSING>"
 
     def _strip_list(self, val):
-        return [_ for _ in val if _.strip()]
+        return [_.strip() for _ in val if _.strip()]
