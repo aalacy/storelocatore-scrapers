@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import csv
-import time
 from sgrequests import SgRequests
 
 
@@ -47,7 +46,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     states = soup.find("ul", {"id": "state-list"}).findAll("li")
     for s in states:
-        sub_url = "https://www.castorage.com"+s.find('a').get('href')
+        sub_url = "https://www.castorage.com" + s.find("a").get("href")
         r = session.get(sub_url, headers=headers, verify=False)
         sub = BeautifulSoup(r.text, "html.parser")
         store = sub.findAll("div", {"class": "facility-card"})
@@ -88,5 +87,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
