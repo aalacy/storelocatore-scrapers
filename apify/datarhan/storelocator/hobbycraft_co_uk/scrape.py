@@ -84,11 +84,7 @@ def fetch_data():
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = re.findall("lng':(.+?),", loc_response.text)
         longitude = longitude[0] if longitude else "<MISSING>"
-        hoo = poi_html.xpath(
-            './/div[@class="col-lg-3 col-sm-4 col-xs-12 store-timings"]/div[@class="dont-collapse-sm"]//text()'
-        )
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
