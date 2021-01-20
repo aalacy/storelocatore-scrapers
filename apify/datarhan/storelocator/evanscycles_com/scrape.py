@@ -1,5 +1,4 @@
 import csv
-from time import sleep
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -51,7 +50,6 @@ def fetch_data():
     }
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(10)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[@class="letItems"]/a/@href')
