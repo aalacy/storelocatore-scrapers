@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "bakersdrivethru.com"
     start_url = "https://www.bakersdrivethru.com/?sm-xml-search=1&lat=34.0738059&lng=-117.3132806&radius=0&namequery=34.0739016%2C%20-117.31365470000003&query_type=all&limit=0&sm_category&sm_tag&sm_day&sm_time&locname&address&city&state&zip&pid=5"
