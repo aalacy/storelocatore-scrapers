@@ -57,7 +57,6 @@ def fetch_data():
         all_locations += data["response"]["entities"]
 
     for poi in all_locations:
-        print(poi)
         store_url = poi.get("landingPageUrl")
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
