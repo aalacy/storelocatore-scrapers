@@ -63,21 +63,48 @@ def fetch_data():
     for item in items:
         page_url = "http://www.poundstretcher.co.uk/" + item["website_url"]
         location_name = myutil._valid(item["title"])
-        _address = myutil._strip_list(item["address_display"].split("\r\n"))
-        city = myutil._valid(location_name)
-        street_address = "<MISSING>"
-        state = "<MISSING>"
+        _address = myutil._strip_list(item["address_display"].split("\n"))
+        if len(_address) == 1:
+            _address = myutil._strip_list(item["address_display"].split(","))
+
+        if _address[-1] == "UK":
+            _address.pop()
+
+        if _address[0] == location_name:
+            _address = _address[1:]
+
         zip = _address[-1]
+        if len(zip.split(",")) > 1:
+            zip = zip.split(",")[1]
+            _address.pop()
+            _address.append(zip.split(",")[0])
+
+        if len(zip.split(" ")) > 2:
+            zip = " ".join(zip.split(" ")[1:])
+            _address.pop()
+            _address.append(zip.split(" ")[0])
+
+        # missing city in address_display, location_name can be city
+        city = location_name.split(" ")[0]
+        street_address = " ".join(_address[:-1])
+        if len(_address) > 2:
+            city = _address[-2]
+            street_address = " ".join(_address[:-2])
+            if len(city.split("\\")) > 1:
+                city = city.split("\\")[1]
+                street_address += " " + city.split("\\")[0]
+
+        state = "<MISSING>"
         country_code = myutil._valid(item["country"])
         store_number = myutil._valid(item["location_id"])
         phone = myutil._valid_uk(item.get("phone"))
+        location_type = "<MISSING>"
         r1 = session.get(page_url)
         soup1 = bs(r1.text, "html.parser")
-        location_type = "<MISSING>"
         if soup1.select("div#store-address"):
             store = soup1.select("div#store-address")[-1]
             if store:
-                _address = [_.text for _ in store.find_all() if _.text.strip()]
+                _address = [_ for _ in store.stripped_strings]
                 if _address[-1].replace(" ", "").isdigit():
                     _address = _address[:-1]
                 if _address[0].strip() == "Address & Contact Details":
@@ -86,13 +113,6 @@ def fetch_data():
                     _address.pop()
 
                 location_type = _address[0]
-                _address = _address[1:]
-                if _address:
-                    if len(_address) < 3:
-                        street_address = " ".join(_address[:-1]) or "<MISSING>"
-                    else:
-                        street_address = " ".join(_address[:-1]) or "<MISSING>"
-                        city = _address[-1]
 
         latitude = myutil._valid(item["latitude"])
         longitude = myutil._valid(item["longitude"])
