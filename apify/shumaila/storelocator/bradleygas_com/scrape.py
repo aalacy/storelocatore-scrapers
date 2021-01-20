@@ -3,8 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("brakecheck_com")
-
+logger = SgLogSetup().get_logger("bradleygas_com")
 
 session = SgRequests()
 
@@ -57,10 +56,10 @@ def fetch_data():
         city = loc["city"]
         state = loc["state"]
         zip = loc["zip"]
-        storenum = loc["description"].replace("#","").replace("-","")
-        if (loc["hours"]):
-            hours_of_operation = loc['hours']
-        else: 
+        storenum = loc["description"].replace("#", "").replace("-", "")
+        if loc["hours"]:
+            hours_of_operation = loc["hours"]
+        else:
             hours_of_operation = "<MISSING>"
         data.append(
             [
