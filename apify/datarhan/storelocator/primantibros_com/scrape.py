@@ -39,7 +39,6 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    scraped_items = []
 
     DOMAIN = "primantibros.com"
     start_url = "https://primantibros.com/locations?lat=34.09647&lng=-118.3991044&zip=90210&type=search"
