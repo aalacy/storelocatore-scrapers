@@ -44,6 +44,8 @@ def fetch_data():
     for store in store_list:
         if "coming soon" in store.text:
             continue
+        if "House of Jerky" not in store.text:
+            continue
         detail = store.text.split("\n")
         while True:
             try:
