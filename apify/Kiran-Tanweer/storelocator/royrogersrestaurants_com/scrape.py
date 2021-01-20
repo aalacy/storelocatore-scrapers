@@ -12,7 +12,6 @@ headers = {
 }
 
 
-
 def write_output(data):
     with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
@@ -38,7 +37,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -60,37 +59,41 @@ def fetch_data():
     url = "https://www.royrogersrestaurants.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find("div", {"class": "locations-overview js-view-dom-id-61741900e5dbe22a472378ccbca05138fc8e90f003892f0ae33accb94c3291a9"})
-    locations = linklist.findAll("ul", {"class":"locations"})
+    linklist = soup.find(
+        "div",
+        {
+            "class": "locations-overview js-view-dom-id-61741900e5dbe22a472378ccbca05138fc8e90f003892f0ae33accb94c3291a9"
+        },
+    )
+    locations = linklist.findAll("ul", {"class": "locations"})
     for loc in locations:
         allloc = loc.findAll("li")
         for l in allloc:
-            title = l.find('h4').text
+            title = l.find("h4").text
             title = title.strip()
-            pagelink = l.find('h4').find('a')['href']
-            pagelink = 'https://www.royrogersrestaurants.com' + pagelink
-            phone = l.find("p", {"class":"phone-number"}).text
+            pagelink = l.find("h4").find("a")["href"]
+            pagelink = "https://www.royrogersrestaurants.com" + pagelink
+            phone = l.find("p", {"class": "phone-number"}).text
             phone = phone.strip()
-            street = l.find("span", {"class":"address-line1"}).text
+            street = l.find("span", {"class": "address-line1"}).text
             street = street.strip()
-            city = l.find("span", {"class":"locality"}).text
+            city = l.find("span", {"class": "locality"}).text
             city = city.strip()
-            state = l.find("span", {"class":"administrative-area"}).text
+            state = l.find("span", {"class": "administrative-area"}).text
             state = state.strip()
-            pcode = l.find("span", {"class":"postal-code"}).text
+            pcode = l.find("span", {"class": "postal-code"}).text
             pcode = pcode.strip()
-            country = l.find("span", {"class":"country"}).text
-            if country == 'United States':
-                country = 'US'
+            country = l.find("span", {"class": "country"}).text
+            if country == "United States":
+                country = "US"
             p = session.get(pagelink, headers=headers, verify=False)
             soup = BeautifulSoup(p.text, "html.parser")
-            content = soup.find("div", {"class":"region-content"})
+            content = soup.find("div", {"class": "region-content"})
             hours = content.findAll("p")[-1].text
-            hours = hours.replace('\n', ' ')
-            hours = hours.replace(',', ':').strip()
-            if hours == '':
-                hours = '<MISSING>'
-
+            hours = hours.replace("\n", " ")
+            hours = hours.replace(",", ":").strip()
+            if hours == "":
+                hours = "<MISSING>"
 
             data.append(
                 [
@@ -121,4 +124,3 @@ def scrape():
 
 
 scrape()
-
