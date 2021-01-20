@@ -116,7 +116,7 @@ def fetch_data():
                 "Branch",
                 lat,
                 longt,
-                phone,
+                hours,
             ]
         )
 
