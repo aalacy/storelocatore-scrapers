@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
 
 session = SgRequests()
 headers = {
