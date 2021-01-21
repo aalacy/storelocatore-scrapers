@@ -1,0 +1,5 @@
+sgrequests
+sglogging
+us
+# uncomment if you use selenium
+# selenium==3.141.0
