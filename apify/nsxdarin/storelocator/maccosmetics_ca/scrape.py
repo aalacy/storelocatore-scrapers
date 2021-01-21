@@ -86,7 +86,11 @@ def fetch_data():
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('"longitude" content="')[1].split('"')[0]
-            if hours == "" and '{"day":"' in line2:
+            if (
+                hours == ""
+                and '{"day":"' in line2
+                and 'itemprop="openingHours" content="' not in line2
+            ):
                 days = (
                     line2.split("days='")[1]
                     .split("}]' data-utc-offsets")[0]
@@ -105,6 +109,15 @@ def fetch_data():
                                 + "-"
                                 + day.split('"end":')[1].split(",")[0]
                             )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+            if hours == "" and 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                for day in days:
+                    if '"c-hours-today-day-status' in day:
+                        hrs = day.split('"')[0]
                         if hours == "":
                             hours = hrs
                         else:
