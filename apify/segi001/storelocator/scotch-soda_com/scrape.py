@@ -108,7 +108,9 @@ def fetch_data():
         phone = f"{s.find('a',{'class':'c-phone-number-link c-phone-main-number-link'}).text}"
         lat = f"{s.find('meta',{'itemprop':'latitude'})['content']}"
         lng = f"{s.find('meta',{'itemprop':'longitude'})['content']}"
-        state = f"{s.find('abbr',{'itemprop':'addressCountry'})['title']}"
+        state = missingString
+        if s.find("span", {"itemprop": "addressRegion"}):
+            state = f"{s.find('span',{'itemprop':'addressRegion'}).text}"
         code = f"{s.find('address',{'id':'address'})['data-country']}"
         time = s.findAll("tr", {"data-day-of-week-start-index": True})
         timeArr = []
