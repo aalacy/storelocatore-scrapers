@@ -86,7 +86,7 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = ""
         longitude = ""
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = ""
 
         for child in store:
             if child.tag == "lat":
@@ -158,6 +158,32 @@ def fetch_data():
             latitude = "<MISSING>"
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
+
+        desc = store_sel.xpath(
+            '//div[@class="grid-unit size1of1 location-description"]/p'
+        )
+        hours = ""
+        for index in range(0, len(desc)):
+            if "Our Hours:" in "".join(desc[index].xpath("text()")).strip():
+                hours = "".join(desc[index + 1].xpath(".//text()")).strip()
+                break
+
+        hours_list = []
+        for hour in hours.split("\n"):
+            if len("".join(hour).strip()) > 0:
+                hours_list.append("".join(hour).strip())
+
+        hours_of_operation = (
+            "; ".join(hours_list)
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "-")
+            .strip()
+        )
+
+        if hours_of_operation == "":
+            hours_of_operation = "<MISSING>"
 
         curr_list = [
             locator_domain,
