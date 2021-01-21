@@ -53,7 +53,6 @@ def fetch_data():
         if link in streetlist:
             continue
         streetlist.append(link)
-        print(link)
         r = session.get(link, headers=headers, verify=False)
         loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
             "</script", 1
