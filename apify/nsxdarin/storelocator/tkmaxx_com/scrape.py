@@ -1,7 +1,6 @@
 import csv
 import json
 import threading
-import threading
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
