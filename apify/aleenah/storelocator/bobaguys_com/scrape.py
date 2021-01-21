@@ -75,12 +75,14 @@ def fetch_data():
                 ).find_all("p")
             except:
                 continue
-            content = re.sub(cleanr, "\n", str(div))
+            content = re.sub(
+                cleanr,
+                "\n",
+                str(div).replace("San Francisco Mission location", "").strip(),
+            )
             content = re.sub(pattern, "\n", content).lstrip()
             title = content.split("\n", 1)[0]
 
-            if "closed" in content.lower():
-                continue
             try:
                 address = content.split("\n", 1)[1].split("Mon")[0]
                 hours = "Mon" + content.split("Mon")[1]
@@ -89,8 +91,11 @@ def fetch_data():
                     address = content.split("\n", 1)[1].split("Wed")[0]
                     hours = "Wed" + content.split("Wed")[1]
                 except:
-                    address = content.split("\n", 1)[1].split("Temp")[0]
-                    hours = "Temp" + content.split("Temp")[1]
+                    try:
+                        address = content.split("\n", 1)[1].split("Temp")[0]
+                        hours = "Temp" + content.split("Temp")[1]
+                    except:
+                        continue  # closed
 
             address = address.replace("\n", " ")
 
