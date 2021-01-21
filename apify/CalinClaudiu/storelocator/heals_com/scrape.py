@@ -45,6 +45,7 @@ def parse_store(k):
         addr = "<MISSING>"
 
     try:
+        addr.pop(0)
         k["address"] = addr[0]
         addr.pop(0)
         if k["address"] == "Heal’s Westfield White City":
@@ -100,10 +101,31 @@ def parse_store(k):
     except Exception:
         k["phone"] = "<MISSING>"
 
+    if k["phone"] == "<MISSING>":
+        try:
+            addr = list(soup.find("address").stripped_strings)
+            for i in addr:
+                if "Tel" in i:
+                    k["phone"] = i.split("Tel")[1].replace(":", "").strip()
+        except:
+            k["phone"] = "<MISSING>"
+
+    if k["phone"] == "<MISSING>":
+        try:
+            phone = page.text.split("Tel:")[1].strip()
+            k["phone"] = []
+            i = 0
+            while phone[i].isdigit() or phone[i] == " ":
+                k["phone"].append(phone[i])
+                i += 1
+
+            k["phone"] = "".join(k["phone"]).strip()
+        except:
+            k["phone"] = "<MISSING>"
     k["id"] = "<MISSING>"
 
     try:
-        h = soup.find("div", {"class": "col-left"}).find("ul")
+        h = soup.find_all("div", {"class": "col-left"})[-1].find("ul")
         h = h.find_all("li")
         k["hours"] = []
         for i in h:
@@ -154,7 +176,6 @@ def fetch_data():
     url = "https://www.heals.com/stores/"
     page = session.get(url, headers=headers)
     soup = b4(page.text, "lxml")
-
     results = []
     locs = soup.find(
         "ul",

@@ -54,7 +54,9 @@ def fetch_data():
         else:
             sub_dir_response = session.get(url)
             dir_dom = etree.HTML(sub_dir_response.text)
-            all_locations_urls += dir_dom.xpath('//a[@class="Teaser-titleLink"]/@href')
+            all_locations_urls += dir_dom.xpath(
+                '//a[@data-ya-track="businessname"]/@href'
+            )
             sub_directories_urls = dir_dom.xpath(
                 '//a[@class="Directory-listLink"]/@href'
             )
@@ -66,7 +68,7 @@ def fetch_data():
                     sub2dir_response = session.get(url)
                     sub2dir_dom = etree.HTML(sub2dir_response.text)
                     all_locations_urls += sub2dir_dom.xpath(
-                        '//a[@class="Teaser-titleLink"]/@href'
+                        '//a[@data-ya-track="businessname"]/@href'
                     )
                     sub2directories_urls = sub2dir_dom.xpath(
                         '//a[@class="Directory-listLink"]/@href'
