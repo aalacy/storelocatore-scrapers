@@ -77,8 +77,8 @@ def fetch_data():
                     street = link["address_1"]
         final_data.append(
             [
-                "tonysfreshmarket.com",
-                "https://www.foodmaxx.com/stores",
+                "https://www.tonysfreshmarket.com/",
+                "https://www.tonysfreshmarket.com/my-store/store-locator",
                 title,
                 street,
                 city,

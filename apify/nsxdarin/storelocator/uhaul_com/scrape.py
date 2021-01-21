@@ -246,7 +246,10 @@ def get_location(loc, retry_count=0):
 
         phone = get_phone(data)
         hours = get_hours_from_page(soup) or get_hours(data.get("openingHours"))
-
+        if "Sat" not in hours:
+            hours = hours + "; Sat: Closed"
+        if "Sun" not in hours:
+            hours = hours + "; Sun: Closed"
         return [
             locator_domain,
             page_url,
