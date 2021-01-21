@@ -1,3 +1,2 @@
 sgrequests
 sgzip==0.1.0
-sglogging
