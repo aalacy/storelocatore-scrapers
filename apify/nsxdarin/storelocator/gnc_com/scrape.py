@@ -2,13 +2,8 @@ import csv
 import json
 import re
 import time
-import os
-from datetime import datetime
 import random
-import numpy as np
 import threading
-import math
-import requests_random_user_agent  # noqa
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
@@ -41,7 +36,7 @@ FIELDS = [
 ]
 
 
-def sleep(min=2, max=3):
+def sleep(min=0, max=2):
     duration = random.randint(min, max)
     time.sleep(duration)
 
@@ -61,7 +56,7 @@ def get_session():
     # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 6 requests
     if not hasattr(thread_local, "session") or thread_local.request_count > 3:
         thread_local.session = SgRequests(
-            retry_behavior=None, proxy_rotation_failure_threshold=6
+            retry_behavior=None, proxy_rotation_failure_threshold=3
         )
         thread_local.request_count = 0
 
@@ -104,23 +99,22 @@ def find_node(entityNum, soup):
     return node
 
 
-def search_zip(postal, tracker, retry_count=0):
+def search_zip(postal, tracker):
     url = "https://www.gnc.com/on/demandware.store/Sites-GNC2-Site/default/Stores-FindStores"
     payload = {
         "dwfrm_storelocator_countryCode": "US",
         "dwfrm_storelocator_distanceUnit": "mi",
         "dwfrm_storelocator_postalCode": postal,
-        "dwfrm_storelocator_maxdistance": "500",
+        "dwfrm_storelocator_maxdistance": "10",
         "dwfrm_storelocator_findbyzip": "Search",
     }
     try:
-        session = get_session()
-        # get the home page before each search to avoid captcha
-        session.get("https://www.gnc.com/stores", headers=headers, timeout=10)
-        sleep()
-        res = session.post(url, data=payload, headers=headers, timeout=10)
-        increment_request_count()
-        res.raise_for_status()
+        with get_session() as session:
+            # get the home page before each search to avoid captcha
+            session.get("https://www.gnc.com/stores", headers=headers)
+            sleep()
+            res = session.post(url, data=payload, headers=headers)
+            res.raise_for_status()
 
         data = get_json_data(res.text)
         locations = data.get("features", []) if data else []
@@ -140,8 +134,8 @@ def search_zip(postal, tracker, retry_count=0):
 
         return pois
 
-    except Exception as ex:
-        logger.info(f">>> exception searching zip {postal} >>> {ex}")
+    except Exception as e:
+        logger.error(f"error fetching {postal} >>> {e}")
         return []
 
 
@@ -197,27 +191,23 @@ def extract(loc):
 def fetch_data():
     dedup_tracker = []
     zip_searched = 0
-    zips = static_zipcode_list(50, SearchableCountries.USA)
+    zips = static_zipcode_list(10, SearchableCountries.USA)
 
     logger.info(f"total zips: {len(zips)}")
-    workers = min([os.cpu_count() + 4, 10])
 
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        logger.info(f"initialize executor with {workers} workers")
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"initialize executor with {executor._max_workers} workers")
         futures = as_completed(
-            [
-                executor.submit(search_zip, zipcode, dedup_tracker)
-                for zipcode in zips
-            ]
+            [executor.submit(search_zip, zipcode, dedup_tracker) for zipcode in zips]
         )
 
         for future in futures:
             yield future.result()
             zip_searched += 1
 
-        logger.info(
-            f"found: {len(dedup_tracker)} | zipcodes: {zip_searched}/{len(zips)}"
-        )
+            logger.info(
+                f"found: {len(dedup_tracker)} | zipcodes: {zip_searched}/{len(zips)}"
+            )
 
 
 def scrape():
