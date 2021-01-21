@@ -142,6 +142,13 @@ def fetch_data():
                     + str(raw_hour["intervals"][0]["end"])
                 )
             hours_of_operation = (hours_of_operation + " " + day + " " + hours).strip()
+        hours_of_operation = (
+            hours_of_operation.replace("00-", ":00-")
+            .replace("30-", ":30-")
+            .replace("30 ", ":30 ")
+            .replace("00 ", ":00 ")
+        )
+
         latitude = store["profile"]["yextDisplayCoordinate"]["lat"]
         longitude = store["profile"]["yextDisplayCoordinate"]["long"]
 
