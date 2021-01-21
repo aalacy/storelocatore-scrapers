@@ -70,40 +70,37 @@ def fetch_data():
         hours = "<MISSING>"
         lurl = "https://www.motel6.com/bin/g6/propertydata." + loc + ".json?lng=en"
         r2 = get_url(lurl)
-        try:
-            array = json.loads(r2.content)
-            lat = array["latitude"]
-            lng = array["longitude"]
-            typ = array["brand_id"]
-            add = array["address"]["address_line_0"]
-            zc = array["zip"]
-            city = array["city"]
-            name = array["name"]
-            state = array["state"]
-            country = array["country"]
-            phone = array["phone"]
-            store = array["property_id"]
-            addinfo = add + city + state
-            if addinfo not in ids:
-                ids.append(addinfo)
-                yield [
-                    website,
-                    purl,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
-        except:
-            pass
+        array = json.loads(r2.content)
+        lat = array["latitude"]
+        lng = array["longitude"]
+        typ = array["brand_id"]
+        add = array["address"]["address_line_0"]
+        zc = array["zip"]
+        city = array["city"]
+        name = array["name"]
+        state = array["state"]
+        country = array["country"]
+        phone = array["phone"]
+        store = array["property_id"]
+        addinfo = add + city + state
+        if addinfo not in ids:
+            ids.append(addinfo)
+            yield [
+                website,
+                purl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
