@@ -45,6 +45,7 @@ def get_url(lurl):
     r = session.get(lurl, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
+    return r
 
 
 def fetch_data():
