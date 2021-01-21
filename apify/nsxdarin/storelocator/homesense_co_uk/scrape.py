@@ -58,7 +58,7 @@ def fetch_data():
         logger.info(loc)
         name = ""
         add = ""
-        city = ""
+        city = loc.rsplit("/", 1)[1].replace("%20", " ")
         state = "<MISSING>"
         zc = ""
         store = ""
@@ -83,7 +83,11 @@ def fetch_data():
             if add == "" and 'itemprop="streetAddress">' in line2:
                 add = line2.split('itemprop="streetAddress">')[1].split("<")[0]
             if 'itemprop="addressLocality">' in line2 and city == "":
-                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
+                add = (
+                    add
+                    + " "
+                    + line2.split('itemprop="addressLocality">')[1].split("<")[0]
+                )
             if 'itemprop="zipCode">' in line2 and zc == "":
                 zc = line2.split('itemprop="zipCode">')[1].split("<")[0]
             if store == "" and 'data-store-id="' in line2:
@@ -95,6 +99,13 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        if "%" in city:
+            city = city.split("%")[0]
+        city = city.strip()
+        if "Manchester" in city:
+            city = "Manchester"
+        if "Staples" in name:
+            city = "London"
         yield [
             website,
             loc,
