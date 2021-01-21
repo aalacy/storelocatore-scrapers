@@ -50,40 +50,50 @@ def fetch_data():
         url = "https://www.southtexasdental.com/locations"
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "view-content"}).findAll('div', {"class": "locations_block"})
+        loclist = soup.find("div", {"class": "view-content"}).findAll(
+            "div", {"class": "locations_block"}
+        )
         for loc in loclist:
-              temp = loc.find('div', {"class": "col-sm-4 address"})
-              title = temp.find('h4').find('a').text
-              link = temp.find('h4').find('a')['href']
-              address = temp.find('p').get_text(separator='|', strip=True).split('|')
-              street = address[0]
-              address = address[1].split(',',1)
-              city = address[0]
-              address = address[1].split()
-              state = address[0]
-              pcode = address[1]
-              phone = loc.find('div', {"class": "col-sm-4 phone"}).text.strip().replace('\n',"")
-              if 'For Braces' in phone:
-                  phone = phone.split('For Braces',1)[0]
-              hours = loc.find('div', {"class": "col-sm-4 hours"}).text.strip().replace('\n',"")
-              final_data.append(
-                    [
-                        "https://www.southtexasdental.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        "<MISSING>",
-                        phone,
-                        "<MISSING>",
-                        "<MISSING>",
-                        "<MISSING>",
-                        hours
-                    ]
-                )
+            temp = loc.find("div", {"class": "col-sm-4 address"})
+            title = temp.find("h4").find("a").text
+            link = temp.find("h4").find("a")["href"]
+            address = temp.find("p").get_text(separator="|", strip=True).split("|")
+            street = address[0]
+            address = address[1].split(",", 1)
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            pcode = address[1]
+            phone = (
+                loc.find("div", {"class": "col-sm-4 phone"})
+                .text.strip()
+                .replace("\n", "")
+            )
+            if "For Braces" in phone:
+                phone = phone.split("For Braces", 1)[0]
+            hours = (
+                loc.find("div", {"class": "col-sm-4 hours"})
+                .text.strip()
+                .replace("\n", "")
+            )
+            final_data.append(
+                [
+                    "https://www.southtexasdental.com/",
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    "<MISSING>",
+                    phone,
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    hours,
+                ]
+            )
         return final_data
 
 
