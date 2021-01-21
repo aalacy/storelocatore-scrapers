@@ -87,7 +87,6 @@ def fetch_data():
             raw_address = loc_dom.xpath('//p[@class="facility-p"]/text()')
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         if not raw_address:
-            print(store_url)
             continue
         if len(raw_address) == 3:
             raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
