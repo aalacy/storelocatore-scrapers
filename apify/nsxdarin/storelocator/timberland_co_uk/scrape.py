@@ -127,6 +127,8 @@ def fetch_data():
                 typ = "Timberland Outlet Store"
             else:
                 typ = "Timberland Store"
+            if "TBC" in phone:
+                phone = "<MISSING>"
             yield [
                 website,
                 loc,

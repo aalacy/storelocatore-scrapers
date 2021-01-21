@@ -52,11 +52,7 @@ def fetch_data():
     data = []
     for store in store_list:
         page_url = "https://www.tuxedojunction.com/stores"
-        street_address = (
-            store["address_1"] + ", " + store["address_2"]
-            if store["address_2"] != ""
-            else store["address_1"]
-        )
+        street_address = store["address_1"]
         location_name = store["dba"]
         city = store["city"]
         zip = store["postcode"]
