@@ -64,91 +64,96 @@ def fetch_data():
         if 'id="__EVENTVALIDATION" value="' in line:
             EV = line.split('id="__EVENTVALIDATION" value="')[1].split('"')[0]
     for zipcode in search:
-        logger.info(("Pulling Postal Code %s..." % zipcode))
-        headers2 = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-            "Host": "www.appleone.com",
-            "Origin": "https://www.appleone.com",
-            "Referer": "https://www.appleone.com/localoffice.aspx",
-        }
-        payload = {
-            "__EVENTTARGET": "",
-            "__EVENTARGUMENT": "",
-            "__VIEWSTATE": VS,
-            "__VIEWSTATEGENERATOR": VSG,
-            "__EVENTVALIDATION": EV,
-            "ctl00$MainContentPlaceHolder$txtLocalZip": zipcode,
-            "ctl00$MainContentPlaceHolder$txtLocalCity": "",
-            "ctl00$MainContentPlaceHolder$ddlLocalState": "AK",
-            "ctl00$MainContentPlaceHolder$btnSubmit": "Locate Offices",
-        }
-        r2 = session.post(url, headers=headers2, data=payload)
-        lines = r2.iter_lines()
-        website = "appleone.com"
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if '<dd class="accordion-navigation" data-officename="' in line2:
-                add = ""
-                city = ""
-                state = ""
-                loc = "<MISSING>"
-                zc = ""
-                country = "US"
-                phone = ""
-                typ = "<MISSING>"
-                store = "<MISSING>"
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-                hours = ""
-                name = line2.split(
-                    '<dd class="accordion-navigation" data-officename="'
-                )[1].split('"')[0]
-                addinfo = line2.split('address="')[1].split('"')[0]
-                if addinfo.count(",") == 3:
-                    add = addinfo.split(",")[0] + " " + addinfo.split(",")[1].strip()
-                    city = addinfo.split(",")[2].strip()
-                    state = addinfo.split(",")[3].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
-                else:
-                    add = addinfo.split(",")[0]
-                    city = addinfo.split(",")[1].strip()
-                    state = addinfo.split(",")[2].strip().split(" ")[0]
-                    zc = addinfo.rsplit(" ", 1)[1]
-            if '<a href="tel:+' in line2:
-                phone = line2.split('">')[1].split("<")[0]
-            if "day</span>" in line2:
-                day = line2.split(">")[1].split("<")[0]
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                if ">" not in g:
+        try:
+            logger.info(("Pulling Postal Code %s..." % zipcode))
+            headers2 = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+                "Host": "www.appleone.com",
+                "Origin": "https://www.appleone.com",
+                "Referer": "https://www.appleone.com/localoffice.aspx",
+            }
+            payload = {
+                "__EVENTTARGET": "",
+                "__EVENTARGUMENT": "",
+                "__VIEWSTATE": VS,
+                "__VIEWSTATEGENERATOR": VSG,
+                "__EVENTVALIDATION": EV,
+                "ctl00$MainContentPlaceHolder$txtLocalZip": zipcode,
+                "ctl00$MainContentPlaceHolder$txtLocalCity": "",
+                "ctl00$MainContentPlaceHolder$ddlLocalState": "AK",
+                "ctl00$MainContentPlaceHolder$btnSubmit": "Locate Offices",
+            }
+            r2 = session.post(url, headers=headers2, data=payload)
+            lines = r2.iter_lines()
+            website = "appleone.com"
+            for line2 in lines:
+                line2 = str(line2.decode("utf-8"))
+                if '<dd class="accordion-navigation" data-officename="' in line2:
+                    add = ""
+                    city = ""
+                    state = ""
+                    loc = "<MISSING>"
+                    zc = ""
+                    country = "US"
+                    phone = ""
+                    typ = "<MISSING>"
+                    store = "<MISSING>"
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
+                    hours = ""
+                    name = line2.split(
+                        '<dd class="accordion-navigation" data-officename="'
+                    )[1].split('"')[0]
+                    addinfo = line2.split('address="')[1].split('"')[0]
+                    if addinfo.count(",") == 3:
+                        add = (
+                            addinfo.split(",")[0] + " " + addinfo.split(",")[1].strip()
+                        )
+                        city = addinfo.split(",")[2].strip()
+                        state = addinfo.split(",")[3].strip().split(" ")[0]
+                        zc = addinfo.rsplit(" ", 1)[1]
+                    else:
+                        add = addinfo.split(",")[0]
+                        city = addinfo.split(",")[1].strip()
+                        state = addinfo.split(",")[2].strip().split(" ")[0]
+                        zc = addinfo.rsplit(" ", 1)[1]
+                if '<a href="tel:+' in line2:
+                    phone = line2.split('">')[1].split("<")[0]
+                if "day</span>" in line2:
+                    day = line2.split(">")[1].split("<")[0]
                     g = next(lines)
                     g = str(g.decode("utf-8"))
-                hrs = day + ": " + g.split(">")[1].split("<")[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if 'div id="gmap-display-' in line2:
-                info = name + "|" + add
-                if info not in ids:
-                    ids.append(info)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if ">" not in g:
+                        g = next(lines)
+                        g = str(g.decode("utf-8"))
+                    hrs = day + ": " + g.split(">")[1].split("<")[0]
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
+                if 'div id="gmap-display-' in line2:
+                    info = name + "|" + add
+                    if info not in ids:
+                        ids.append(info)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
+        except:
+            pass
 
 
 def scrape():

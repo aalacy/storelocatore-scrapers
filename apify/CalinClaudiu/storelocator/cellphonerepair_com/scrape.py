@@ -15,16 +15,14 @@ def fetch_axml(request_url: str,
               data_params: dict = {},
               headers: dict = {},
               xml_parser: str = 'lxml',
-              retries: int = 10,
-              retry_backoff_factor = 0.3) -> List[dict]:
+              retries: int = 10) -> List[dict]:
     
     response = net_utils.fetch_data(request_url=request_url,
                           method=method,
                           data_params=data_params,
                           query_params=query_params,
                           headers=headers,
-                          retries=retries,
-                          retry_backoff_factor=retry_backoff_factor)
+                          retries=retries)
 
     xml_result = BeautifulSoup(response.text, xml_parser)
 

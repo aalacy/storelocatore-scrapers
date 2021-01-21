@@ -4,12 +4,11 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import os
 
 
 def setUp():
     options = webdriver.FirefoxOptions()
-    headless = False
+    headless = True
     options.headless = headless
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.formfill.enable", False)
@@ -23,16 +22,16 @@ def setUp():
         options=options,
         capabilities=capabilities,
         firefox_profile=profile,
-        executable_path=os.path.abspath("geckodriver"),
+        executable_path="geckodriver.exe",
     )
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("hsbc.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -51,7 +50,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-
+        # Body
         for row in data:
             writer.writerow(row)
 

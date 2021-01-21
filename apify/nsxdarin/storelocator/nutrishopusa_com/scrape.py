@@ -113,7 +113,7 @@ def fetch_data():
             if '{"id":"' in line:
                 items = line.split('{"id":"')
                 for item in items:
-                    if '"address1":"' in item:
+                    if '"address1":"' in item and '"status":"coming_soon"' not in item:
                         name = item.split('"name":"')[1].split('"')[0].replace("\\", "")
                         store = item.split('"')[0]
                         add = item.split('"address1":"')[1].split('"')[0].strip()

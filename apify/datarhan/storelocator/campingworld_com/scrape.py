@@ -54,7 +54,6 @@ def fetch_data():
     for url in all_locations:
         base_url = "https://rv.ganderoutdoors.com/dealer/"
         store_url = urljoin(base_url, url)
-        print(store_url)
         location_name = ""
         while not location_name:
             store_response = session.get(store_url.replace(" ", "%20"), headers=headers)
@@ -66,7 +65,6 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         if "Camping World" not in location_name:
             continue
-        print(location_name)
         address_raw = store_dom.xpath('//div[@class="col-xs-12 address"]/a/p/text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
         street_address = address_raw[0]

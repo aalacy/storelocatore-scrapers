@@ -80,6 +80,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
+        typ = loc.split("https://baptisthealth.net/Locations/")[1].split("/")[0]
         store = "<MISSING>"
         phone = ""
         lat = "<MISSING>"
