@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("champssports_com")
@@ -37,6 +37,9 @@ def write_output(data):
             writer.writerow(row)
 
 
+session = SgRequests()
+
+
 def fetch_data():
     # Your scraper here
     locs = []
@@ -51,7 +54,7 @@ def fetch_data():
     page_url = []
     countries = []
 
-    res = requests.get("https://stores.champssports.com/")
+    res = session.get("https://stores.champssports.com/")
     soup = BeautifulSoup(res.text, "html.parser")
     uls = soup.find("div", {"class": "Directory-content"}).find_all("ul")
     usa = uls[0].find_all("a") + uls[2].find_all("a") + uls[3].find_all("a")
@@ -69,7 +72,7 @@ def fetch_data():
 
             url = "https://stores.champssports.com/" + a.get("href").replace("../", "")
 
-            res = requests.get(url)
+            res = session.get(url)
             soup = BeautifulSoup(res.text, "html.parser")
             sa = soup.find("div", {"class": "Directory-content"}).find_all("a")
 
@@ -90,7 +93,7 @@ def fetch_data():
                         "../", ""
                     )
 
-                    res = requests.get(url)
+                    res = session.get(url)
                     soup = BeautifulSoup(res.text, "html.parser")
                     sas = soup.find_all("a", {"class": "Teaser-titleLink"})
                     for s in sas:
@@ -116,7 +119,7 @@ def fetch_data():
 
             url = "https://stores.champssports.com/" + a.get("href")
 
-            res = requests.get(url)
+            res = session.get(url)
             soup = BeautifulSoup(res.text, "html.parser")
             sa = soup.find("div", {"class": "Directory-content"}).find_all("a")
 
@@ -132,7 +135,7 @@ def fetch_data():
                         "../", ""
                     )
 
-                    res = requests.get(url)
+                    res = session.get(url)
                     soup = BeautifulSoup(res.text, "html.parser")
                     sas = soup.find_all("a", {"class": "Teaser-titleLink"})
                     for s in sas:
@@ -153,7 +156,7 @@ def fetch_data():
     for url in page_url:
         logger.info(url)
 
-        res = requests.get(url)
+        res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         div = soup.find("div", {"class": "Core-row l-row"})
 

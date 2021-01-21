@@ -36,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://impark.com/"
+    locator_domain = "https://www.daisojapan.com/"
     api_url = (
         "https://cdn.storelocatorwidgets.com/json/305108bbd6b1fed18ddf5701d3977501"
     )

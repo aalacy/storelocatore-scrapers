@@ -1,5 +1,6 @@
 import re
 import csv
+import threading
 import usaddress
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
@@ -10,10 +11,9 @@ from sgzip.static import (
     SearchableCountries,
 )
 
+local = threading.local()
 logger = SgLogSetup().get_logger("bobcat_com")
 
-current_session = SgRequests()
-request_count = 0
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -48,14 +48,11 @@ def write_output(data):
 
 
 def get_session(reset=False):
-    global current_session
-    global request_count
+    if not hasattr(local, "session") or reset or local.request_count == 3:
+        local.session = SgRequests()
+        local.request_count = 0
 
-    if reset or request_count == 10:
-        current_session = SgRequests()
-        request_count = 0
-
-    return current_session
+    return local.session
 
 
 def get_location_name(tag):
@@ -138,18 +135,18 @@ def get_street_address(addr, address):
     return street_address.strip()
 
 
-def get_state_zip(addr, address, country_code):
-    if country_code == SearchableCountries.USA:
-        state = addr.get("StateName") or MISSING
-        zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
-        return state, zipcode
+def get_state_zip_country(addr, address):
+    zipcode = addr.get("ZipCode") or addr.get("OccupancyIdentifier") or MISSING
 
-    if country_code == SearchableCountries.CANADA:
+    if zipcode.isdigit():
+        state = addr.get("StateName") or MISSING
+        return state, zipcode, "US"
+    else:
         components = address.split(", ")
         if len(components) > 1:
             state_zip = components.pop()
             state, zipcode = state_zip.split(" ", 1)
-            return state, zipcode
+            return state, zipcode, "CA"
 
     return MISSING, MISSING
 
@@ -195,8 +192,7 @@ def get_store_number(tag):
     return match.group(1)
 
 
-def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
-    global request_count
+def fetch_us_location(coord, country, dedup_tracker, retry_count=0):
 
     lat, lng = coord
     url = "https://bobcat.know-where.com/bobcat/cgi/selection"
@@ -212,13 +208,11 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
     session = get_session(retry_count > 0)
     try:
         res = session.get(url, params=params, headers=headers)
-        request_count += 1
+        local.request_count += 1
         res.raise_for_status()
     except Exception as e:
         if retry_count < 3:
-            return fetch_us_location(
-                coord, country_code, dedup_tracker, retry_count + 1
-            )
+            return fetch_us_location(coord, country, dedup_tracker, retry_count + 1)
         logger.error(f"unable to fetch coord: {lat} {lng} >>>> {e}")
 
     soup = BeautifulSoup(res.text, "lxml")
@@ -238,12 +232,15 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
 
         street_address = get_street_address(addr, address)
         city = addr.get("PlaceName") or MISSING
-        state, zipcode = get_state_zip(addr, address, country_code)
+        state, zipcode, country_code = get_state_zip_country(addr, address)
 
         phone = get_phone(location)
         page_url = get_page_url(location)
         location_name = get_location_name(location)
 
+        if " " in state:
+            state = state.split(" ")[0]
+            country_code = "CA"
         poi = {
             "locator_domain": "bobcat.com",
             "page_url": page_url,
@@ -254,7 +251,7 @@ def fetch_us_location(coord, country_code, dedup_tracker, retry_count=0):
             "city": city,
             "state": state,
             "zip": zipcode,
-            "country_code": country_code.upper(),
+            "country_code": country_code,
             "latitude": MISSING,
             "longitude": MISSING,
             "phone": phone,

@@ -37,7 +37,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
@@ -51,7 +51,7 @@ def fetch_data():
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
     token = dom.xpath("//input/@value")[0]
-    states = ["MD", "WV", "VA", "NC", "SC", "FL"]
+    states = ["MD", "WV", "VA", "NC", "SC", "FL", "DC"]
     for state in states:
         url = "https://order.ledopizza.com/api/vendors/search/{}".format(state)
         headers = {

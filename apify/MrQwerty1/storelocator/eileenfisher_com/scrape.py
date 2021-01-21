@@ -35,7 +35,7 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = "https://locations.eileenfisher.com/"
+    url = "https://eileenfisher.com/"
     api_url = "https://maps.eileenfisher.com/api/getAsyncLocations?template=domain&level=domain&limit=*&radius=*"
 
     session = SgRequests()
@@ -48,8 +48,7 @@ def fetch_data():
         locator_domain = url
         page_url = j.get("url") or "<MISSING>"
         location_name = j.get("location_name") or "<MISSING>"
-        if location_name.find("EILEEN FISHER") == -1:
-            continue
+
         street_address = (
             f"{j.get('address_1')} {j.get('address_2')}".strip() or "<MISSING>"
         )

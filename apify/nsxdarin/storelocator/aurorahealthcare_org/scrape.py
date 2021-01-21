@@ -104,22 +104,23 @@ def fetch_data():
                 lng = line2.split('longitude="')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if add != "":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

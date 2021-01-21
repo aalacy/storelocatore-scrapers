@@ -73,19 +73,19 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-            if 'itemprop="streetAddress">' in line2:
+            if 'itemprop="streetAddress">' in line2 and add == "":
                 add = line2.split('itemprop="streetAddress">')[1].split("<")[0].strip()
-            if 'itemprop="addressLocality">' in line2:
+            if 'itemprop="addressLocality">' in line2 and city == "":
                 city = (
                     line2.split('itemprop="addressLocality">')[1].split("<")[0].strip()
                 )
-            if 'itemprop="addressRegion">' in line2:
+            if 'itemprop="addressRegion">' in line2 and state == "":
                 state = (
                     line2.split('itemprop="addressRegion">')[1].split("<")[0].strip()
                 )
-            if 'itemprop="postalCode">' in line2:
+            if 'itemprop="postalCode">' in line2 and zc == "":
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0].strip()
-            if 'phone-number" href="tel:' in line2:
+            if 'phone-number" href="tel:' in line2 and phone == "":
                 phone = line2.split('phone-number" href="tel:')[1].split('"')[0].strip()
             if 'itemprop="openingHours" datetime="' in line2:
                 hrs = (
@@ -101,6 +101,7 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        city = city.replace(",", "")
         yield [
             website,
             loc,

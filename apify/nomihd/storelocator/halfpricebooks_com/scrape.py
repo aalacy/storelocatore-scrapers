@@ -134,9 +134,16 @@ def fetch_data():
             ).strip()
 
             location_type = "<MISSING>"
-            hours_of_operation = " ".join(
-                store_sel.xpath('//ul[@class="store-details-hours mts"]/li/text()')
-            ).strip()
+            hours_of_operation = (
+                " ".join(
+                    store_sel.xpath('//ul[@class="store-details-hours mts"]/li/text()')
+                )
+                .strip()
+                .replace("Outlets do not buy merchandise from the public.", "")
+                .strip()
+                .replace("Outlets are unable to buy merchandise from the public.", "")
+                .strip()
+            )
 
             if "Not Open to the Public" in hours_of_operation:
                 hours_of_operation = "<MISSING>"
@@ -169,23 +176,24 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
+            if page_url == store_req.url:
+                curr_list = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                loc_list.append(curr_list)
 
     return loc_list
 

@@ -81,6 +81,11 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
+        if "closed" in hours_of_operation.lower():
+            location_type = "closed"
+        if "soon" in location_name.lower():
+            location_type = "coming soon"
+
         item = [
             DOMAIN,
             store_url,
