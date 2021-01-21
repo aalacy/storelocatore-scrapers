@@ -1,6 +1,5 @@
 import csv
 import json
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -37,43 +36,32 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.gooutdoors.co.uk"
-    payload = {
-        "postcode": "",
-        "submit": "Find stores",
-        "radius": "500",
-        "ac_store_limit": "300",
-        "current_view": "list",
-        "fascias[]": "GO",
-    }
-    r = session.post("https://www.gooutdoors.co.uk/google/store-locator", data=payload)
-    soup = bs(r.text, "lxml")
-    store_list = soup.select("ul.store-list li")
+    base_url = "https://www.getitnowstores.com/"
+    res = session.get(
+        "https://www.getitnowstores.com/-/custom/GetStoresWithZipCode.json",
+    )
     data = []
+    store_list = json.loads(res.text)
     for store in store_list:
-        page_url = (
-            base_url
-            + store.select("div.store-details div.more_info p")
-            .pop()
-            .select_one("a")["href"]
-        )
-        location_name = store.select_one("div.store-details h3 a").string
-        res = session.get(page_url)
-        detail = json.loads(
-            res.text.split('type="application/ld+json">')[1].split("</script>")[0]
-        )
-        street_address = detail["address"]["streetAddress"]
-        country_code = detail["address"]["addressCountry"]
-        phone = store.select_one("div.store-details a.tel_link").string
-        city = detail["address"]["addressLocality"]
-        state = "<MISSING>"
-        zip = detail["address"]["postalCode"]
-        hours_of_operation = ", ".join(detail["openingHours"])
-        geo = res.text.split("maps.LatLng(")[1].split(");")[0]
-        latitude = geo.split(", ")[0]
-        longitude = geo.split(", ")[1]
-        store_number = "<MISSING>"
-        location_type = detail["@type"]
+        page_url = "<MISSING>"
+        location_name = "<MISSING>"
+        street_address = store["Address1"]
+        store_number = store["StoreNumber"]
+        city = store["City"]
+        state = store["State"]
+        zip = store["ZipCode"]
+        hours_of_operation = ""
+        hours_of_operation += store["StoreHours1"] + " "
+        hours_of_operation += store["StoreHours2"] + " "
+        hours_of_operation += store["StoreHours3"] + " "
+        hours_of_operation += store["StoreHours4"] + " "
+        hours_of_operation += store["StoreHours5"]
+        hours_of_operation = hours_of_operation.strip()
+        country_code = "US"
+        phone = store["PhoneNumber"]
+        location_type = "<MISSING>"
+        latitude = store["Latitude"]
+        longitude = store["Longitude"]
 
         data.append(
             [
