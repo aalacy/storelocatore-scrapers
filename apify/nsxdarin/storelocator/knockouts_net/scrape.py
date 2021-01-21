@@ -48,7 +48,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for item in json.loads(r.content):
-        raw_address = item["address"]
+        rawadd = item["address"]
         loc = "<MISSING>"
         store = "<MISSING>"
         lat = item["lat"]
@@ -57,23 +57,41 @@ def fetch_data():
         phone = "<MISSING>"
         hours = "<MISSING>"
         try:
-            tagged = usaddress.tag(raw_address)[0]
+            tagged = usaddress.tag(rawadd)[0]
             city = tagged.get("PlaceName", "<MISSING>")
             state = tagged.get("StateName", "<MISSING>")
             zc = tagged.get("ZipCode", "<MISSING>")
             if city != "<MISSING>":
-                add = raw_address.split(city)[0].strip()
+                add = rawadd.split(city)[0].strip()
             else:
-                add = raw_address.split(",")[0]
+                add = rawadd.split(",")[0]
         except:
             zc = "<MISSING>"
             add = "<MISSING>"
             city = "<MISSING>"
             state = "<MISSING>"
+        if "Burleson" in name:
+            add = "1185 N. Burleson Blvd., Ste. 215"
+            city = "Burleson"
+            state = "Texas"
+            zc = "76028"
+        add = add.replace("<br />", "")
+        if "Keller" in name:
+            add = "1600 Keller Pkwy Suite 130"
+            city = "Keller"
+            state = "Texas"
+            zc = "76248"
+        if "Saginaw" in name:
+            add = "1209 N Saginaw Blvd"
+            city = "Saginaw"
+            state = "Texas"
+            zc = "76179"
+        add = add.replace(",", "").strip()
         yield [
             website,
             loc,
             name,
+            rawadd,
             add,
             city,
             state,

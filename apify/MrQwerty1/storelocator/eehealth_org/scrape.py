@@ -115,6 +115,14 @@ def get_data(page_url):
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            "".join(tree.xpath("//span[@class='location-detail__office-hours']/text()"))
+            .strip()
+            .replace("\n", ";")
+            or "<MISSING>"
+        )
+
     if hours_of_operation.lower().find("call") != -1:
         hours_of_operation = "<MISSING>"
 
