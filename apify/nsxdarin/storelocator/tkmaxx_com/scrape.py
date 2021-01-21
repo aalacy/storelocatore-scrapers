@@ -1,14 +1,17 @@
 import csv
 import json
-from tenacity import retry, stop_after_attempt
+import threading
+import threading
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-session = SgRequests()
+local = threading.local()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "X-Requested-With": "XMLHttpRequest"
+    "X-Requested-With": "XMLHttpRequest",
 }
 
 logger = SgLogSetup().get_logger("tkmaxx_com")
@@ -42,6 +45,13 @@ def write_output(data):
 
 
 MISSING = "<MISSING>"
+
+
+def get_session():
+    if not hasattr(local, "session"):
+        local.session = SgRequests()
+
+    return local.session
 
 
 def get(location, key):
@@ -81,7 +91,7 @@ def extract(location, store_number):
     hours_of_operation = MISSING
     if openings != MISSING:
         hours = json.loads(openings).items()
-        hours_of_operation = ','.join([f'{day}: {hour}' for day, hour in hours])
+        hours_of_operation = ",".join([f"{day}: {hour}" for day, hour in hours])
 
     return {
         "locator_domain": locator_domain,
@@ -104,25 +114,38 @@ def extract(location, store_number):
 session = SgRequests()
 
 
-@retry(stop=stop_after_attempt(5))
 def fetch(postal):
-    params = {"q": postal}
-    result = session.get(
-        "https://www.tkmaxx.com/uk/en/store-finder", params=params, headers=headers
-    ).json()
+    try:
+        params = {"q": postal}
+        result = (
+            get_session()
+            .get(
+                "https://www.tkmaxx.com/uk/en/store-finder",
+                params=params,
+                headers=headers,
+                timeout=10,
+            )
+            .json()
+        )
 
-    return result.get("data", [])
+        return result.get("data", [])
+    except Exception as e:
+        logger.error(f"error fetching data for {postal}: {e}")
+        return []
 
 
 def fetch_data():
+    completed = 0
     searched = []
-    search = static_zipcode_list(20, SearchableCountries.BRITAIN)
+    search = static_zipcode_list(10, SearchableCountries.BRITAIN)
 
-    session.get('https://www.tkmaxx.com', headers=headers)
-    for postal in search:
-        try:
-            coords = []
-            locations = fetch(postal)
+    get_session().get("https://www.tkmaxx.com/uk/en/", headers=headers)
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch, postal) for postal in search]
+
+        for future in as_completed(futures):
+            locations = future.result()
             for location in locations:
                 store_number = get(location, "name")
                 if store_number in searched:
@@ -130,12 +153,12 @@ def fetch_data():
                 searched.append(store_number)
 
                 poi = extract(location, store_number)
-                coords.append([poi.get("latitude"), poi.get("longitude")])
-
                 yield [poi[field] for field in FIELDS]
 
-        except Exception as e:
-            logger.error(f'error fetching data for {postal}: {e}')
+            completed += 1
+            logger.info(
+                f"locations found: {len(searched)} | coords remaining: {completed}/{len(search)}"
+            )
 
 
 def scrape():
