@@ -49,7 +49,6 @@ def fetch_data():
     all_locations = dom.xpath("//div[@data-stores]/div")
 
     for poi_html in all_locations:
-        # print(etree.tostring(poi_html))
         store_url = poi_html.xpath(".//a[@data-article-tile-image]/@href")
         store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
         location_name = " ".join(
