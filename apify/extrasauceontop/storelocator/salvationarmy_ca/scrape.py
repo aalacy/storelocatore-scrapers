@@ -39,7 +39,7 @@ for key in serve_dict:
 
     for location in serve_resp:
         locator_domains.append("https://salvationarmy.ca/")
-        page_urls.append("https://salvationarmy.ca/locate")
+        page_urls.append("https://salvationarmy.ca/locator")
         location_names.append(location["Name"])
         street_addresses.append(location["Street"])
         citys.append(location["City"])
