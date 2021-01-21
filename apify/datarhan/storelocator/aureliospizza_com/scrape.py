@@ -43,54 +43,46 @@ def fetch_data():
     items = []
 
     DOMAIN = "aureliospizza.com"
-    start_url = "https://www.aureliospizza.com/wp-admin/admin-ajax.php?action=get_store_data&yourstoreSlug=undefined%2Caddison%2Cbourbonnais%2Ccedar-lake%2Cchicago-heights%2Cchicago-south-loop%2Ccrete%2Ccrown-point%2Cdowners-grove%2Cfishers%2Cfrankfort%2Cgeneva%2Cgriffith%2Chammond%2Chomewood%2Cjoliet%2Clagrange%2Claporte%2Clas-vegas-north%2Clowell%2Cmokena%2Cmorris%2Cmunster%2Cnaperville-springbrook%2Cnaples%2Cnew-lenox%2Cpalos-heights%2Cplainfield%2Cportage%2Cramsey-minnesota%2Crichton-park%2Cschererville%2Csouth-holland%2Ctinley-park%2Cvalparaiso%2Coakbrook%2Cwheaton-winfield-il%2Cwinfield-in-lakes-of-the-four-seasons%2Cwoodridge&nonce=be5eeab2f8"
+    start_url = "https://www.aureliospizza.com/locations/"
 
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
     }
     response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[@id="maplistko-js-extra"]/text()')[0]
+    data = re.findall("ParamsKo =(.+);", data)
+    data = json.loads(data[0])
 
-    for poi in data[1:]:
-        store_url = poi["url"]
+    for poi in data["KOObject"][0]["locations"]:
+        store_url = poi["locationUrl"]
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
-        data = loc_dom.xpath('//script[@id="FullPageMapScript-js-extra"]/text()')[0]
-        data = re.findall("ScriptParams =(.+?);", data)[0]
-        data = json.loads(data)
-        data = json.loads(data["location"])
-
-        location_name = poi["name"]
+        raw_address = loc_dom.xpath('//div[@class="location"]//a/text()')
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//div[@id="MapAddress"]/p/text()')
-        if len(raw_address) != 1:
-            raw_address = [elem.strip() for elem in raw_address]
-            street_address = raw_address[0]
-            street_address = street_address if street_address else "<MISSING>"
-            city = raw_address[1]
-            state = loc_dom.xpath('//div[@class="location"]/a/text()')[1].split()[-2]
-            zip_code = raw_address[-2]
-            country_code = raw_address[-1]
+        street_address = raw_address[0]
+        street_address = street_address if street_address else "<MISSING>"
+        city = location_name.split(",")[0]
+        state = raw_address[0].split(", ")[-1].split()
+        if state[-1].isdigit():
+            state = state[-2]
         else:
-            raw_address = raw_address[0].split(", ")
-            street_address = raw_address[0]
-            street_address = street_address if street_address else "<MISSING>"
-            city = raw_address[1]
-            state = loc_dom.xpath('//div[@class="location"]/a/text()')[1].split()[-2]
-            zip_code = raw_address[-1].split()[-1]
-            country_code = "<MISSING>"
-        store_number = poi["storeID"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+            state = state[-1]
+        city = city.split(state)[0].split(" - ")[0]
+        street_address = street_address.split(city)[0].split(",")[0].strip()
+        zip_code = raw_address[0].split(", ")[-1].split()[-1]
+        phone = raw_address[-1]
+        country_code = "<MISSING>"
+        store_number = loc_dom.xpath("//article/@id")[0].split("-")[-1]
         location_type = "<MISSING>"
         location_type = location_type if location_type else "<MISSING>"
-        latitude = data["latitude"]
-        longitude = data["longitude"]
-        hours_of_operation = loc_dom.xpath(
-            '//h5[contains(text(), "Hours")]/following-sibling::p[1]/text()'
-        )
+        latitude = poi["latitude"]
+        longitude = poi["longitude"]
+        sdesc_html = etree.HTML(poi["simpledescription"])
         hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
+            elem.strip() for elem in sdesc_html.xpath("//text()") if "am " in elem
         ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"

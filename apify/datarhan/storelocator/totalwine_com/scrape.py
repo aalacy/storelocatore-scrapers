@@ -36,7 +36,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
@@ -103,8 +103,6 @@ def fetch_data():
     all_locations = []
     for state in states:
         response = session.get(start_url.format(state), headers=headers)
-        if not response.text.startswith("{"):
-            continue
         data = json.loads(response.text)
         if not data.get("stores"):
             continue
