@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-import json
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 
@@ -45,7 +44,7 @@ def get_url(lurl):
     r = session.get(lurl, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
-    return r
+    return r.json()
 
 
 def fetch_data():
@@ -69,8 +68,7 @@ def fetch_data():
         typ = ""
         hours = "<MISSING>"
         lurl = "https://www.motel6.com/bin/g6/propertydata." + loc + ".json?lng=en"
-        r2 = get_url(lurl)
-        array = json.loads(r2.content)
+        array = get_url(lurl)
         lat = array["latitude"]
         lng = array["longitude"]
         typ = array["brand_id"]
