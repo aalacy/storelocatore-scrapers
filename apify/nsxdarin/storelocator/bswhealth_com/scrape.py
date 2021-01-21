@@ -45,7 +45,6 @@ def fetch_data():
     for line in r.iter_lines(decode_unicode=True):
         if '"locationType":"' in line:
             items = line.split('"locationType":"')
-            print(len(items))
             for item in items:
                 if '"photoUrl":' in item:
                     typ = item.split('"')[0]
