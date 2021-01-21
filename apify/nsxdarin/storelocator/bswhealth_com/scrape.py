@@ -4,7 +4,8 @@ from sgrequests import SgRequests
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "x-bsw-correlationid": "778d8d48eae6468bbee87d82d2b3037a",
+    "x-bsw-correlationid": "ecf2fb2f-89bb-41a6-bc53-68ffc5880f56",
+    "x-bsw-sessionid": "ecf2fb2f-89bb-41a6-bc53-68ffc5880f56",
     "x-bsw-clientid": "BSWHealth.com",
 }
 
@@ -37,8 +38,8 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=32,-96&distance=2500&LineOfBusiness=BSWH&pageNumber=1&sortSeed=7202&perPage=2500&SortBy=Distance&DocSortBy=NextAvailableAppointment"
-    r = session.get(url, headers=headers)
+    url = "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=37.912491449640854,-99.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true"
+    r = session.get(url, headers=headers, stream=True)
     if r.encoding is None:
         r.encoding = "utf-8"
     website = "bswhealth.com"
