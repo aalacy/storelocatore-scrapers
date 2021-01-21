@@ -9,7 +9,7 @@ from sgrequests import SgRequests
 
 
 def sleep():
-    time.sleep(random.randint(1, 2))
+    time.sleep(random.randint(2, 5))
 
 
 def write_output(data):
