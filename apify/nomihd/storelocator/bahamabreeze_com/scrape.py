@@ -224,14 +224,13 @@ def fetch_data():
                 hours_of_operation = ""
                 hours_list = []
                 hours = store_sel.xpath('//div[@class="hours-section"]/span')
-                total = int((len(hours) / 2) + 1)
-                print(total)
-                for index in range(
-                    0,
-                ):
+                total = int((len(hours) / 2))
+                for index in range(0, total):
                     hours_list.append(
                         "".join(hours[index].xpath("text()")).strip()
-                    ) + ":" + "".join(hours[index + 1].xpath("text()")).strip()
+                        + ":"
+                        + "".join(hours[index + 1].xpath("text()")).strip()
+                    )
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
