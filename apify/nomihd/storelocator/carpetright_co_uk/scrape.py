@@ -188,7 +188,9 @@ def fetch_data():
     countries = countries_sel.xpath('//a[@class="Directory-listLink"]')
     for con in countries:
         if "".join(con.xpath("@data-count")).strip() == "(1)":
-            store_url = domain + "".join(con.xpath("@href")).strip().replace("../", "").strip()
+            store_url = (
+                domain + "".join(con.xpath("@href")).strip().replace("../", "").strip()
+            )
             store_sel = get_selector(store_url)
             curr_list = get_store_data(store_sel, store_url)
             loc_list.append(curr_list)
@@ -200,31 +202,61 @@ def fetch_data():
 
             for state in states:
                 if "".join(state.xpath("@data-count")).strip() == "(1)":
-                    store_url = domain + "".join(state.xpath("@href")).strip().replace("../", "").strip()
+                    store_url = (
+                        domain
+                        + "".join(state.xpath("@href"))
+                        .strip()
+                        .replace("../", "")
+                        .strip()
+                    )
                     store_sel = get_selector(store_url)
                     curr_list = get_store_data(store_sel, store_url)
                     loc_list.append(curr_list)
 
                 else:
-                    state_url = domain + "".join(state.xpath("@href")).strip().replace("../", "").strip()
+                    state_url = (
+                        domain
+                        + "".join(state.xpath("@href"))
+                        .strip()
+                        .replace("../", "")
+                        .strip()
+                    )
                     cities_sel = get_selector(state_url)
                     cities = cities_sel.xpath('//a[@class="Directory-listLink"]')
 
                     for city in cities:
                         if "".join(city.xpath("@data-count")).strip() == "(1)":
-                            store_url = domain + "".join(city.xpath("@href")).strip().replace("../", "").strip()
+                            store_url = (
+                                domain
+                                + "".join(city.xpath("@href"))
+                                .strip()
+                                .replace("../", "")
+                                .strip()
+                            )
                             store_sel = get_selector(store_url)
                             curr_list = get_store_data(store_sel, store_url)
                             loc_list.append(curr_list)
                         else:
-                            city_url = domain + "".join(city.xpath("@href")).strip().replace("../", "").strip()
+                            city_url = (
+                                domain
+                                + "".join(city.xpath("@href"))
+                                .strip()
+                                .replace("../", "")
+                                .strip()
+                            )
                             stores_sel = get_selector(city_url)
                             stores = stores_sel.xpath(
                                 '//a[@class="Teaser-titleLink"]/@href'
                             )
 
                             for store_url in stores:
-                                page_url = domain + store_url.replace("../", "").strip().replace("../", "").strip()
+                                page_url = (
+                                    domain
+                                    + store_url.replace("../", "")
+                                    .strip()
+                                    .replace("../", "")
+                                    .strip()
+                                )
                                 store_sel = get_selector(page_url)
                                 curr_list = get_store_data(store_sel, page_url)
                                 loc_list.append(curr_list)
