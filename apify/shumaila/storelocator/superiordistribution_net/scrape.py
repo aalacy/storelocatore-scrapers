@@ -47,6 +47,9 @@ def fetch_data():
     data_list = soup.findAll("div", {"class": "locations"})
     for loc in data_list:
         title = loc.find("a").text
+        page_url = url + loc.find("a").get("href")
+        if len(page_url) < 1:
+            page_url = "<MISSING>"
         det = str(loc).replace("<br/>", "")
         det = BeautifulSoup(det, "html.parser")
         det = det.findAll("strong")
@@ -57,13 +60,18 @@ def fetch_data():
         phone = loc.findAll("a")[1].get("href")
         phone = str(phone).replace("tel:", "")
         hours_of_operation = (
-            det[3].text + det[3].next_sibling + "\n" + det[4].text + det[4].next_sibling
+            det[3].text
+            + det[3].next_sibling.rstrip()
+            + " "
+            + det[4].text.rstrip()
+            + det[4].next_sibling.rstrip()
         )
+        hours_of_operation = hours_of_operation.replace("\n", ",")
 
         data.append(
             [
                 "https://superiordistribution.net/",
-                "https://superiordistribution.net/",
+                page_url,
                 title,
                 street,
                 city,
