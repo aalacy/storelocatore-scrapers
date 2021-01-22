@@ -47,38 +47,50 @@ def fetch_data():
     DOMAIN = "kekes.com"
     start_url = "https://www.kekes.com/all-locations"
 
-    response = session.get(start_url)
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+    }
+    response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@class="sqs-block-content"]/p/a/@href')
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        with SgFirefox() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
+        loc_response = session.get(store_url, headers=headers)
+        loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath("//div/@data-block-json")
         if not poi:
             continue
         poi = json.loads(poi[0])
-        if not poi["location"]["addressLine2"]:
-            continue
 
+        raw_address = loc_dom.xpath('//div[@class="sqs-block-content"]/p[2]/a/text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//div[@class="sqs-block-content"]/p[3]/a/text()'
+            )
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        if len(raw_address) != 2:
+            raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
         location_name = loc_dom.xpath('//div[@class="sqs-block-content"]/h1/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi["location"]["addressLine1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = "<MISSING>"
-        if len(poi["location"]["addressLine2"].split(", ")) == 3:
-            city = poi["location"]["addressLine2"].split(", ")[0]
-        state = poi["location"]["addressLine2"].split(", ")[-2]
-        zip_code = poi["location"]["addressLine2"].split(", ")[-1]
+        street_address = raw_address[0]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = poi["location"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["location"]["mapZoom"]
         store_number = store_number if store_number else "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
+        if phone == "<MISSING>":
+            phone = loc_dom.xpath('//div[@class="sqs-block-content"]/p[1]/text()')[0]
+        if "NOW OPEN" in phone:
+            phone = loc_dom.xpath('//div[@class="sqs-block-content"]/p[2]/text()')[0]
         location_type = "<MISSING>"
+        if "COMING SOON" in phone:
+            phone = "<MISSING>"
+            location_type = "COMING SOON"
         latitude = poi["location"]["mapLat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["location"]["mapLng"]
@@ -86,17 +98,9 @@ def fetch_data():
         hoo = loc_dom.xpath('//p[contains(text(), "open daily")]/text()')[0]
         hours_of_operation = re.findall(r"locations are (.+)\(", hoo)[0]
 
-        if city.split(",")[0].isdigit():
-            city = "<MISSING>"
-        if state.split(",")[0].isdigit():
-            state = "<MISSING>"
-        if len(zip_code.split()) == 2:
-            city = state
-            state = zip_code.split()[0]
-            zip_code = zip_code.split()[-1]
-        if street_address == "<MISSING>":
-            state = "<MISSING>"
-            zip_code = "<MISSING>"
+        if "FL" in city:
+            state = city.split(",")[-1].split()[0]
+            city = city.split(",")[0]
 
         item = [
             DOMAIN,
