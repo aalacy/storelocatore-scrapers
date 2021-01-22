@@ -1,8 +1,6 @@
 import csv
 import json
 
-from datetime import datetime
-
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
