@@ -49,33 +49,39 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("a", {"class": "textlink"})
     for link in linklist:
-        url = 'https://www.greatwraps.com' + link['href']
+        url = "https://www.greatwraps.com" + link["href"]
         p = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(p.text, "html.parser")
         title = soup.find("div", {"id": "locName"})
         title = title.text.strip()
-        phone = soup.find("a", {"class":"globalBtn red phone"})
+        phone = soup.find("a", {"class": "globalBtn red phone"})
         if phone is None:
-            phone = '<MISSING>'
+            phone = "<MISSING>"
         else:
             phone = phone.text.strip()
-        Address = soup.find("p", {"class":"locationsAddress"}).text.strip()
-        Address = Address.rstrip('United States').strip()
-        if url == 'https://www.greatwraps.com/location-details/?stitle=Atlanta International Airport (ATL) Concourse C':
-            street = 'Airport location'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            pcode = '<MISSING>'
-        elif url == 'https://www.greatwraps.com/location-details/?stitle=Chicago Premium Outlets':
-            street = 'Mall Location'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            pcode = '<MISSING>'
-        else:            
-            Address = Address.rstrip(',')
-            Address = Address.split(',')
+        Address = soup.find("p", {"class": "locationsAddress"}).text.strip()
+        Address = Address.rstrip("United States").strip()
+        if (
+            url
+            == "https://www.greatwraps.com/location-details/?stitle=Atlanta International Airport (ATL) Concourse C"
+        ):
+            street = "Airport location"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            pcode = "<MISSING>"
+        elif (
+            url
+            == "https://www.greatwraps.com/location-details/?stitle=Chicago Premium Outlets"
+        ):
+            street = "Mall Location"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            pcode = "<MISSING>"
+        else:
+            Address = Address.rstrip(",")
+            Address = Address.split(",")
             if len(Address) == 4:
-                street = Address[0].strip() + ' ' + Address[1].strip()
+                street = Address[0].strip() + " " + Address[1].strip()
                 city = Address[2].strip()
                 statenzip = Address[3].strip()
                 statenzip = statenzip.strip()
@@ -84,30 +90,27 @@ def fetch_data():
                 city = Address[1].strip()
                 statenzip = Address[2].strip()
                 statenzip = statenzip.strip()
-            if (len(statenzip) == 2):
+            if len(statenzip) == 2:
                 state = statenzip
-                pcode = '<MISSING>'
+                pcode = "<MISSING>"
             else:
-                state = statenzip.split(' ')[0].strip()
-                pcode = statenzip.split(' ')[1].strip()
-        hours = soup.find("div", {"id":"locationsHours"})
+                state = statenzip.split(" ")[0].strip()
+                pcode = statenzip.split(" ")[1].strip()
+        hours = soup.find("div", {"id": "locationsHours"})
         hours = hours.text.strip()
-        hours = hours.replace('\n', ' ')
-        hours = hours.lstrip('Hours of Operation ')
-        hours = hours.replace('Weekdays:', 'Monday - Friday:')
+        hours = hours.replace("\n", " ")
+        hours = hours.lstrip("Hours of Operation ")
+        hours = hours.replace("Weekdays:", "Monday - Friday:")
 
-        coords = soup.findAll('script')
+        coords = soup.findAll("script")
         coord = str(coords[7])
-        coord = coord.split('var latlng = new google.maps.LatLng(')[1].split(');')[0]
-        if coord == ',':
-            lat = '<MISSING>'
-            lng = '<MISSING>'
+        coord = coord.split("var latlng = new google.maps.LatLng(")[1].split(");")[0]
+        if coord == ",":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         else:
-            lat = coord.split(',')[0]
-            lng = coord.split(',')[1]
-
-
-
+            lat = coord.split(",")[0]
+            lng = coord.split(",")[1]
         data.append(
             [
                 "https://www.greatwraps.com/",
