@@ -57,6 +57,7 @@ def fetch_data():
             temp = loc.find("div", {"class": "col-sm-4 address"})
             title = temp.find("h4").find("a").text
             link = temp.find("h4").find("a")["href"]
+              link = 'https://www.southtexasdental.com' + link
             address = temp.find("p").get_text(separator="|", strip=True).split("|")
             street = address[0]
             address = address[1].split(",", 1)
