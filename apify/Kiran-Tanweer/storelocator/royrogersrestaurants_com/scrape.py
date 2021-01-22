@@ -76,6 +76,15 @@ def fetch_data():
             phone = l.find("p", {"class": "phone-number"}).text
             phone = phone.strip()
             street = l.find("span", {"class": "address-line1"}).text
+            street2 = l.find("span", {"class": "address-line2"})
+            if street2 is not None:
+                street2 = street2.text
+                street = street + " " + street2
+            if (
+                street
+                == "Highspire Travel Plaza Exit 247 Eastbound, Milepost 249.7, 300 Industrial Lane, Middletown, PA 17057"
+            ):
+                street = "Highspire Travel Plaza Exit 247 Eastbound, Milepost 249.7, 300 Industrial Lane"
             street = street.strip()
             city = l.find("span", {"class": "locality"}).text
             city = city.strip()
