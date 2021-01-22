@@ -40,26 +40,15 @@ def write_output(data):
             ]
         )
         # Body
-        temp_list = []  # ignoring duplicates
         for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
+            writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     data = []
     referlinks = []
+    streetlist = []
     url = "https://www.pizzaking.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     loclist = r.text.split('<section class="entry-content cf">', 1)[1].split(
@@ -104,8 +93,6 @@ def fetch_data():
                             referlist = referlist + "}]"
                             referlist = json.loads(referlist)
                             for reference in referlist:
-                                if reference in referlinks:
-                                    continue
                                 referlinks.append(reference["url"])
                 except:
                     address = temp.find("div", {"class": "address"}).text.replace(
@@ -114,6 +101,9 @@ def fetch_data():
                     phone = temp.find("div", {"class": "address"}).find("a").text
                     street = address.split(phone, 1)[0]
                     hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
+                if street in streetlist:
+                    continue
+                streetlist.append(street.strip())
                 data.append(
                     [
                         "https://www.pizzaking.com/",
@@ -161,14 +151,15 @@ def fetch_data():
                         referlist = referlist + "}]"
                         referlist = json.loads(referlist)
                         for reference in referlist:
-                            if reference in referlinks:
-                                continue
                             referlinks.append(reference["url"])
             except:
                 address = temp.find("div", {"class": "address"}).text.replace("\n", " ")
                 phone = temp.find("div", {"class": "address"}).find("a").text
                 street = address.split(phone, 1)[0]
             hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
+            if street in streetlist:
+                continue
+            streetlist.append(street.strip())
             data.append(
                 [
                     "https://www.pizzaking.com/",
@@ -215,6 +206,9 @@ def fetch_data():
             day = hour[0].text
             time = hour[1].find("time").text
             hours = hours + " " + day + " " + time
+        if street in streetlist:
+            continue
+        streetlist.append(street.strip())
         data.append(
             [
                 "https://www.pizzaking.com/",
