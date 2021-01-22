@@ -47,8 +47,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    referlinks = []
-    streetlist = []
     url = "https://www.pizzaking.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     loclist = r.text.split('<section class="entry-content cf">', 1)[1].split(
@@ -92,9 +90,6 @@ def fetch_data():
                     phone = temp.find("div", {"class": "address"}).find("a").text
                     street = address.split(phone, 1)[0]
                     hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
-                if street in streetlist:
-                    continue
-                streetlist.append(street.strip())
                 data.append(
                     [
                         "https://www.pizzaking.com/",
@@ -139,9 +134,6 @@ def fetch_data():
                 phone = temp.find("div", {"class": "address"}).find("a").text
                 street = address.split(phone, 1)[0]
             hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
-            if street in streetlist:
-                continue
-            streetlist.append(street.strip())
             data.append(
                 [
                     "https://www.pizzaking.com/",
