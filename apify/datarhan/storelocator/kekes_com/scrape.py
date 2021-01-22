@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
 
 
 def write_output(data):
