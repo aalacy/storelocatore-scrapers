@@ -78,6 +78,10 @@ def fetch_data():
                     loc = "<MISSING>"
             if "new google.maps.InfoWindow({" in line:
                 if "Coming" not in phone:
+                    if phone == "":
+                        phone = "<MISSING>"
+                    if "aldergrove" in name.lower():
+                        loc = "https://powerhousegym.com/locations/aldergrove-bc/"
                     yield [
                         website,
                         loc,

@@ -70,8 +70,7 @@ def fetch_data():
         stores = states_dict[state]
         for store in stores:
             if store["post_status"] == "publish":
-                page_url = store["_yoast_wpseo_canonical"]
-
+                page_url = "https://www.sonnysbbq.com/locations/" + store["slug"]
                 locator_domain = website
                 location_name = store["post_title"]
                 if location_name == "":
@@ -93,7 +92,9 @@ def fetch_data():
                 except:
                     hours_of_operation = store["store_hours"]
 
-                hours_of_operation = hours_of_operation.strip()
+                hours_of_operation = " ".join(
+                    hours_of_operation.strip().split("\n")
+                ).strip()
 
                 latitude = store["address"]["lat"]
                 longitude = store["address"]["lng"]
@@ -160,10 +161,13 @@ def fetch_data():
                             state = state_zip
                             zip = "<MISSING>"
 
-                    page_url = "<MISSING>"
-
                 if us.states.lookup(state):
                     country_code = "US"
+
+                if city == "<MISSING>":
+                    city = location_name
+                    if "-" in city:
+                        city = city.split("-")[0].strip()
 
                 curr_list = [
                     locator_domain,

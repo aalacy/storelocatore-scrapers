@@ -5,7 +5,7 @@ from sglogging import sglog
 from lxml import etree
 from bs4 import BeautifulSoup as BS
 
-website = "mrsub.com"
+website = "mrsub.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -70,7 +70,7 @@ def fetch_data():
     stores_sel = etree.fromstring(stores_req.text)
     stores = stores_sel.xpath("//store/item")
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://mrsub.ca/locations/"
         locator_domain = website
         location_name = "Mr.Sub"
         street_address = ""

@@ -91,14 +91,14 @@ def fetch_data():
         longitude = geo[-1]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//h4[span[contains(text(), "hours")]]/following-sibling::div/text()'
+            '//h4[span[contains(text(), "hours")]]/following-sibling::div[1]//text()'
         )
         if not hours_of_operation:
             hours_of_operation = loc_dom.xpath(
                 '//h4[span[contains(text(), "hours")]]/following-sibling::div/p/text()'
             )
         hours_of_operation = (
-            hours_of_operation[0] if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
         item = [

@@ -113,6 +113,10 @@ def fetch_data():
                 )
                 if "<" in hours:
                     hours = hours.split("<")[0].strip()
+        if "Quebec" in state:
+            country = "CA"
+        if "(Parts)" in add:
+            add = add.split("(Parts)")[0].strip()
         yield [
             website,
             loc,

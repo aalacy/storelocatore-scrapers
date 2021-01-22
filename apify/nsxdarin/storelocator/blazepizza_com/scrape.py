@@ -86,10 +86,10 @@ def extract(location, store_number):
         page_url = f"https://nomnom-prod-api.blazepizza.com/restaurants/{store_number}"
         location_name = location.get("name", MISSING)
         location_type = MISSING
-
         street_address = location.get("streetaddress")
         city = location.get("city")
         state = location.get("state")
+        page_url = "https://www.blazepizza.com/locations/" + state + "/" + city
         postal = location.get("zip", MISSING)
         country_code = location.get("country", MISSING)
         lat = location.get("latitude", MISSING)
@@ -97,7 +97,7 @@ def extract(location, store_number):
         phone = location.get("phone", MISSING)
         hours_of_operation = get_hours(location)
         if ":" not in hours_of_operation:
-            hours_of_operation = ""
+            hours_of_operation = "<MISSING>"
         return {
             "locator_domain": locator_domain,
             "page_url": page_url,

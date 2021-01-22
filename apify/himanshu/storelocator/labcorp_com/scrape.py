@@ -44,19 +44,13 @@ def fetch_data():
         max_radius_miles=84,
         max_search_results=75,
     )
-
     MAX_DISTANCE = 50
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
-
     base_url = "https://www.labcorp.com/"
-
     for lat, long in search:
-        print(f"{(lat, long)} | remaining: {search.items_remaining()}")
         result_coords = []
-
         location_url = (
             "https://www.labcorp.com/labs-and-appointments/results?lat="
             + str(lat)
@@ -65,23 +59,19 @@ def fetch_data():
             + "&radius="
             + str(MAX_DISTANCE)
         )
-
         try:
             r = session.get(location_url, headers=headers)
         except:
             r = ""
-            pass
-
+            continue
         soup = BeautifulSoup(r.text, "lxml")
         data = soup.find("script", {"type": "application/json"}).text
-
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
                 ]:
-
                     location_name = (
                         i["name"]
                         .replace("-APPOINTMENT ONLY", "")
@@ -172,7 +162,6 @@ def fetch_data():
                         .replace("NO DRUG SCREENS PERFORMED AT THIS LOCATION", ""),
                     )
                     result_coords.append((latitude, longitude))
-
                     store = []
                     store.append(base_url)
                     store.append(
@@ -256,10 +245,6 @@ def fetch_data():
                         continue
                     addresses.append(store[2])
                     yield store
-            else:
-                pass
-        else:
-            pass
 
 
 def scrape():
