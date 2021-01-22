@@ -140,14 +140,14 @@ def fetch_data():
         hours_list = []
         for hour in hours:
             temp_text = "".join(hour.xpath("text()")).strip()
-            if (
-                "monday" in temp_text.lower()
-                or "tuesday" in temp_text.lower()
-                or "wednesday" in temp_text.lower()
-                or "thursday" in temp_text.lower()
-                or "friday" in temp_text.lower()
-            ):
-                hours_list.append(temp_text)
+            if "by appointment only" not in temp_text.lower():
+                if (
+                    "----------------------------------------------------------------------------"
+                    in temp_text
+                ):
+                    break
+                else:
+                    hours_list.append(temp_text)
 
         hours_of_operation = "; ".join(hours_list).strip()
 
