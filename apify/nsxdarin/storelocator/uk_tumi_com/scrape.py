@@ -147,6 +147,8 @@ def fetch_data():
                         )
                     if " - Temporarily closed" in name:
                         name = name.split(" - Temporarily closed")[0]
+                    if "Westfield" in add:
+                        phone = "+44 2 087403296"
                     yield [
                         website,
                         loc,
