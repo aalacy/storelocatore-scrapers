@@ -1,5 +1,4 @@
 import csv
-import json
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -40,26 +39,13 @@ def write_output(data):
             ]
         )
         # Body
-        temp_list = []  # ignoring duplicates
         for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
+            writer.writerow(row)
+        log.info(f"No of records being processed: {len(data)}")
 
 
 def fetch_data():
     data = []
-    referlinks = []
     url = "https://www.pizzaking.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     loclist = r.text.split('<section class="entry-content cf">', 1)[1].split(
@@ -92,21 +78,10 @@ def fetch_data():
                     else:
                         address = temp.find("div", {"class": "address"}).findAll("a")
                         street = address[0].text
-                        link = address[0]["href"]
                         phone = address[1].text
                         hours = temp.find("div", {"class": "hours"}).text.replace(
                             "\n", " "
                         )
-                        if "tel:" not in link:
-                            link = link + "?relatedposts=1"
-                            r = session.get(link, headers=headers, verify=False)
-                            referlist = r.text.split('"items":')[1].split("}]}", 1)[0]
-                            referlist = referlist + "}]"
-                            referlist = json.loads(referlist)
-                            for reference in referlist:
-                                if reference in referlinks:
-                                    continue
-                                referlinks.append(reference["url"])
                 except:
                     address = temp.find("div", {"class": "address"}).text.replace(
                         "\n", " "
@@ -152,18 +127,7 @@ def fetch_data():
                 else:
                     address = temp.find("div", {"class": "address"}).findAll("a")
                     street = address[0].text
-                    link = address[0]["href"]
                     phone = address[1].text
-                    if "tel:" not in link:
-                        link = link + "?relatedposts=1"
-                        r = session.get(link, headers=headers, verify=False)
-                        referlist = r.text.split('"items":')[1].split("}]}", 1)[0]
-                        referlist = referlist + "}]"
-                        referlist = json.loads(referlist)
-                        for reference in referlist:
-                            if reference in referlinks:
-                                continue
-                            referlinks.append(reference["url"])
             except:
                 address = temp.find("div", {"class": "address"}).text.replace("\n", " ")
                 phone = temp.find("div", {"class": "address"}).find("a").text
@@ -187,52 +151,6 @@ def fetch_data():
                     hours.strip(),
                 ]
             )
-    for refer in referlinks:
-        r = session.get(refer, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        templist = soup.find("div", {"class": "wpsl-locations-details"})
-        title = templist.find("strong").text
-        temp = templist.find("div", {"class": "wpsl-location-address"}).findAll("span")
-        if len(temp) > 5:
-            street = temp[1].text
-            city = temp[2].text.replace(",", "")
-            state = temp[3].text
-            pcode = temp[4].text
-            ccode = temp[5].text
-        else:
-            street = temp[0].text
-            city = temp[1].text.replace(",", "")
-            state = temp[2].text
-            pcode = temp[3].text
-            ccode = temp[4].text
-        phone = (
-            templist.find("div", {"class": "wpsl-contact-details"}).find("span").text
-        )
-        hourlist = soup.find("table", {"class": "wpsl-opening-hours"}).findAll("tr")
-        hours = ""
-        for hour in hourlist:
-            hour = hour.findAll("td")
-            day = hour[0].text
-            time = hour[1].find("time").text
-            hours = hours + " " + day + " " + time
-        data.append(
-            [
-                "https://www.pizzaking.com/",
-                refer.strip(),
-                title.strip(),
-                street.strip(),
-                city.strip(),
-                state.strip(),
-                pcode.strip(),
-                ccode.strip(),
-                "<MISSING>",
-                phone.strip(),
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours.strip(),
-            ]
-        )
     return data
 
 
