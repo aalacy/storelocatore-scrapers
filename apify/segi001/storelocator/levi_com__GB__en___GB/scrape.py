@@ -1,8 +1,7 @@
 import csv
-from requests_html import HTMLSession
 import sgrequests
 import json
-import bs4
+import re
 
 
 def write_output(data):
@@ -43,22 +42,15 @@ def fetch_data():
 
     api = "https://www.levi.com/nextgen-webhooks/?operationName=storeDirectory&locale=GB-en_GB"
 
-    store_domain = "https://www.levi.com/GB/en_GB/store-finder/store-directory"
+    chunk = "https://www.levi.com/ngsa/js/chunk-24f7f1ee.2af9b26b.js"
 
-    sess = HTMLSession()
+    r = sgrequests.SgRequests().get(chunk).text
 
-    r = sess.get(store_domain)
-
-    r.html.render()
-
-    s = bs4.BeautifulSoup(r.html.html, features="lxml")
-
-    countries = s.findAll("option")
+    countries = re.findall(r'isocode:"(.*?)"', r)
 
     result = []
 
-    for code in countries:
-        c = code["value"]
+    for c in countries:
         if c == "":
             pass
         else:
