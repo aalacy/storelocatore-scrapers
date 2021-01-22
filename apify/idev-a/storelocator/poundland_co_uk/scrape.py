@@ -36,35 +36,44 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.homechoicestores.com/"
+    base_url = "https://www.poundland.co.uk"
     res = session.get(
-        "https://www.homechoicestores.com/-/custom/GetStoresWithZipCode.json",
+        "https://www.poundland.co.uk/rest/poundland/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=51.4810135&searchCriteria%5Blongitude%5D=-0.0082384&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=1000",
     )
+    store_list = json.loads(res.text)["locations"]
     data = []
-    store_list = json.loads(res.text)
     for store in store_list:
-        if store["RelatedWebsite"] != "homechoicestores.com":
-            continue
-        page_url = "<MISSING>"
-        location_name = "<MISSING>"
-        street_address = store["Address1"]
-        store_number = store["StoreNumber"]
-        city = store["City"]
-        state = store["State"]
-        zip = store["ZipCode"]
+        page_url = (
+            "https://www.poundland.co.uk/store-finder/store_page/view/id/"
+            + store["store_id"]
+        )
+        location_name = store["name"]
+        street_address = (
+            store["address"]["line"]
+            if type(store["address"]["line"]) is str
+            else " ".join(store["address"]["line"])
+        )
+        store_number = store["store_id"]
+        city = store["address"]["city"]
+        state = "<MISSING>"
+        zip = store["address"]["postcode"]
         hours_of_operation = ""
-        hours_of_operation += store["StoreHours1"] + " "
-        hours_of_operation += store["StoreHours2"] + " "
-        hours_of_operation += store["StoreHours3"] + " "
-        hours_of_operation += store["StoreHours4"] + " "
-        hours_of_operation += store["StoreHours5"]
+        for x in store["opening_hours"]:
+            hours_of_operation += x["day"] + ": " + x["hours"] + " "
         hours_of_operation = hours_of_operation.strip()
-        country_code = "US"
-        phone = store["PhoneNumber"]
-        location_type = "<MISSING>"
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
-
+        country_code = store["address"]["country"]
+        phone = store["tel"]
+        location_type = store["type"]
+        latitude = (
+            "<MISSING>"
+            if float(store["geolocation"]["latitude"]) == 0
+            else store["geolocation"]["latitude"]
+        )
+        longitude = (
+            "<MISSING>"
+            if float(store["geolocation"]["longitude"]) == 0
+            else store["geolocation"]["longitude"]
+        )
         data.append(
             [
                 base_url,

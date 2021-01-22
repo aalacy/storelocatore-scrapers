@@ -1,6 +1,7 @@
 import re
 import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -41,47 +42,42 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "carbones.com"
-    start_url = "https://www.carbones.com/"
+    DOMAIN = "gopackagingstore.com"
+    start_url = "https://www.gopackagingstore.com/search"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//ul[@class="locations"]//a/@href')
+    all_locations = dom.xpath('//span[@itemprop="name"]/a/@href')
 
-    for store_url in all_locations:
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
+        raw_address = loc_dom.xpath('//div[@class="adr"]//text()')
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         location_name = loc_dom.xpath(
-            '//div[@class="details col-md-8 col-sm-8"]/h3/text()'
+            '//span[@class="content_frame"]//div[@class="view-content"]/div/text()'
         )
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//a[@class="address"]/text()')[0].split(", ")
         street_address = raw_address[0]
-        street_address = street_address if street_address else "<MISSING>"
-        city = location_name.split(" (")[0].strip()
-        city_indx = street_address.split()
-        street_address = " ".join(sorted(set(city_indx), key=city_indx.index))
+        location_type = "<MISSING>"
+        city = raw_address[1]
         state = raw_address[-1].split()[0]
         zip_code = raw_address[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//p[@class="contact"]//a[contains(@href, "tel")]/text()')
+        store_number = store_url.split("/")[-1]
+        phone = loc_dom.xpath('//span[@itemprop="telephone"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo = re.findall('startLatlng":"(.+?)",', loc_response.text)[0].split(",")
-        latitude = geo[0]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = geo[1]
-        longitude = longitude if longitude else "<MISSING>"
+        latitude = re.findall('latitude":"(.+?)",', loc_response.text)
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = re.findall('longitude":"(.+?)",', loc_response.text)
+        longitude = longitude[0] if longitude else "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//h3[span[contains(text(), "View ")]]/following-sibling::ul//text()'
+            '//h2[contains(text(), "Location Hours")]/following-sibling::div/text()'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            hours_of_operation[0].strip() if hours_of_operation else "<MISSING>"
         )
 
         item = [
@@ -100,7 +96,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items
