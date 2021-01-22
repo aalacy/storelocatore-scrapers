@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 
-website = "jdwetherspoon_co.uk"
+website = "jdwetherspoon.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -127,8 +127,14 @@ def fetch_data():
                     phone = store["telephone"]
 
                     location_type = "<MISSING>"
+                    if "/pubs/" in page_url:
+                        location_type = "pub"
+                    elif "/hotels/" in page_url:
+                        location_type = "hotel"
+
+                    hours_of_operation = ""
                     if store["PubIsTemporaryClosed"] is True:
-                        location_type = "Temporary Closed"
+                        hours_of_operation = "Temporary Closed"
 
                     latitude = store["lat"]
                     longitude = store["lng"]
@@ -137,8 +143,6 @@ def fetch_data():
                         latitude = "<MISSING>"
                     if longitude == "" or longitude is None:
                         longitude = "<MISSING>"
-
-                    hours_of_operation = "<MISSING>"
 
                     if hours_of_operation == "":
                         hours_of_operation = "<MISSING>"

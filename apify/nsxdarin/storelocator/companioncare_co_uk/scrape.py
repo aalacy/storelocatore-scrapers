@@ -65,14 +65,21 @@ def fetch_data():
                 except:
                     city = "<MISSING>"
                 state = "<MISSING>"
-                zc = line.split('zipcode": "')[1].split('"')[0]
-                lat = line.split('"coordinates": [')[1].split(",")[0]
-                lng = (
-                    line.split('"coordinates": [')[1]
-                    .split(",")[1]
-                    .strip()
-                    .split("]")[0]
-                )
+                try:
+                    zc = line.split('zipcode": "')[1].split('"')[0]
+                except:
+                    zc = "<MISSING>"
+                try:
+                    lat = line.split('"coordinates": [')[1].split(",")[0]
+                    lng = (
+                        line.split('"coordinates": [')[1]
+                        .split(",")[1]
+                        .strip()
+                        .split("]")[0]
+                    )
+                except:
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
                 try:
                     hours = (
                         "Mon: "

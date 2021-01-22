@@ -1,9 +1,15 @@
 import re
 import csv
 import json
+import time
+import random
 from lxml import etree
 
 from sgrequests import SgRequests
+
+
+def sleep():
+    time.sleep(random.randint(2, 5))
 
 
 def write_output(data):
@@ -46,7 +52,7 @@ def fetch_data():
     start_url = "https://www.aureliospizza.com/locations/"
 
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
     }
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
@@ -55,6 +61,7 @@ def fetch_data():
     data = json.loads(data[0])
 
     for poi in data["KOObject"][0]["locations"]:
+        sleep()
         store_url = poi["locationUrl"]
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
