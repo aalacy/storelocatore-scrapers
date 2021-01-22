@@ -61,6 +61,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = "<MISSING>"
+        Closed = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -73,7 +74,9 @@ def fetch_data():
                 zc = line2.split('"postalCode">')[1].split("<")[0]
             if 'telephone" content="' in line2:
                 phone = line2.split('telephone" content="')[1].split('"')[0]
-        if add != "":
+            if "permanently closed" in line2:
+                Closed = True
+        if add != "" and Closed is False:
             yield [
                 website,
                 loc,
