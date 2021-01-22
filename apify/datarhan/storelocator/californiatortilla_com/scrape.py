@@ -38,15 +38,14 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
     DOMAIN = "californiatortilla.com"
     start_url = "https://www.californiatortilla.com/locations/"
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
 
-    response = session.get(start_url, proxies=proxies)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "locations = ")]/text()')[0]
     data = re.findall("locations =(.+);", data.replace("\n", ""))
@@ -60,7 +59,7 @@ def fetch_data():
 
     for poi in data:
         store_url = poi["url"]
-        loc_response = session.get(store_url, proxies=proxies)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         raw_address = loc_dom.xpath(
             '//span[contains(text(), "Address")]/following-sibling::p[1]/text()'
