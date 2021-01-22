@@ -135,7 +135,9 @@ def fetch_data():
             .strip()
         )
 
-        location_type = "<MISSING>"
+        location_type = ""
+        if "opening" in location_name.lower():
+            location_type = "Coming Soon"
         if location_type == "":
             location_type = "<MISSING>"
 
