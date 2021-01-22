@@ -13,7 +13,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -89,12 +89,42 @@ def fetch_data():
             p = session.get(pagelink, headers=headers, verify=False)
             soup = BeautifulSoup(p.text, "html.parser")
             content = soup.find("div", {"class": "region-content"})
-            hours = content.findAll("p")[-1].text
-            hours = hours.replace("\n", " ")
-            hours = hours.replace(",", ":").strip()
-            if hours == "":
-                hours = "<MISSING>"
-
+            hours = content.findAll("p")
+            if len(hours) == 2:
+                HOO = "<MISSING>"
+            if len(hours) == 3:
+                HOO = hours[-1].text.strip()
+            if len(hours) == 4:
+                HOO = hours[-1].text.strip()
+                if (
+                    pagelink
+                    == "https://www.royrogersrestaurants.com/locations/manchester-lakes"
+                ):
+                    hr1 = hours[-1].text.strip()
+                    hr2 = hours[-2].text.strip()
+                    HOO = hr1 + " " + hr2
+            if len(hours) == 5:
+                hr1 = hours[-1].text.strip()
+                hr2 = hours[-2].text.strip()
+                HOO = hr1 + " " + hr2
+            if len(hours) == 6:
+                hr1 = hours[-1].text.strip()
+                hr2 = hours[-2].text.strip()
+                hr3 = hours[-3].text.strip()
+                HOO = hr1 + " " + hr2 + " " + hr3
+            HOO = HOO.replace("\n", " ")
+            HOO = HOO.replace(",", ":").strip()
+            if HOO == "":
+                HOO = "<MISSING>"
+            coords = soup.findAll("script")
+            if len(coords) == 35:
+                coord = str(coords[3])
+                coord = coord.split('"coordinates":[')[1].split("]}")[0]
+                lat = coord.split(",")[0].strip()
+                lng = coord.split(",")[1].strip()
+            else:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             data.append(
                 [
                     "https://www.royrogersrestaurants.com/",
@@ -108,9 +138,9 @@ def fetch_data():
                     "<MISSING>",
                     phone,
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    hours,
+                    lat,
+                    lng,
+                    HOO,
                 ]
             )
     return data
