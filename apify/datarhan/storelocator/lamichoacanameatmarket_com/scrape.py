@@ -53,7 +53,7 @@ def fetch_data():
         "lng": "",
         "category_id": "",
         "max_distance": "",
-        "nb_display": "50",
+        "nb_display": "500",
     }
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -92,20 +92,30 @@ def fetch_data():
             raw_addr = raw_addr.replace(", Estados Unidos", "")
         usaddress_data = usaddress.tag(raw_addr)
         city = usaddress_data[0]["PlaceName"]
-        state = raw_address[-1].split()[0]
-        if len(state) != 2 and "TX" in street_address:
-            state = "TX"
-        street_address = street_address.split(city)[0]
-        zip_code = raw_address[-1].split()[-1]
+        state = usaddress_data[0]["StateName"]
+        str_indx = street_address.split()
+        street_address = " ".join(sorted(set(str_indx), key=str_indx.index))
+        zip_code = usaddress_data[0]["ZipCode"]
         country_code = "<MISSING>"
         store_number = store_url.split("=")[-1]
         phone = poi_html.xpath('.//div[@class="ygp_sl_stores_list_tel"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0].split(" y")[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         geo = poi_html.xpath(".//img/@src")[0].split("=")[1].split("&")[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
-        hours_of_operation = "<MISSING>"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hours_of_operation = loc_dom.xpath(
+            '//h2[contains(text(), "HORARIOS")]/following-sibling::p[1]//text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
