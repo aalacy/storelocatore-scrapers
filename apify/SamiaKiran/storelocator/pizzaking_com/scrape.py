@@ -40,11 +40,11 @@ def write_output(data):
             ]
         )
         # Body
-        for row in data:   
-                writer.writerow(row)
+        for row in data:
+            writer.writerow(row)
         log.info(f"No of records being processed: {len(data)}")
 
-    
+
 def fetch_data():
     data = []
     referlinks = []
@@ -102,7 +102,7 @@ def fetch_data():
                     street = address.split(phone, 1)[0]
                     hours = temp.find("div", {"class": "hours"}).text.replace("\n", " ")
                 if street in streetlist:
-                     continue
+                    continue
                 streetlist.append(street.strip())
                 data.append(
                     [
