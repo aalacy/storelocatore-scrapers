@@ -87,7 +87,9 @@ def fetch_data():
             if not hours:
                 hours = "<MISSING>"
             state = "<MISSING>"
-            phone = "<MISSING>"
+            phone = loc.find("span", {"itemprop": "telephone"}).text.strip()
+            if not phone:
+                phone = "<MISSING>"
             final_data.append(
                 [
                     "https://www.jackwills.com/",
