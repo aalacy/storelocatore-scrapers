@@ -65,7 +65,7 @@ def get_data(coord):
         country_code = "US"
         store_number = "<MISSING>"
         latitude = "".join(m.xpath("./@lat")) or "<MISSING>"
-        longitude = "".join(m.xpath("./@lat")) or "<MISSING>"
+        longitude = "".join(m.xpath("./@lng")) or "<MISSING>"
         location_type = "<MISSING>"
 
         t = "".join(m.xpath(".//contents/text()"))
