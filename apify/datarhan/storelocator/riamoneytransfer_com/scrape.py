@@ -148,6 +148,8 @@ def fetch_data():
             logger.error(f"error fetching data for {lat} {lng}: {e}")
             continue
         for location in locations:
+            if type(location) == str:
+                continue
             store_number = get(location, "locationId")
             if store_number in searched:
                 continue
