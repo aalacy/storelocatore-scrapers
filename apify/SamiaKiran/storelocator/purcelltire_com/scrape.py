@@ -1,9 +1,10 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
 
-website = "southtexasdental_com"
+website = "purcelltire_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -46,40 +47,44 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
+    pattern = re.compile(r"\s\s+")
     if True:
-        url = "https://www.southtexasdental.com/locations"
+        url = "https://www.purcelltire.com/Contact/Find-Us?nav=%2f"
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "view-content"}).findAll(
-            "div", {"class": "locations_block"}
+        loclist = soup.find("div", {"id": "LocationListView"}).findAll(
+            "div", {"class": "loclisting type0"}
         )
         for loc in loclist:
-            temp = loc.find("div", {"class": "col-sm-4 address"})
-            title = temp.find("h4").find("a").text
-            link = temp.find("h4").find("a")["href"]
-            link = "https://www.southtexasdental.com" + link
-            address = temp.find("p").get_text(separator="|", strip=True).split("|")
-            street = address[0]
-            address = address[1].split(",", 1)
-            city = address[0]
-            address = address[1].split()
+            temp = loc.find("div", {"id": "info"})
+            store = loc["id"]
+            title = temp.find("div", {"class": "locationInfo"}).find("strong").text
+            address = (
+                temp.find("div", {"class": "locationInfo"})
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            street = address[2]
+            city = address[3].split(",", 1)[0]
+            address = address[3].split(",", 1)[1].split()
             state = address[0]
             pcode = address[1]
+            link = temp.find("a")["href"]
             phone = (
-                loc.find("div", {"class": "col-sm-4 phone"})
-                .text.strip()
-                .replace("\n", "")
+                loc.find("div", {"class": "contactInfo"})
+                .find("div", {"class": "locphone"})
+                .find("a")
+                .text
             )
-            if "For Braces" in phone:
-                phone = phone.split("For Braces", 1)[0]
-            hours = (
-                loc.find("div", {"class": "col-sm-4 hours"})
-                .text.strip()
-                .replace("\n", "")
+            hours = loc.find("div", {"class": "locationhours"}).text.replace(
+                "Hours", ""
             )
+            hours = re.sub(pattern, "\n", hours).replace("\n", " ").strip()
+            lat = loc.find("div", {"class": "locLink"}).find("span")["lat"]
+            longt = loc.find("div", {"class": "locLink"}).find("span")["lon"]
             final_data.append(
                 [
-                    "https://www.southtexasdental.com/",
+                    "https://www.purcelltire.com/",
                     link,
                     title,
                     street,
@@ -87,11 +92,11 @@ def fetch_data():
                     state,
                     pcode,
                     "US",
-                    "<MISSING>",
+                    store,
                     phone,
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
+                    lat,
+                    longt,
                     hours,
                 ]
             )
