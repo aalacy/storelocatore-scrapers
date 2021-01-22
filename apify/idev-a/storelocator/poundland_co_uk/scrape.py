@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from sgrequests import SgRequests
