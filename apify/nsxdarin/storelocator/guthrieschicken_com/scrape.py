@@ -76,9 +76,25 @@ def fetch_data():
             next(lines)
             g = next(lines)
             g = str(g.decode("utf-8"))
-            hours = g.split("<")[0].strip()
+            hours = (
+                g.strip()
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("<p>", "")
+                .replace("<br/>", "; ")
+                .replace("</p>", "")
+            )
+            g = next(lines)
+            g = str(g.decode("utf-8"))
+            if "pm" in g:
+                hours = hours + "; " + g.split("<")[0]
+            g = next(lines)
+            g = str(g.decode("utf-8"))
+            if "pm" in g:
+                hours = hours + "; " + g.split("<")[0]
             if hours == "":
                 hours = "<MISSING>"
+            hours = hours.replace("<br>; Open", "Open")
         if '<a href="http://www.google.com/maps/?saddr=&daddr=' in line:
             lat = line.split('<a href="http://www.google.com/maps/?saddr=&daddr=')[
                 1
