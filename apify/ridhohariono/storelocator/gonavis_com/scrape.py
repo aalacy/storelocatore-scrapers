@@ -117,7 +117,6 @@ def fetch_data():
             .find("div", {"class": "col-md-4 col-md-pull-8"})
         )
         if not container:
-            print(page_url)
             continue
         get_content = container.find_all("div", {"class": "panel panel-default"})
         locator_domain = DOMAIN
