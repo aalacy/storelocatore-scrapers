@@ -48,8 +48,11 @@ def fetch_data():
     for loc in data_list:
         title = loc.find("a").text
         page_url = url + loc.find("a").get("href")
+        storenum = "<MISSING>"
         if len(page_url) < 1:
             page_url = "<MISSING>"
+        else:
+            storenum = page_url.split("BranchId=")[1].split("&")[0]
         det = str(loc).replace("<br/>", "")
         det = BeautifulSoup(det, "html.parser")
         det = det.findAll("strong")
@@ -78,7 +81,7 @@ def fetch_data():
                 state,
                 zip,
                 "US",
-                "<MISSING>",
+                storenum,
                 phone,
                 "<MISSING>",
                 "<MISSING>",
