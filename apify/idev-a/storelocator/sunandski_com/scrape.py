@@ -79,7 +79,7 @@ def fetch_data():
         store_number = store["code"]
         latitude = store["geo"]["lat"]
         longitude = store["geo"]["lng"]
-        hours_of_operation = ""
+        hours_of_operation = " "
         for x in store["regularHours"]:
             hours_of_operation += x + ": " + store["regularHours"][x]["label"] + " "
         hours_of_operation = hours_of_operation.strip()
