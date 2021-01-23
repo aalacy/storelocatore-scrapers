@@ -44,7 +44,7 @@ def fetch_data():
     for store in store_list:
         if "coming soon" in store.text:
             continue
-        if "House of Jerky" not in store.text:
+        if "House of Jerky".lower() not in store.text.lower():
             continue
         detail = store.text.split("\n")
         while True:
@@ -79,7 +79,7 @@ def fetch_data():
             zip = address_detail.split(", ")[2]
         city = city.replace("ñ", "n")
         state = state[:-1] if state.endswith(".") else state
-        street_address = " ".join(detail).replace("\n", "").replace("’", "")
+        street_address = " ".join(detail[1:]).replace("\n", "").replace("’", "")
         location_type = "<MISSING>"
         country_code = "US"
         phone = "<MISSING>"
