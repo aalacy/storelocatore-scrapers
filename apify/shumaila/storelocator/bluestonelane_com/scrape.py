@@ -52,8 +52,7 @@ def fetch_data():
         if link in linklist:
             continue
         linklist.append(link)
-        r = session.get(link, headers=headers, verify=False)
-        ccode = "US"
+        r = session.get(link, headers=headers, verify=False)       
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("span", {"id": "yext-address"})
