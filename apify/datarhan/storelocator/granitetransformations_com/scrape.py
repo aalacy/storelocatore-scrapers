@@ -45,7 +45,7 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="row locationContent"]')
+    all_locations = dom.xpath('//div[@class="row locationContent"]/address')
 
     for poi_html in all_locations:
         store_url = poi_html.xpath(".//h4/a/@href")
