@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 import re
 
-logger = SgLogSetup().get_logger("brakecheck_com")
+logger = SgLogSetup().get_logger("bradlygas_com")
 
 
 session = SgRequests()
