@@ -76,6 +76,7 @@ def fetch_data():
         phone = loc_dom.xpath('//p[@class="PhoneNumber"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         geo = re.findall(r'initializeMap\("(.+?)"\);', loc_response.text)[0].split(
+            '","'
         )
         latitude = geo[0]
         latitude = latitude if latitude else "<MISSING>"
