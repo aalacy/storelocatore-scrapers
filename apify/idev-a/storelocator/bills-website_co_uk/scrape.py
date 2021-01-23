@@ -93,6 +93,8 @@ def fetch_data():
             for hour in hours:
                 hours_of_operation += hour["title"] + " " + hour["content"] + " "
             hours_of_operation = hours_of_operation.replace("&amp;amp;", "&")
+            if "temporarily closed" in res1.text:
+                hours_of_operation = "Temporarily closed " + hours_of_operation
             country_code = "UK"
             store_number = "<MISSING>"
             location_type = "<MISSING>"
