@@ -73,7 +73,7 @@ def fetch_data():
         else:
             try:
                 geo = geo.split("ll=")[1].split("&")[0].split(",")
-            except Exception as e:
+            except Exception:
                 geo = ""
         latitude = "<MISSING>"
         longitude = "<MISSING>"
