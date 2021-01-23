@@ -76,12 +76,16 @@ def fetch_data():
             r"properties =(.+?)],", data.replace("\n", "").replace("\t", "")
         )[0].split(",")[-3]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//div[@class="location-inner"]/p/text()')[
-            1:
-        ]
+        hours_of_operation = loc_dom.xpath(
+            '//p[contains(text() ,"Operation Hours:")]/text()'
+        )
         hours_of_operation = [elem.strip() for elem in hours_of_operation]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation)
+            .replace("\n", " ")
+            .replace("Operation Hours: ", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         # Exceptions
