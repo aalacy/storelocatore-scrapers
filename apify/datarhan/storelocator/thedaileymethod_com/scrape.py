@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,43 +36,38 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
-
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
     items = []
 
-    DOMAIN = "abbottscustard.com"
-    start_url = "https://www.abbottscustard.com/wp-admin/admin-ajax.php?action=store_search&lat=43.12749&lng=-77.56644&max_results=25&search_radius=50&autoload=1"
+    DOMAIN = "thedaileymethod.com"
+    start_url = "https://thedaileymethod.com/studios/"
 
     response = session.get(start_url)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//ul[@class="city-list clean inline pack"]//a/@href')
 
-    for poi in data:
-        store_url = poi["permalink"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"].replace("&#8217;", "'")
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+    for store_url in all_locations:
+        loc_response = session.get(store_url + "contact/")
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//span[@class="location-title"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = loc_dom.xpath('//div[@class="address"]/text()')
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = loc_dom.xpath('//span[@class="city"]/text()')
+        city = city[0] if city else "<MISSING>"
+        state = loc_dom.xpath('//span[@class="state"]/text()')
+        state = state[0].split()[-1] if state else "<MISSING>"
+        zip_code = loc_dom.xpath('//span[@class="zip"]/text()')
+        zip_code = zip_code[0].replace("C.P.", "") if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="phone"]/text()')
+        phone = phone[0].split(": ")[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hoo = []
-        if poi["hours"]:
-            hoo = etree.HTML(poi["hours"])
-            hoo = [elem.strip() for elem in hoo.xpath("//text()") if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        latitude = loc_dom.xpath("//@data-lat")[0]
+        longitude = loc_dom.xpath("//@data-lng")[0]
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,

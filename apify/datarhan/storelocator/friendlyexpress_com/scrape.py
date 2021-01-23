@@ -41,39 +41,53 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "abbottscustard.com"
-    start_url = "https://www.abbottscustard.com/wp-admin/admin-ajax.php?action=store_search&lat=43.12749&lng=-77.56644&max_results=25&search_radius=50&autoload=1"
+    DOMAIN = "friendlyexpress.com"
 
-    response = session.get(start_url)
+    start_url = "https://friendlyexpress.com/locations/search"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    response = session.get("https://friendlyexpress.com")
+    dom = etree.HTML(response.text)
+    token = dom.xpath('//input[@name="XID"]/@value')[0]
+    formdata = {"XID": token, "keyword": ""}
+    response = session.post(start_url, data=formdata, headers=headers)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = poi["permalink"]
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"].replace("&#8217;", "'")
+    for poi in data["locations"]:
+        if not poi.get("url_title"):
+            continue
+        store_url = "https://friendlyexpress.com/locations/" + poi["url_title"]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = etree.HTML(poi["address"])
+        street_address = street_address.xpath("//text()")
+        street_address = street_address[0] if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
         zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = location_name.split()[-1]
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["phone_number"]
+        phone = phone.split()[-1] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["lat"]
+        latitude = poi["coordinates"][0]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
+        longitude = poi["coordinates"][1]
         longitude = longitude if longitude else "<MISSING>"
-        hoo = []
-        if poi["hours"]:
-            hoo = etree.HTML(poi["hours"])
-            hoo = [elem.strip() for elem in hoo.xpath("//text()") if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = loc_dom.xpath('//div[@class="results"]/p/text()')[1:-1]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
