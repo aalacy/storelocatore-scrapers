@@ -50,7 +50,7 @@ def fetch_data():
         r = session.get(url, headers=headers)
         website = "companioncare.co.uk"
         typ = "<MISSING>"
-        country = "US"
+        country = "GB"
         store = str(x)
         logger.info("Pulling Store %s..." % str(x))
         for line in r.iter_lines():
@@ -65,14 +65,23 @@ def fetch_data():
                 except:
                     city = "<MISSING>"
                 state = "<MISSING>"
-                zc = line.split('zipcode": "')[1].split('"')[0]
-                lat = line.split('"coordinates": [')[1].split(",")[0]
-                lng = (
-                    line.split('"coordinates": [')[1]
-                    .split(",")[1]
-                    .strip()
-                    .split("]")[0]
-                )
+                if city == "<MISSING>":
+                    city = add.rsplit(",", 1)[1].strip()
+                try:
+                    zc = line.split('zipcode": "')[1].split('"')[0]
+                except:
+                    zc = "<MISSING>"
+                try:
+                    lat = line.split('"coordinates": [')[1].split(",")[0]
+                    lng = (
+                        line.split('"coordinates": [')[1]
+                        .split(",")[1]
+                        .strip()
+                        .split("]")[0]
+                    )
+                except:
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
                 try:
                     hours = (
                         "Mon: "
@@ -144,6 +153,15 @@ def fetch_data():
                         hours = hours + "; Sun: Closed"
                 except:
                     hours = "<MISSING>"
+                try:
+                    r2 = session.get(lurl, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if "is temporarily closed" in line2 or "is closed" in line2:
+                            if "Chichester is closed" not in line2:
+                                hours = "Temporarily Closed"
+                except:
+                    pass
                 yield [
                     website,
                     lurl,
