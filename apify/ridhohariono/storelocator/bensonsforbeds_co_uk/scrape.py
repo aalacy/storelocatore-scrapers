@@ -101,7 +101,6 @@ def fetch_data():
                 strip=True, separator=" | "
             )
         )
-        address = soup.find("span", {"class": "c-address-street-1"})
         addr1 = soup.find("span", {"class": "c-address-street-1"})
         addr2 = soup.find("span", {"class": "c-address-street-2"})
         if addr2:
