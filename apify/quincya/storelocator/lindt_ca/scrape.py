@@ -121,7 +121,7 @@ def fetch_data():
             street_address = " ".join(raw_address[:-2]).strip()
             if ">" in street_address:
                 street_address = street_address.split(">")[1].strip()
-            city = raw_address[-2].replace("</span>", "").strip()
+            city = raw_address[-2].replace("</span>", "").replace("No. 44", "").strip()
             state = raw_address[-1].split()[0].strip()
             zip_code = raw_address[-1].replace(state, "").replace("</span>", "").strip()
             state = state.replace("New", "New ")
