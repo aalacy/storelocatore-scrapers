@@ -104,6 +104,12 @@ def fetch_data():
             name = name.replace("\\u0026", "&")
             if " - " in name:
                 typ = name.split(" - ")[0]
+            if "14985 Old" in add:
+                phone = "904.288.9491"
+            if "1577 Roberts Drive" in add:
+                phone = "904.247.3324"
+            if "14540 Old St" in add:
+                phone = "904.202.2222"
             yield [
                 website,
                 loc,
@@ -151,6 +157,12 @@ def fetch_data():
                     loc = "<MISSING>"
                     store = "<MISSING>"
                     hours = "<MISSING>"
+                    if "14985 Old" in add:
+                        phone = "904.288.9491"
+                    if "1577 Roberts Drive" in add:
+                        phone = "904.247.3324"
+                    if "14540 Old St" in add:
+                        phone = "904.202.2222"
                     yield [
                         website,
                         loc,
@@ -213,6 +225,12 @@ def fetch_data():
                         loc = "<MISSING>"
                         store = "<MISSING>"
                         hours = "<MISSING>"
+                        if "14985 Old" in add:
+                            phone = "904.288.9491"
+                        if "1577 Roberts Drive" in add:
+                            phone = "904.247.3324"
+                        if "14540 Old St" in add:
+                            phone = "904.202.2222"
                         yield [
                             website,
                             loc,

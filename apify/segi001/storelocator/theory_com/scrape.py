@@ -89,8 +89,9 @@ def fetch_data():
             zp = s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
         else:
             zp = (
-                s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
-                + s.find("div", {"class": "city-zip-code"}).text.split(" ")[-2].strip()
+                s.find("div", {"class": "city-zip-code"}).text.split(" ")[-2].strip()
+                + " "
+                + s.find("div", {"class": "city-zip-code"}).text.split(" ")[-1].strip()
             )
         if "data-store-postalCode" in res:
             zp = res["data-store-postalCode"]
@@ -107,26 +108,30 @@ def fetch_data():
 
         for ps in p:
             if "Monday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Tuesday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Wednesday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Thursday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Friday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Saturday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
             elif "Sunday" in ps.text:
-                timeArr.append(ps.text)
+                timeArr.append(ps.text.strip("\n"))
 
-        hours = ", ".join(timeArr)
+        hours = ", ".join(timeArr).strip("\n")
 
         if hours == "":
             for el in s.findAll("div", {"class": "details-info"}):
                 if "Monday" in el.text.strip():
-                    hours = el.get_text(separator=", ")
+                    h = el.text
+                    t = []
+                    for l in h.splitlines():
+                        t.append(l.strip())
+                    hours = ", ".join(t).replace(",", "", 1)[:-2]
                 else:
                     pass
 
