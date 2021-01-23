@@ -44,7 +44,7 @@ def fetch_data():
     url = "https://bluestonelane.com/cafe-and-coffee-shop-locations/?shop-sort=nearest&view-all=1&lat=&lng="
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=cafes]")
+    divlist = soup.findAll("a", {"class": "homebox-address"})
     linklist = []
     p = 0
     for div in divlist:
@@ -53,6 +53,7 @@ def fetch_data():
             continue
         linklist.append(link)
         r = session.get(link, headers=headers, verify=False)
+        ccode = "US"
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("span", {"id": "yext-address"})
@@ -60,10 +61,12 @@ def fetch_data():
             store = street["data-yext-location-id"]
         except:
             store = "<MISSING>"
+            continue
         url = (
             "https://knowledgetags.yextpages.net/embed?key=6Af24AhHWVK9u_N4dzlSiNnLaAoxr-dpa-xe7Zf76O9rU3Eb4m0xxX6-7A_CxoZF&account_id=6868880511088594204&location_id="
             + store
         )
+
         r = session.get(url, headers=headers, verify=False)
         address = r.text.split('"address":{', 1)[1].split("},", 1)[0]
         address = "{" + address + "}"
