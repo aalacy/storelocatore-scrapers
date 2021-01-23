@@ -70,6 +70,23 @@ def fetch_data():
             add = "<MISSING>"
             city = "<MISSING>"
             state = "<MISSING>"
+        if "Burleson" in name:
+            add = "1185 N. Burleson Blvd., Ste. 215"
+            city = "Burleson"
+            state = "Texas"
+            zc = "76028"
+        add = add.replace("<br />", "")
+        if "Keller" in name:
+            add = "1600 Keller Pkwy Suite 130"
+            city = "Keller"
+            state = "Texas"
+            zc = "76248"
+        if "Saginaw" in name:
+            add = "1209 N Saginaw Blvd"
+            city = "Saginaw"
+            state = "Texas"
+            zc = "76179"
+        add = add.replace(",", "").strip()
         yield [
             website,
             loc,
