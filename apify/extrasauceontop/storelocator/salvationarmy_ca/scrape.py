@@ -3,6 +3,21 @@ import pandas as pd
 
 session = SgRequests()
 
+canada_state_codes = [
+    "NL",
+    "PE",
+    "NS",
+    "NB",
+    "QC",
+    "ON",
+    "MB",
+    "SK",
+    "AB",
+    "BC",
+    "YT",
+    "NT",
+    "NU",
+]
 # Declare needed lists
 locator_domains = []
 page_urls = []
@@ -38,8 +53,10 @@ for key in serve_dict:
     serve_resp = session.get(serve_url).json()
 
     for location in serve_resp:
+        state = location["ProvinceCode"]
+
         locator_domains.append("https://salvationarmy.ca/")
-        page_urls.append("https://salvationarmy.ca/locate")
+        page_urls.append("https://salvationarmy.ca/locator")
         location_names.append(location["Name"])
         street_addresses.append(location["Street"])
         citys.append(location["City"])
@@ -50,7 +67,11 @@ for key in serve_dict:
         latitudes.append(str(location["Latitude"]))
         longitudes.append(str(location["Longitude"]))
         hours_of_operations.append("<MISSING>")
-        country_codes.append("CA")
+
+        if state in canada_state_codes:
+            country_codes.append("CA")
+        else:
+            country_codes.append("<MISSING>")
         location_types.append(key)
 
 location_types_df = pd.DataFrame(
@@ -104,7 +125,10 @@ for location in all_locations:
     latitudes.append(str(location["Latitude"]))
     longitudes.append(str(location["Longitude"]))
     hours_of_operations.append("<MISSING>")
-    country_codes.append("CA")
+    if state in canada_state_codes:
+        country_codes.append("CA")
+    else:
+        country_codes.append("<MISSING>")
     location_types.append("<MISSING>")
 
 all_location_df = pd.DataFrame(
