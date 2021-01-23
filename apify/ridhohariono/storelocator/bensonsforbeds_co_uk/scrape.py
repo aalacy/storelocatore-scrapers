@@ -50,6 +50,13 @@ def handle_missing(field):
     return field
 
 
+def get_hours(data):
+    results = []
+    for key, value in data.items():
+        results.append("{}: {}".format(key, value))
+    return ", ".join(results)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     store_info = session.get(LOCATION_URL, headers=HEADERS).json()
@@ -70,10 +77,13 @@ def fetch_data():
         country_code = handle_missing(row["country"])
         store_number = handle_missing(row["id"])
         phone = handle_missing(row["phone"])
-        location_type = "<MISSING>"
+        if all(value == "closed" for value in row["hours"].values()):
+            location_type = "TEMP_CLOSED"
+        else:
+            location_type = "OPEN"
         latitude = handle_missing(row["lat"])
         longitude = handle_missing(row["lng"])
-        hours_of_operation = "<INACCESSIBLE>"
+        hours_of_operation = get_hours(row["hours"])
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
             [

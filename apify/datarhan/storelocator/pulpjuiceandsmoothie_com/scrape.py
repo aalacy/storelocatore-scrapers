@@ -52,7 +52,7 @@ def fetch_data():
     for poi in data:
         store_url = poi["url"]
         store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"]
+        location_name = poi["store"].replace("&#8211;", ",")
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
