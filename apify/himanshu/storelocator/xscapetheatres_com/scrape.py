@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("xscapetheatres_com")
@@ -12,6 +13,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,6 +32,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -55,12 +58,12 @@ def fetch_data():
             return_object = []
             return_object.append("https://www.xscapetheatres.com/")
             return_object.append(location_name)
-            return_object.append(street_address)
+            return_object.append(street_address.replace(",", ""))
             return_object.append(city)
             return_object.append(state)
             return_object.append(store_zip)
             return_object.append("US")
-            return_object.append(store_number.replace("Fulshear", "<MISSING>"))
+            return_object.append("<MISSING>")
             return_object.append("<MISSING>")
             return_object.append("xscape theatres")
             return_object.append("<MISSING>")
