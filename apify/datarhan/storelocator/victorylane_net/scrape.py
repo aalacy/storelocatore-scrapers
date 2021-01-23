@@ -41,42 +41,40 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "petparadise.com"
-    start_url = "https://www.petparadise.com/files/4859/widget856515.js?callback=widget856515DataCallback&_=1611159764874"
-    response = session.get(start_url)
-    data = response.text.split("DataCallback(")[-1][:-2]
-    data = json.loads(data)
+    DOMAIN = "victorylane.net"
+    start_url = "https://victorylane.net/wp-admin/admin-ajax.php?action=store_search&lat=44.31484&lng=-85.60236&max_results=25&search_radius=25&autoload=1"
 
-    for poi in data["PropertyorInterestPoint"]:
-        store_url = poi["interestpointMoreInfoLink"]
-        location_name = poi["interestpointpropertyname"]
+    response = session.get(start_url)
+    data = json.loads(response.text)
+
+    for poi in data:
+        store_url = poi["url"]
+        location_name = poi["store"].replace("&#8211;", "")
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["interestpointpropertyaddress"]
+        street_address = poi["address"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["interestpointCity"]
+        city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["interestpointState"]
+        state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["interestpointPostalCode"]
+        zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = poi["country"]
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["interestpointPhoneNumber"]
+        phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        if phone == "TBD":
-            phone = "<MISSING>"
-        location_type = poi["interestpointVetStatus"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["interestpointinterestlatitude"]
+        location_type = "<MISSING>"
+        latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["interestpointinterestlongitude"]
+        longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = etree.HTML(poi["interestpointHours"])
-        hours_of_operation = hours_of_operation.xpath("//text()")
+        hours_of_operation = []
+        if poi.get("hours"):
+            hours_of_operation = etree.HTML(poi["hours"])
+            hours_of_operation = hours_of_operation.xpath("//text()")
         hours_of_operation = (
-            " ".join(hours_of_operation).replace("Location Hours ", "")
-            if hours_of_operation
-            else "<MISSING>"
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
         item = [
