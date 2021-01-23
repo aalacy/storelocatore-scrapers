@@ -1,3 +1,4 @@
-sgrequests
+bs4
+sgselenium
 sglogging
 sgzip

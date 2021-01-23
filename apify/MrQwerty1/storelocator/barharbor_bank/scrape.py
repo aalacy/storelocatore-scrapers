@@ -73,6 +73,10 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("Call for an appointment;")[
                 -1
             ].strip()
+        elif hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                ";".join(tree.xpath("//div/text()")).strip() or "<MISSING>"
+            )
 
         row = [
             locator_domain,
