@@ -43,20 +43,22 @@ def fetch_data():
 
     DOMAIN = "eighteeneight.com"
     start_url = "https://eighteeneight.com/wp-admin/admin-ajax.php?action=store_search&lat=33.68457&lng=-117.8265&max_results=50&search_radius=150&autoload=1"
-
-    response = session.get(start_url)
+    proxy = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
+    response = session.get(start_url, proxies=proxy)
     data = json.loads(response.text)
 
     for poi in data:
         store_url = poi["url"]
         store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["store"]
+        location_name = poi["store"].replace("&#8211; ", "")
         street_address = poi["address"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]
         city = poi["city"]
-        city = city if city else "<MISSING>"
+        city = city.split(",")[0] if city else "<MISSING>"
         state = poi["state"]
+        if not state:
+            state = store_url.split("-")[-1].capitalize()
         state = state if state else "<MISSING>"
         zip_code = poi["zip"]
         zip_code = zip_code if zip_code else "<MISSING>"
@@ -73,6 +75,13 @@ def fetch_data():
         if poi["hours"]:
             hoo = etree.HTML(poi["hours"])
             hoo = [elem.strip() for elem in hoo.xpath("//text()")]
+        else:
+            loc_response = session.get(store_url, proxies=proxy)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "HOURS:")]/following-sibling::p/text()'
+            )
+            hoo = [elem.strip() for elem in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
