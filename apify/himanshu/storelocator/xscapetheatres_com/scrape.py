@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("xscapetheatres_com")
@@ -54,7 +53,6 @@ def fetch_data():
             city = mp[2].split(",")[0]
             state = mp[2].split(",")[1].split(" ")[1]
             store_zip = mp[2].split(",")[1].split(" ")[-1]
-            store_number = mp[0].split(" ")[-1]
             return_object = []
             return_object.append("https://www.xscapetheatres.com/")
             return_object.append(location_name)
