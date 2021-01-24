@@ -36,41 +36,35 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
+
     items = []
 
-    DOMAIN = "thedaileymethod.com"
-    start_url = "https://thedaileymethod.com/studios/"
+    DOMAIN = "kmtire.com"
+    start_url = "http://kmtire.com/km-cgi/locations"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//ul[@class="city-list clean inline pack"]//a/@href')
+    all_locations = dom.xpath('//div[@class="locations-content"]/h5')
 
-    for store_url in all_locations:
-        loc_response = session.get(store_url + "contact/")
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//span[@class="location-title"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        if "Mexico" in location_name:
+    for poi_html in all_locations:
+        store_url = "http://kmtire.com/km-cgi/locations"
+        location_name = poi_html.xpath("text()")
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        raw_address = poi_html.xpath(".//following-sibling::p[1]/text()")
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        if not raw_address:
             continue
-        street_address = loc_dom.xpath('//div[@class="address"]/text()')
-        if "any questions" in street_address[0]:
-            street_address = street_address[1:]
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = loc_dom.xpath('//span[@class="city"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//span[@class="state"]/text()')
-        state = state[0].split()[-1] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@class="zip"]/text()')
-        zip_code = zip_code[0].replace("C.P.", "") if zip_code else "<MISSING>"
+        street_address = raw_address[0].strip()
+        city = raw_address[1].split(", ")[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//div[@class="phone"]/text()')
-        phone = phone[0].split(": ")[-1] if phone else "<MISSING>"
+        phone = raw_address[2].split(": ")[-1]
         location_type = "<MISSING>"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-lng")[0]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
         item = [
