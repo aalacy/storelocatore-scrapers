@@ -108,6 +108,11 @@ def fetch_data():
                     zc = "77096"
                 else:
                     addinfo = line2.split("saddr=&daddr=")[1].split('"')[0]
+                    addinfo = (
+                        addinfo.replace("Route 31", "Route 31,")
+                        .replace("NJ", ",NJ")
+                        .replace(",,", ",")
+                    )
                     add = addinfo.split(",")[0]
                     city = addinfo.split(",")[1].strip()
                     state = addinfo.split(",")[2].strip().split(" ")[0]
@@ -126,6 +131,7 @@ def fetch_data():
             state = "OH"
             zc = "<MISSING>"
         if add != "" and state != "USA" and CS is False:
+            state = name.rsplit(",", 1)[1].strip()
             if phone == "":
                 phone = "<MISSING>"
             if zc == "":
