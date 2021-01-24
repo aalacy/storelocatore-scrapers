@@ -66,7 +66,7 @@ def fetch_data():
         )
         raw_address = [elem.strip() for elem in raw_address]
 
-        location_name = poi["name"]
+        location_name = poi["name"].replace("&#8211;", "")
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["street"]
         city = raw_address[1].split(", ")[0]

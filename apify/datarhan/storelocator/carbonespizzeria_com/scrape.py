@@ -60,7 +60,8 @@ def fetch_data():
         street_address = raw_address[0]
         street_address = street_address if street_address else "<MISSING>"
         city = location_name.split(" (")[0].strip()
-        street_address = street_address.split(city)[0]
+        city_indx = street_address.split()
+        street_address = " ".join(sorted(set(city_indx), key=city_indx.index))
         state = raw_address[-1].split()[0]
         zip_code = raw_address[-1].split()[-1]
         country_code = "<MISSING>"
