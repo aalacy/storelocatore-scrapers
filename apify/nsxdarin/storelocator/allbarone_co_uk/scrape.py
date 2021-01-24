@@ -63,9 +63,12 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        Closed = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "covid/closed" in line2:
+                Closed = True
             if '"@type":"Restaurant"' in line2:
                 name = line2.split('"name":"')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
@@ -89,6 +92,8 @@ def fetch_data():
                 phone = line2.split('lass="phone-number">')[1].split("<")[0]
         if hours == "":
             hours = "<MISSING>"
+        if Closed or "00" not in hours:
+            hours = "Temporarily Closed"
         if add != "":
             yield [
                 website,

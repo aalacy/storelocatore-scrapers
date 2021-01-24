@@ -9,7 +9,7 @@ base_url = "https://w-hotels.marriott.com/"
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -42,7 +42,6 @@ def fetch_data():
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
     }
-    address = []
     request = session.get(url, headers=headers)
     soup = BeautifulSoup(request.text, "lxml")
     data = soup.text
@@ -53,7 +52,11 @@ def fetch_data():
             for k in j["country_states"]:
                 for h in k["state_cities"]:
                     for g in h["city_properties"]:
-                        if "USA" in (g["country_name"]):
+                        if (
+                            "USA" in (g["country_name"])
+                            or "CA" in (g["country_code"])
+                            or "GB" in (g["country_code"])
+                        ):
                             zipp = g["postal_code"]
                             location_name = g["name"]
                             street_address = g["address"]
@@ -70,7 +73,9 @@ def fetch_data():
                             output = []
                             output.append(base_url if base_url else "<MISSING>")
                             output.append(
-                                location_name if location_name else "<MISSING>"
+                                location_name.replace("™", "").replace("–", "-")
+                                if location_name.replace("™", "")
+                                else "<MISSING>"
                             )
                             output.append(
                                 street_address if street_address else "<MISSING>"
@@ -79,100 +84,13 @@ def fetch_data():
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("W Hotels Worldwide")
                             output.append(latitude if latitude else "<MISSING>")
                             output.append(longitude if longitude else "<MISSING>")
                             output.append("<MISSING>")
                             output.append(page_url if page_url else "<MISSING>")
-                            if output[2] in address:
-                                continue
-                            address.append(output[2])
-                            yield output
-    for i1 in data_8:
-        for j1 in i1["region_countries"]:
-            for k1 in j1["country_states"]:
-                for h1 in k1["state_cities"]:
-                    for g1 in h1["city_properties"]:
-                        if "CA" in (g1["country_code"]):
-                            zipp = g1["postal_code"]
-                            location_name = g1["name"]
-                            street_address = g1["address"]
-                            city = g1["city"]
-                            state = g1["state_name"]
-                            country_code = g1["country_name"]
-                            phone = g1["phone"]
-                            latitude = g1["latitude"]
-                            longitude = g1["longitude"]
-                            key = g1["marsha_code"]
-                            page_url = "https://www.marriott.com/hotels/travel/" + str(
-                                key
-                            )
-                            output = []
-                            output.append(base_url if base_url else "<MISSING>")
-                            output.append(
-                                location_name if location_name else "<MISSING>"
-                            )
-                            output.append(
-                                street_address if street_address else "<MISSING>"
-                            )
-                            output.append(city if city else "<MISSING>")
-                            output.append(state if state else "<MISSING>")
-                            output.append(zipp if zipp else "<MISSING>")
-                            output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
-                            output.append(phone if phone else "<MISSING>")
-                            output.append("W Hotels Worldwide")
-                            output.append(latitude if latitude else "<MISSING>")
-                            output.append(longitude if longitude else "<MISSING>")
-                            output.append("<MISSING>")
-                            output.append(page_url if page_url else "<MISSING>")
-                            if output[2] in address:
-                                continue
-                            address.append(output[2])
-                            yield output
-    for i2 in data_8:
-        for j2 in i2["region_countries"]:
-            for k2 in j2["country_states"]:
-                for h2 in k2["state_cities"]:
-                    for g2 in h2["city_properties"]:
-                        if "GB" in (g2["country_code"]):
-                            zipp = g2["postal_code"]
-                            location_name = g2["name"]
-                            street_address = g2["address"]
-                            city = g2["city"]
-                            state = g2["state_name"]
-                            country_code = g2["country_name"]
-                            phone = g2["phone"]
-                            latitude = g2["latitude"]
-                            longitude = g2["longitude"]
-                            key = g2["marsha_code"]
-                            page_url = "https://www.marriott.com/hotels/travel/" + str(
-                                key
-                            )
-                            output = []
-                            output.append(base_url if base_url else "<MISSING>")
-                            output.append(
-                                location_name if location_name else "<MISSING>"
-                            )
-                            output.append(
-                                street_address if street_address else "<MISSING>"
-                            )
-                            output.append(city if city else "<MISSING>")
-                            output.append(state if state else "<MISSING>")
-                            output.append(zipp if zipp else "<MISSING>")
-                            output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
-                            output.append(phone if phone else "<MISSING>")
-                            output.append("W Hotels Worldwide")
-                            output.append(latitude if latitude else "<MISSING>")
-                            output.append(longitude if longitude else "<MISSING>")
-                            output.append("<MISSING>")
-                            output.append(page_url if page_url else "<MISSING>")
-                            if output[2] in address:
-                                continue
-                            address.append(output[2])
                             yield output
 
 

@@ -12,6 +12,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,6 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -57,8 +59,8 @@ def fetch_data():
 
     r = session.get("https://www.graduatehotels.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    for li in soup.find("ul", class_="directory-navigation").find_all(
-        "a", class_="location-item"
+    for li in soup.find("ul", {"class": "directory-navigation"}).find_all(
+        "a", {"class": "location-item"}
     ):
         page_url = li["href"]
         r_loc = session.get(page_url, headers=headers)
