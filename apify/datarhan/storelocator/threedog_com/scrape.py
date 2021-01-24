@@ -1,3 +1,4 @@
+import re
 import csv
 import json
 from lxml import etree
@@ -42,9 +43,11 @@ def fetch_data():
     session = SgRequests()
 
     DOMAIN = "theparkingspot.com"
-    start_url = "https://threedog.com/wp/wp-admin/admin-ajax.php?location=Kansas+City%2C+MO&tdb_nonce=2a8b345533&action=get_bakeries_json"
+    start_url = "https://threedog.com/wp/wp-admin/admin-ajax.php?location=Kansas+City%2C+MO&tdb_nonce={}&action=get_bakeries_json"
 
-    response = session.get(start_url)
+    response = session.get("https://threedog.com/")
+    token = re.findall("nonce: '(.+?)',", response.text)[0]
+    response = session.get(start_url.format(token), verify=False)
     data = json.loads(response.text)
 
     for poi in data["results"]:
@@ -70,7 +73,14 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+
+        loc_response = session.get(store_url, verify=False)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//div[@class="hours"]/text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if "Coming Soon" in hours_of_operation:
+            location_type = "Coming Soon"
 
         if "Canada" in raw_address[-1]:
             city = raw_address[-1].split(", ")[0]
