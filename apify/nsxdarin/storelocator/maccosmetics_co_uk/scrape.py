@@ -77,7 +77,11 @@ def fetch_data():
                         phone = "<MISSING>"
                     if typ == "":
                         typ = "MAC"
-                    if "Boots" not in name:
+                    if "once again putting" in hours:
+                        hours = "Temporarily Closed"
+                    if "contact this store" in hours.lower():
+                        hours = "<MISSING>"
+                    if "Boots" not in name and state != "Ireland":
                         yield [
                             website,
                             loc,

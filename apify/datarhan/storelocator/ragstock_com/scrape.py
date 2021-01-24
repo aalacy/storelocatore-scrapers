@@ -59,6 +59,8 @@ def fetch_data():
             './/following-sibling::div[@class="stores-info"][1]/text()'
         )
         raw_data = [elem.strip() for elem in raw_data if elem.strip()]
+        if "Space" in raw_data[1]:
+            raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
         street_address = raw_data[0]
         city = raw_data[1].split(", ")[0]
         state = raw_data[1].split(", ")[-1].split()[0]
