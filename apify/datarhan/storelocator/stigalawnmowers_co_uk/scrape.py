@@ -59,7 +59,10 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = poi["website"]
+        url = [
+            elem for elem in poi["attributes"] if elem["attribute_code"] == "url_key"
+        ][0]["value"]
+        store_url = "https://www.stiga.com/uk/storelocator/location/{}/".format(url)
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
