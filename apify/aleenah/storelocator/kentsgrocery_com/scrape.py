@@ -41,7 +41,7 @@ driver = SgSelenium().chrome()
 
 
 def get_value(item):
-    if item == None or len(item) == 0:
+    if item is None or len(item) == 0:
         item = "<MISSING>"
     return item
 
@@ -98,7 +98,7 @@ def fetch_data():
             0
         ]
         tim = store_info_container.find("div", {"id": store_hour_id}).get_text(" ")
-        if tim == None or len(tim) == 0:
+        if tim is None or len(tim) == 0:
             tim = "<MISSING>"
         parsed_address = parse_address(address)
         city = parsed_address["city"]
