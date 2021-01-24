@@ -1,6 +1,7 @@
 import csv
 import json
 
+from datetime import datetime, timedelta
 from sgrequests import SgRequests
 
 
@@ -31,6 +32,40 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
+
+
+def override(js):
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    j = (
+        json.loads(js.get("hours_sets:primary"))
+        .get("children", {})
+        .get("holiday")
+        .get("overrides")
+    )
+    date_list = [
+        (datetime.today() + timedelta(days=x)).date().strftime("%Y-%m-%d")
+        for x in range(7)
+    ]
+
+    _tmp = []
+    for date in date_list:
+        day = days[datetime.strptime(date, "%Y-%m-%d").weekday()]
+        if type(j.get(date)) == list:
+            time = f"{j[date][0].get('open')} - {j[date][0].get('close')}"
+            _tmp.append(f"{day}: {time}")
+        else:
+            _tmp.append(f"{day}: Closed")
+
+    hoo = ";".join(_tmp)
+    return hoo
 
 
 def fetch_data():
@@ -79,10 +114,12 @@ def fetch_data():
             else:
                 _tmp.append(f"{day} Closed")
 
-        if _tmp:
-            hours_of_operation = ";".join(_tmp)
-        else:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+        try:
+            hours_of_operation = override(j)
+        except:
+            pass
 
         row = [
             locator_domain,
