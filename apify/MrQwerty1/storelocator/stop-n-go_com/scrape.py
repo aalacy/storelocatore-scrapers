@@ -75,6 +75,9 @@ def get_data(coord):
                 _tmp.append(f"{day}: Closed")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        is24 = j.get("open24Hours")
+        if is24:
+            hours_of_operation = "Open 24 Hours"
 
         row = [
             locator_domain,
