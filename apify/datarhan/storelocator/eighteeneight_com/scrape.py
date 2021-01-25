@@ -43,8 +43,8 @@ def fetch_data():
 
     DOMAIN = "eighteeneight.com"
     start_url = "https://eighteeneight.com/wp-admin/admin-ajax.php?action=store_search&lat=33.68457&lng=-117.8265&max_results=50&search_radius=150&autoload=1"
-    proxy = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
-    response = session.get(start_url, proxies=proxy)
+
+    response = session.get(start_url)
     data = json.loads(response.text)
 
     for poi in data:
@@ -76,7 +76,7 @@ def fetch_data():
             hoo = etree.HTML(poi["hours"])
             hoo = [elem.strip() for elem in hoo.xpath("//text()")]
         else:
-            loc_response = session.get(store_url, proxies=proxy)
+            loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
             hoo = loc_dom.xpath(
                 '//h3[contains(text(), "HOURS:")]/following-sibling::p/text()'
