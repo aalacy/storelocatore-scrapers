@@ -62,8 +62,8 @@ def fetch_data():
 
     loclist = session.post(url, data=mydata, headers=headers).json()["features"]
     for loc in loclist:
-        lat = loc["geometry"]["coordinates"][0]
-        longt = loc["geometry"]["coordinates"][1]
+        longt = loc["geometry"]["coordinates"][0]
+        lat = loc["geometry"]["coordinates"][1]
         title = loc["properties"]["name"]
         link = "https://joeskwikmart.com/" + loc["properties"]["url"]
         content = loc["properties"]["fulladdress"]
