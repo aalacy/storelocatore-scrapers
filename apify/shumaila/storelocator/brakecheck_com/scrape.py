@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("brakecheck_com")
+
+
 session = SgRequests()
 
 
@@ -55,17 +57,21 @@ def fetch_data():
         city = loc["city"]
         state = loc["state"]
         zip = loc["zip"]
+        pageurl = "https://brakecheck.com/" + loc["url"]
         storenum = loc["store_no"]
         hours_of_operation = (
-            loc["weekday_hours"].replace("<b>", "").replace("</b>", "")
-            + "\n"
+            loc["weekday_hours"]
+            .replace("<b>", "")
+            .replace("</b>", "")
+            .replace("\n", " ")
+            + ", "
             + loc["sunday_hours"]
         )
 
         data.append(
             [
                 "www.brakecheck.com",
-                "https://brakecheck.com/book-now-store-locator/?msg=no-results",
+                pageurl,
                 title,
                 street,
                 city,
