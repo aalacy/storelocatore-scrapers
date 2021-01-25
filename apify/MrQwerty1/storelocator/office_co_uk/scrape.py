@@ -34,18 +34,25 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_sitemap_url():
+    session = SgRequests()
+    r = session.get("https://www.office.co.uk/view/component/sitemap.xml")
+    tree = html.fromstring(r.content)
+
+    return "".join(tree.xpath("//loc[contains(text(), 'Store')]/text()"))
+
+
 def get_urls():
     session = SgRequests()
-    r = session.get(
-        "https://www.office.co.uk/medias/sys_master/root/h17/h42/10345024454686/Store-en-GBP-9078464507453372675.xml"
-    )
+    url = get_sitemap_url()
+    r = session.get(url)
     tree = html.fromstring(r.content)
 
     return tree.xpath("//loc/text()")
 
 
 def get_data(page_url):
-    locator_domain = "https://www.bangor.com/"
+    locator_domain = " https://office.co.uk/"
 
     session = SgRequests()
     r = session.get(page_url)
@@ -75,6 +82,9 @@ def get_data(page_url):
     if postal == line:
         city = postal
         postal = "<MISSING>"
+
+    if city.lower().find("dublin") != -1 or city.lower().find("cork") != -1:
+        return
     state = "<MISSING>"
     country_code = "GB"
     store_number = "<MISSING>"
