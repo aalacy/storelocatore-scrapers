@@ -33,6 +33,26 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_hours(page_url):
+    _tmp = []
+    session = SgRequests()
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    tr = tree.xpath("//table[@class='hours']//tr")
+    for t in tr:
+        day = "".join(t.xpath("./td[1]/text()")).strip()
+        time = "".join(t.xpath("./td[2]/text()")).strip()
+        _tmp.append(f"{day}: {time}")
+
+    hours = ";".join(_tmp) or "<MISSING>"
+    if hours.lower().find("call") != -1:
+        hours = "<MISSING>"
+    if hours.lower().find("closed") != -1:
+        hours = "Closed"
+
+    return hours
+
+
 def fetch_data():
     out = []
     locator_domain = "https://hillstone.com/"
@@ -62,9 +82,10 @@ def fetch_data():
         )
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = (
-            "".join(d.xpath(".//a[@itemprop='url']/@href")).strip() or "<MISSING>"
-        )
+        try:
+            page_url = d.xpath(".//a[@itemprop='url']/@href")[-1].strip()
+        except IndexError:
+            page_url = "<MISSING>"
         location_name = (
             " ".join(
                 "".join(d.xpath(".//h3[@class='truncate']//text()"))
@@ -80,7 +101,7 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = get_hours(page_url)
 
         row = [
             locator_domain,
