@@ -14,7 +14,6 @@ headers = {
 }
 
 
-
 def write_output(data):
     with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
@@ -40,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -56,27 +55,28 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
     data = []
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
-    url = 'https://www.sullivantire.com/truck-center'
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.sullivantire.com/truck-center"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     loclist = soup.findAll("div", {"class": "media-location--item"})
     for loc in loclist:
         title = loc.find("h4", {"class": "big"}).text
         address = loc.find("div", {"class": "detail"}).text.strip()
-        address = re.sub(pattern, ' ', address)
-        address = re.sub(cleanr, ' ', address)
+        address = re.sub(pattern, " ", address)
+        address = re.sub(cleanr, " ", address)
         address = address.replace(",", " ")
         address = usaddress.parse(address)
-     
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -109,7 +109,8 @@ def fetch_data():
         phone = phone.lstrip("Tel")
         phone = phone.strip()
         hours = loc.findAll("div", {"class": "half"})[1].text
-        hours = hours.replace("Hours Today", "Hours Today ")
+        hours = hours.replace("Hours Today", "")
+        hours = hours.strip()
 
         data.append(
             [
@@ -140,4 +141,3 @@ def scrape():
 
 
 scrape()
-
