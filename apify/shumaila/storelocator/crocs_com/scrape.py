@@ -111,7 +111,7 @@ def fetch_data():
                 phone = detail[start:end]
 
                 title = soup.find("h1").text.replace("\n", "")
-                title = re.sub("\s+", " ", title).strip()
+                title = re.sub("\\s+", " ", title).strip()
                 hours = (
                     soup.find("div", {"class": "hrs"})
                     .find("table")
@@ -132,7 +132,7 @@ def fetch_data():
                         city,
                         state,
                         pcode,
-                        "US",
+                        ccode,
                         store,
                         phone,
                         "store",
