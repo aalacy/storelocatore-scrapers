@@ -1,4 +1,5 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -57,6 +58,7 @@ def write_output(data):
 
 
 def get_store_data(loc):
+    pattern = re.compile(r"\s\s+")
     title = loc.find("div", {"class", "card-text"}).find("h3").text
     link = loc.find("div", {"class", "author-name text-center"}).find("a")["href"]
     link = "https://www.naturalgrocers.com" + link
@@ -66,6 +68,9 @@ def get_store_data(loc):
     lat = loc.find("div", {"class", "geolocation"})["data-lat"]
     longt = loc.find("div", {"class", "geolocation"})["data-lng"]
     if "Coming Soon!" in title:
+        title = title.split("- Coming Soon!")[0].replace("\n", "").strip()
+        title = title + " " + "- Coming Soon!"
+        title = re.sub(pattern, "\n", title)
         phone = "<MISSING>"
         pcode = "<MISSING>"
         hours = "<MISSING>"
@@ -106,6 +111,7 @@ def get_store_data(loc):
 def fetch_data():
     # Your scraper here
     final_data = []
+
     if True:
         url = "https://www.naturalgrocers.com/store-directory"
         r = session.get(url, headers=headers, verify=False)
