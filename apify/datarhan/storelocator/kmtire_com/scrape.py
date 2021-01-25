@@ -53,6 +53,8 @@ def fetch_data():
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//following-sibling::p[1]/text()")
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        if len(raw_address) == 5:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
         if not raw_address:
             continue
         street_address = raw_address[0].strip()
