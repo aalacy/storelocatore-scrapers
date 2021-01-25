@@ -62,7 +62,7 @@ def fetch_data():
     linklist = soup.find(
         "div",
         {
-            "class": "locations-overview js-view-dom-id-61741900e5dbe22a472378ccbca05138fc8e90f003892f0ae33accb94c3291a9"
+            "class": "locations-overview js-view-dom-id-c0930adbb4fa0c7c89099acc444d0add7f16ce4183b883d8e5e132e7c8089493"
         },
     )
     locations = linklist.findAll("ul", {"class": "locations"})
