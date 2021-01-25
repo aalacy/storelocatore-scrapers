@@ -81,14 +81,36 @@ def fetch_data():
             hours_of_operation.replace(" Face mask required.", "")
             .replace("\n", "")
             .replace("Face Mask Required", "")
-            .replace("Masks Required ", "")
+            .replace("Masks Required", "")
+            .replace("Mask required", "")
+            .replace("Face Masks Strongl", "")
+            .replace("Face Masks Strong", "")
         )
         hours_of_operation = (
             hours_of_operation.replace("Face Masks Strong ", "")
             .replace("Face Mask Require", "")
             .replace("masks required", "")
             .replace("Open to the public", "")
+            .replace("\n", "")
+            .replace("\t", "")
+            .replace("\r", "")
         )
+
+        str_to_del = [
+            "Shoppes of New Castle ",
+            "Parkway Shopping Center ",
+            "Overland Park Shopping Center ",
+            "Tri-County Towne Center ",
+            "Battlefield Shopping Center ",
+            "Hunnington Place, ",
+            "Shoppes of New Castle ",
+            "Towne Square Shopping Center Next to Sams ",
+            "Ravensworth Shopping Center ",
+            "Henrietta Plaza ",
+        ]
+        for elem in str_to_del:
+            street_address = street_address.replace(elem, "")
+        street_address = street_address.split(", use")[0]
 
         item = [
             DOMAIN,
