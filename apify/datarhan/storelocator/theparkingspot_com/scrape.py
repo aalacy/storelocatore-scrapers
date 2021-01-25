@@ -50,7 +50,7 @@ def fetch_data():
     all_urls = dom.xpath('//section[@class="airport-locations-block-list"]//a/@href')
     all_locations = []
     for url in all_urls:
-        if len(url.split("/")) == 7:
+        if len(url.split("/")) == 5:
             all_locations.append(url)
             continue
         response = session.get(urljoin(start_url, url))
@@ -60,7 +60,8 @@ def fetch_data():
         )
 
     for store_url in list(set(all_locations)):
-        loc_response = session.get(urljoin(start_url, store_url))
+        store_url = urljoin(start_url, store_url)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[-1]
         poi = json.loads(poi)
