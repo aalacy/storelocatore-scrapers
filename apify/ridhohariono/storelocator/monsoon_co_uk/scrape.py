@@ -60,14 +60,6 @@ def handle_missing(field):
     return field
 
 
-def parse_json(page_url):
-    log.info("Parse content to json => " + page_url)
-    soup = pull_content(page_url)
-    info = soup.find("script", type="application/ld+json").string
-    data = json.loads(info)
-    return data
-
-
 def parse_hours(element, store_id):
     log.info("Parsing hours_of_operation => " + store_id)
     content = bs(element, "lxml")
@@ -101,8 +93,11 @@ def fetch_store_data(store_id):
 def fetch_data():
     log.info("Fetching store_locator data")
     store_ids = json.loads(fetch_store_id())
+    skip_id = ["1387", "1274"]
     locations = []
     for row in store_ids:
+        if row["ID"] in skip_id:
+            continue
         data = fetch_store_data(row["ID"])
         store = data["store"]
         locator_domain = DOMAIN
@@ -125,7 +120,11 @@ def fetch_data():
             location_type = "OPEN"
         latitude = handle_missing(store["latitude"])
         longitude = handle_missing(store["longitude"])
-        log.info("Append info to locations")
+        log.info(
+            "Append info to locations => {}:{} => {}".format(
+                latitude, longitude, street_address
+            )
+        )
         locations.append(
             [
                 locator_domain,
