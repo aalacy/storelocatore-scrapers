@@ -125,6 +125,32 @@ def fetch_data():
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('"longitude" content="')[1].split('"')[0]
+            if '<td class="c-hours-details-row-day">' in line2 and hours == "":
+                days = line2.split('<td class="c-hours-details-row-day">')
+                for day in days:
+                    if '</td><td class="c-hours-details-row-intervals">' in day:
+                        if 'data-open-interval-start="' not in day:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split(
+                                    '</td><td class="c-hours-details-row-intervals">'
+                                )[1].split("<")[0]
+                            )
+                        else:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split('data-open-interval-start="')[1].split('"')[
+                                    0
+                                ]
+                                + "-"
+                                + day.split('data-open-interval-end="')[1].split('"')[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if hours == "" and '{"day":"' in line2:
                 days = (
                     line2.split("days='")[1]
