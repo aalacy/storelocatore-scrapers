@@ -53,6 +53,7 @@ def fetch_data():
             continue
         linklist.append(link)
         r = session.get(link, headers=headers, verify=False)
+        ccode = "US"
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("span", {"id": "yext-address"})
@@ -108,9 +109,13 @@ def fetch_data():
             hours = "<MISSING>"
         phone = r.text.split('"telephone":"', 1)[1].split('"', 1)[0].replace("+1", "")
         phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
-
+        ccode = "US"
         if "-" in pcode:
             continue
+        if pcode.isdigit():
+            pass
+        else:
+            ccode = "CA"
         data.append(
             [
                 "https://bluestonelane.com/",
@@ -120,7 +125,7 @@ def fetch_data():
                 city,
                 state,
                 pcode,
-                "US",
+                ccode,
                 store,
                 phone,
                 "<MISSING>",

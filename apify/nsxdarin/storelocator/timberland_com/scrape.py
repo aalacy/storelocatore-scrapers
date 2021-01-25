@@ -119,6 +119,12 @@ def fetch_data():
                     + store
                     + "/"
                 )
+                if "ca/gilroy/126" in loc:
+                    hours = "Mon-Sun: 11am - 7pm"
+                if "/ca/commerce/338" in loc:
+                    hours = "Mon-Sun: Closed"
+                if "/fl/orlando/325" in loc:
+                    hours = "Mon-Sat: 11am - 7pm; Sun: 12pm - 6pm"
                 yield [
                     website,
                     loc,
