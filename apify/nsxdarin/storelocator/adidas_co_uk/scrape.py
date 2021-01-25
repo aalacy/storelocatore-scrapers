@@ -50,64 +50,65 @@ def fetch_data():
         if "<loc>www.adidas.co.uk/storefront/GB" in line:
             locs.append("https://" + line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = loc.split("/storefront/")[1].split("-")[0]
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        session = SgRequests()
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "><h3>" in line2:
-                name = line2.split("><h3>")[1].split("<")[0]
-            if '"storeLocator\\":{\\"content\\"' in line2:
-                info = line2.split('"storeLocator\\":{\\"content\\"')[1]
-                add = info.split('"street\\":\\"')[1].split("\\")[0]
-                city = info.split('"city\\":\\"')[1].split("\\")[0]
-                zc = info.split('"postcode\\":\\"')[1].split("\\")[0]
-                state = "<MISSING>"
-                lat = info.split('\\"lat\\":')[1].split(",")[0]
-                lng = info.split('"lng\\":')[1].split("}")[0]
-            if '<a title="Phone" href="tel:' in line2:
-                phone = line2.split('<a title="Phone" href="tel:')[1].split('"')[0]
-            if '<li class="timerow' in line2:
-                items = line2.split('<li class="timerow')
-                for item in items:
-                    if "day</span>" in item:
-                        hrs = (
-                            item.split("<span>")[1].split("<")[0]
-                            + ": "
-                            + item.split("day</span><span>")[1].split("<")[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        if phone == "undefined":
-            phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "GB201125-online-20-garrett-street-okini" not in loc:
+            logger.info(loc)
+            name = ""
+            add = ""
+            city = ""
+            state = ""
+            zc = ""
+            store = loc.split("/storefront/")[1].split("-")[0]
+            phone = ""
+            lat = ""
+            lng = ""
+            hours = ""
+            session = SgRequests()
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if "><h3>" in line2:
+                    name = line2.split("><h3>")[1].split("<")[0]
+                if '"storeLocator\\":{\\"content\\"' in line2:
+                    info = line2.split('"storeLocator\\":{\\"content\\"')[1]
+                    add = info.split('"street\\":\\"')[1].split("\\")[0]
+                    city = info.split('"city\\":\\"')[1].split("\\")[0]
+                    zc = info.split('"postcode\\":\\"')[1].split("\\")[0]
+                    state = "<MISSING>"
+                    lat = info.split('\\"lat\\":')[1].split(",")[0]
+                    lng = info.split('"lng\\":')[1].split("}")[0]
+                if '<a title="Phone" href="tel:' in line2:
+                    phone = line2.split('<a title="Phone" href="tel:')[1].split('"')[0]
+                if '<li class="timerow' in line2:
+                    items = line2.split('<li class="timerow')
+                    for item in items:
+                        if "day</span>" in item:
+                            hrs = (
+                                item.split("<span>")[1].split("<")[0]
+                                + ": "
+                                + item.split("day</span><span>")[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+            if phone == "undefined":
+                phone = "<MISSING>"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
