@@ -58,7 +58,8 @@ def fetch_data():
             "," not in poi_html.xpath('.//li[@class="title"]/text()')[0]
             and " United Kingdom" not in raw_address[-1]
         ):
-            continue
+            if "Bristol" not in poi_html.xpath('.//li[@class="title"]/text()')[0]:
+                continue
         raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
         country_code = "<MISSING>"
         if "USA" in raw_address[-1]:
