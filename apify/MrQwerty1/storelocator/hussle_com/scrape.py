@@ -39,7 +39,9 @@ def get_urls():
     urls = []
     session = SgRequests()
     for i in range(1, 5000):
-        r = session.get(f"https://www.hussle.com/search?page={i}")
+        r = session.get(
+            f"https://www.hussle.com/search?distance=20&location=london&page={i}"
+        )
         tree = html.fromstring(r.text)
         links = tree.xpath("//a[@class='result__gym-name-link']/@href")
         for l in links:
