@@ -71,7 +71,9 @@ def fetch_data():
             detail = json.loads(detail_text)
 
         location_name = detail["name"].replace("&amp;", "")
-        street_address = detail["address"]["streetAddress"]
+        street_address = detail["address"]["streetAddress"].replace(
+            "(Century Park  Courtyard), ", ""
+        )
         city = detail["address"]["addressLocality"]
         state = detail["address"]["addressRegion"]
         zip = detail["address"]["postalCode"]
@@ -89,8 +91,10 @@ def fetch_data():
             .contents[:-3]
             .pop()
             .text.replace("\n", " ")
+            .replace("Phone lines open at 8am", "")
             .strip()
         )
+        hours_of_operation = hours_of_operation or "<MISSING>"
 
         data.append(
             [
