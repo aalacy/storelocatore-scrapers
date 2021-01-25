@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import pandas as pd
 import re
 
+
 def getdata():
     session = SgRequests()
     response = session.get(
@@ -12,7 +13,6 @@ def getdata():
     soup = bs(response, "html.parser")
 
     places = soup.find_all("placemark")
-
 
     latitudes = []
     longitudes = []
@@ -97,8 +97,10 @@ def getdata():
 
     writedata(df)
 
+
 def writedata(df):
     df = df.replace(r"^\s*$", "<MISSING>", regex=True)
     df.to_csv("data.csv", index=False)
+
 
 getdata()
