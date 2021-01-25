@@ -4,6 +4,7 @@ import json
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 
 def write_output(data):
@@ -35,12 +36,12 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
+def get_urls(postal):
     urls = []
     session = SgRequests()
     for i in range(1, 5000):
         r = session.get(
-            f"https://www.hussle.com/search?distance=20&location=london&page={i}"
+            f"https://www.hussle.com/search?distance=20&geo-location=&location={postal}&page={i}"
         )
         tree = html.fromstring(r.text)
         links = tree.xpath("//a[@class='result__gym-name-link']/@href")
@@ -57,6 +58,10 @@ def get_data(page_url):
     locator_domain = "https://www.hussle.com/"
     session = SgRequests()
     r = session.get(page_url)
+
+    if page_url != r.url:
+        return
+
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[@type='application/ld+json']/text()"))
     j = json.loads(text)
@@ -86,6 +91,10 @@ def get_data(page_url):
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
+    check = tree.xpath("//li[@class='alert alert-danger alert--with-icon']")
+    if check:
+        location_type = "Temporarily Closed"
+
     row = [
         locator_domain,
         page_url,
@@ -108,7 +117,15 @@ def get_data(page_url):
 
 def fetch_data():
     out = []
-    urls = get_urls()
+    urls = set()
+
+    postals = static_zipcode_list(radius=20, country_code=SearchableCountries.BRITAIN)
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_urls, p): p for p in postals}
+        for future in futures.as_completed(future_to_url):
+            links = future.result()
+            for l in links:
+                urls.add(l)
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
