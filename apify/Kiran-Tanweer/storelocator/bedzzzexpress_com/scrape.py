@@ -10,8 +10,8 @@ logger = SgLogSetup().get_logger("bedzzzexpress_com")
 session = SgRequests()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-    }
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -39,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -63,30 +63,35 @@ def fetch_data():
     soups = BeautifulSoup(r.text, "html.parser")
     scripts = soups.findAll("script")[15]
     scripts = str(scripts)
-    scripts = scripts.lstrip('<script type="text/javascript">\n  // <![CDATA[\n jQuery(document).ready(\n   function()\n     {\n       jQuery("#map1").dmxGoogleMaps(\n         {"dataSource": "", "dataSourceType": "dynamic", "zoom": 6, "markers": [ {')
+    scripts = scripts.lstrip(
+        '<script type="text/javascript">\n  // <![CDATA[\n jQuery(document).ready(\n   function()\n     {\n       jQuery("#map1").dmxGoogleMaps(\n         {"dataSource": "", "dataSourceType": "dynamic", "zoom": 6, "markers": [ {'
+    )
     coords = scripts.split('"latitude": ')
-    linklist = soups.find("div", {"id" : "StoreList"})
-    sections = linklist.findAll("div", {"class" : "fgm-section"})
+    linklist = soups.find("div", {"id": "StoreList"})
+    sections = linklist.findAll("div", {"class": "fgm-section"})
     for sec in sections:
-        info = sec.find("a", {"class" : "sot_store_header_link"})
-        link = 'https://bedzzzexpress.com' + info['href']
+        info = sec.find("a", {"class": "sot_store_header_link"})
+        link = "https://bedzzzexpress.com" + info["href"]
         title = info.text
-        allinfo = sec.findAll('p')
-        storeid = allinfo[0].find('input')['value']
+        allinfo = sec.findAll("p")
+        storeid = allinfo[0].find("input")["value"]
         address = allinfo[1].text
-        address = address.replace(',', '')
-        phone = allinfo[2].find('a').text
+        address = address.replace(",", "")
+        phone = allinfo[2].find("a").text
         hours = allinfo[5].text.strip()
-        hours = hours.replace('pmS', 'pm S')
-        if hours == 'This is a Bedzzz Central Warehouse and Corporate Offices  Customer Pick Up Only':
-            hours = '<MISSING>'
+        hours = hours.replace("pmS", "pm S")
+        if (
+            hours
+            == "This is a Bedzzz Central Warehouse and Corporate Offices  Customer Pick Up Only"
+        ):
+            hours = "<MISSING>"
         address = usaddress.parse(address)
- 
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -117,40 +122,32 @@ def fetch_data():
         search = '"' + storeid + '"'
         for c in coords:
             if c.find(search) != -1:
-                lat = c.split(',')[0]
-                lng = c.split('"longitude":')[1].split(',')[0]
-
-        if street == '6880 US Hwy 90Daphne AL':
-            street = '6880 US Hwy 90'
-            city = 'Daphne'
-            state = 'AL'
-
-        if street == '11464 Hwy 431Guntersville AL':
-            street = '11464 Hwy 431'
-            city = 'Guntersville'
-            state = 'AL'
-
-        if street == '2711 Hwy 150 Suite 100Hoover':
-            street = '2711 Hwy 150 Suite 100'
-            city = 'Hoover'
-
-        if street == '4710 Frank St.Birmingham AL':
-            street = '4710 Frank St.'
-            city = 'Birmingham'
-            state = 'AL'
-
-        if street == '5555 Whittlesey Blvd. Unit 2Columbus':
-            street = '5555 Whittlesey Blvd. Unit 2'
-            city = 'Columbus'
-
-        if street == '289 Ridgewalk Pkwy Suite 108Woodstock':
-            street = '289 Ridgewalk Pkwy Suite 108'
-            city = 'Woodstock'
-
-        if street == '545 Cool Springs Boulevard Suite 165Franklin':
-            street = '545 Cool Springs Boulevard Suite 165'
-            city = 'Franklin'
-
+                lat = c.split(",")[0]
+                lng = c.split('"longitude":')[1].split(",")[0]
+        if street == "6880 US Hwy 90Daphne AL":
+            street = "6880 US Hwy 90"
+            city = "Daphne"
+            state = "AL"
+        if street == "11464 Hwy 431Guntersville AL":
+            street = "11464 Hwy 431"
+            city = "Guntersville"
+            state = "AL"
+        if street == "2711 Hwy 150 Suite 100Hoover":
+            street = "2711 Hwy 150 Suite 100"
+            city = "Hoover"
+        if street == "4710 Frank St.Birmingham AL":
+            street = "4710 Frank St."
+            city = "Birmingham"
+            state = "AL"
+        if street == "5555 Whittlesey Blvd. Unit 2Columbus":
+            street = "5555 Whittlesey Blvd. Unit 2"
+            city = "Columbus"
+        if street == "289 Ridgewalk Pkwy Suite 108Woodstock":
+            street = "289 Ridgewalk Pkwy Suite 108"
+            city = "Woodstock"
+        if street == "545 Cool Springs Boulevard Suite 165Franklin":
+            street = "545 Cool Springs Boulevard Suite 165"
+            city = "Franklin"
         data.append(
             [
                 "https://bedzzzexpress.com/",
@@ -180,4 +177,3 @@ def scrape():
 
 
 scrape()
-
