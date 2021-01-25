@@ -50,7 +50,7 @@ def fetch_data():
         if "<loc>www.adidas.co.uk/storefront/GB" in line:
             locs.append("https://" + line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        if "GB201125-online-20-garrett-street-okini" not in loc:
+        if "-online-" not in loc:
             logger.info(loc)
             name = ""
             add = ""
