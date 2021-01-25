@@ -47,13 +47,12 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = poi["url"]
-        store_url = store_url if store_url else "<MISSING>"
+        store_url = "https://www.bakersdrivethru.com/locations/"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
         if poi["address2"]:
-            street_address += ", " + poi["address"]
+            street_address += ", " + poi["address2"]
         city = poi.get("city")
         city = city if city else "<MISSING>"
         state = poi["state"]

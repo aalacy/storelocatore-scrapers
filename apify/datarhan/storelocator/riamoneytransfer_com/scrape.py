@@ -96,15 +96,15 @@ def extract(location, store_number):
 
 
 @retry(stop=stop_after_attempt(5))
-def fetch(lat, lng):
+def fetch(lat, lng, country):
     body = {
-        "CountryTo": "US",
+        "CountryTo": country,
         "FindLocationType": "RMT",
         "Lat": "",
         "Latitude": lat,
         "Long": "",
         "Longitude": lng,
-        "RequestCountry": "US",
+        "RequestCountry": country,
         "RequiredPayoutAgents": False,
         "RequiredReceivingAgents": False,
         "RequiredReceivingAndPayoutAgents": False,
@@ -115,7 +115,7 @@ def fetch(lat, lng):
         json=body,
         headers=headers,
     ).json()
-
+    print(country, len(result))
     return result
 
 
@@ -134,31 +134,42 @@ def set_jwt_token_header(session):
 
 def fetch_data():
     searched = []
-    search = DynamicGeoSearch(
+    all_coordinates = {}
+    us_search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
+    ca_search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=50
+    )
+    uk_search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+    )
+    all_coordinates = {"US": us_search, "CA": ca_search, "UK": uk_search}
 
     set_jwt_token_header(session)
 
-    for lat, lng in search:
+    for country, coordinates in all_coordinates.items():
         coords = []
-        try:
-            locations = fetch(lat, lng)
-        except Exception as e:
-            logger.error(f"error fetching data for {lat} {lng}: {e}")
-            continue
-        for location in locations:
-            store_number = get(location, "locationId")
-            if store_number in searched:
+        for lat, lng in coordinates:
+            try:
+                locations = fetch(lat, lng, country)
+            except Exception as e:
+                logger.error(f"error fetching data for {lat} {lng}: {e}")
                 continue
-            searched.append(store_number)
+            for location in locations:
+                if type(location) == str:
+                    continue
+                store_number = get(location, "locationId")
+                if store_number in searched:
+                    continue
+                searched.append(store_number)
 
-            poi = extract(location, store_number)
-            if not poi:
-                continue
-            coords.append([poi.get("latitude"), poi.get("longitude")])
+                poi = extract(location, store_number)
+                if not poi:
+                    continue
+                coords.append([poi.get("latitude"), poi.get("longitude")])
 
-            yield [poi[field] for field in FIELDS]
+                yield [poi[field] for field in FIELDS]
 
 
 def scrape():

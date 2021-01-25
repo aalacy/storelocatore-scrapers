@@ -66,6 +66,12 @@ def get_data(url):
         postal = "<MISSING>"
 
     state = "<MISSING>"
+    if city.lower().find("park,") != -1:
+        city = city.split(",")[-1].strip()
+    if city.find(",") != -1:
+        state = city.split(",")[-1].strip() or "<MISSING>"
+        city = city.split(",")[0].strip()
+
     country_code = "GB"
     store_number = "<MISSING>"
     text = "".join(tree.xpath("//div[@class='book_outer']/text()")).strip()
