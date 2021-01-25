@@ -84,13 +84,12 @@ def fetch_data():
             " ".join(hours_of_operation)
             .replace("\n", " ")
             .replace("Operation Hours: ", "")
+            .split("What")[0]
             if hours_of_operation
             else "<MISSING>"
         )
 
         # Exceptions
-        if "s on Tap" in hours_of_operation:
-            hours_of_operation = "<MISSING>"
         if "," in city:
             zip_code = city.split(",")[-1].split()[-1]
             state = city.split(",")[-1].split()[0]
