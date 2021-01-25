@@ -9,8 +9,8 @@ logger = SgLogSetup().get_logger("sitnsleep_com")
 session = SgRequests()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-    }
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -38,7 +38,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -54,37 +54,38 @@ def write_output(data):
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
 
+
 def fetch_data():
     data = []
     url = "https://www.sitnsleep.com/js/app.851c759c.js"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     bs = str(soup)
-    bs = bs.split('stores:')[1].split('}}};t["a"]=s},')[0]
-    locs = bs.split('{about:')
+    bs = bs.split("stores:")[1].split('}}};t["a"]=s},')[0]
+    locs = bs.split("{about:")
     for loc in locs:
-        if loc != '[':
+        if loc != "[":
             title = loc.split(',name:"')[1].split('",')[0]
             street = loc.split(',street:"')[1].split('",')[0]
-            street = street.replace('<br/>', ' ')
+            street = street.replace("<br/>", " ")
             city = loc.split('{city:"')[1].split('",')[0]
             state = loc.split(',state:"')[1].split('",')[0]
             pcode = loc.split(',zip:"')[1].split('"}')[0]
             country = loc.split(',country:"')[1].split('",')[0]
             hours = loc.split(",hours:'")[1].split("',l")[0]
-            week = hours.split('<p><strong>')[1].split('</p>')[0]
-            week = week.replace('</strong>', '')
-            sat = hours.split('hours-saturday">')[1].split('</p>')[0]
-            sat = sat.replace('</strong>', '')
-            sun = hours.split('hours-sunday">')[1].split('</p>')[0]
-            sun = sun.replace('</strong>', '')
-            hoo = week + ', ' + sat + ', ' + sun
+            week = hours.split("<p><strong>")[1].split("</p>")[0]
+            week = week.replace("</strong>", "")
+            sat = hours.split('hours-saturday">')[1].split("</p>")[0]
+            sat = sat.replace("</strong>", "")
+            sun = hours.split('hours-sunday">')[1].split("</p>")[0]
+            sun = sun.replace("</strong>", "")
+            hoo = week + ", " + sat + ", " + sun
             lat = loc.split('latitude:"')[1].split('",')[0]
             lng = loc.split('longitude:"')[1].split('",')[0]
             phone = loc.split(',phone:"')[1].split('",')[0]
             link = loc.split('route:"')[1].split('",')[0]
             link = link.rstrip('"},')
-            page = 'https://www.sitnsleep.com/store/' + link
+            page = "https://www.sitnsleep.com/store/" + link
 
             data.append(
                 [
@@ -115,4 +116,3 @@ def scrape():
 
 
 scrape()
-
