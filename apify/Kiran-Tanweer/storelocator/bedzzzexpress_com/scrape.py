@@ -75,7 +75,11 @@ def fetch_data():
         title = info.text
         allinfo = sec.findAll("p")
         storeid = allinfo[0].find("input")["value"]
-        address = allinfo[1].text
+        address = str(allinfo[1])
+        address = address.lstrip("<p>")
+        address = address.rstrip("</p>")
+        address = address.strip()
+        address = address.replace("<br/>", " ")
         address = address.replace(",", "")
         phone = allinfo[2].find("a").text
         hours = allinfo[5].text.strip()
@@ -124,30 +128,6 @@ def fetch_data():
             if c.find(search) != -1:
                 lat = c.split(",")[0]
                 lng = c.split('"longitude":')[1].split(",")[0]
-        if street == "6880 US Hwy 90Daphne AL":
-            street = "6880 US Hwy 90"
-            city = "Daphne"
-            state = "AL"
-        if street == "11464 Hwy 431Guntersville AL":
-            street = "11464 Hwy 431"
-            city = "Guntersville"
-            state = "AL"
-        if street == "2711 Hwy 150 Suite 100Hoover":
-            street = "2711 Hwy 150 Suite 100"
-            city = "Hoover"
-        if street == "4710 Frank St.Birmingham AL":
-            street = "4710 Frank St."
-            city = "Birmingham"
-            state = "AL"
-        if street == "5555 Whittlesey Blvd. Unit 2Columbus":
-            street = "5555 Whittlesey Blvd. Unit 2"
-            city = "Columbus"
-        if street == "289 Ridgewalk Pkwy Suite 108Woodstock":
-            street = "289 Ridgewalk Pkwy Suite 108"
-            city = "Woodstock"
-        if street == "545 Cool Springs Boulevard Suite 165Franklin":
-            street = "545 Cool Springs Boulevard Suite 165"
-            city = "Franklin"
         data.append(
             [
                 "https://bedzzzexpress.com/",
