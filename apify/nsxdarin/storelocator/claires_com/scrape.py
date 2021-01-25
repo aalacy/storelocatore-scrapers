@@ -8,7 +8,7 @@ logger = SgLogSetup().get_logger("claires_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
+    max_radius_miles=25,
     max_search_results=None,
 )
 
