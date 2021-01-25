@@ -1,4 +1,3 @@
-import re
 import csv
 from lxml import etree
 
@@ -37,51 +36,50 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
 
-    DOMAIN = "carbones.com"
-    start_url = "https://www.carbones.com/"
+    DOMAIN = "grouchos.com"
+    start_url = "https://www.grouchos.com/locations/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//ul[@class="locations"]//a/@href')
+    all_locations = dom.xpath('//a[@class="btn btn-xs btn-white website"]/@href')
 
     for store_url in all_locations:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath(
-            '//div[@class="details col-md-8 col-sm-8"]/h3/text()'
+        name = loc_dom.xpath("//title/text()")
+        loc_id = loc_dom.xpath('//div[contains(@id, "contact-form-widget")]/@id')[
+            0
+        ].replace("contact-form-widget-", "")
+        loc_response = session.get(
+            f"https://impact.locable.com/widgets/contact_form_widgets/{loc_id}"
         )
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//h3[@itemprop="name"]/text()')
+        if not location_name:
+            location_name = name
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//a[@class="address"]/text()')[0].split(", ")
+        raw_address = loc_dom.xpath('//a[@itemprop="address"]/span/text()')
+        raw_address = [elem.strip() for elem in raw_address]
         street_address = raw_address[0]
-        street_address = street_address if street_address else "<MISSING>"
-        city = location_name.split(" (")[0].strip()
-        city_indx = street_address.split()
-        street_address = " ".join(sorted(set(city_indx), key=city_indx.index))
-        state = raw_address[-1].split()[0]
-        zip_code = raw_address[-1].split()[-1]
+        location_type = "<MISSING>"
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        city = raw_address[-1].split(", ")[0]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//p[@class="contact"]//a[contains(@href, "tel")]/text()')
+        phone = loc_dom.xpath('//a[@itemprop="telephone"]/text()')
         phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo = re.findall('startLatlng":"(.+?)",', loc_response.text)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if geo:
-            geo = [0].split(",")
-            latitude = geo[0]
-            longitude = geo[1]
-        hours_of_operation = loc_dom.xpath(
-            '//h3[span[contains(text(), "View ")]]/following-sibling::ul//text()'
+        geo = (
+            loc_dom.xpath('//a[@itemprop="address"]/@href')[0].split("=")[-1].split(",")
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
+        latitude = geo[0]
+        longitude = geo[1]
+        hours_of_operation = loc_dom.xpath('//div[@itemprop="openingHours"]//text()')
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
