@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -61,7 +61,15 @@ def fetch_data():
 
         location_name = loc_dom.xpath('//meta[@itemprop="name"]/@content')[0]
         street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        street_address = (
+            street_address[0]
+            .replace("u0027", "'")
+            .replace("u00E9", "é")
+            .replace("u00E8", "è")
+            .replace("u00F4", "ô")
+            if street_address
+            else "<MISSING>"
+        )
         city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')
         city = city[0] if city[0].strip() else "<MISSING>"
         state = "<MISSING>"

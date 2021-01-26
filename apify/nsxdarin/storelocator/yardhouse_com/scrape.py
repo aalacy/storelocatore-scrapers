@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -39,6 +38,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    session = SgRequests()
     url = "https://www.yardhouse.com/locations/all-locations?orderOnline=true"
     r = session.get(url, headers=headers)
     website = "yardhouse.com"
@@ -64,6 +64,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        session = SgRequests()
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -94,6 +95,30 @@ def fetch_data():
             hours = "Sun-Sat: 11:00AM - 10:00PM"
             store = "8359"
             name = "KANSAS CITY - DOWNTOWN P&L DISTRICT"
+        if "san-antonio-the-shops-at-la-cantera" in loc:
+            name = "SAN ANTONIO - THE SHOPS AT LA CANTERA"
+            add = "15900 La Cantera Parkway  Bldg 23"
+            city = "San Antonio"
+            state = "TX"
+            zc = "78256"
+            phone = "(210) 691-0033"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        if state == "":
+            state = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        if store == "":
+            store = "<MISSING>"
+        if add == "":
+            add = "<MISSING>"
         yield [
             website,
             loc,

@@ -88,8 +88,6 @@ def fetch_data():
             ]
         )
 
-        break
-
     return data
 
 

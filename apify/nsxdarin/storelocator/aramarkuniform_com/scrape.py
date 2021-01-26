@@ -67,8 +67,8 @@ def fetch_data():
             if 'data-pin="' in line2:
                 name = line2.split('data-pin="')[1].split('"')[0]
                 if " | " in name:
-                    name = name.split(" | ")[0]
                     typ = name.split(" | ")[1]
+                    name = name.split(" | ")[0]
             if 'latitude" content="' in line2:
                 lat = line2.split('latitude" content="')[1].split('"')[0]
             if '"longitude" content="' in line2:

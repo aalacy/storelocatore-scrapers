@@ -71,7 +71,7 @@ def fetch_data():
         zip_code = poi["postalcode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
-        store_number = "<MISSING>"
+        store_number = poi["clientkey"]
         location_name = poi["name"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
