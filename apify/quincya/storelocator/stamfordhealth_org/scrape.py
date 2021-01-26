@@ -135,8 +135,22 @@ def fetch_data():
                         hours_of_operation = (
                             hours_of_operation + " " + clean_hours
                         ).strip()
+
+                days = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                for day in days:
+                    if day.lower() not in hours_of_operation.lower():
+                        hours_of_operation = hours_of_operation + " " + day + " Closed"
             except:
                 hours_of_operation = "<MISSING>"
+
             try:
                 latitude = store["geo"]["latitude"]
                 longitude = store["geo"]["longitude"]
