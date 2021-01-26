@@ -39,26 +39,29 @@ def write_output(data):
 
 
 def fetch_data():
-    ccodes = ['US','GB','CA']
+    ccodes = ["US", "GB", "CA"]
     website = "ysl.com"
     typ = "<MISSING>"
     for ccode in ccodes:
-        url = 'https://www.ysl.com/on/demandware.store/Sites-SLP-NOAM-Site/en_US/Stores-FindStoresData?countryCode=' + ccode
+        url = (
+            "https://www.ysl.com/on/demandware.store/Sites-SLP-NOAM-Site/en_US/Stores-FindStoresData?countryCode="
+            + ccode
+        )
         r = session.get(url, headers=headers)
         country = ccode
         logger.info("Pulling Stores")
-        for item in json.loads(r.content)['storesData']['stores']:
-            store = item['ID']
-            name = item['name']
-            add = item['address1']
-            city = item['city']
-            zc = item['postalCode']
-            state = item['stateCode']
-            phone = item['phone']
-            lat = item['latitude']
-            lng = item['longitude']
-            loc = item['detailsUrl']
-            hours = item['storeHours'].replace('\n','')
+        for item in json.loads(r.content)["storesData"]["stores"]:
+            store = item["ID"]
+            name = item["name"]
+            add = item["address1"]
+            city = item["city"]
+            zc = item["postalCode"]
+            state = item["stateCode"]
+            phone = item["phone"]
+            lat = item["latitude"]
+            lng = item["longitude"]
+            loc = item["detailsUrl"]
+            hours = item["storeHours"].replace("\n", "")
             yield [
                 website,
                 loc,
