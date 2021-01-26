@@ -76,7 +76,6 @@ def fetch_data():
         if location_name == "":
             location_name = "<MISSING>"
 
-        add_list = []
         address = "".join(location_name).split("(")[0]
         if len(address.split(",")) == 3:
             street_address = address.split(",")[0].strip()
