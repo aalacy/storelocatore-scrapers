@@ -45,7 +45,6 @@ def fetch_data():
     typ = ""
     country = "US"
     logger.info("Pulling Stores")
-    Found = True
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
