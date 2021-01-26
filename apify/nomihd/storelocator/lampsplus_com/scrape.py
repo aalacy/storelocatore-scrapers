@@ -82,6 +82,11 @@ def fetch_data():
                 '//address[@class="addressStore"]/span[@itemprop="streetAddress"]/text()'
             )
         ).strip()
+        try:
+            street_address = street_address.split("(")[0].strip()
+        except:
+            pass
+
         city = "".join(
             store_sel.xpath(
                 '//address[@class="addressStore"]/span[@itemprop="addressLocality"]/text()'
