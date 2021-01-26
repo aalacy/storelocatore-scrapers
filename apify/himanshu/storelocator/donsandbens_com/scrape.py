@@ -12,7 +12,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,7 +30,7 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
+
         for row in data:
             writer.writerow(row)
 
@@ -63,7 +62,7 @@ def fetch_data():
         location_name = val["merchant"]["name"]
         street_address = val["merchant"]["address"]["address_properties"][
             "street_address"
-        ].replace("635 Cibolo Valley Drive", "Address: 635 Cibolo Valley Dr Ste 169")
+        ].replace("Address:", "")
         city = val["merchant"]["address"]["address_properties"]["city"]
         state = val["merchant"]["address"]["address_properties"]["state"]
         zipp = val["merchant"]["address"]["address_properties"]["zip"]
@@ -77,6 +76,7 @@ def fetch_data():
         if phone in match_dict:
             page_url = match_dict[phone]
             match_dict.pop(phone)
+
         store = []
         store.append("https://donsandbens.com/")
         store.append(location_name)
@@ -111,13 +111,7 @@ def fetch_data():
                 "div", {"class": "elementor-text-editor elementor-clearfix"}
             ).stripped_strings
         )
-        street_address = (
-            addr[0]
-            .split("•")[0]
-            .replace("Address:", "")
-            .strip()
-            .replace("635 Cibolo Valley Drive", "Address: 635 Cibolo Valley Dr Ste 169")
-        )
+        street_address = addr[0].split("•")[0].replace("Address:", "").strip()
         city = addr[0].split("•")[1].strip().split(",")[0]
         state = addr[0].split("•")[1].strip().split(",")[1].strip().split(" ")[0]
         zipp = addr[0].split("•")[1].strip().split(",")[1].strip().split(" ")[1]

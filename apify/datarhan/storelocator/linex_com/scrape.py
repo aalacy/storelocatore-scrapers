@@ -45,7 +45,7 @@ def fetch_data():
 
     DOMAIN = "linex.com"
     start_url = "https://linex.com/find-a-location"
-    response = session.get("https://linex.com/find-a-location")
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
     token = dom.xpath('//meta[@name="csrf-token"]/@content')[0]
 
@@ -82,8 +82,6 @@ def fetch_data():
             if store_url
             else "<MISSING>"
         )
-        # if "/linex.com" not in store_url:
-        #     continue
 
         location_type = "<MISSING>"
         hours_of_operation = ""
@@ -137,6 +135,8 @@ def fetch_data():
         )
 
         if "coming soon" in location_name.lower():
+            location_type = "coming soon"
+        if street_address == "<MISSING>":
             location_type = "coming soon"
 
         item = [

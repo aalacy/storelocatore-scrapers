@@ -1,5 +1,6 @@
 lxml==4.3.3
 beautifulsoup4==4.7.1
 sglogging
-sgzip
+sgzip==0.1.0
 sgrequests
+sgselenium

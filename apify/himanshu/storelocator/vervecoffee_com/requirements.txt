@@ -1,3 +1,2 @@
 sgrequests
-beautifulsoup4
-lxml
+

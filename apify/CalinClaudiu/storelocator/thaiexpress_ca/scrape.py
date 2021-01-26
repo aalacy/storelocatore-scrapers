@@ -139,7 +139,7 @@ def fix_comma(x):
     except Exception:
         h = x
 
-    return h
+    return h.replace("&#39;", "'").replace("&#44;", ",").replace(",,", ",")
 
 
 def clean_hours(x):
@@ -149,21 +149,41 @@ def clean_hours(x):
         x = x.split("<")[0]
         if len(x) < 3:
             return "<MISSING>"
+        try:
+            x = x.split("you;")[1]
+        except Exception:
+            x = x
+
         return (
             x.replace("day", "day:")
             .replace("::", ":")
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
-        )
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
+            .replace(";;", ";")
+            .replace("Temporairement fermé;", "")
+            .replace("Temporarily closed;", "")
+        ).strip()
+
     except Exception:
+        try:
+            x = x.split("you;")[1]
+        except Exception:
+            x = x
         return (
             x.replace("day", "day:")
             .replace("::", ":")
             .replace("\n", "; ")
             .replace("\r", "; ")
             .replace(": ;", ": Closed;")
-        )
+            .replace("&nbsp;", " ")
+            .replace("Â", " ")
+            .replace(";;", ";")
+            .replace("Temporairement fermé;", "")
+            .replace("Temporarily closed;", "")
+        ).strip()
 
 
 def scrape():
@@ -175,6 +195,7 @@ def scrape():
             mapping=["Name"],
             is_required=False,
             part_of_record_identity=True,
+            value_transform=lambda x: x.replace("&#39;", "'").replace(",,", ","),
         ),
         latitude=MappingField(mapping=["Latitude"]),
         longitude=MappingField(mapping=["Longitude"]),
@@ -222,6 +243,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        post_process_filter=lambda x: "Closed permanently" not in x["location_type"],
     )
 
     pipeline.run()

@@ -1,9 +1,10 @@
+import re
 import csv
 import json
+from urllib.parse import urljoin
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -38,7 +39,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests().requests_retry_session(retries=3, backoff_factor=0.3)
 
     items = []
 
@@ -52,80 +53,54 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="location-list-item"]//a/@href')
     for url in list(set(all_locations)):
-        store_url = "https://www.daveandbusters.com" + url
+        store_url = urljoin(start_url, url)
         response = session.get(store_url, headers=hdr)
         dom = etree.HTML(response.text)
-        poi = dom.xpath('//script[@type="application/ld+json"]/text()')
-        if poi:
-            poi = json.loads(poi[0])
-            location_name = poi["name"]
-            street_address = poi["address"]["streetAddress"]
-            city = poi["address"]["addressLocality"]
-            state = poi["address"].get("addressRegion")
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            country_code = poi["address"]["addressCountry"]
-            store_number = "<MISSING>"
-            phone = poi.get("telephone")
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["@type"]
-            latitude = poi["geo"]["latitude"]
-            longitude = poi["geo"]["longitude"]
-            hours_of_operation = []
-            for elem in poi["openingHoursSpecification"]:
-                for day in elem["dayOfWeek"]:
-                    hours_of_operation.append(
-                        f'{day} {elem["opens"]} - {elem["closes"]}'
-                    )
-            hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        loc_id = re.findall(r"AddLocationId\((\d+)\);", response.text)
+        try:
+            response = session.get(
+                "https://www.daveandbusters.com/umbraco/api/LocationDataApi/GetLocationDataById?locationId={}".format(
+                    loc_id[0]
+                ),
+                headers=hdr,
             )
-        else:
-            with SgFirefox() as driver:
-                driver.get("https://www.daveandbusters.com/locations/memphis")
-                driver_r = etree.HTML(driver.page_source)
-            location_name = driver_r.xpath(
-                '//div[@class="dave-busters-header"]//text()'
+        except Exception:
+            response = session.get(
+                "https://www.daveandbusters.com/umbraco/api/LocationDataApi/GetLocationSpecialDataById?locationId={}".format(
+                    loc_id[0]
+                ),
+                headers=hdr,
             )
-            location_name = (
-                " ".join([elem.strip() for elem in location_name])
-                if location_name
-                else "<MISSING>"
-            )
-            street_address = driver_r.xpath(
-                '//div[@class="location-address ng-binding"]/text()'
-            )[0].strip()
-            city = driver_r.xpath(
-                '//div[@class="location-address-2 ng-binding"]/text()'
-            )[0].split(",")[0]
-            state = driver_r.xpath(
-                '//div[@class="location-address-2 ng-binding"]/text()'
-            )[0].split(",")[1]
-            state = state if state else "<MISSING>"
-            zip_code = driver_r.xpath(
-                '//div[@class="location-address-2 ng-binding"]/text()'
-            )[0].split(",")[-1]
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = driver_r.xpath('//div[@class="location-phone"]/a/text()')
-            phone = "".join(phone).strip() if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            geo = (
-                driver_r.xpath('//a[contains(@href, "google.com/maps")]/@href')[0]
-                .split("=")[1]
-                .split("&")[0]
-            )
-            latitude = geo.split(",")[0]
-            longitude = geo.split(",")[-1]
-            hours_of_operation = driver_r.xpath(
-                '//div[@class="location-hours"]//text()'
-            )
-            hours_of_operation = [
-                elem.strip() for elem in hours_of_operation if elem.strip()
-            ]
-            hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-            )
+        poi = json.loads(response.text)
+
+        location_name = poi["DisplayName"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["Address"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["City"]
+        city = city if city else "<MISSING>"
+        state = poi["State"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["Zip"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["Country"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["ID"]
+        store_number = store_number if store_number else "<MISSING>"
+        phone = poi["Phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["Latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["Longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = poi["Hours"]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
+        if poi["TempClosed"]:
+            hours_of_operation = "<MISSING>"
+            location_type = "temporary closed"
 
         item = [
             DOMAIN,

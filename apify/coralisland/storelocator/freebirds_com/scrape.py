@@ -1,65 +1,83 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
-import time
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from sgrequests import SgRequests
 
-options = Options() 
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-# options.add_argument("--start-maximized")
-driver = webdriver.Chrome('chromedriver', options=options)
+base_url = "https://freebirds.com"
 
-
-base_url = 'https://freebirds.com'
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
+
+    headers = {
+        "authority": "cms.freebirds.chepri.com",
+        "method": "GET",
+        "path": "/fb/items/locations?fields=*.*&limit=-1",
+        "scheme": "https",
+        "accept": "application/json, text/plain, */*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "origin": "https://freebirds.com",
+        "referer": "https://freebirds.com/locations",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "sec-fetch-user": "?1",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+    }
+
     output_list = []
-    url = "https://freebirds.com/api/restaurants?includePrivate=false"
-    session = requests.Session()
-    request = session.get(url)
-    driver.get('https://freebirds.com/locations')
-    source = driver.page_source
-    time.sleep(15)
-    # bt_element_present = EC.presence_of_element_located((By.CLASS, 'row golden-links'))
-    # WebDriverWait(driver, 10).until(elements)
-    store_hours = etree.HTML(source).xpath('.//div[@class="container m-auto location-cont"]')
-    store_list = json.loads(request.text)['restaurants']
-    for idx, store in enumerate(store_list):
+    url = "https://cms.freebirds.chepri.com/fb/items/locations?fields=*.*&limit=-1"
+    session = SgRequests()
+    store_list = session.get(url, headers=headers).json()["data"]
+    for store in store_list:
         output = []
-        output.append(base_url) # url
-        output.append(store['name']) #location name
-        output.append(store['streetaddress']) #address
-        output.append(store['city']) #city
-        output.append(store['state']) #state
-        output.append(store['zip']) #zipcode
-        output.append('US') #country code
-        output.append(store['id']) #store_number
-        output.append(store['telephone']) #phone
-        output.append('<MISSING>') #location type
-        output.append(store['latitude']) #latitude
-        output.append(store['longitude']) #longitude
-        output.append(''.join(store_hours[idx].xpath('.//strong//text()'))) #opening hours
+        output.append(base_url)  # url
+        output.append(store["name"])  # location name
+        output.append(store["address_1"])  # address
+        output.append(store["city"])  # city
+        output.append(store["state"])  # state
+        output.append(store["zip_code"])  # zipcode
+        output.append("US")  # country code
+        output.append(store["olo_store_id"])  # store_number
+        output.append(store["phone_number"])  # phone
+        output.append("<MISSING>")  # location type
+        output.append("<MISSING>")  # latitude
+        output.append("<MISSING>")  # longitude
+        output.append("<INACCESSIBLE>")  # opening hours
+        output.append(store["rio_url"])  # page url
         output_list.append(output)
     return output_list
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

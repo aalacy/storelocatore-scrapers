@@ -43,7 +43,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "chicosofftherack.com"
-    start_url = "https://chicosofftherack.brickworksoftware.com/locations_search?hitsPerPage=24&page=0&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:chicosofftherack.brickworksoftware.com+AND+publishedAt%3C%3D1607683679661&esSearch=%7B%22page%22:0,%22storesPerPage%22:24,%22domain%22:%22chicosofftherack.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[%7B%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:%7B%22lte%22:1607683679661%7D%7D],%22filters%22:[],%22aroundLatLngViaIP%22:true%7D&aroundLatLngViaIP=true"
+    start_url = "https://chicosofftherack.brickworksoftware.com/locations_search?hitsPerPage=15&page=0&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:chicosofftherack.brickworksoftware.com+AND+publishedAt%3C%3D1607683679661&esSearch=%7B%22page%22:0,%22storesPerPage%22:15,%22domain%22:%22chicosofftherack.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[%7B%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:%7B%22lte%22:1607683679661%7D%7D],%22filters%22:[],%22aroundLatLngViaIP%22:true%7D&aroundLatLngViaIP=true"
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
@@ -54,16 +54,16 @@ def fetch_data():
     data = json.loads(response.text)
     all_poi += data["hits"]
     total_pages = data["nbPages"] + 2
-    for page in range(1, total_pages):
+    for page in range(0, total_pages):
         page_url = "https://chicosofftherack.brickworksoftware.com/locations_search?"
         params = {
-            "hitsPerPage": "24",
+            "hitsPerPage": "15",
             "page": str(page),
             "getRankingInfo": "true",
             "facets[]": "*",
             "aroundRadius": "all",
             "filters": "",
-            "esSearch": '{"page":%s,"storesPerPage":24,"domain":"chicosofftherack.brickworksoftware.com","locale":"en_US","must":[{"type":"range","field":"published_at","value":{"lte":1607684950300}}],"filters":[],"aroundLatLng":{"lat":"40.581811","lon":"-74.166455"}}'
+            "esSearch": '{"page":%s,"storesPerPage":15,"domain":"chicosofftherack.brickworksoftware.com","locale":"en_US","must":[{"type":"range","field":"published_at","value":{"lte":1607684950300}}],"filters":[],"aroundLatLng":{"lat":"40.581811","lon":"-74.166455"}}'
             % str(page),
             "aroundLatLng": "40.581811,-74.166455",
         }
@@ -128,8 +128,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
+        check = "{} {}".format(location_name, street_address)
+        if check not in scraped_items:
+            scraped_items.append(check)
             items.append(item)
 
     return items
