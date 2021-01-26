@@ -87,7 +87,7 @@ def fetch_data():
             .strip()
             .replace('\\"', '"')
             .strip()
-            .replace("\/", "/")
+            .replace("\\/", "/")
             .strip()
         )
 
