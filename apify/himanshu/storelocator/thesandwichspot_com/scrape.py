@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("thesandwichspot_com")
@@ -85,6 +86,41 @@ def fetch_data():
     data_list = soup.findAll("div", {"role": "gridcell"})
     for loc in data_list:
         title = loc.find("h4").text
+        links = loc.findAll("a")
+        page_url = ""
+        for l in links:
+            if "-menu" in l.get("href"):
+                page_url = "https://www.thesandwichspot.com" + l.get("href").replace(
+                    ".", ""
+                )
+        if len(page_url) < 1:
+            page_url = "<MISSING>"
+        if page_url != "<MISSING>":
+            hoolink = session.get(page_url)
+            hoo_data = BeautifulSoup(hoolink.text, "html.parser")
+            hoo_details = hoo_data.findAll("div", {"data-testid": "richTextElement"})
+            div_count = 0
+            for det in hoo_details:
+                div_count = div_count + 1
+                if "HOURS:" in det.text:
+                    hoo_div = det.find_all("p", {"class": "font_8"})
+            count = 0
+            for d in hoo_div:
+                count = count + 1
+                if "HOURS" in d.text:
+                    break
+            hours_of_operation = ""
+            for i in range(count, len(hoo_div)):
+                hours_of_operation = hours_of_operation + hoo_div[i].text + " "
+            hours_of_operation = (
+                hours_of_operation.replace("Please call for Hours due to C19", "")
+                .replace("&", "and")
+                .replace(" ", " ")
+                .replace("\u200b", "")
+                .replace("(Covid 19 Hours in Place)", "")
+            )
+        else:
+            hours_of_operation = "<MISSING>"
         details = loc.find_all("p", {"class": "font_7"})
         for d in details:
             if "Phone" in d.text:
@@ -116,7 +152,6 @@ def fetch_data():
             zipcode = details[1].text.split(",")[1].split(" ")[2]
             lat = "<MISSING>"
             lng = "<MISSING>"
-
         elif title == "Delta Shore":
             street = details[0].text.split("\n")[0]
             city = details[1].text.split(",")[0]
@@ -124,7 +159,6 @@ def fetch_data():
             zipcode = details[1].text.split(",")[1].split(" ")[2]
             lat = "<MISSING>"
             lng = "<MISSING>"
-
         elif title == "Reno":
 
             street = details[0].text.split("\n")[0]
@@ -133,7 +167,6 @@ def fetch_data():
             zipcode = "89511"
             lat = "<MISSING>"
             lng = "<MISSING>"
-
         elif lat_lng[title]["street"] == "<MISSING>" or title == "Reno":
             street = details[0].text.split("\n")[0]
             city = details[0].text.split("\n")[1].split(",")[0]
@@ -141,17 +174,15 @@ def fetch_data():
             zipcode = details[0].text.split("\n")[1].split(", ")[1].split(" ")[1]
             lat = "<MISSING>"
             lng = "<MISSING>"
-
         else:
             street = lat_lng[title]["street"]
             city = lat_lng[title]["city"]
             state = lat_lng[title]["state"]
             zipcode = lat_lng[title]["zip"]
-
         data.append(
             [
                 "www.thesandwichspot.com",
-                "www.thesandwichspot.com/locations",
+                page_url,
                 title.lstrip(),
                 street.lstrip(),
                 city.lstrip(),
@@ -163,7 +194,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 lng,
-                "<MISSING>",
+                hours_of_operation,
             ]
         )
     return data
