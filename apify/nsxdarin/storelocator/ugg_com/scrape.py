@@ -162,6 +162,8 @@ def fetch_data():
                     )
                     if hours == "<MISSING>; Sat: Closed; Sun: Closed":
                         hours = "<MISSING>"
+                    if "MISSING" in hours:
+                        hours = "<MISSING>"
                     yield [
                         website,
                         lurl,
@@ -296,6 +298,8 @@ def fetch_data():
                         .strip()
                     )
                     if hours == "<MISSING>; Sat: Closed; Sun: Closed":
+                        hours = "<MISSING>"
+                    if "MISSING" in hours:
                         hours = "<MISSING>"
                     yield [
                         website,
