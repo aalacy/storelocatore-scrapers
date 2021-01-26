@@ -8,7 +8,6 @@ myutil = Util()
 
 
 session = SgRequests()
-import pdb
 
 
 def write_output(data):
@@ -70,9 +69,6 @@ def fetch_data():
         phone = phone.replace("Tel:", "").strip()
         store_number = "<MISSING>"
         location_type = location_name.replace("T. H. Baker", "").strip()
-        scripts = [
-            script.contents[0] for script in soup.find_all("script") if script.contents
-        ]
         direction = myutil._strip_list(
             r1.text.split("locationData: {")[1]
             .strip()
