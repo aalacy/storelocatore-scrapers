@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 
-website = "matalan_co.uk"
+website = "matalan.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -84,6 +84,7 @@ def fetch_data():
                 street_address + ", " + store["attributes"]["address_line_2"]
             )
 
+        street_address = street_address.replace("Matalan - ", "").strip()
         city = store["attributes"]["city"]
         zip = store["attributes"]["postcode"]
         country_code = "GB"
