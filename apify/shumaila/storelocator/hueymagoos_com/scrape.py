@@ -2,17 +2,20 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+import json
 
-logger = SgLogSetup().get_logger("hueymagoos_com")
+logger = SgLogSetup().get_logger("brakecheck_com")
+
 
 session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+
         # Header
         writer.writerow(
             [
@@ -39,93 +42,15 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     data = []
-    base_url = "https://www.hueymagoos.com"
-    p_url = "https://hueymagoos.com/locations/"
-    r = session.get(p_url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
+    base_url = "https://code.metalocator.com/index.php?option=com_locator&view=directory&force_link=1&tmpl=component&task=search_zip&framed=1&format=raw&no_html=1&templ[]=address_format&layout=_jsonfast&postal_code=40.7128,-74.006&radius=5000&interface_revision=266&limitstart=0&limit=500&user_lat=0&user_lng=0&Itemid=10475&preview=0&parent_table=&parent_id=0&search_type=point&_opt_out=&ml_location_override=&reset=false&nearest=true&national=false&callback=handleJSONPResults"
+    r = session.get(base_url, headers=headers)
+    data_list = r.text.split('"results":')[1].split("}]", 1)[0] + "}]"
+    data_list = json.loads(data_list)
+    print(len(data_list))
 
-    data_list = soup.findAll("div", {"class": "loc-box-new"})
-
-    for loc in data_list:
-        try:
-            title = loc.find("h3").text
-        except:
-            continue
-        details = loc.find("p")
-        phone = ""
-        address = ""
-        details = str(details).replace("<br/>", "\n")
-        details = BeautifulSoup(details, "html.parser")
-
-        if len(details.findAll("a")) > 1:
-            if details.findAll("a")[0].get("href").find("tel") != -1:
-                phone = details.findAll("a")[0].text
-            else:
-                phone = "<MISSING>"
-            if details.findAll("a")[1].get("href").find("maps") != -1:
-                address = details.findAll("a")[1].text
-                street = address.split("\n")[0]
-                city = address.split("\n")[1].split(", ")[0].strip()
-                state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
-                zip = address.split("\n")[1].split(", ")[1].split(" ")[1]
-            else:
-                address = "<MISSING>"
-            hours_of_operation = (
-                details.findAll("a")[1].next_sibling.lstrip().replace("–", "-")
-            )
-        elif len(details.findAll("a")) == 1:
-            if details.findAll("a")[0].get("href").find("tel") != -1:
-                phone = details.findAll("a")[0].text
-            else:
-                phone = "<MISSING>"
-            if details.findAll("a")[0].get("href").find("maps") != -1:
-                address = details.findAll("a")[0].text
-                street = address.split("\n")[0]
-                city = address.split("\n")[1].split(", ")[0].strip()
-                state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
-                zip = address.split("\n")[1].split(", ")[1].split(" ")[1]
-            else:
-                address = "<MISSING>"
-            if details.findAll("a")[0].next_sibling.find("am") or details.findAll("a")[
-                0
-            ].next_sibling.find("pm"):
-                hours_of_operation = (
-                    details.findAll("a")[0].next_sibling.lstrip().replace("–", "-")
-                )
-            else:
-                hours_of_operation = "<MISSING>"
-        else:
-            if details.text:
-                address = details.text
-                street = address.split("\n")[0]
-                city = address.split("\n")[1].split(", ")[0].strip()
-                state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
-                zip = address.split("\n")[1].split(", ")[1].split(" ")[1]
-            else:
-                address = "<MISSING>"
-            phone = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-        data.append(
-            [
-                base_url,
-                p_url,
-                title,
-                street,
-                city,
-                state,
-                zip,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours_of_operation,
-            ]
-        )
     return data
 
 
