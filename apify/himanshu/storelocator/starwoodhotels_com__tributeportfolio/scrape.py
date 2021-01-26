@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 session = SgRequests()
 import json
 from bs4 import BeautifulSoup
-import unicodedata
 
 base_url = "https://tribute-portfolio.marriott.com/"
 
@@ -80,7 +79,7 @@ def fetch_data():
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Tribute Portfolio Hotels & Resorts")
                             output.append(latitude if latitude else "<MISSING>")
@@ -90,27 +89,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i1 in data_8:
         for j1 in i1["region_countries"]:
@@ -143,7 +121,7 @@ def fetch_data():
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Tribute Portfolio Hotels & Resorts")
                             output.append(latitude if latitude else "<MISSING>")
@@ -153,27 +131,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
     for i2 in data_8:
         for j2 in i2["region_countries"]:
@@ -206,7 +163,7 @@ def fetch_data():
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Tribute Portfolio Hotels & Resorts")
                             output.append(latitude if latitude else "<MISSING>")
@@ -216,27 +173,6 @@ def fetch_data():
                             if output[2] in address:
                                 continue
                             address.append(output[2])
-                            for i in range(len(output)):
-                                if isinstance(output[i], str):
-                                    output[i] = "".join(
-                                        (
-                                            c
-                                            for c in unicodedata.normalize(
-                                                "NFD", output[i]
-                                            )
-                                            if unicodedata.category(c) != "Mn"
-                                        )
-                                    )
-                            output = [
-                                x.replace("–", "-") if isinstance(x, str) else x
-                                for x in output
-                            ]
-                            output = [
-                                x.encode("ascii", "ignore").decode("ascii")
-                                if isinstance(x, str)
-                                else x
-                                for x in output
-                            ]
                             yield output
 
 
