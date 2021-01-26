@@ -71,7 +71,6 @@ def fetch_data():
     )
 
     url_dict = {}
-    # count = 0
     for data in all_stores:
         url = data.xpath('.//div[@class="store-locator__store"]//a/@href')
         if len(url) > 0:
