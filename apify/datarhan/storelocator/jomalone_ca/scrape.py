@@ -45,7 +45,6 @@ def fetch_data():
         "https://www.jomalone.ca/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents"
     )
 
-    proxy = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
     headers = {
         "accept": "*/*",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -53,7 +52,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
     formdata = "JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A4%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+LONGITUDE%2C+LATITUDE%22%2C%22radius%22%3A%2220000%22%2C%22latitude%22%3A51.04473309999999%2C%22longitude%22%3A-114.0718831%2C%22zip%22%3A%22%22%2C%22country%22%3A%22%22%2C%22state%22%3A%22Alberta%22%2C%22city%22%3A%22Calgary%22%2C%22region_id%22%3A%220%2C47%2C27%22%7D%5D%7D%5D"
-    response = session.post(start_url, data=formdata, headers=headers, proxies=proxy)
+    response = session.post(start_url, data=formdata, headers=headers)
     data = json.loads(response.text)
 
     for poi in data[0]["result"]["value"]["results"].values():
