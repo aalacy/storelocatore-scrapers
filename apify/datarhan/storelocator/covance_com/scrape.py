@@ -74,6 +74,8 @@ def fetch_data():
         state = (
             poi_html.xpath('.//li[@class="title"]/text()')[0].split(", ")[-1].strip()
         )
+        if "Bristol" in state:
+            state = "TN"
         street_address = street_address.split(", {}".format(state))[0]
         zip_code = raw_address[-1].split()[-1]
         if len(zip_code) == 3:
@@ -89,7 +91,7 @@ def fetch_data():
         if zip_code in street_address:
             street_address = street_address.replace(zip_code, "")
 
-        for elem in ["UK", "FAX", "England", "Kingdom"]:
+        for elem in ["UK", "FAX", "Kingdom"]:
             if elem in zip_code:
                 zip_code = "<MISSING>"
         if city == state:
@@ -97,6 +99,17 @@ def fetch_data():
         if state == "Maidenhead":
             state = "<MISSING>"
             zip_code = "<MISSING>"
+        if "England" in raw_address[-1]:
+            zip_code = raw_address[-1].replace(" England", "")
+            state = raw_address[-2].split(", ")[0]
+            street_address = " ".join(raw_address[:2])
+        if "The Clove Building" in raw_address[0]:
+            street_address = " ".join(raw_address[:2])
+            zip_code = raw_address[3]
+        if len(state.strip()) > 2:
+            state = "<MISSING>"
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
 
         item = [
             DOMAIN,
