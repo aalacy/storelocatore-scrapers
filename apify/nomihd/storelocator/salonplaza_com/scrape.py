@@ -70,7 +70,7 @@ def fetch_data():
     phone_dict = {}
     for ph in phone_numbers:
         phone_dict["".join(ph.xpath("@data-post")).strip()] = "".join(
-            ph.xpath('.//p[contains(@href,"tel:")]/text()')
+            ph.xpath('.//p/a[contains(@href,"tel:")]/text()')
         ).strip()
 
     stores = stores_sel.xpath('//div[@class="map__locations sr-only"]/ul/li')
