@@ -8,7 +8,6 @@ myutil = Util()
 
 
 session = SgRequests()
-import pdb
 
 
 def write_output(data):
