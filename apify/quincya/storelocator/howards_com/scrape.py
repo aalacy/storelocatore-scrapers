@@ -49,7 +49,7 @@ def fetch_data():
 
     data = []
 
-    items = base.find_all(class_="stores-page-box")[1:]
+    items = base.find_all(class_="stores-page-box")
     locator_domain = "howards.com"
 
     for item in items:
@@ -90,6 +90,10 @@ def fetch_data():
         else:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+
+        if "6346 E. Pacific" in street_address:
+            latitude = "33.760438"
+            longitude = "-118.113446"
 
         data.append(
             [

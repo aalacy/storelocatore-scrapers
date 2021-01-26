@@ -43,20 +43,32 @@ def fetch_data():
     items = []
 
     DOMAIN = "accor.com"
-    start_url = "https://ibis.accor.com/gb/city/hotels-london-v2352.shtml"
+    start_urls = [
+        "https://ibis.accor.com/gb/city/hotels-london-v2352.shtml",
+        "https://all.accor.com/ssr/app/ibis/hotels/united-states/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false",
+        "https://all.accor.com/ssr/app/ibis/hotels/canada/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false&destination=Canada",
+    ]
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="hotelPic"]/a/@href')
-    next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
-    while next_page:
-        response = session.get(urljoin(start_url, next_page[0]))
+    all_locations = []
+    for start_url in start_urls:
+        response = session.get(start_url)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//div[@class="hotelPic"]/a/@href')
+        all_locations += dom.xpath(
+            '//div[@class="hotel__content hotel__block--right"]//h2/a/@href'
+        )
         next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
+        while next_page:
+            response = session.get(urljoin(start_url, next_page[0]))
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//div[@class="hotelPic"]/a/@href')
+            all_locations += dom.xpath(
+                '//div[@class="hotel__content hotel__block--right"]//h2/a/@href'
+            )
+            next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
 
     for url in all_locations:
-        poi_url = urljoin(start_url, url)
+        poi_url = urljoin(start_urls[0], url.split("?")[0])
         loc_response = session.get(poi_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath(
@@ -65,11 +77,12 @@ def fetch_data():
         if not poi:
             continue
         poi = json.loads(poi[0])
+        add_data = loc_dom.xpath('//script[contains(text(), "hotelName")]/text()')[0]
+        add_data = json.loads(add_data)
 
         poi_name = poi["name"]
         poi_name = poi_name if poi_name else "<MISSING>"
-        street = loc_dom.xpath('//meta[@property="og:street-address"]/@content')
-        street = street[0] if street else "<MISSING>"
+        street = add_data["streetAddress"]
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = "<MISSING>"

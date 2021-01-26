@@ -83,6 +83,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["UNITED KINGDOM", "CANADA"]:
+            continue
         poi_number = "<MISSING>"
         phone = poi["telephone"]
         poi_type = poi["@type"]
