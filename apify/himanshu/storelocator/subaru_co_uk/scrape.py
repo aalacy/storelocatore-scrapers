@@ -5,7 +5,6 @@ from sglogging import SgLogSetup
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("subaru_co_uk")
-
 session = SgRequests()
 
 
@@ -14,7 +13,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -33,7 +31,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -73,9 +70,7 @@ def request_wrapper(url, method, headers, data=None):
 
 def fetch_data():
     adressessess = []
-
     url = "https://subaru.co.uk/wp-admin/admin-ajax.php"
-
     payload = "action=get_stores_by_name&name=&categories%5B0%5D=&filter%5B161%5D=161"
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -90,140 +85,142 @@ def fetch_data():
         soup = session.post(url, headers=headers, data=payload).json()
     except:
         pass
-
-    for mp1 in soup:
-        location_name = soup[mp1]["na"].replace("#038;", " ")
-        street_address = soup[mp1]["st"].replace("#038;", " ")
-        city = soup[mp1]["ct"]
-        zipp = soup[mp1]["zp"]
-        if street_address in adressessess:
-            continue
-        adressessess.append(street_address)
-        country_code = "UK"
-        phone = ""
-        phone = soup[mp1]["te"]
-        latitude = soup[mp1]["lat"]
-        longitude = soup[mp1]["lng"]
-        hours_of_operation = ""
-        state = ""
-        page_url = ""
-        new_page_url = ""
-        hours_of_operation = ""
-        if soup[mp1]["we"]:
-            page_url = soup[mp1]["we"]
-            new_page_url = page_url + "/contact"
-            r1 = request_wrapper(new_page_url, "get", headers=headers)
-            try:
-                soup1 = BeautifulSoup(r1.text, "lxml")
-            except:
-                pass
-            try:
-                new_page_url = (
-                    soup[mp1]["we"]
-                    + soup1.find_all("div", {"class": "contact-location-box"})[0].find(
-                        "a"
-                    )["href"]
-                )
-                page_url = (
-                    soup[mp1]["we"]
-                    + soup1.find_all("div", {"class": "contact-location-box"})[0].find(
-                        "a"
-                    )["href"]
-                )
-                r2 = request_wrapper(page_url, "get", headers=headers)
-                soup3 = BeautifulSoup(r2.text, "lxml")
+    try:
+        for mp1 in soup:
+            location_name = soup[mp1]["na"].replace("#038;", " ")
+            street_address = soup[mp1]["st"].replace("#038;", " ")
+            city = soup[mp1]["ct"]
+            zipp = soup[mp1]["zp"]
+            if street_address in adressessess:
+                continue
+            adressessess.append(street_address)
+            country_code = "UK"
+            phone = ""
+            phone = soup[mp1]["te"]
+            latitude = soup[mp1]["lat"]
+            longitude = soup[mp1]["lng"]
+            hours_of_operation = ""
+            state = ""
+            page_url = ""
+            new_page_url = ""
+            hours_of_operation = ""
+            if soup[mp1]["we"]:
+                page_url = soup[mp1]["we"]
+                new_page_url = page_url + "/contact"
+                r1 = request_wrapper(new_page_url, "get", headers=headers)
                 try:
-                    state = (
-                        list(
-                            soup3.find_all("div", {"class": "box flexi-height_child"})[
-                                1
-                            ].stripped_strings
-                        )[-3]
-                        .strip()
-                        .split(",")[-2]
-                    )
+                    soup1 = BeautifulSoup(r1.text, "lxml")
                 except:
                     pass
                 try:
-                    phone = (
-                        soup3.find("p", class_="telephone-box")
-                        .text.strip()
-                        .replace("Telephone: ", "")
+                    new_page_url = (
+                        soup[mp1]["we"]
+                        + soup1.find_all("div", {"class": "contact-location-box"})[
+                            0
+                        ].find("a")["href"]
                     )
-                except:
-                    pass
-                hours_of_operation = " ".join(
-                    list(
-                        soup3.find("div", {"class": "opening-times-container"})
-                        .find("div", {"class": "row"})
-                        .stripped_strings
+                    page_url = (
+                        soup[mp1]["we"]
+                        + soup1.find_all("div", {"class": "contact-location-box"})[
+                            0
+                        ].find("a")["href"]
                     )
-                )
-            except:
-                try:
-                    state = (
-                        list(
-                            soup1.find_all("div", {"class": "box flexi-height_child"})[
-                                1
-                            ].stripped_strings
-                        )[-3]
-                        .strip()
-                        .split(",")[-2]
-                    )
-                except:
-                    pass
-                try:
-                    phone = (
-                        soup1.find("p", class_="telephone-box")
-                        .text.strip()
-                        .replace("Telephone: ", "")
-                    )
-                except:
-                    pass
-                try:
+                    r2 = request_wrapper(page_url, "get", headers=headers)
+                    soup3 = BeautifulSoup(r2.text, "lxml")
+                    try:
+                        state = (
+                            list(
+                                soup3.find_all(
+                                    "div", {"class": "box flexi-height_child"}
+                                )[1].stripped_strings
+                            )[-3]
+                            .strip()
+                            .split(",")[-2]
+                        )
+                    except:
+                        pass
+                    try:
+                        phone = (
+                            soup3.find("p", class_="telephone-box")
+                            .text.strip()
+                            .replace("Telephone: ", "")
+                        )
+                    except:
+                        pass
                     hours_of_operation = " ".join(
                         list(
-                            soup1.find("div", {"class": "opening-times-container"})
+                            soup3.find("div", {"class": "opening-times-container"})
                             .find("div", {"class": "row"})
                             .stripped_strings
                         )
                     )
                 except:
-                    pass
-        store_number = soup[mp1]["ID"]
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        if "Middletown," in street_address:
-            new_page_url = "https://www.simpsons-subaru.co.uk/contact?location=8408"
-        if "Cavendish Street," in street_address:
-            new_page_url = (
-                "https://www.colinappleyardcars-subaru.co.uk/contact?location=8357"
+                    try:
+                        state = (
+                            list(
+                                soup1.find_all(
+                                    "div", {"class": "box flexi-height_child"}
+                                )[1].stripped_strings
+                            )[-3]
+                            .strip()
+                            .split(",")[-2]
+                        )
+                    except:
+                        pass
+                    try:
+                        phone = (
+                            soup1.find("p", class_="telephone-box")
+                            .text.strip()
+                            .replace("Telephone: ", "")
+                        )
+                    except:
+                        pass
+                    try:
+                        hours_of_operation = " ".join(
+                            list(
+                                soup1.find("div", {"class": "opening-times-container"})
+                                .find("div", {"class": "row"})
+                                .stripped_strings
+                            )
+                        )
+                    except:
+                        pass
+            store_number = soup[mp1]["ID"]
+            store = []
+            store.append(base_url)
+            store.append(location_name if location_name else "<MISSING>")
+            if "Middletown," in street_address:
+                new_page_url = "https://www.simpsons-subaru.co.uk/contact?location=8408"
+            if "Cavendish Street," in street_address:
+                new_page_url = (
+                    "https://www.colinappleyardcars-subaru.co.uk/contact?location=8357"
+                )
+            if "Lockwood Road" in street_address:
+                new_page_url = (
+                    "https://www.colinappleyardcars-subaru.co.uk/contact?location=8358"
+                )
+            store.append(
+                street_address.replace(",", " ") if street_address else "<MISSING>"
             )
-        if "Lockwood Road" in street_address:
-            new_page_url = (
-                "https://www.colinappleyardcars-subaru.co.uk/contact?location=8358"
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
+            store.append(store_number if store_number else "<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(
+                hours_of_operation.replace("\n", "").strip()
+                if hours_of_operation
+                else "<MISSING>"
             )
-        store.append(
-            street_address.replace(",", " ") if street_address else "<MISSING>"
-        )
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(
-            hours_of_operation.replace("\n", "").strip()
-            if hours_of_operation
-            else "<MISSING>"
-        )
-        store.append(new_page_url if new_page_url else "<MISSING>")
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
+            store.append(new_page_url if new_page_url else "<MISSING>")
+            store = [str(x).strip() if x else "<MISSING>" for x in store]
+            yield store
+    except:
+        pass
 
 
 def scrape():

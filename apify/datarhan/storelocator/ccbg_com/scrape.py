@@ -59,6 +59,8 @@ def fetch_data():
     for poi in all_locations:
         store_url = poi["landingPageUrl"]
         location_name = poi["name"]
+        if "Capital City Bank ATM" in location_name:
+            continue
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["line1"]
         street_address = street_address if street_address else "<MISSING>"

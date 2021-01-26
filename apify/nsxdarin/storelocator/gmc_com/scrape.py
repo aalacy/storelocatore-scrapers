@@ -1,12 +1,15 @@
 import csv
+import time
+import random
+import threading
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.static import static_coordinate_list, SearchableCountries
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+local = threading.local()
 logger = SgLogSetup().get_logger("gmc_com")
-session = SgRequests()
 
-request_count = 0
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "locale": "en_US",
@@ -31,15 +34,18 @@ FIELDS = [
 ]
 
 
+def sleep():
+    duration = random.randint(2, 5)
+    time.sleep(duration)
+
+
 def get_session(reset=False):
-    global session
-    global request_count
+    global local
+    if not hasattr(local, "session") or reset:
+        local.request_count = 0
+        local.session = SgRequests().requests_retry_session(retries=0)
 
-    if request_count >= 10 or reset:
-        request_count = 0
-        session = SgRequests()
-
-    return session
+    return local.session
 
 
 def write_output(data):
@@ -53,8 +59,9 @@ def write_output(data):
 
 
 def get_hours(location):
-    hours = []
+    hours = {}
     days = [None, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    week_days = days[1:]
 
     opening_hours = (
         location.get("generalOpeningHour")
@@ -69,25 +76,29 @@ def get_hours(location):
         open_from = timeframe["openFrom"]
         open_to = timeframe["openTo"]
         for day in timeframe["dayOfWeek"]:
-            hours.append(f"{days[day]}: {open_from}-{open_to} ")
+            day_name = days[day]
+            hours[day_name] = f"{open_from}-{open_to}"
 
-    return ",".join(hours)
+    for day in week_days:
+        if day not in hours:
+            hours[day] = "Closed"
+
+    return ",".join(f"{day}: {hours[day]}" for day in week_days)
 
 
 def fetch_locations(coord, tracker, retry_count=0):
-    global request_count
+    global local
     lat, lng = coord
 
-    url = f"https://www.gmc.com/OCRestServices/dealer/latlong/v1/GMC//{lat}/{lng}"
-    params = {"distance": 500, "filterByType": "services", "maxResults": 50}
+    url = f"https://www.gmc.com/OCRestServices/dealer/latlong/v1/GMC/{lat}/{lng}"
+    params = {"distance": 500, "maxResults": 50}
 
     try:
+        sleep()
         result = (
-            get_session(retry_count > 0)
-            .get(url, params=params, headers=headers, timeout=1)
-            .json()
+            get_session(retry_count > 0).get(url, params=params, headers=headers).json()
         )
-        request_count += 1
+        local.request_count += 1
         if not result["payload"] or not result["payload"]["dealers"]:
             return []
 
@@ -143,33 +154,38 @@ def fetch_locations(coord, tracker, retry_count=0):
     except Exception as e:
         if retry_count < 3:
             return fetch_locations(coord, tracker, retry_count + 1)
-        logger.error(e)
+        logger.error(f"unable to fetch locations for {lat}, {lng} >>>> {e}")
         return []
 
 
+def log(locations, completed, total):
+    if completed % 25 == 0 or completed == total:
+        logger.info(
+            f"locations found {locations} | items remaining: {completed}/{total}"
+        )
+
+
 def fetch_data():
+    completed = 0
     dedup_tracker = []
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_results=50,
-        max_radius_miles=100,
+    search = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
+    search.extend(
+        static_coordinate_list(radius=50, country_code=SearchableCountries.CANADA)
     )
 
-    for coord in search:
-        coords = []
-        locations = fetch_locations(coord, dedup_tracker)
+    with ThreadPoolExecutor() as executor:
+        logger.info(f"starting {executor._max_workers} workers")
+        futures = [
+            executor.submit(fetch_locations, coord, dedup_tracker) for coord in search
+        ]
 
-        if not len(locations):
-            continue
+        for future in as_completed(futures):
+            completed += 1
 
-        for location in locations:
-            coords.append((location.get("latitude"), location.get("longitude")))
-            yield [location[field] for field in FIELDS]
+            for location in future.result():
+                yield [location[field] for field in FIELDS]
 
-        search.mark_found(coords)
-        logger.info(
-            f"locations found {len(dedup_tracker)} | items remaining: {search.items_remaining()}"
-        )
+            log(len(dedup_tracker), completed, len(search))
 
 
 def scrape():

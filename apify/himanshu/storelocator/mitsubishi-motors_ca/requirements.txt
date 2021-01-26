@@ -2,3 +2,4 @@ sgrequests
 bs4
 sglogging
 google_trans_new
+lsml

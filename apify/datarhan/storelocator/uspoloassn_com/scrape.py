@@ -70,12 +70,16 @@ def fetch_data():
         zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["address"]["countryCode"]
+        if country_code != "US":
+            continue
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["meta"]["id"]
         store_number = store_number if store_number else "<MISSING>"
         phone = poi["mainPhone"]
         phone = phone if phone else "<MISSING>"
         location_type = poi["meta"]["schemaTypes"][0]
+        if "Event" in location_type:
+            continue
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if poi["displayCoordinate"]:

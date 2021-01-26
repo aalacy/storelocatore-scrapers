@@ -76,6 +76,7 @@ def fetch_data():
                 longt = loc["lng"]
                 adrs = loc["address"]
                 link_url = loc["link_url"]
+                linkurl = link_url
                 p = session.get(link_url, headers=headers, verify=False)
                 soup = BeautifulSoup(p.text, "html.parser")
                 div = soup.findAll("div", {"class": "location-contact-data"})
@@ -117,21 +118,19 @@ def fetch_data():
                     state = state.replace(",", "")
                     pcode = pcode.lstrip()
                     pcode = pcode.replace(",", "")
-
                 else:
                     adrs = adrs.split(",")
                     street = adrs[0].strip()
                     city = adrs[1].strip()
                     state = adrs[2].strip()
                     pcode = "<MISSING>"
-
+                    linkurl = url
                 div = soup.findAll("div", {"class": "location-contact-data"})
                 if (len(div)) == 0:
                     phone = "<MISSING>"
                 else:
                     phone = div[1].text
                     phone = phone.strip()
-
                 time = soup.findAll("div", {"class": "location-hours-info"})
                 HOO = ""
                 for day in time:
@@ -144,11 +143,10 @@ def fetch_data():
                 if street == "15060 Sequoia Pkwy # 6Tigard":
                     street = "15060 Sequoia Pkwy # 6"
                     city = "Tigard"
-
                 data.append(
                     [
                         "https://www.emetabolic.com/",
-                        "https://www.emetabolic.com/locations/",
+                        linkurl,
                         title,
                         street,
                         city,
