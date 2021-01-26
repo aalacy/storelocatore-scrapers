@@ -55,7 +55,7 @@ def write_output(data):
             ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
-            writer.writerow(row)
+                writer.writerow(row)
 
         log.info(f"No of records being processed: {len(temp_list)}")
 
