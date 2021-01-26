@@ -122,10 +122,10 @@ def fetch_data():
                     hours = hours + "; Wed: " + item["wed_hours"]
                     hours = hours + "; Thu: " + item["thu_hours"]
                     hours = hours + "; Fri: " + item["fri_hours"]
-                    try:
-                        hours = hours + "; Sat: " + item["sat_hours"]
-                    except:
-                        hours = hours + "; Sat: Closed"
+                if item["sat_hours"]:
+                    hours = hours + "; Sat: " + item["sat_hours"]
+                else:
+                    hours = hours + "; Sat: Closed"
                 if item["sun_hours"]:
                     hours = hours + "; Sun: " + item["sun_hours"]
                 else:
@@ -160,6 +160,8 @@ def fetch_data():
                         .replace("DEVONSHIRE MALL", "")
                         .strip()
                     )
+                    if hours == "<MISSING>; Sat: Closed; Sun: Closed":
+                        hours = "<MISSING>"
                     yield [
                         website,
                         lurl,
@@ -257,10 +259,8 @@ def fetch_data():
                     hours = hours + "; Wed: " + item["wed_hours"]
                     hours = hours + "; Thu: " + item["thu_hours"]
                     hours = hours + "; Fri: " + item["fri_hours"]
-                    try:
-                        hours = hours + "; Sat: " + item["sat_hours"]
-                    except:
-                        hours = hours + "; Sat: Closed"
+                if item["sat_hours"]:
+                    hours = hours + "; Sat: " + item["sat_hours"]
                 if item["sun_hours"]:
                     hours = hours + "; Sun: " + item["sun_hours"]
                 else:
@@ -295,6 +295,8 @@ def fetch_data():
                         .replace("DEVONSHIRE MALL", "")
                         .strip()
                     )
+                    if hours == "<MISSING>; Sat: Closed; Sun: Closed":
+                        hours = "<MISSING>"
                     yield [
                         website,
                         lurl,
