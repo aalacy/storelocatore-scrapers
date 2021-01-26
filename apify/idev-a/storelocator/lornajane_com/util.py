@@ -1,34 +1,3 @@
-import us
-
-ca_provinces = [
-    "alberta",
-    "british columbia",
-    "manitoba",
-    "new brunswick",
-    "newfoundland and labrador",
-    "nova scotia",
-    "ontario",
-    "prince edward island",
-    "quebec",
-    "saskatchewan",
-]
-ca_provinces_codes = {
-    "AB",
-    "BC",
-    "MB",
-    "NB",
-    "NL",
-    "NS",
-    "NT",
-    "NU",
-    "ON",
-    "PE",
-    "QC",
-    "SK",
-    "YT",
-}
-
-
 class Util:
     def _strip_list(self, val):
         return [_.strip() for _ in val if _.strip()]
