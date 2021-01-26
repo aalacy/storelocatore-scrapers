@@ -57,6 +57,7 @@ def fetch_data():
             )
             name = name.replace("&lt;br&gt;", "")
             name = name.replace("&amp;reg", "")
+            hours = ""
         if "<address1>" in line:
             add = line.split("<address1>")[1].split("<")[0]
         if "<address2>" in line:
@@ -107,7 +108,11 @@ def fetch_data():
                 + hours7
             )
             if state != "":
-                if "0" not in hours or ":" not in hours:
+                if (
+                    "am" not in hours
+                    and "pm" not in hours
+                    and "closed" not in hours.lower()
+                ):
                     hours = "<MISSING>"
                 name = name.replace("Timberland", "Timberland ").replace("  ", " ")
                 loc = (

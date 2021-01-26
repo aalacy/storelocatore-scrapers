@@ -84,6 +84,7 @@ def fetch_data():
                     loc = loc.replace(
                         "http://www.sunriseconveniencestores.com/", ""
                     ).replace(".com//", ".com/")
+                    phone = phone.replace("\\", "").replace("n", "")
                     yield [
                         website,
                         loc,
