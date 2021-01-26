@@ -44,10 +44,6 @@ def fetch_data():
     DOMAIN = "jimboystacos.com"
     start_url = "https://jimboystacos.com/wp-admin/admin-ajax.php?action=store_search&lat=33.80761&lng=-117.91491&max_results=25&search_radius=50&autoload=1"
 
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
     response = session.get(start_url)
     data = json.loads(response.text)
 
