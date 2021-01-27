@@ -1,6 +1,6 @@
 FROM safegraph/apify-python3:latest
 
-COPY ../nypi ./
+COPY . ./
 
 USER root
 
