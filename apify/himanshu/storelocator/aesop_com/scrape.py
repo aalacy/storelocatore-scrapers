@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
-import usaddress as usd
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import usaddress as usd
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("aesop_com")
@@ -59,7 +59,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-
         for row in data:
             writer.writerow(row)
 
@@ -94,7 +93,6 @@ def fetch_data():
 
     adressess = []
     for lat, lng in search:
-
         payload = (
             '{"query":"\\n  \\n  fragment openingHours on StoreOpeningHoursTimesType {\\n    closedAllDay\\n    openingTimeHour\\n    openingTimeMinute\\n    closingTimeHour\\n    closingTimeMinute\\n  }\\n\\n  query {\\n    stores (\\n      query: [\\n        { key: \\"fields.storeLocation\\", Op:WITHIN, value: \\"37.887,-79.488,'
             + str(lat)
@@ -252,6 +250,7 @@ def fetch_data():
                             except IndexError:
                                 zipp = "<MISSING>"
                         country_code = "US"
+
                     elif value["country"] is None:
                         if location_name == "Aesop UTC":
                             street_address = (
@@ -440,7 +439,6 @@ def fetch_data():
                             + ", sunday-"
                             + sunday
                         )
-
                     except:
                         hours_of_operation = "<MISSING>"
 
@@ -448,6 +446,7 @@ def fetch_data():
                         page_url = "https://www.aesop.com/hk/en/r/" + value["id"]
                     else:
                         page_url = "<MISSING>"
+
                     store = []
                     if street_address == "Space":
                         street_address = "Space 2118, Westfield, 4545 La Jolla"
@@ -460,6 +459,13 @@ def fetch_data():
                         street_address.replace(
                             "630 Old Country Rd", "630 Old Country Rd Space, 1101D"
                         )
+                        .replace("International Market Place, Space 116, ", "")
+                        .replace("NorthPark Center, ", "")
+                        .replace("Space 2118, ", "")
+                        .replace("Space K02 - ", "")
+                        .replace("The Village at Corte Madera, Space D207, ", "")
+                        .replace("Tysons Corner Center, Suite O008U, ", "")
+                        .replace("Westfield, ", "")
                     )
                     store.append(city.replace("Space, 1101D ", ""))
                     store.append(state)
@@ -477,12 +483,6 @@ def fetch_data():
                     if store[2] in adressess:
                         continue
                     adressess.append(store[2])
-                    store = [
-                        str(x).encode("ascii", "ignore").decode("ascii").strip()
-                        if x
-                        else "<MISSING>"
-                        for x in store
-                    ]
                     yield store
 
 

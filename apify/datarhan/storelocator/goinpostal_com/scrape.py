@@ -40,7 +40,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "freshii.com"
+    DOMAIN = "goinpostal.com"
 
     start_url = (
         "https://goinpostal.com/wp-admin/admin-ajax.php?action=get_stores_by_zipcode"
@@ -55,7 +55,11 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "<MISSING>"
+        store_url = (
+            "https://goinpostal.com/locations/locator_store.php/?storeID={}".format(
+                poi["store_id_old"]
+            )
+        )
         location_name = poi["store_name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["store_address"]
@@ -86,15 +90,19 @@ def fetch_data():
 
         mon = "Monday {}".format(poi["hour_work_Mon"])
         tue = "Tuesday {}".format(poi["hour_work_Tue"])
-        wen = "Wednesday {}".format(poi["hour_work_Tue"])
-        thu = "Thursday {}".format(poi["hour_work_Tue"])
-        fri = "Friday {}".format(poi["hour_work_Tue"])
-        sat = "Saturday {}".format(poi["hour_work_Tue"])
-        sun = "Sunday {}".format(poi["hour_work_Tue"])
+        wen = "Wednesday {}".format(poi["hour_work_Wed"])
+        thu = "Thursday {}".format(poi["hour_work_Thu"])
+        fri = "Friday {}".format(poi["hour_work_Fri"])
+        sat = "Saturday {}".format(poi["hour_work_Sat"])
+        sun = "Sunday {}".format(poi["hour_work_Sun"])
         hours_of_operation = [mon, tue, wen, thu, fri, sat, sun]
         hours_of_operation = (
             ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if "soon" in hours_of_operation.lower():
+            location_type = "Coming Soon"
+        if poi["coding"] == "N":
+            location_type = "Coming Soon"
 
         item = [
             DOMAIN,

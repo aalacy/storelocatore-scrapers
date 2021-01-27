@@ -43,6 +43,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
         "Toronto",
@@ -248,22 +249,24 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if lurl not in alllocs:
+            alllocs.append(lurl)
+            yield [
+                website,
+                lurl,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

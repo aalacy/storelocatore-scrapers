@@ -43,6 +43,7 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    scraped_items = []
 
     DOMAIN = "metro.ca"
     start_url = "https://www.metro.ca/en/find-a-grocery"
@@ -50,7 +51,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=200,
+        max_radius_miles=5,
         max_search_results=None,
     )
     for code in all_codes:
@@ -88,7 +89,6 @@ def fetch_data():
         country_code = data["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        store_number = store_number if store_number else "<MISSING>"
         phone = data["telephone"]
         phone = phone if phone else "<MISSING>"
         location_type = data["type"].split("/")[-1]
@@ -122,7 +122,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        items.append(item)
+        check = "{} {}".format(street_address, location_name)
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

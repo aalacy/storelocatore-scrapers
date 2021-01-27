@@ -68,8 +68,9 @@ def get_data(_id):
     longitude = j.get("longitude") or "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = j.get("hours").replace("\n", ";") or "<MISSING>"
+    status = j.get("status") or ""
 
-    if hours_of_operation == "Open 24/7":
+    if status.find("coming") != -1:
         hours_of_operation = "Coming Soon"
 
     row = [

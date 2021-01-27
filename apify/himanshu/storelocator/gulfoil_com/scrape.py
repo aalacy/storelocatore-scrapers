@@ -16,7 +16,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -35,7 +34,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -93,6 +91,16 @@ def fetch_data():
             if state in ["KM"]:
                 continue
 
+            hours_of_operation = table[i].find("p", text=re.compile("Hours:"))
+            if hours_of_operation is None:
+                hours_of_operation = "<MISSING>"
+            else:
+                hours_of_operation = (
+                    str(hours_of_operation.text)
+                    .replace("Hours:-", "<MISSING>")
+                    .replace("Hours:", "")
+                )
+
             store = []
             locator_domain = base_url
             store.append(locator_domain if locator_domain else "<MISSING>")
@@ -107,7 +115,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append(hours_of_operation)
             store.append("http://gulfoil.com/station-locator")
             yield store
         page += 1

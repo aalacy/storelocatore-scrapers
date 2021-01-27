@@ -46,7 +46,6 @@ def fetch_data():
     hdr = {"Content-Type": "application/json"}
     body = '{"lat":30.24,"lng":-81.39,"startRcdNum":"0","radius":"50000","StoreNum":"","searchText":"    32004   "}'
     response = session.post(start_url, headers=hdr, data=body)
-
     dom = ET.fromstring(response.text)
     all_locations = dom.findall("Store")
 
@@ -78,6 +77,14 @@ def fetch_data():
         hours_of_operation = poi.find("StoreHours").text
         hours_of_operation = (
             hours_of_operation.replace(";", ",") if hours_of_operation else "<MISSING>"
+        )
+        store_url = "https://www.thecheckcashingstore.com/StoreDetails/StoreDetails?US/{}/{}/{}/{}/{}"
+        store_url = store_url.format(
+            state,
+            city.replace(" ", "-"),
+            street_address.replace(" ", "-"),
+            zip_code,
+            store_number,
         )
 
         item = [

@@ -43,7 +43,7 @@ def fetch_data():
     Found = False
     while Found is False:
         logger.info("Getting Locations...")
-        r = session.get(url, headers=headers, timeout=90, stream=True)
+        r = session.get(url, headers=headers, timeout=150, stream=True)
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
             if '"_id":"restaurant_' in line:
@@ -177,27 +177,28 @@ def fetch_data():
                         except:
                             pass
                         if hours == "":
-                            hours = "Closed"
+                            hours = "<MISSING>"
                         phone = phone.encode("ascii", errors="ignore").decode()
                         if phone == "":
                             phone = "<MISSING>"
-                        if "Closed" not in hours:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                        if '"diningRoomHours":{"_type":"hoursOfOperation"}' in item:
+                            hours = "Sun-Sat: Closed"
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

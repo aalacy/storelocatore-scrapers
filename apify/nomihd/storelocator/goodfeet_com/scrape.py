@@ -96,6 +96,11 @@ def fetch_data():
                 .replace("\\u003c", "<")
                 .replace("\\u003e", ">")
                 .strip()
+                .replace("\\u0027", "'")
+                .replace("\\r", "")
+                .strip()
+                .replace("\\n", "")
+                .strip()
                 .replace("\\", " ")
                 .strip(),
                 "html.parser",
@@ -137,8 +142,15 @@ def fetch_data():
                 phone = phone.rsplit("(", 1)[0].strip()
 
         location_type = "<MISSING>"
-        hours_of_operation = store[7]
-
+        hours_of_operation = (
+            store[7]
+            .replace("Appointments Required. Call for Same Day Availability.", "")
+            .replace("Open for appointments only. ", "")
+            .replace("Evening Hours by Appointment Only", "")
+            .replace("Open 7 Days A Week! ", "")
+            .strip()
+        )
+        hours_of_operation = hours_of_operation.strip()
         latitude = store[14]
         longitude = store[15]
 

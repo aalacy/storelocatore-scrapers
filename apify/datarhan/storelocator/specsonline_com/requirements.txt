@@ -1,4 +1,4 @@
-sgselenium==0.0.12
-lxml==4.5.2
+w3lib==1.22.0
 sgrequests==0.0.15
+lxml==4.5.2
 sgvalidator==0.0.71

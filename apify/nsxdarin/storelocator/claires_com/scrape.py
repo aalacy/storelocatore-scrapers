@@ -1,15 +1,16 @@
 import csv
 from sgrequests import SgRequests
 import json
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("claires_com")
 
-search = (
-    sgzip.ClosestNSearch()
-)  # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes=["us", "ca"])
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_radius_miles=25,
+    max_search_results=None,
+)
 
 session = SgRequests()
 headers = {
@@ -48,12 +49,11 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    coord = search.next_coord()
-    while coord:
+    for lat, lng in search:
         try:
             result_coords = []
-            x = coord[0]
-            y = coord[1]
+            x = lat
+            y = lng
             url = "https://www.claires.com/on/demandware.store/Sites-clairesNA-Site/en_US/Stores-GetNearestStores"
             payload = {
                 "time": "00:00",
@@ -61,7 +61,7 @@ def fetch_data():
                 "lat": str(x),
                 "lng": str(y),
             }
-            logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+            logger.info("%s - %s..." % (str(x), str(y)))
             website = "claires.com"
             r = session.post(url, headers=headers, data=payload)
             if '"id":"' in r.content.decode("utf-8"):
@@ -79,16 +79,38 @@ def fetch_data():
                     zc = item["postalCode"]
                     country = item["country"]
                     phone = item["phone"]
-                    state = "<MISSING>"
                     lat = item["coordinates"]["lat"]
                     lng = item["coordinates"]["lng"]
                     result_coords.append((lat, lng))
                     typ = item["business"]
+                    state = "<MISSING>"
                     loc = "https://www.claires.com/us/store-details/?StoreID=" + store
                     r2 = session.get(loc, headers=headers)
                     lines = r2.iter_lines()
                     for line2 in lines:
                         line2 = str(line2.decode("utf-8"))
+                        if (
+                            '<link rel="canonical" href="https://stores.claires.com/us/'
+                            in line2
+                        ):
+                            state = (
+                                line2.split(
+                                    '<link rel="canonical" href="https://stores.claires.com/us/'
+                                )[1]
+                                .split("/")[0]
+                                .upper()
+                            )
+                        if (
+                            '<link rel="canonical" href="https://stores.claires.com/ca/'
+                            in line2
+                        ):
+                            state = (
+                                line2.split(
+                                    '<link rel="canonical" href="https://stores.claires.com/ca/'
+                                )[1]
+                                .split("/")[0]
+                                .upper()
+                            )
                         if "<p><strong>" in line2:
                             next(lines)
                             next(lines)
@@ -127,9 +149,6 @@ def fetch_data():
                             hours,
                         ]
                         yield poi
-
-            search.max_count_update(result_coords)
-            coord = search.next_coord()
         except:
             pass
 
