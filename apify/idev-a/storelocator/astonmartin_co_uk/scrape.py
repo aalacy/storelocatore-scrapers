@@ -36,7 +36,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.specsavers.co.uk"
+    base_url = "https://astonmartin.co.uk"
     res = session.get(
         "https://astonmartin.co.uk/api/v1/dealers?latitude=51.5113555&longitude=-0.1568901000000551&cultureName=en-GB&take=26"
     )
