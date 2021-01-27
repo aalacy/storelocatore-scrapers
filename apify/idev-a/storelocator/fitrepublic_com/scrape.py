@@ -77,7 +77,6 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
-        hours_data = [_ for _ in horizontal_rule.next_sibling.p.stripped_strings][1:]
         hours_of_operation = "; ".join(
             [_ for _ in horizontal_rule.next_sibling.p.stripped_strings][1:]
         )
