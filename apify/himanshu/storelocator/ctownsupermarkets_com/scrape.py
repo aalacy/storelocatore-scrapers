@@ -92,7 +92,7 @@ def fetch_data():
         locations = data["response"]["entities"]
         coordinates = []
         for location in locations:
-            store_number = location.get("c_internalStoreNumber", MISSING)
+            store_number = location["meta"]["id"]
 
             phone = location.get("mainPhone", MISSING)
 

@@ -44,22 +44,21 @@ def fetch_data():
 
     DOMAIN = "gorays.com"
     start_url = "https://www.gorays.com/StoreLocator/"
-    proxy = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
 
     all_locations = []
-    response = session.get(start_url, proxies=proxy)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_states = dom.xpath(
         '//h3[contains(text(), "Our stores are in the following states:")]/following-sibling::div[1]//a/@href'
     )
     for url in all_states:
-        response = session.get(urljoin(start_url, url), proxies=proxy)
+        response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//td/a[contains(text(), "View")]/@href')
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, proxies=proxy)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
         raw_address = loc_dom.xpath('//p[@class="Address"]/text()')

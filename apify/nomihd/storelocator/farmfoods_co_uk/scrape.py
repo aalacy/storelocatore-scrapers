@@ -6,7 +6,7 @@ import json
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 import lxml.html
 
-website = "farmfoods_co.uk"
+website = "farmfoods.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -88,23 +88,21 @@ def fetch_data():
                     if len("".join(store["address2"]).strip()) > 0:
                         street_address = street_address + ", " + store["address2"]
 
+                city = ""
                 if store["address3"] is not None:
                     if len("".join(store["address3"]).strip()) > 0:
-                        street_address = street_address + ", " + store["address3"]
+                        city = store["address3"]
 
+                state = ""
                 if store["address4"] is not None:
                     if len("".join(store["address4"]).strip()) > 0:
-                        street_address = street_address + ", " + store["address4"]
+                        state = store["address4"]
 
-                city = location_name
-                if "," in city:
-                    city = city.split(",")[0].strip()
-                state = "<MISSING>"
                 zip = ""
                 if store["post_code"] is not None:
                     zip = store["post_code"]
 
-                country_code = "GB"
+                country_code = "<MISSING>"
 
                 if street_address == "" or street_address is None:
                     street_address = "<MISSING>"
