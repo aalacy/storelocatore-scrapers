@@ -89,8 +89,10 @@ def fetch_data():
                         zipp = us_zip_list[0]
                     else:
                         zipp = "<MISSING>"
+                    pat = r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"
+
                     phone_list = re.findall(
-                        re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+                        re.compile(pat),
                         str(address[-1]),
                     )
                     if phone_list:
