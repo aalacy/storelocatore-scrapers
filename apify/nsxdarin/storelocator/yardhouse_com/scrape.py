@@ -102,6 +102,23 @@ def fetch_data():
             state = "TX"
             zc = "78256"
             phone = "(210) 691-0033"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        if state == "":
+            state = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        if store == "":
+            store = "<MISSING>"
+        if add == "":
+            add = "<MISSING>"
         yield [
             website,
             loc,

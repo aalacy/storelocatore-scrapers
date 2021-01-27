@@ -61,6 +61,8 @@ def fetch_data():
             .find("table")
             .text.replace("day", "day ")
             .replace("PM", "PM ")
+            .replace(":00", ":00 ")
+            .strip()
         )
 
         data.append(
