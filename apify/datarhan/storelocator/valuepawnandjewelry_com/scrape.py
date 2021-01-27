@@ -1,6 +1,5 @@
 import csv
-from urllib.parse import urljoin
-from lxml import etree
+import json
 
 from sgrequests import SgRequests
 
@@ -42,66 +41,42 @@ def fetch_data():
     items = []
 
     DOMAIN = "valuepawnandjewelry.com"
-    start_url = "https://stores.valuepawnandjewelry.com/"
+    start_url = (
+        "https://valuepawnandjewelry.com/data/locations/valuepawn/output/locations.json"
+    )
 
-    all_locations = []
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    states = dom.xpath('//a[@class="c-directory-list-content-item-link"]/@href')
-    for url in states:
-        state_response = session.get(urljoin(start_url, url))
-        state_dom = etree.HTML(state_response.text)
-        all_urls = state_dom.xpath(
-            '//a[@class="c-directory-list-content-item-link"]/@href'
-        )
-        for url in all_urls:
-            if len(url.split("/")) == 3:
-                all_locations.append(url)
-                continue
-            city_response = session.get(urljoin(start_url, url))
-            city_dom = etree.HTML(city_response.text)
-            all_locations += city_dom.xpath(
-                '//h3[@class="c-location-grid-item-title"]/a/@href'
-            )
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
+    }
+    response = session.get(start_url, headers=headers)
+    data = json.loads(response.text)
 
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//span[@itemprop="name"]/span/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = loc_dom.xpath(
-            '//section[@id="location-info"]//span[@class="c-address-street-1"]/text()'
-        )
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = loc_dom.xpath(
-            '//section[@id="location-info"]//span[@class="c-address-city"]/span/text()'
-        )
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//abbr[@class="c-address-state"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@class="c-address-postal-code"]/text()')
-        zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
-        country_code = loc_dom.xpath(
-            '//abbr[@class="c-address-country-name c-address-country-us"]/text()'
-        )
-        country_code = country_code[0] if country_code else "<MISSING>"
+    for poi in data:
+        store_url = "<MISSING>"
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["zip"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["countryCode"]
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = loc_dom.xpath("//main/@itemtype")[0].split("/")[-1]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//tr[@itemprop="openingHours"]/td//text()')
-        hours_of_operation = (
-            ", ".join(hours_of_operation).replace("  ", " ")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
