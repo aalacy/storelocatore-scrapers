@@ -1,5 +1,7 @@
+import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,43 +42,49 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "valuepawnandjewelry.com"
-    start_url = (
-        "https://valuepawnandjewelry.com/data/locations/valuepawn/output/locations.json"
-    )
-
+    DOMAIN = "qualitydairy.com"
+    start_url = "http://qualitydairy.com/v15/stores/"
     headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
+
     response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
+    all_locations = re.findall(
+        "qd_locations = (.+?);\r", response.text.replace("\n", "")
+    )[0]
+    data = json.loads(all_locations)
 
     for poi in data:
-        store_url = "<MISSING>"
+        store_url = poi["url"]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
+        if poi["address2"]:
+            street_address += ", " + poi["address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
+        raw_address = loc_dom.xpath('//div[@class="address"]/text()')
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = poi["id"]
+        store_number = store_number if store_number else "<MISSING>"
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = loc_dom.xpath('//table[@id="hours-table"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@id="hours-label"]/text()')
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
