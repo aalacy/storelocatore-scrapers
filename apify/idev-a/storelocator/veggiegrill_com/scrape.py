@@ -70,11 +70,11 @@ def fetch_data():
         location_name = location.select_one("b").text
         address = [_ for _ in location.select_one("address").stripped_strings]
         street_address = address[0]
-        city = myuti._valid(address[1].split(",")[0])
+        city = myutil._valid(address[1].split(",")[0])
         state = address[1].split(",")[1].strip().split(" ")[0]
         zip = address[1].split(",")[1].strip().split(" ")[1]
         country_code = myutil.get_country_by_code(state)
-        phone = myuti._valid(
+        phone = myutil._valid(
             location.find("a", string=re.compile("\\d{3}-\\d{4}")).text
         )
         link = soup.find("div", attrs={"data-id": "5972"})
