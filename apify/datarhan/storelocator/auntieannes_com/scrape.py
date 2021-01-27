@@ -1,5 +1,4 @@
 import csv
-import json
 import urllib.parse
 from lxml import etree
 from sglogging import SgLogSetup
@@ -67,13 +66,11 @@ def fetch_data():
             store_url = poi_data.xpath('.//a[@class="generic-link"]/@href')[0]
             store_url = urllib.parse.urljoin(start_url, store_url)
             location_name = poi_data.xpath('.//a[@class="generic-link"]/text()')[0]
-            location_name = location_name if location_name else "<MISSING>"
-            if "temporarily closed" in location_name.lower():
-                continue
+            location_name = str(location_name) if location_name else "<MISSING>"
             street_address = poi_data.xpath(
                 './/div[@class="city-details"]/span[1]/text()'
             )
-            street_address = street_address[0] if street_address else "<MISSING>"
+            street_address = str(street_address[0]) if street_address else "<MISSING>"
             city = poi_data.xpath('.//div[@class="city-details"]/span[2]/text()')
             city = city[0].split(",")[0] if city else "<MISSING>"
             state = poi_data.xpath('.//div[@class="city-details"]/span[2]/text()')
@@ -88,7 +85,7 @@ def fetch_data():
             country_code = country_code if country_code else "<MISSING>"
             store_number = store_url.split("/")[-1]
             phone = poi_data.xpath('//a[@aria-label="Telephone Number"]/span/text()')
-            phone = phone[0] if phone else "<MISSING>"
+            phone = str(phone[0]) if phone else "<MISSING>"
 
             store_response = session.get(store_url, headers=user_agent)
             store_dom = etree.HTML(store_response.text)
@@ -97,9 +94,9 @@ def fetch_data():
                 location_type = "Food Truck"
             location_type = location_type if location_type else "<MISSING>"
             latitude = store_dom.xpath("//a/@data-lat")
-            latitude = latitude[0] if latitude else "<MISSING>"
+            latitude = float(latitude[0]) if latitude else "<MISSING>"
             longitude = store_dom.xpath("//a/@data-long")
-            longitude = longitude[0] if longitude else "<MISSING>"
+            longitude = float(longitude[0]) if longitude else "<MISSING>"
             days_list = store_dom.xpath('//div[@class="hours-wrapper"]//dt/text()')
             hours_list = store_dom.xpath('//div[@class="hours-wrapper"]//dd/text()')
             hours_of_operation = list(
@@ -131,8 +128,9 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
+            check = f"{store_number} {location_name}"
+            if check not in scraped_items:
+                scraped_items.append(check)
                 items.append(item)
 
     return items

@@ -1,6 +1,5 @@
 sgrequests
-beautifulsoup4==4.7.1
+beautifulsoup4
+sgzip==0.1.0
 sglogging
-sgzip==0.0.55
 phonenumbers
-unicodedata

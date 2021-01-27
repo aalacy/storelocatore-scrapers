@@ -1,0 +1,6 @@
+sgscrape
+sgrequests
+sglogging
+selenium==3.141.0
+selenium-wire==2.1.1
+sgselenium==0.0.12
