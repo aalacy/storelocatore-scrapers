@@ -153,6 +153,9 @@ def fetch_data():
                                 .replace("Donegal House", "")
                                 .replace("Wytham Court", "")
                             )
+                            add = add.replace(",", "").strip()
+                            add = add.replace("&#x2f;", "/")
+                            name = name.replace("&#x2f;", "/")
                             yield [
                                 website,
                                 loc,

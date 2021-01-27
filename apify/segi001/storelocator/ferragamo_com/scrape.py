@@ -2,6 +2,7 @@ import csv
 import sgrequests
 import bs4
 import json
+import re
 
 
 def write_output(data):
@@ -122,7 +123,8 @@ def fetch_data():
         return str(hour)[:2] + ":" + str(hour)[2:]
 
     for store in stores:
-        st = bs4.BeautifulSoup(sess.get(store).text, features="lxml")
+        a = sess.get(store).text
+        st = bs4.BeautifulSoup(a, features="lxml")
         name = missingString
         if st.find("span", {"class": "Hero-title Heading--lead"}):
             name = st.find("span", {"class": "Hero-title Heading--lead"}).text
@@ -151,6 +153,8 @@ def fetch_data():
                     f"{obj['day']} {generateHourString(obj['intervals'][0]['start'])} AM - {generateHourString(obj['intervals'][0]['end'])} PM"
                 )
         hour = ", ".join(array)
+        country_code = re.search(r'"country":"(.*?)",', a).group(1)
+        store_num = re.search(r'"id":(.*?),', a).group(1)
         result.append(
             [
                 locator_domain,
@@ -160,8 +164,8 @@ def fetch_data():
                 city,
                 state,
                 zc,
-                missingString,
-                missingString,
+                country_code,
+                store_num,
                 phone,
                 missingString,
                 lat,
