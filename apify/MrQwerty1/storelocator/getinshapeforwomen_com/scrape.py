@@ -51,6 +51,8 @@ def fetch_data():
             f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
         )
 
+        if not street_address[0].isdigit():
+            street_address = j.get("address2") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
