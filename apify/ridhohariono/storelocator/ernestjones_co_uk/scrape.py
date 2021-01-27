@@ -108,11 +108,7 @@ def fetch_data():
         zip_code = find_meta(
             soup, "meta", {"property": "business:contact_data:postal_code"}
         )
-        country_code = find_meta(
-            soup, "meta", {"property": "business:contact_data:country_name"}
-        )
-        if country_code == "United Kingdom":
-            country_code = "UK"
+        country_code = "UK"
         store_number = row["store_number"]
         phone = find_meta(
             soup, "meta", {"property": "business:contact_data:phone_number"}
