@@ -54,15 +54,15 @@ def fetch_data():
             or location_name.lower().find("soon") != -1
         ):
             continue
-        street_address = j.get("addressLineOne") or "<MISSING>"
+        street_address = (
+            j.get("addresses", {}).get("marketing", {}).get("addressLineOne")
+            or "<MISSING>"
+        )
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
         store_number = j.get("storeNumber") or "<MISSING>"
-        page_url = (
-            f"https://www.urbanoutfitters.com/api/misl/v1/stores/search?"
-            f"&storeNumber={store_number}&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
-        )
+        page_url = f'https://www.urbanoutfitters.com/stores/{j.get("slug")}'
         phone = j.get("storePhoneNumber") or "<MISSING>"
         if phone.find("?") != -1:
             phone = "<MISSING>"

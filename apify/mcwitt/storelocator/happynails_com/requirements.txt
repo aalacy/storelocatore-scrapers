@@ -19,4 +19,3 @@ sgzip==0.1.0
 Shapely==1.7.1
 six==1.15.0
 urllib3==1.26.2
-fakedependency==42.0.0

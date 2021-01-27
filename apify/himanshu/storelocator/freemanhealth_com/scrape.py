@@ -1,93 +1,262 @@
 import csv
 from bs4 import BeautifulSoup
-import re
-import json
-import requests
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger('freemanhealth_com')
-
-
+session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    return_main_object = []
     addresses = []
-    addressesess=[]
-    headers = {
-    'accept': "application/json, text/javascript, */*; q=0.01",
-    'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
-    }
-    result_coords = []
-    link={33:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=5",18:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=10",8:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=25",5:"https://www.freemanhealth.com/locations/location-search-results?PostalCode=85029&LocationDescendants=true&page=1&count=50"}
-    
-    for q in link:
-        for i in range(0,q):
-            url123 = str(link[q].split("page=")[0].replace("1",'')+"page="+str(i)+"&"+link[q].split("page=")[1].split("&")[1])
-            response = requests.get(url123, headers=headers)
-            soup=BeautifulSoup(response.text,'lxml')
-            data = soup.find(lambda tag: (tag.name == "script") and "var g_ihApplicationPath" in tag.text.strip())
-            data1=json.loads(data.text.split("moduleInstanceData_IH_Public")[-1].split(" = ")[1].split(" if (!window.controllerNames)")[0].replace("};","}"))
-            page_url1=[]
-            for d in json.loads(data1['SettingsData'])['Records']:
-                for d1 in d['StaticPageZones']:
-                    for d2 in d1['Value']['FieldColumns']:
-                        for d3 in d2['Fields']:
-                            if "URL" in d3 and "location" in d3['URL']:
-                                if str(d3['URL']) not in addresses :
-                                    addresses.append(str(d3['URL']))
-                                    if "/location/" in d3['URL']:
-                                        page_url1.append("https://www.freemanhealth.com"+d3['URL'])
-            # logger.info(page_url1)
-            for urls in page_url1:
-                response1 = requests.get(urls, headers=headers)
-                soup1 = BeautifulSoup(response1.text, "lxml")
-                # latitude = str(soup1).split("center: {")[1].split("},")[0].split("lat: ")[1].split(",")[0]
-                # longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
-                street_address=(soup1.find("meta",{"itemprop":"streetAddress"})['content'])
-                name=soup1.find_all("meta",{"itemprop":'name'})[-1]['content']
-                # logger.info(name)
-                city = soup1.find("meta",{"itemprop":"addressLocality"})['content']
-                state = soup1.find("meta",{"itemprop":"addressRegion"})['content']
-                zipp = soup1.find("meta",{"itemprop":"postalCode"})['content']
-                phone = soup1.find("meta",{"itemprop":"telephone"})['content']    
-                loctype = "<MISSING>"
-                store_number = "<MISSING>"
-                store = []
-                store.append("https://www.freemanhealth.com")
-                store.append(name) 
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append(store_number if store_number else "<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append(urls)
-                if store[2] in addressesess:
-                    continue
-                addressesess.append(store[2])
-                # logger.info("data ==="+str(store))
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                yield store
-                        
-        
-                  
+    base_url = "https://freemanhealth.com"
+    url = "https://freemanhealth.com/all-locations"
+
+    r = session.get(url)
+    soup = BeautifulSoup(r.text, "lxml")
+    loc_types = soup.find_all("li", {"class": "facet-item"})[:-3]
+
+    for locs in loc_types:
+
+        location_type = locs.find("span", {"class": "facet-item__value"}).text
+
+        counts = (
+            locs.find("span", {"class": "facet-item__count"})
+            .text.replace("(", "")
+            .replace(")", "")
+        )
+
+        link = locs.find("a").get("href")
+
+        page_url = base_url + link
+
+        r2 = session.get(page_url)
+        soup2 = BeautifulSoup(r2.text, "lxml")
+        medicals = soup2.find_all("article", {"role": "article"})
+
+        for med in medicals:
+            loc_name = med.find(
+                "h2", {"class": "coh-heading coh-style-heading-3-size coh-ce-4da6d1f4"}
+            ).text
+            street1 = med.find_all("p", {"class": "coh-paragraph coh-ce-e013c31a"})[
+                0
+            ].text
+            street2 = med.find_all("p", {"class": "coh-paragraph coh-ce-e013c31a"})[1]
+            if street2:
+                street1 = street1 + " " + street2.text
+            city = med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"}).text.split(
+                ","
+            )[0]
+            state = (
+                med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                .text.split(",")[1]
+                .split()[0]
+            )
+            zip_code = (
+                med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                .text.split(",")[1]
+                .split()[-1]
+            )
+            if len(zip_code) == 5:
+                country_code = "US"
+            else:
+                country_code = "CA"
+            store_number = "<MISSING>"
+            try:
+                phone = (
+                    med.find("a", {"class": "coh-link coh-ce-ee7ae836"})
+                    .text.strip()
+                    .replace(".", "-")
+                )
+            except:
+                phone = "<MISSING>"
+
+            med_url = med.find(
+                "a", {"class": "coh-link coh-style-link-with-icon-long"}
+            ).get("href")
+
+            soup3 = BeautifulSoup(session.get(med_url).text, "lxml")
+
+            hours = ""
+            try:
+                hours = list(
+                    soup3.find(
+                        "h5", text=" Hours of Operation "
+                    ).next_element.next_element.next_element.stripped_strings
+                )
+            except:
+                try:
+                    hours = list(
+                        soup3.find(
+                            "h5", text=" Hours "
+                        ).next_element.next_element.next_element.stripped_strings
+                    )
+                except:
+                    try:
+                        hours = list(
+                            soup3.find(
+                                "h2", text="Hours"
+                            ).next_element.next_element.next_element.stripped_strings
+                        )
+                    except:
+                        hours = "<MISSING>"
+            hours_of_operation = "".join(hours)
+            if street1 == "2531 East 32nd Street":
+                loc_name = loc_name.replace("﻿", "")
+            store = []
+            store.append(base_url)
+            store.append(loc_name)
+            store.append(street1)
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zip_code if zip_code else "<MISSING>")
+            store.append(country_code)
+            store.append(store_number)
+            store.append(phone if phone else "<MISSING>")
+            store.append(location_type)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours_of_operation)
+            store.append(med_url)
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            yield store
+
+        if int(counts) > 10:
+            while True:
+                try:
+                    next_page = soup2.find("a", {"rel": "next"}).get("href")
+                    next_page_url = url + next_page
+                    r3 = session.get(next_page_url)
+                    soup4 = BeautifulSoup(r3.text, "lxml")
+                    medicals = soup4.find_all("article", {"role": "article"})
+                    soup2 = soup4
+                except:
+                    break
+                for med in medicals:
+                    loc_name = med.find(
+                        "h2",
+                        {
+                            "class": "coh-heading coh-style-heading-3-size coh-ce-4da6d1f4"
+                        },
+                    ).text
+                    street1 = med.find_all(
+                        "p", {"class": "coh-paragraph coh-ce-e013c31a"}
+                    )[0].text
+                    street2 = med.find_all(
+                        "p", {"class": "coh-paragraph coh-ce-e013c31a"}
+                    )[1]
+                    if street2:
+                        street1 = street1 + " " + street2.text
+                    city = med.find(
+                        "p", {"class": "coh-paragraph coh-ce-6ae15eb3"}
+                    ).text.split(",")[0]
+                    state = (
+                        med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                        .text.split(",")[1]
+                        .split()[0]
+                    )
+                    zip_code = (
+                        med.find("p", {"class": "coh-paragraph coh-ce-6ae15eb3"})
+                        .text.split(",")[1]
+                        .split()[-1]
+                    )
+                    if len(zip_code.strip()) == 5:
+                        country_code = "US"
+                    else:
+                        country_code = "CA"
+                    store_number = "<MISSING>"
+                    try:
+                        phone = (
+                            med.find("a", {"class": "coh-link coh-ce-ee7ae836"})
+                            .text.strip()
+                            .replace(".", "-")
+                        )
+                    except:
+                        phone = "<MISSING>"
+
+                    med_url = med.find(
+                        "a", {"class": "coh-link coh-style-link-with-icon-long"}
+                    ).get("href")
+
+                    soup5 = BeautifulSoup(session.get(med_url).text, "lxml")
+                    hours = ""
+                    try:
+                        hours = list(
+                            soup5.find(
+                                "h5", text=" Hours of Operation "
+                            ).next_element.next_element.next_element.stripped_strings
+                        )
+                    except:
+                        try:
+                            hours = list(
+                                soup5.find(
+                                    "h5", text=" Hours "
+                                ).next_element.next_element.next_element.stripped_strings
+                            )
+                        except:
+                            try:
+                                hours = list(
+                                    soup5.find(
+                                        "h2", text="Hours"
+                                    ).next_element.next_element.next_element.stripped_strings
+                                )
+                            except:
+                                hours = "<MISSING>"
+
+                    hours_of_operation = "".join(hours)
+                    store = []
+                    store.append(base_url)
+                    store.append(loc_name)
+                    store.append(street1)
+                    store.append(city if city else "<MISSING>")
+                    store.append(state if state else "<MISSING>")
+                    store.append(zip_code if zip_code else "<MISSING>")
+                    store.append(country_code)
+                    store.append(store_number)
+                    store.append(phone if phone else "<MISSING>")
+                    store.append(location_type)
+                    store.append("<MISSING>")
+                    store.append("<MISSING>")
+                    store.append(hours_of_operation)
+                    store.append(med_url)
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
+                    yield store
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

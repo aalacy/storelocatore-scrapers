@@ -1,6 +1,6 @@
-lxml==4.3.4
+sglogging
 sgrequests
-beautifulsoup4==4.7.1
 shapely
 sgselenium
-sglogging
+bs4
+lxml

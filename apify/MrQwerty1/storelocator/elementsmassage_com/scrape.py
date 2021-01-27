@@ -74,6 +74,9 @@ def get_data(query):
     js = r.json()["locations"]
 
     for j in js:
+        status = j.get("status")
+        if status == "soon":
+            continue
         page_url = f'https://elementsmassage.com/{j.get("slug")}'
         location_name = j.get("name").strip()
         street_address = (
