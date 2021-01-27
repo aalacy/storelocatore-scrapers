@@ -6,9 +6,9 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import os
 
-from sgselenium import SgFirefox
-
-log = sglog.SgLogSetup().get_logger(logger_name='jdsports.co.uk', stdout_log_level="INFO")
+log = sglog.SgLogSetup().get_logger(
+    logger_name="jdsports.co.uk", stdout_log_level="INFO"
+)
 
 HEADERS_LIST_PAGE = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -158,7 +158,7 @@ def fetch_data():
 
 
 def get_page(page_url, headers):
-    access_denied_text = 'Access Denied'
+    access_denied_text = "Access Denied"
     response_text = access_denied_text
 
     i = 1
@@ -178,7 +178,9 @@ def get_page(page_url, headers):
 
         # if proxy did not work for max_tries times in a row
         if i >= max_tries:
-            exit(f"{i} different IPs failed to access {page_url}. Is Proxy working correctly ?")
+            exit(
+                f"{i} different IPs failed to access {page_url}. Is Proxy working correctly ?"
+            )
 
         i += 1
 
