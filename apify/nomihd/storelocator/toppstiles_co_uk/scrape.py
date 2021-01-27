@@ -108,6 +108,10 @@ def fetch_data():
         except:
             pass
 
+        if "," in city:
+            street_address = street_address + " " + city.split(",")[0].strip()
+            city = city.split(",")[-1].strip()
+
         if country_code == "":
             country_code = "<MISSING>"
 

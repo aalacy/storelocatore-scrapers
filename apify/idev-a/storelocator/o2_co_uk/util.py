@@ -56,8 +56,9 @@ class Util:
 
     def _check_duplicate_by_loc(self, data, _item):
         is_duplicated = False
-        for item in data:
+        for x, item in enumerate(data):
             if item[11] == _item[11] and item[12] == _item[12]:
+                data[x] = _item
                 is_duplicated = True
                 break
 

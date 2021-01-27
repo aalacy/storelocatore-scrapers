@@ -181,23 +181,24 @@ def fetch_data():
                         phone = phone.encode("ascii", errors="ignore").decode()
                         if phone == "":
                             phone = "<MISSING>"
-                        if "Closed" not in hours:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                        if '"diningRoomHours":{"_type":"hoursOfOperation"}' in item:
+                            hours = "Sun-Sat: Closed"
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():
