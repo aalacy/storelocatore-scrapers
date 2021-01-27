@@ -38,6 +38,7 @@ def getdata():
         zip_code = place.find(attrs={"name": "ZIP"}).text.strip()
         phone = place.find(attrs={"name": "Phone"}).text.strip()
         hour = place.find(attrs={"name": "Store Hrs."}).text.strip()
+        page_url = "https://www.google.com/maps/d/viewer?mid=1k_5K2ikpmcAyElx_ND0io5MT-3w&ll=35.64271937457243%2C-88.47843979999999&z=4"
 
         # for some reason the 0 is trimmed off of zip codes beginning with 0. Add that back here
         if len(zip_code) == 4:
@@ -49,11 +50,9 @@ def getdata():
         zips.append(zip_code)
         phones.append(phone)
         hours.append(hour)
+        page_urls.append(page_url)
 
         locator_domains.append("premierrents.net")
-        page_urls.append(
-            "https://www.google.com/maps/d/viewer?mid=1k_5K2ikpmcAyElx_ND0io5MT-3w&ll=35.64271937457243%2C-88.47843979999999&z=4"
-        )
         country_codes.append("US")
         location_types.append("<MISSING>")
         store_numbers.append("<MISSING>")
@@ -86,7 +85,6 @@ def getdata():
             "city": citys,
             "state": states,
             "zip": zips,
-            "store_numbers": store_numbers,
             "phone": phones,
             "hours_of_operation": hours,
             "country_code": country_codes,
