@@ -10,8 +10,8 @@ logger = SgLogSetup().get_logger("mgmwineandspirits_com")
 session = SgRequests()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-    }
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -39,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -58,37 +58,40 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://mgmwineandspirits.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     locations = soup.findAll("a", {"class": "btn locations"})
     for loc in locations:
-        link = 'https://mgmwineandspirits.com' + loc['href']
+        link = "https://mgmwineandspirits.com" + loc["href"]
         p = session.get(link, headers=headers, verify=False)
         bs = BeautifulSoup(p.text, "html.parser")
-        title = bs.find("div", {"class":"page-header visible-lg visible-md"}).text.strip()
-        hours = bs.find("section", {"id":"store-hours"}).text
-        hours = re.sub(pattern, '\n', hours)
-        hours = re.sub(cleanr, ' ', hours)
-        hours = hours.replace('\n', ' ')
+        title = bs.find(
+            "div", {"class": "page-header visible-lg visible-md"}
+        ).text.strip()
+        hours = bs.find("section", {"id": "store-hours"}).text
+        hours = re.sub(pattern, "\n", hours)
+        hours = re.sub(cleanr, " ", hours)
+        hours = hours.replace("\n", " ")
         hours = hours.strip()
-        hours = hours.lstrip('Store Hours')
-        hours = hours.rstrip(' Walk in or Call us! Both in store and curbside services available. Curbside Service Call 507-366-6460 with your order. Thank you and stay safe!')
-        phone = bs.find("span", {"class" : "btn phone-number"}).text
-        address = bs.find("a", {"class" : "btn address"})
+        hours = hours.lstrip("Store Hours")
+        hours = hours.rstrip(
+            " Walk in or Call us! Both in store and curbside services available. Curbside Service Call 507-366-6460 with your order. Thank you and stay safe!"
+        )
+        phone = bs.find("span", {"class": "btn phone-number"}).text
+        address = bs.find("a", {"class": "btn address"})
         address = str(address)
-        address = address.split('<span>')[1].split('</span>')[0]
-        address = address.replace('<br/>', ',')
-        address = address.split(',')
+        address = address.split("<span>")[1].split("</span>")[0]
+        address = address.replace("<br/>", ",")
+        address = address.split(",")
         street = address[0].strip()
         city = address[1].strip()
         locality = address[2].strip()
-        locality = locality.split(' ')
+        locality = locality.split(" ")
         state = locality[0]
         pcode = locality[1]
-
 
         data.append(
             [
@@ -119,4 +122,3 @@ def scrape():
 
 
 scrape()
-
