@@ -42,61 +42,65 @@ def write_output(data):
 
 
 def fetch_data():
-    data = []    
-    url = 'https://mes124x9ka-dsn.algolia.net/1/indexes/StoreLocations/query'
+    data = []
+    url = "https://mes124x9ka-dsn.algolia.net/1/indexes/StoreLocations/query"
     params = {
-        'x-algolia-api-key': '6a25958408aec66c81024ac2fcd3677c',
-        'x-algolia-application-id': 'MES124X9KA',
-        'x-algolia-agent': 'Algolia for vanilla JavaScript 3.7.0'
+        "x-algolia-api-key": "6a25958408aec66c81024ac2fcd3677c",
+        "x-algolia-application-id": "MES124X9KA",
+        "x-algolia-agent": "Algolia for vanilla JavaScript 3.7.0",
     }
-    body = {"params": "query=&hitsPerPage=100&aroundLatLng=34.2156247%2C-77.8125942&aroundRadius=all"}
+    body = {
+        "params": "query=&hitsPerPage=100&aroundLatLng=34.2156247%2C-77.8125942&aroundRadius=all"
+    }
     loclist = session.post(url, params=params, json=body).json()
-    loclist = loclist['hits']
+    loclist = loclist["hits"]
     for loc in loclist:
-            title = loc["DealerName"]
-            link = loc["LocationPageURL"]
-            if not link:
-                link = "<MISSING>"
-            phone = loc["PhoneNumber"]
-            if not phone:
-                phone = "<MISSING>"
-            temp = loc ['Address2']
-            if not temp:
-                street = loc["Address1"]
-            else:
-                street = loc["Address1"]
-                street = street + " " + temp
-            city = loc["City"]
-            state = loc["State"]
-            pcode = loc["PostalCode"]
-            ccode = loc["CountryCode"]
-            longt = loc["_geoloc"]['lng']
-            lat = loc["_geoloc"]['lat']
-            store = loc["IDS_Site_ID"]
-            data.append(
-                [
-                    "https://www.marinemax.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    "<MISSING>"
-                ]
-            )
+        title = loc["DealerName"]
+        link = loc["LocationPageURL"]
+        if not link:
+            link = "<MISSING>"
+        phone = loc["PhoneNumber"]
+        if not phone:
+            phone = "<MISSING>"
+        temp = loc["Address2"]
+        if not temp:
+            street = loc["Address1"]
+        else:
+            street = loc["Address1"]
+            street = street + " " + temp
+        city = loc["City"]
+        state = loc["State"]
+        pcode = loc["PostalCode"]
+        ccode = loc["CountryCode"]
+        longt = loc["_geoloc"]["lng"]
+        lat = loc["_geoloc"]["lat"]
+        store = loc["IDS_Site_ID"]
+        data.append(
+            [
+                "https://www.marinemax.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                ccode,
+                store,
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                "<MISSING>",
+            ]
+        )
     return data
+
 
 def scrape():
     log.info("Started")
     data = fetch_data()
     write_output(data)
     log.info("Finished")
+
 
 scrape()
