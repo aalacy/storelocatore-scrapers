@@ -74,7 +74,7 @@ def fetch_data():
             state = store["address"]["addressRegion"]
             zip_code = store["address"]["postalCode"]
             country_code = "US"
-            store_number = link.split("/")[-1]
+            store_number = "/".join(link.split("/")[-2:])
             location_type = "<MISSING>"
             phone = store["telephone"]
             if not phone:
