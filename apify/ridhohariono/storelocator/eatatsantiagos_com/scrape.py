@@ -109,7 +109,21 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = content.find("div", {"class": "phone"}).text.strip()
         location_type = "<MISSING>"
-        hours_of_operation = content.find("div", {"class": "hours"}).text.strip()
+        hours_of_operation = (
+            content.find("div", {"class": "hours"}).text.replace("Hours:", "").strip()
+        )
+        if len(hours_of_operation.split(",")) > 2:
+            hoo = content.find_all("div", {"class": "hours"})
+            hours_of_operation = "".join(
+                [hoo[x].text.replace("Hours:", "").strip() for x in range(0, 2)]
+            )
+        elif (
+            "Sundays" not in hours_of_operation
+            and len(hours_of_operation.split(",")) == 2
+        ):
+            hours_of_operation = (
+                hours_of_operation + content.find_all("div", {"class": "hours"})[1].text
+            )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         log.info("Append {} => {}".format(location_name, street_address))
