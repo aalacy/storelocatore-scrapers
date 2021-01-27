@@ -1,1 +1,1 @@
- --ignore CountryValidator --ignore LatLngDuplicationValidator (Confirmed on website)
+ --ignore CountryValidator (Confirmed on website)

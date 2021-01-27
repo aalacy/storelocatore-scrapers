@@ -40,13 +40,19 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = "https://www.saintalphonsus.org/sitemap-xml-locations"
+    url = "https://www.saintalphonsus.org/find-a-location/locations-results?LocationDescendants=true&page=1&count=500"
     r = session.get(url, verify=False, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
     for line in r.iter_lines(decode_unicode=True):
-        if "<loc>https://www.saintalphonsus.org/location/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+        if '"DirectUrl\\":\\"' in line:
+            items = line.split('"DirectUrl\\":\\"')
+            for item in items:
+                if 'DynamicPageZones\\":[]}]' not in item:
+                    locs.append(
+                        "https://www.saintalphonsus.org"
+                        + item.split('\\",\\"LocationName')[0]
+                    )
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         rs = session.get(loc, headers=headers)
@@ -80,8 +86,16 @@ def fetch_data():
                     )
                 except:
                     hours = ""
-            if "itemprop='streetAddress' content='" in line2:
-                add = line2.split("itemprop='streetAddress' content='")[1].split("'")[0]
+                add = line2.split('"Address1\\\\\\":\\\\\\"')[1].split("\\")[0]
+                try:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('"Address2\\\\\\":\\\\\\"')[1].split("\\")[0]
+                    )
+                except:
+                    pass
+                add = add.strip()
             if '"twitter:title" content="' in line2:
                 name = line2.split('"twitter:title" content="')[1].split('"')[0]
                 name = name.replace(" - Saint Alphonsus", "")
