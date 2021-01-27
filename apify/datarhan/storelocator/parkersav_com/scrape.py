@@ -40,7 +40,6 @@ def fetch_data():
     # Your scraper here
     items = []
 
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
     DOMAIN = "parkerskitchen.com"
     start_url = "https://parkerskitchen.com/wp-content/themes/parkers/get-locations.php?origAddress=8120+US-280%2C+Ellabell%2C+GA+31308%2C+%D0%A1%D0%A8%D0%90"
     headers = {
@@ -48,12 +47,12 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-    response = session.get(start_url, headers=headers, proxies=proxies)
+    response = session.get(start_url, headers=headers)
     data = json.loads(response.text)
 
     for poi in data:
         store_url = poi["web"]
-        loc_response = session.get(store_url, proxies=proxies)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
         store_number = poi["id"]
