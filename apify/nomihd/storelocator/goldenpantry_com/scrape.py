@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import us
-import lxml.html
 
 website = "goldenpantry.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
