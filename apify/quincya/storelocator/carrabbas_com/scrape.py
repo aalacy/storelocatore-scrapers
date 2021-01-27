@@ -134,7 +134,9 @@ def fetch_data():
         longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
 
         try:
-            hours_of_operation = " ".join(list(item.find(class_="c-hours-details").tbody.stripped_strings))
+            hours_of_operation = " ".join(
+                list(item.find(class_="c-hours-details").tbody.stripped_strings)
+            )
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
         except:
