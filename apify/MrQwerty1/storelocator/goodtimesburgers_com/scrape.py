@@ -1,7 +1,6 @@
 import csv
 
 from concurrent import futures
-from lxml import html
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 
@@ -67,16 +66,16 @@ def get_data(coord):
         location_type = "<MISSING>"
 
         _tmp = []
-        hours = j.get("hours") or "<html></html>"
-        tree = html.fromstring(hours)
-        tr = tree.xpath("//tr")
-
-        for t in tr:
-            day = "".join(t.xpath("./td[1]//text()"))
-            time = "".join(t.xpath("./td[2]//text()"))
-            _tmp.append(f"{day}: {time}")
+        items = {"sun_thurs": "Sun-Thurs", "fri_sat": "Fri-Sat", "mon_sat": "Mon-Sat"}
+        for k in items.keys():
+            v = j.get(k)
+            if v:
+                _tmp.append(f"{items[k]}: {v}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        everyday = j.get("everyday")
+        if everyday:
+            hours_of_operation = f"Daily: {everyday}"
 
         row = [
             locator_domain,
@@ -105,7 +104,7 @@ def fetch_data():
     s = set()
     coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
         for future in futures.as_completed(future_to_url):
             rows = future.result()
