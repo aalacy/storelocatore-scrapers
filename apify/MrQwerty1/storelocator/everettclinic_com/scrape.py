@@ -111,7 +111,6 @@ def fetch_data():
     out = []
     s = set()
     coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
-    # coords = [('47.9990269', '-122.1914014')]
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
