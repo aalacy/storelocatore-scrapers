@@ -62,7 +62,9 @@ def fetch_data():
                 location_soup.find("div", {"class": "loc-address"}).stripped_strings
             )
             hours = " ".join(
-                list(location_soup.find("div", {"id": "loc-accordion"}).stripped_strings)
+                list(
+                    location_soup.find("div", {"id": "loc-accordion"}).stripped_strings
+                )
             )
             if location_soup.find("a", {"href": re.compile("tel:")}) is None:
                 phone = "<MISSING>"
