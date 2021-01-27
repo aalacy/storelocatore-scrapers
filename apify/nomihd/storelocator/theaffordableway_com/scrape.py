@@ -70,10 +70,7 @@ def fetch_data():
     data_list = []
     latlng_list = stores_req.text.split("latlng = new google.maps.LatLng(")
     for index in range(1, len(latlng_list)):
-        temp_data = (
-            latlng_list[index].split("google.maps.event.addListener(")[0].strip()
-        )
-        title = latlng_list[index].split('title: "')[1].strip().split('",')[0].strip()
+
         lat = latlng_list[index].split(",")[0].strip()
         lng = latlng_list[index].split(",")[1].strip().split(")")[0].strip()
         info_sel = lxml.html.fromstring(
