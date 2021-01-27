@@ -79,12 +79,14 @@ def get_data(page_url):
         day = h.get("dayOfWeek").split("/")[-1]
         start = h.get("opens")
         close = h.get("closes")
-        _tmp.append(f"{day}: {start} - {close}")
-
+        if start != close:
+            _tmp.append(f"{day}: {start} - {close}")
+        else:
+            _tmp.append(f"{day}: Closed")
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     message = "".join(tree.xpath("//p[@class='store-results__message']/text()")).strip()
     if message.lower().find("closed") != -1:
-        hours_of_operation = message
+        location_type = message
 
     row = [
         locator_domain,
@@ -110,7 +112,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()
