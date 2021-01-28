@@ -135,6 +135,9 @@ def fetch_data():
                             ]
                         if "Monday</span>" in line3:
                             hours = "Mon: " + next(lines3).split(">")[1].split("<")[0]
+                            hours = (
+                                hours + "-" + next(lines3).split(">")[1].split("<")[0]
+                            )
                         if 'itemprop="dayOfWeek">' in line3 and "Monday" not in line3:
                             g = next(lines3)
                             hours = (
@@ -144,6 +147,9 @@ def fetch_data():
                                 + ": "
                                 + g.split(">")[1].split("<")[0]
                             )
+                            g = next(lines3)
+                            if '"closes"' in g:
+                                hours = hours + "-" + g.split(">")[1].split("<")[0]
                         if '"openingHoursSpecification": [' in line3:
                             hours = ""
                             HFound = True
