@@ -67,7 +67,9 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="location-box"]')
     for store in stores:
-        page_url = search_url
+        page_url = (
+            "https://studiomoviegrill.com" + "".join(store.xpath("h3/a/@href")).strip()
+        )
 
         locator_domain = website
         location_name = "".join(store.xpath("h3/a/text()")).strip()
