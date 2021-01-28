@@ -44,7 +44,6 @@ def write_output(data):
 def fetch_data():
     p = 0
     data = []
-    pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://www.ntdcanada.com/authorizationserver/oauth/token"
     r = session.post(
@@ -74,8 +73,6 @@ def fetch_data():
         if title in titlelist:
             continue
         titlelist.append(title)
-
-        addressm = re.sub(cleanr, "\n", str(div)).strip()
         address = div.find("h6")
         address = re.sub(cleanr, "\n", str(address)).strip().splitlines()
         street = address[0]
