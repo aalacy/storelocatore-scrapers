@@ -56,7 +56,6 @@ def fetch_data():
         headers=headers,
         params=params,
     ).json()["items"]
-
     for store in storeslist:
         store = store["fields"]
         if "comingSoon" not in store.keys() or not store["comingSoon"]:
@@ -74,6 +73,11 @@ def fetch_data():
             lat = store["location"]["lat"]
             longt = store["location"]["lon"]
             hours = store["storeHours"]
+            try:
+                if "Sun " in store["storeHours2"]:
+                    hours = hours + " " + store["storeHours2"]
+            except:
+                pass
             if location_id.isdigit():
                 pass
             else:
