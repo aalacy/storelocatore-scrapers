@@ -43,7 +43,6 @@ def fetch_data():
     data = []
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
-    p = 0
     url = "http://outbacksteakhouseniagarafalls.com/"
     page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
