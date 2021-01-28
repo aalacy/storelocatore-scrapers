@@ -119,10 +119,7 @@ def fetch_data():
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        hours_of_operation = (
-            "CheckInTime:" + store["CheckInTime"] + ";"
-            "CheckOutTime:" + store["CheckOutTime"]
-        )
+        hours_of_operation = "<MISSING>"
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
