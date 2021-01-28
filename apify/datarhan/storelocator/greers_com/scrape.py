@@ -41,7 +41,6 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     items = []
-    scraped_items = []
 
     DOMAIN = "greers.com"
     start_url = "https://www.greers.com/storelocator"
