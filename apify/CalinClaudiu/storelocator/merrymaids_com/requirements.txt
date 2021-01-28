@@ -3,6 +3,5 @@ sglogging
 sgrequests
 sgselenium
 bs4
-selenium.webdriver.support.ui
-selenium.webdriver.common.by
-selenium.webdriver.support
+beautifulsoup4==4.7.1
+selenium

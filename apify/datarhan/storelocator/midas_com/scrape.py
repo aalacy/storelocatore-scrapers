@@ -60,13 +60,11 @@ def fetch_data():
     for code in all_codes:
         if len(code) == 3:
             code += "%201A0"
-        print(start_url.format(code).lower())
         try:
             response = session.get(start_url.format(code).lower(), headers=hdr)
         except Exception:
             continue
         data = json.loads(response.text)
-        print(len(data))
         for poi in data:
             store_url = urllib.parse.urljoin(start_url, poi["ShopDetailsLink"])
             location_name = poi["Name"]
