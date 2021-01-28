@@ -61,7 +61,7 @@ def fetch_data():
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         if store_url == "<MISSING>":
-            location_type = "coming soon"
+            continue
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
