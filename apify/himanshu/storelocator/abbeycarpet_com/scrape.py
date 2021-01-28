@@ -73,15 +73,19 @@ def fetch_data():
                 address = page_soup.find("a", {"class": "footer-address"})[
                     "href"
                 ].split("/")[-1]
-                name = address.split(",")[0]
-                street = address.split(",")[1]
-                city = address.split(",")[2]
+                if len(address.split(",")) == 4:
+                    name = address.split(",")[0]
+                else:
+                    name = " ".join(address.split(",")[:-3])
+                street = address.split(",")[-3]
+                city = address.split(",")[-2]
                 state = address.split(",")[-1].split()[:-1]
                 if len(address.split(",")[-1].split()) > 2:
                     state = " ".join(state)
                 else:
                     state = address.split(",")[-1].split()[0]
                 zip_code = address.split(",")[-1].split()[-1]
+                country_code = "US"
                 phone = page_soup.find("a", {"class": "footer-phone"}).text
                 location_type = "<MISSING>"
                 hrs = page_soup.find("p", {"class": "hours"}).text.split("\n")
@@ -153,6 +157,9 @@ def fetch_data():
                 except:
                     latitude = ""
                     longitude = ""
+
+            if name == "font>":
+                name = "Southern Carpet & Interiors"
             store = []
             store.append(base_url)
             store.append(name)
