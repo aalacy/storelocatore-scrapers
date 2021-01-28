@@ -1,6 +1,8 @@
 #!/bin/bash
 
 crawler_subdir_regex='apify(\/[^/]+){3}'
+required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
+required_node_files=('Dockerfile' 'scrape.js' 'package.json')
 
 list_diffs() {
 	current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -18,7 +20,7 @@ list_updated_crawlers() {
 		sort |
 		uniq |
 		grep -E "$crawler_subdir_regex" || true
-}
+	}
 
 get_updated_crawler() {
 	mapfile -t updated_subdirs < <(list_updated_crawlers)
@@ -68,5 +70,38 @@ check_diffs() {
 	ensure_no_linter_config "${updated_crawler}/.eslintrc.json" || exit_status=$((exit_status + 4))
 	ensure_no_linter_config "${updated_crawler}/.flake8" || exit_status=$((exit_status + 8))
 
+	return $exit_status
+}
+
+is_node_scraper() {
+	num_js_files=$(find "$1" | filter_node_files | wc -l)
+	if [ "$num_js_files" -gt 0 ]; then
+		true
+	else
+		false
+	fi
+}
+
+check_required_file() {
+	if [ ! -f "${1}/${2}" ]; then
+		echo "FAIL: Your scraper is missing a required file: ${2}."
+		return 1
+	fi
+}
+
+check_required_files() {
+	exit_status=0
+	updated_crawler="$(get_updated_crawler)"
+	if is_node_scraper "$updated_crawler"; then
+		for required_file in "${required_node_files[@]}"
+		do
+			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
+		done
+	else
+		for required_file in "${required_python_files[@]}"
+		do
+			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
+		done
+	fi
 	return $exit_status
 }
