@@ -99,6 +99,7 @@ def fetch_data():
                     zc = "<MISSING>"
                     hours = "<MISSING>"
                     phone = "<MISSING>"
+                    HFound = False
                     for line3 in lines3:
                         if '<h1 class="page-title" itemprop="name">' in line3:
                             name = (
@@ -134,6 +135,9 @@ def fetch_data():
                             ]
                         if "Monday</span>" in line3:
                             hours = "Mon: " + next(lines3).split(">")[1].split("<")[0]
+                            hours = (
+                                hours + "-" + next(lines3).split(">")[1].split("<")[0]
+                            )
                         if 'itemprop="dayOfWeek">' in line3 and "Monday" not in line3:
                             g = next(lines3)
                             hours = (
@@ -143,10 +147,35 @@ def fetch_data():
                                 + ": "
                                 + g.split(">")[1].split("<")[0]
                             )
+                            g = next(lines3)
+                            if '"closes"' in g:
+                                hours = hours + "-" + g.split(">")[1].split("<")[0]
+                        if '"openingHoursSpecification": [' in line3:
+                            hours = ""
+                            HFound = True
+                        if HFound and "]" in line3:
+                            HFound = False
+                        if HFound and '"dayOfWeek": "' in line3:
+                            hrs = line3.split('"dayOfWeek": "')[1].split('"')[0]
+                        if HFound and '"opens": "' in line3:
+                            hrs = (
+                                hrs + ": " + line3.split('"opens": "')[1].split('"')[0]
+                            )
+                        if HFound and '"closes": "' in line3:
+                            hrs = (
+                                hrs + "-" + line3.split('"closes": "')[1].split('"')[0]
+                            )
+                            hrs = hrs.replace("Closed-Closed", "Closed")
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
                     if add == "":
                         add = "<MISSING>"
                     if phone == "":
                         phone = "<MISSING>"
+                    if "Contact Store" in hours:
+                        hours = "<MISSING>"
                     yield [
                         website,
                         loc,

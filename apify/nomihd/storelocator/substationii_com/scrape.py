@@ -179,6 +179,19 @@ def fetch_data():
 
         except:
             pass
+
+        try:
+            hours = hours.split("About")[0].strip()
+
+        except:
+            pass
+
+        try:
+            hours = hours.split("HOLIDAY")[0].strip()
+
+        except:
+            pass
+
         hours_of_operation = (
             "; ".join(hours.split("\n"))
             .strip()
