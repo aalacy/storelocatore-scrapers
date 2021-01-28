@@ -40,7 +40,6 @@ def fetch_data():
     base_url = "https://www.originalmattress.com/"
 
     res1 = session.get("https://www.originalmattress.com/find-a-store")
-    soup = bs(res1.text, "lxml")
     store_list = json.loads(
         res1.text.split('type="hidden" data-mapmarkers="')[1]
         .split('" />')[0]
