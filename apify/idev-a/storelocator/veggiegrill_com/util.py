@@ -59,7 +59,6 @@ class Util:
         for item in data:
             if item[11] == _item[11] and item[12] == _item[12]:
                 is_duplicated = True
-                print('is_duplicated')
                 break
 
         if not is_duplicated:
