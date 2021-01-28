@@ -10,8 +10,8 @@ logger = SgLogSetup().get_logger("minnieland_com")
 session = SgRequests()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
-    }
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -39,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -63,8 +63,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     locations = soup.findAll("div", {"class": "locationRow wrap"})
     for loc in locations:
-        title = loc.find('h3').find('a')
-        link = title['href']
+        title = loc.find("h3").find("a")
+        link = title["href"]
         title = title.text
         info = loc.findAll("div", {"class": "locationRowBox"})
         addr = info[0].text
@@ -83,12 +83,12 @@ def fetch_data():
         addr = addr.replace("Avenue", "Avenue ")
         addr = addr.replace(",", "")
         address = usaddress.parse(addr)
- 
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -121,28 +121,28 @@ def fetch_data():
         city = city.strip()
         state = state.strip()
         pcode = pcode.strip()
-        
-        phone= info[1].text.strip()
+
+        phone = info[1].text.strip()
         hours = info[2].text.strip()
         hours = hours.replace("p.m.", "pm")
         hours = hours.replace("a.m.", "am")
-        hours = hours.replace("pm","pm,")
-        hours = hours.split(',')[0].strip()
+        hours = hours.replace("pm", "pm,")
+        hours = hours.split(",")[0].strip()
 
         p = session.get(link, headers=headers, verify=False)
         bs = BeautifulSoup(p.text, "html.parser")
-        coords = bs.find("div", {"class": "schoolLocDiv"}).find('script')
+        coords = bs.find("div", {"class": "schoolLocDiv"}).find("script")
         coords = str(coords)
-        coords = coords.lstrip('<script>initSchoolMap(')
-        coords = coords.rstrip(');</script>')
+        coords = coords.lstrip("<script>initSchoolMap(")
+        coords = coords.rstrip(");</script>")
         if len(coords) == 1:
-            lat = '<MISSING>'
-            lng = '<MISSING>'
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         else:
-            coords = coords.split(',')
+            coords = coords.split(",")
             lat = coords[0]
             lng = coords[1]
-    
+
         data.append(
             [
                 "https://www.minnieland.com/",
@@ -172,4 +172,3 @@ def scrape():
 
 
 scrape()
-
