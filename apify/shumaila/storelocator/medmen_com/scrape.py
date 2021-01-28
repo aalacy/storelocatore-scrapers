@@ -61,7 +61,6 @@ def fetch_data():
         if "comingSoon" not in store.keys() or not store["comingSoon"]:
             link = "https://www.medmen.com/stores/" + store["slug"]
             location_id = store["securityId"]
-            location_type = "Store"
             title = store["name"]
             street = store["address"]
             city = store["county"]
