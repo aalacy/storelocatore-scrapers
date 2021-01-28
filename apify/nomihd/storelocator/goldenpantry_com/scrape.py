@@ -126,7 +126,8 @@ def fetch_data():
 
         street_address = store["address"]
         if store["address2"] is not None:
-            street_address = street_address + ", " + store["address2"]
+            if len(store["address2"]) > 0:
+                street_address = street_address + ", " + store["address2"]
 
         city = store["city"]
         state = store["state"]
