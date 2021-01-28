@@ -97,6 +97,11 @@ def fetch_data():
                     )
                 ).strip()
 
+                city_to_remove = ", " + city
+                street_address = street_address.replace(city_to_remove, "").strip()
+                if "," == street_address[-1]:
+                    street_address = street_address[:-1]
+
                 if country_code == "" or country_code is None:
                     country_code = "<MISSING>"
                 if street_address == "":
