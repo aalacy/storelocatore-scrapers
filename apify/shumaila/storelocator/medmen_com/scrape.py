@@ -1,121 +1,114 @@
-from bs4 import BeautifulSoup
 import csv
-import string
-import re, time, json
-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('medmen_com')
-
-
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # Your scraper here
     data = []
     p = 0
-    cleanr = re.compile(r'<[^>]+>')
-    r = session.get('https://www.medmen.com/stores', headers=headers)
-    soup = BeautifulSoup(r.text,'html.parser')
-    linklist = soup.findAll('a',{'class':'c-stores-list__link'})
-    logger.info(len(linklist))
-    for link in linklist:
-        if link.text.find("Coming Soon") == -1:
-            link = 'https://www.medmen.com' + link['href']
-            #logger.info(link)
-            r = session.get(link, headers=headers)
-            soup = BeautifulSoup(r.text,'html.parser')
-            title = soup.find('h1').text
-            address =str(soup.find('address'))
-            address = re.sub(cleanr,'\n',address).lstrip().splitlines()
-            street = '<MISSING>'
-            #logger.info(address)
-            for adr in address:
-                if adr == '':
-                    pass
-                else:
-                    if adr.find(', ') > -1:
-                        if adr.find(',') > -1 and adr.find('Suit') > -1:
-                            street  = adr
-                        else:
-                            city, state = adr.split(', ',1)
-                    else:
-                        street  = adr
-                        
-                        
-            
+    headers = {
+        "Sec-Fetch-Mode": "cors",
+        "Origin": "https://www.medmen.com",
+        "X-Contentful-User-Agent": "sdk contentful.js/0.0.0-determined-by-semantic-release; platform browser; os macOS;",
+        "Authorization": "Bearer 3a1fbd8bd8285a5ebe9010b17959d62fed27abc42059373f3789023bb7863a06",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://www.medmen.com/stores",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36",
+        "DNT": "1",
+    }
+    params = (("content_type", "store"),)
+    storeslist = session.get(
+        "https://cdn.contentful.com/spaces/1ehd3ycc3wzr/environments/master/entries",
+        headers=headers,
+        params=params,
+    ).json()["items"]
+    for store in storeslist:
+        store = store["fields"]
+        if "comingSoon" not in store.keys() or not store["comingSoon"]:
+            link = "https://www.medmen.com/stores/" + store["slug"]
+            location_id = store["securityId"]
+            title = store["name"]
+            street = store["address"]
+            city = store["county"]
             try:
-                state,pcode = state.lstrip().split(' ',1)
+                pcode = store["address2"].split(" ")[-1]
             except:
-                pcode= "<MISSING>"
+                pcode = "<MISSING>"
+            state = store["state"]
+            phone = store["phoneNumber"]
+            lat = store["location"]["lat"]
+            longt = store["location"]["lon"]
+            hours = store["storeHours"]
             try:
-                text = street.split(' ')[0]
+                if "Sun " in store["storeHours2"]:
+                    hours = hours + " " + store["storeHours2"]
             except:
-                #logger.info("HER")
-                street = '<MISSING>'
-                
-            phone = soup.findAll('div',{'class':'c-icon-bullet'})[1].text
-            hours = soup.findAll('div',{'class':'c-store-details__block'})[1].find('ol').find('li').text
-            
-            coord ,temp = r.text.split('"'+title + '"'+':{"location":',1)[1].split(',"state"',1)
-            coord = json.loads(coord)
-            lat = coord["lat"]
-            longt = coord['lng']
-            store,temp = temp.split(',"locationId":')[1].split(',',1)
-            
-            if street == '<MISSING>':
-                address = temp.split('"address":["',)[1].split('"]')[0].split(',')
-                street = address[0]            
-                city = address[1]           
-                state,pcode = address[2].lstrip().split(' ',1)
-            if pcode == '<MISSING>':
-                address = temp.split('"address":["',)[1].split('"]')[0].split(',')
-                #street = address[0]            
-                #city = address[1]           
-                pcode = address[2].lstrip().split(' ',1)[1]
-            
-                
-            data.append([
-                        'https://www.medmen.com',
-                        link,                   
-                        title,
-                        street.replace('"',''),
-                        city.replace('"',''),
-                        state.replace(',','').replace('"',''),
-                        pcode.replace('"',''),
-                        'US',
-                        store,
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-            #logger.info(p,data[p])
-            p += 1
+                pass
+            if location_id.isdigit():
+                pass
+            else:
+                location_id = "<MISSING>"
+            data.append(
+                [
+                    "https://www.medmen.com",
+                    link,
+                    title,
+                    street.replace('"', ""),
+                    city.replace('"', ""),
+                    state.replace(",", "").replace('"', ""),
+                    pcode.replace('"', ""),
+                    "US",
+                    location_id,
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    hours,
+                ]
+            )
 
+            p += 1
     return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
     data = fetch_data()
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
 
 scrape()
