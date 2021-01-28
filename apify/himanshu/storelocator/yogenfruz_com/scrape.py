@@ -43,7 +43,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     addresses = []
 
-    locator_domain = base_url
     location_name = "<MISSING>"
     street_address = "<MISSING>"
     city = "<MISSING>"
