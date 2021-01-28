@@ -70,6 +70,26 @@ def fetch_data():
                     hours = ", ".join(js["openingHours"])
                 if "CommunityAmerica – Trans Air Branch" in js["name"]:
                     url = "https://www.communityamerica.com/trans-air"
+                timeArray = []
+                if (
+                    "https://www.communityamerica.com/raytown-hyvee" in url
+                    or "https://www.communityamerica.com/englewood-hyvee" in url
+                ):
+                    tbody = (
+                        bs4.BeautifulSoup(
+                            sgrequests.SgRequests().get(url).text, features="lxml"
+                        )
+                        .find("table")
+                        .findAll("tbody")[0]
+                        .findAll("tr")
+                    )
+                    day = ""
+                    hours = ""
+                    for el in tbody:
+                        day = el.find("td", {"scope": "row"}).text.strip()
+                        hours = el.findAll("td")[1].text.strip()
+                        timeArray.append("{} : {}".format(day, hours))
+                    hours = ", ".join(timeArray)
                 res.append(
                     [
                         locator_domain,
