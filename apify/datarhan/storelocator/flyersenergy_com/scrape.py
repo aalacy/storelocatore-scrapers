@@ -68,7 +68,7 @@ def fetch_data():
             data = json.loads(re.findall(r"marker_data = (.+?);", data)[0])
 
     for poi in data["1"].values():
-        store_url = "<MISSING>"
+        store_url = "https://www.flyersenergy.com/locations/"
         location_name = poi["title"]
         street_address = poi["address"].split(", ")[0]
         city = poi["address"].split(", ")[1]

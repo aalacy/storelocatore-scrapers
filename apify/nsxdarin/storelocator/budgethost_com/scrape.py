@@ -84,12 +84,23 @@ def fetch_data():
                     .strip()
                     .replace("\t", "")
                 )
-                add = g.split(",")[0]
-                city = g.split(",")[1].strip()
-                state = g.split(",")[2].strip().split(" ")[0]
-                zc = g.rsplit(" ", 1)[1]
-            if 'href="tel:' in line2:
-                phone = line2.split('href="tel:')[1].split('"')[0]
+                if g.count(",") == 2:
+                    add = g.split(",")[0]
+                    city = g.split(",")[1].strip()
+                    state = g.split(",")[2].strip().split(" ")[0]
+                    zc = g.rsplit(" ", 1)[1]
+                else:
+                    add = g.split(",")[0] + " " + g.split(",")[1].strip()
+                    city = g.split(",")[2].strip()
+                    state = g.split(",")[3].strip().split(" ")[0]
+                    zc = g.rsplit(" ", 1)[1]
+            if "P: " in line2:
+                phone = line2.split("P: ")[1].split("<")[0].strip()
+        name = name.replace("&#39;", "'")
+        if phone == "":
+            phone = "<MISSING>"
+        if "OH" in zc:
+            zc = "<MISSING>"
         yield [
             website,
             lurl,

@@ -44,7 +44,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "clothesmentor.com"
-    start_url = "https://clothesmentor.com/pages/locations"
+    start_url = "https://clothesmentor.com/apps/store-locator/all"
     with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)

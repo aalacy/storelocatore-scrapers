@@ -48,6 +48,10 @@ def fetch_data():
         location_name = j.get("interestpointpropertyname") or "<MISSING>"
         street_address = j.get("interestpointpropertyaddress") or "<MISSING>"
         city = j.get("interestpointCity") or "<MISSING>"
+        if city.find("-") != -1:
+            city = city.split("-")[0].strip()
+        elif city.find(",") != -1:
+            city = city.split(",")[0].strip()
         state = j.get("interestpointState") or "<MISSING>"
         postal = j.get("interestpointPostalCode") or "<MISSING>"
         country_code = "US"

@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -28,6 +28,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -49,7 +50,7 @@ def fetch_data():
         store.append(base_url if base_url else "<MISSING>")
         store.append(i["name"] if i["name"] else "<MISSING>")
         store.append(
-            i["address"]["address1"].strip()
+            i["address"]["address1"].strip().replace("&#xD;&#xA;", " ")
             if i["address"]["address1"].strip()
             else "<MISSING>"
         )
@@ -59,7 +60,7 @@ def fetch_data():
             else "<MISSING>"
         )
         store.append(
-            i["address"]["region"].strip()
+            i["address"]["region"].strip().replace("3", "<MISSING>")
             if i["address"]["region"].strip()
             else "<MISSING>"
         )
@@ -109,6 +110,8 @@ def fetch_data():
         try:
             store.append(i["url"] if i["url"] else "<MISSING>")
         except:
+            store.append("<MISSING>")
+        if store[2] == "Hadfield Road":
             store.append("<MISSING>")
         if store[2] in address:
             continue

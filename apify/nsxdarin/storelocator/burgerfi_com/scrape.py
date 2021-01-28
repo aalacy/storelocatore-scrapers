@@ -43,16 +43,15 @@ def fetch_data():
     website = "burgerfi.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"id":' in line:
-            items = line.split('"id":')
+        if '{"acceptsordersbeforeopening":' in line:
+            items = line.split('{"acceptsordersbeforeopening":')
             for item in items:
                 if 'isavailable":' in item and "Corporate Office" not in item:
-                    store = item.split(",")[0]
+                    store = item.split('"id":')[1].split(",")[0]
                     name = item.split('"name":"')[1].split('"')[0]
                     add = item.split('"streetaddress":"')[1].split('"')[0]
                     phone = item.split('"telephone":"')[1].split('"')[0]
@@ -62,6 +61,14 @@ def fetch_data():
                     except:
                         city = "<MISSING>"
                     state = item.split('"state":"')[1].split('"')[0]
+                    loc = (
+                        "https://order.burgerfi.com/locations/"
+                        + state
+                        + "/"
+                        + city
+                        + "/"
+                        + store
+                    )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split(",")[0]
                     if "15201 Potomac" in add:

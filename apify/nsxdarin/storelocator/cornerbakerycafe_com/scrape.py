@@ -96,7 +96,7 @@ def fetch_data():
                     .strip()
                 )
         hours = hours.replace(", ", "; ")
-        if hours == "":
+        if ":" not in hours:
             hours = "<MISSING>"
         yield [
             website,

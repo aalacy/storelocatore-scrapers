@@ -62,8 +62,12 @@ def fetch_data():
         location_name = " ".join(location_name) if location_name else "<MISSING>"
         street_address = store_dom.xpath(
             '//h2[@class="centerAddress clearLeft mt-3 mb-1"]/text()'
-        )
-        street_address = street_address[0] if street_address else "<MISSING>"
+        )[0]
+        if len(store_dom.xpath('//h2[@class="centerAddress"]/text()')) == 2:
+            street_address += (
+                ", " + store_dom.xpath('//h2[@class="centerAddress"]/text()')[0]
+            )
+        street_address = street_address if street_address else "<MISSING>"
         city = store_dom.xpath('//h2[@class="centerAddress"]/text()')[-1].split(", ")[0]
         state = (
             store_dom.xpath('//h2[@class="centerAddress"]/text()')[-1]
