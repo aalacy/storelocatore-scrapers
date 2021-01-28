@@ -21,6 +21,17 @@ jobs:
           command: |
             source ./.circleci/lib.sh
             check_required_files
+  
+  check-forbidden-files:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: Check no forbidden files are present
+          command: |
+            source ./.circleci/lib.sh
+            check_forbidden_files
 
   python-lint-updates:
     executor:
@@ -135,6 +146,10 @@ workflows:
             branches:
               ignore: master
       - check-required-files:
+          filters:
+            branches:
+              ignore: master
+      - check-forbidden-files:
           filters:
             branches:
               ignore: master

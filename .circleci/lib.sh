@@ -3,6 +3,7 @@
 crawler_subdir_regex='apify(\/[^/]+){3}'
 required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
 required_node_files=('Dockerfile' 'scrape.js' 'package.json')
+forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv')
 
 list_diffs() {
 	current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -89,6 +90,13 @@ check_required_file() {
 	fi
 }
 
+check_forbidden_file() {
+	if [ -f "${1}/${2}" ]; then
+		echo "FAIL: Your scraper contains a forbidden file: ${2}."
+		return 1
+	fi
+}
+
 check_required_files() {
 	exit_status=0
 	updated_crawler="$(get_updated_crawler)"
@@ -103,5 +111,15 @@ check_required_files() {
 			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
 		done
 	fi
+	return $exit_status
+}
+
+check_forbidden_files() {
+	exit_status=0
+	updated_crawler="$(get_updated_crawler)"
+	for forbidden_file in "${forbidden_files[@]}"
+	do
+		check_forbidden_file "${updated_crawler}" "${forbidden_file}" || exit_status=1
+	done
 	return $exit_status
 }
