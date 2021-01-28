@@ -43,13 +43,13 @@ def fetch_data():
     r = session.get(url, headers=headers)
     website = "nationwide.co.uk"
     typ = "<MISSING>"
-    country = "US"
+    country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://locations.nationwidebranches.co.uk/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
-            if lurl.count("/") == 4:
+            if lurl.count("/") >= 4:
                 locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
     for loc in locs:
         logger.info(loc)

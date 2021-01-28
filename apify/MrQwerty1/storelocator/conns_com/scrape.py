@@ -34,13 +34,22 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_key():
+    session = SgRequests()
+    r = session.get("https://www.conns.com/store-locator")
+    tree = html.fromstring(r.text)
+    cookies = session.session.cookies.get_dict()
+    return cookies, tree.xpath("//input[@name='form_key']/@value")[0]
+
+
 def fetch_data():
     out = []
     locator_domain = "https://www.conns.com/"
-    api_url = "https://www.conns.com/store-locator/search?search_type=simple&current_page=1&page_size=10&page=1&search=77022&distance=5000"
+    cookies, key = get_key()
+    api_url = f"https://www.conns.com/store-locator/search?form_key={key}&search_type=simple&current_page=1&page_size=10&page=1&search=75022&distance=5000"
 
     session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api_url, cookies=cookies)
     tree = html.fromstring(r.text)
     li = tree.xpath("//li[@data-role='map-item']")
 
