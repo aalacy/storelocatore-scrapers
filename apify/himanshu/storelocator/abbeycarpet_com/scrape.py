@@ -85,7 +85,6 @@ def fetch_data():
                 else:
                     state = address.split(",")[-1].split()[0]
                 zip_code = address.split(",")[-1].split()[-1]
-                country_code = "US"
                 phone = page_soup.find("a", {"class": "footer-phone"}).text
                 location_type = "<MISSING>"
                 hrs = page_soup.find("p", {"class": "hours"}).text.split("\n")
