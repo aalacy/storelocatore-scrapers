@@ -1,0 +1,5 @@
+--ignore CountryValidator --ignore GeoConsistencyValidator
+Some store pages doesn't have zip/postal code
+example:
+https://www.eltorito.com/location/cypress/
+https://www.eltorito.com/location/lakewood/
