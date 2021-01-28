@@ -96,6 +96,10 @@ def fetch_data():
             state = "BC"
             pcode = "V8Z 3B7"
             phone = "(888) 575-0828"
+            try:
+                street = street.split(city, 1)[0]
+            except:
+                pass
         store = title.strip().split(" ")[-1]
 
         data.append(
