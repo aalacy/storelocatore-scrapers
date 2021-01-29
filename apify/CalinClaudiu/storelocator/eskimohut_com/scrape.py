@@ -219,7 +219,7 @@ def scrape():
         phone=MappingField(mapping=["phone"], part_of_record_identity=True),
         store_number=MissingField(),
         hours_of_operation=MappingField(mapping=["hours"]),
-        location_type=MissingField(),  # MappingField(mapping=[], is_required = False)
+        location_type=MissingField(),
     )
 
     pipeline = SimpleScraperPipeline(
