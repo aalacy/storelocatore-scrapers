@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from urllib.parse import urljoin
 import json
-import re
 
 from util import Util  # noqa: I900
 
