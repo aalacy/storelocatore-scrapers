@@ -118,7 +118,7 @@ def fetch_data():
         if not city:
             if "https://www.discounttirecenters.com/store-el-monte" in store:
                 phone = phone[-1].get_text(separator="\n").split("\n")[-2]
-                city = s.find("span", {"class": "lh-1 font-size-14"}).text.split(",")[0]
+                city = "El Monte"
                 state = (
                     s.findAll("span", {"class": "lh-1 font-size-14"})[1]
                     .text.split(",")[-1]
@@ -133,12 +133,7 @@ def fetch_data():
                 )
             elif "https://www.discounttirecenters.com/store-canyon-country" in store:
                 phone = phone[-1].get_text(separator="\n").split("\n")[-2]
-                city = (
-                    s.find("span", {"class": "lh-1 font-size-14"})
-                    .get_text(separator="\n")
-                    .split("\n")[0]
-                    .strip()
-                )
+                city = "Canyon Country"
                 state = (
                     s.findAll("span", {"class": "lh-1 font-size-14"})[1]
                     .get_text(separator="\n")
