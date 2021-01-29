@@ -16,16 +16,57 @@ def fetch_data():
     rows = container.find_all("tr")
     del rows[0]
     for row in rows:
-        locator_domain = "https://wokbox.ca/locations"
+        locator_domain = "https://wokbox.ca/"
         name = row.find(class_="wpgmza_table_title all").get_text()
         address = row.find(class_="wpgmza_table_address").get_text().split()
-        street = " ".join(address[0:-3]).replace("#", "").replace(",", "")
-        city = address[-3]
-        state = "<MISSING>"
+        if (
+            "Sylvan" in address
+            or "Saint" in address
+            or "South" in address
+            or "Moose" in address
+            or "Grande" in address
+            or "Edmonton" in address
+            or "Sherwood" in address
+            or "Cold" in address
+        ):
+            street = " ".join(address[0:-4]).replace("#", "").replace(",", "")
+        elif "Prince" in address:
+            street = " ".join(address[0:-5]).replace("#", "").replace(",", "")
+        elif "2T4" in address or "3M1" in address or "John's," in address:
+            street = " ".join(address[0:-2]).replace("#", "").replace(",", "")
+        else:
+            street = " ".join(address[0:-3]).replace("#", "").replace(",", "")
+
+        if "2T4" in address or "3M1" in address or "John's," in address:
+            city = "<MISSING>"
+        elif (
+            "Saint" in address
+            or "Sylvan" in address
+            or "Moose" in address
+            or "Grande" in address
+            or "Sherwood" in address
+            or "Cold" in address
+            or "2T4" in address
+            or "3M1" in address
+        ):
+            city = address[-4] + " " + address[-3].replace(",", "")
+        elif "Prince" in address:
+            city = address[-5] + " " + address[-4].replace(",", "")
+        elif "Edmonton" in address:
+            city = address[-4].replace(",", "")
+        else:
+            city = address[-3].replace(",", "")
+
+        if "Red Deer" in street or "St. John's" in street:
+            city = " ".join(street.split(" ")[-2:])
+            street = " ".join(street.split(" ")[:-2])
+
+        state = row.find(class_="wpgmza_table_category").get_text()
         pin = address[-2] + " " + address[-1]
         country_code = "CA"
         store_number = "<MISSING>"
         desc = row.find(class_="wpgmza_table_description").get_text().split()
+
         for index, h in enumerate(desc):
             if "Phone" in h:
                 hours = " ".join(desc[:index])
@@ -39,8 +80,8 @@ def fetch_data():
         store.append(locator_domain if locator_domain else "<MISSING>")
         store.append(name if name else "<MISSING>")
         store.append(street if street else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state)
+        store.append(city.replace("AB", "Edmonton") if city else "<MISSING>")
+        store.append(state.strip() if state else "<MISSING>")
         store.append(pin if pin else "<MISSING>")
         store.append(country_code if country_code else "<MISSING>")
         store.append(store_number)
@@ -59,7 +100,6 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -78,7 +118,6 @@ def write_output(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -88,5 +127,4 @@ def scrape():
     write_output(data)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

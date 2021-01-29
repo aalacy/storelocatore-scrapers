@@ -1,5 +1,4 @@
 sgrequests
-beautifulsoup4
-sgzip==0.1.0
-sglogging
-gzip
+bs4
+sgzip
+lxml

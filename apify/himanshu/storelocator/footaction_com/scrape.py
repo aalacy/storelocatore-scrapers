@@ -11,10 +11,13 @@ def fetch_data():
     main_page = session.get(main_url)
     main_soup = BeautifulSoup(main_page.text, "lxml")
     states = main_soup.find_all("li", {"class": "Directory-listItem"})
-    del states[-1]
     for state in states:
         state_url = state.find("a", {"class": "Directory-listLink"}).get("href")
-        state_page_url = base_url + state_url
+        state_page_url = (base_url + state_url).replace(
+            "https://stores.footaction.com/us/nv/las-vegas.html",
+            "https://stores.footaction.com/us/nv.html",
+        )
+
         city_counts = (
             state.find("a", {"class": "Directory-listLink"})
             .get("data-count")
@@ -92,11 +95,12 @@ def fetch_data():
                         locations.append(location_type)
                         locations.append(lati)
                         locations.append(longi)
-                        locations.append(hours_of_operation)
+                        locations.append(hours_of_operation.replace("day", "day "))
                         locations.append(page_url)
                         yield locations
 
                 else:
+
                     stores_page = session.get(city_page_url)
                     stores_soup = BeautifulSoup(stores_page.text, "lxml")
                     name = stores_soup.find("h1", {"class": "Hero-title"}).get_text()
@@ -106,9 +110,12 @@ def fetch_data():
                     cty = stores_soup.find(
                         "span", {"class": "c-address-city"}
                     ).get_text()
-                    st = stores_soup.find("abbr", {"class": "c-address-state"}).get(
-                        "title"
-                    )
+                    try:
+                        st = stores_soup.find("abbr", {"class": "c-address-state"}).get(
+                            "title"
+                        )
+                    except:
+                        st = "<MISSING>"
                     pin = stores_soup.find(
                         "span", {"class": "c-address-postal-code"}
                     ).get_text()
@@ -146,7 +153,7 @@ def fetch_data():
                     locations.append(location_type)
                     locations.append(lati)
                     locations.append(longi)
-                    locations.append(hours_of_operation)
+                    locations.append(hours_of_operation.replace("day", "day "))
                     locations.append(page_url)
                     yield locations
 
@@ -196,7 +203,7 @@ def fetch_data():
             locations.append(location_type)
             locations.append(lati)
             locations.append(longi)
-            locations.append(hours_of_operation)
+            locations.append(hours_of_operation.replace("day", "day "))
             locations.append(page_url)
             yield locations
 
@@ -206,8 +213,6 @@ def load_data(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -226,7 +231,6 @@ def load_data(data):
                 "page_url",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 

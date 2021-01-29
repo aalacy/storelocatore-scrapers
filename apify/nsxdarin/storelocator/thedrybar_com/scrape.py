@@ -83,24 +83,24 @@ def fetch_data():
                 state = line2.split('"addressRegion": "')[1].split('"')[0].strip()
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
-            if ":</span>" in line2:
+            if ":</span>" in line2 and "Closed" not in line2:
                 if (
-                    "a" in line2
-                    or "u" in line2
-                    or "i" in line2
-                    or "e" in line2
-                    or "o" in line2
+                    "a" in line2.replace("span", "")
+                    or "u" in line2.replace("span", "")
+                    or "i" in line2.replace("span", "")
+                    or "e" in line2.replace("span", "")
+                    or "o" in line2.replace("span", "")
                 ):
                     hrs = (
-                        line2.split("<span>")[1].split("<")[0]
+                        line2.split("span>")[1].split("<")[0]
                         + ": "
-                        + line2.split("<span>")[2].split("<")[0]
+                        + line2.split("span")[3].split(">")[1].split("<")[0]
                     )
                     if hours == "":
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-                    hours = hours.replace("&#8209;", "-")
+                    hours = hours.replace("&#8209;", "-").replace("::", ":")
         yield [
             website,
             loc,

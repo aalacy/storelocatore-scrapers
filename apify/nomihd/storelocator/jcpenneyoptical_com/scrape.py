@@ -81,6 +81,8 @@ def fetch_data():
         street_address = raw_text[0].strip()
         city_state_zip = raw_text[1]
         city = city_state_zip.rsplit(",", 1)[0].strip()
+        if "." in city:
+            city = city.split(".")[1].strip()
         state = city_state_zip.rsplit(",", 1)[1].strip()
         zip = "<MISSING>"
 

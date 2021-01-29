@@ -1,4 +1,2 @@
-lxml==4.3.4
 sgselenium
 usaddress==0.5.10
-sglogging
