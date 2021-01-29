@@ -114,7 +114,7 @@ def fetch_data():
                                     hours = hours + "; " + hrs
                     except:
                         hours = "<MISSING>"
-                    if country == "CA" or country == "US":
+                    if country == "CA" or country == "US" or country == "GB":
                         yield [
                             website,
                             loc,
