@@ -1,11 +1,12 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -40,40 +41,29 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "carliecs.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&is_selectable=true&limit=100&token=0afb14f1dbfdb5fc2c6c96195e399ebd"
+    DOMAIN = "buona.com"
+    start_url = "https://buona.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&cat=&max_results=50&search_radius=300&autoload=1"
 
     response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data["items"]:
-        store_url = poi["url"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address_1"]
-        street_address = street_address if street_address else "<MISSING>"
+    for poi in data:
+        store_url = "https://buona.com{}".format(poi["url"])
+        location_name = poi["store"]
+        street_address = poi["address"]
         city = poi["city"]
         state = poi["state"]
-        zip_code = poi["postal_code"]
-        country_code = "<MISSING>"
-        store_number = poi["number"]
-        phone = poi["phone_md"].split("\n")[0].strip()
+        zip_code = poi["zip"]
+        country_code = poi["country"]
+        store_number = poi["id"]
+        phone = "<MISSING>"
         location_type = "<MISSING>"
-        hoo = []
-        if poi.get("delivery_areas"):
-            try:
-                latitude = poi["delivery_areas"][-1]["lat_lng"][0][0]
-                longitude = poi["delivery_areas"][-1]["lat_lng"][0][-1]
-            except Exception:
-                areas = poi["delivery_areas"]
-                latitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
-                    0
-                ][0][0]
-                longitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
-                    0
-                ][0][-1]
-        hoo = poi["hours_md"].replace("\n", " ").split("Senior")[0].strip()
-        hours_of_operation = hoo if hoo else "<MISSING>"
+        latitude = poi["lat"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["lng"]
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = etree.HTML(poi["hours"]).xpath("//text()")
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

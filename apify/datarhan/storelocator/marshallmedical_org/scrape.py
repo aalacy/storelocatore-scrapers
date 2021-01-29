@@ -89,7 +89,7 @@ def fetch_data():
         longitude = poi.xpath("@data-longitude")
         longitude = longitude[0] if longitude else "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//strong[contains(text(), "Hours")]/following-sibling::ul/li/text()'
+            '//strong[contains(text(), "Hours")]/following-sibling::ul/li//text()'
         )
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
