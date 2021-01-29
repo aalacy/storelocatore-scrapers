@@ -44,31 +44,32 @@ def write_output(data):
 def fetch_data():
     base_url = "https://banking.cit.com/ajax/get-location-data?branch=true"
     r = session.get(base_url)
-    locations = json.loads(r.text)['locations']
+    locations = json.loads(r.text)["locations"]
     data = []
     for location in locations:
-        page_url = '<MISSING>'
-        location_name = location['name']
+        page_url = "<MISSING>"
+        location_name = location["name"]
         country_code = "US"
-        zip = location['zip']
-        city = location['city']
-        state = location['state']
-        street_address = myutil._valid(location['address'] + ' ' + myutil._valid1(location.get('address_two')))
-        phone = location['phone']
+        zip = location["zip"]
+        city = location["city"]
+        state = location["state"]
+        street_address = myutil._valid(
+            location["address"] + " " + myutil._valid1(location.get("address_two"))
+        )
+        phone = location["phone"]
         store_number = "<MISSING>"
-        location_type = location['type'][0]
-        latitude = location['lat']
-        longitude = location['long']
-        soup = bs(location['hours'], 'lxml')
-        import pdb; pdb.set_trace()
-        hours = [_.text for _ in soup.select('.ls-hours') if _.text]
+        location_type = location["type"][0]
+        latitude = location["lat"]
+        longitude = location["long"]
+        soup = bs(location["hours"], "lxml")
+        hours = [_.text for _ in soup.select(".ls-hours") if _.text]
         _hours = []
         for hour in hours:
-            if hour == 'Lobby Hours:':
+            if hour == "Lobby Hours:":
                 continue
-            if hour == 'Drive-up Hours:':
+            if hour == "Drive-up Hours:":
                 break
-            _hours.append(hour)
+            _hours.append(hour.replace("–", "-"))
 
         hours_of_operation = "; ".join(_hours)
         _item = [

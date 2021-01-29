@@ -57,7 +57,7 @@ class Util:
     def _valid1(self, val):
         if val:
             return val.strip()
-        return ''
+        return ""
 
     def _check_duplicate_by_loc(self, data, _item):
         is_duplicated = False
