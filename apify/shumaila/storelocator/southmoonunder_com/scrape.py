@@ -41,7 +41,6 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.southmoonunder.com/api/StoreLocator/Search"
     p = 0
     myobj = {"SearchText": "", "SearchRadius": "10000", "Latitude": "", "Longitude": ""}
