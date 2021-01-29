@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Sitemap filters out Licensed Partners)
