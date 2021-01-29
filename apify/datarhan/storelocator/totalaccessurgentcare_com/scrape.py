@@ -83,7 +83,7 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
         if hours_of_operation == "<MISSING>":
-            location_type = 'coming soon'
+            location_type = "coming soon"
 
         item = [
             DOMAIN,
