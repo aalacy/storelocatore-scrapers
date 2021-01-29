@@ -41,9 +41,10 @@ def fetch_data():
     DOMAIN = "hibdontire.com"
     start_url = "https://local.hibdontire.com/"
 
-    with webdriver.Firefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
+    driver = webdriver.Firefox()
+    driver.get(start_url)
+    driver.close()
+    dom = etree.HTML(driver.page_source)
     all_locations = dom.xpath('//li[@itemtype="http://schema.org/LocalBusiness"]')
 
     for poi_html in all_locations:
