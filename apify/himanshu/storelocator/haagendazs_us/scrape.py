@@ -103,7 +103,7 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
             result_coords.append((data["lat__c"], data["lon__c"]))
             location_type = data["IsHDShop"]
-            if location_type == True:
+            if location_type is True:
                 continue
             else:
                 location_type = "store"
