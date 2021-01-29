@@ -42,6 +42,7 @@ def write_output(data):
 
 
 def fetch_data():
+    locator_domain = "https://banking.cit.com/find-bank-location"
     base_url = "https://banking.cit.com/ajax/get-location-data?branch=true"
     r = session.get(base_url)
     locations = json.loads(r.text)["locations"]
@@ -73,7 +74,7 @@ def fetch_data():
 
         hours_of_operation = "; ".join(_hours)
         _item = [
-            base_url,
+            locator_domain,
             page_url,
             location_name,
             street_address,
