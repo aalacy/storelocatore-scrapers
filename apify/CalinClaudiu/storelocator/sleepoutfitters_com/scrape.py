@@ -61,6 +61,15 @@ def pretty_hours(x):
     return x
 
 
+def fix_address(x):
+    x = x.replace("None", "")
+    h = []
+    for i in x.split(","):
+        if len(i) > 2:
+            h.append(i)
+    return ", ".join(h)
+
+
 def scrape():
     url = "https://stores.sleepoutfitters.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
@@ -74,6 +83,7 @@ def scrape():
         street_address=MultiMappingField(
             mapping=[["properties", "addressLine1"], ["properties", "addressLine2"]],
             multi_mapping_concat_with=", ",
+            value_transform=fix_address,
         ),
         city=MappingField(mapping=["properties", "city"]),
         state=MappingField(mapping=["properties", "province"]),
