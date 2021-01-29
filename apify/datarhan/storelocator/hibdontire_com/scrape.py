@@ -1,7 +1,7 @@
 import csv
 from lxml import etree
 
-from sgselenium import SgFirefox
+from sgselenium.sgselenium import webdriver
 
 
 def write_output(data):
@@ -37,49 +37,37 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     items = []
-    scraped_items = []
 
-    DOMAIN = "thundercloud.com"
-    start_url = "https://thundercloud.com/find-your-location/"
+    DOMAIN = "hibdontire.com"
+    start_url = "https://local.hibdontire.com/"
 
-    with SgFirefox() as driver:
+    with webdriver.Firefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//li[@itemtype="http://schema.org/LocalBusiness"]')
 
-    all_locations = dom.xpath('//div[@class="row location-results"]')
     for poi_html in all_locations:
-        store_url = "<MISSING>"
-        location_name = poi_html.xpath(".//h6/a/text()")
+        store_url = poi_html.xpath(".//h3/a/@href")[0]
+        location_name = poi_html.xpath(".//h3/a/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath(".//div/small/text()")
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        if len(raw_address) == 2:
-            raw_address = raw_address[1:]
-        store_number = "<MISSING>"
-        street_address = location_name
-        city = raw_address[0].split(", ")[0]
-        state = raw_address[0].split(", ")[-1].split()[0]
-        zip_code = raw_address[0].split(", ")[-1].split()[-1]
+        street_address = poi_html.xpath('.//div[@itemprop="streetAddress"]/text()')
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
+        city = city[0][:-1] if city else "<MISSING>"
+        state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
+        state = state[0] if state else "<MISSING>"
+        zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        phone = poi_html.xpath('.//div/strong[contains(text(), ".")]/text()')
-        if not phone:
-            phone = poi_html.xpath('.//div/strong[contains(text(), "-")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        temp_closed = poi_html.xpath('.//*[contains(text(), "TEMPORARILY CLOSED")]')
-        if temp_closed:
-            location_type = "Temp_closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath(
-            './/p[contains(text(), "Hours:")]/following-sibling::p/text()'
-        )
-        if not hoo:
-            hoo = poi_html.xpath('.//p[contains(text(), "Hours:")]/text()')
+        hoo = poi_html.xpath('.//dl[@class="list-hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = (
-            " ".join(hoo).replace("Hours:", "").strip() if hoo else "<MISSING>"
-        )
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
@@ -97,10 +85,8 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+
+        items.append(item)
 
     return items
 
