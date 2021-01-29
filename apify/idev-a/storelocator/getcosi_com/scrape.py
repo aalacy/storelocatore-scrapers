@@ -69,7 +69,8 @@ def fetch_data():
         longitude = location["lng"]
         tags = bs(location["hours"], "lxml")
         hours_of_operation = (
-            "; ".join([_.text for _ in tags.select("p")[:-2]]) or "<MISSING>"
+            "; ".join([_.text for _ in tags.select("p") if _.find("strong")])
+            or "<MISSING>"
         )
 
         data.append(
