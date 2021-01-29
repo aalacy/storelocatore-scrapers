@@ -1,7 +1,7 @@
 import csv
 from lxml import etree
 
-from sgselenium.sgselenium import webdriver
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -36,39 +36,37 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests()
+
     items = []
 
-    DOMAIN = "hibdontire.com"
-    start_url = "https://local.hibdontire.com/"
+    DOMAIN = "usautoforce.com"
+    start_url = "http://www.usautoforce.com/about/locations/"
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+    }
+    response = session.get(start_url, headers=headers)
+    dom = etree.HTML(response.text)
 
-    driver = webdriver.Firefox()
-    driver.get(start_url)
-    dom = etree.HTML(driver.page_source)
-    driver.close()
-    all_locations = dom.xpath('//li[@itemtype="http://schema.org/LocalBusiness"]')
-
+    all_locations = dom.xpath("//li[@data-id]")
     for poi_html in all_locations:
-        store_url = poi_html.xpath(".//h3/a/@href")[0]
-        location_name = poi_html.xpath(".//h3/a/text()")
+        store_url = "<MISSING>"
+        location_name = poi_html.xpath('.//div[@class="larger uppercase"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//div[@itemprop="streetAddress"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
-        city = city[0][:-1] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        address_raw = poi_html.xpath('.//div[@class="map-location-button"]/div/text()')[
+            1:
+        ]
+        city = address_raw[-1].split(", ")[0]
+        street_address = address_raw[0]
+        state = address_raw[-1].split(", ")[-1].split()[0]
+        zip_code = address_raw[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath('.//dl[@class="list-hours"]//text()')
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
