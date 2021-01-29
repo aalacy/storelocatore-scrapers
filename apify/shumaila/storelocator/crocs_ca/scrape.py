@@ -75,7 +75,7 @@ def fetch_data():
             street = js["address1"]
             state = js["province"]
             szip = js["postalcode"]
-            if szip == None:
+            if szip is None:
                 szip = "<MISSING>"
             city = js["city"]
             key = loc + city + szip + state
@@ -87,7 +87,7 @@ def fetch_data():
                 tim = js["storehours"]
             except:
                 tim = None
-            if tim == "null" or tim == "" or tim == None:
+            if tim == "null" or tim == "" or tim is None:
                 tim = "<MISSING>"
             else:
                 tim = (
@@ -124,7 +124,7 @@ def fetch_data():
                 phone = js["phone"]
             except:
                 phone = None
-            if phone == "null" or phone == "" or phone == None:
+            if phone == "null" or phone == "" or phone is None:
                 phone = "<MISSING>"
             ltype = js["tblstoretype"]
 
