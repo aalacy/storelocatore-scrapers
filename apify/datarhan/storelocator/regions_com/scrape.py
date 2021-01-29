@@ -35,7 +35,7 @@ def process_record(raw_results_from_one_zipcode):
     for poi in raw_results_from_one_zipcode:
         if type(poi) == str:
             continue
-        
+
         page_url = "<MISSING>"
         location_name = poi["title"]
         street_address = poi["address"].split("<br />")[0]
@@ -50,7 +50,7 @@ def process_record(raw_results_from_one_zipcode):
         longitude = poi["lng"]
         hours_of_operation = poi["hours"]
 
-        check = f'{location_name} {street_address}'
+        check = f"{location_name} {street_address}"
         if check not in SCRAPED_POI:
             SCRAPED_POI.append(check)
 
@@ -69,7 +69,7 @@ def process_record(raw_results_from_one_zipcode):
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=DOMAIN,
-                    hours_of_operation=hours_of_operation
+                    hours_of_operation=hours_of_operation,
                 )
             )
 
@@ -79,10 +79,12 @@ def process_record(raw_results_from_one_zipcode):
 if __name__ == "__main__":
     with SgWriter() as writer:
         results = parallelize(
-            search_space=static_zipcode_list(radius=30, country_code=SearchableCountries.USA),
+            search_space=static_zipcode_list(
+                radius=30, country_code=SearchableCountries.USA
+            ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=16  # tweak to see what's fastest
+            max_threads=16,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)
