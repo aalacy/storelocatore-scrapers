@@ -192,7 +192,7 @@ def fetch_data():
             + "&maxrec=500"
         )
         try:
-            r = session.get(url, headers=headers, verify=False)
+            r = session.get(url, headers=headers, verify=False, timeout=30)
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
                 typ = item["storeType"]
