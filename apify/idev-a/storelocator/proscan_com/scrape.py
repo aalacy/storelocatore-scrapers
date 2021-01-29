@@ -69,16 +69,33 @@ def fetch_data():
         state = block[2].split(",")[1].strip().split(" ")[0]
         zip = myutil._strip_list(block[2].split(",")[1].strip().split(" "))[1].strip()
         country_code = myutil.get_country_by_code(state)
-        idx = 4
-        if block[3] != "Direct:":
+        idx = 3
+        while True:
+            if block[idx] == "Direct:":
+                phone = block[idx].replace("–", "-")
+                idx += 2
+                break
+            idx += 1
+        if block[idx] == "Fax:":
             idx += 2
-        phone = block[idx].replace("–", "-")
-        idx += 4
+
+        if block[idx] == "Toll Free:":
+            idx += 2
+
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
         location_type = "<MISSING>"
+        hours = []
+        for _hour in block[idx:]:
+            if _hour.strip() == "Hours of Operation":
+                continue
+            if _hour.strip() == "MRI":
+                continue
+            if _hour.strip() == "CT":
+                break
+            hours.append(_hour)
         hours_of_operation = (
-            str("; ".join(block[idx:]).replace("–", "-").encode("utf-8"))[2:-1]
+            str("; ".join(hours).replace("–", "-").encode("utf-8"))[2:-1]
             .replace("\\xc2\\xa0", " ")
             .replace("\ufeff", "")
             .replace("\\xef\\xbb\\xbf", "")
