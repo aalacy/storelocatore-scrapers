@@ -1,6 +1,5 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 import json
 
 from util import Util  # noqa: I900
@@ -42,37 +41,38 @@ def write_output(data):
 
 
 def fetch_data():
-    locator_domain = 'https://www.sendiks.com/my-store/locations'
+    locator_domain = "https://www.sendiks.com/my-store/locations"
     base_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token=d4e5be6cc9f62cad0d0e126beb352c8b"
     r = session.get(base_url)
-    locations = json.loads(r.text)["locations"]
+    locations = json.loads(r.text)["items"]
     data = []
     for location in locations:
-        page_url = "<MISSING>"
+        page_url = location["url"]
         location_name = location["name"]
         country_code = "US"
-        zip = location["zip"]
+        zip = location["postal_code"]
         city = location["city"]
         state = location["state"]
-        street_address = myutil._valid(
-            location["address"] + " " + myutil._valid1(location.get("address_two"))
-        )
-        phone = location["phone"]
-        store_number = "<MISSING>"
-        location_type = location["type"][0]
-        latitude = location["lat"]
-        longitude = location["long"]
-        soup = bs(location["hours"], "lxml")
-        hours = [_.text for _ in soup.select(".ls-hours") if _.text]
-        _hours = []
-        for hour in hours:
-            if hour == "Lobby Hours:":
-                continue
-            if hour == "Drive-up Hours:":
-                break
-            _hours.append(hour.replace("–", "-"))
+        if "address_1" in location:
+            street_address = myutil._valid(location["address_1"])
+        else:
+            street_address = location["address_0"]
 
-        hours_of_operation = "; ".join(_hours)
+        phone = "<MISSING>"
+        if "phone" in location:
+            phone = location["phone"]
+        elif "phone_md" in location:
+            phone = location["phone_md"]
+
+        store_number = location["store_number"]
+        location_type = "<MISSING>"
+        latitude = location["latitude"]
+        longitude = location["longitude"]
+        hours_of_operation = "<MISSING>"
+        if "hours" in location:
+            hours_of_operation = location["hours"]
+        elif "hours_md" in location:
+            hours_of_operation = location["hours_md"]
         _item = [
             locator_domain,
             page_url,
