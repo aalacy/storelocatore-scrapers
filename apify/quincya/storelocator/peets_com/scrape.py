@@ -57,7 +57,9 @@ def fetch_data():
 
     driver.get(base_link)
     WebDriverWait(driver, 50).until(
-        ec.presence_of_element_located((By.CSS_SELECTOR, ".sitemap-location.ng-binding"))
+        ec.presence_of_element_located(
+            (By.CSS_SELECTOR, ".sitemap-location.ng-binding")
+        )
     )
     time.sleep(1)
 
