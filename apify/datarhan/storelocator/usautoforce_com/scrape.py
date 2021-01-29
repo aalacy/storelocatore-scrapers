@@ -1,5 +1,5 @@
 import csv
-import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -40,40 +40,33 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "carliecs.com"
-    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&is_selectable=true&limit=100&token=0afb14f1dbfdb5fc2c6c96195e399ebd"
+    DOMAIN = "usautoforce.com"
+    start_url = "http://www.usautoforce.com/about/locations/"
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+    }
+    response = session.get(start_url, headers=headers)
+    dom = etree.HTML(response.text)
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data["items"]:
-        store_url = poi["url"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address_1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postal_code"]
+    all_locations = dom.xpath("//li[@data-id]")
+    for poi_html in all_locations:
+        store_url = "<MISSING>"
+        location_name = poi_html.xpath('.//div[@class="larger uppercase"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        address_raw = poi_html.xpath('.//div[@class="map-location-button"]/div/text()')[
+            1:
+        ]
+        city = address_raw[-1].split(", ")[0]
+        street_address = address_raw[0]
+        state = address_raw[-1].split(", ")[-1].split()[0]
+        zip_code = address_raw[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
-        store_number = poi["number"]
-        phone = poi["phone_md"].split("\n")[0].strip()
         location_type = "<MISSING>"
-        hoo = []
-        if poi.get("delivery_areas"):
-            try:
-                latitude = poi["delivery_areas"][-1]["lat_lng"][0][0]
-                longitude = poi["delivery_areas"][-1]["lat_lng"][0][-1]
-            except Exception:
-                areas = poi["delivery_areas"]
-                latitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
-                    0
-                ][0][0]
-                longitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
-                    0
-                ][0][-1]
-        hoo = poi["hours_md"].replace("\n", " ").split("Senior")[0].strip()
-        hours_of_operation = hoo if hoo else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
         item = [
             DOMAIN,
