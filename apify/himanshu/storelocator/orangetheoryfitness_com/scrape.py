@@ -86,7 +86,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(page_url)
                     store = [str(x).strip() if x else "MISSING" for x in store]
-                    if "8765-e-orchid-rd-704" not in base_url:
+                    if "8765-e-orchid-rd-704" not in page_url:
                         yield store
             except:
                 pass
