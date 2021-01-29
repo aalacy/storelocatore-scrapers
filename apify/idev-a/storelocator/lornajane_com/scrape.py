@@ -49,7 +49,11 @@ def fetch_data():
     for item in items:
         page_url = base_url
         location_name = item["name"]
-        street_address = myutil._valid(f"{item['address1']} {item.get('address2', '')}")
+        street_address = (
+            myutil._valid(f"{item['address1']}")
+            + " "
+            + myutil._valid1(item.get("address2", ""))
+        )
         city = myutil._valid(item["city"])
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
