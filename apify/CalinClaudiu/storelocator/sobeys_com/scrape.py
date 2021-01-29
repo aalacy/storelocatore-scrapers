@@ -179,13 +179,6 @@ def nice_hours(x):
         x = "Open 24 Hours"
     return x
 
-def fix_address(x):
-    x = x.replace('None','')
-    h = []
-    for i in x.split(','):
-        if len(i)>2:
-            h.append(i)
-    return ', '.join(h)
 
 def scrape():
     url = "https://www.sobeys.com/"
@@ -208,7 +201,6 @@ def scrape():
                 ["location", "address", "address_2"],
             ],
             multi_mapping_concat_with=", ",
-            value_transform = fix_address
         ),
         city=MappingField(mapping=["location", "address", "city"], is_required=False),
         state=MappingField(
