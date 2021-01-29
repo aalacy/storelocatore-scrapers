@@ -82,7 +82,7 @@ def fetch_data():
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
         if hours_of_operation.lower().count("closed") == 7:
-            hours_of_operation = "Closed"
+            continue
 
         row = [
             locator_domain,
