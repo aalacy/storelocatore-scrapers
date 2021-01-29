@@ -74,15 +74,6 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        # hoo = loc_dom.xpath('//div[@class="loc-header-right"]/p/text()')
-        # hoo = [elem.strip() for elem in hoo if elem.strip()]
-        # hours_of_operation = (
-        #     " ".join(hoo).replace("NOW OPEN!", "") if hoo else "<MISSING>"
-        # )
-        # if "@" in hours_of_operation:
-        #     hours_of_operation = "<MISSING>"
-        # if "NOW Open, we can" in hours_of_operation:
-        #     hours_of_operation = "<MISSING>"
         hoo = loc_dom.xpath('//h3[@id="hours"]/following-sibling::table[1]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
