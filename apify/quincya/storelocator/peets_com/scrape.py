@@ -56,6 +56,12 @@ def fetch_data():
     base_link = "https://locations.peets.com/site-map/all"
 
     driver.get(base_link)
+    WebDriverWait(driver, 50).until(
+        ec.presence_of_element_located(
+            (By.CSS_SELECTOR, ".sitemap-location.ng-binding")
+        )
+    )
+    time.sleep(1)
 
     base = BeautifulSoup(driver.page_source, "lxml")
     items = base.find_all(class_="sitemap-location ng-binding")
