@@ -1,4 +1,4 @@
 sgscrape
 sglogging
 sgselenium
-webdriver
+selenium
