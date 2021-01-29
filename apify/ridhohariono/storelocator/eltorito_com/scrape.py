@@ -95,14 +95,14 @@ def fetch_data():
         address = addr_content.text.strip().split(",")
         if len(address) < 4:
             street_address = address[0]
-            city = address[1]
-            state = address[2]
+            city = address[1].strip()
+            state = address[2].strip()
             zip_code = "<MISSING>"
         else:
             street_address = address[0]
             city = address[1]
-            state = address[2]
-            zip_code = address[3]
+            state = re.sub(r"\d+", "", address[2]).strip()
+            zip_code = re.sub(r"\D+", "", address[2]).strip()
         country_code = "US"
         store_number = row["store_number"]
         phone = content.select_one("div.location-contact p a").text.strip()
