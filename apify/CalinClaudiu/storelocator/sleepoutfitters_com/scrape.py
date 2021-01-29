@@ -15,7 +15,7 @@ def fetch_data():
     url = "https://stores.sleepoutfitters.com/"
     logzilla = sglog.SgLogSetup().get_logger(logger_name="sleepoutfitter")
     son = []
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox() as driver:
         logzilla.info(f"Opening {url}")  # noqa
         driver.get(url)
         logzilla.info(f"Waiting for requests to load")  # noqa
