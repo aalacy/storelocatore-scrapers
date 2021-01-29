@@ -56,9 +56,7 @@ def fetch_data():
         state = "<MISSING>"
         zip = "<MISSING>"
         if address[-1].split(",")[1].strip() == "UAE":
-            country_code = address[-1].split(",")[1]
-            city = address[-1].split(",")[0].strip()
-            street_address = " ".join(address[:-1])
+            continue
         else:
             zip = address[-1].split(",")[1].strip().split(" ")[1]
             state = address[-1].split(",")[1].strip().split(" ")[0]
