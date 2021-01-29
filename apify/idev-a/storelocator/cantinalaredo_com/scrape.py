@@ -41,14 +41,14 @@ def write_output(data):
 
 
 def fetch_data():
-    locator_domain = 'https://www.cantinalaredo.com/'
+    locator_domain = "https://www.cantinalaredo.com/"
     base_url = "https://www.cantinalaredo.com/locations/"
     r = session.get(base_url)
     soup = bs(r.text, "lxml")
     locations = soup.select("div.wpb_wrapper div.single-location")
     data = []
     for location in locations:
-        page_url = location.select_one('.location-visit a')['href']
+        page_url = location.select_one(".location-visit a")["href"]
         location_name = " ".join(
             [_ for _ in location.select_one(".location-name").stripped_strings]
         )
@@ -56,14 +56,17 @@ def fetch_data():
         address = _address.split("\r\n")
         if len(address) == 1:
             address = _address.split("\\r\\n")
-        if address[-1].startswith('Across from'):
+        if address[-1].startswith("Across from"):
             address = address[:-1]
         country_code = "US"
         street_address = "<MISSING>"
         city = "<MISSING>"
         state = "<MISSING>"
         zip = "<MISSING>"
-        if len(address[-1].split(",")) > 1 and address[-1].split(",")[1].strip() == "UAE":
+        if (
+            len(address[-1].split(",")) > 1
+            and address[-1].split(",")[1].strip() == "UAE"
+        ):
             continue
         else:
             zip = address[-1].split(",")[1].strip().split(" ")[1]
@@ -72,18 +75,20 @@ def fetch_data():
             street_address = " ".join(address[:-1])
 
         if len(address) == 1:
-            address = myutil._strip_list(address[0].split(','))
-            zip = address[-1].split(' ')[1]
-            state = address[-1].split(' ')[0]
+            address = myutil._strip_list(address[0].split(","))
+            zip = address[-1].split(" ")[1]
+            state = address[-1].split(" ")[0]
             city = address[-2]
-            street_address = ' '.join(address[:-2])
-            
+            street_address = " ".join(address[:-2])
+
         phone = myutil._valid(location.select_one(".tel").text)
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<INACCESSIBLE>"
         longitude = "<INACCESSIBLE>"
-        hours_of_operation = myutil._valid("; ".join(location.select_one(".hours p").text.split("\n")))
+        hours_of_operation = myutil._valid(
+            "; ".join(location.select_one(".hours p").text.split("\n"))
+        )
 
         data.append(
             [
