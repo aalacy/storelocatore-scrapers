@@ -211,7 +211,6 @@ def scrape():
             mapping=["longitude"],
         ),
         street_address=MappingField(mapping=["address"], part_of_record_identity=True),
-        # street_address=ConstantField(url),
         city=MappingField(mapping=["city"], part_of_record_identity=True),
         state=MappingField(mapping=["state"], part_of_record_identity=True),
         zipcode=MappingField(mapping=["zip"], part_of_record_identity=True),
