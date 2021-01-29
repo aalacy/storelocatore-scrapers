@@ -5,7 +5,7 @@ from sglogging import sglog
 import json
 import datetime
 
-website = "toppstiles_co.uk"
+website = "toppstiles.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
