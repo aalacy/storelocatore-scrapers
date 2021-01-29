@@ -123,6 +123,8 @@ def fetch_data():
             pass
 
         location_type = "<MISSING>"
+        if "coming soon" in location_name.lower():
+            location_type = "coming soon"
 
         latitude = (
             store_req.text.split("google.maps.LatLng(")[1].strip().split(",")[0].strip()
