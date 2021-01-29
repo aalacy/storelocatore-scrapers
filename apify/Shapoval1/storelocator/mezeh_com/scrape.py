@@ -34,39 +34,48 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.mascomabank.com"
-    page_url = "https://www.mascomabank.com/locations/"
+    locator_domain = "https://mezeh.com"
+    page_url = "https://mezeh.com/locations/"
 
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.content)
-    div = tree.xpath('//div[@class="location-overlay"]')
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//div[@class="column_attr clearfix align_left mobile_align_left"]'
+    )
     for j in div:
-        ad = j.xpath('.//div[@class="marker"]/text()')
-        ad = list(filter(None, [a.strip() for a in ad]))
-        street_address = ", ".join(ad[:-1])
-        line = ad[-1]
-        city = line.split(",")[0]
-        line = line.split(",")[1].strip()
-        postal = line.split()[-1]
-        state = line.replace(postal, "")
+        coming_soon = "".join(j.xpath(".//h3/strong/text()"))
+        if coming_soon.find("coming soon") != -1:
+            continue
 
+        ad = j.xpath(".//a[1]/h5/text()")
+        ad = list(filter(None, [a.strip() for a in ad]))
+        street_address = "".join(ad[0])
+        line = ad[1]
+        city = "".join(line.split(",")[0])
+        line = line.split(",")[1].strip()
+        postal = "".join(line.split()[1])
+        state = "".join(line.split()[0])
+        try:
+            phone = "".join(ad[2])
+        except IndexError:
+            phone = "<MISSING>"
+        hours_of_operation = ";".join(ad[3:]) or "Closed"
         country_code = "US"
         store_number = "<MISSING>"
-        page_url = "".join(j.xpath('.//div[@class="visit"]/a/@href'))
-        location_name = "".join(j.xpath('.//div[@class="marker"]/@data-name'))
-        phone = "".join(j.xpath('.//div[@class="phone"]/text()'))
+        page_url = "".join(j.xpath(".//a[1]/@href")) or "<MISSING>"
+        location_name = (
+            "".join(j.xpath(".//a/h4/text()")).replace("’", "").replace("‘", "")
+            or "<MISSING>"
+        )
+
         latitude = "".join(j.xpath('.//div[@class="marker"]/@data-lat')) or "<MISSING>"
         longitude = "".join(j.xpath('.//div[@class="marker"]/@data-lng')) or "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = j.xpath('.//div[@class="hours card-header"]/p[1]/strong/text()')
-        hours = list(filter(None, [a.strip() for a in hours]))
-        hours = "".join(hours)
-
-        hours_of_operation = "Closed"
-        if hours == "Lobby Closed":
-            hours_of_operation = "Closed"
         row = [
             locator_domain,
             page_url,
