@@ -39,7 +39,10 @@ def fetch_data():
         logzilla.info(f"Looking for API calls")  # noqa
         for r in driver.requests:
             if "locations-details" in r.path:
-                son.append(json.loads(r.response.body))
+                try:
+                    son.append(json.loads(r.response.body))
+                except Exception:
+                    continue
 
     for i in son:
         for j in i["features"]:
@@ -110,7 +113,6 @@ def scrape():
         field_definitions=field_defs,
         log_stats_interval=15,
     )
-
     pipeline.run()
 
 
