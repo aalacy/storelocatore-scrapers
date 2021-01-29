@@ -44,12 +44,6 @@ def fetch_data():
         max_search_results=200,
     )
     MAX_DISTANCE = 50
-
-    headers = {
-        "User-Agent": "PostmanRuntime/7.19.0",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "accept": "application/json, text/javascript, */*; q=0.01",
-    }
     for lat, lng in search:
         result_coords = []
         lat = str(lat)
@@ -63,7 +57,6 @@ def fetch_data():
         zipp = "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        phone = "<INACCESSIBLE>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
