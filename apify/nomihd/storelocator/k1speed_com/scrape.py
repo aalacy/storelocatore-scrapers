@@ -67,7 +67,8 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
         '//li[@class="menu-item menu-item-type-post_type menu-item-object-page "]/a[contains(@href,"-location.html")]/@href'
-    )
+    ) + ["https://www.k1speed.com/canovanas-location.html"]
+
     for store_url in list(set(stores)):
         page_url = store_url
         log.info(page_url)

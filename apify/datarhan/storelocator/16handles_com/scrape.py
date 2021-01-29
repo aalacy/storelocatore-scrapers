@@ -81,6 +81,8 @@ def fetch_data():
         country_code = poi["data"]["address"]["countryCode"]
         store_number = "<MISSING>"
         phone = poi["data"].get("localPhone")
+        if not phone:
+            phone = poi["data"].get("mainPhone")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["data"]["geocodedCoordinate"]["latitude"]
