@@ -59,20 +59,20 @@ def fetch_data():
             street_address = location["address_0"]
 
         phone = "<MISSING>"
-        if "phone" in location:
-            phone = location["phone"]
-        elif "phone_md" in location:
+        if "phone_md" in location:
             phone = location["phone_md"]
+        elif "phone" in location:
+            phone = location["phone"]
 
         store_number = location["store_number"]
         location_type = "<MISSING>"
         latitude = location["latitude"]
         longitude = location["longitude"]
         hours_of_operation = "<MISSING>"
-        if "hours" in location:
-            hours_of_operation = location["hours"]
-        elif "hours_md" in location:
+        if "hours_md" in location:
             hours_of_operation = location["hours_md"]
+        elif "hours" in location:
+            hours_of_operation = location["hours"]
         _item = [
             locator_domain,
             page_url,
