@@ -271,6 +271,10 @@ def fetch_data():
                         .split('intervals-instance-close">')[1]
                         .split("<")[0]
                     )
+        name = name.replace("&amp;", "&").replace("&#39;", "'").replace("&amp", "&")
+        add = add.replace("&amp;", "&").replace("&#39;", "'").replace("&amp", "&")
+        if "(" in city:
+            city = city.split("(")[0].strip()
         yield [
             website,
             loc,

@@ -81,7 +81,7 @@ def fetch_data():
     stores = json.loads(stores_req.text)["data"]
 
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://roti.com/menu/" + store["slug"]
 
         locator_domain = website
         location_name = store["name"]
