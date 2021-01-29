@@ -72,7 +72,7 @@ def fetch_data():
                 longitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
                     0
                 ][0][-1]
-        hoo = poi["hours_md"].replace("\n", " ")
+        hoo = poi["hours_md"].replace("\n", " ").split("Senior")[0].strip()
         hours_of_operation = hoo if hoo else "<MISSING>"
 
         item = [
