@@ -120,7 +120,7 @@ def fetch_data():
             [
                 store["locator_domain"],
                 store["page_url"],
-                store["location_name"],
+                store["location_name"].strip(),
                 store["street_address"],
                 store["city"],
                 store["state"],
