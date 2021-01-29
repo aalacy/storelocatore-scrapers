@@ -1,5 +1,7 @@
 import csv
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -40,45 +42,43 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "valuepawnandjewelry.com"
-    start_url = (
-        "https://valuepawnandjewelry.com/data/locations/valuepawn/output/locations.json"
+    DOMAIN = "microcenter.com"
+    start_url = "https://www.microcenter.com/site/stores/default.aspx"
+
+    response = session.get(
+        start_url,
     )
+    dom = etree.HTML(response.text)
 
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
-    }
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
+    all_locations = dom.xpath('//a[@class="search"]/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text() , "telephone")]/text()')[-1]
+        poi = json.loads(poi)
 
-    for poi in data:
-        store_url = "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
+        street_address = poi["address"]["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
+        city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
-        state = poi["state"]
+        state = poi["address"]["addressRegion"]
         state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
+        zip_code = poi["address"]["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
+        country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "sms")]/@href')[0].split("//")[-1]
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        store_url = f'https://valuepawnandjewelry.com/stores/{state}/{city.replace(" ", "+")}/{street_address.replace(" ", "-").replace(".", "")}/'
-        store_url = store_url.lower()
+        latitude = poi["geo"]["latitude"]
+        longitude = poi["geo"]["longitude"]
+        hours_of_operation = loc_dom.xpath('//div[@id="hours"]/p/text()')
+        hours_of_operation = (
+            hours_of_operation[0].strip() if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
@@ -96,7 +96,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         items.append(item)
 
     return items

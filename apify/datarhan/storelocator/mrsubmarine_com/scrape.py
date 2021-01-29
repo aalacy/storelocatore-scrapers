@@ -1,11 +1,13 @@
+import re
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+    with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -40,45 +42,40 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "valuepawnandjewelry.com"
-    start_url = (
-        "https://valuepawnandjewelry.com/data/locations/valuepawn/output/locations.json"
-    )
+    DOMAIN = "mrsubmarine.com"
+    start_url = "https://stockist.co/api/v1/u6409/locations/search?callback=jQuery21404351132512701026_1611914731917&tag=u6409&latitude=41.959604999999996&longitude=-87.8579&distance=39.45648735936302&_=1611914731918"
 
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
-    }
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
+    response = session.get(start_url)
+    data = re.findall(r"\((.+)\);", response.text)[0]
+    data = json.loads(data)
 
-    for poi in data:
-        store_url = "<MISSING>"
+    for poi in data["locations"]:
+        store_url = [
+            elem["value"]
+            for elem in poi["custom_fields"]
+            if elem["name"] == "Store Info"
+        ][0]
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = poi["address_line_1"]
         city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
+        state = poi["state"].replace(".", "")
+        zip_code = poi["postal_code"]
+        country_code = poi["country"]
         country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
+        store_number = poi["id"]
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        store_url = f'https://valuepawnandjewelry.com/stores/{state}/{city.replace(" ", "+")}/{street_address.replace(" ", "-").replace(".", "")}/'
-        store_url = store_url.lower()
+        hoo = loc_dom.xpath(
+            '//h2[span[contains(text(), "Hours")]]/following-sibling::div//text()'
+        )
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

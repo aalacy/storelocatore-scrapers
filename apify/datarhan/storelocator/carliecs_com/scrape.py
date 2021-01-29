@@ -40,45 +40,40 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "valuepawnandjewelry.com"
-    start_url = (
-        "https://valuepawnandjewelry.com/data/locations/valuepawn/output/locations.json"
-    )
+    DOMAIN = "carliecs.com"
+    start_url = "https://api.freshop.com/1/stores?app_key=carlie_c_s&has_address=true&is_selectable=true&limit=100&token=0afb14f1dbfdb5fc2c6c96195e399ebd"
 
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
-    }
-    response = session.get(start_url, headers=headers)
+    response = session.get(start_url)
     data = json.loads(response.text)
 
-    for poi in data:
-        store_url = "<MISSING>"
+    for poi in data["items"]:
+        store_url = poi["url"]
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
+        street_address = poi["address_1"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
-        city = city if city else "<MISSING>"
         state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        zip_code = poi["postal_code"]
+        country_code = "<MISSING>"
+        store_number = poi["number"]
+        phone = poi["phone_md"].split("\n")[0].strip()
         location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        store_url = f'https://valuepawnandjewelry.com/stores/{state}/{city.replace(" ", "+")}/{street_address.replace(" ", "-").replace(".", "")}/'
-        store_url = store_url.lower()
+        hoo = []
+        if poi.get("delivery_areas"):
+            try:
+                latitude = poi["delivery_areas"][-1]["lat_lng"][0][0]
+                longitude = poi["delivery_areas"][-1]["lat_lng"][0][-1]
+            except Exception:
+                areas = poi["delivery_areas"]
+                latitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
+                    0
+                ][0][0]
+                longitude = [elem["lat_lng"] for elem in areas if elem.get("lat_lng")][
+                    0
+                ][0][-1]
+        hoo = poi["hours_md"].replace("\n", " ").split("Senior")[0].strip()
+        hours_of_operation = hoo if hoo else "<MISSING>"
 
         item = [
             DOMAIN,
