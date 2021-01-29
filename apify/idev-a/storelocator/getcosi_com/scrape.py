@@ -69,8 +69,19 @@ def fetch_data():
         longitude = location["lng"]
         tags = bs(location["hours"], "lxml")
         hours_of_operation = (
-            "; ".join([_.text for _ in tags.select("p")[:-2]]) or "<MISSING>"
+            "; ".join(
+                [
+                    _.text
+                    for _ in tags.select("p")
+                    if not _.find("a") and "This location" not in _.text
+                ]
+            )
+            or "<MISSING>"
         )
+
+        _hours = re.findall(r"\w+:;", hours_of_operation)
+        for hour in _hours:
+            hours_of_operation = hours_of_operation.replace(hour, hour[:-1])
 
         data.append(
             [

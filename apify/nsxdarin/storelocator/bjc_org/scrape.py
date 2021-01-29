@@ -70,6 +70,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
+        hours2 = ""
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
@@ -103,8 +104,16 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if "Operating Hours:</strong><br><strong>" in line2:
+                hours2 = line2.split("Operating Hours:</strong><br><strong>")[1].split(
+                    "</p><"
+                )[0]
         if hours == "":
             hours = "<MISSING>"
+        if hours2 != "":
+            hours = hours2
+        hours = hours.replace("</strong>", "")
+        hours = hours.replace("</strong><br><strong>", "; ")
         hours = hours.replace(":00;", ";").replace(":00-", "-")
         city = city.replace("&#39;", "'")
         add = add.replace("&#39;", "'")
@@ -112,6 +121,7 @@ def fetch_data():
         city = city.replace("&amp;", "&")
         add = add.replace("&amp;", "&")
         name = name.replace("&amp;", "&")
+        hours = hours.replace("<br><strong>", "; ")
         if phone == "":
             phone = "<MISSING>"
         yield [
