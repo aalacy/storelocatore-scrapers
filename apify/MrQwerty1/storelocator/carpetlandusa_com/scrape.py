@@ -1,5 +1,4 @@
 import csv
-from lxml import html
 from sgrequests import SgRequests
 
 
@@ -34,39 +33,33 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://www.mascomabank.com"
-    page_url = "https://www.mascomabank.com/locations/"
+    locator_domain = "https://carpetlandusa.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
+    }
+    api_url = "https://carpetlandusa.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
 
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.content)
-    div = tree.xpath('//div[@class="location-overlay"]')
-    for j in div:
-        ad = j.xpath('.//div[@class="marker"]/text()')
-        ad = list(filter(None, [a.strip() for a in ad]))
-        street_address = ", ".join(ad[:-1])
-        line = ad[-1]
-        city = line.split(",")[0]
-        line = line.split(",")[1].strip()
-        postal = line.split()[-1]
-        state = line.replace(postal, "")
+    r = session.get(api_url, headers=headers)
+    js = r.json()
 
+    for j in js:
+        street_address = (
+            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
+        )
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "".join(j.xpath('.//div[@class="visit"]/a/@href'))
-        location_name = "".join(j.xpath('.//div[@class="marker"]/@data-name'))
-        phone = "".join(j.xpath('.//div[@class="phone"]/text()'))
-        latitude = "".join(j.xpath('.//div[@class="marker"]/@data-lat')) or "<MISSING>"
-        longitude = "".join(j.xpath('.//div[@class="marker"]/@data-lng')) or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        page_url = j.get("url") or "<MISSING>"
+        location_name = j.get("store").replace("&#8211;", "-")
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
-        hours = j.xpath('.//div[@class="hours card-header"]/p[1]/strong/text()')
-        hours = list(filter(None, [a.strip() for a in hours]))
-        hours = "".join(hours)
-
-        hours_of_operation = "Closed"
-        if hours == "Lobby Closed":
-            hours_of_operation = "Closed"
         row = [
             locator_domain,
             page_url,
