@@ -55,18 +55,24 @@ def fetch_data():
     time.sleep(10)
 
     base = BeautifulSoup(driver.page_source, "lxml")
-    items = base.find(id="storeLocator__storeList").find_all(class_="store-locator__infobox")
+    items = base.find(id="storeLocator__storeList").find_all(
+        class_="store-locator__infobox"
+    )
 
     data = []
     found_poi = []
 
     locator_domain = "manchuwok.com"
     for item in items:
-        location_name = item.find(class_="infobox__row infobox__title store-location").text.strip()
+        location_name = item.find(
+            class_="infobox__row infobox__title store-location"
+        ).text.strip()
         if "closed" in location_name.lower():
             continue
 
-        raw_address = item.find(class_="infobox__row store-address").text.strip().split("  ")
+        raw_address = (
+            item.find(class_="infobox__row store-address").text.strip().split("  ")
+        )
 
         street_address = raw_address[0].strip()
         if street_address in found_poi:
@@ -94,11 +100,25 @@ def fetch_data():
         location_type = "<MISSING>"
         phone = "<MISSING>"
 
-        latitude = item.find(class_="infobox__row infobox__cta ssflinks")["href"].split("(")[1].split(",")[0].strip()
-        longitude = item.find(class_="infobox__row infobox__cta ssflinks")["href"].split("(")[1].split(",")[1][:-1].strip()
+        latitude = (
+            item.find(class_="infobox__row infobox__cta ssflinks")["href"]
+            .split("(")[1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            item.find(class_="infobox__row infobox__cta ssflinks")["href"]
+            .split("(")[1]
+            .split(",")[1][:-1]
+            .strip()
+        )
 
         try:
-            hours_of_operation = item.find(class_="infobox__row store-operating-hours").get_text(" ").strip()
+            hours_of_operation = (
+                item.find(class_="infobox__row store-operating-hours")
+                .get_text(" ")
+                .strip()
+            )
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
         except:
