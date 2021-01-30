@@ -3,7 +3,6 @@ from lxml import html
 from sgrequests import SgRequests
 
 
-
 def write_output(data):
     with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
         writer = csv.writer(
