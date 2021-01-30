@@ -103,26 +103,27 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        if CS is False:
-            if lat == "":
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if lat == "":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if CS is True:
+            hours = "Coming Soon"
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():
