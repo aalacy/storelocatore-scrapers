@@ -135,13 +135,13 @@ def fetch_data():
     searched = []
     all_coordinates = {}
     us_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_radius_miles=50
     )
     ca_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA], max_radius_miles=200
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=50
     )
     uk_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=200
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
     )
     all_coordinates = {"US": us_search, "CA": ca_search, "UK": uk_search}
 
