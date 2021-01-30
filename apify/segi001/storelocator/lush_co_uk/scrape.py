@@ -125,24 +125,29 @@ def fetch_data():
             if hours == "":
                 hours = missingString
                 typ = "Closed"
-            result.append(
-                [
-                    locator_domain,
-                    url,
-                    name,
-                    street,
-                    city,
-                    missingString,
-                    zp,
-                    missingString,
-                    store_num,
-                    phone,
-                    typ,
-                    missingString,
-                    missingString,
-                    hours,
-                ]
-            )
+            if "Dublin" in city:
+                pass
+            elif "Cork" in city:
+                pass
+            else:
+                result.append(
+                    [
+                        locator_domain,
+                        url,
+                        name,
+                        street,
+                        city,
+                        missingString,
+                        zp,
+                        missingString,
+                        store_num,
+                        phone,
+                        typ,
+                        missingString,
+                        missingString,
+                        hours,
+                    ]
+                )
     return result
 
 
