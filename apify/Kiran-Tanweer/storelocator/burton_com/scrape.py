@@ -9,8 +9,8 @@ logger = SgLogSetup().get_logger("burton_com")
 session = SgRequests()
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36',
-    }
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
+}
 
 
 def write_output(data):
@@ -38,7 +38,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -53,56 +53,71 @@ def write_output(data):
                 temp_list.append(comp_list)
                 writer.writerow(row)
         logger.info(f"No of records being processed: {len(temp_list)}")
-        
-locations = ['https://www.shopbedmart.com/hi/locations/', 'https://www.shopbedmart.com/nw/locations/']
+
+
+locations = [
+    "https://www.shopbedmart.com/hi/locations/",
+    "https://www.shopbedmart.com/nw/locations/",
+]
+
 
 def fetch_data():
     data = []
-    url = 'https://www.burton.com/ca/en/stores'
+    url = "https://www.burton.com/ca/en/stores"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    locations = soup.findAll("figure", {"class":"store-wrap north-america"})
+    locations = soup.findAll("figure", {"class": "store-wrap north-america"})
     for loc in locations:
-        title = loc.find("h3", {"class":"text-h3-display"}).text.strip()
-        street = loc.find("span", {"itemprop":"streetAddress"}).text.strip()
-        city = loc.find("span", {"itemprop":"addressLocality"}).text.strip()
-        state = loc.find("span", {"itemprop":"addressRegion"}).text.strip()
-        pcode = loc.find("span", {"itemprop":"postalCode"}).text.strip()
+        title = loc.find("h3", {"class": "text-h3-display"}).text.strip()
+        street = loc.find("span", {"itemprop": "streetAddress"}).text.strip()
+        city = loc.find("span", {"itemprop": "addressLocality"}).text.strip()
+        state = loc.find("span", {"itemprop": "addressRegion"}).text.strip()
+        pcode = loc.find("span", {"itemprop": "postalCode"}).text.strip()
 
-        if state == 'VT' or state == 'CO' or state == 'NY' or state == 'CA' or state == 'MA' or state == 'UT' or state == 'PA' or state == 'IL' or state == 'ME':
-            country = 'US'
+        if (
+            state == "VT"
+            or state == "CO"
+            or state == "NY"
+            or state == "CA"
+            or state == "MA"
+            or state == "UT"
+            or state == "PA"
+            or state == "IL"
+            or state == "ME"
+        ):
+            country = "US"
         else:
-            country = 'CAN'
+            country = "CAN"
 
-        phone = loc.find("span", {"itemprop":"telephone"}).text.strip()
-        link = loc.find("span", {"class":"view-details"}).find('a')['href'].strip()
-        link = 'https://www.burton.com/' + link
+        phone = loc.find("span", {"itemprop": "telephone"}).text.strip()
+        link = loc.find("span", {"class": "view-details"}).find("a")["href"].strip()
+        link = "https://www.burton.com/" + link
         p = session.get(link, headers=headers, verify=False)
         soups = BeautifulSoup(p.text, "html.parser")
-        info = soups.find("div", {"class":"hours"})
-        hours = info.find('h5').text.strip()
-        if hours == 'Store Hours:':
-            hours = '<MISSING>'
+        info = soups.find("div", {"class": "hours"})
+        hours = info.find("h5").text.strip()
+        if hours == "Store Hours:":
+            hours = "<MISSING>"
         else:
             hours = hours
-    
+
         data.append(
-                [
-                    url,
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    country,
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    "<INACCESSIBLE>",
-                    "<INACCESSIBLE>",
-                    hours,
-                ]
+            [
+                url,
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                country,
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                "<INACCESSIBLE>",
+                "<INACCESSIBLE>",
+                hours,
+            ]
         )
     return data
 
