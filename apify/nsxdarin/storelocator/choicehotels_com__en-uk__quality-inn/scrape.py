@@ -7,7 +7,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("choicehotels_com__en-uk__ascend")
+logger = SgLogSetup().get_logger("choicehotels_com__en-uk__quality-inn")
 
 
 def write_output(data):
@@ -41,13 +41,13 @@ def fetch_data():
     locs = []
     url = "https://www.choicehotels.com/cs/chcom_eu/eu/docs/en-gb/choice-hotels/sitemap.xml"
     r = session.get(url, headers=headers, verify=False)
-    website = "choicehotels.com/en-uk/ascend"
+    website = "choicehotels.com/en-uk/quality-inn"
     country = "GB"
-    typ = "Ascend"
+    typ = "Quality Inn"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "united-kingdom" in line and "ascend-hotels/gb" in line:
+        if "united-kingdom" in line and "quality-inn-hotels/gb" in line:
             locs.append(
                 line.strip().replace("\r", "").replace("\n", "").replace("\n", "")
             )
@@ -58,7 +58,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        store = loc.split("ascend-hotels/")[1]
+        store = loc.split("quality-inn-hotels/")[1]
         phone = ""
         lat = ""
         lng = ""
