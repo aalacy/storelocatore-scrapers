@@ -69,7 +69,6 @@ def fetch_data():
         if "Coming" in hours:
             continue
         phone = div.find("div", {"class": "phone"}).text
-        lat = longt = "<MISSING>"
         data.append(
             [
                 "https://www.pgatoursuperstore.com/",
