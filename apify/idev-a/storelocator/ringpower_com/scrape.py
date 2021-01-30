@@ -54,7 +54,7 @@ def fetch_data():
         city = myutil._valid(item["city"])
         state = myutil._valid(item["state"])
         zip = myutil._valid(item["zipCode"])
-        country_code = "UK"
+        country_code = "US"
         store_number = "<MISSING>"
         phone = myutil._valid(item.get("phone"))
         location_type = myutil._valid(item["speciality"])
