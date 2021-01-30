@@ -194,10 +194,6 @@ def fetch_data():
             adressessess.append(store[2] + store[-1])
             yield store
 
-
-# fetch_data()
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
