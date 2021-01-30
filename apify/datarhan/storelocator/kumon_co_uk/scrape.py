@@ -1,6 +1,7 @@
 import csv
 from lxml import etree
 
+from sgscrape.sgpostal import SgAddress, parse_address
 from sgrequests import SgRequests
 
 
@@ -93,18 +94,19 @@ def fetch_data():
 
         location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
-        street_address += loc_dom.xpath(
-            '//span[@itemprop="streetAddress"]/following::text()'
-        )[0]
-        street_address = street_address if street_address else "<MISSING>"
-        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        full_addr = " ".join(loc_dom.xpath('//span[@itemprop="address"]//text()'))
+        parsed_adr = parse_address(full_addr)
+        street_address = parsed_adr.street_address_1
+        if parsed_adr.street_address_2:
+            street_address += ", " + parsed_adr.street_address_2
+        city = parsed_adr.city
+        city = city if city else "<MISSING>"
+        state = parsed_adr.state
+        state = state if state else "<MISSING>"
+        zip_code = parsed_adr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = parsed_adr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//span[@class="number"]/text()')
         phone = phone[0] if phone else "<MISSING>"
