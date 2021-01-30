@@ -1,7 +1,7 @@
 import csv
 from lxml import etree
 
-from sgscrape.sgpostal import SgAddress, parse_address
+from sgscrape.sgpostal import parse_address
 from sgrequests import SgRequests
 
 
