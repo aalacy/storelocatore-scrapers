@@ -31,7 +31,6 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
         # Body
