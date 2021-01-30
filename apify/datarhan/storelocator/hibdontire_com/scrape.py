@@ -41,9 +41,10 @@ def fetch_data():
     DOMAIN = "hibdontire.com"
     start_url = "https://local.hibdontire.com/"
 
-    with webdriver.Firefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
+    driver = webdriver.Firefox()
+    driver.get(start_url)
+    dom = etree.HTML(driver.page_source)
+    driver.close()
     all_locations = dom.xpath('//li[@itemtype="http://schema.org/LocalBusiness"]')
 
     for poi_html in all_locations:
@@ -57,11 +58,11 @@ def fetch_data():
         state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
         state = state[0] if state else "<MISSING>"
         zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
-        phone = phone if phone else "<MISSING>"
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
