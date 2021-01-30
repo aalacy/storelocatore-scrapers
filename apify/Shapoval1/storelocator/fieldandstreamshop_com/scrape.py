@@ -1,7 +1,7 @@
 import csv
 from lxml import html
 from sgrequests import SgRequests
-from concurrent import futures
+
 
 
 def write_output(data):
