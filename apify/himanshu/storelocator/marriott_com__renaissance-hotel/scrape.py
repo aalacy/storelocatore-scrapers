@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
 
 session = SgRequests()
@@ -82,7 +81,6 @@ def fetch_data():
                     phone = location["@graph"][-1]["telephone"]
                 else:
                     phone = "<MISSING>"
-                location_type = location["@graph"][-1]["@type"]
                 latitude = location["@graph"][-1]["geo"]["latitude"]
                 longitude = location["@graph"][-1]["geo"]["longitude"]
                 if (
@@ -171,7 +169,6 @@ def fetch_data():
                     continue
                 store_number = "<MISSING>"
                 phone = location["contactPoint"][0]["telephone"]
-                location_type = location["@type"]
                 latitude = location["geo"]["latitude"]
                 longitude = location["geo"]["longitude"]
                 if street_address == "401 Chestnut Street":
