@@ -60,13 +60,17 @@ def _parse_detail(locator_domain, links):
         direction = contact_info[0]["href"].split("/")[-1].strip().split(",")
         latitude = direction[0].strip()
         longitude = direction[1].strip()
-        tags = soup1.select("table.hours tr")
-        hours = []
-        for tag in tags:
-            hours.append(
-                f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
-            )
-        hours_of_operation = myutil._valid("; ".join(hours))
+        hours_of_operation = soup1.select_one("h2.subtitle").text
+        if hours_of_operation == "This Location is Temporarily Closed":
+            hours_of_operation = "Closed"
+        else:
+            tags = soup1.select("table.hours tr")
+            hours = []
+            for tag in tags:
+                hours.append(
+                    f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
+                )
+            hours_of_operation = myutil._valid("; ".join(hours))
 
         _item = [
             locator_domain,
@@ -85,7 +89,7 @@ def _parse_detail(locator_domain, links):
             hours_of_operation,
         ]
 
-        myutil._check_duplicate_by_loc(data, _item)
+        data.append(_item)
 
     return data
 
