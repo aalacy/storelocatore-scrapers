@@ -112,10 +112,15 @@ def fetch_data():
                 .replace(" Québec", " ,Québec")
                 .replace('<span style="font-size: 16px; ">', "")
                 .replace("Les Avenues Vaudreuil -", "")
+                .replace("Carrefour Laval", "Carrefour, Laval")
                 .replace("<br />", ",")
                 .split("&nbsp")[0]
                 .split(",")
             )
+
+            if raw_address[0] == "":
+                raw_address.pop(0)
+
             if "CANADA" in raw_address[-1].upper():
                 raw_address.pop(-1)
             street_address = " ".join(raw_address[:-2]).strip()
@@ -140,9 +145,12 @@ def fetch_data():
                 zip_code = "G2K 1N4"
 
             if "#2058" not in street_address and "Mode Unit" not in street_address:
-                digit = re.search(r"\d", street_address).start(0)
-                if digit != 0:
-                    street_address = street_address[digit:]
+                try:
+                    digit = re.search(r"\d", street_address).start(0)
+                    if digit != 0:
+                        street_address = street_address[digit:]
+                except:
+                    pass
 
             country_code = "CA"
             hours = loc["further_information_content"].replace("\r\n", " ").strip()
