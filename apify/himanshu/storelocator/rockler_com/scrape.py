@@ -141,13 +141,6 @@ def fetch_data():
                 page_url = dt1["href"]
 
                 soup2 = BeautifulSoup(session.get(page_url).text, "lxml")
-
-                # if page_url == "https://www.rockler.com/retail/stores/wi/brookfield-store":
-                #     main2 = soup2.find("div", {"class": "col-m-5"})
-                # elif page_url == "https://www.rockler.com/retail/stores/wa/tukwila-store":
-                #     main2 = soup2.find_all("div", {"class": "col-m-6"})[1]
-                # else:
-                #     main2 = soup2.find("div", {"class": "col-m-6"})
                 return_main_object.append(get_store(soup2, page_url))
 
     return return_main_object
