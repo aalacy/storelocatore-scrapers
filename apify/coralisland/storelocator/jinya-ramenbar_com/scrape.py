@@ -11,7 +11,7 @@ base_url = "http://jinya-ramenbar.com"
 
 
 def validate(item):
-    if item == None:
+    if item is None:
         item = ""
     if type(item) == int or type(item) == float:
         item = str(item)
@@ -21,7 +21,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
