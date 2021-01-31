@@ -47,7 +47,7 @@ def fetch_data():
     stores = soup.find("section", {"id": "comp-keeh2c47"}).find_all(
         "div", {"class": "_1Z_nJ"}
     )
-    print(len(stores))
+
     del stores[0]  # Location title
     for store in stores:
         ps = store.find_all("p")
