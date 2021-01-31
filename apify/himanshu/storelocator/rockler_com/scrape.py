@@ -52,7 +52,7 @@ def get_store(soup2, page_url):
         loc.remove("**New Address**")
         loc.remove("Store Location")
 
-    hours = " ".join(loc[loc.index("Store Hours"):]).replace("Store Hours", "").strip()
+    hours = " ".join(loc[loc.index("Store Hours") :]).replace("Store Hours", "").strip()
 
     i = loc.index("Phone:")
     if i > 3:
