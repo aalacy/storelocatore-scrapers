@@ -87,8 +87,12 @@ def fetch_data():
         hoo = []
         for elem in poi["location"]["businessHours"]:
             if elem["hours"]:
-                opens = elem["hours"][0]["openTime"].split("T")[-1].split(":30.1")[0]
-                closes = elem["hours"][0]["closeTime"].split("T")[-1].split(":30.1")[0]
+                opens = ":".join(
+                    elem["hours"][0]["openTime"].split("T")[-1].split(":")[:2]
+                )
+                closes = ":".join(
+                    elem["hours"][0]["closeTime"].split("T")[-1].split(":")[:2]
+                )
                 hoo.append(f'{elem["day"]} {opens} - {closes}')
             else:
                 hoo.append(f'{elem["day"]} ')
