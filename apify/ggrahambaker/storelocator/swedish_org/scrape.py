@@ -1,6 +1,4 @@
 import csv
-import os
-import time
 import re
 import json
 from bs4 import BeautifulSoup
