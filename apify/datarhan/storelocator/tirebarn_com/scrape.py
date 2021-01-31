@@ -80,8 +80,12 @@ def fetch_data():
                     hoo[day]["opens"] = ":".join(hours.split(":")[:2])
         hours_of_operation = []
         for day, hours in hoo.items():
-            hours_of_operation.append(f'{day} {hours["opens"]} - {hours["closes"]}')
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            opens = hours["opens"]
+            closes = hours["closes"]
+            hours_of_operation.append(f"{day} {opens} - {closes}")
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
