@@ -34,14 +34,7 @@ def para(url):
 
     k["page_url"] = "https://www.eskimohut.com" + url
 
-    try:
-        k["name"] = (
-            soup.find("span", {"class": "m-font-size-36 lh-1 font-size-48"})
-            .find("font")
-            .text.strip()
-        )
-    except Exception:
-        k["name"] = "<MISSING>"
+    k["name"] = "<MISSING>"
 
     try:
         k["latitude"] = data["data-lat"]
@@ -167,6 +160,29 @@ def para(url):
         except Exception:
             k["address"] = "<MISSING>"
 
+    k["type"] = "<MISSING>"
+
+    if k["type"] == "<MISSING>":
+        try:
+            backup = k["name"]
+            k["name"] = soup.find('h2',{'id':'1266783305'}).text.strip()
+            if 'oming' in k["name"]:
+                k["type"] = "Coming Soon"
+                try:
+                    k["name"] = k["name"].split('(',1)[0]+k["name"].split(')',1)[1]
+                except Exception:
+                    k["name"] = k["name"]
+            else:
+                k["type"] = "<MISSING>"
+        except Exception:
+            k["name"] = "<MISSING>"
+            k["type"] = "<MISSING>"
+        try:
+            k["name"] = soup.find('div',{'id':'1092523778'}).text.strip()
+        except Exception:
+            k["name"] = "<MISSING>"
+            
+
     return k
 
 
@@ -218,7 +234,7 @@ def scrape():
         phone=MappingField(mapping=["phone"], part_of_record_identity=True),
         store_number=MissingField(),
         hours_of_operation=MappingField(mapping=["hours"]),
-        location_type=MissingField(),
+        location_type=MappingField(mapping=["type"]),
     )
 
     pipeline = SimpleScraperPipeline(
