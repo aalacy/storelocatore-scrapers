@@ -105,7 +105,6 @@ def scrape():
             multi_mapping_concat_with=",",
             value_transform=fix_hours,
         ),
-        # street_address=ConstantField(url),
         city=MappingField(mapping=["city"]),
         state=MappingField(mapping=["state"]),
         zipcode=MappingField(
