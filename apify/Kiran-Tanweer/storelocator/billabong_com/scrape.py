@@ -183,7 +183,6 @@ def fetch_data():
                         close_time = hour[4]
                     else:
                         close_time = hour[3]
-                    status = hour[5]
                     hoo = day + ": " + str(open_time) + "-" + str(close_time) + " "
                     hrs = hoo + hrs
                 hours = hrs
