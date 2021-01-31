@@ -71,15 +71,15 @@ def fetch_data():
     li = tree.xpath('//div[@class="fl-rich-text"]')
     for j in li:
 
-        line = ''.join(j.xpath(".//p/text()")).strip().split('\n')
+        line = "".join(j.xpath(".//p/text()")).strip().split("\n")
         location_name = line[0]
-        phone = ''.join(line[-1].split(':')[-1].strip()).replace(' – ', '-').strip()
+        phone = "".join(line[-1].split(":")[-1].strip()).replace(" – ", "-").strip()
         line = line[1:-1]
-        if line[0].find(',') == -1:
-            line = ' '.join(line)
+        if line[0].find(",") == -1:
+            line = " ".join(line)
         else:
             line = line[0]
-        line = line.replace('Address:', '').replace('\xa0', ' ').strip()
+        line = line.replace("Address:", "").replace("\xa0", " ").strip()
         a = usaddress.tag(line, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
         if street_address == "None":
@@ -94,9 +94,7 @@ def fetch_data():
         longitude = "<MISSING>"
         location_type = "<MISSING>"
 
-
-
-        hours_of_operation = '<MISSING>'
+        hours_of_operation = "<MISSING>"
         row = [
             locator_domain,
             page_url,
