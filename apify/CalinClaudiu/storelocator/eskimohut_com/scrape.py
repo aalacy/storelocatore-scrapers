@@ -164,12 +164,11 @@ def para(url):
 
     if k["type"] == "<MISSING>":
         try:
-            backup = k["name"]
-            k["name"] = soup.find('h2',{'id':'1266783305'}).text.strip()
-            if 'oming' in k["name"]:
+            k["name"] = soup.find("h2", {"id": "1266783305"}).text.strip()
+            if "oming" in k["name"]:
                 k["type"] = "Coming Soon"
                 try:
-                    k["name"] = k["name"].split('(',1)[0]+k["name"].split(')',1)[1]
+                    k["name"] = k["name"].split("(", 1)[0] + k["name"].split(")", 1)[1]
                 except Exception:
                     k["name"] = k["name"]
             else:
@@ -178,10 +177,9 @@ def para(url):
             k["name"] = "<MISSING>"
             k["type"] = "<MISSING>"
         try:
-            k["name"] = soup.find('div',{'id':'1092523778'}).text.strip()
+            k["name"] = soup.find("div", {"id": "1092523778"}).text.strip()
         except Exception:
             k["name"] = "<MISSING>"
-            
 
     return k
 
