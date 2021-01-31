@@ -42,13 +42,13 @@ def fetch_data():
     items = []
 
     DOMAIN = "buona.com"
-    start_url = "https://buona.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&cat=&max_results=50&search_radius=300&autoload=1"
+    start_url = "https://buona.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&cat=&max_results=50&search_radius=3000&autoload=1"
 
     response = session.get(start_url)
     data = json.loads(response.text)
 
     for poi in data:
-        store_url = "https://buona.com{}".format(poi["url"])
+        store_url = "<MISSING>"
         location_name = poi["store"]
         street_address = poi["address"]
         city = poi["city"]
