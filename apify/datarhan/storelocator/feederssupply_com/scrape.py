@@ -49,32 +49,76 @@ def fetch_data():
     for poi in [
         elem
         for elem in data["data"]["document_data"].values()
-        if elem.get("pageTitleSEO")
+        if elem.get("pageUriSEO")
     ]:
         store_url = "https://www.feederssupply.com/" + poi["pageUriSEO"]
-        if "copy-of-" in store_url:
+        if "copy-" not in store_url:
+            print("----", store_url)
+            continue
+        if "fish-guarantee" in store_url:
             continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
-        raw_data = loc_dom.xpath("//div[@data-packed]//p/span//text()")
-        if not loc_dom.xpath('//h2[span[contains(text(), "Feeders Supply -")]]'):
-            continue
+        print("++++", store_url)
 
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = raw_data[0].strip()
-        street_address = street_address if street_address else "<MISSING>"
-        city = raw_data[1].split(", ")[0].strip()
-        state = raw_data[1].split(", ")[-1].split()[0].strip()
-        zip_code = raw_data[1].split(", ")[-1].split()[-1].strip()
+        street_address = loc_dom.xpath("//div[@data-packed]/p[3]/text()")
+        if not street_address:
+            street_address = loc_dom.xpath("//div[@data-packed]/p[1]/span/text()")
+        if not street_address:
+            street_address = loc_dom.xpath(
+                "//div[@data-packed]/p[3]/span/span/span/text()"
+            )
+        street_address = street_address[0] if street_address else "<MISSING>"
+        alt = loc_dom.xpath("//div[@data-packed]/p[3]/text()")
+        city = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
+        if not city:
+            city = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
+        if not city:
+            city = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
+        if city and not city[0].strip():
+            city = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
+        city = (
+            city[0].split(", ")[0].strip() if city else alt[-1].split(", ")[0].strip()
+        )
+        state = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
+        if not state:
+            state = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
+        if not state:
+            state = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
+        if state and not state[0].strip():
+            state = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
+        state = (
+            state[0].split(", ")[-1].split()[0]
+            if state
+            else alt[-1].split(", ")[-1].split()[0]
+        )
+        zip_code = loc_dom.xpath("//div[@data-packed]/p[4]/text()")
+        if not zip_code:
+            zip_code = loc_dom.xpath("//div[@data-packed]/p[2]/span/text()")
+        if not zip_code:
+            zip_code = loc_dom.xpath("//div[@data-packed]/p[2]/text()")
+        if zip_code and not zip_code[0].strip():
+            zip_code = loc_dom.xpath("//div[@data-packed]/p[3]/text()")[1:]
+        zip_code = (
+            zip_code[0].split(", ")[-1].split()[-1]
+            if zip_code
+            else alt[-1].split(", ")[-1].split()[-1]
+        )
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = raw_data[2].strip()
+        phone = loc_dom.xpath('//a[@data-type="phone"]/@data-content')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = raw_data[4].strip()
+        hours_of_operation = loc_dom.xpath(
+            '//div[contains(@id,"comp")]/div[@data-packed="true"][2]/p[2]//text()'
+        )
+        hours_of_operation = (
+            hours_of_operation[0] if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,
