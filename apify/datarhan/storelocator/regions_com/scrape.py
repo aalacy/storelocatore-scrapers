@@ -23,7 +23,14 @@ def fetch_records_for(zipcode):
             "searchResults =(.+);", all_poi.replace("\r", "").replace("\n", "")
         )[0]
         all_poi = json.loads(all_poi.replace("/* forcing open state for all FCs*/", ""))
+        all_urls = dom.xpath('//ol[@class="locator-results__list"]/li/a/@href')
         for poi in all_poi:
+            if type(poi) == str:
+                continue
+            for url in all_urls:
+                if poi["title"].replace(" ", "-").lower() in url.lower():
+                    poi["store_url"] = url
+                    break
             yield poi
 
 
@@ -37,12 +44,14 @@ def process_record(raw_results_from_one_zipcode):
             continue
 
         page_url = "<MISSING>"
+        if poi.get("store_url"):
+            page_url = "https://www.regions.com" + poi["store_url"]
         location_name = poi["title"]
         street_address = poi["address"].split("<br />")[0]
         city = poi["address"].split("<br />")[-1].split(",")[0]
         state = poi["address"].split("<br />")[-1].split(",")[-1].split()[0]
         zip_postal = poi["address"].split("<br />")[-1].split(",")[-1].split()[-1]
-        country_code = poi["geolocation"]
+        country_code = "US"
         store_number = ""
         phone = ""
         location_type = poi["type"]
