@@ -106,8 +106,10 @@ def fetch_data():
         if city == "Palm Desert":
             street_address = a.get("recipient")
         if city == "Carmel":
-            street_address = f"{a.get('address1')} {a.get('address2')} {a.get('city')}".replace(
-                "None", ""
+            street_address = (
+                f"{a.get('address1')} {a.get('address2')} {a.get('city')}".replace(
+                    "None", ""
+                )
             )
         if city == "Vancouver":
             street_address = "".join(line.split(",")[:-2]).strip()
