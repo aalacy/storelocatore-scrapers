@@ -85,7 +85,6 @@ def fetch_data():
                     store_link = "https://agents.allstate.com/" + a[loc][
                         "href"
                     ].replace("../../", "")
-
                     r3 = session.get(store_link)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     phone = soup3.find("span", {"class": "Core-phoneText"}).text
@@ -222,6 +221,24 @@ def fetch_data():
                     ).text.strip()
                 except:
                     continue
+                try:
+                    day = soup2.find("table", {"class": "c-hours-details"}).text
+
+                    hours_of_operation = ""
+                    hours_of_operation = (
+                        day.replace("Day of the WeekHours", "")
+                        .replace("Available by appointment", "")
+                        .replace("Mon", " Mon ")
+                        .replace("Tue", " Tue ")
+                        .replace("Wed", " Wed ")
+                        .replace("Thu", " Thu ")
+                        .replace("Fri", " Fri ")
+                        .replace("Sat", " Sat ")
+                        .replace("Sun", " Sun ")
+                        .strip()
+                    )
+                except:
+                    hours_of_operation = "<MISSING>"
                 zip1 = soup2.find(
                     "span", {"class": "c-address-postal-code"}
                 ).text.strip()

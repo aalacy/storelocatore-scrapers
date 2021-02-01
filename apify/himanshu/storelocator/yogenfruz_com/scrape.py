@@ -1,162 +1,105 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('yogenfruz_com')
-
-
-
-
-
+logger = SgLogSetup().get_logger("yogenfruz_com")
 session = SgRequests()
 
+
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-
-    logger.info("soup ===  first")
 
     base_url = "https://www.yogenfruz.com"
-    r = session.get("https://www.yogenfruz.com/storelocator/frozen-yogurt", headers=headers)
+    r = session.get("https://yogenfruz.com/find-a-store/")
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
-    # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+    addresses = []
 
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = ""
+    location_name = "<MISSING>"
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "<MISSING>"
     store_number = "<MISSING>"
-    phone = ""
+    phone = "<MISSING>"
     location_type = "yogen fruz"
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
-    for script in soup.find_all("a"):
-        if "canada" in script.text.lower() or "usa" in script.text.lower():
-            country_code = script.text[:2].upper()
-            r_country = session.get(script.get("href"), headers=headers)
-            soup_country = BeautifulSoup(r_country.text, "lxml")
-            # logger.info(script.text+" = Country = "+script.get("href"))
+    locs = soup.find_all("div", {"class": "location-search-result col-md-4"})
+    for loc in locs:
+        page_url = loc.find("a", {"class": "location-link"})["href"]
+        location_name = loc.find("a", {"class": "location-link"}).text
+        street_address = loc.find(
+            "div", {"class": "location-detail-address-1"}
+        ).text.strip()
+        if loc.find("div", {"class": "location-detail-address-3"}):
+            city_state_zip = (
+                loc.find("div", {"class": "location-detail-address-3"})
+                .text.strip()
+                .split(",")
+            )
+            city = city_state_zip[0].strip()
+            state = city_state_zip[1].strip()
+            zipp = city_state_zip[-1].strip()
+        if len(zipp) == 5:
+            country_code = "US"
+        else:
+            country_code = "CA"
 
-            for script_country in soup_country.find_all("div", "blocks block-r-half alllocations"):
-                # logger.info(script_country.text +" = region = "+script_country.find("a").get("href"))
-                r_region = session.get(script_country.find("a").get("href"), headers=headers)
-                soup_region = BeautifulSoup(r_region.text, "lxml")
+        if loc.find("a", {"class": "address-block-phone"}):
+            phone = loc.find("a", {"class": "address-block-phone"}).text.strip()
 
-                for script_region in soup_region.find_all("div", "blocks block-r-half alllocations"):
-                    # logger.info(script_region.text +" = Brooks = "+script_region.find("a").get("href"))
-                    r_brooks = session.get(script_region.find("a").get("href"),headers=headers)
-                    #r_brooks = session.get("https://www.yogenfruz.com/storelocator/city/whitby/ontario/canada",headers=headers)
-
-                    soup_brooks = BeautifulSoup(r_brooks.text, "lxml")
-
-                    for script_brooks in soup_brooks.find_all("div", "container15px"):
-                        location_name = script_brooks.find("a").text
-                        if location_name == "":
-                            location_name = "<MISSING>"
-                        # logger.info(script_brooks.find("a").text +" = Locations = "+script_brooks.find("a").get("href"))
-                        # r_location = session.get(script_brooks.find("a",text="location details").get("href"),
-                        # headers=headers)
-                        r_location = session.get(script_brooks.find("a").get("href"), headers=headers)
-                        soup_location = BeautifulSoup(r_location.text, "lxml")
-
-                        temp_flag = ""
-                        for l_data in list(soup_location.find("div", {"class": "container15px"}).stripped_strings):
-                            if "address" in l_data.lower():
-                                temp_flag = "address"
-                                address = ""
-                            elif "phone" in l_data.lower():
-                                temp_flag = "phone"
-                                phone = ""
-                            elif "business hours:" in l_data.lower():
-                                temp_flag = "business hours"
-                                hours_of_operation = ""
-                            elif "ucard:" in l_data.lower():
-                                temp_flag = "ucard"
-                            elif "mini" in l_data.lower():
-                                temp_flag = "mini"
-                            elif "map" in l_data.lower():
-                                temp_flag = "map"
-                            else:
-                                if temp_flag == "address":
-                                    address += l_data + ","
-                                elif temp_flag == "business hours":
-                                    hours_of_operation += l_data + " "
-                                elif temp_flag == "phone":
-                                    phone += l_data + " "
-                                else:
-                                    pass
-
-                        logger.info("~~~~~~~~~~~~~~~~~~~~~~country ==== " + script.text)
-                        logger.info("region ==== " + script_country.find("a").text)
-                        logger.info("brooks ==== " + script_region.find("a").text)
-                        logger.info("location_name ==== " + location_name)
-                        logger.info("address ==== " + address)
-
-                        try:
-                            latlong_url = soup_location.find("div", {"class": "container15px"}).find("a")["href"]
-                            latitude = latlong_url.split("daddr=")[1].split(",")[0]
-                            longitude = latlong_url.split("daddr=")[1].split(",")[1].split(" ")[0]
-                            logger.info("latlong_url ==== " + latlong_url)
-                        except:
-                            latitude = "<MISSING>"
-                            longitude = "<MISSING>"
-                            pass
-
-                        street_address = address.split(",")[0]
-                        logger.info("street_address = " + street_address)
-                        if ((len(address.split(",")[-2]) == 7 and country_code == "CA") or
-                                (len(address.split(",")[-2]) == 5 and country_code == "US")):
-                            city = address.split(",")[-4];
-                            logger.info("city = " + city)
-                            state = address.split(",")[-3].split(" ")[1];
-                            logger.info("state = " + state)
-                            zipp = address.split(",")[-2]
-                            logger.info("zipp = " + zipp)
-                            logger.info("latitude = " + latitude)
-                            logger.info("longitude = " + longitude)
-                        else:
-                            city = address.split(",")[-3];
-                            logger.info("city = " + city)
-                            state = address.split(",")[-2].split(" ")[1]
-                            logger.info("state = " + state)
-                            zipp = "<MISSING>"
-                            logger.info("zipp = " + zipp)
-                            logger.info("latitude = " + latitude)
-                            logger.info("longitude = " + longitude)
-
-                        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
-                        return_main_object.append(store)
-
-            #     break
-            # break
-
-    return return_main_object
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours_of_operation)
+        store.append(page_url)
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        yield store
 
 
 def scrape():

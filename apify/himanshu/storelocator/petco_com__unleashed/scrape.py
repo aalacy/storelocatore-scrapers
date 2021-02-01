@@ -1,109 +1,122 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('petco_com__unleashed')
-
-
-
-
-
+logger = SgLogSetup().get_logger("petco_com__unleashed")
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
+def write_output(data):
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
     base_url = "https://stores.petco.com"
-    r = session.get(base_url,headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    store_name = []
-    store_detail = []
-    return_main_object = []
-    addresss = []
-    link = (soup.find_all("a", {"class": "gaq-link", "data-gaq": "List, Region"}))
-    # logger.info(link)
-    # logger.info(len(link))
-    # exit()
+    addressses = []
+    state_divs = soup.find_all("div", {"class": "map-list-item-wrap is-single"})
+    for i, st_div in enumerate(state_divs, start=1):
+        if i == 53:
+            break
 
-    
-    for index, i in enumerate(link):
-        r1 = session.get(i['href'])
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        link1 = soup1.find_all("a", {"class": "gaq-link", "data-gaq": "List, City"})
-        
-        for j in link1:
-            
-            r2 = session.get(j['href'], headers=headers)
-            soup2 = BeautifulSoup(r2.text, "lxml")
-            details = soup2.find_all(
-                "a", {"class": "btn btn-primary store-info gaq-link"})
-            for q in details:
-                tem_var = [] 
-                page_url = q['href']
-                # logger.info(page_url)
-                r3 = session.get(q['href'], headers=headers)
-                soup3 = BeautifulSoup(r3.text, "html5lib")
-                json1 = json.loads(soup3.find(
-                    "script", {"type": "application/ld+json"}).text)
-                # logger.info(json1)
-            #     # logger.info("+++++++++++++++++++++++++++++++++++++++++++++++++++")
-                if "Unleashed" in soup3.find("span", class_="location-name").text.strip():
+        st_link = st_div.find("a", {"class": "gaq-link"})["href"]
+        req1 = session.get(st_link, headers=headers)
+        cities_soup = BeautifulSoup(req1.text, "lxml")
+        ct_divs = cities_soup.find_all("div", {"class": "map-list-item-wrap is-single"})
+        for city in ct_divs:
+            if city.find("a", {"class": "gaq-link"}):
+                page_url = city.find("a", {"class": "gaq-link"})["href"]
+                req2 = session.get(page_url, headers=headers)
+                store_soup = BeautifulSoup(req2.text, "lxml")
+                location_name = city.find("a", {"class": "gaq-link"})["title"].split(
+                    "|"
+                )[::-1]
+                location_name = " ".join(location_name)
+                store_number = "<MISSING>"
+                address = store_soup.find("p", {"class": "address"})
+                street = address.find_all("span")[0].text
+                cty = address.find_all("span")[1].text.split(",")[0]
+                st = address.find_all("span")[1].text.split(",")[1].split()[0]
+                zip_code = address.find_all("span")[1].text.split(",")[1].split()[1]
+                phone = store_soup.find("a", {"class": "phone gaq-link"}).text.strip()
+                lat_lng = store_soup.find("a", {"class": "directions"})["href"].split(
+                    "="
+                )[-1]
+                latitude = lat_lng.split(",")[0]
+                longitude = lat_lng.split(",")[1]
 
-                    location_name = soup3.find("span", class_="location-name").text.strip()
-                    store_number = soup3.find("span", class_="store-number").text.replace("Store:", "").strip()
-                    # logger.info(location_name)
-                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    # logger.info("============================link", details)
-                
-                    hours = " ".join(list(soup3.find("div", {"class": "hours"}).stripped_strings))
-                    latitude = json1[0]['geo']['latitude']
-                    longitude = json1[0]['geo']['longitude']
-                    name = json1[0]['mainEntityOfPage']['breadcrumb']['itemListElement'][0]['item']['name']
-                    # logger.info(json1[0]['address'])
-                    phone = json1[0]['address']['telephone']
-                    st = json1[0]['address']['streetAddress']
-                    city = json1[0]['address']['addressLocality']
-                    state = json1[0]['address']['addressRegion']
-                    zip1 = json1[0]['address']['postalCode']
+                new_link = store_soup.find(
+                    "a", {"class": "btn btn-primary full-width store-info gaq-link"}
+                )["href"]
+                req3 = session.get(new_link)
+                last_soup = BeautifulSoup(req3.text, "lxml")
 
-                    tem_var.append("https://stores.petco.com")
-                    tem_var.append(location_name)
-                    tem_var.append(st)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zip1)
-                    tem_var.append("US")
-                    tem_var.append(store_number)
-                    tem_var.append(phone)
-                    tem_var.append("PetStore")
-                    tem_var.append(latitude)
-                    tem_var.append(longitude)
-                    tem_var.append(hours)
-                    tem_var.append(page_url)
-                    if tem_var[2] in addresss:
-                        continue
-                    addresss.append(tem_var[2])
+                try:
+                    hrs_rows = last_soup.find_all("div", {"class": "day-hour-row"})
+                    openingHours = ""
+                    for row in hrs_rows:
+                        day = row.find("span", {"class": "daypart"}).text.strip()
+                        opening = row.find("span", {"class": "time-open"}).text.strip()
+                        closing = row.find("span", {"class": "time-close"}).text.strip()
+                        openingHours = (
+                            openingHours + day + " " + opening + "-" + closing + " "
+                        )
+                except:
+                    openingHours = "<MISSING>"
 
-                    # logger.info("==", str(tem_var))
-                    # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    yield tem_var
+                location_type = "PetStore"
+
+                store = []
+                store.append(base_url)
+                store.append(location_name.strip())
+                store.append(street.strip())
+                store.append(cty.strip())
+                store.append(st.strip())
+                store.append(zip_code.strip())
+                if zip_code.strip().isdigit():
+                    store.append("US")
+                else:
+                    store.append("CA")
+                store.append(store_number.strip())
+                store.append(phone.strip())
+                store.append(location_type)
+                store.append(str(latitude).strip() if latitude else "<MISSING>")
+                store.append(str(longitude).strip() if longitude else "<MISSING>")
+                store.append(openingHours.strip())
+                store.append(new_link.strip())
+                if store[2] in addressses:
+                    continue
+                addressses.append(store[2])
+                yield store
 
 
 def scrape():

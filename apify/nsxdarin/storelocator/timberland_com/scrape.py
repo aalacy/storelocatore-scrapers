@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://hosted.where2getit.com/timberland/local/ajax?lang=en-EN&xml_request=%3Crequest%3E%3Cappkey%3E3BD8F794-CA9E-11E5-A9D5-072FD1784D66%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Eretail_store%2Cfactory_outlet%2Crank+ASC%2C_distance%3C%2Forder%3E%3Climit%3E5000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E10002%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3Csearchradius%3E5000%3C%2Fsearchradius%3E%3Cwhere%3E%3Cor%3E%3Cretail_store%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Fretail_store%3E%3Cfactory_outlet%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Ffactory_outlet%3E%3Cauthorized_reseller%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fauthorized_reseller%3E%3Cicon%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ficon%3E%3Cpro_workwear%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Fpro_workwear%3E%3Cpro_footwear%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Fpro_footwear%3E%3Ctree_footwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftree_footwear%3E%3Ctree_apparel%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftree_apparel%3E%3C%2For%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
+    url = "https://hosted.where2getit.com/timberland/local/ajax?lang=en-EN&xml_request=%3Crequest%3E%3Cappkey%3E3BD8F794-CA9E-11E5-A9D5-072FD1784D66%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Eretail_store%2Cfactory_outlet%2Crank+ASC%2C_distance%3C%2Forder%3E%3Climit%3E2500%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E10002%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3Csearchradius%3E5000%3C%2Fsearchradius%3E%3Cwhere%3E%3Cor%3E%3Cretail_store%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Fretail_store%3E%3Cfactory_outlet%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Ffactory_outlet%3E%3Cauthorized_reseller%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fauthorized_reseller%3E%3Cicon%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ficon%3E%3Cpro_workwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fpro_workwear%3E%3Cpro_footwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fpro_footwear%3E%3Ctree_footwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftree_footwear%3E%3Ctree_apparel%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ftree_apparel%3E%3C%2For%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
     r = session.get(url, headers=headers)
     website = "timberland.com"
     typ = "<MISSING>"
@@ -57,6 +57,7 @@ def fetch_data():
             )
             name = name.replace("&lt;br&gt;", "")
             name = name.replace("&amp;reg", "")
+            hours = ""
         if "<address1>" in line:
             add = line.split("<address1>")[1].split("<")[0]
         if "<address2>" in line:
@@ -107,7 +108,11 @@ def fetch_data():
                 + hours7
             )
             if state != "":
-                if "0" not in hours or ":" not in hours:
+                if (
+                    "am" not in hours
+                    and "pm" not in hours
+                    and "closed" not in hours.lower()
+                ):
                     hours = "<MISSING>"
                 name = name.replace("Timberland", "Timberland ").replace("  ", " ")
                 loc = (
@@ -115,6 +120,9 @@ def fetch_data():
                     + state.lower()
                     + "/"
                     + city.lower().replace(" ", "-")
+                    + "/"
+                    + store
+                    + "/"
                 )
                 yield [
                     website,

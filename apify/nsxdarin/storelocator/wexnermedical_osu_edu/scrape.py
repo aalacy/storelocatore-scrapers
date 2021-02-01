@@ -46,7 +46,61 @@ def fetch_data():
     website = "wexnermedical.osu.edu"
     typ = "<MISSING>"
     country = "US"
+    loc = "<MISSING>"
     logger.info("Pulling Stores")
+    name = "Central Ohio Primary Care"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    add = "4895 Olentangy Rd. Suite 150"
+    city = "Columbus"
+    state = ("OH",)
+    zc = "43214"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    phone = "<MISSING>"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
+    name = "Ohio State Transplant Care at the Jewish Hospital - Mercy Health"
+    lat = "<MISSING>"
+    lng = "<MISSING>"
+    loc = "<MISSING>"
+    add = "4700 E. Galbraith Rd., Suite 104"
+    city = "Cincinnati"
+    state = ("OH",)
+    zc = "45236"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    phone = "<MISSING>"
+    yield [
+        website,
+        loc,
+        name,
+        add,
+        city,
+        state,
+        zc,
+        country,
+        store,
+        phone,
+        typ,
+        lat,
+        lng,
+        hours,
+    ]
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if '"Url":"' in line:
@@ -69,6 +123,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if '<meta property="og:title" content="' in line2:
+                name = line2.split('<meta property="og:title" content="')[1].split('"')[
+                    0
+                ]
             if '<h1 class="globalpagetitle">' in line2:
                 name = line2.split('<h1 class="globalpagetitle">')[1].split("<")[0]
             if '"latitude": "' in line2:
@@ -92,6 +150,14 @@ def fetch_data():
                 )
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"openingHours": "' in line2:
+                hours = line2.split('"openingHours": "')[1].split('"')[0]
+            if '<span class="phoneLink">' in line2:
+                phone = line2.split('<span class="phoneLink">')[1].split("<")[0]
+        if "Ohio" in name:
+            state = "Ohio"
+        if "Mary Rutan" in add:
+            add = "Mary Rutan Hospital Orthopedics 2221 Timber Trail"
         if phone == "":
             phone = "<MISSING>"
         if hours == "":

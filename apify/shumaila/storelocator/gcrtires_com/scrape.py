@@ -40,7 +40,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.gcrtires.com/content/bcs-sites/gcr/en/locations/_jcr_content.csrstorelist.json?jkhjkhj"
+    url = "https://www.gcrtires.com/content/bcs-sites/gcr/en/locations/_jcr_content.storelist.json"
     p = 0
     loclist = session.get(url, headers=headers, verify=False).json()["storeList"]
     for loc in loclist:
