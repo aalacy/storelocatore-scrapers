@@ -1,6 +1,12 @@
 import csv
+
+from sglogging import sglog
+
 from sgrequests import SgRequests
+
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="thelittleclinic.com")
 
 session = SgRequests()
 
@@ -44,10 +50,14 @@ def fetch_data():
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
     }
     for zip_code in zip_codes:
+        log.info(
+            "Searching: %s | Items remaining: %s"
+            % (zip_code, zip_codes.items_remaining())
+        )
         r = session.get(
             "https://www.thelittleclinic.com/tlc/api/clinic/search?freeFormAddress="
             + str(zip_code)
-            + "&maxResults=300&pageSize=500",
+            + "&maxResults=100&pageSize=500",
             headers=headers,
         )
         json_data = r.json()
@@ -61,12 +71,13 @@ def fetch_data():
             store.append(i["address"]["stateCode"])
             store.append(i["address"]["zip"])
             store.append(i["address"]["countryCode"])
-            store.append(i["storeNumber"])
+            store.append(i["clinicId"])
             store.append(i["phoneNumber"])
             store.append(i["banner"])
             store.append(i["latitude"])
             store.append(i["longitude"])
-            store.append("<INACCESSBLE>")
+            hours = " ".join(i["weekHours"])
+            store.append(hours)
             store.append(
                 "https://www.thelittleclinic.com/scheduler/tlc/location/"
                 + str(i["clinicId"])
