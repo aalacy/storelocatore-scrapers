@@ -58,7 +58,6 @@ def fetch_data():
     logger.info(len(divs))
     for div in divs:
         a = div.find_element_by_tag_name("h3").find_element_by_tag_name("a")
-        # ids.append(a.get('href').split("/")[-1])
         locs.append(a.text)
         sa = div.find_elements_by_tag_name("a")
         a = sa[1]
