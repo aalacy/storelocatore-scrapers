@@ -73,6 +73,9 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.replace(
+            "p.m. 11:00 a.m. – 10:00 p.m.", "p.m."
+        )
 
         item = [
             DOMAIN,
