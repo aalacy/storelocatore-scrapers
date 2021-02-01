@@ -1,33 +1,16 @@
 from bs4 import BeautifulSoup
 import csv
 import time
+import re
+import usaddress
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import usaddress
 
-logger = SgLogSetup().get_logger("planetsub_com")
+logger = SgLogSetup().get_logger("shopbedmart_com")
 
 session = SgRequests()
 
 headers = {
-    "authority": "planetsub.com",
-    "method": "POST",
-    "path": "/contact/find-a-location/",
-    "scheme": "https",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "identity",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
-    "content-length": "14",
-    "content-type": "application/x-www-form-urlencoded",
-    "cookie": "PHPSESSID=lnpc04bv70tij3suieb2ngo1o0; __utmc=230204893; __utmz=230204893.1611633760.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _fbp=fb.1.1611633760304.649577070; __utma=230204893.1389812213.1611633760.1611775008.1611806536.3; __utmt=1; __utmb=230204893.2.10.1611806536",
-    "origin": "https://planetsub.com",
-    "referer": "https://planetsub.com/contact/find-a-location/",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
 }
 
@@ -74,97 +57,152 @@ def write_output(data):
         logger.info(f"No of records being processed: {len(temp_list)}")
 
 
+locations = [
+    "https://www.shopbedmart.com/hi/locations/",
+    "https://www.shopbedmart.com/nw/locations/",
+]
+
+
 def fetch_data():
     data = []
-    lat = []
-    lng = []
-    form_data = {"location": "85713"}
-    url = "https://planetsub.com/contact/find-a-location/"
-    r = session.post(url, headers=headers, data=form_data, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    locations = soup.find("div", {"id": "mapContainer"})
-    loc = locations.findAll("div", {"class": "popup"})
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    for link in locations:
+        url = link
+        r = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divloc = soup.find("div", {"class": "row location-list"})
+        locs = divloc.findAll("div", {"class": "location-card"})
+        for loc in locs:
+            title = loc.find("h4", {"class": "location-card-title"}).find("a")
+            link = title["href"].strip()
+            title = title.text.strip()
+            info = loc.find("p", {"class": "location-card-content"}).text
+            info = re.sub(pattern, " ", info)
+            info = re.sub(cleanr, " ", info)
+            info = info.split("\n")
+            if len(info) == 5:
+                address = info[0]
+                phone = info[1]
+                hours = info[2]
+            if len(info) == 4:
+                address = info[0]
+                phone = info[1]
+                hours = info[2] + " " + info[3]
+            if len(info) == 7:
+                address = info[0]
+                phone = info[1]
+                hours = info[2] + " " + info[3] + " " + info[4]
+            if len(info) == 6:
+                address = info[0]
+                phone = info[1]
+                hours = info[3]
 
-    locations = str(locations)
-    info = locations.split("var locations = ")[1].split(
-        "locations = JSON.parse(locations);"
-    )[0]
-    coords = info.split("],[")
-    j = 0
-    for c in range(1, 34):
-        index = '",' + str(c) + ',"'
-        centre = coords[c - 1].split(index)[0]
-        centre = centre.split('","')
-        lat.append(centre[1])
-        lng.append(centre[2])
+            if address == " 1825 Haleukana St Unit C, Lihue 808-600-3934":
+                address = " 1825 Haleukana St Unit C, Lihue"
+                phone = "808-600-3934"
 
-    for l in loc:
-        title = l.find("span", {"class": "franchise_title_name"}).text.strip()
-        address = l.find("span", {"class": "franchise_address"}).text.strip()
-        address = address.replace(",", "")
-        address = usaddress.parse(address)
+            if address == " 380 Dairy Rd Kahului, HI 808.376.2740":
+                address = " 380 Dairy Rd Kahului, HI"
+                phone = "808.376.2740"
+                hours = info[1] + " " + info[2] + " " + info[3]
 
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        street = street.lstrip()
-        street = street.replace(",", "")
-        city = city.lstrip()
-        city = city.replace(",", "")
-        state = state.lstrip()
-        state = state.replace(",", "")
-        pcode = pcode.lstrip()
-        pcode = pcode.replace(",", "")
+            if address == " 1039 NW Glisan St Portland, OR 97209":
+                hours = info[2] + " " + info[3]
 
-        hours = l.find("span", {"class": "franchise_hours"}).text.strip()
-        hours = hours.replace("\n", " ")
-        hours = hours.rstrip(" NOW OPEN")
-        phone = l.find("span", {"class": "franchise_phone"}).text.strip()
-        phone = phone.lstrip("Phone: ").strip()
-        latitude = lat[j].strip()
-        longitude = lng[j].strip()
+            if address == " 15387 bangy road lake oswego, or 503.639.9750":
+                address = " 15387 bangy road lake oswego, or"
+                phone = "503.639.9750"
+                hours = info[1] + " " + info[2] + " " + info[3]
 
-        data.append(
-            [
-                "https://planetsub.com/",
-                "https://planetsub.com/contact/find-a-location/",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                latitude,
-                longitude,
-                hours,
-            ]
-        )
+            address = address.strip()
+            phone = phone.strip()
+            hours = hours.strip()
 
-        j = j + 1
+            title = title.rstrip(" – Pickup Only")
+            hours = hours.rstrip(" Directions")
+
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+
+            i = 0
+            street = ""
+            city = ""
+            state = ""
+            pcode = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street = street + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    pcode = pcode + " " + temp[0]
+                i += 1
+            street = street.lstrip()
+            street = street.replace(",", "")
+            city = city.lstrip()
+            city = city.replace(",", "")
+            state = state.lstrip()
+            state = state.replace(",", "")
+            pcode = pcode.lstrip()
+            pcode = pcode.replace(",", "")
+
+            if pcode == "":
+                pcode = "<MISSING>"
+
+            if street == "1825 Haleukana St Unit C Lihue":
+                street = "1825 Haleukana St Unit C"
+                city = "Lihue"
+                state = "HI"
+                pcode = "<MISSING>"
+
+            if state == "or":
+                state = "OR"
+
+            if state == "hi":
+                state = "HI"
+
+            p = session.get(link, headers=headers, verify=False)
+            soup = BeautifulSoup(p.text, "html.parser")
+
+            scripts = soup.findAll("script")
+            script = str(scripts[29])
+            coords = script.split("center: {")[1].split("},")[0]
+            coords = coords.split(",")
+            lat = coords[0].strip()
+            lat = lat.split("lat: ")[1]
+            lng = coords[1].strip()
+            lng = lng.split("lng: ")[1]
+
+            data.append(
+                [
+                    url,
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    "<MISSING>",
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    lng,
+                    hours,
+                ]
+            )
     return data
 
 
