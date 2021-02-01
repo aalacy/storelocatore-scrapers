@@ -58,7 +58,7 @@ def fetch_data():
         )
         r = session.get(url, headers=headers)
         website = "oliverpeoples.com"
-        typ = "<MISSING>"
+        typ = "Hospital"
         logger.info("Pulling Stores")
         for item in json.loads(r.content)["records"]:
             hours = ""
@@ -90,6 +90,8 @@ def fetch_data():
                     hours = hours + "; " + hrs
             if phone == "" or phone is None:
                 phone = "<MISSING>"
+            if hours == "":
+                hours = "<MISSING>"
             if store not in ids:
                 ids.append(store)
                 yield [
@@ -157,6 +159,8 @@ def fetch_data():
                     hours = hours + "; " + hrs
             if phone == "" or phone is None:
                 phone = "<MISSING>"
+            if hours == "":
+                hours = "<MISSING>"
             if store not in ids:
                 ids.append(store)
                 yield [

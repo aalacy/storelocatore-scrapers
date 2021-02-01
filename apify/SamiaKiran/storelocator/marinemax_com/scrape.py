@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+from bs4 import BeautifulSoup
 
 website = "marinemax_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,11 +58,31 @@ def fetch_data():
     for loc in loclist:
         title = loc["DealerName"]
         link = loc["LocationPageURL"]
+        temp_link = loc["City"]
+        temp_link = temp_link.replace(" ", "-").lower()
         if not link:
-            link = "<MISSING>"
-        phone = loc["PhoneNumber"]
-        if not phone:
+            link = "https://www.marinemax.com/stores/" + temp_link
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        try:
+            phone = soup.find("div", {"class": "store-phones"}).find("a").text
+            phone = phone.split("Phone", 1)[0].strip()
+        except:
             phone = "<MISSING>"
+        try:
+            hourlist = soup.find("ul", {"class": "store-department-hours"}).findAll(
+                "li"
+            )
+            hours = ""
+            if len(hourlist) > 7:
+                del hourlist[-1]
+            for hour in hourlist:
+                temp = hour.findAll("span")
+                day = temp[0].text
+                time = temp[1].text
+                hours = hours + day + " " + time + " "
+        except:
+            hours = "<MISSING>"
         temp = loc["Address2"]
         if not temp:
             street = loc["Address1"]
@@ -90,7 +111,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                "<MISSING>",
+                hours,
             ]
         )
     return data
