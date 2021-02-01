@@ -45,6 +45,7 @@ def fetch_data():
     start_url = "https://americantiredepot.com/search/store/locations"
 
     with SgFirefox() as driver:
+        driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath('//div[@class="stores-list"]')
 

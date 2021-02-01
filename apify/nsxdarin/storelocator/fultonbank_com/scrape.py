@@ -49,8 +49,8 @@ def fetch_data():
     website = "fultonbank.com"
     typ = "<MISSING>"
     country = "US"
+    addlist = []
     loc = "<MISSING>"
-    hours = "<MISSING>"
     store = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
@@ -58,6 +58,7 @@ def fetch_data():
         if "location-name" in line:
             items = line.split("location-name")
             for item in items:
+                hours = ""
                 if "location-address" in item:
                     name = (
                         item.split("\\u003e")[1]
@@ -82,27 +83,42 @@ def fetch_data():
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                     try:
-                        phone = (
-                            item.split("Phone: ")[1].split("\\")[0].replace(".", "-")
-                        )
+                        phone = item.split("Phone:")[1].split("\\")[0].strip()
                     except:
                         phone = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    days = item.split('"hours-row\\"\\u003e')
+                    dc = 0
+                    for day in days:
+                        if "location-address" not in day:
+                            hrs = day.split("\\")[0]
+                            dc = dc + 1
+                            if dc <= 7:
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                    addcity = add + "|" + city
+                    if addcity not in addlist:
+                        addlist.append(addcity)
+                    if hours == "":
+                        hours = "<MISSING>"
+                    else:
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

@@ -60,33 +60,28 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        poi_html = etree.HTML(poi["store_list_html"])
+        poi_html = etree.HTML(poi["popup_html"])
         store_url = poi_html.xpath('//a[@class="amlocator-link"]/@href')
         store_url = store_url[0] if store_url else "<MISSING>"
-        location_name = poi["name"]
-        street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
         raw_state = poi_html.xpath("//text()")
         raw_state = [elem.strip() for elem in raw_state if elem.strip()]
-        state = raw_state[-2].split(", ")[1]
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
+        location_name = poi_html.xpath('//a[@class="amlocator-link"]/text()')
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = raw_state[1]
+        city = raw_state[2].split(", ")[0]
+        state = raw_state[2].split(", ")[1]
+        zip_code = raw_state[2].split(", ")[2]
+        country_code = "<MISSING>"
         store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        phone = raw_state[3]
+        if "AM" in phone:
+            phone = "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = poi["description"]
-        hours_of_operation = (
-            hours_of_operation.replace("|", "") if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = raw_state[-1]
 
         item = [
             DOMAIN,

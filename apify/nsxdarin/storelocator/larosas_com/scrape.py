@@ -43,7 +43,7 @@ def write_output(data):
 
 def fetch_data():
     allids = []
-    for pid in range(1, 100):
+    for pid in range(1, 150):
         logger.info(pid)
         url = "https://www.larosas.com/api/locations?handler=GetLocationsByStoreID"
         payload = {"id": pid, "pizzeriasOnly": "true"}

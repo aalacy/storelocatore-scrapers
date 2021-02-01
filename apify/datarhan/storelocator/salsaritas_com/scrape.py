@@ -59,11 +59,7 @@ def fetch_data():
         'infowindow_setting":"","infowindow_bounce',
         data,
     )
-    data = re.sub(
-        r'order-catering":"(.+?)","phone-catering',
-        'order-catering":"","phone-catering',
-        data,
-    )
+    data = data.replace('140""', '140"')
     data = re.sub(
         r'infowindow_content":"(.+?)","content', 'infowindow_content":"","content', data
     )
@@ -83,7 +79,6 @@ def fetch_data():
         data,
     )
     data = json.loads(data.replace('[data-container="wpgmp-filters-container"]', ""))
-
     for poi in data["places"]:
         if poi.get("source"):
             if poi["source"] == "post":
@@ -109,7 +104,10 @@ def fetch_data():
         location_type = poi["categories"][0]["name"]
         latitude = poi["location"]["lat"]
         longitude = poi["location"]["lng"]
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = poi["location"]["extra_fields"]["opening-hours"].replace(
+            "<br>", ""
+        )
+        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
 
         item = [
             DOMAIN,

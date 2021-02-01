@@ -1,12 +1,8 @@
 import csv
-import json
-import time
-
-from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 
 log = SgLogSetup().get_logger("meijer.com")
 
@@ -39,28 +35,23 @@ def write_output(data):
 
 
 def fetch_data():
-
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    driver = SgChrome().chrome(user_agent=user_agent)
+    session = SgRequests()
 
     data = []
     locator_domain = "meijer.com"
-
     for page_num in range(50):
         base_link = (
             "https://www.meijer.com/shop/en/store-finder/search?q=60010&page=%s&radius=4500"
             % page_num
         )
         log.info(base_link)
-        driver.get(base_link)
-        time.sleep(1)
-        base = BeautifulSoup(driver.page_source, "lxml")
-        stores = json.loads(base.text)["data"]
 
+        stores = session.get(base_link, headers=headers).json()["data"]
         if len(stores) == 0:
             break
-
         for store in stores:
             location_name = store["displayName"]
             street_address = (store["line1"] + " " + store["line2"]).strip()
@@ -75,7 +66,6 @@ def fetch_data():
             latitude = store["latitude"]
             longitude = store["longitude"]
             link = "https://www.meijer.com/shop/en/store/" + store_number
-
             # Store data
             data.append(
                 [
@@ -95,7 +85,6 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
-    driver.close()
     return data
 
 
