@@ -49,7 +49,7 @@ def fetch_data():
     for item in items:
         page_url = "<MISSING>"
         location_name = item["name"]
-        street_address = (
+        street_address = myutil._valid1(
             myutil._valid(f"{item['address1']}")
             + " "
             + myutil._valid1(item.get("address2", ""))
