@@ -9,7 +9,7 @@ logger = SgLogSetup().get_logger("timessupermarkets_com")
 
 session = SgRequests()
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36',
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
 }
 
 
@@ -38,7 +38,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -60,33 +60,42 @@ def fetch_data():
     url = "https://www.timessupermarkets.com/store"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    content = soup.find("div", {"class":"view-content"})
-    content = soup.findAll("div", {"class":"views-row"})
+    content = soup.find("div", {"class": "view-content"})
+    content = soup.findAll("div", {"class": "views-row"})
     for store in content:
-        links = store.find("div", {"class":"store-list-box-title"})
-        link = links.find('a')['href']
+        links = store.find("div", {"class": "store-list-box-title"})
+        link = links.find("a")["href"]
         title = links.text
-        link = 'https://www.timessupermarkets.com' + link
+        link = "https://www.timessupermarkets.com" + link
         p = session.get(link, headers=headers, verify=False)
         bs = BeautifulSoup(p.text, "html.parser")
-        store_box = bs.find("div", {"class":"store-node-box"})
-        address = store_box.find("div", {"class":"field-item even"}).text
-        phone = store_box.find("div", {"class":"field field-name-field-store-phone field-type-text field-label-above"})
-        phone = phone.find("div", {"class":"field-items"}).find('a')['href']
-        hours = store_box.find("div", {"class":"field field-name-field-store-hours field-type-text field-label-above"})
-        hours = hours.find("div", {"class":"field-items"}).text.strip()
-        hours = hours.replace('Everyday', 'Mon-Sun:')
-        hours = hours.replace('Midnight', '12 am')
-        hours = hours.replace('M-Sat', 'Mon-Sat:')
-        hours = hours.replace('(temporary closing at 11 pm until further notice)', '')
+        store_box = bs.find("div", {"class": "store-node-box"})
+        address = store_box.find("div", {"class": "field-item even"}).text
+        phone = store_box.find(
+            "div",
+            {
+                "class": "field field-name-field-store-phone field-type-text field-label-above"
+            },
+        )
+        phone = phone.find("div", {"class": "field-items"}).find("a")["href"]
+        hours = store_box.find(
+            "div",
+            {
+                "class": "field field-name-field-store-hours field-type-text field-label-above"
+            },
+        )
+        hours = hours.find("div", {"class": "field-items"}).text.strip()
+        hours = hours.replace("Everyday", "Mon-Sun:")
+        hours = hours.replace("Midnight", "12 am")
+        hours = hours.replace("M-Sat", "Mon-Sat:")
+        hours = hours.replace("(temporary closing at 11 pm until further notice)", "")
         hours = hours.strip()
-        address = address.split(' •')
+        address = address.split(" •")
         street = address[0].strip()
         city = address[1].strip()
-        state = 'HI'
+        state = "HI"
         pcode = address[-1].strip()
-        phone = phone.lstrip('tel:')
-
+        phone = phone.lstrip("tel:")
 
         data.append(
             [
@@ -117,4 +126,3 @@ def scrape():
 
 
 scrape()
-
