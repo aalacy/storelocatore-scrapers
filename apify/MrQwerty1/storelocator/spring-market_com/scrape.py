@@ -91,7 +91,7 @@ def fetch_data():
             close = h.get("close")
             _tmp.append(f"{d} {start} - {close}")
 
-        hours_of_operation = ";".join(_tmp)
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,
