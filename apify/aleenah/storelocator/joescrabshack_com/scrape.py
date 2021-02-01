@@ -46,13 +46,11 @@ def fetch_data():
     street = []
     states = []
     cities = []
-    types = []
     phones = []
     zips = []
     long = []
     lat = []
     timing = []
-    ids = []
 
     driver.get("https://www.joescrabshack.com/store-locator/")
     time.sleep(5)
