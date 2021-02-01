@@ -1,9 +1,0 @@
-{
-  "name": "factory-connection_com",
-  "version": "1.0.0",
-  "dependencies": {
-    "atob": "^2.1.2",
-    "axios": "^0.21.1",
-    "pako": "^2.0.3"
-  }
-}
