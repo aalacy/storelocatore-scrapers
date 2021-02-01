@@ -240,6 +240,10 @@ def fetch_data():
                 hours = missingString
             if missingString in hours:
                 typ = "currently closed".title()
+            if "Rancho Cucamonga" in zp:
+                zp = "91739"
+            if "SUGAR LAND" in zp:
+                zp = "77478"
             return [
                 locator_domain,
                 u,
@@ -261,10 +265,37 @@ def fetch_data():
 
     for u in urls:
         lst = send_crawler(u)
+        cal = "https://www.gyu-kaku.com/calgary"
+        b = bs4.BeautifulSoup(sgrequests.SgRequests().get(cal).text, features="lxml")
+        arr = b.find("h3", {"style": "text-align: center;"}).text.strip().split("\n")
+        name = arr[0].strip()
+        phone = arr[1].strip()
+        street = arr[2].strip()
+        zp = arr[-1].replace(name, "").strip()
+        city = "Calgary"
+        state = "AB"
         if lst is None:
             pass
         else:
             result.append(lst)
+    result.append(
+        [
+            locator_domain,
+            cal,
+            name,
+            street,
+            city,
+            state,
+            zp,
+            missingString,
+            missingString,
+            phone,
+            "Temporary Closed",
+            missingString,
+            missingString,
+            missingString,
+        ]
+    )
 
     return result
 

@@ -47,20 +47,17 @@ def fetch_data():
         for j in js:
             a = j.get("address")
             locator_domain = url
-            street_address = f"{a.get('line1')}".strip() or "<MISSING>"
+            street_address = (
+                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+            )
             city = a.get("city") or "<MISSING>"
             location_name = f"{j.get('name')} {city}"
-            page_url = j.get("landingPageUrl") or "<MISSING>"
+            page_url = j.get("landingPageUrl") or "<INACCESSIBLE>"
 
             if location_name.lower().find(" open") != -1:
                 location_name = j.get("name")
 
             if location_name.lower().find("closed") != -1:
-                continue
-            elif (
-                page_url.find("coming-soon") != -1
-                and location_name.lower().find("now open") == -1
-            ):
                 continue
 
             state = a.get("region") or "<MISSING>"
@@ -74,10 +71,10 @@ def fetch_data():
             )
             location_type = "<MISSING>"
 
-            hours = j.get("hours")
+            hours = j.get("hours") or {}
             _tmp = []
             for k, v in hours.items():
-                if k == "holidayHours":
+                if k == "holidayHours" or k == "reopenDate":
                     continue
 
                 day = k

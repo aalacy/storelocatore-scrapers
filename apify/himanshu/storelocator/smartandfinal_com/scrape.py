@@ -59,8 +59,8 @@ def fetch_data():
     r = session.post(init_url, headers=headers)
     csrf_token = r.json()[0]
 
-    setCookie(session.session, 'www.smartandfinal.com', 'has_js', '1')
-    setCookie(session.session, 'www.smartandfinal.com',
+    setCookie(session.get_session(), 'www.smartandfinal.com', 'has_js', '1')
+    setCookie(session.get_session(), 'www.smartandfinal.com',
               'XSRF-TOKEN', csrf_token)
     headers['x-csrf-token'] = csrf_token
 
