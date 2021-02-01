@@ -201,9 +201,16 @@ def populate_details(location_tuple, location_map):
     r = session.get(location.get("page_url"))
     soup = BeautifulSoup(r.text, "html.parser")
 
-    phone = soup.select_one("#main_0_contentpanel_2_hlAlternatePhone")
+    phone = soup.find(class_="mobile-only-phone")
 
     phoneNumber = clean_phone(phone)
+    if not phoneNumber:
+        try:
+            phoneNumber = re.findall(
+                r"[\d]{3}-[\d]{3}-[\d]{4}", str(soup.find(id="main-content").text)
+            )[0]
+        except:
+            pass
 
     hours = soup.select_one("#main_0_rightpanel_0_pnlOfficeHours .option-content")
     hours_of_operation = (
@@ -217,21 +224,14 @@ def populate_details(location_tuple, location_map):
 
 
 def clean_phone(phone):
-    if not phone or phone.text == "":
+    if not phone or "-" not in phone.text:
         return None
 
-    phoneNumber = phone.text
+    phoneNumber = phone.text.strip()
+    if " (" in phoneNumber:
+        phoneNumber = phoneNumber.split(" (")[1][:-1].strip()
 
-    match = re.search(r"\d{3}-\d{3}-\d{4}", phoneNumber)
-
-    if not match:
-        return None
-
-    match = re.search(r"\s\((.*)\)", phoneNumber)
-    if match and match.group(1):
-        phoneNumber = match.group(1)
-
-    return re.sub(r"\(|\)|\s|-", "", phoneNumber)
+    return phoneNumber
 
 
 def scrape():
