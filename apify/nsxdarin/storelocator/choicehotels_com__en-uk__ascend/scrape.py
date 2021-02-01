@@ -40,7 +40,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = "https://www.choicehotels.com/cs/chcom_eu/eu/docs/en-gb/choice-hotels/sitemap.xml"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     website = "choicehotels.com/en-uk/ascend"
     country = "GB"
     typ = "Ascend"
@@ -74,7 +74,10 @@ def fetch_data():
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lon":"')[1].split('"')[0]
                 add = line2.split('"line1":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
+                try:
+                    phone = line2.split('"phone":"')[1].split('"')[0]
+                except:
+                    phone = "NA"
         if zc == "":
             zc = "<MISSING>"
         if phone == "":
@@ -84,22 +87,23 @@ def fetch_data():
             lng = "<MISSING>"
         if state == "":
             state = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if phone != "NA":
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():
