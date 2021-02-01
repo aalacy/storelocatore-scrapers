@@ -1,14 +1,11 @@
 from bs4 import BeautifulSoup
 import csv
 import time
-import usaddress
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from datetime import datetime
-from datetime import datetime as dt
-import datetime
 
-logger = SgLogSetup().get_logger("eddiev_com")
+
+logger = SgLogSetup().get_logger("timessupermarkets_com")
 
 session = SgRequests()
 headers = {
@@ -17,7 +14,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -60,56 +57,40 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://www.eddiev.com/locations/all-locations"
+    url = "https://www.timessupermarkets.com/store"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    storelist = soup.find("div", {"class": "cols"})
-    more_link = storelist.findAll('div', {'class', 'more_links'})
-    for link_div in more_link:
-        link = link_div.find('a', {'id': 'locDetailsId'})['href']
-        link = 'https://www.eddiev.com' + link
+    content = soup.find("div", {"class":"view-content"})
+    content = soup.findAll("div", {"class":"views-row"})
+    for store in content:
+        links = store.find("div", {"class":"store-list-box-title"})
+        link = links.find('a')['href']
+        title = links.text
+        link = 'https://www.timessupermarkets.com' + link
         p = session.get(link, headers=headers, verify=False)
         bs = BeautifulSoup(p.text, "html.parser")
-        left_bar = bs.find('div', {'class':'left-bar'})
-        title = left_bar.find('h1', {'class': 'style_h1'}).text.strip()
-        addr_div = left_bar.find('p')
-        addr_div = str(addr_div)
-        addr_div = addr_div.strip()
-        info = addr_div.split('\n')
-        street = info[2]
-        street = street.rstrip('<br/>')
-        city = info[4]
-        city = city.rstrip(',')
-        state = info[5].strip()
-        pcode = info[6]
-        pcode = pcode.rstrip('<br/>')
-        phone = info[7]
-        phone = phone.rstrip('</p>')
-        hours = left_bar.findAll('ul',{'class':'inline top-bar'})
-        hrs = ''
-        for hr in hours:
-            days = hr.findAll('li')
-            day = days[0].text.strip()
-            time = days[1].text.strip()
-            now = dt.today() - datetime.timedelta(days=1)
-            now = now.strftime('%a %b %d')
-            time = time.replace(now, '').strip()
-            time = time.replace(':00 EST 2021', '').strip()
-            hoo = day + ' ' + time
-            hoo = hoo.replace('Today (', '')
-            hoo = hoo.replace(')', '').strip()
-            hrs = hrs + ' ' +hoo
-        hrs = hrs.strip()
-        script = bs.find('script', {'type': 'application/ld+json'})
-        script = str(script)
-        lat = script.split('"latitude":"')[1].split('"')[0]
-        lng = script.split('"longitude":"')[1].split('"')[0]
-
+        store_box = bs.find("div", {"class":"store-node-box"})
+        address = store_box.find("div", {"class":"field-item even"}).text
+        phone = store_box.find("div", {"class":"field field-name-field-store-phone field-type-text field-label-above"})
+        phone = phone.find("div", {"class":"field-items"}).find('a')['href']
+        hours = store_box.find("div", {"class":"field field-name-field-store-hours field-type-text field-label-above"})
+        hours = hours.find("div", {"class":"field-items"}).text.strip()
+        hours = hours.replace('Everyday', 'Mon-Sun:')
+        hours = hours.replace('Midnight', '12 am')
+        hours = hours.replace('M-Sat', 'Mon-Sat:')
+        hours = hours.replace('(temporary closing at 11 pm until further notice)', '')
+        hours = hours.strip()
+        address = address.split(' •')
+        street = address[0].strip()
+        city = address[1].strip()
+        state = 'HI'
+        pcode = address[-1].strip()
+        phone = phone.lstrip('tel:')
 
 
         data.append(
             [
-                "https://www.eddiev.com/",
+                "https://www.timessupermarkets.com/",
                 link,
                 title,
                 street,
@@ -120,9 +101,9 @@ def fetch_data():
                 "<MISSING>",
                 phone,
                 "<MISSING>",
-                lat,
-                lng,
-                hrs,
+                "<MISSING>",
+                "<MISSING>",
+                hours,
             ]
         )
     return data
@@ -136,5 +117,4 @@ def scrape():
 
 
 scrape()
-##
-##fetch_data()
+
