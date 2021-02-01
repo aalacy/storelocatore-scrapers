@@ -53,7 +53,7 @@ def fetch_data():
             myutil._valid(f"{item['address1']}")
             + " "
             + myutil._valid1(item.get("address2", ""))
-        )
+        ).replace("None", "")
         city = myutil._valid(item["city"])
         state = myutil._valid(item["stateCode"])
         zip = myutil._valid(myutil._digit(item["postalCode"]))
