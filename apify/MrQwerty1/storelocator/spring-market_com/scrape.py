@@ -48,7 +48,7 @@ def generate_headers():
 
 def fetch_data():
     out = []
-    url = "https://www.spring-market.com/stores"
+    url = "https://www.spring-market.com/"
 
     session = SgRequests()
     headers, cookies = generate_headers()
