@@ -76,17 +76,20 @@ def fetch_data():
             r"properties =(.+?)],", data.replace("\n", "").replace("\t", "")
         )[0].split(",")[-3]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//div[@class="location-inner"]/p/text()')[
-            1:
-        ]
+        hours_of_operation = loc_dom.xpath(
+            '//p[contains(text() ,"Operation Hours:")]/text()'
+        )
         hours_of_operation = [elem.strip() for elem in hours_of_operation]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation)
+            .replace("\n", " ")
+            .replace("Operation Hours: ", "")
+            .split("What")[0]
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         # Exceptions
-        if "s on Tap" in hours_of_operation:
-            hours_of_operation = "<MISSING>"
         if "," in city:
             zip_code = city.split(",")[-1].split()[-1]
             state = city.split(",")[-1].split()[0]

@@ -78,13 +78,24 @@ def fetch_data():
                 g = next(lines)
                 h = next(lines)
                 i = next(lines)
+                j = next(lines)
                 g = str(g.decode("utf-8"))
                 h = str(h.decode("utf-8"))
                 i = str(i.decode("utf-8"))
+                j = str(j.decode("utf-8"))
                 state = "<MISSING>"
-                add = g.split(">")[1].split("<")[0]
-                city = g.split(">")[1].split("<")[0]
-                zc = g.split(">")[1].split("<")[0]
+                if "<li>" not in j:
+                    add = g.split(">")[1].split("<")[0]
+                    city = h.split(">")[1].split("<")[0]
+                    zc = i.split(">")[1].split("<")[0]
+                else:
+                    add = (
+                        g.split(">")[1].split("<")[0]
+                        + " "
+                        + h.split(">")[1].split("<")[0]
+                    )
+                    city = i.split(">")[1].split("<")[0]
+                    zc = j.split(">")[1].split("<")[0]
             if DFound and '<div class="address">' in line2:
                 DFound = False
             if DFound and "day: </span>" in line2:

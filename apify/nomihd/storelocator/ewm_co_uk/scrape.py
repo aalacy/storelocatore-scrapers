@@ -5,7 +5,7 @@ from sglogging import sglog
 import lxml.html
 import json
 
-website = "ewm_co.uk"
+website = "ewm.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {

@@ -59,9 +59,14 @@ def get_data(coord):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("long") or "<MISSING>"
         location_type = j.get("type") or "<MISSING>"
-        hours_of_operation = (
-            ":".join(j.get("hours_1").split(":")[1:]).strip() or "<MISSING>"
-        )
+
+        _tmp = []
+        for i in range(1, 5):
+            line = j.get(f"hours_{i}")
+            if line:
+                _tmp.append(line)
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,

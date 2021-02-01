@@ -36,7 +36,7 @@ def write_output(data):
 
 def get_data(coord):
     rows = []
-    locator_domain = "https://www.bangor.com/"
+    locator_domain = "https://debenhams.com/"
     lat, lon = coord
     api_url = f"https://mystore.debenhams.com/data/search.json?&lat={lat}&lng={lon}"
     page_url = "<MISSING>"

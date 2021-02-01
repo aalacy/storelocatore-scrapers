@@ -43,6 +43,8 @@ def fetch_data():
     data = []
     store_list = json.loads(res.text)
     for store in store_list:
+        if store["RelatedWebsite"] != "homechoicestores.com":
+            continue
         page_url = "<MISSING>"
         location_name = "<MISSING>"
         street_address = store["Address1"]

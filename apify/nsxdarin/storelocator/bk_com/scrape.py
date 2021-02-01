@@ -183,23 +183,22 @@ def fetch_data():
                             phone = "<MISSING>"
                         if '"diningRoomHours":{"_type":"hoursOfOperation"}' in item:
                             hours = "Sun-Sat: Closed"
-                        if "Closed" not in hours:
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

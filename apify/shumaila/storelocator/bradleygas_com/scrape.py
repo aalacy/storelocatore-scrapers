@@ -2,8 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+import re
 
-logger = SgLogSetup().get_logger("bradleygas_com")
+logger = SgLogSetup().get_logger("bradlygas_com")
+
 
 session = SgRequests()
 
@@ -48,7 +50,9 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     data_list = soup.findAll("marker")
     for loc in data_list:
-        title = loc["name"]
+        title = loc["name"].replace("&amp", "and")
+        title = re.sub(r"[()\#/@;:<>{}`+=~|.!?,]", "", title)
+
         street = loc["street"]
         lat = loc["lat"]
         lng = loc["lng"]

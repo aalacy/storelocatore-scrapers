@@ -1,8 +1,6 @@
 import csv
 import json
 
-from datetime import datetime
-
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
@@ -89,32 +87,8 @@ def fetch_data():
             location_type = "<MISSING>"
             latitude = json_data["latitude"]
             longitude = json_data["longitude"]
-            for j in json_data["physicalStoreAttribute"]:
-                if "hours-Week1" in j["name"]:
-                    hours = ""
-                    day = [
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday",
-                    ]
-                    for l in range(0, 7):
-                        start = datetime.strptime(
-                            str(j["value"].split(",")[l].split("|")[0]), "%H:%M"
-                        )
-                        start_value = start.strftime("%I:%M %p")
-                        end = datetime.strptime(
-                            str(
-                                j["value"].split(",")[l].split("|")[1].replace("M", "")
-                            ),
-                            "%H:%M",
-                        )
-                        end_value = end.strftime("%I:%M %p")
-                        hours += " " + day[l] + " " + start_value + " - " + end_value
-                    hours_of_operation = hours
+            hours_of_operation = "<INACCESSIBLE>"
+
             store = []
             store.append(base_url)
             store.append(location_name)

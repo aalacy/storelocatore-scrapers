@@ -5,7 +5,7 @@ from sglogging import sglog
 import lxml.html
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-website = "krispykreme_co.uk"
+website = "krispykreme.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {

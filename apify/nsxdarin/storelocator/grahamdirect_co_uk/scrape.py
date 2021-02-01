@@ -77,6 +77,8 @@ def fetch_data():
             )
             if store not in ids:
                 ids.append(store)
+                if lat == "55.962371":
+                    city = "Edinburgh"
                 yield [
                     website,
                     loc,
