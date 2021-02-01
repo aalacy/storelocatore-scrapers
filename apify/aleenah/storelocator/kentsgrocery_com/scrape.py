@@ -104,7 +104,7 @@ def fetch_data():
         city = loc.replace("Kent's ", "")
         state = parsed_address["state"]
         zipcode = parsed_address["zipcode"]
-        street = parsed_address["street"]
+        street = parsed_address["street"] + parsed_address["city"].replace(city, "")
         all.append(
             [
                 "https://kentsgrocery.com",

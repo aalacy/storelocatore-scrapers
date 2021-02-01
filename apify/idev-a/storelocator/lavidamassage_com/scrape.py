@@ -9,6 +9,7 @@ myutil = Util()
 session = SgRequests()
 
 start_url = "https://lavidamassage.com/locations/"
+locator_domain = "https://lavidamassage.com"
 base_url = "https://lavidamassage.com/wp-admin/admin-ajax.php"
 
 
@@ -56,16 +57,23 @@ def _headers():
 
 def fetch_data():
     data = []
-    page_url = base_url
+    page_url = start_url
     session.get(start_url)
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=84,
-        max_search_results=75,
-    )
+    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+    new_coordinates = set()
     for lat, lng in search:
+        pair = (lat, lng)
+        if pair in new_coordinates:
+            continue
+
+        new_coordinates.add(pair)
+
         payload = {"action": "get_closest_locations", "lat": lat, "lng": lng}
         res = session.post(base_url, headers=_headers(), data=payload)
+        if res.status_code != 200 or not res.json():
+            new_coordinates.pop()
+            continue
+
         for _ in res.json():
             location_name = _["title"]
             street_address, city, state, zip, country_code = myutil.parse_us_addr(
@@ -78,7 +86,7 @@ def fetch_data():
             longitude = _["location"]["lng"]
             hours_of_operation = "<INACCESSIBLE>"
             _item = [
-                base_url,
+                locator_domain,
                 page_url,
                 location_name,
                 street_address,
@@ -95,6 +103,8 @@ def fetch_data():
             ]
             myutil._check_duplicate_by_loc(data, _item)
 
+    if new_coordinates:
+        search.mark_found(new_coordinates)
     return data
 
 

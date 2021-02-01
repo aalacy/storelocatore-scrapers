@@ -68,7 +68,7 @@ def fetch_data():
         phone = soup1.select_one("div.amlocator-block.-contact a").string
         phone = phone.replace("Tel:", "").strip()
         store_number = "<MISSING>"
-        location_type = location_name.replace("T. H. Baker", "").strip()
+        location_type = "<MISSING>"
         direction = myutil._strip_list(
             r1.text.split("locationData: {")[1]
             .strip()
