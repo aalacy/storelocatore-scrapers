@@ -48,7 +48,7 @@ def generate_headers():
 
 def fetch_data():
     out = []
-    url = "https://www.super1foods.com/stores"
+    url = "https://www.super1foods.com/"
 
     session = SgRequests()
     headers, cookies = generate_headers()
