@@ -102,7 +102,12 @@ def fetch_data():
         else:
             phones.append("<MISSING>")
 
-        tim = soup.find("p", {"class": "loc-hours"}).text.strip()
+        tim = (
+            soup.find("p", {"class": "loc-hours"})
+            .text.strip()
+            .replace("\r\n", ", ")
+            .replace("\n", ", ")
+        )
         timing.append(tim)
 
     all = []
