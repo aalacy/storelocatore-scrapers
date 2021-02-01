@@ -40,7 +40,6 @@ search = DynamicGeoSearch(
     max_search_results=250,
 )
 
-session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 }
@@ -53,6 +52,7 @@ def fetch_data():
     if BFound:
         BFound = False
         url = "https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500"
+        session = SgRequests()
         r = session.get(url, headers=headers, verify=False, timeout=30)
         for item in json.loads(r.content)["stores"]:
             store = item["storeNo8Digit"]
@@ -191,6 +191,7 @@ def fetch_data():
             + "&maxrec=500"
         )
         try:
+            session = SgRequests()
             r = session.get(url, headers=headers, verify=False, timeout=30)
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
