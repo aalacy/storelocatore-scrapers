@@ -1,7 +1,6 @@
 import csv
 import re
 import time
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgSelenium
 
@@ -38,7 +37,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-session = SgRequests()
 driver = SgSelenium().chrome()
 
 
@@ -67,7 +65,6 @@ def fetch_data():
         sa = div.find_elements_by_tag_name("a")
         a = sa[1]
         coord = a.get_attribute("href")
-        print(coord)
         if "query_place_id=" in coord:
             lat.append(re.findall(r"query=(-?[\d\.]*)", coord)[0])
             long.append(re.findall(r"query=[-?\d\.]*,([-?\d\.]*)", coord)[0])
@@ -86,7 +83,6 @@ def fetch_data():
         phones.append(a.text.strip())
         tim = div.find_element_by_class_name("locationListItemHours").text
         tim = ", ".join(re.findall(".*PM", tim, re.DOTALL)[0].split("\n"))
-        print(tim)
         timing.append(tim)
 
     all = []
