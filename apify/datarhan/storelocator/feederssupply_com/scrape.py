@@ -56,7 +56,6 @@ def fetch_data():
     for poi in all_elems:
         store_url = "https://www.feederssupply.com/" + poi["pageUriSEO"]
         if "copy-" not in store_url:
-            print("----", store_url)
             continue
         if "fish-guarantee" in store_url:
             continue
@@ -69,7 +68,6 @@ def fetch_data():
 
         final_list = [store_url, base_url]
         for store_url in final_list:
-            print("++++", store_url)
             loc_response = session.get(store_url)
             if loc_response.status_code != 200:
                 continue
@@ -87,6 +85,8 @@ def fetch_data():
                 street_address = loc_dom.xpath(
                     "//div[@data-packed]/p[1]/span/span/span/text()"
                 )
+            if not street_address:
+                street_address = loc_dom.xpath("//div[@data-packed]/p[1]/span/text()")
             if "|" in street_address[0]:
                 street_address = loc_dom.xpath(
                     "//div[@data-packed]/p[1]/span/span/text()"
@@ -153,8 +153,9 @@ def fetch_data():
             hours_of_operation = loc_dom.xpath(
                 '//div[contains(@id,"comp")]/div[@data-packed="true"][2]/p[2]//text()'
             )
+            hours_of_operation = [elem.strip() for elem in hours_of_operation]
             hours_of_operation = (
-                hours_of_operation[0] if hours_of_operation else "<MISSING>"
+                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
             )
 
             item = [
@@ -173,7 +174,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            check = f"{location_name} {street_address}"
+            check = location_name.split(",")[0].replace("- ", "")
             if check not in scraped_items:
                 scraped_items.append(check)
                 items.append(item)
