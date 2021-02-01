@@ -69,7 +69,7 @@ def fetch_data():
         page_url = "https://modernmarket.com/locations/"
 
         locator_domain = website
-        location_name = store["storename"]
+        location_name = store["name"]
         if location_name == "":
             location_name = "<MISSING>"
 
@@ -95,7 +95,7 @@ def fetch_data():
         store_number = str(store["id"])
         phone = store["telephone"]
 
-        location_type = "<MISSING>"
+        location_type = store["storename"]
         latitude = store["latitude"]
         longitude = store["longitude"]
 

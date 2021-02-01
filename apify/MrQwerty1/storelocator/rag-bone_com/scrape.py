@@ -62,17 +62,24 @@ def fetch_data():
             "".join(d.xpath(".//span[@itemprop='postalCode']/text()")).strip()
             or "<MISSING>"
         )
-        if len(postal) != 5:
-            continue
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_name = "".join(
-            d.xpath(".//a[@class='sl__store-details-name']/text()")
-        ).strip()
+
         phone = (
             "".join(d.xpath(".//span[@itemprop='telephone']/text()")).strip()
             or "<MISSING>"
         )
+
+        if len(postal) == 5:
+            country_code = "US"
+        elif phone.startswith("+44"):
+            country_code = "GB"
+        else:
+            continue
+
+        store_number = "<MISSING>"
+        location_name = "".join(
+            d.xpath(".//a[@class='sl__store-details-name']/text()")
+        ).strip()
+
         text = "".join(d.xpath(".//*[@data-pin]/@data-pin"))
         try:
             lat_lon = eval(text)
