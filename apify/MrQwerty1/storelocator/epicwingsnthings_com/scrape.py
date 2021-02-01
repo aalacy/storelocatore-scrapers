@@ -47,7 +47,9 @@ def fetch_data():
         for j in js:
             a = j.get("address")
             locator_domain = url
-            street_address = f"{a.get('line1')}".strip() or "<MISSING>"
+            street_address = (
+                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+            )
             city = a.get("city") or "<MISSING>"
             location_name = f"{j.get('name')} {city}"
             page_url = j.get("landingPageUrl") or "<INACCESSIBLE>"
