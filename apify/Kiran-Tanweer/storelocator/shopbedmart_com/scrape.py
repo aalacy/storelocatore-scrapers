@@ -97,24 +97,20 @@ def fetch_data():
                 address = info[0]
                 phone = info[1]
                 hours = info[3]
-
             if address == " 1825 Haleukana St Unit C, Lihue 808-600-3934":
                 address = " 1825 Haleukana St Unit C, Lihue"
                 phone = "808-600-3934"
-
+                hours = info[1]
             if address == " 380 Dairy Rd Kahului, HI 808.376.2740":
                 address = " 380 Dairy Rd Kahului, HI"
                 phone = "808.376.2740"
                 hours = info[1] + " " + info[2] + " " + info[3]
-
             if address == " 1039 NW Glisan St Portland, OR 97209":
                 hours = info[2] + " " + info[3]
-
             if address == " 15387 bangy road lake oswego, or 503.639.9750":
                 address = " 15387 bangy road lake oswego, or"
                 phone = "503.639.9750"
                 hours = info[1] + " " + info[2] + " " + info[3]
-
             address = address.strip()
             phone = phone.strip()
             hours = hours.strip()
@@ -160,19 +156,15 @@ def fetch_data():
 
             if pcode == "":
                 pcode = "<MISSING>"
-
             if street == "1825 Haleukana St Unit C Lihue":
                 street = "1825 Haleukana St Unit C"
                 city = "Lihue"
                 state = "HI"
                 pcode = "<MISSING>"
-
             if state == "or":
                 state = "OR"
-
             if state == "hi":
                 state = "HI"
-
             p = session.get(link, headers=headers, verify=False)
             soup = BeautifulSoup(p.text, "html.parser")
 
@@ -185,9 +177,12 @@ def fetch_data():
             lng = coords[1].strip()
             lng = lng.split("lng: ")[1]
 
+            if street == "15387 bangy road lake":
+                street = "15387 bangy road"
+                city = "lake oswego"
             data.append(
                 [
-                    url,
+                    "https://www.shopbedmart.com/",
                     link,
                     title,
                     street,
