@@ -73,8 +73,11 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        hours_of_operation = hours_of_operation.replace(
-            "p.m. 11:00 a.m. – 10:00 p.m.", "p.m."
+        hoo = hours_of_operation.split("p.m. 11:00 a.m. – 10:00 p.m.")[0] + "p.m."
+        hoo = hoo.split("p.m. 10:00 a.m. – 10:00 p.m.")[0] + "p.m."
+        hours_of_operation = hoo.split("p.m. 4:00 p.m. – 9:00 p.m")[0] + "p.m."
+        hours_of_operation = hours_of_operation.replace("p.m.p.m.p.m.", "p.m.").replace(
+            "p.m.p.m.", "p.m."
         )
 
         item = [
