@@ -87,6 +87,9 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        name = name.replace("&#35;", "-")
+        add = add.replace("&#35;", "-")
+        city = city.replace("&#35;", "-")
         yield [
             website,
             loc,

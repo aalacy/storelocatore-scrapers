@@ -75,7 +75,9 @@ def fetch_data():
             '//div[@class="hours-item simplewys"]/text()'
         )
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).split("Patio")[0]
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [

@@ -2,6 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address
 
 
 def write_output(data):
@@ -40,7 +41,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "colortyme.com"
+    DOMAIN = "compren.com"
     start_url = "http://compren.com/storefind.php"
     headers = {
         "Accept-Encoding": "gzip, deflate",
@@ -118,13 +119,16 @@ def fetch_data():
         loc_name_1 = loc_name_1[0]
         loc_name_2 = poi_html.xpath("store_number/text()")[0]
         location_name = f"Friendly Computers #{loc_name_1} - {loc_name_2}"
-        street_address = poi_html.xpath("address/text()")
-        street_address = street_address[0].strip() if street_address else "<MISSING>"
-        city = loc_name_1
-        if street_address.endswith(city):
-            street_address = street_address.replace(city, "")
-        street_address = street_address if street_address.strip() else "<MISSING>"
-        state = poi_html.xpath("address/text()")
+        street_address = poi_html.xpath("address/text()")[0]
+        structured_result = parse_address(street_address)
+        street_address = structured_result.street_address_1
+        street_address = street_address if street_address else "<MISSING>"
+        city = structured_result.city
+        if not city:
+            city = loc_name_1
+            street_address = street_address.replace(city.lower(), "").strip()
+        city = city if city else "<MISSING>"
+        state = poi_html.xpath("state/text()")
         state = state[0] if state else "<MISSING>"
         zip_code = poi_html.xpath("zipcode/text()")
         zip_code = zip_code[0] if zip_code else "<MISSING>"
