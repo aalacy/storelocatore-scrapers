@@ -70,6 +70,8 @@ def fetch_data():
             state = store["address"]["region"]["isocodeShort"]
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["country"]["isocode"]
+            if country_code == "GB":
+                state = "<MISSING>"
             store_number = store["name"]
             location_type = "<MISSING>"
 
