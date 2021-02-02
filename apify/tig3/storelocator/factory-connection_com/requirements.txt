@@ -4,4 +4,3 @@ sglogging==0.0.4
 sgvalidator==0.0.71
 Naked==0.1.31
 usaddress==0.5.10
-sgaddress

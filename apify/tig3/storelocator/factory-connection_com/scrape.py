@@ -149,11 +149,9 @@ def parse_missing_street_address(raw_street_address):
 
 def npm_install():
     log.info("Custom npm install")
-    res = subprocess.call("npm install", shell=True)
-
-    if res != 0:
-        log.error("Error running npm install")
-        exit("EXIT")
+    subprocess.call("npm install axios", shell=True)
+    subprocess.call("npm install atob", shell=True)
+    subprocess.call("npm install pako", shell=True)
 
 
 def get_hours_of_operation(hours):
