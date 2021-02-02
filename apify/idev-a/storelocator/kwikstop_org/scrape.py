@@ -61,57 +61,49 @@ def fetch_data():
         for row in rows:
             location = row.select_one(".sqs-block-map")
             if location:
-                try:
-                    location1 = [
-                        _ for _ in row.select_one(".sqs-block-html").stripped_strings
-                    ]
-                    block = json.loads(location["data-block-json"])["location"]
-                    location_name = location1[0].split("#")[0].strip()
-                    store_number = location1[0].split("#")[1].strip()
-                    street_address = location1[1]
-                    address = location1[2].split(",")
-                    city = address[0]
-                    state = ""
-                    zip = ""
-                    if len(address) == 2:
-                        state = (
-                            address[1].strip().split(" ")[0].replace(".", "").strip()
-                        )
-                        zip = address[1].strip().split(" ")[1].replace(",", "").strip()
-                    else:
-                        zip = address[-1].strip().replace(".", "").strip()
-                        state = address[1].strip().replace(",", "").strip()
+                location1 = [
+                    _ for _ in row.select_one(".sqs-block-html").stripped_strings
+                ]
+                block = json.loads(location["data-block-json"])["location"]
+                location_name = location1[0].split("#")[0].strip()
+                store_number = location1[0].split("#")[1].strip()
+                street_address = location1[1]
+                address = location1[2].split(",")
+                city = address[0]
+                state = ""
+                zip = ""
+                if len(address) == 2:
+                    state = address[1].strip().split(" ")[0].replace(".", "").strip()
+                    zip = address[1].strip().split(" ")[1].replace(",", "").strip()
+                else:
+                    zip = address[-1].strip().replace(".", "").strip()
+                    state = address[1].strip().replace(",", "").strip()
 
-                    country_code = "US"
-                    phone = myutil._valid(location1[-1])
-                    location_type = "<MISSING>"
-                    latitude = block["mapLat"]
-                    longitude = block["mapLng"]
-                    hours_of_operation = "<MISSING>"
+                country_code = "US"
+                phone = myutil._valid(location1[-1])
+                location_type = "<MISSING>"
+                latitude = block["mapLat"]
+                longitude = block["mapLng"]
+                hours_of_operation = "<MISSING>"
 
-                    _item = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
+                _item = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
 
-                    data.append(_item)
-                except Exception as err:
-                    print(err)
-                    import pdb
-
-                    pdb.set_trace()
+                data.append(_item)
     return data
 
 
