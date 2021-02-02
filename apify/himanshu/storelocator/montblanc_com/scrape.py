@@ -40,8 +40,6 @@ def write_output(data):
 
 
 def fetch_data():
-
-    lst = []
     addressesess = []
     for q in range(0, 5):
         url = (
