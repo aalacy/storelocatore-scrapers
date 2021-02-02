@@ -13,6 +13,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+
 def write_output(data):
     with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
@@ -38,7 +39,7 @@ def write_output(data):
             ]
         )
 
-        temp_list = []  
+        temp_list = []
         for row in data:
             comp_list = [
                 row[2].strip(),
@@ -57,40 +58,40 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.elizabethgrady.com/locations/"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
     loclist = soup.findAll("div", {"class": "et_pb_row locations-row"})
     for loc in loclist:
-        all_div = loc.findAll('div') 
-        title = all_div[0].find('h3').text
-        phone = all_div[1].find('a')
+        all_div = loc.findAll("div")
+        title = all_div[0].find("h3").text
+        phone = all_div[1].find("a")
         if phone is None:
             phone = all_div[1]
             phone = str(phone)
-            phone = re.sub(pattern, ' ', phone)
-            phone = re.sub(cleanr, ' ', phone)
-            phone = phone.split('   ')[1].split('   Now Open!')[0]
+            phone = re.sub(pattern, " ", phone)
+            phone = re.sub(cleanr, " ", phone)
+            phone = phone.split("   ")[1].split("   Now Open!")[0]
         else:
             phone = phone.text
         addr = all_div[1]
         addr = str(addr)
-        addr = addr.split('">')[1].split('<a href')[0]
-        addr = addr.replace('<br/>', ' ').strip()
+        addr = addr.split('">')[1].split("<a href")[0]
+        addr = addr.replace("<br/>", " ").strip()
         hours = all_div[-1].text
-        hours = re.sub(pattern, ' ', hours)
-        hours = re.sub(cleanr, ' ', hours)
+        hours = re.sub(pattern, " ", hours)
+        hours = re.sub(cleanr, " ", hours)
 
         address = addr.replace(",", " ")
         address = usaddress.parse(address)
- 
-        i=0
-        street = ''
-        city = ''
-        state = ''
-        pcode = ''
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
         while i < len(address):
             temp = address[i]
             if (
@@ -119,17 +120,17 @@ def fetch_data():
         pcode = pcode.lstrip()
         pcode = pcode.replace(",", "")
 
-
-        if street == '104 Spit Brook Road Suite A 603-943-5531 div class="special-message':
-            street = '104 Spit Brook Road Suite A'
+        if (
+            street
+            == '104 Spit Brook Road Suite A 603-943-5531 div class="special-message'
+        ):
+            street = "104 Spit Brook Road Suite A"
 
         if street == '45 Lafayette Road 603-964-9492 div class="special-message':
-            street = '45 Lafayette Road'
-            
-        if street == '240 North Broadway 603-893-3535 div class="special-message':
-            street = '240 North Broadway'
-            
+            street = "45 Lafayette Road"
 
+        if street == '240 North Broadway 603-893-3535 div class="special-message':
+            street = "240 North Broadway"
 
         data.append(
             [
