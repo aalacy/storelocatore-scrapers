@@ -71,7 +71,7 @@ def fetch_data():
         .strip()
         + "}"
     )
-    json_text = json_text.replace("\/", "/").strip().replace("'", "\\'")
+    json_text = json_text.replace("\\/", "/").strip().replace("'", "\\'")
     stores = json.loads(json_text)["locations"]
     for store in stores:
         page_url = search_url
