@@ -108,6 +108,14 @@ def fetch_data():
             lng = "<MISSING>"
         if CS is True:
             hours = "Coming Soon"
+        if add == "":
+            add = "<INACCESSIBLE>"
+        if city == "":
+            city = "<INACCESSIBLE>"
+        if state == "":
+            state = "<INACCESSIBLE>"
+        if zc == "":
+            zc = "<INACCESSIBLE>"
         yield [
             website,
             loc,
