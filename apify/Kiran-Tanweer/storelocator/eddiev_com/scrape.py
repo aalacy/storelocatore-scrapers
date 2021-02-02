@@ -3,7 +3,7 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from datetime import datetime
+from datetime import timedelta
 from datetime import datetime as dt
 
 logger = SgLogSetup().get_logger("eddiev_com")
@@ -89,7 +89,7 @@ def fetch_data():
             days = hr.findAll("li")
             day = days[0].text.strip()
             time = days[1].text.strip()
-            now = dt.today() - datetime.timedelta(days=1)
+            now = dt.today() - timedelta(days=1)
             now = now.strftime("%a %b %d")
             time = time.replace(now, "").strip()
             time = time.replace(":00 EST 2021", "").strip()
