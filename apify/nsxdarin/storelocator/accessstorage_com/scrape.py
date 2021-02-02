@@ -106,6 +106,9 @@ def fetch_data():
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
                 lng = line2.split('data-lng="')[1].split('"')[0]
+        if "/access-self-storage-guildford" in loc:
+            add = "19 Moorfield Road, Slyfield Industrial Estate"
+        hours = hours.replace("Monday - Friday: ;", "Monday - Friday: 08.00 - 18.00")
         yield [
             website,
             loc,
