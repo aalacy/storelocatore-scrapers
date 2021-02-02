@@ -3,7 +3,7 @@ import csv
 import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from datetime import datetime, timedelta
+from datetime import timedelta
 from datetime import datetime as dt
 
 logger = SgLogSetup().get_logger("eddiev_com")
