@@ -127,7 +127,7 @@ def extract(loc):
 
 
 MAX_COUNT = 1500
-MAX_DISTANCE = 300
+MAX_DISTANCE = 100
 
 
 @retry(stop=stop_after_attempt(3))

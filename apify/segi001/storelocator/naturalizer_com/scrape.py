@@ -118,6 +118,10 @@ def fetch_data():
                         " {} : {} ".format(hs["data-day"], hs["data-hours"])
                     )
                 hours = ", ".join(timeArray)
+            if "PARAMOUNT & PONONA" in city:
+                city = "Montebello"
+            if "COLISEUM/COLDWATER" in city:
+                city = "Ft. Wayne"
             result.append(
                 [
                     locator_domain,

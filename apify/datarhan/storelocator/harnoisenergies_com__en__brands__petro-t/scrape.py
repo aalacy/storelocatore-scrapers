@@ -41,7 +41,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "hardwarestore.com"
+    DOMAIN = "https://harnoisenergies.com/en/brands/petro-t/"
     start_url = (
         "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=petro-t"
     )
@@ -79,6 +79,23 @@ def fetch_data():
     all_locations = page_dom.xpath('//div[@class="item"]')
     for page in range(2, int(total_pages) + 2):
         url = "https://harnoisenergies.com/en/service-stations/?fwp_station_banners=petro-t&fwp_paged={}"
+        formdata = {
+            "action": "facetwp_refresh",
+            "data[facets]": '{"station_banners":["petro-t"],"station_area":[],"station_main_services":[],"station_restauration":[],"station_promotions":[],"station_alternate_energy":[]}',
+            "data[http_params][get][fwp_station_banners]": "petro-t",
+            "data[http_params][uri]": "en/service-stations",
+            "data[http_params][url_vars][station_banners][]": "petro-t",
+            "data[http_params][lang]": "en",
+            "data[template]": "wp",
+            "data[extras][pager]": "true",
+            "data[extras][sort]": "default",
+            "data[extras][sortlat]": "46.017911",
+            "data[extras][sortlng]": "-73.3965646",
+            "data[soft_refresh]": "0",
+            "data[is_bfcache]": "1",
+            "data[first_load]": "0",
+            "data[paged]": str(page),
+        }
         response = session.post(url.format(str(page)), data=formdata, headers=headers)
         data = json.loads(response.text)
         page_dom = etree.HTML(data["template"])

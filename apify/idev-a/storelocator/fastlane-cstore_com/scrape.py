@@ -67,7 +67,12 @@ def fetch_data():
                     store_list[idx].select_one("strong").string.replace("’", "'")
                 )
             except:
-                location_type = store_list[idx].select_one("font").string
+                location_type = (
+                    store_list[idx]
+                    .select_one("font")
+                    .string.replace("\n", " ")
+                    .replace("                ", " ")
+                )
                 idx += 1
                 continue
         if "Phone:" in store_list[idx + 1].text:

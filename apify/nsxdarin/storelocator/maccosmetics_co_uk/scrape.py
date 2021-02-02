@@ -79,6 +79,8 @@ def fetch_data():
                         typ = "MAC"
                     if "once again putting" in hours:
                         hours = "Temporarily Closed"
+                    if "contact this store" in hours.lower():
+                        hours = "<MISSING>"
                     if "Boots" not in name and state != "Ireland":
                         yield [
                             website,

@@ -77,6 +77,13 @@ def fetch_data():
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
 
+        try:
+            message = j.get("custom").get("emergencyMessage").get("markup") or ""
+            if message.lower().find("closed") != -1:
+                hours_of_operation = "Closed"
+        except:
+            pass
+
         if not location_name:
             continue
 

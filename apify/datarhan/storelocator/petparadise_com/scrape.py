@@ -74,7 +74,9 @@ def fetch_data():
         hours_of_operation = etree.HTML(poi["interestpointHours"])
         hours_of_operation = hours_of_operation.xpath("//text()")
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).replace("Location Hours ", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [

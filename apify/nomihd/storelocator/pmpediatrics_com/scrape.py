@@ -53,7 +53,7 @@ def write_output(data):
             ]
             if comp_list not in temp_list:
                 temp_list.append(comp_list)
-            writer.writerow(row)
+                writer.writerow(row)
 
         log.info(f"No of records being processed: {len(temp_list)}")
 
@@ -122,10 +122,12 @@ def fetch_data():
         ).strip()
 
         location_type = "<MISSING>"
-
         page_url = "".join(store.xpath('.//div[@class="buttons"]/a[1]/@href')).strip()
+        log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
+        if "coming soon" in store_req.text.lower():
+            location_type = "Coming Soon"
 
         temp_hours = store_sel.xpath('//div[@id="loc_address"]/p')
         hours_of_operation = ""
@@ -136,6 +138,10 @@ def fetch_data():
                     text.strip()
                     .replace("Office hours:", "")
                     .replace("Office Hours:", "")
+                    .replace(
+                        "Urgent Care & COVID Testing  Exclusively for children and their accompanying parent/caregiver",
+                        "",
+                    )
                     .strip()
                     .encode("ascii", "replace")
                     .decode("utf-8")
@@ -147,18 +153,52 @@ def fetch_data():
             hours_of_operation = (
                 "".join(
                     store_sel.xpath(
-                        '//div[@id="loc_address"]/p[3]/span[@class="font-weight: 400;"]/text()'
+                        '//div[@id="loc_address"]//span[@style="font-weight: 400;"]/text()'
                     )
                 )
                 .strip()
                 .replace("Office hours:", "")
                 .replace("Office Hours:", "")
+                .replace(
+                    "Urgent Care & COVID Testing  Exclusively for children and their accompanying parent/caregiver",
+                    "",
+                )
                 .strip()
                 .encode("ascii", "replace")
                 .decode("utf-8")
                 .replace("?", "-")
                 .strip()
             )
+
+        if len(hours_of_operation) <= 0:
+            for temp in temp_hours:
+                text = "".join(temp.xpath("text()")).strip().lower()
+                if (
+                    "monday" in text
+                    or "tuesday" in text
+                    or "wednesday" in text
+                    or "thursday" in text
+                    or "friday" in text
+                    or "saturday" in text
+                    or "sunday" in text
+                    or "am" in text
+                    or "pm" in text
+                ):
+                    hours_of_operation = (
+                        "".join(temp.xpath("text()"))
+                        .strip()
+                        .encode("ascii", "replace")
+                        .decode("utf-8")
+                        .replace("?", "-")
+                        .strip()
+                    )
+
+        if (
+            "PM Pediatrics" in hours_of_operation
+            or "Our offices remain" in hours_of_operation
+        ):
+            hours_of_operation = "<MISSING>"
+
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 

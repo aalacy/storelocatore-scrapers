@@ -57,7 +57,7 @@ def fetch_data():
         address = re.sub(pattern, "\n", address)
         pcode = address.split("\n")[-1]
         city = address.split("\n")[-2]
-        street = address.split(city, 1)[0].replace("\n", " ")
+        street = " ".join(address.split("\n")[0:-2])
         state = loc["region"]
         lat = loc["lat"]
         longt = loc["lng"]

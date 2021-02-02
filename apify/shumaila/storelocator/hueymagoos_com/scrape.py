@@ -54,6 +54,13 @@ def fetch_data():
             title = loc.find("h3").text
         except:
             continue
+        if loc.find(
+            "img",
+            {
+                "src": "https://hueymagoos.com/wp-content/uploads/coming-soon.png?b603d3&b603d3"
+            },
+        ):
+            continue
         details = loc.find("p")
         phone = ""
         address = ""
@@ -93,7 +100,10 @@ def fetch_data():
                 0
             ].next_sibling.find("pm"):
                 hours_of_operation = (
-                    details.findAll("a")[0].next_sibling.lstrip().replace("–", "-")
+                    details.findAll("a")[0]
+                    .next_sibling.lstrip()
+                    .replace("–", "-")
+                    .replace("\n", " ")
                 )
             else:
                 hours_of_operation = "<MISSING>"
@@ -113,7 +123,7 @@ def fetch_data():
                 base_url,
                 p_url,
                 title,
-                street,
+                street.replace(",", "").replace("#", "No."),
                 city,
                 state,
                 zip,
@@ -123,7 +133,7 @@ def fetch_data():
                 "<MISSING>",
                 "<MISSING>",
                 "<MISSING>",
-                hours_of_operation,
+                hours_of_operation.replace("\n", " "),
             ]
         )
     return data

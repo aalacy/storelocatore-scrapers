@@ -57,7 +57,6 @@ def fetch_data():
     for store_url in all_locations:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
         location_name = loc_dom.xpath('//div[@id="BoxBG"]//h3/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//div[@id="BoxBG"]//div[@class="right"]/text()')[
@@ -84,6 +83,7 @@ def fetch_data():
             phone = loc_dom.xpath('//div[@id="BoxBG"]//div[@class="right"]/text()')[
                 5
             ].strip()
+        phone = phone.replace("Store", "").strip()
         location_type = "<MISSING>"
         geo = (
             loc_dom.xpath("//iframe/@src")[0].split("ll=")[-1].split("&")[0].split(",")

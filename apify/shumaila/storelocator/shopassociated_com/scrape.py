@@ -92,7 +92,7 @@ def fetch_data():
         )
         if "hourInfo" in store_object:
             store.append(
-                store_object["hourInfo"]
+                store_object["hourInfo"].replace("\n", " ")
                 if store_object["hourInfo"].replace("\n", ", ") != ""
                 else "<MISSING>"
             )

@@ -118,31 +118,36 @@ def fetch_data():
         raw_address = [elem.strip() for elem in raw_address if elem.strip()]
         street_address = " ".join(raw_address[:2])
         raw_adr_new = " ".join(sorted(set(raw_address), key=raw_address.index))
+        street_address = raw_adr_new.split(", ")[0]
         city = [
             elem[0] for elem in usaddress.parse(raw_adr_new) if elem[1] == "PlaceName"
         ]
         city = " ".join(city) if city else "<MISSING>"
-        city = city if city else "<MISSING>"
+        if city == "<MISSING>":
+            city = raw_address[2]
+        city = city.split("Street")[-1].strip().replace("Building ", "")
+        street_address_spilt = street_address.split()
+        street_address = " ".join(
+            sorted(set(street_address_spilt), key=street_address_spilt.index)
+        )
+        if street_address.strip().endswith(city):
+            street_address = street_address.split(city)[0]
         state = raw_address[-2].replace(",", "")
         zip_code = raw_address[-1]
         country_code = "<MISSING>"
         phone = loc_dom.xpath(
             '//div[contains(text(), "Main:")]/following-sibling::div[@class="phone"][1]/text()'
         )
-        phone = phone[0].strip() if phone else "<MISSING>"
+        phone = (
+            phone[0].replace("Customer Service", "").strip() if phone else "<MISSING>"
+        )
         location_type = "<MISSING>"
         geo = loc_dom.xpath('//input[@id="endPoint"]/@value')[0].split(",")
         latitude = geo[0]
         latitude = latitude if latitude else "<MISSING>"
         longitude = geo[1]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//div[@class="hours"]//text()')
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hours_of_operation = "<INACCESIBLE>"
 
         item = [
             DOMAIN,

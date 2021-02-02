@@ -1,4 +1,5 @@
 import csv
+import re
 
 from concurrent import futures
 from lxml import html
@@ -66,8 +67,13 @@ def get_data(url):
         "".join(tree.xpath("//div[@class='location__telephone']/text()")).strip()
         or "<MISSING>"
     )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+
+    try:
+        latitude = re.findall(r'"latitude":"(\d+.\d+)"', r.text)[0]
+        longitude = re.findall(r'"longitude":"(-?\d+.\d+)"', r.text)[0]
+    except IndexError:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
     location_type = "<MISSING>"
     hours = " ".join(
         "".join(tree.xpath("//span[@class='oh-display']//text()")).split()

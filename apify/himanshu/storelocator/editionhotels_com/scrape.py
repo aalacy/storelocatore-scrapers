@@ -1,8 +1,8 @@
 import csv
 from bs4 import BeautifulSoup
 import json
-from sgrequests import SgRequests
 import time
+from sgrequests import SgRequests
 
 session = SgRequests()
 
@@ -13,6 +13,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -31,6 +32,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -98,7 +100,7 @@ def fetch_data():
         store.append(state if state else "<MISSING>")
         store.append(zipp if zipp else "<MISSING>")
         store.append(country_code if country_code else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(j.upper())
         store.append(phone if phone else "<MISSING>")
         store.append("EDITION Hotels")
         store.append(latitude if latitude else "<MISSING>")

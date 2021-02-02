@@ -41,25 +41,25 @@ def fetch_data():
     session = SgRequests()
 
     items = []
+    proxy = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
 
     DOMAIN = "homelandstores.com"
     start_url = "https://www.homelandstores.com/StoreLocator/"
 
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
     all_locations = []
-    response = session.get(start_url, proxies=proxies)
+    response = session.get(start_url, proxies=proxy)
     dom = etree.HTML(response.text)
     all_states = dom.xpath(
         '//h3[contains(text(), "Our stores are in the following states:")]/following-sibling::div//a/@href'
     )
     for url in all_states:
-        response = session.get(urljoin(start_url, url), proxies=proxies)
+        response = session.get(urljoin(start_url, url), proxies=proxy)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//td[@align="right"]/a/@href')
 
     for url in all_locations:
         poi_url = urljoin(start_url, url)
-        loc_response = session.get(poi_url, proxies=proxies)
+        loc_response = session.get(poi_url, proxies=proxy)
         loc_dom = etree.HTML(loc_response.text)
 
         poi_name = loc_dom.xpath("//title/text()")[0].split("for ")[-1]
@@ -86,6 +86,10 @@ def fetch_data():
             '//dt[contains(text(), "Pharmacy Hours:")]/following-sibling::dd[1]//text()'
         )
         hoo = [elem.strip() for elem in hoo]
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//dt[contains(text(), "Hours of Operation:")]/following-sibling::dd/text()'
+            )
         hoo = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
