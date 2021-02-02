@@ -46,18 +46,24 @@ def fetch_data():
         locator_domain = url
         location_name = j.get("storeName")
         adr1 = j.get("address1")
-        if adr1[0].isdigit() or not j.get("address2"):
-            street_address = (
-                f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-            )
+        if adr1:
+            if adr1[0].isdigit() or not j.get("address2"):
+                street_address = (
+                    f"{j.get('address1')} {j.get('address2') or ''}".strip()
+                    or "<MISSING>"
+                )
+            else:
+                street_address = j.get("address2") or "<MISSING>"
         else:
-            street_address = j.get("address2") or "<MISSING>"
+            street_address = "<MISSING>"
         city = j.get("city") or "<MISSING>"
         state = j.get("stateCode") or "<MISSING>"
         postal = j.get("postalCode") or "<MISSING>"
         country_code = "US"
         store_number = j.get("id") or "<MISSING>"
-        page_url = j.get("weeklyCircular") or "<MISSING>"
+        page_url = (
+            f" https://www.dunhamssports.com/weekly-ads.html?store_code={store_number}"
+        )
         phone = j.get("phone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
@@ -77,6 +83,8 @@ def fetch_data():
             _tmp.append(f"{day} {time}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        if hours_of_operation.lower().count("closed") == 7:
+            continue
 
         row = [
             locator_domain,

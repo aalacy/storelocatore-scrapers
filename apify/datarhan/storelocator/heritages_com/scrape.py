@@ -41,7 +41,7 @@ def fetch_data():
 
     items = []
 
-    DOMAIN = "hercrentals.com"
+    DOMAIN = "heritages.com"
 
     start_url = "https://heritages.com/?hcs=locatoraid&hca=search%3Asearch%2F10001%2Flat%2F40.75368539999999%2Flng%2F-73.9991637%2Fradius%2F10000%2Flimit%2F100"
 

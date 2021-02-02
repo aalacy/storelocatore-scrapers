@@ -40,7 +40,6 @@ def fetch_data():
     # Your scraper here
     items = []
 
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
     DOMAIN = "parkerskitchen.com"
     start_url = "https://parkerskitchen.com/wp-content/themes/parkers/get-locations.php?origAddress=8120+US-280%2C+Ellabell%2C+GA+31308%2C+%D0%A1%D0%A8%D0%90"
     headers = {
@@ -48,17 +47,25 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-    response = session.get(start_url, headers=headers, proxies=proxies)
+    response = session.get(start_url, headers=headers)
     data = json.loads(response.text)
 
     for poi in data:
         store_url = poi["web"]
-        loc_response = session.get(store_url, proxies=proxies)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
         store_number = poi["id"]
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = loc_dom.xpath(
+            '//p[strong[contains(text(), "Business Hours:")]]/text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation[:2] if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
         location_name = poi["name"].replace("&#8217;", "'")
         street_address = poi["address"]
         if poi["address2"]:

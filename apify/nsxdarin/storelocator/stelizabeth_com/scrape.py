@@ -71,6 +71,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
+        HFound = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
@@ -89,16 +90,22 @@ def fetch_data():
                 state = line2.split('="region">')[1].split("<")[0]
             if '="postal-code">' in line2:
                 zc = line2.split('="postal-code">')[1].split("<")[0]
-            if "day:" in line2:
-                hrs = line2.split("<")[0].strip().replace("\t", "")
+            if "Hours:" in line2:
+                HFound = True
+            if HFound and "</div>" in line2:
+                HFound = False
+            if HFound and "Hours:" not in line2:
+                hrs = (
+                    line2.strip()
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .replace("<br>", "; ")
+                )
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if 'class="tel">' in line2:
-                phone = line2.split('class="tel">')[1].split("<")[0]
-            if "Hours:" in line2:
-                hours = ""
             if " PM" in line2:
                 hrs = (
                     line2.replace("<br />", "")
