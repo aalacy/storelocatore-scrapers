@@ -115,6 +115,16 @@ def fetch_data():
                     except:
                         hours = "<MISSING>"
                     if country == "CA" or country == "US" or country == "GB":
+                        if country == "GB":
+                            state = "<MISSING>"
+                        if "Outlets " in add:
+                            add = add.split("Outlets ")[1]
+                        if "- Pittsburgh " in add:
+                            add = add.split("- Pittsburgh ")[1]
+                        if "Outles " in add:
+                            add = add.split("Outles ")[1]
+                        if "- Lancaster " in add:
+                            add = add.split("- Lancaster ")[1]
                         yield [
                             website,
                             loc,
