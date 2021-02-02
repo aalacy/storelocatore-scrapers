@@ -36,6 +36,8 @@ def fetch_records_for(zipcode):
 
 def process_record(raw_results_from_one_zipcode):
     # parse, normalize, process raw results here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     DOMAIN = "regions.com"
 
     all_poi = []
@@ -44,8 +46,9 @@ def process_record(raw_results_from_one_zipcode):
             continue
 
         page_url = "<MISSING>"
-        if poi.get("store_url"):
-            page_url = "https://www.regions.com" + poi["store_url"]
+        if not poi.get("store_url"):
+            continue
+        page_url = "https://www.regions.com" + poi["store_url"]
         location_name = poi["title"]
         street_address = poi["address"].split("<br />")[0]
         city = poi["address"].split("<br />")[-1].split(",")[0]
@@ -53,11 +56,19 @@ def process_record(raw_results_from_one_zipcode):
         zip_postal = poi["address"].split("<br />")[-1].split(",")[-1].split()[-1]
         country_code = "US"
         store_number = ""
-        phone = ""
         location_type = poi["type"]
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hours_of_operation = poi["hours"]
+
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        phone = loc_dom.xpath('//a[@class="rds-link" and contains(@href, "tel")]/@href')
+        phone = phone[0].split(":")[-1] if phone else "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Lobby Hours")]/following-sibling::ul[1]//text()'
+        )
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         check = f"{location_name} {street_address}"
         if check not in SCRAPED_POI:
