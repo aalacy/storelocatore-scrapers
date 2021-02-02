@@ -71,6 +71,8 @@ def fetch_data():
             if name == "":
                 name = typ
             city = item["storeAddress"]["city"]
+            if "London" in city:
+                city = "London"
             state = "<MISSING>"
             zc = item["storeAddress"]["postCode"]
             country = "GB"
