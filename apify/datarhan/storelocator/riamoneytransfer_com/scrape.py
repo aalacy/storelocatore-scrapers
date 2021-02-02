@@ -54,7 +54,7 @@ def get(location, key):
     return location.get(key, MISSING) or MISSING
 
 
-def extract(location, store_number):
+def extract(location, store_number, country):
     locator_domain = "riamoneytransfer.com"
     page_url = MISSING
     location_name = get(location, "name")
@@ -62,7 +62,7 @@ def extract(location, store_number):
     city = get(location, "city")
     state = get(location, "state")
     zip = MISSING
-    country_code = MISSING
+    country_code = country
     store_number = get(location, "locationId")
     phone = get(location, "phone")
     location_type = get(location, "locationType")
@@ -104,7 +104,7 @@ def fetch(lat, lng, country):
         "Latitude": lat,
         "Long": "",
         "Longitude": lng,
-        "RequestCountry": country,
+        "RequestCountry": "US",
         "RequiredPayoutAgents": False,
         "RequiredReceivingAgents": False,
         "RequiredReceivingAndPayoutAgents": False,
@@ -115,7 +115,6 @@ def fetch(lat, lng, country):
         json=body,
         headers=headers,
     ).json()
-    print(country, len(result))
     return result
 
 
@@ -164,7 +163,7 @@ def fetch_data():
                     continue
                 searched.append(store_number)
 
-                poi = extract(location, store_number)
+                poi = extract(location, store_number, country)
                 if not poi:
                     continue
                 coords.append([poi.get("latitude"), poi.get("longitude")])
