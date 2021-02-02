@@ -63,7 +63,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'window.hotelInfoData = {"status":"OK"' in line2:
