@@ -1,122 +1,206 @@
 import csv
-import re
-import pdb
-import requests
-from lxml import etree
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import json
-import usaddress
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('jimmassey_com')
+logger = SgLogSetup().get_logger("hometownbanks_com")
 
+session = SgRequests()
 
-
-
-base_url = 'http://www.jimmassey.com'
-
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '') + ' '
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    output_list = []
-    url = "http://www.jimmassey.com/locations/"
-    session = requests.Session()
-    request = session.get(url).text
-    source = validate(request.split('maplistScriptParamsKo = ')[1].split('};')[0]) + '}'
-    store_list =json.loads(source)['KOObject'][0]['locations'] 
-    for store in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['locationUrl'])) # page url
-        output.append(get_value(store['title'])) #location name
-        details = eliminate_space(etree.HTML(store['description']).xpath('.//text()'))
-        phone = ''
-        store_hours = []
-        for idx, de in enumerate(details):
-            if 'phone' in de.lower():
-                phone = details[idx+1]
-            if 'hour' in de.lower():
-                store_hours = details[idx:]
-        if phone == '':            
-            phone = details[-1]
-            store_hours = store_hours[:-1]
-            address = validate(etree.HTML(store['address']).xpath('.//text()')).split(',')
-            output.append(get_value(address[0].split(' ')[:-1])) #address
-            output.append(address[0].split(' ')[-1]) #city
-            output.append(address[1]) #state
-            output.append('<MISSING>') #zipcode 
+    data = []
+
+    base_url = "https://www.hometownbanks.com"
+    r = session.get("https://www.hometownbanks.com/MCB/Map/Markers.js")
+
+    json_data = r.text.split("locationData = ")[1].split("}]")[0] + "}]"
+    json_data = json_data.replace("new google.maps", '"new google.maps').replace(
+        '),"title"', ')","title"'
+    )
+    json_data = json.loads(json_data)
+    lat_lng = {}
+    casey_lat_lng = {}
+    caseycount = 0
+
+    for loc in json_data:
+        lat = loc["position"].split("LatLng(")[1].split(",")[0].strip()
+        lng = loc["position"].split("LatLng(")[1].split(",")[1].split(")")[0].strip()
+        address = loc["address"]
+        title = loc["title"].replace("&#39;", "'")
+
+        add_details = address.split(",")
+
+        state = add_details[-1].strip()
+        city = add_details[-2].strip()
+        street = add_details[-3]
+        if title != "Casey's":
+            lat_lng[title] = {
+                "lat": lat,
+                "lng": lng,
+                "street": street,
+                "city": city,
+                "state": state,
+            }
         else:
-            address = validate(etree.HTML(store['address']).xpath('.//text()'))
-            address = parse_address(address)
-            output.append(address['street']) #address
-            output.append(address['city']) #city
-            output.append(address['state']) #state
-            output.append(address['zipcode']) #zipcode 
-        output.append('US') #country code
-        output.append('<MISSING>') #store_number
-        output.append(get_value(phone)) #phone
-        output.append("Drycleaning Locations | Laundry and Drycleaning| Jim Massey's Cleaners") #location type
-        output.append(get_value(store['latitude'])) #latitude
-        output.append(get_value(store['longitude'])) #longitude        
-        output.append(get_value(store_hours).replace('Hours:', '')) #opening hours
-        logger.info(output)
-        output_list.append(output)
-    return output_list
+            casey_lat_lng["Casey's" + str(caseycount)] = {
+                "lat": lat,
+                "lng": lng,
+                "street": street,
+                "city": city,
+                "state": state,
+            }
+            caseycount = caseycount + 1
+    fin_lat = ""
+    fin_lng = ""
+    r = session.get("https://www.hometownbanks.com/Locations/All")
+    soup = BeautifulSoup(r.text, "html.parser")
+    data_list = soup.findAll("div", {"class": "row py-2"})
+    count = 0
+    for loc in data_list:
+        hours_of_operation = ""
+        details = loc.findAll("div", {"class": "col-12 col-md-3"})
+        html_title = (
+            loc.find("div", {"class": "col-12 col-md"}).find("p").find("strong").text
+        )
+        if html_title == "Casey's":
+            html_title = "Casey's" + str(count)
+            count = count + 1
+            fin_zip = loc.find("div", {"class": "col-12 col-md"}).find("p")
+            fin_zip = str(fin_zip).replace("<br/>", "|")
+            fin_zip = BeautifulSoup(fin_zip, "html.parser")
+            fin_street = str(fin_zip).split("|")[1]
+            fin_city = str(fin_zip).split("|")[2].split(", ")[0]
+            fin_state = str(fin_zip).split("|")[2].split(", ")[1].split(" ")[0]
+            fin_phone = ""
+            if (len(str(fin_zip).split("|"))) > 3:
+                fin_phone = (
+                    str(fin_zip)
+                    .split("|")[3]
+                    .replace("ATM not owned or operated by Morton Community Bank", "")
+                    .replace("</p>", "")
+                )
+            else:
+                fin_phone = "<MISSING>"
+            if fin_phone == "":
+                fin_phone = "<MISSING>"
+            fin_zip = (
+                str(fin_zip)
+                .split("|")[2]
+                .split(", ")[1]
+                .split(" ")[1]
+                .replace("</p", "")
+                .replace(">", "")
+            )
+            for key, value in casey_lat_lng.items():
+                json_street = value["street"]
+                if str(fin_street) in json_street:
+                    fin_lat = value["lat"]
+                    fin_lng = value["lng"]
+            hours_of_operation = ""
+            for det in details:
+                if "Lobby Hours" in det.text:
+                    det = str(det).replace("<br/>", " ")
+                    det = BeautifulSoup(det, "html.parser")
+                    hoo = det.findAll("p")
+                    for p in hoo:
+                        hours_of_operation = hours_of_operation + p.text + " "
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+        else:
+            fin_lat = lat_lng[html_title]["lat"]
+            fin_lng = lat_lng[html_title]["lng"]
+            fin_zip = loc.find("div", {"class": "col-12 col-md"}).find("p")
+            fin_zip = str(fin_zip).replace("<br/>", "|")
+
+            fin_zip = BeautifulSoup(fin_zip, "html.parser")
+            fin_phone = ""
+            if (len(str(fin_zip).split("|"))) > 3:
+                fin_phone = (
+                    str(fin_zip)
+                    .split("|")[3]
+                    .replace("ATM not owned or operated by Morton Community Bank", "")
+                    .replace("</p>", "")
+                )
+            else:
+                fin_phone = "<MISSING>"
+            if fin_phone == "":
+                fin_phone = "<MISSING>"
+            fin_street = str(fin_zip).split("|")[1]
+            fin_city = str(fin_zip).split("|")[2].split(", ")[0]
+            fin_state = str(fin_zip).split("|")[2].split(", ")[1].split(" ")[0]
+
+            fin_zip = (
+                str(fin_zip)
+                .split("|")[2]
+                .split(", ")[1]
+                .split(" ")[1]
+                .replace("</p", "")
+                .replace(">", "")
+            )
+            for det in details:
+                if "Lobby Hours" in det.text:
+                    det = str(det).replace("<br/>", " ")
+                    det = BeautifulSoup(det, "html.parser")
+                    hoo = det.findAll("p")
+                    for p in hoo:
+                        hours_of_operation = hours_of_operation + p.text + " "
+            if hours_of_operation == "":
+                hours_of_operation = "<MISSING>"
+        data.append(
+            [
+                base_url,
+                "https://www.hometownbanks.com/Locations/All",
+                html_title,
+                fin_street,
+                fin_city,
+                fin_state,
+                fin_zip,
+                "US",
+                "<MISSING>",
+                fin_phone,
+                "<MISSING>",
+                fin_lat,
+                fin_lng,
+                hours_of_operation,
+            ]
+        )
+    return data
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
