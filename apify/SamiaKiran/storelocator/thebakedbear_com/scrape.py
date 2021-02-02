@@ -1,9 +1,10 @@
 import csv
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
 
-website = "littlesprouts_com"
+website = "thebakedbear_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -59,70 +60,69 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     final_data = []
-    link_list = []
     if True:
-        url = "https://littlesprouts.com/schools/"
+        url = "https://www.thebakedbear.com/locations/"
         r = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.findAll("div", {"class": "x-container max width"})
+        linklist = soup.find("div", {"class": "fusion-builder-row fusion-row"}).findAll(
+            "div", {"class": "fusion-layout-column"}
+        )[1:]
         for link in linklist:
-            loclist = link.findAll("div", {"class": "x-column x-sm x-1-4"})
-            for loc in loclist:
-                try:
-                    link = loc.find(
-                        "a", {"class": "x-btn purple-btn x-btn-small x-btn-block"}
-                    )["href"]
-                except:
-                    continue
-                if link in link_list:
-                    temp = loc.find(
-                        "h3",
-                        {"class": "h-custom-headline cs-ta-center mbs mtn h4 accent"},
-                    ).text
-                    temp = temp.lower()
-                    link = "http://littlesprouts.com/schools/" + temp + "/"
-                link_list.append(link)
+            try:
+                templist = link.find("ul").findAll("li")
+            except:
+                pass
+            for temp in templist:
+                link = temp.find("a")["href"]
+                link = "https://www.thebakedbear.com" + link
                 r = session.get(link, headers=headers, verify=False)
+                if "COMING SOON" in r.text:
+                    continue
+                coord = r.text.split('"latitude":"')[1].split("}],", 1)[0]
+                lat = coord.split(",", 1)[0].replace('"', "")
+                longt = coord.split('longitude":"', 1)[1].replace('"', "")
+                if ",cache:" in longt:
+                    longt = longt.split(",cache:", 1)[0]
                 soup = BeautifulSoup(r.text, "html.parser")
-                longt, lat = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!2m", 1)[0]
-                    .split("!3d")
-                )
-                if "!3m" in lat:
-                    lat = lat.split("!3m", 1)[0]
-                temp_address = soup.findAll("div", {"class": "x-text"})
-                if len(temp_address) == 7:
-                    hours = temp_address[6].text.split("\n")
-                    hours = hours[0] + " " + hours[1]
-                    address = temp_address[5].text.split("|", 1)[0].strip()
-                    if "Infant" in address:
-                        address = temp_address[4].text.split("|", 1)[0].strip()
+                title = soup.find("h2", {"class": "title-heading-center"}).text
+                temp_address = soup.findAll("div", {"class": "fusion-li-item-content"})
+                if re.match(
+                    r"^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$",
+                    temp_address[-1].text.strip(),
+                ):
+                    phone = temp_address[-1].text.strip()
                 else:
-                    hours = temp_address[5].text.split("\n")
-                    hours = hours[0] + " " + hours[1]
-                    address = temp_address[4].text.split("|", 1)[0].strip()
-                    if "Infant" in address:
-                        address = temp_address[3].text.split("|", 1)[0].strip()
-                    elif "Learn About Transportation Availability" in address:
-                        hours = temp_address[7].text.split("\n")
-                        hours = hours[0] + " " + hours[1]
-                        address = temp_address[6].text.split("|", 1)[0].strip()
-                address = address.split(",")
-                street = address[0]
-                city = address[1]
-                title = city
-                temp = address[2].split()
-                state = temp[0]
-                try:
-                    pcode = temp[1]
-                except:
-                    pcode = "<MISSING>"
-                phone = soup.find("a", {"id": "call-btn-desktop"}).text.strip()
+                    phone = "<MISSING>"
+                address = temp_address[0].get_text(separator="|", strip=True).split("|")
+                if len(address) > 2:
+                    street = address[0] + " " + address[1]
+                    temp_address = address[2].split(",")
+                    city = temp_address[0]
+                    temp_address = temp_address[1].split()
+                    if len(temp_address) > 2:
+                        state = temp_address[0] + " " + temp_address[1]
+                        pcode = temp_address[2]
+                    else:
+                        state = temp_address[0]
+                        pcode = temp_address[1]
+                else:
+                    street = address[0]
+                    temp_address = address[1].split(",")
+                    city = temp_address[0]
+                    temp_address = temp_address[1].split()
+                    state = temp_address[0]
+                    pcode = temp_address[1]
+                hourlist = soup.findAll("div", {"class": "fusion-column-wrapper"})[
+                    1
+                ].findAll("li")
+                hours = ""
+                for hour in hourlist:
+                    hours = hours + hour.text + " "
+                if not hours:
+                    hours = "<MISSING>"
                 final_data.append(
                     [
-                        "https://littlesprouts.com/",
+                        "https://www.thebakedbear.com/",
                         link,
                         title,
                         street,
