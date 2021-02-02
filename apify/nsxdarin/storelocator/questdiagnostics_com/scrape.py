@@ -1,14 +1,17 @@
 import csv
 import string
 import random
+import threading
 from http import HTTPStatus
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("questdiagnostics_com")
-session = SgRequests()
+local = threading.local()
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -32,6 +35,15 @@ FIELDS = [
 ]
 
 
+def get_session():
+    if not hasattr(local, "session") or local.request_count == 10:
+        local.session = SgRequests()
+        local.request_count = 0
+        set_session_cookies(local.session)
+
+    return local.session
+
+
 def get_random_string(stringLength=34):
     lettersAndDigits = string.ascii_lowercase + string.digits
     return "".join((random.choice(lettersAndDigits) for i in range(stringLength)))
@@ -42,44 +54,28 @@ def setCookie(current_session, domain, name, value):
     current_session.cookies.set_cookie(cookie)
 
 
-def get_f5_cookie():
-    # start with search page to populate cookies
-    url_home = "https://appointment.questdiagnostics.com/patient/findlocation"
-    response = session.get(url_home, headers=headers)
-    for cookie in response.cookies:
-        if cookie.name.startswith("f5"):
-            return (cookie.name, response.cookies.get(cookie.name))
-
-
 def set_session_cookies(session):
     # this request is required in order to get the "demyq" cookie, otherwise 401 unauthorized
-    f5_cookie = get_f5_cookie()
     csrf_token = get_random_string()
-    current_session = session.session
+    current_session = session.get_session()
     setCookie(
         current_session, "appointment.questdiagnostics.com", "CSRF-TOKEN", csrf_token
     )
 
-    if f5_cookie:
-        setCookie(
-            current_session,
-            "appointment.questdiagnostics.com",
-            f5_cookie[0],
-            f5_cookie[1],
-        )
-
     headers["X-CSRF-TOKEN"] = csrf_token
-    headers["Content-Length"] = "2"
+    headers["Content-Length"] = "125"
     url_encounter = (
         "https://appointment.questdiagnostics.com/mq-service/asone/encounter"
     )
-    r = current_session.put(url_encounter, data="{}", headers=headers)
-    r.raise_for_status()
 
-
-def init_session():
-    session = SgRequests()
-    set_session_cookies(session)
+    session.put(url_encounter, data="{}", headers=headers)
+    session.get(
+        "https://appointment.questdiagnostics.com/as-service/services/redirectBeta"
+    )
+    session.get(
+        "https://appointment.questdiagnostics.com/as-service/services/maintenance"
+    )
+    session.get("https://appointment.questdiagnostics.com/mq-service/session/user")
 
 
 def write_output(data):
@@ -131,73 +127,67 @@ def extract(loc):
 
 
 MAX_COUNT = 1500
-MAX_DISTANCE = 300
+MAX_DISTANCE = 100
 
 
-def fetch(lat, lng, request_count, retry=0):
+@retry(stop=stop_after_attempt(3))
+def fetch(lat, lng):
     payload = {
+        "miles": MAX_DISTANCE,
+        "address": {},
         "latitude": lat,
         "longitude": lng,
-        "miles": MAX_DISTANCE,
         "maxReturn": MAX_COUNT,
         "onlyScheduled": "false",
-        "questDirect": False,
-        "address": {},
         "accessType": [],
-        "serviceType": ["all"],
     }
 
     url = (
         "https://appointment.questdiagnostics.com/as-service/services/getQuestLocations"
     )
 
-    response = session.post(url, json=payload, headers=headers, stream=True)
-    request_count += 1
+    response = get_session().post(
+        url, json=payload, headers=headers, stream=True, timeout=15
+    )
+    local.request_count += 1
 
     if response.status_code == HTTPStatus.NO_CONTENT:
         return None
 
-    try:
-        return response.json()
-    except Exception as e:
-        logger.error(e)
-        if retry < 3:
-            fetch(lat, lng, request_count, retry + 1)
-
-        return None
+    return response.json()
 
 
 def fetch_data():
-    init_session()
-    request_count = 0
+    completed = 0
     dedup_tracker = []
 
-    search = static_coordinate_list(20, SearchableCountries.USA)
-    search.extend(static_coordinate_list(20, SearchableCountries.CANADA))
+    search = static_coordinate_list(100, SearchableCountries.USA)
+    search += static_coordinate_list(30, SearchableCountries.CANADA)
 
-    for lat, lng in search:
-        result_coords = []
-        if request_count == 10:
-            init_session()
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch, lat, lng) for lat, lng in search]
 
-        locations = fetch(lat, lng, request_count)
-        if not locations:
-            continue
+        for future in as_completed(futures):
+            completed += 1
+            try:
+                locations = future.result()
 
-        for loc in locations:
-            poi = extract(loc)
-            id = poi.get("store_number")
+                if not locations:
+                    continue
 
-            if id not in dedup_tracker:
-                dedup_tracker.append(id)
-                coords = [poi.get("latitude"), poi.get("longitude")]
+                for loc in locations:
+                    poi = extract(loc)
+                    id = poi.get("store_number")
 
-                result_coords.append(coords)
-                yield [poi[field] for field in FIELDS]
+                    if id not in dedup_tracker:
+                        dedup_tracker.append(id)
+                        yield [poi[field] for field in FIELDS]
 
-        logger.info(
-            f"locations found: {len(dedup_tracker)} | currently pulling: {len(locations)}"
-        )
+                logger.info(
+                    f"locations found: {len(dedup_tracker)} | currently pulling: {len(locations)} | remaining postals: {completed}/{len(search)}"
+                )
+            except:
+                pass
 
     logger.info(f"total locations: {len(dedup_tracker)}")
 

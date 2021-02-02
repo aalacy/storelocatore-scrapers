@@ -101,6 +101,8 @@ def fetch_data():
         )
         if "soon" in hours_of_operation.lower():
             location_type = "Coming Soon"
+        if poi["coding"] == "N":
+            location_type = "Coming Soon"
 
         item = [
             DOMAIN,

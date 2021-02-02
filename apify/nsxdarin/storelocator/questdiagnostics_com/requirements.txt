@@ -1,4 +1,5 @@
 sgrequests
 requests_toolbelt
 sglogging
-sgzip==0.0.55
+sgzip==0.1.0
+tenacity

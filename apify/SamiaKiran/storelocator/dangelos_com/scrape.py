@@ -1,11 +1,11 @@
-from bs4 import BeautifulSoup
 import csv
-import re
-import usaddress
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger("dangelos_com")
+website = "dangelos_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 session = SgRequests()
 headers = {
@@ -14,7 +14,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -39,97 +39,158 @@ def write_output(data):
             ]
         )
         # Body
+        temp_list = []  # ignoring duplicates
         for row in data:
-            writer.writerow(row)
+            comp_list = [
+                row[2].strip(),
+                row[3].strip(),
+                row[4].strip(),
+                row[5].strip(),
+                row[6].strip(),
+                row[8].strip(),
+                row[10].strip(),
+            ]
+            if comp_list not in temp_list:
+                temp_list.append(comp_list)
+                writer.writerow(row)
+        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    data1 = []
-    url = "https://dangelos.com/locations/"
+    data = []
+    url = "https://locations.dangelos.com/index.html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    data_list = soup.findAll("li", {"class": "location-result"})
-    for data in data_list:
-        title = data["data-name"]
-        lat = data["data-latitude"]
-        longt = data["data-longitude"]
-        link = data.find("a", {"class": "location-title"})
-        if re.match(r"^http", link["href"]):
-            link = link["href"]
-        else:
-            link = "https://dangelos.com" + link["href"]
-        store = link
-        store = store.split("location/")[1]
-        store = store.split("/")[0]
-        if store.isdigit() is True:
-            store = store
-        else:
-            store = "<MISSING>"
-        phone = data.find("span", {"class": "location-phone"})
-        if phone is None:
-            phone = data.find("a", {"class": "location-phone"}).text
-        else:
-            phone = phone.text
-        hours_list = data.find("div", {"class": "location-hours"})
-        hours_list = hours_list.findAll("tr")
-        hours = ""
-        for temp in hours_list:
-            day = temp.find("span").text
-            temp_hour = temp.find("td").text
-            temp_hour = temp_hour.strip()
-            hours = hours + day + " " + temp_hour + " "
-        address = data["data-address"]
-        address = address.replace(",", " ")
-        address = usaddress.parse(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        data1.append(
-            [
-                "https://www.foodmaxx.com/",
-                "https://www.foodmaxx.com/stores",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+    statelist = soup.find("div", {"class": "Directory"}).findAll(
+        "a", {"class": "c-directory-list-content-item-link Link--main"}
+    )
+    for stnow in statelist:
+        stlink = "https://locations.dangelos.com/" + stnow["href"]
+        r = session.get(stlink, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        citylist = soup.find("div", {"class": "Directory"}).findAll(
+            "a", {"class": "c-directory-list-content-item-link Link--main"}
         )
-    return data1
+
+        for citynow in citylist:
+            citylink = "https://locations.dangelos.com/" + citynow["href"]
+            r = session.get(citylink, headers=headers, verify=False)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                branchlist = soup.find("ul", {"class": "c-LocationGrid"}).findAll("li")
+                for branch in branchlist:
+                    branch = branch.find("div", {"class": "Teaser-details"}).find(
+                        "a", {"class": "Link--main"}
+                    )
+                    branch = "https://locations.dangelos.com/" + branch["href"]
+                    branch = branch.replace("../", "")
+                    r = session.get(branch, headers=headers, verify=False)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    store = r.text.split('"id":', 1)[1].split(",", 1)[0].strip()
+                    lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0].strip()
+                    longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0].strip()
+                    title = (
+                        soup.find("h1", {"class": "Nap-title Heading Heading--lead"})
+                        .text.replace("\n", " ")
+                        .strip()
+                    )
+                    street = soup.find(
+                        "span", {"class": "c-address-street-1"}
+                    ).text.strip()
+                    city = (
+                        soup.find("span", {"class": "c-address-city"})
+                        .text.replace(",", "")
+                        .strip()
+                    )
+                    state = soup.find("span", {"class": "c-address-state"}).text.strip()
+                    pcode = soup.find(
+                        "span", {"class": "c-address-postal-code"}
+                    ).text.strip()
+                    phone = soup.find("span", {"id": "telephone"}).text.strip()
+                    hours = soup.find(
+                        "table", {"class": "c-location-hours-details"}
+                    ).text.strip()
+                    hours = (
+                        hours.replace("Day of the WeekHours", "")
+                        .replace("day", "day ")
+                        .replace("PM", "PM ")
+                        .strip()
+                    )
+                    data.append(
+                        [
+                            "https://dangelos.com/",
+                            branch,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            "US",
+                            store,
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours,
+                        ]
+                    )
+            except:
+                branch = citylink
+                store = r.text.split('"id":', 1)[1].split(",", 1)[0].strip()
+                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0].strip()
+                longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0].strip()
+                title = (
+                    soup.find("h1", {"class": "Nap-title Heading Heading--lead"})
+                    .text.replace("\n", " ")
+                    .strip()
+                )
+                street = soup.find("span", {"class": "c-address-street-1"}).text.strip()
+                city = (
+                    soup.find("span", {"class": "c-address-city"})
+                    .text.replace(",", "")
+                    .strip()
+                )
+                state = soup.find("span", {"class": "c-address-state"}).text.strip()
+                pcode = soup.find(
+                    "span", {"class": "c-address-postal-code"}
+                ).text.strip()
+                phone = soup.find("span", {"id": "telephone"}).text.strip()
+                hours = soup.find(
+                    "table", {"class": "c-location-hours-details"}
+                ).text.strip()
+                hours = (
+                    hours.replace("Day of the WeekHours", "")
+                    .replace("day", "day ")
+                    .replace("PM", "PM ")
+                    .strip()
+                )
+                data.append(
+                    [
+                        "https://dangelos.com/",
+                        branch,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        "US",
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours,
+                    ]
+                )
+    return data
 
 
 def scrape():
+    log.info("Started")
     data = fetch_data()
     write_output(data)
+    log.info("Finished")
 
 
 scrape()

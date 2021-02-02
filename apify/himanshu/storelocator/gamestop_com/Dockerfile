@@ -1,9 +1,9 @@
-FROM safegraph/apify-python3-ssl-upgrade:latest
-
-COPY . ./
+FROM safegraph/apify-python3:latest
 
 USER root
 
-RUN pip3.7 install -r requirements.txt
+COPY . ./
+
+RUN pip3 install -r requirements.txt
 
 CMD npm start

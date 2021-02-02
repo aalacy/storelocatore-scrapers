@@ -73,6 +73,7 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        new_coordinates = []
         store_data = json.loads(base.text)["response"]["entities"]
         locator_domain = "cfsc.com"
 
@@ -83,14 +84,17 @@ def fetch_data():
             except:
                 page_url = "<MISSING>"
 
+            store_number = page_url.split("-")[-1]
+            phone = store["mainPhone"]
+
+            if phone not in found_poi:
+                found_poi.append(phone)
+            else:
+                continue
+
             try:
                 location_name = store["name"]
             except:
-                continue
-
-            if location_name not in found_poi:
-                found_poi.append(location_name)
-            else:
                 continue
 
             street_address = store["address"]["line1"]
@@ -98,12 +102,10 @@ def fetch_data():
             state = store["address"]["region"]
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["countryCode"]
-            store_number = page_url.split("-")[-1]
             try:
                 location_type = ",".join(store["services"])
             except:
                 location_type = "<MISSING>"
-            phone = store["mainPhone"]
             try:
                 raw_hours = store["hours"]
                 hours_of_operation = ""
@@ -133,7 +135,7 @@ def fetch_data():
                 geo = store["yextDisplayCoordinate"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            search.mark_found([latitude, longitude])
+            new_coordinates.append([latitude, longitude])
 
             data.append(
                 [
@@ -153,6 +155,9 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
+
+        if len(new_coordinates) > 0:
+            search.mark_found(new_coordinates)
 
     return data
 
