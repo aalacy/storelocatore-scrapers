@@ -73,11 +73,10 @@ def fetch_data():
             phone = store["phone"]
             latitude = store["markers"]["lat"]
             longitude = store["markers"]["long"]
-
-            hours_of_operation = (
-                BeautifulSoup(store["storeHours"], "lxml")
-                .text.replace("\n", " ")
-                .strip()
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = " ".join(
+                list(base.find(class_="cc-container-day-info").stripped_strings)
             )
 
             data.append(
