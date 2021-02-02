@@ -60,50 +60,44 @@ def fetch_data():
         location = json.loads(
             soup.select_one("div.js-map-wrapper.b-find-a-store-map")["data-mapconfig"]
         )
-        try:
-            location_name = location["name"]
-            store_number = location["id"]
-            street_address = location["address1"] + myutil._valid1(
-                location.get("address2", "")
-            )
-            city = myutil._valid(location["city"])
-            zip = myutil._valid(location["postalCode"])
-            state = myutil._valid(location["state"])
-            country_code = location["countryCode"]
-            phone = myutil._valid(location["phone"])
-            location_type = "<MISSING>"
-            latitude = location["latitude"]
-            longitude = location["longitude"]
-            hours_of_operation = "; ".join(
-                [
-                    _["content"]
-                    for _ in soup.select("ul.b-store-locator-details__listing li")
-                ]
-            )
-
-            _item = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
+        location_name = location["name"]
+        store_number = location["id"]
+        street_address = location["address1"] + myutil._valid1(
+            location.get("address2", "")
+        )
+        city = myutil._valid(location["city"])
+        zip = myutil._valid(location["postalCode"])
+        state = myutil._valid(location["state"])
+        country_code = location["countryCode"]
+        phone = myutil._valid(location["phone"])
+        location_type = "<MISSING>"
+        latitude = location["latitude"]
+        longitude = location["longitude"]
+        hours_of_operation = "; ".join(
+            [
+                _["content"]
+                for _ in soup.select("ul.b-store-locator-details__listing li")
             ]
+        )
 
-            data.append(_item)
-        except Exception as err:
-            print(err)
-            import pdb
+        _item = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-            pdb.set_trace()
+        data.append(_item)
     return data
 
 
