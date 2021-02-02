@@ -62,11 +62,17 @@ def fetch_data():
         )
         json_data = r.json()
         j = json_data["results"]
+
+        new_coordinates = []
+
         for i in j:
             store = []
             store.append("https://www.thelittleclinic.com/")
             store.append(i["legalName"])
             store.append(i["address"]["addressLine1"])
+            if store[2] in adressess:
+                continue
+            adressess.append(store[2])
             store.append(i["address"]["city"])
             store.append(i["address"]["stateCode"])
             store.append(i["address"]["zip"])
@@ -74,19 +80,22 @@ def fetch_data():
             store.append(i["clinicId"])
             store.append(i["phoneNumber"])
             store.append(i["banner"])
-            store.append(i["latitude"])
-            store.append(i["longitude"])
+            lat = i["latitude"]
+            lng = i["longitude"]
+            store.append(lat)
+            store.append(lng)
+            new_coordinates.append([lat, lng])
             hours = " ".join(i["weekHours"])
             store.append(hours)
             store.append(
                 "https://www.thelittleclinic.com/scheduler/tlc/location/"
                 + str(i["clinicId"])
             )
-            if store[2] in adressess:
-                continue
-            adressess.append(store[2])
             store = [str(x).strip() if x else "<MISSING>" for x in store]
             yield store
+
+        if len(new_coordinates) > 0:
+            zip_codes.mark_found(new_coordinates)
 
 
 def scrape():
