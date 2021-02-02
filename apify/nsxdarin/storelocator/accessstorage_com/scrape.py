@@ -39,9 +39,10 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    urls = ['https://www.accessstorage.com/stores-outside-london',
-            'https://www.accessstorage.com/stores-in-london'
-            ]
+    urls = [
+        "https://www.accessstorage.com/stores-outside-london",
+        "https://www.accessstorage.com/stores-in-london",
+    ]
     website = "accessstorage.com"
     typ = "<MISSING>"
     country = "GB"
@@ -54,20 +55,20 @@ def fetch_data():
                 locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        store = '<MISSING>'
-        phone = ''
-        lat = ''
-        lng = ''
-        hours = ''
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode('utf-8'))
+            line2 = str(line2.decode("utf-8"))
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"telephone": "' in line2:
@@ -76,28 +77,32 @@ def fetch_data():
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
             if 'times__label">' in line2:
                 g = next(lines)
-                g = str(g.decode('utf-8'))
-                day = g.strip().replace('\r','').replace('\t','').replace('\n','')
+                g = str(g.decode("utf-8"))
+                day = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             if 'store-opening-times__hours">' in line2:
                 g = next(lines)
-                g = str(g.decode('utf-8'))
-                hrs = day + ': ' + g.strip().replace('\r','').replace('\t','').replace('\n','')
-                if hours == '':
+                g = str(g.decode("utf-8"))
+                hrs = (
+                    day
+                    + ": "
+                    + g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
+                )
+                if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + '; ' + hrs
+                    hours = hours + "; " + hrs
             if '"store-map__info-address">' in line2:
-                add = line2.split('"store-map__info-address">')[1].split('<')[0]
+                add = line2.split('"store-map__info-address">')[1].split("<")[0]
             if 'banner__info-address">' in line2:
                 g = next(lines)
-                g = str(g.decode('utf-8'))
+                g = str(g.decode("utf-8"))
                 state = "<MISSING>"
-                if g.count(',') == 2:
-                    city = g.split(',')[1].strip()
-                elif g.count(',') == 3:
-                    city = g.split(',')[2].strip()
+                if g.count(",") == 2:
+                    city = g.split(",")[1].strip()
+                elif g.count(",") == 3:
+                    city = g.split(",")[2].strip()
                 else:
-                    city = g.split(',')[3].strip()
+                    city = g.split(",")[3].strip()
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
                 lng = line2.split('data-lng="')[1].split('"')[0]
