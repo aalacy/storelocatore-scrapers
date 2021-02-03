@@ -84,6 +84,7 @@ def fetch_data():
         phone = temp["properties"]["phoneLabel"]
         link = temp["properties"]["slug"]
         link = "https://stores.maxmuscle.com/" + link
+
         hours = (
             str(temp["properties"]["hoursOfOperation"])
             .replace("{", "")
@@ -91,6 +92,8 @@ def fetch_data():
             .replace("[[", "")
             .replace("]]", "")
         )
+        if "[]" in hours:
+            hours = hours.replace("[]", " Closed")
         data.append(
             [
                 "https://maxmuscle.com/",
