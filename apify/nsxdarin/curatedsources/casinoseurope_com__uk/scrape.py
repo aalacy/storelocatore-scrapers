@@ -1,6 +1,13 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import (
+    SgAddress,
+    USA_Fast_Parser,
+    International_Parser,
+    USA_Best_Parser,
+    parse_address,
+)
 
 session = SgRequests()
 headers = {
@@ -118,6 +125,11 @@ def fetch_data():
                     rawadd = line2.split("<")[0]
                 else:
                     rawadd = rawadd + " " + line2.split("<")[0]
+                addr = parse_address(rawadd, International_Parser())
+                city = addr.city
+                zc = addr.postcode
+                add = addr.street_address_1
+                state = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
         if lat == "":
