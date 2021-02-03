@@ -50,7 +50,7 @@ class Util:
 
     def _valid(self, val):
         if val:
-            return val.strip()
+            return val.strip().replace("–", "-")
         else:
             return "<MISSING>"
 
@@ -59,3 +59,6 @@ class Util:
             if item[11] == _item[11] and item[12] == _item[12]:
                 data[x] = _item
                 break
+
+    def _strip_list(self, val):
+        return [_.strip() for _ in val if _.strip()]

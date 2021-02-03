@@ -73,7 +73,13 @@ def fetch_data():
         state = adr[-1].split(",")[-1].split()[0]
         zipcode = adr[-1].split(",")[-1].split()[1]
         street_address = " ".join(adr[1:-1]).replace(",", "")
+        if "1015 Westhaven" in street_address:
+            city = "Franklin"
+            state = "TN"
+            zipcode = "37064"
+
         phone = adr1[0].replace("Call ", "")
+
         tem_var = []
         tem_var.append("https://www.firstbankonline.com/")
         tem_var.append(name.replace("�", ""))
@@ -90,7 +96,7 @@ def fetch_data():
         tem_var.append(hours.replace("Hours: ", ""))
         tem_var.append(page_url)
         for i in range(len(tem_var)):
-            if type(tem_var[i]) == str:
+            if isinstance(tem_var[i], str):
                 tem_var[i] = "".join(
                     (
                         c
@@ -98,9 +104,10 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        tem_var = [x.replace("–", "-") if type(x) == str else x for x in tem_var]
+        tem_var = [x.replace("–", "-") if isinstance(x, str) else x for x in tem_var]
         tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         yield tem_var
+
     base_url = "https://www.firstbankonline.com/location/?type=atm"
     r = session.get(base_url)
     soup = BeautifulSoup(r.text, "lxml")
@@ -115,6 +122,11 @@ def fetch_data():
         zipcode = adr[-3].split(",")[-1].split()[1]
         hours = " ".join(adr[-2:-1])
         street_address = " ".join(adr[1:-3]).replace(",", "")
+        if "1015 Westhaven" in street_address:
+            city = "Franklin"
+            state = "TN"
+            zipcode = "37064"
+
         location_type = "ATM"
         page_url = "<MISSING>"
         tem_var = []
@@ -133,7 +145,7 @@ def fetch_data():
         tem_var.append(hours.replace("Hours: ", ""))
         tem_var.append(page_url)
         for i in range(len(tem_var)):
-            if type(tem_var[i]) == str:
+            if isinstance(tem_var[i], str):
                 tem_var[i] = "".join(
                     (
                         c
@@ -141,7 +153,7 @@ def fetch_data():
                         if unicodedata.category(c) != "Mn"
                     )
                 )
-        tem_var = [x.replace("–", "-") if type(x) == str else x for x in tem_var]
+        tem_var = [x.replace("–", "-") if isinstance(x, str) else x for x in tem_var]
         tem_var = [str(x).strip() if x else "<MISSING>" for x in tem_var]
         yield tem_var
 
