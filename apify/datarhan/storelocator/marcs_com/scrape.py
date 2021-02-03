@@ -42,7 +42,6 @@ def fetch_data():
     # Your scraper here
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
     items = []
 
     DOMAIN = "marcs.com"
@@ -57,7 +56,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    response = session.get(start_url, proxies=proxies)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
     viewgen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
@@ -87,19 +86,17 @@ def fetch_data():
             "p$lt$ctl04$pageplaceholder$p$lt$ctl03$Locations$submit": "Submit",
         }
 
-        response = session.post(
-            start_url, data=formdata, headers=headers, proxies=proxies
-        )
+        response = session.post(start_url, data=formdata, headers=headers)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//a[contains(@id, "storelink")]/@href')
-        response = session.get(start_url, proxies=proxies)
+        response = session.get(start_url)
         dom = etree.HTML(response.text)
         viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
         viewgen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
 
     for url in tqdm(list(set(all_locations))):
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, proxies=proxies)
+        loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="display-text"]/text()')
