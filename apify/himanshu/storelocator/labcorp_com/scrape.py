@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import html5lib
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -47,9 +46,7 @@ def fetch_data():
         max_radius_miles=84,
         max_search_results=75,
     )
-    MAX_RESULTS = 100
     MAX_DISTANCE = 50
-    current_results_len = 0
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
