@@ -160,36 +160,54 @@ def fetch_data():
         state_link = us_states[state].replace(" ", "-")
         city_link = city.replace(" ", "-")
 
-        link = "https://www.hearinglife.com/hearing-aids-centers/" + state_link + "/" + city_link
+        link = (
+            "https://www.hearinglife.com/hearing-aids-centers/"
+            + state_link
+            + "/"
+            + city_link
+        )
 
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
         got_hours = False
         try:
-            hours_of_operation = " ".join(list(base.find(class_="hours-list").stripped_strings))
+            hours_of_operation = " ".join(
+                list(base.find(class_="hours-list").stripped_strings)
+            )
             got_hours = True
         except:
             if "-" in city_link:
                 city_link = city_link.replace("-", " ")
-                link = "https://www.hearinglife.com/hearing-aids-centers/" + state_link + "/" + city_link
+                link = (
+                    "https://www.hearinglife.com/hearing-aids-centers/"
+                    + state_link
+                    + "/"
+                    + city_link
+                )
                 try:
                     req = session.get(link, headers=headers)
                     base = BeautifulSoup(req.text, "lxml")
 
-                    hours_of_operation = " ".join(list(base.find(class_="hours-list").stripped_strings))
+                    hours_of_operation = " ".join(
+                        list(base.find(class_="hours-list").stripped_strings)
+                    )
                     got_hours = True
                 except:
                     pass
         if got_hours:
-            script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
+            script = (
+                base.find("script", attrs={"type": "application/ld+json"})
+                .text.replace("\n", "")
+                .strip()
+            )
             store = json.loads(script)
 
             js_street = store["address"]["streetAddress"]
 
             if street_address[:3] in js_street:
-                latitude = store['geo']['latitude']
-                longitude = store['geo']['longitude']
+                latitude = store["geo"]["latitude"]
+                longitude = store["geo"]["longitude"]
             else:
                 link = "<INACCESSIBLE>"
                 hours_of_operation = "<INACCESSIBLE>"
