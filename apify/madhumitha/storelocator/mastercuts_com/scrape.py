@@ -1,7 +1,6 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 
 DOMAIN = "https://mastercuts.com"
 MISSING = "<MISSING>"
