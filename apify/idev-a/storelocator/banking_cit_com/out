@@ -1,0 +1,2501 @@
+<!doctype html>
+<html lang="en">
+    <head >
+        <script>
+    var BASE_URL = 'https://www.thbaker.co.uk/';
+    var require = {
+        "baseUrl": "https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB"
+    };
+</script>
+        <meta charset="utf-8"/>
+<meta name="title" content="Kidderminster Weavers Wharf | T.H. Baker Family Jewellers"/>
+<meta name="description" content="NULL"/>
+<meta name="robots" content="INDEX,FOLLOW"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="format-detection" content="telephone=no"/>
+<title>Kidderminster Weavers Wharf | T.H. Baker Family Jewellers</title>
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Mirasvit_Core/css/source/include_all_modules.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/css/styles.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Amasty_Base/vendor/slick/amslick.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/THBaker_AjaxWishlist/css/jquery.fancybox.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Amasty_SocialLogin/css/source/mkcss/amsociallogin.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Trustpilot_Reviews/css/trustpilot.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Amasty_Storelocator/vendor/fancybox/jquery.fancybox.min.css" />
+<link  rel="stylesheet" type="text/css"  media="all" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/THBaker_StoreLocator/css/styles.min.css" />
+<link  rel="stylesheet" type="text/css"  media="print" href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/css/print.min.css" />
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/requirejs/require.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/requirejs-min-resolver.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/mage/requirejs/mixins.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/requirejs-config.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/mage/polyfill.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Magento_Theme/js/custom.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Magento_Theme/js/lazysizes.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Magento_Theme/js/modernizr.min.js"></script>
+<script  type="text/javascript"  src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/THBaker_StoreLocator/js/store-locator.min.js"></script>
+<script  type="text/javascript"  defer="" src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/Magento_Theme/js/svgxuse.min.js"></script>
+<link  rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
+<link  rel="icon" type="image/x-icon" href="https://www.thbaker.co.uk/pub/media/favicon/default/THBaker-favicon.png" />
+<link  rel="shortcut icon" type="image/x-icon" href="https://www.thbaker.co.uk/pub/media/favicon/default/THBaker-favicon.png" />
+                <script>
+        window.getWpCookie = function(name) {
+            match = document.cookie.match(new RegExp(name + '=([^;]+)'));
+            if (match) return decodeURIComponent(match[1].replace(/\+/g, ' ')) ;
+        };
+
+        window.dataLayer = window.dataLayer || [];
+                var dlObjects = [{"google_tag_params":{"ecomm_pagetype":"other"}}];
+        for (var i in dlObjects) {
+            window.dataLayer.push(dlObjects[i]);
+        }
+                var wpCookies = ['wp_customerId','wp_customerGroup'];
+        wpCookies.map(function(cookieName) {
+            var cookieValue = window.getWpCookie(cookieName);
+            if (cookieValue) {
+                var dlObject = {};
+                dlObject[cookieName.replace('wp_', '')] = cookieValue;
+                window.dataLayer.push(dlObject);
+            }
+        });
+    </script>
+
+    <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W2PC2HH');</script>
+<!-- End Google Tag Manager --><!-- BEGIN GOOGLE ANALYTICS CODE -->
+<script type="text/x-magento-init">
+{
+    "*": {
+        "Magento_GoogleAnalytics/js/google-analytics": {
+            "isCookieRestrictionModeEnabled": 0,
+            "currentWebsite": 1,
+            "cookieName": "user_allowed_save_cookie",
+            "ordersTrackingData": [],
+            "pageTrackingData": {"optPageUrl":"","isAnonymizedIpActive":false,"accountId":"UA-53631885-3"}        }
+    }
+}
+</script>
+<!-- END GOOGLE ANALYTICS CODE -->
+<!-- BEGIN GOOGLE VERIFICATION TAG -->
+<!-- END GOOGLE VERIFICATION TAG -->
+<!-- BEGIN GTAG GLOBAL TAG -->
+<!-- END GTAG GLOBAL TAG -->
+<script type="text/javascript" async>
+    var w = document.createElement("script");
+    w.type = "text/javascript";
+    w.src = "//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js";
+    w.async = true;
+    document.head.appendChild(w);
+</script>
+<script type="text/javascript">
+    (function(w,d,s,r,n){w.TrustpilotObject=n;w[n]=w[n]||function(){(w[n].q=w[n].q||[]).push(arguments)};
+    a=d.createElement(s);a.async=1;a.src=r;a.type='text/java'+s;f=d.getElementsByTagName(s)[0];
+    f.parentNode.insertBefore(a,f)})(window,document,'script', 'https://invitejs.trustpilot.com/tp.min.js', 'tp');
+    tp('register','7mXG2QuvTSGysEMV');
+</script>
+<script type="text/javascript">
+    function inIframe () {
+        try {
+            return window.self !== window.top;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function tryParseJson(str) {
+        if (typeof str === 'string') {
+            try {
+                return JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    if (inIframe()) {
+        window.addEventListener('message', function(e) {
+            var adminOrign = new URL(window.location).hostname;
+            if (!e.data || e.origin.indexOf(adminOrign) === -1) {
+                return;
+            }
+            if (typeof TrustpilotPreview !== 'undefined') {
+                if (typeof e.data === 'string' && e.data === 'submit') {
+                    TrustpilotPreview.sendTrustboxes();
+                } else {
+                    jsonData = tryParseJson(e.data);
+                    if (jsonData.trustbox) {
+                        TrustpilotPreview.setSettings(jsonData.trustbox);
+                    } else if (jsonData.customised) {
+                        TrustpilotPreview.updateActive(jsonData.customised);
+                    }
+                }
+            } else {
+                var settings = tryParseJson(e.data);
+                if (settings) {
+                    var p = document.createElement("script");
+                    p.type = "text/javascript";
+                    p.onload = function () {
+                        const iFrame = e.source.parent.document.getElementById('configuration_iframe').contentWindow;
+                        TrustpilotPreview.init(['//ecommplugins-scripts.trustpilot.com/v2.1/css/preview.min.css'], settings, iFrame, e.source);
+                    };
+                    p.src = '//ecommplugins-scripts.trustpilot.com/v2.1/js/preview.min.js';
+                    document.head.appendChild(p);
+                }
+            }
+        });
+    }
+</script><script type="text/javascript" async>
+    const trustpilot_trustbox_settings = {"trustboxes":[]};
+    if (trustpilot_trustbox_settings) {
+        document.addEventListener('DOMContentLoaded', function() {
+            tp('trustBox', trustpilot_trustbox_settings);
+        });
+    }
+</script><script type="application/ld+json">
+    {
+        "@context":"http://schema.org",
+        "@type":"Organization",
+        "address":{
+            "@type":"PostalAddress",
+            "addressLocality":"Kidderminster",
+            "postalCode":"DY10 1BT",
+            "streetAddress":"West Midlands Merchants, Brinton House",
+            "addressRegion":"Worcestershire"
+        },
+        "name":"T.H.Baker",
+        "telephone":"01562 312 224",
+        "url" : "https://www.thbaker.co.uk/stores/t-h-baker-kidderminster-weavers-wharf/",
+        "logo": "https://www.thbaker.co.uk/stores/t-h-baker-kidderminster-weavers-wharf//pub/media/design/logo.png"
+        ,"sameAs" : [
+            "https://en-gb.facebook.com/thbakerjeweller/","https://twitter.com/thbakerjeweller","https://www.youtube.com/channel/UCGWTr09sQUfu3RiDDHDN8pQ","https://www.instagram.com/thbakerjeweller","https://www.pinterest.co.uk/thbakerjeweller/"        ]
+    }
+</script>
+<script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "WebSite",
+      "url": "https://www.thbaker.co.uk/stores/t-h-baker-kidderminster-weavers-wharf/",
+      "potentialAction": [{
+        "@type": "SearchAction",
+        "target": "https://www.thbaker.co.uk/stores/t-h-baker-kidderminster-weavers-wharf//catalogsearch/result/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }]
+    }
+</script>
+<meta property="fb:app_id" content="338275566542845"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<script type="text/javascript"> (function(a,b,c,d,e,f,g){e['ire_o']=c;e[c]= e[c]||function(){(e[c].a=e[c].a||[]).push(arguments)};f=d.createElement(b);g=d.getElementsByTagName(b)[0];f.async=1;f.src=a;g.parentNode.insertBefore(f,g);})('//d.impactradius-event.com/A1228856-742d-474c-b012-6e34b72c42531.js','script','ire',document,window); </script>
+<script src="https://www.googleoptimize.com/optimize.js?id=OPT-PNXKZ85"></script>
+    </head>
+    <body data-container="body"
+          data-mage-init='{"loaderAjax": {}, "loader": { "icon": "https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/loader-2.gif"}}'
+        class="amlocator-location-view page-layout-1column">
+        <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W2PC2HH"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) --><div id="email"></div>
+<script type="text/x-magento-init">
+    {
+    "*":
+    {
+            "Bss_FacebookPixel/js/code": {
+                "id" : 1037220053036714,
+                "action" : "amlocator_location_view",
+                "productData" : 404,
+                "categoryData" : 404,
+                "registration" : 404,
+                "addToWishList" : 404,
+                "initiateCheckout" : 404,
+                "search" : 404,
+                "orderData" : 404,
+                "pageView" : "pass"
+            }
+        }
+    }
+</script>
+<!-- Facebook Pixel Code -->
+<noscript><img height="1" width="1" style="display:none" alt="Facebook Pixel"
+               src="https://www.facebook.com/tr?id=1037220053036714&ev=PageView&noscript=1"
+    /></noscript>
+<!-- End Facebook Pixel Code -->
+<div data-role="bss-fbpixel-subscribe" style="display:none;">
+</div>
+<span class="bss-subscribe-email" style="display:none;"></span>
+<span class="bss-subscribe-id" style="display:none;"></span>
+<script type="text/x-magento-init">
+    {
+        "[data-role='bss-fbpixel-subscribe']":
+            {
+                "Magento_Ui/js/core/app": {"components":{"bssFbpixelsSubscribe":{"component":"Bss_FacebookPixel\/js\/subscribe"}}}            }
+    }
+</script>
+<div data-role="bss-fbpixel-atc" style="display:none;">
+
+</div>
+<script type="text/x-magento-init">
+    {
+        "[data-role='bss-fbpixel-atc']":
+            {
+                "Magento_Ui/js/core/app": {"components":{"bssFbpixelsAtc":{"component":"Bss_FacebookPixel\/js\/atc"}}}            }
+    }
+</script>
+
+
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "mage/cookies": {
+                "expires": null,
+                "path": "\u002F",
+                "domain": ".www.thbaker.co.uk",
+                "secure": false,
+                "lifetime": "604800"
+            }
+        }
+    }
+</script>
+    <noscript>
+        <div class="message global noscript">
+            <div class="content">
+                <p>
+                    <strong>JavaScript seems to be disabled in your browser.</strong>
+                    <span>For the best experience on our site, be sure to turn on Javascript in your browser.</span>
+                </p>
+            </div>
+        </div>
+    </noscript>
+
+<script>
+    window.cookiesConfig = window.cookiesConfig || {};
+    window.cookiesConfig.secure = true;
+</script>
+<!-- BEGIN GTAG CART SCRIPT -->
+<!-- END GTAG CART SCRIPT -->
+
+    <script>
+        require.config({
+            paths: {
+                'dmpt':  "//r1-t.trackedlink.net/_dmpt"
+            }
+        });
+    </script>
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "dmpt": {}
+            }
+        }
+    </script>
+<script id="searchAutocompletePlaceholder" type="text/x-custom-template">
+    <div class="mst-searchautocomplete__autocomplete">
+        <div class="mst-searchautocomplete__spinner">
+            <div class="spinner-item spinner-item-1"></div>
+            <div class="spinner-item spinner-item-2"></div>
+            <div class="spinner-item spinner-item-3"></div>
+            <div class="spinner-item spinner-item-4"></div>
+            <div class="spinner-item spinner-item-5"></div>
+            <div class="spinner-item spinner-item-6"></div>
+            <div class="spinner-item spinner-item-7"></div>
+            <div class="spinner-item spinner-item-8"></div>
+        </div>
+
+        <div class="mst-searchautocomplete__close">
+            &times;
+        </div>
+    </div>
+</script>
+
+<script id="searchAutocompleteWrapper" type="text/x-custom-template">
+    <div class="mst-searchautocomplete__wrapper">
+        <div class="searchautocomplete-content" data-bind="visible: result.noResults == false">
+            <div class="searchautocomplete-left" data-bind="foreach: { data: result.indices, as: 'index' }">
+                <!-- ko ifnot: index.identifier == 'magento_catalog_product' -->
+                <div data-bind="visible: index.totalItems, attr: {class: 'mst-searchautocomplete__index ' + index.identifier}">
+                    <div class="mst-searchautocomplete__index-title">
+                        <span data-bind="text: index.title"></span>
+                    </div>
+
+                    <ul data-bind="foreach: { data: index.items, as: 'item' }">
+                        <li data-bind="
+                            template: { name:index.identifier, data: item },
+                            attr: {class: 'mst-searchautocomplete__item ' + index.identifier},
+                            event: { mouseover: $parents[1].onMouseOver, mouseout: $parents[1].onMouseOut, mousedown: $parents[1].onClick },
+                            css: {_active: $data.isActive}">
+                        </li>
+                    </ul>
+                </div>
+                <!-- /ko -->
+            </div>
+            <div class="searchautocomplete-right" data-bind="foreach: { data: result.indices, as: 'index' }">
+                <!-- ko if: index.identifier == 'magento_catalog_product' -->
+                <div data-bind="visible: index.totalItems, attr: {class: 'mst-searchautocomplete__index ' + index.identifier}">
+                    <div class="mst-searchautocomplete__index-title">
+                        <span data-bind="text: index.title"></span>
+                        <span data-bind="visible: index.isShowTotals">
+                            (<span data-bind="text: index.totalItems"></span>)
+                        </span>
+                    </div>
+
+                    <ul class="autocompletesearch-products-grid" data-bind="foreach: { data: index.items, as: 'item' }">
+                        <li data-bind="
+                            template: { name:index.identifier, data: item },
+                            attr: {class: 'mst-searchautocomplete__item ' + index.identifier},
+                            event: { mouseover: $parents[1].onMouseOver, mouseout: $parents[1].onMouseOut, mousedown: $parents[1].onClick },
+                            css: {_active: $data.isActive, 'exact-match': item.exact}">
+                        </li>
+                    </ul>
+                </div>
+                <!-- /ko -->
+            </div>
+
+        </div>
+        <div class="mst-searchautocomplete__show-all" data-bind="visible: result.urlAll && result.totalItems > 0">
+            <a data-bind="attr: { href: result.urlAll }">
+                See all results →
+            </a>
+        </div>
+
+        <div class="mst-searchautocomplete__empty-result" data-bind="visible: result.noResults == true && !loading">
+            <span data-bind="text: result.textEmpty"></span>
+        </div>
+    </div>
+</script>
+
+<script id="popular" type="text/x-custom-template">
+    <a class="title" data-bind="text: query"></a>
+</script>
+
+<script id="magento_catalog_category" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="magento_catalog_product" type="text/x-custom-template">
+    <!-- ko if: optimize -->
+    <a class="title" data-bind="html: name, attr: {href: url}, highlight"></a>
+
+    <!-- ko if: price > 0 -->
+    <div data-bind="text: price, price" class="price"></div>
+    <!-- /ko -->
+    <!-- /ko -->
+
+    <!-- ko if: !optimize -->
+    <!-- ko if: image -->
+    <img data-bind="attr: {src: image}"/>
+    <!-- /ko -->
+
+    <div class="meta">
+        <div class="title">
+            <a data-bind="html: name, attr: {href: url}, highlight"></a>
+
+            <!-- ko if: sku -->
+            <span class="sku" data-bind="text: sku, highlight"></span>
+            <!-- /ko -->
+        </div>
+
+        <!-- ko if: description -->
+        <div class="description" data-bind="text: description, highlight"></div>
+        <!-- /ko -->
+
+        <!-- ko if: rating -->
+        <div data-bind="html: rating"></div>
+        <!-- /ko -->
+
+        <form data-role="tocart-form" class="to-cart"
+              data-bind="visible: cart.visible, attr:{action: cart.params.action}, afterRender: $parents[2].afterRender"
+              method="post">
+            <input type="hidden" name="product" data-bind="value: cart.params.data.product">
+            <input type="hidden" name="uenc" data-bind="value: cart.params.data.uenc">
+            <input type="hidden" name="form_key" data-bind="value: $parents[2].form_key"/>
+            <button type="submit" class="action tocart primary">
+                <span data-bind="html: cart.label,event: { mousedown: $parents[2].onSubmit }"></span>
+            </button>
+        </form>
+    </div>
+
+    <!-- ko if: price > 0 -->
+    <div class="store">
+        <div data-bind="text: price, price" class="price"></div>
+    </div>
+    <!-- /ko -->
+    <!-- /ko -->
+</script>
+
+<script id="magento_cms_page" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="magento_catalog_categoryproduct" type="text/x-custom-template">
+    <a class="title" data-bind="html: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="magento_search_query" type="text/x-custom-template">
+    <a class="title" data-bind="text: query_text, attr: {href: url}, highlight"></a> <span class="num_results"
+                                                                                           data-bind="text: num_results"></span>
+</script>
+
+<script id="external_wordpress_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="magefan_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="magento_catalog_attribute" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="mageplaza_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="mirasvit_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="mirasvit_gry_registry" type="text/x-custom-template">
+    <a class="title" data-bind="text: title, attr: {href: url}, highlight"></a>
+    <p data-bind="text: name, highlight"></p>
+</script>
+
+<script id="mirasvit_kb_article" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="ves_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="amasty_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="aheadworks_blog_post" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+
+<script id="fishpig_glossary_word" type="text/x-custom-template">
+    <a class="title" data-bind="text: name, attr: {href: url}, highlight"></a>
+</script>
+    <script>
+        require([
+                'jquery',
+                'Mirasvit_SearchAutocomplete/js/autocomplete',
+                'Mirasvit_SearchAutocomplete/js/typeahead',
+                'ko'
+            ], function ($, autocomplete, typeahead, ko) {
+                var selector = 'input#search, input#mobile_search, .minisearch input[type="text"]';
+
+                autocomplete.prototype.ensurePosition = function () {
+                    var position = this.$input.position();
+                    var top = position.top + parseInt(this.$input.css('marginTop'), 10);
+
+                    this.$placeholder()
+                        .css('top', this.$input.outerHeight() - 1 + top);
+                }
+
+                autocomplete.prototype._doSearch = function (query) {
+                    this.isVisible = true;
+
+                    this.$spinner().show();
+
+                    var catId = $('#search-category').val();
+
+                    if (catId === '') {
+                        catId = false
+                    }
+
+                    this.xhr = $.ajax({
+                        url:      this.config.url,
+                        dataType: 'json',
+                        type:     'GET',
+                        data:     {
+                            q:        query,
+                            store_id: this.config.storeId,
+                            cat:      catId
+                        },
+                        success:  function (data) {
+                            this.processApplyBinding(data);
+
+                            this.$spinner().hide();
+                        }.bind(this)
+                    });
+                }
+
+                autocomplete.prototype.processApplyBinding = function (data) {
+                    if (this.$wrapper().length > 0) {
+                        if (!!ko.dataFor(this.$wrapper())) {
+                            ko.cleanNode(this.$wrapper());
+                        }
+                    }
+
+                    this.$wrapper().remove();
+
+                    var wrapper = $('#searchAutocompleteWrapper').html();
+
+                    this.$placeholder().append(wrapper);
+
+                    ko.applyBindings(this.viewModel(data), this.$wrapper()[0]);
+
+                    if (this.config.layout == '2columns'
+                        && data.indices !== undefined
+                        && Object.keys(data.indices).length > 1
+                    ) {
+                        var result = {};
+                        data.indices.forEach(function (index) {
+                            if (index.items.length > 0) {
+                                result[index.identifier] = index.items.length;
+                            }
+                        });
+
+                        if (Object.keys(result).length > 1 && typeof result.magento_catalog_product != 'undefined') {
+                            this.$placeholder().addClass(this.additionalColumnSelector);
+                        } else {
+                            this.$placeholder().removeClass(this.additionalColumnSelector);
+                        }
+                    }
+
+
+                    this.ensurePosition();
+                };
+
+                $(document).ready(function () {
+                    var $input = $(selector);
+
+                    $input.each(function (index, searchInput) {
+                        
+                        new autocomplete($(searchInput)).init({"query":"","priceFormat":{"pattern":"\u00a3%s","precision":2,"requiredPrecision":2,"decimalSymbol":".","groupSymbol":",","groupLength":3,"integerRequired":false},"minSearchLength":3,"url":"https:\/\/www.thbaker.co.uk\/thbautocomplete\/ajax\/suggest\/","storeId":"1","delay":300,"layout":"2columns","popularTitle":"Hot Searches","popularSearches":["St christopher","Gucci bracelets","Gucci","Necklace","Rings"],"isTypeaheadEnabled":"0","typeaheadUrl":"https:\/\/www.thbaker.co.uk\/searchautocomplete\/ajax\/typeahead\/"});
+                    });
+                });
+            }
+        );
+    </script>
+
+<div class="page-wrapper"><div class="header-top clearfix">
+    <div class="header-row">
+        <span class="h6 tag-line">Independent Family Jeweller Since 1888</span>
+        <a href="tel:+44 (0)1562 312 224 " class="header-phone">
+            Call our team on +44 (0)1562 312 224        </a>
+    </div>
+</div>
+<header class="header"><section class="header-container clearfix"><div class="header-row clearfix"><div class="header-left">
+    <a href="#mobile-nav" id="open-panel" class="open-panel">
+        <svg class="svg-icon menu"><use xmlns="http://www.w3.org/2000/svg" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-bars"></use></svg>
+    </a>
+</div>
+<a class="header-logo" href="https://www.thbaker.co.uk/">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='306' height='26' version='1' fill='%23fff' viewBox='-12 -407 1826 155'%3E%3Cpath d='M43-384c0-6 0-7-5-7H24c-16 0-21 9-27 26-3 1-7 0-9-3 5-15 6-29 8-37l3-2 3 1c1 4 2 5 19 5h83c14 0 18 0 20-5l3-1 3 2c-2 8-4 26-3 38-2 2-8 3-9 1-4-14-7-25-23-25H81c-5 0-6 1-6 7v98c0 21 2 23 12 24l9 1v8a1147 1147 0 0 0-74 0c-2-1-2-7 0-8l10-1c10-1 11-3 11-24zm154 52c0-10 8-18 18-18 11 0 19 9 19 18 0 10-8 18-19 18-8 0-18-7-18-18zm207 8c-9 0-9 0-9 6v32c0 21 1 23 11 24l7 1c2 1 2 7 0 8a961 961 0 0 0-67 0c-2-1-2-7 0-8l5-1c11-1 12-3 12-24v-83c0-21-1-23-12-24l-5-1c-2-1-2-6 0-8a856 856 0 0 0 64 0c2 2 2 7 0 8l-5 1c-9 1-10 3-10 24v26c0 6 0 7 9 7h46c10 0 10-1 10-7v-26c0-21-1-22-12-24l-6-1c-2-1-2-6 0-8a947 947 0 0 0 66 0v8l-5 1c-10 1-11 3-11 24v83c0 21 1 22 11 24l5 1c2 1 2 7 0 8a806 806 0 0 0-65 0v-8l5-1c10-1 12-3 12-24v-32c0-6 0-6-10-6zm211-8c0-10 8-18 18-18 11 0 18 9 18 18 0 10-7 18-18 18-9 0-18-7-18-18zm160-33c0-22 0-24-10-26l-6-1c-2-1-2-7 1-8l56-2c21 0 35 3 45 9 10 5 16 15 16 28 0 19-16 26-23 28l-5 2c0 1 1 2 3 2 18 4 33 15 33 37 0 21-12 33-26 38-14 4-31 5-44 5l-23-1-35 1v-8l7-1c10-2 11-4 11-24zm31 22c0 6 0 6 12 6 19 0 26-12 26-25 0-20-12-29-27-29-11 0-11 1-11 11zm0 52c0 17 2 28 20 28 16 0 25-13 25-31 0-19-11-33-33-33-12 0-12 0-12 9zm209-13c-6 0-6 0-8 4l-8 26-2 8c0 2 3 3 9 4l7 1c1 2 2 7-1 8l-25-1-23 1c-2-1-2-6 0-8l6-1c5 0 9-2 13-11l14-35 20-55c6-14 9-22 9-28 10-3 19-14 19-14 3 0 4 2 5 5l10 30 31 88c4 13 6 18 15 20l8 1c1 1 2 7 0 8a838 838 0 0 0-65 0c-2-1-3-6 0-8l7-1c5-1 6-2 6-4l-4-15-6-19c-1-4-3-4-11-4zm25-12c5 0 6-1 4-6l-5-19-9-26-10 28-6 16c-2 6-1 7 5 7zm213-26c0 8 1 9 4 9 4 0 14-9 18-13 11-13 24-27 31-38l3-6s-1-2-3-2l-8-2c-3-1-2-7 1-8a711 711 0 0 0 54 0c3 1 3 6 1 8l-19 4c-9 4-18 12-33 29l-10 11-3 5c0 2 1 4 8 14 11 17 24 38 40 58 6 9 10 10 16 11l7 1c2 2 2 7-1 8a795 795 0 0 0-67 0c-3-1-3-7 0-8l6-1 3-2-1-5-13-20-12-18c-8-12-12-17-17-17s-5 3-5 15v23c0 21 1 23 11 24l6 1c2 2 2 7 0 8a881 881 0 0 0-67 0c-2-1-2-7 0-8l6-1c10-1 12-3 12-24v-83c0-21-2-23-12-24l-6-1c-2-1-2-6 0-8a860 860 0 0 0 67 0c2 2 2 7 0 8l-6 1c-10 1-11 3-11 24zm248-1c0 6 1 7 7 7h15c12 0 14-2 16-13l2-5c1-2 7-2 8 0a394 394 0 0 0 0 47c-1 2-7 3-8 1l-2-6c-2-11-4-12-16-12h-15c-6 0-7 0-7 6v27c0 10 1 17 4 21s7 6 23 6c20 0 27-1 39-26 2-2 8-1 9 1-1 12-6 30-10 36l-51-1h-29l-38 1c-2-1-2-7 0-8l10-2c10-1 11-2 11-23v-83c0-20-1-22-11-24l-6-1c-2-1-1-6 1-8l32 1h47l30-1 3 35c-1 2-6 3-8 1-3-8-6-15-9-18-4-4-11-7-22-7h-17c-8 0-8 1-8 9zm183-22c0-22-1-25-10-26l-6-1c-2-1-2-7 0-8l56-2c19 0 35 3 43 8 13 8 20 19 20 33 0 20-13 29-24 34-2 1-2 2-1 5 15 30 24 46 35 55 6 5 11 7 15 7 2 1 2 4 1 6l-18 2c-21 0-34-8-43-24l-18-34c-2-6-6-8-12-8-7 0-8 0-8 5v27c0 21 2 22 12 24l6 1v8a837 837 0 0 0-66 0c-2-1-2-7 0-8l6-1c10-2 12-3 12-24zm30 28c0 8 1 9 14 9 8 0 13-2 17-6s8-11 8-24c0-20-12-33-29-33-9 0-10 0-10 11z'/%3E%3C/svg%3E" alt="T.H.Baker" width="306">
+</a>
+<div class="block block-search active">
+    <div class="block block-title"><strong>Search</strong></div>
+    <div class="block block-content">
+        <form class="form minisearch clearfix" id="search_mini_form" action="https://www.thbaker.co.uk/catalogsearch/result/" method="get">
+            <div class="field search">
+                <div class="control">
+                    <input id="search"
+                           data-mage-init='{"quickSearch":{
+                                "formSelector":"#search_mini_form",
+                                "url":"https://www.thbaker.co.uk/search/ajax/suggest/",
+                                "destinationSelector":"#search_autocomplete"}
+                           }'
+                           type="text"
+                           name="q"
+                           value=""
+                           placeholder="Search by product name, brand or code"
+                           class="input-text"
+                           maxlength="128"
+                           role="combobox"
+                           aria-haspopup="false"
+                           aria-autocomplete="both"
+                           autocomplete="off"/>
+                    <div id="search_autocomplete" class="search-autocomplete"></div>
+                                    </div>
+            </div>
+            <div class="actions">
+                <button type="submit"
+                        title="Search"
+                        class="action search"></button>
+            </div>
+            <div class="search-dropdown-wrapper">
+                <select name="cat" id="search-category" class="search-block ga-link" data-section="header" data-text="search category" tabindex="1">
+                    <option value="">Search All</option>
+                    <option value="4792">Brands</option>
+                    <option value="3626">Watches</option>
+                    <option value="3635">Jewellery</option>
+                    <option value="3687">Occasions</option>
+                    <option value="5089">Second Hand</option>
+                    <option value="3643">Sale</option>
+                </select>
+            </div>
+            <div class="mobile-overlay"></div>
+        </form>
+    </div>
+</div>
+<div class="header-right"><ul class="quick-access clearfix">
+<li data-block="minicart" class="minicart-wrapper">
+    <a class="action showcart" href="https://www.thbaker.co.uk/checkout/cart/"
+       data-bind="scope: 'minicart_content'">
+        <svg class="svg-icon"><use xmlns="http://www.w3.org/2000/svg" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-bag"></use></svg>
+        <span class="counter qty empty"
+              data-bind="css: { empty: !!getCartParam('summary_count') == false }, blockLoader: isLoading">
+            <span class="counter-number"><!-- ko text: getCartParam('summary_count') --><!-- /ko --></span>
+        </span>
+    </a>
+            <div class="block block-minicart"
+             data-role="dropdownDialog"
+             data-mage-init='{"dropdownDialog":{
+                "appendTo":"[data-block=minicart]",
+                "triggerTarget":".showcart",
+                "timeout": "2000",
+                "closeOnMouseLeave": false,
+                "closeOnEscape": true,
+                "triggerClass":"active",
+                "parentClass":"active",
+                "buttons":[]}}'>
+            <div id="minicart-content-wrapper" data-bind="scope: 'minicart_content'">
+                <!-- ko template: getTemplate() --><!-- /ko -->
+            </div>
+                    </div>
+        <script>
+        window.checkout = {"shoppingCartUrl":"https:\/\/www.thbaker.co.uk\/checkout\/cart\/","checkoutUrl":"https:\/\/www.thbaker.co.uk\/checkout\/","updateItemQtyUrl":"https:\/\/www.thbaker.co.uk\/checkout\/sidebar\/updateItemQty\/","removeItemUrl":"https:\/\/www.thbaker.co.uk\/checkout\/sidebar\/removeItem\/","imageTemplate":"Magento_Catalog\/product\/image_with_borders","baseUrl":"https:\/\/www.thbaker.co.uk\/","minicartMaxItemsVisible":3,"websiteId":"1","maxItemsToDisplay":10,"storeId":"1","customerLoginUrl":"https:\/\/www.thbaker.co.uk\/customer\/account\/login\/","isRedirectRequired":false,"autocomplete":"off","captcha":{"user_login":{"isCaseSensitive":false,"imageHeight":50,"imageSrc":"","refreshUrl":"https:\/\/www.thbaker.co.uk\/captcha\/refresh\/","isRequired":false,"timestamp":1611620545}}};
+    </script>
+    <script type="text/x-magento-init">
+    {
+        "[data-block='minicart']": {
+            "Magento_Ui/js/core/app": {"components":{"minicart_content":{"children":{"subtotal.container":{"children":{"subtotal":{"children":{"subtotal.totals":{"config":{"display_cart_subtotal_incl_tax":1,"display_cart_subtotal_excl_tax":0,"template":"Magento_Tax\/checkout\/minicart\/subtotal\/totals"},"children":{"subtotal.totals.msrp":{"component":"Magento_Msrp\/js\/view\/checkout\/minicart\/subtotal\/totals","config":{"displayArea":"minicart-subtotal-hidden","template":"Magento_Msrp\/checkout\/minicart\/subtotal\/totals"}}},"component":"Magento_Tax\/js\/view\/checkout\/minicart\/subtotal\/totals"}},"component":"uiComponent","config":{"template":"Magento_Checkout\/minicart\/subtotal"}}},"component":"uiComponent","config":{"displayArea":"subtotalContainer"}},"item.renderer":{"component":"uiComponent","config":{"displayArea":"defaultRenderer","template":"Magento_Checkout\/minicart\/item\/default"},"children":{"item.image":{"component":"Magento_Catalog\/js\/view\/image","config":{"template":"Magento_Catalog\/product\/image","displayArea":"itemImage"}},"checkout.cart.item.price.sidebar":{"component":"uiComponent","config":{"template":"Magento_Checkout\/minicart\/item\/price","displayArea":"priceSidebar"}}}},"extra_info":{"component":"uiComponent","config":{"displayArea":"extraInfo"}},"promotion":{"component":"uiComponent","config":{"displayArea":"promotion"}}},"config":{"itemRenderer":{"default":"defaultRenderer","simple":"defaultRenderer","virtual":"defaultRenderer"},"template":"Magento_Checkout\/minicart\/content"},"component":"Magento_Checkout\/js\/view\/minicart"}},"types":[]}        },
+        "*": {
+            "Magento_Ui/js/block-loader": "https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/loader-1.gif"
+        }
+    }
+    </script>
+</li>
+
+
+    <li class="header-wishlist">
+        <a href="https://www.thbaker.co.uk/wishlist/" class="skip-cart no-count user-logged-out">
+            <svg class="svg-icon"><use xmlns="http://www.w3.org/2000/svg" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-wishlist"></use></svg>
+                        <div class="icon-txt">Wishlist</div>
+        </a>
+    </li>
+
+<li class="header-account">
+    <a href="https://www.thbaker.co.uk/customer/account/login/" class="user-logged-out" id="user-logged-out">
+        <svg class="svg-icon"><use xmlns="http://www.w3.org/2000/svg" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-user"></use></svg>
+        <div class="icon-txt">Account</div>
+    </a>
+</li>
+</ul></div></div><div class="mobile-overlay"></div>
+<style type="text/css">
+    @media only screen and (max-width: 992px) {
+        .header .nav a.menu-image-link {
+            background-repeat: no-repeat;
+            background-position: right;
+            background-color: #242021;
+            color: #fff;
+        }
+        .nav-primary .menu-stores a.menu-image-link {}
+        .menu-stores .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Stores-300x61.jpg);
+ }
+        .nav-primary .menu-christmas a.menu-image-link {}
+        .menu-christmas .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/Christmas-2020-Nav-300x61.jpg);
+        }
+        .nav-primary .menu-brands a.menu-image-link {}
+         .menu-brands .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Brands-300x61.jpg);
+        }
+        .nav-primary .menu-watches a.menu-image-link {}
+         .menu-watches .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Watches-300x61.jpg);
+        }
+        .nav-primary .menu-jewellery a.menu-image-link {}
+         .menu-jewellery .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Jewellery-300x61.jpg);
+        }
+        .nav-primary .menu-diamonds a.menu-image-link {}
+         .menu-diamonds .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Diamond-300x61.jpg);
+        }
+        .nav-primary .menu-occasions a.menu-image-link {}
+         .menu-occasions .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-occasions-300x61.jpg);
+        }
+        .nav-primary .menu-secondhand a.menu-image-link {
+            background-color: #040517;
+        }
+         .menu-secondhand .menu-image-link.lazyloaded {
+            background-image: url(https://www.thbaker.co.uk/pub/media/cms/nav/THB-Mobile-Nav-Second-Hand-300x61.jpg);
+        }
+        .nav-primary .menu-sale a.menu-image-link {
+            background-color: #ed1b24;
+        }
+    }
+</style>
+<nav id="nav" class="nav">
+    <a id="close-panel" class="close-panel" href="#">
+        <svg class="svg-icon svg-close"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-close"></use></svg>
+    </a>
+    <div class="menu-top">
+        <ul class="mobile-social-icons clearfix">
+            <li class="minicart-wrapper">
+                <a href="#">
+                    <svg class="svg-icon svg-bag"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-bag"></use></svg>
+                    <div class="icon-txt">Bag</div>
+                </a>
+            </li>
+            <a id="back-panel" class="back-panel" href="#">
+                <svg class="svg-icon svg-back"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-action_arrow"></use></svg>
+                <div class="icon-txt">Back</div>
+            </a>
+        </ul>
+    </div>
+    <ul class="nav-primary">
+        <li class="dropdown menu-valentines" data-nav="valentines">
+    <a href="https://www.thbaker.co.uk/valentines-jewellery/" class="menu-image-link lazyload">Valentines</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span><b>Valentines</b></span>
+                <a href="https://www.thbaker.co.uk/gifts-for-him/">Gifts For Him</a>
+                <a href="https://www.thbaker.co.uk/gifts-for-her/">Gifts For Her</a>
+                <a href="https://www.thbaker.co.uk/diamond-sale/">50% Off Selected Diamonds</a>
+                <a href="https://www.thbaker.co.uk/fashion-watches/">Fashion Watches</a>
+                <a href="https://www.thbaker.co.uk/gift-sets/">Gift Sets</a>
+                <a href="https://www.thbaker.co.uk/engagement-rings/">Engagement Rings</a>
+                <a href="https://www.thbaker.co.uk/second-hand-jewellery/" class="menu-space">Unique Second Hand Gifts</a>
+                <a href="https://www.thbaker.co.uk/valentines-jewellery/">Shop ALL Valentines Gifts</a>
+            </div>
+             <div class="col1 col-link">
+                <div>                    
+                    <span>Shop By Brand</span>
+                    <a href="https://www.thbaker.co.uk/1888-collection-diamonds/">1888 Collection </a>
+                    <a href="https://www.thbaker.co.uk/daisy/">Daisy London </a>
+                    <a href="https://www.thbaker.co.uk/clogau/">Clogau </a>
+                    <a href="https://www.thbaker.co.uk/gucci/">Gucci </a>
+                    <a href="https://www.thbaker.co.uk/michael-kors/">Michael Kors </a>
+                    <a href="https://www.thbaker.co.uk/nomination/">Nomination </a>
+                    <a href="https://www.thbaker.co.uk/olivia-burton/">Olivia Burton </a>
+                    <a href="https://www.thbaker.co.uk/all-starbright-jewellery/">Starbright </a>
+                    <a href="https://www.thbaker.co.uk/swarovski/">Swarovski </a>
+                    <a href="https://www.thbaker.co.uk/thomas-sabo/">THOMAS SABO </a>
+                    <a href="https://www.thbaker.co.uk/brands/">View All Brands </a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <span>Gift By Price</span>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-250">Under £250</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-500">Under £500</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-1000">Under £1000</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1000-">Over £1000</a>
+            </div>
+<div class="nav-img col2">
+                <a href="https://www.thbaker.co.uk/gifts-for-her/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Valentines-For-her-Nav-455x295.jpg" alt="Gifts For Her">
+                </a>
+            </div>
+            <div class="nav-img col2 nav-img-2">
+                <a href="https://www.thbaker.co.uk/gifts-for-him/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Valentines-For-him-Nav-455x295.jpg" alt="Gifts For Him">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/engagement-rings/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Valentines-2020-1366x90-1.jpg" alt="Valentines">
+                </picture>
+            </a>
+        </div>
+    </div>
+
+<style>
+@media only screen and (min-width: 993px) {
+  .nav-img-2 {
+    margin-right: 20px;
+  }
+}
+</style>
+
+</li>
+
+
+
+
+        <li class="dropdown menu-stores" data-nav="Stores">
+    <a href="https://www.thbaker.co.uk/stores/" class="menu-image-link lazyload">Stores</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col3 col-link">
+                <span>TH Baker</span>
+                <div class="menu-third">
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-alton-high-street/">T. H. Baker Alton</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-brighton-churchill-centre/">T. H. Baker Brighton</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-cambridge-grafton-center/">T. H. Baker Cambridge</a>
+                    <a href="https://www.thbaker.co.uk/stores/thbaker-chesterfield-south-street/">T. H. Baker Chesterfield</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-halesowen-cornbow-centre/">T. H. Baker Halesowen</a>
+
+                </div>
+                <div class="menu-third">
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-horsham-west-street/">T. H. Baker Horsham</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-ipswich-tavern-street/">T. H. Baker Ipswich</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-kidderminster-weavers-wharf/">T. H. Baker Kidderminster</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-merry-hill/">T. H. Baker Merry Hill</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-portsmouth-cascades-centre/">T. H. Baker Portsmouth</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-reigate-high-street/">T. H. Baker Reigate</a>
+                </div>
+                <div class="menu-third">
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-shrewsbury-pride-hill/">T. H. Baker Shrewsbury</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-stourbridge-high-street/">T. H. Baker Stourbridge</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-tamworth-ankerside-precinct/">T. H. Baker Tamworth</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-telford-shopping-centre/">T. H. Baker Telford</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-walsall-park-street/">T. H. Baker Walsall</a>
+                    <a href="https://www.thbaker.co.uk/stores/t-h-baker-wolverhampton-mander-centre/">T. H. Baker Wolverhampton</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <span>Partner Store</span>
+                <a href="https://www.thbaker.co.uk/stores/green-and-benz-sheffield-division-street/">Green and Benz Sheffield</a>
+            </div>
+            <div class="nav-img col3">
+                <a href="https://www.thbaker.co.uk/stores/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Stores-455x295-1.jpg" alt="">
+                </a>
+            </div>
+<a class="nav-bottom-img" href="https://www.thbaker.co.uk/our-history">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-History-1366x90.jpg" alt="">
+                </picture>
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-brands" data-nav="Brands">
+    <a href="https://www.thbaker.co.uk/brands/" class="menu-image-link lazyload">Brands</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col2 col-link">
+                <span>Luxury Brands</span>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/1888-collection-diamonds/">1888 Collection</a>
+                    <a href="https://www.thbaker.co.uk/bell-and-ross-watches/">Bell & Ross</a>
+                    <a href="https://www.thbaker.co.uk/breitling/">Breitling</a>
+                    <a href="https://www.thbaker.co.uk/bremont/">Bremont</a>
+                    <a href="https://www.thbaker.co.uk/chopard-jewellery/">Chopard</a>
+                    <a href="https://www.thbaker.co.uk/gucci/">Gucci</a>
+                    <a href="https://www.thbaker.co.uk/longines/">Longines</a>
+                </div>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/meistersinger-watches/">MeisterSinger</a>
+                    <a href="https://www.thbaker.co.uk/montblanc-all/">Montblanc</a>
+                    <a href="https://www.thbaker.co.uk/omega/">OMEGA</a>
+                    <a href="https://www.thbaker.co.uk/oris/">Oris</a>
+                    <a href="https://www.thbaker.co.uk/rado/">Rado</a>
+                    <a href="https://www.thbaker.co.uk/raymond-weil/">Raymond Weil</a>
+                    <a href="https://www.thbaker.co.uk/second-hand-rolex-watches/">Second Hand Rolex</a>
+                    <a href="https://www.thbaker.co.uk/tag-heuer/">TAG Heuer</a>
+                </div>
+                <a href="https://www.thbaker.co.uk/brands/" class="mobile-hide"><span>All Brands</span></a>
+            </div>
+            <div class="col2 col-link">
+                <span>Popular Brands</span>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/bourne-and-wilde/">Bourne and Wilde</a>
+                    <a href="https://www.thbaker.co.uk/casio-watches/">Casio</a>
+                    <a href="https://www.thbaker.co.uk/citizen/">Citizen</a>
+                    <a href="https://www.thbaker.co.uk/emporio-armani/">Emporio Armani</a>
+                    <a href="https://www.thbaker.co.uk/fleur-kids-jewellery/">Fleur</a>
+                    <a href="https://www.thbaker.co.uk/fossil-all/">Fossil</a>
+                    <a href="https://www.thbaker.co.uk/boss-by-hugo-boss/">Hugo Boss</a>
+                    <a href="https://www.thbaker.co.uk/isabella-verona-jewellery/">Isabella Verona</a>
+                    <a href="https://www.thbaker.co.uk/links-of-london-jewellery/">Links Of London</a>
+                    <a href="https://www.thbaker.co.uk/michael-kors/">Michael Kors</a>
+                    <a href="https://www.thbaker.co.uk/morado-jewellery/">Morado</a>
+                </div>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/nomination/">Nomination</a>
+                    <a href="https://www.thbaker.co.uk/olivia-burton/">Olivia Burton</a>
+                    <a href="https://www.thbaker.co.uk/petite-diamonds-jewellery/">Petite Diamonds</a>
+                    <a href="https://www.thbaker.co.uk/rosa-lea/">Rosa Lea</a>
+                    <a href="https://www.thbaker.co.uk/seiko/">Seiko</a>
+                    <a href="https://www.thbaker.co.uk/skagen-watches/">Skagen</a>
+                    <a href="https://www.thbaker.co.uk/all-starbright-jewellery/">Starbright</a>
+                    <a href="https://www.thbaker.co.uk/swarovski/">Swarovski</a>
+                    <a href="https://www.thbaker.co.uk/t-h-baker-jewellery/">T H Baker</a>
+                    <a href="https://www.thbaker.co.uk/thomas-sabo/">THOMAS SABO</a>
+                    <a href="https://www.thbaker.co.uk/tissot/">Tissot</a>
+                </div>
+            </div>
+            <div class="col2 desktop-hide">                
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/brands/"><span>All Brands</span></a>
+                </div>
+            </div>
+            <div class="nav-img col3">
+                <a href="https://www.thbaker.co.uk/omega/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/Omega-July-455x295_MC34.jpg" alt="">
+                </a>
+            </div>
+             <a class="nav-bottom-img" href="https://www.thbaker.co.uk/breitling/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                   <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/Breitling-1366x90-Superocean Heritage-57.jpg" alt="Breitling">
+                </picture>
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-watches" data-nav="Watches">
+    <a href="https://www.thbaker.co.uk/all-watches/" class="menu-image-link lazyload">Watches</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span>Main Collections</span>
+                <a href="https://www.thbaker.co.uk/all-watches/">Shop All Watches</a>
+                <a href="https://www.thbaker.co.uk/all-mens-watches/">Mens Watches</a>
+                <a href="https://www.thbaker.co.uk/all-ladies-watches/">Ladies Watches</a>
+                <a href="https://www.thbaker.co.uk/watches/?product_list_order=new/">New In</a>
+                <a href="https://www.thbaker.co.uk/limited-edition-watches/">Special Editions</a>
+                <a href="https://www.thbaker.co.uk/luxury-watches/">Luxury Watches</a>
+
+            </div>
+            <div class="col2 col-link">
+                <span>By Brand</span>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/accurist-watches/">Accurist</a>
+                    <a href="https://www.thbaker.co.uk/bell-and-ross-watches/">Bell & Ross</a>
+                    <a href="https://www.thbaker.co.uk/breitling/">Breitling</a>
+                    <a href="https://www.thbaker.co.uk/bremont/">Bremont</a>
+                    <a href="https://www.thbaker.co.uk/casio-watches/">Casio</a>
+                    <a href="https://www.thbaker.co.uk/citizen/">Citizen</a>
+                    <a href="https://www.thbaker.co.uk/chopard/filter/producttype-watch/">Chopard</a>
+                    <a href="https://www.thbaker.co.uk/gucci-watches/">Gucci</a>
+                    <a href="https://www.thbaker.co.uk/boss-by-hugo-boss/">Hugo Boss</a>
+                    <a href="https://www.thbaker.co.uk/longines/">Longines</a>
+                    <a href="https://www.thbaker.co.uk/meistersinger-watches/">MeisterSinger</a>
+                    <a href="https://www.thbaker.co.uk/michael-kors-watches/">Michael Kors</a>
+                    <a href="https://www.thbaker.co.uk/montblanc-watches/">Montblanc</a>
+                </div>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/olivia-burton-watches/">Olivia Burton</a>
+                    <a href="https://www.thbaker.co.uk/omega/">OMEGA</a>
+                    <a href="https://www.thbaker.co.uk/oris/">Oris</a>
+                    <a href="https://www.thbaker.co.uk/rado/">Rado</a>
+                    <a href="https://www.thbaker.co.uk/raymond-weil/">Raymond Weil</a>
+                    <a href="https://www.thbaker.co.uk/second-hand-rolex-watches/">Second Hand Rolex</a>
+                    <a href="https://www.thbaker.co.uk/rotary/">Rotary</a>
+                    <a href="https://www.thbaker.co.uk/sekonda-watches/">Sekonda</a>
+                    <a href="https://www.thbaker.co.uk/seiko/">Seiko</a>
+                    <a href="https://www.thbaker.co.uk/skagen-watches/">Skagen</a>
+                    <a href="https://www.thbaker.co.uk/swatch-watches/">Swatch</a>
+                    <a href="https://www.thbaker.co.uk/tag-heuer/">TAG Heuer</a>
+                    <a href="https://www.thbaker.co.uk/tissot/">Tissot</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <div>                    
+                    <span>By Feature</span>
+                    <a href="https://www.thbaker.co.uk/all-swiss-watches/">Swiss Watches</a>
+                    <a href="https://www.thbaker.co.uk/smart-watches/">Smart Watches</a>
+                    <a href="https://www.thbaker.co.uk/limited-edition-watches/">Limited Edition</a>
+                    <a href="https://www.thbaker.co.uk/bracelet-watches/">Bracelet Strap</a>
+                    <a href="https://www.thbaker.co.uk/leather-strap-watches/filter/strapbracelet_type-leather_strap/">Leather Strap</a>
+                    <a href="https://www.thbaker.co.uk/chronograph-watches/">Chronograph</a>
+                    <a href="https://www.thbaker.co.uk/automatic-watches/"class="menu-space"> Automatic Watches</a>
+                </div>
+                <div>                    
+                    <span>By Style</span>
+                    <a href="https://www.thbaker.co.uk/classic-watches/">Classic</a>
+                    <a href="https://www.thbaker.co.uk/fashion-watches/">Fashion</a>
+                    <a href="https://www.thbaker.co.uk/rose-gold-watches/">Rose Gold</a>
+                    <a href="https://www.thbaker.co.uk/sports-watches/">Sports</a>
+                    <a href="https://www.thbaker.co.uk/all-swiss-watches/">Swiss</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <span>By Price</span>
+                <a href="https://www.thbaker.co.uk/watches/?price=1-250">Under £250</a>
+                <a href="https://www.thbaker.co.uk/watches/?price=1-500">Under £500</a>
+                <a href="https://www.thbaker.co.uk/watches/?price=1-1000">Under £1000</a>
+                <a href="https://www.thbaker.co.uk/watches/?price=1000-">Over £1000</a>
+            </div>
+            <div class="nav-img col2">
+                <a href="https://www.thbaker.co.uk/automatic-watches/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Watch-Winder-GWP-455x295-Dec.jpg" alt="">
+                </a>
+
+            </div>
+ <a class="nav-bottom-img" href="https://www.thbaker.co.uk/watches-sale/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-W-Sale-1366x90.jpg" alt="">
+                </picture>
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-jewellery" data-nav="Jewellery">
+    <a href="https://www.thbaker.co.uk/all-jewellery/" class="menu-image-link lazyload">Jewellery</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span>Main Collections</span>
+                <a href="https://www.thbaker.co.uk/new-arrivals/">New In</a>
+                <a href="https://www.thbaker.co.uk/jewellery/filter/gender-ladies-unisex/">Ladies Jewellery</a>
+                <a href="https://www.thbaker.co.uk/mens-jewellery/">Mens Jewellery</a>
+                <a href="https://www.thbaker.co.uk/childrens-jewellery/">Childrens Jewellery</a>
+                <a href="https://www.thbaker.co.uk/designer-jewellery/">Designer Jewellery</a>
+                <a href="https://www.thbaker.co.uk/diamonds/">Diamond Jewellery</a>
+                <a href="https://www.thbaker.co.uk/bespoke-jewellery/" class="menu-space">Bespoke Jewellery</a>
+                <a href="https://www.thbaker.co.uk/gold-buying-online/" class="menu-space">Gold Buying Online</a>
+                <a href="https://www.thbaker.co.uk/sale/" class="menu-space"><b>SALE</b></a>
+            </div>
+            <div class="col1 col-link">
+                <div>                    
+                    <span>By Type</span>
+                    <a href="https://www.thbaker.co.uk/accessories/">Accessories</a>
+                    <a href="https://www.thbaker.co.uk/anklets/">Anklets</a>
+                    <a href="https://www.thbaker.co.uk/bangles/">Bangles</a>
+                    <a href="https://www.thbaker.co.uk/bracelets/">Bracelets</a>
+                    <a href="https://www.thbaker.co.uk/charms/">Charms</a>
+                    <a href="https://www.thbaker.co.uk/cufflinks/">Cufflinks</a>
+                    <a href="https://www.thbaker.co.uk/earings/">Earrings</a>
+                    <a href="https://www.thbaker.co.uk/jewellery-sets/">Jewellery Sets</a>
+                    <a href="https://www.thbaker.co.uk/locket-jewellery/">Lockets</a>
+                    <a href="https://www.thbaker.co.uk/necklaces/">Necklaces</a>
+                    <a href="https://www.thbaker.co.uk/pendants/">Pendants</a>
+                    <a href="https://www.thbaker.co.uk/rings/">Rings</a>
+                    <a href="https://www.thbaker.co.uk/thumb-rings/">Thumb Rings</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <div>                    
+                    <span>By Metal</span>
+                    <a href="https://www.thbaker.co.uk/silver-jewellery/">Silver</a>
+                    <a href="https://www.thbaker.co.uk/gold-jewellery/">Yellow Gold</a>
+                    <a href="https://www.thbaker.co.uk/rose-gold-jewellery/">Rose Gold</a>
+                    <a href="https://www.thbaker.co.uk/white-gold-jewellery/">White Gold</a>
+                    <a href="https://www.thbaker.co.uk/platinum-rings/" class="menu-space">Platinum</a>
+                </div>
+                <div>                
+                    <span>By Stone</span>
+                    <a href="https://www.thbaker.co.uk/diamonds/">Diamonds</a>
+                    <a href="https://www.thbaker.co.uk/gemstone-jewellery/">Gemstones</a>
+                    <a href="https://www.thbaker.co.uk/pearl-jewellery/">Pearls</a>
+                    <a href="https://www.thbaker.co.uk/birthstone-jewellery/">Birthstones</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <div>                    
+                    <span>By Brand</span>
+                    <a href="https://www.thbaker.co.uk/1888-collection-diamonds/">1888 Collection </a>
+                    <a href="https://www.thbaker.co.uk/daisy/">Daisy London </a>
+                    <a href="https://www.thbaker.co.uk/chopard-jewellery/">Chopard </a>
+                    <a href="https://www.thbaker.co.uk/clogau/">Clogau </a>
+                    <a href="https://www.thbaker.co.uk/gucci/">Gucci </a>
+                    <a href="https://www.thbaker.co.uk/links-of-london-jewellery/">Links of London </a>
+                    <a href="https://www.thbaker.co.uk/michael-kors/">Michael Kors </a>
+                    <a href="https://www.thbaker.co.uk/nomination/">Nomination </a>
+                    <a href="https://www.thbaker.co.uk/olivia-burton/">Olivia Burton </a>
+                    <a href="https://www.thbaker.co.uk/all-starbright-jewellery/">Starbright </a>
+                    <a href="https://www.thbaker.co.uk/swarovski/">Swarovski </a>
+                    <a href="https://www.thbaker.co.uk/thomas-sabo/">THOMAS SABO </a>
+                    <a href="https://www.thbaker.co.uk/brands/">View All Brands </a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <span>By Price</span>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-250">Under £250</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-500">Under £500</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1-1000">Under £1000</a>
+                <a href="https://www.thbaker.co.uk/jewellery/?price=1000-">Over £1000</a>
+            </div>
+            <div class="nav-img col2">
+                <a href="https://www.thbaker.co.uk/gold-buying-online/">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Banner-Sell-Gold-455x295.jpg" alt="">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/jewellery-sale/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-J-Sale-1366x90.jpg" alt="Sale">
+                </picture>
+
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-diamonds" data-nav="Diamonds">
+    <a href="https://www.thbaker.co.uk/diamond-jewellery/" class="menu-image-link lazyload">Diamonds</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span>Main Collections</span>
+                <a href="https://www.thbaker.co.uk/diamond-sale/">50% Off Diamond Jewellery</a>
+                <a href="https://www.thbaker.co.uk/diamonds/?dir=desc&order=created_at/">New Arrivals</a>
+                <a href="https://www.thbaker.co.uk/diamonds/?dir=asc&order=position/">Bestsellers</a>
+                <a href="https://www.thbaker.co.uk/bespoke-jewellery/">Bespoke Engagement Rings</a>
+                <a href="https://www.thbaker.co.uk/signature-diamond-collection/">Signature Diamonds</a>
+                <a href="https://www.thbaker.co.uk/diamond-sale/" class="menu-space">Sale Diamonds</a>
+
+		<a href="https://www.thbaker.co.uk/bespoke-jewellery/"><b>Bespoke Jewellery</b></a>
+
+
+            </div>
+            <div class="col1 col-link">
+                <span>Product Type</span>
+                <a href="https://www.thbaker.co.uk/diamond-bracelets/">Diamond Bracelets</a>
+                <a href="https://www.thbaker.co.uk/diamond-earrings/">Diamond Earrings</a>
+                <a href="https://www.thbaker.co.uk/diamond-necklaces/">Diamond Necklaces</a>
+                <a href="https://www.thbaker.co.uk/diamond-rings/">Diamond Rings</a>
+                <a href="https://www.thbaker.co.uk/diamonds/">All Diamond Jewellery</a>
+            </div>
+            <div class="col1 col-link">
+                <span>Ring Style</span>
+                <a href="https://www.thbaker.co.uk/engagement-rings/">Engagement Rings</a>
+                <a href="https://www.thbaker.co.uk/wedding-rings/">Wedding Rings</a>
+                <a href="https://www.thbaker.co.uk/eternity-rings/">Eternity Rings</a>
+                <a href="https://www.thbaker.co.uk/bridal-sets/">Bridal Sets</a>
+                <a href="https://www.thbaker.co.uk/bespoke-rings/">Bespoke Rings</a>
+                <a href="https://www.thbaker.co.uk/diamond-rings/">Shop All Rings</a>
+            </div>
+            <div class="col1 col-link">
+                <span>Brands</span>
+                <a href="https://www.thbaker.co.uk/1888-collection/">1888 Collection</a>
+                <a href="https://www.thbaker.co.uk/signature-diamond-collection/">Signature Collection</a>
+                <a href="https://www.thbaker.co.uk/t-h-baker-jewellery/filter/stone_type-diamond/">TH Baker Diamonds</a>
+                <a href="https://www.thbaker.co.uk/mastercut-jewellery/">Mastercut</a>
+                <a href="https://www.thbaker.co.uk/diamonds/filter/brand-gucci/">Gucci</a>
+                <a href="https://www.thbaker.co.uk/second-hand-diamond-jewellery/">Second Hand Diamonds</a>
+            </div>
+            <div class="nav-img col3">
+                <a href="https://www.thbaker.co.uk/diamond-sale/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-half-price-diamonds-455x295-2.jpg" alt="">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/engagement-rings/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Engagement-Rings1366x90.jpg" alt="Engagement Rings ">
+                </picture>
+
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-occasions" data-nav="Occasions">
+    <a href="https://www.thbaker.co.uk/all-occasions/" class="menu-image-link lazyload">Occasions</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col2 col-link">
+                <span>Wedding</span>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/wedding-rings/">Wedding Rings</a>
+                    <a href="https://www.thbaker.co.uk/ladies-wedding-rings/">Ladies Wedding Rings</a>
+                    <a href="https://www.thbaker.co.uk/mens-wedding-rings/">Mens Wedding Rings</a>
+                    <a href="https://www.thbaker.co.uk/diamond-wedding-rings/">Diamond Wedding Rings</a>
+                    <a href="https://www.thbaker.co.uk/second-hand-wedding-rings/">Second Hand Wedding Rings</a>
+                    <a href="https://www.thbaker.co.uk/blog/wedding-rings-guide/" class="menu-space">Wedding Ring Guide</a>
+                    <a href="https://www.thbaker.co.uk/bride-gifts/">Gifts for the Bride</a>
+                    <a href="https://www.thbaker.co.uk/groom-gifts/">Gifts for the Groom</a>
+                    <a href="https://www.thbaker.co.uk/best-man-gifts/">Gifts for the Best Man</a>
+                    <a href="https://www.thbaker.co.uk/bridesmaid-gifts/" class="menu-space">Gifts for the Bridesmaid</a>
+                    <a href="https://www.thbaker.co.uk/blog/category/weddings/">Wedding Planner</a>
+                </div>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/gold-wedding-rings/">Gold</a>
+                    <a href="https://www.thbaker.co.uk/white-gold-wedding-rings/">White Gold</a>
+                    <a href="https://www.thbaker.co.uk/platinum-wedding-rings/">Platinum</a>
+                    <a href="https://www.thbaker.co.uk/palladium-wedding-rings/">Palladium</a>
+                    <a href="https://www.thbaker.co.uk/titanium-wedding-rings/" class="menu-space">Titanium</a>
+                    <a href="https://www.thbaker.co.uk/plain-wedding-rings/">Classic Plain</a>
+                    <a href="https://www.thbaker.co.uk/court-wedding-rings/">Court Shaped</a>
+                    <a href="https://www.thbaker.co.uk/d-shape-wedding-rings/">D Shape</a>
+                    <a href="https://www.thbaker.co.uk/diamond-wedding-rings/">Diamond Set</a>
+                    <a href="https://www.thbaker.co.uk/patterned-wedding-rings/">Patterned</a>
+                    <a href="https://www.thbaker.co.uk/shaped-wedding-rings/">Shaped</a>
+                    <a href="https://www.thbaker.co.uk/bridal-sets/">Bridal Set</a>
+                </div>
+            </div>
+            <div class="col2 col-link">
+                <span>Engagement</span>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/engagement-rings/">Engagement Rings</a>
+                    <a href="https://www.thbaker.co.uk/engagement-ring-sale/">Engagement Ring Offers</a>
+                    <a href="https://www.thbaker.co.uk/engagement-rings/">Ladies Engagement Rings</a>
+                    <a href="https://www.thbaker.co.uk/mens-engagement-rings/">Mens Engagement Rings</a>
+                    <a href="https://www.thbaker.co.uk/second-hand-engagement-rings/">Second Hand Engagement Rings</a>
+                    <a href="https://www.thbaker.co.uk/promise-rings/" class="menu-space">Placement Rings</a>
+                    <a href="https://www.thbaker.co.uk/diamond-guide/">Diamond Guide</a>
+                    <a href="https://www.thbaker.co.uk/blog/category/engagement/">Engagement Ring Guide</a>
+                    <a href="https://www.thbaker.co.uk/size-guides/">Ring Sizing</a>
+                    <a href="https://www.thbaker.co.uk/blog/metal-guide/">Metal Guide</a>
+                </div>
+                <div class="menu-half">
+                    <a href="https://www.thbaker.co.uk/gold-engagement-rings/">Gold</a>
+                    <a href="https://www.thbaker.co.uk/white-gold-engagement-rings/">White Gold</a>
+                    <a href="https://www.thbaker.co.uk/platinum-engagement-rings/" class="menu-space">Platinum</a>
+                    <a href="https://www.thbaker.co.uk/solitaire-engagement-rings/">Solitaires</a>
+                    <a href="https://www.thbaker.co.uk/cluster-engagement-rings/">Clusters</a>
+                    <a href="https://www.thbaker.co.uk/bridal-sets/">Bridal Sets</a>
+                    <a href="https://www.thbaker.co.uk/three-stone-engagement-rings/">Three Stone</a>
+                    <a href="https://www.thbaker.co.uk/shoulder-set-engagement-rings/">Shouldered</a>
+                    <a href="https://www.thbaker.co.uk/gemstone-engagement-rings/">Gemstone</a>
+                    <a href="https://www.thbaker.co.uk/princess-cut-engagement-rings/">Princess</a>
+                </div>
+            </div>
+            <div class="col1 col-link">
+                <span><b>Gifts</b></span>
+                <a href="https://www.thbaker.co.uk/gifts/filter/gender-ladies/">Gifts For Her</a>
+                <a href="https://www.thbaker.co.uk/gifts/filter/gender-mens/">Gifts For Him</a>
+                <a href="https://www.thbaker.co.uk/diamond-sale/">50% Off Selected Diamonds</a>
+                <a href="https://www.thbaker.co.uk/engagement-rings/">Engagement Rings</a>
+                <a href="https://www.thbaker.co.uk/all-swiss-watches/">Luxury Watches</a>
+                <a href="https://www.thbaker.co.uk/gift-sets/">Gift Sets</a>
+                <a href="https://www.thbaker.co.uk/second-hand-jewellery/" class="menu-space">Unique Second Hand Gifts</a>
+                <a href="https://www.thbaker.co.uk/gifts/"><b>Shop ALL Gifts</b></a>
+            </div>
+            <div class="nav-img col2">
+                <a href="https://www.thbaker.co.uk/1888-collection-diamonds/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-1888-455x295-2.jpg" alt="1888">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/wedding/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Wedding-Rings1366x90.jpg" alt="Wedding Rings">
+                </picture>
+
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-secondhand" data-nav="Second Hand">
+    <a href="https://www.thbaker.co.uk/second-hand-collection/" class="menu-image-link lazyload">Second Hand</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span>Main Collections</span>
+                <a href="https://www.thbaker.co.uk/second-hand-mens-collection/">Mens</a>
+                <a href="https://www.thbaker.co.uk/second-hand-ladies-collection/">Ladies</a>
+                <a href="https://www.thbaker.co.uk/second-hand-watches/">Watches</a>
+                <a href="https://www.thbaker.co.uk/second-hand-jewellery/">Jewellery</a>
+                <a href="https://www.thbaker.co.uk/gold-buying-online/">Gold Buying Online</a>
+                <a href="https://www.thbaker.co.uk/second-hand-sale/">Sale</a>
+                <a href="https://www.thbaker.co.uk/second-hand-collection/"><b>Shop All Second Hand</b></a>
+            </div>
+            <div class="col1 col-link">
+                <span>Brand</span>
+                <a href="https://www.thbaker.co.uk/second-hand-rolex-watches/">Rolex</a>
+                <a href="https://www.thbaker.co.uk/second-hand-breitling-watches/">Breitling</a>
+                <a href="https://www.thbaker.co.uk/second-hand/filter/brand-second_hand_cartier/">Cartier</a>
+                <a href="https://www.thbaker.co.uk/second-hand/filter/brand-second_hand_gucci_watches/">Gucci</a>
+                <a href="https://www.thbaker.co.uk/second-hand-tag-heuer-watches/">TAG Heuer</a>
+                <a href="https://www.thbaker.co.uk/second-hand-omega-watches/">OMEGA</a>
+                <a href="https://www.thbaker.co.uk/second-hand/filter/brand-second_hand_tiffany_and_co/">Tiffany & Co</a>
+            </div>
+            <div class="col1 col-link">
+                <span>By Type</span>
+                <a href="https://www.thbaker.co.uk/second-hand-bracelets-and-bangles/">Bracelets</a>
+                <a href="https://www.thbaker.co.uk/second-hand-brooches/">Brooches</a>
+                <a href="https://www.thbaker.co.uk/second-hand-chains/">Chains</a>
+                <a href="https://www.thbaker.co.uk/second-hand-cufflinks/">Cufflinks</a>
+                <a href="https://www.thbaker.co.uk/second-hand-earrings/">Earrings</a>
+                <a href="https://www.thbaker.co.uk/second-hand-necklaces-and-pendants/">Necklaces and Pendants</a>
+                <a href="https://www.thbaker.co.uk/second-hand-rings/">Rings</a>
+                <a href="https://www.thbaker.co.uk/second-hand-watches/">Watches</a>
+            </div>
+            <div class="col1 col-link">
+                <span>Collections</span>
+                <a href="https://www.thbaker.co.uk/second-hand-engagement-rings/">Engagement Rings</a>
+                <a href="https://www.thbaker.co.uk/second-hand-wedding-rings/">Wedding Rings</a>
+                <a href="https://www.thbaker.co.uk/second-hand-diamond-jewellery/">Diamonds</a>
+                <a href="https://www.thbaker.co.uk/second-hand-gemstone-jewellery/">Gemstones</a>
+                <a href="https://www.thbaker.co.uk/second-hand-coins/">Coins</a>
+            </div>
+            <div class="col1 col-link">
+                <span>By Price</span>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=1-250">Under £250</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=250-399.99">£250-£399.99</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=400-499.99">£400-£499.99</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=500-749.99">£500-£749.99</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=750-999.99">£750-£999.99</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=1000-1999.99">£1000-£1999.99</a>
+                <a href="https://www.thbaker.co.uk/second-hand/?price=2000-">£2000+</a>
+            </div>
+            <div class="nav-img col2">
+                <a href="https://www.thbaker.co.uk/gold-buying-online/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-Banner-Sell-Gold-455x295.jpg" alt="">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/second-hand-rolex-watches/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/sh-rolex-nav-1366x90.jpg" alt="">
+                </picture>
+            </a>
+        </div>
+    </div>
+</li>
+
+        <li class="dropdown menu-sale" data-nav="Sale">
+    <a href="https://www.thbaker.co.uk/jewellery-and-watch-sale/" class="menu-image-link lazyload">Sale</a>
+    <div class="dropdown-menu">
+        <div class="container">
+            <div class="col1 col-link">
+                <span>Sale Watches</span>
+                <a href="https://www.thbaker.co.uk/watches-sale/filter/gender-mens/">Mens Watches</a>
+                <a href="https://www.thbaker.co.uk/watches-sale/filter/gender-ladies/">Ladies Watches</a>
+                <a href="https://www.thbaker.co.uk/luxury-watch-sale/">Luxury Watches</a>
+                <a href="https://www.thbaker.co.uk/watches-sale/"class="menu-space">Designer Watches</a>
+                <a href="https://www.thbaker.co.uk/watches-sale/"><b>All SALE Watches</b></a>
+            </div>
+            <div class="col1 col-link">
+                <span>Sale Jewellery</span>
+								<a href="https://www.thbaker.co.uk/diamond-sale/">Diamond Jewellery</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/producttype-bracelet/">Bracelets</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/producttype-earrings/">Earrings</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/producttype-necklace/">Necklaces</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/producttype-ring/">Rings</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/material-sterling_silver_1/"class="menu-space">Silver Jewellery</a>
+                <a href="https://www.thbaker.co.uk/sale/filter/producttype-charm_1-bracelet-bangle-earrings-jewellery_set-necklace-ring/"><b>All SALE Jewellery</b></a>
+            </div>
+            <div class="col1 col-link">
+                <span>Sale Brands</span>
+								<a href="https://www.thbaker.co.uk/sale/filter/brand-bremont/">Bremont</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/brand-gucci/">Gucci</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/brand-omega/">OMEGA</a>
+                                                                <a href="https://www.thbaker.co.uk/sale/filter/producttype-watch-brand-raymond_weil/">Raymond Weil</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/brand-tag_heuer/">TAG Heuer</a>
+								<a href="https://www.thbaker.co.uk/sale/filter/brand-t_h_baker_jewellery/"class="menu-space">TH Baker</a>
+                
+               <a href="https://www.thbaker.co.uk/sale/"><b>View All SALE</b></a>
+            </div>
+            <div class="col1 col-link">
+                <span>By Price</span>
+                                <a href="https://www.thbaker.co.uk/sale/?price=-250/">Under £250</a>
+                                <a href="https://www.thbaker.co.uk/sale/?price=250-400/">£250-£399.99</a>
+                                <a href="https://www.thbaker.co.uk/sale/?price=400-500/">£400-£499.99</a>
+                                <a href="https://www.thbaker.co.uk/sale/?price=500-750/">£500-£749.99</a>
+                                <a href="https://www.thbaker.co.uk/sale/?price=750-1000/">£750-£999.99</a>
+                                <a href="https://www.thbaker.co.uk/sale/?price=1000-1999.99/">£1000-£1999.99</a>						
+								<a href="https://www.thbaker.co.uk/sale/?price=2000-/"class="menu-space">£2000+</a>
+								
+								<a href="https://www.thbaker.co.uk/sale/"><b>Shop All SALE </b></a>
+            </div>
+            <div class="nav-img col3">
+                <a href="https://www.thbaker.co.uk/diamond-sale/">
+                        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-half-price-diamonds-SALE-455x295.jpg" alt="Diamond Sale">
+                </a>
+            </div>
+            <a class="nav-bottom-img" href="https://www.thbaker.co.uk/jewellery-and-watch-sale/">
+                <picture>
+                    <source srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" media="(max-width: 992px)">
+                    <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="https://www.thbaker.co.uk/pub/media/cms/THB-Nav-SALE-1366x90.jpg" alt="Sale">
+                </picture>
+            </a>
+        </div>
+    </div>
+<style>
+@media only screen and (max-width: 992px) {
+.header .nav .dropdown:last-of-type {
+    padding-bottom: 70px;
+}
+}
+</style>
+</li>
+
+    </ul>
+</nav>
+</section></header>    <section class="header-promotions">
+        <div class="owl-carousel">
+            <div class="promo">
+	<a href="/second-hand-collection/" class="ga-link" data-section="USP"><strong>Second Hand Jewellery Collection</strong> <span>Largest in the UK</span> </a>
+</div>
+<div class="promo"> 
+	<a href="/delivery-options/" class="ga-link" data-section="USP"><strong>Free Delivery Available</strong> <span>On Orders Over £50</span> </a>
+</div>
+<div class="promo">
+	<a href="/interest-free-credit/" class="ga-link" data-section="USP"><strong>Interest Free Credit</strong>  <span>Available On Orders Over £280</span> </a>
+</div>
+        </div>
+    </section>
+        <div class="breadcrumbs container">
+        <div class="row">
+            <ul class="items col-xs-12">
+                                    <li class="item storelocator">
+                                            <a href="https://www.thbaker.co.uk/stores/" title="Store Locator">
+                            Store Locator                        </a>
+                                        </li>
+                                    <li class="item location_page">
+                                            <strong>T. H. Baker Kidderminster</strong>
+                                        </li>
+                            </ul>
+        </div>
+    </div>
+    <main id="maincontent" class="main clearfix"><a id="contentarea" tabindex="-1"></a>
+<div class="page messages"><div data-placeholder="messages"></div>
+<div data-bind="scope: 'messages'">
+    <!-- ko if: cookieMessages && cookieMessages.length > 0 -->
+    <div role="alert" data-bind="foreach: { data: cookieMessages, as: 'message' }" class="messages">
+        <div data-bind="attr: {
+            class: 'message-' + message.type + ' ' + message.type + ' message',
+            'data-ui-id': 'message-' + message.type
+        }">
+            <div data-bind="html: message.text"></div>
+        </div>
+    </div>
+    <!-- /ko -->
+    <!-- ko if: messages().messages && messages().messages.length > 0 -->
+    <div role="alert" data-bind="foreach: { data: messages().messages, as: 'message' }" class="messages">
+        <div data-bind="attr: {
+            class: 'message-' + message.type + ' ' + message.type + ' message',
+            'data-ui-id': 'message-' + message.type
+        }">
+            <div data-bind="html: message.text"></div>
+        </div>
+    </div>
+    <!-- /ko -->
+</div>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app": {
+                "components": {
+                        "messages": {
+                            "component": "Magento_Theme/js/view/messages"
+                        }
+                    }
+                }
+            }
+    }
+</script>
+</div><div class="columns"><div class="column main"><input name="form_key" type="hidden" value="ZYilw18uJjN2azta" /><div id="authenticationPopup" data-bind="scope:'authenticationPopup'" style="display: none;">
+    <script>
+        window.authenticationPopup = {"autocomplete":"off","customerRegisterUrl":"https:\/\/www.thbaker.co.uk\/customer\/account\/create\/","customerForgotPasswordUrl":"https:\/\/www.thbaker.co.uk\/customer\/account\/forgotpassword\/","baseUrl":"https:\/\/www.thbaker.co.uk\/"};
+    </script>
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <script type="text/x-magento-init">
+        {
+            "#authenticationPopup": {
+                "Magento_Ui/js/core/app": {"components":{"authenticationPopup":{"component":"Magento_Customer\/js\/view\/authentication-popup","children":{"messages":{"component":"Magento_Ui\/js\/view\/messages","displayArea":"messages"},"captcha":{"component":"Magento_Captcha\/js\/view\/checkout\/loginCaptcha","displayArea":"additional-login-form-fields","formId":"user_login","configSource":"checkout"},"amazon-button":{"component":"Amazon_Login\/js\/view\/login-button-wrapper","sortOrder":"0","displayArea":"additional-login-form-fields","config":{"tooltip":"Securely login to our website using your existing Amazon details.","componentDisabled":true}}}}}}            },
+            "*": {
+                "Magento_Ui/js/block-loader": "https\u003A\u002F\u002Fwww.thbaker.co.uk\u002Fpub\u002Fstatic\u002Fversion1611326633\u002Ffrontend\u002FTHBaker\u002Ftheme\u002Fen_GB\u002Fimages\u002Floader\u002D1.gif"
+            }
+        }
+    </script>
+</div>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Customer/js/section-config": {
+                "sections": {"stores\/store\/switch":"*","stores\/store\/switchrequest":"*","directory\/currency\/switch":"*","*":["messages"],"customer\/account\/logout":["recently_viewed_product","recently_compared_product","persistent"],"customer\/account\/loginpost":"*","customer\/account\/createpost":"*","customer\/account\/editpost":"*","customer\/ajax\/login":["checkout-data","cart","captcha"],"catalog\/product_compare\/add":["compare-products"],"catalog\/product_compare\/remove":["compare-products"],"catalog\/product_compare\/clear":["compare-products"],"sales\/guest\/reorder":["cart","ammessages"],"sales\/order\/reorder":["cart","ammessages"],"checkout\/cart\/add":["cart","directory-data","ammessages","bss-fbpixel-atc","gtm"],"checkout\/cart\/delete":["cart","ammessages","gtm"],"checkout\/cart\/updatepost":["cart","ammessages"],"checkout\/cart\/updateitemoptions":["cart","ammessages"],"checkout\/cart\/couponpost":["cart","ammessages"],"checkout\/cart\/estimatepost":["cart","ammessages"],"checkout\/cart\/estimateupdatepost":["cart","ammessages"],"checkout\/onepage\/saveorder":["cart","checkout-data","last-ordered-items","ammessages"],"checkout\/sidebar\/removeitem":["cart","ammessages","gtm"],"checkout\/sidebar\/updateitemqty":["cart","ammessages"],"rest\/*\/v1\/carts\/*\/payment-information":["cart","last-ordered-items","instant-purchase","ammessages","gtm"],"rest\/*\/v1\/guest-carts\/*\/payment-information":["cart","ammessages","gtm"],"rest\/*\/v1\/guest-carts\/*\/selected-payment-method":["cart","checkout-data","ammessages"],"rest\/*\/v1\/carts\/*\/selected-payment-method":["cart","checkout-data","instant-purchase","ammessages"],"customer\/address\/*":["instant-purchase"],"customer\/account\/*":["instant-purchase"],"vault\/cards\/deleteaction":["instant-purchase"],"paypal\/express\/placeorder":["cart","checkout-data","ammessages"],"paypal\/payflowexpress\/placeorder":["cart","checkout-data","ammessages"],"paypal\/express\/onauthorization":["cart","checkout-data","ammessages"],"persistent\/index\/unsetcookie":["persistent"],"review\/product\/post":["review"],"wishlist\/index\/add":["wishlist"],"wishlist\/index\/remove":["wishlist"],"wishlist\/index\/updateitemoptions":["wishlist"],"wishlist\/index\/update":["wishlist"],"wishlist\/index\/cart":["wishlist","cart"],"wishlist\/index\/fromcart":["wishlist","cart"],"wishlist\/index\/allcart":["wishlist","cart"],"wishlist\/shared\/allcart":["wishlist","cart"],"wishlist\/shared\/cart":["cart"],"faq\/index\/save":["faq"],"amgiftcard\/cart\/apply":["cart"],"amgiftcard\/cart\/remove":["cart"],"amgiftwrap\/ajax_wrap\/add":["cart","messages"],"amgiftwrap\/ajax_wrap\/remove":["cart","messages"],"amgiftwrap\/ajax_wrap\/update":["cart","messages"],"ammostviewed\/cart\/add":["cart","messages"],"amasty_promo\/cart\/add":["cart","ammessages"],"braintree\/paypal\/placeorder":["ammessages"],"authorizenet\/directpost_payment\/place":["ammessages"],"multishipping\/checkout\/overviewpost":["ammessages"],"newsletter\/subscriber\/new":["bss-fbpixel-subscribe"],"checkout\/cart\/configure":["gtm"],"rest\/*\/v1\/guest-carts\/*\/shipping-information":["gtm"],"rest\/*\/v1\/carts\/*\/shipping-information":["gtm"]},
+                "clientSideSections": ["checkout-data","cart-data","faq_product","chatData"],
+                "baseUrls": ["https:\/\/www.thbaker.co.uk\/"],
+                "sectionNames": ["messages","customer","compare-products","last-ordered-items","cart","directory-data","instant-purchase","captcha","persistent","review","wishlist","faq","ammessages","bss-fbpixel-atc","bss-fbpixel-subscribe","chatData","gtm","recently_viewed_product","recently_compared_product","product_data_storage","paypal-billing-agreement"]            }
+        }
+    }
+</script>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Customer/js/customer-data": {
+                "sectionLoadUrl": "https\u003A\u002F\u002Fwww.thbaker.co.uk\u002Fcustomer\u002Fsection\u002Fload\u002F",
+                "expirableSectionLifetime": 60,
+                "expirableSectionNames": ["cart","persistent"],
+                "cookieLifeTime": "604800",
+                "updateSessionUrl": "https\u003A\u002F\u002Fwww.thbaker.co.uk\u002Fcustomer\u002Faccount\u002FupdateSession\u002F"
+            }
+        }
+    }
+</script>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Customer/js/invalidation-processor": {
+                "invalidationRules": {
+                    "website-rule": {
+                        "Magento_Customer/js/invalidation-rules/website-rule": {
+                            "scopeConfig": {
+                                "websiteId": "1"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+</script>
+<script type="text/x-magento-init">
+    {
+        "body": {
+            "pageCache": {"url":"https:\/\/www.thbaker.co.uk\/page_cache\/block\/render\/id\/4\/","handles":["default","amlocator_location_view","weltpixel_googlecards_remove_opengraph","weltpixel_googlecards_remove_schema"],"originalRequest":{"route":"amlocator","controller":"location","action":"view","uri":"\/stores\/t-h-baker-kidderminster-weavers-wharf\/"},"versionCookieName":"private_content_version"}        }
+    }
+</script>
+
+<script src="https://widget.trustist.com/1IYe-SI6CUajW1L4kaTpBg/trustistreviewer.js" async defer></script><div class="main-banner has-overlay">
+    <div class="overlay-con">
+        <div class="container overlay">
+            <div class="row overlay-ele brand-logo">
+                <div class="col-xs-12">
+                    <h1 class="bgColor">T. H. Baker Kidderminster</h1>
+                </div>
+            </div>
+        </div>
+        <picture class="lazyload">
+                            <img class="img-responsive img-center" src="https://www.thbaker.co.uk/pub/media/amasty/amlocator/gallery/4/thbaker_kidderminster_1.jpg" alt="">
+                    </picture>
+    </div>
+</div>
+<div class="brand-logos clearfix">
+    <div class="container">
+        <div class="row">
+                                        <div class="brand-img ">
+                                                                    <a href="/1888-collection-diamonds">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/New-1888-Logo-180x70_1.png">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img ">
+                                                                    <a href="/oris">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/o/r/oris180x70.jpg">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img ">
+                                                                    <a href="/clogau">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/c/l/clogau180x70.jpg">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img ">
+                                                                    <a href="/nomination">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/n/o/nomination180x70.jpg">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img ">
+                                                                    <a href="/thomas-sabo">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/t/h/thomas-sabo180x70.jpg">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img mobile-hide">
+                                                                    <a href="/links-of-london-jewellery">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/LoL-Black-Logo-230x100.png">
+                                    </a>
+                                                            </div>
+                                                        <div class="brand-img mobile-hide">
+                                                                    <a href="/michael-kors">
+                                        <img class="img-responsive lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/m/i/michael-kors180x70.jpg">
+                                    </a>
+                                                            </div>
+                                        <div class="brand-btn">
+                <span class="button view-brands btn-white">View all</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="store-cta col-xs-12">
+            <a class="cta-icon" href="tel: 01562 751675">
+                <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-phone"></use></svg>
+                <span class="svg-text">Call now</span>
+            </a>
+            <a class="cta-icon" href="https://www.google.com/maps/dir/?api=1&destination=52.38709000,-2.25047400">
+                <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-compass"></use></svg>
+                <span class="svg-text">Get directions</span>
+            </a>
+                            <a href="https://www.thbaker.co.uk/appointment/form/index/thbstore/4/" class="cta-icon">
+                    <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-calendar"></use></svg>
+                    <span class="svg-text">Book appointment</span>
+                </a>
+                                <a href="https://www.trustistreviewer.com/surveyapp/bm5_y860/9mzghh89" class="cta-icon">
+                    <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-star"></use></svg>
+                    <span class="svg-text">Leave a review</span>
+                </a>
+                    </div>
+        <div class="amlocator-location-main">
+            <div class="amlocator-location-container">
+                <div class="amlocator-column -right">
+                    <div class="amlocator-block -map" data-amlocator-js="location-map">
+                    </div>
+                    <div style="display:none">
+                        <div class="controls zoom-control">
+                            <button class="zoom-control-in" title="Zoom In">+</button>
+                            <button class="zoom-control-out" title="Zoom Out">−</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="amlocator-column -left">
+                    <div class="amlocator-description-grey"><p>Our T. H. Baker store takes pride of place at the entrance of Weavers Wharf in Kidderminster. Here we stock a variety of prestigious watches and luxury brands, including a second hand collection offering unique vintage pieces.</p>
+<p>&nbsp;</p>
+<p><span style="color: #ff0000;"><strong>Please note - Due to the ongoing Covid-19 situation opening times may vary at our Kidderminster store.</strong></span></p></div>
+                    <div class="amlocator-block amlocator-location-info">
+                        <p>T. H. Baker Kidderminster<br>
+                        1 Weavers Wharf<br>
+                        Kidderminster<br>
+                        Worcestershire<br>
+                        DY10 1AA</p>
+                        <div class="amlocator-block -contact">
+                                                            <a href="tel:01562 751675" class="amlocator-link">Tel: 01562 751675</a>
+                                                    </div>
+                        <p>Manager: John</p>
+                    </div>
+                    <div class="amlocator-schedule">
+                        
+<div class="amlocator-schedule-container">
+    <p class="schedule-header">Opening Times</p>
+    <div class="amlocator-week" data-amlocator-js="collapse-content" id="schedule4">
+        <div class="amlocator-schedule-table">
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Monday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Tuesday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Wednesday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Thursday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Friday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Saturday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                            <div class="amlocator-row">
+                                            <span class="amlocator-cell -day">Sunday</span>
+                        <span class="amlocator-cell -time">Closed</span>
+                                    </div>
+                    </div>
+    </div>
+</div>
+                    </div>
+                    <div class="subscribe-review">
+                        <div ts-widget ts-suppress-review-link=”true” class="leave-review"></div>
+                        <div class="newsletter footer-newsletter">
+    <div class="title"><h2>Get email updates <span>&amp; 5% off</span></h2></div>
+    <div class="content">
+        <form class="form subscribe"
+            novalidate
+            action="https://www.thbaker.co.uk/newsletter/subscriber/new/"
+            method="post"
+            data-mage-init='{"validation": {"errorClass": "mage-error"}}'
+            id="newsletter-validate-detail">
+            <div class="field newsletter">
+                <div class="control">
+                    <input name="email" type="email" id="newsletter"
+                           placeholder="Enter email address"
+                           data-mage-init='{"mage/trim-input":{}}'
+                           data-validate="{required:true, 'validate-email':true}"/>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="action subscribe primary" title="Subscribe" type="submit">
+                    <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-action_arrow"></use></svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="store-blog col-xs-12">
+            <div class="blog-btn">
+                <a href="https://www.thbaker.co.uk/blog/" class="button btn-white">To the blog</a>
+            </div>
+            <h2 class="blog-header alt">Store News</h2>
+                <div data-amblog-js="accordion" class="amblog-widget-container -post">
+        <ul class="amblog-list row" data-amblog-js="content">
+                            <li class="amblog-item  amblog-recent-post-221 col-xs-12 col-sm-4">
+                                            <a class="thumbnail"
+                           href="https://www.thbaker.co.uk/blog/shrewsbury-pre-owned-watch-and-jewellery-event"
+                           title="Shrewsbury Pre-Owned Watch And Jewellery Event - April 2019">
+                            <img class="img lazyload img-responsive"
+                                 data-src="https://www.thbaker.co.uk/pub/media/amasty/blog/cache/2/n/435/200/2ndHAND_SHREWSBURY_ONLINE_1000x550_BLOG.jpg"
+                                 alt="Shrewsbury Pre-Owned Watch And Jewellery Event - April 2019">
+                        </a>
+                                        <h3>
+                        <a class="amblog-headline" href="https://www.thbaker.co.uk/blog/shrewsbury-pre-owned-watch-and-jewellery-event">
+                            Shrewsbury Pre-Owned Watch And Jewellery Event - April 2019                        </a>
+                    </h3>
+                                                        </li>
+                            <li class="amblog-item  amblog-recent-post-176 col-xs-12 col-sm-4">
+                                            <a class="thumbnail"
+                           href="https://www.thbaker.co.uk/blog/10-off-pre-owned-at-our-walsall-store-this-weekend-only"
+                           title="10% Off Pre-Owned At Our Walsall Store This Weekend Only">
+                            <img class="img lazyload img-responsive"
+                                 data-src="https://www.thbaker.co.uk/pub/media/amasty/blog/cache/1/0/435/200/10-Percent-Off-Walsall-PreownedCropped.png"
+                                 alt="10% Off Pre-Owned At Our Walsall Store This Weekend Only">
+                        </a>
+                                        <h3>
+                        <a class="amblog-headline" href="https://www.thbaker.co.uk/blog/10-off-pre-owned-at-our-walsall-store-this-weekend-only">
+                            10% Off Pre-Owned At Our Walsall Store This Weekend Only                        </a>
+                    </h3>
+                                                        </li>
+                            <li class="amblog-item  amblog-recent-post-174 col-xs-12 col-sm-4">
+                                            <a class="thumbnail"
+                           href="https://www.thbaker.co.uk/blog/july-birthstone-ruby"
+                           title="July Birthstone - Ruby">
+                            <img class="img lazyload img-responsive"
+                                 data-src="https://www.thbaker.co.uk/pub/media/amasty/blog/cache/T/H/435/200/THB-Blog-Birthstone-of-the-Month-RUBY700x300.png"
+                                 alt="July Birthstone - Ruby">
+                        </a>
+                                        <h3>
+                        <a class="amblog-headline" href="https://www.thbaker.co.uk/blog/july-birthstone-ruby">
+                            July Birthstone - Ruby                        </a>
+                    </h3>
+                                                        </li>
+                    </ul>
+    </div>
+        </div>
+    </div>
+</div>
+<div class="store-services">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <h2 class="alt">Our Services</h2>
+                <ul>
+                                                            <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-battery-full"></use></svg>
+                                                                                    <span>Battery Replacement</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-store-alt"></use></svg>
+                                                                                    <span>Click and Collect</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-tools"></use></svg>
+                                                                                    <span>General Repairs</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-gem"></use></svg>
+                                                                                    <span>In House cleaning &amp; polishing</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-insurance"></use></svg>
+                                                                                    <span>Insurance</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-percent"></use></svg>
+                                                                                    <span>Interest free credit</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-link"></use></svg>
+                                                                                    <span>Link removal</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-ruler"></use></svg>
+                                                                                    <span>Jewellery Resizing</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-clock-solid"></use></svg>
+                                                                                    <span>Replacement watch straps</span>
+                                        </li>
+                                                                                <li class="col-xs-4 col-sm-2">
+                                                                                        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-pound-sign"></use></svg>
+                                                                                    <span>Valuations</span>
+                                        </li>
+                                                        </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="store-brands">
+            <h2 class="col-xs-12 alt">Brands in Store</h2>
+                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/1888-collection-diamonds">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/New-1888-Logo-180x70_1.png">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/accurist-watches">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/a/c/accurist180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/boss-by-hugo-boss">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/h/u/hugo-boss180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/casio-watches">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/c/a/casio180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/chrysalis-jewellery">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/c/h/chrysalis180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/citizen">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/c/i/citizen180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/clogau">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/c/l/clogau180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/d-for-diamonds">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/d/-/d-for-diamond180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/e/m/emozioni180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/emporio-armani">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/e/m/emporio-armani180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/fiorelli-jewellery">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/f/i/fiorelli180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/fossil-all">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/f/o/fossil180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/fred-bennett">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/f/r/fred-bennett180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/geti">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/g/e/geti180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/henry-london-watches">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/h/e/henry-london180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/hirsch">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/h/i/hirsch180x70.png">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/kit-heath-jewellery">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/k/i/kit-heath180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/links-of-london-jewellery">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/LoL-Black-Logo-230x100.png">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/lola-rose">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/l/o/lola-rose180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/michael-kors">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/m/i/michael-kors180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/nomination">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/n/o/nomination180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/oris">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/o/r/oris180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/raymond-weil">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/r/a/raymond-weil180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/rosa-lea">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/Rosa_Lea_Logo_400x60_2.svg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/rotary">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/r/o/rotary180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/seiko">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/s/e/seiko180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/sekonda-watches">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/s/e/sekonda180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/skagen">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/s/k/skagen180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/all-starbright-jewellery">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/Starbrightlogo-180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/swarovski">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/s/w/swarovski180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/swatch-watches">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/s/w/swatch180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/thomas-sabo">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/t/h/thomas-sabo180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/tissot">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/t/i/tissot180x70.jpg">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/wena-by-sony">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/w/e/wena.png">
+                                    </a>
+                                </p>
+                                                            <p class="brands-instore col-xs-6 col-sm-3">
+                                    <a href="/wolf-accessories">
+                                        <img class="img-responsive lazyload" width="150" height="80" data-src="https://www.thbaker.co.uk/pub/media//amasty/shopby/option_images/w/o/wolf-180-x70.png">
+                                    </a>
+                                </p>
+                                    </div>
+    </div>
+</div>
+<script>
+    require([
+        'jquery',
+        'THBaker_StoreLocator/js/location-view',
+        'domReady!',
+        'https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyCihL7vYRn1CLi5Taj5hAPQSCr9Rk5UUb8'
+    ], function ($) {
+        $('[data-amlocator-js="location-map"]').amLocationPage({
+            locationData: {
+                lat: 52.38709,
+                lng: -2.250474,
+                marker_url: ''
+            }
+        });
+    });
+</script>
+</div></div></main><div class="mobile-overlay"></div>
+<footer class="page-footer"><div class="footer"><section class="footer-container clearfix"><div class="container"><div class="row"><div class="newsletter footer-newsletter">
+    <div class="title"><h2>Get email updates <span>&amp; 5% off</span></h2></div>
+    <div class="content">
+        <form class="form subscribe"
+            novalidate
+            action="https://www.thbaker.co.uk/newsletter/subscriber/new/"
+            method="post"
+            data-mage-init='{"validation": {"errorClass": "mage-error"}}'
+            id="newsletter-validate-detail">
+            <div class="field newsletter">
+                <div class="control">
+                    <input name="email" type="email" id="newsletter"
+                           placeholder="Enter email address"
+                           data-mage-init='{"mage/trim-input":{}}'
+                           data-validate="{required:true, 'validate-email':true}"/>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="action subscribe primary" title="Subscribe" type="submit">
+                    <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-action_arrow"></use></svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<ul id="footer-social" class="social col-xs-12 col-sm-4">
+    <h2 class="title">Stay in the loop</h2>
+    <li><a href="https://www.facebook.com/Thbakerjeweller/" target="blank" rel="noopener">
+        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-facebook"></use></svg>
+    </a></li>
+    <li><a href="https://instagram.com/thbakerjeweller/" target="blank" rel="noopener">
+        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-instagram"></use></svg>
+    </a></li>
+    <!--<li><a href="https://twitter.com/THBakerJeweller" target="blank" rel="noopener">
+        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-twitter"></use></svg>
+    </a></li>-->
+    <li><a href="https://www.youtube.com/channel/UCGWTr09sQUfu3RiDDHDN8pQ" target="blank" rel="noopener">
+        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-youtube-play"></use></svg>
+    </a></li>
+    <li><a href="https://uk.pinterest.com/thbakerjeweller/" target="blank" rel="noopener">
+        <svg class="svg-icon"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#icon-pinterest-p"></use></svg>
+    </a></li>
+</ul>
+<div class="social-images col-xs-12 col-sm-4">
+    <a href="https://www.instagram.com/thbakerjeweller/" class="col-xs-4">
+        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="245" height="225" data-src="https://www.thbaker.co.uk/pub/media/cms/social-3.jpg">
+    </a>
+    <a href="https://www.instagram.com/thbakerjeweller/" class="col-xs-4">
+        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="245" height="225" data-src="https://www.thbaker.co.uk/pub/media/cms/social-2.jpg">
+    </a>
+    <a href="https://www.instagram.com/thbakerjeweller/" class="col-xs-4">
+        <img class="lazyload img-responsive" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="245" height="225" data-src="https://www.thbaker.co.uk/pub/media/cms/social-1.jpg">
+    </a>
+</div>
+<a href="#0" class="cd-top">
+    <svg class="svg-icon scroll-top"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-caret-up"></use></svg>
+</a>
+</div></div></section><div class="header-top clearfix">
+    <div class="header-row">
+        <span class="h6 tag-line">Independent Family Jeweller Since 1888</span>
+        <a href="tel:+44 (0)1562 312 224 " class="header-phone">
+            Call our team on +44 (0)1562 312 224        </a>
+    </div>
+</div>
+<section class="footer-links container">
+    <div class="row">
+        <div class="col-lg-4 about-blurb">
+	<h3 class="heading header-reset">About T. H. Baker</h3>
+	<p>T. H. Baker is a family owned business with over 125 years experience in the jewellery and watch industry. T. H. Baker has established itself as a popular independent jeweller while sticking to standards that have been set since its beginning in 1888.</p>
+	<p>T. H. Baker operates in over 20 stores located throughout the Midlands and southern England. Each store has its own dedicated team of reliable and knowledgeable staff to help customers with an elite level of customer service.</p>
+</div>
+<ul class="footer-link col-lg-2 col-sm-3">
+	<li class="heading"><h3 class="header-reset">The company</h3></li>
+	<li><a href="https://www.thbaker.co.uk/about-us">About Us</a></li>
+	<li><a href="https://www.thbaker.co.uk/our-history">Our History</a></li>
+	<li><a href="https://www.thbaker.co.uk/stores">Visit a Store</a></li>
+	<li><a href="https://www.thbaker.co.uk/careers">Careers</a></li>
+	<li><a href="https://www.thbaker.co.uk/contact">Contact Us</a></li>
+</ul>
+<ul class="footer-link col-lg-2 col-sm-3">
+	<li class="heading"><h3 class="header-reset">Company service</h3></li>
+	<li><a href="https://www.thbaker.co.uk/delivery-options">Delivery & Order Tracking</a></li>
+	<li><a href="https://www.thbaker.co.uk/returns">Returns</a></li>
+	<li><a href="https://www.thbaker.co.uk/interest-free-credit">Interest Free Credit</a></li>
+	<li><a href="https://www.thbaker.co.uk/engraving-terms-and-conditions">Engraving</a></li>
+	<li><a href="https://www.thbaker.co.uk/bespoke-jewellery">Bespoke Jewellery Design</a></li>
+	<li><a href="https://www.thbaker.co.uk/valuations">Valuations</a></li>
+	<li><a href="https://www.thbaker.co.uk/gold-buying-online">Gold Buying Online</a></li>
+</ul>
+<ul class="footer-link col-lg-2 col-sm-3">
+	<li class="heading"><h3 class="header-reset">Information</h3></li>
+	<li><a href="https://www.thbaker.co.uk/faq">FAQs</a></li>
+	<li><a href="https://www.thbaker.co.uk/terms-and-conditions">Terms &amp; Conditions</a></li>
+	<li><a href="https://www.thbaker.co.uk/privacy-policy">Privacy & Cookies</a></li>
+	<li><a href="https://www.thbaker.co.uk/diamond-guide">Diamond Knowledge</a></li>
+        <li><a href="https://www.thbaker.co.uk/jewellery-care">Jewellery Care</a></li>
+        <li><a href="https://www.thbaker.co.uk/paypal-credit">PayPal Credit</a></li>
+</ul>
+<ul class="footer-link col-lg-2 col-sm-3">
+	<li class="heading"><h3 class="header-reset">News</h3></li>
+	<li><a href="https://www.thbaker.co.uk/blog">Blog & Store News</a></li>
+	<li><a href="https://www.thbaker.co.uk/blog/category/charity-work">Charity Work</a></li>
+</ul>
+<!-- <style type="text/css">
+.checkout-index-index .store-collect,
+.checkout-index-index .post-collect {
+    display: none;
+}
+</style> -->
+
+<style type="text/css">
+.checkout-index-index .post-collect {
+    display: none;
+}
+.payment-logos .svg-klarna {
+    display:none;
+}
+</style>        <div class="mobile-tel">
+            <a href="tel:+44 (0)1562 312 224 ">
+                <svg class="svg-icon svg-phone"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-phone"></use></svg>
+                +44 (0)1562 312 224            </a>
+            <p class="h1">Family Jeweller Since 1888</p>
+        </div>
+    </div>
+</section>
+<section class="footer-bottom">
+    <div class="container">
+        <div class="row">
+            <div class="footer-charity">
+                <a href="https://www.midlandsairambulance.com/" target="_blank" rel="noopener nofollow"><img class="lazyload" data-src="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/midlands-air-ambulance-logo.png" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="160" height="60"></a>
+                <p>Official<br/>Charity Partner</p>
+            </div>
+                            <div class="our-reviews">
+                    <div class="review-service trustpilot-widget" data-locale="en-GB" data-template-id="53aa8807dec7e10d38f59f32" data-businessunit-id="4e2c714100006400051055ea" data-style-height="120px" data-style-width="140px" data-theme="light"></div>
+                    <div class="review-service trustist-reviews" ts-widget="" ts-suppress-review-link="true" ></div>
+                </div>
+                        <div class="payment-logos">
+                <span class="logos first">
+                    <svg class="svg-icon svg-visa"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-visa"></use></svg>
+                    <svg class="svg-icon svg-mastercard"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-mastercard"></use></svg>
+                    <svg class="svg-icon svg-klarna"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-klarna"></use></svg>
+                    <svg class="svg-icon svg-paypal"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-paypal"></use></svg>
+                </span>
+                <span class="logos second">
+                    <svg class="svg-icon svg-paypalcc"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-paypalcc"></use></svg>
+                    <svg class="svg-icon svg-v12finance"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-v12finance"></use></svg>
+                    <svg class="svg-icon svg-royalmail"><use xlink:href="https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/symbol-defs.svg#svg-royalmail"></use></svg>
+                </span>
+            </div>
+            <div class="footer-legal">
+                <p>&copy;T H Baker & Co (Est 1888) Ltd 2021 - All Rights Reserved, Registered in England 506598, VAT reg 276 9381 10</p>
+                <p>T H Baker are regulated by the Financial Conduct Authority, Consumer Credit Licence Number 48215.</p>
+            </div>
+            <div class="footer-paypal">Finance provided by PayPal Credit & V12 Retail Finance Limited. Terms and conditions apply. Credit subject to status, UK residents only, TH Baker & co (established 1888) Ltd acts as a broker and offers ﬁnance from a restricted range of ﬁnance providers. 
+PayPal Credit is a trading name of PayPal (Europe) S.à.r.l et Cie, S.C.A. 22-24 Boulevard Royal L-2449, Luxembourg. V12 Retail Finance is a trading name of Secure Trust Bank PLC. One Arleston Way, Solihull, B90 4LH.</div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+    function loadJS(d,b){b=void 0===b?!1:b;var a=document,c=a.getElementsByTagName("script")[0];a=a.createElement("script");a.src=d;a.async=b;c.parentNode.insertBefore(a,c)};
+</script>
+<script type="text/javascript">
+    require(['jquery'], function($) {
+        if ($('.checkout-index-index, .checkout-cart-index, .paypal-express-review').length === 0) {
+            var currentUrl = window.location.href;
+
+            if ($('.amlocator-location-view').length === 0 && currentUrl.indexOf('stores') === -1 ) {
+                loadJS('https://widget.trustist.com/2lo-ZjOu8kqLUNDfo7opcQ/trustistreviewer.js', true);
+            }
+        }
+    });
+</script>
+<script src="https://apis.google.com/js/platform.js?onload=googleTrusted" async defer></script>
+<script>
+    window.googleTrusted = function() {
+        if (window.renderBadge) {
+            window.renderBadge();
+        }
+        if (window.renderOptIn) {
+            window.renderOptIn();
+        }
+    }
+    window.renderBadge = function() {
+        var ratingBadgeContainer = document.createElement('div');
+        document.body.appendChild(ratingBadgeContainer);
+        window.gapi.load('ratingbadge', function() {
+            window.gapi.ratingbadge.render(ratingBadgeContainer, {'merchant_id': 103017495, 'position': 'BOTTOM_LEFT'});
+        });
+    }
+</script>
+<!--uW8xnQrGzQx29ViZyXG6Ijx4LrplefS5-->
+</div></footer><script type="text/x-magento-init">
+        {
+            "*": {
+                "Magento_Ui/js/core/app": {
+                    "components": {
+                        "storage-manager": {
+                            "component": "Magento_Catalog/js/storage-manager",
+                            "appendTo": "",
+                            "storagesConfiguration" : {"recently_viewed_product":{"requestConfig":{"syncUrl":"https:\/\/www.thbaker.co.uk\/catalog\/product\/frontend_action_synchronize\/"},"lifetime":"1000","allowToSendRequest":null},"recently_compared_product":{"requestConfig":{"syncUrl":"https:\/\/www.thbaker.co.uk\/catalog\/product\/frontend_action_synchronize\/"},"lifetime":"1000","allowToSendRequest":null},"product_data_storage":{"updateRequestConfig":{"url":"https:\/\/www.thbaker.co.uk\/rest\/default\/V1\/products-render-info"},"allowToSendRequest":null}}                        }
+                    }
+                }
+            }
+        }
+</script>
+        <div class="am-login-overlay" data-am-js="am-login-overlay" style="display: none">
+        <div id="social-login-popup"
+             class="am-login-popup -social-right"
+             data-mage-init='{"tabs":{"openedState":"active"}}'
+             data-am-js="am-login-popup">
+            <span class="am-close"></span>
+            <div class="am-content-wrapper" data-am-js="am-content-wrapper"></div>
+            <div class="am-tabs-wrapper" data-am-js="am-tabs-wrapper">
+                <ul class="am-tablist">
+                    <li data-role="collapsible" class="am-title" data-am-js="am-popup-original">
+                        <a href="#am-login-content"
+                           class="am-link"
+                           data-toggle="switch"
+                           tabindex="-1">Login</a>
+                    </li>
+                    <li data-role="collapsible" class="am-title" data-am-js="am-popup-original">
+                        <a href="#am-register-content"
+                           class="am-link"
+                           data-toggle="switch"
+                           tabindex="-1">Register</a>
+                    </li>
+                </ul>
+                <div id="am-login-content" class="am-content am-login-content" data-role="content">
+                    <p class="am-error -default" data-am-js="am-default-error"></p>
+                    <div class="am-form">
+                        <div class="block block-customer-login">
+    <div class="block-title">
+        <strong id="block-customer-login-heading" role="heading" aria-level="2">Registered Customers</strong>
+    </div>
+    <div class="block-content" aria-labelledby="block-customer-login-heading">
+        <form class="form form-login"
+              action="https://www.thbaker.co.uk/customer/account/loginPost/"
+              method="post"
+              id="login-form"
+              data-mage-init='{"validation":{}}'>
+            <input name="form_key" type="hidden" value="ZYilw18uJjN2azta" />            <fieldset class="fieldset login" data-hasrequired="* Required Fields">
+                <div class="field note">If you have an account, sign in with your email address.</div>
+                <div class="field email required clearfix">
+                    <label class="label" for="email"><span>Email</span></label>
+                    <div class="control">
+                        <input name="login[username]" value=""  autocomplete="off" id="email" type="email" class="input-text" title="Email" data-mage-init='{"mage/trim-input":{}}' data-validate="{required:true, 'validate-email':true}">
+                    </div>
+                </div>
+                <div class="field password required clearfix">
+                    <label for="pass" class="label"><span>Password</span></label>
+                    <div class="control">
+                        <input name="login[password]" type="password"  autocomplete="off" class="input-text" id="pass" title="Password" data-validate="{required:true}">
+                    </div>
+                </div>
+                <!-- BLOCK captcha_login --><!-- /BLOCK captcha_login -->                <div class="actions-toolbar">
+                    <div class="primary"><button type="submit" class="action login primary" name="send" id="send2"><span>Sign In</span></button></div>
+                    <div class="secondary"><a class="action remind" href="https://www.thbaker.co.uk/customer/account/forgotpassword/"><span>Forgot Your Password?</span></a></div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+                    </div>
+                                    </div>
+                <div id="am-register-content" class="am-content am-register-content" data-role="content">
+                    <p class="am-error -default" data-am-js="am-default-error"></p>
+                    <div class="am-form">
+                        <form class="form create account form-create-account" action="https://www.thbaker.co.uk/customer/account/createpost/" method="post" id="form-validate" enctype="multipart/form-data" autocomplete="off">
+    <input name="form_key" type="hidden" value="ZYilw18uJjN2azta" />    <fieldset class="fieldset create info">
+        <legend class="legend"><span>Personal Information</span></legend><br>
+        <input type="hidden" name="success_url" value="">
+        <input type="hidden" name="error_url" value="">
+        
+            <div class="field field-name-firstname required">
+            <label class="label" for="firstname"><span>First Name</span></label>
+            <div class="control">
+                <input type="text" id="firstname"
+                       name="firstname"
+                       value=""
+                       title="First&#x20;Name"
+                       class="input-text required-entry"  data-validate="{required:true}">
+            </div>
+        </div>
+            <div class="field field-name-lastname required">
+            <label class="label" for="lastname"><span>Last Name</span></label>
+            <div class="control">
+                <input type="text" id="lastname"
+                       name="lastname"
+                       value=""
+                       title="Last&#x20;Name"
+                       class="input-text required-entry"  data-validate="{required:true}">
+            </div>
+        </div>
+    
+                <div class="field choice newsletter clearfix">
+                <input type="checkbox" name="is_subscribed" title="Sign&#x20;Up&#x20;for&#x20;Newsletter" value="1" id="is_subscribed" class="checkbox">
+                <label for="is_subscribed" class="label"><span>Sign Up for Newsletter</span></label>
+            </div>
+                </fieldset>
+
+        <fieldset class="fieldset create account" data-hasrequired="&#x2A;&#x20;Required&#x20;Fields">
+        <legend class="legend"><span>Sign-in Information</span></legend><br>
+        <div class="field required clearfix">
+            <label for="email_address" class="label"><span>Email</span></label>
+            <div class="control">
+                <input type="email" name="email" autocomplete="email" id="email_address" value="" title="Email" class="input-text" data-mage-init='{"mage/trim-input":{}}' data-validate="{required:true, 'validate-email':true}">
+            </div>
+        </div>
+        <div class="field password required clearfix">
+            <label for="password" class="label"><span>Password</span></label>
+            <div class="control">
+                <input type="password" name="password" id="password"
+                       title="Password"
+                       class="input-text"
+                       data-password-min-length="8"
+                       data-password-min-character-sets="3"
+                       data-validate="{required:true, 'validate-customer-password':true}"
+                       autocomplete="off">
+                <div id="password-strength-meter-container" data-role="password-strength-meter" aria-live="polite">
+                    <div id="password-strength-meter" class="password-strength-meter">
+                        Password Strength:
+                        <span id="password-strength-meter-label" data-role="password-strength-meter-label">
+                            No Password                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="field confirmation required clearfix">
+            <label for="password-confirmation" class="label"><span>Confirm Password</span></label>
+            <div class="control">
+                <input type="password" name="password_confirmation" title="Confirm&#x20;Password" id="password-confirmation" class="input-text" data-validate="{required:true, equalTo:'#password'}" autocomplete="off">
+            </div>
+        </div>
+        <!-- BLOCK captcha_create --><div class="field captcha required" role="user_create">
+    <label for="captcha_user_create" class="label"><span>Please type the letters and numbers below</span></label>
+    <div class="control captcha">
+        <input name="captcha[user_create]" type="text" class="input-text required-entry" data-validate="{required:true}" id="captcha_user_create" autocomplete="off"/>
+        <div class="nested">
+            <div class="field captcha no-label"
+                 data-captcha="user_create"
+                 id="captcha-container-user_create"
+                 data-mage-init='{"captcha":{"url": "https://www.thbaker.co.uk/captcha/refresh/",
+                                            "imageLoader": "https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/loader-2.gif",
+                                             "type": "user_create"}}'>
+                <div class="control captcha-image">
+                    <img alt="Please&#x20;type&#x20;the&#x20;letters&#x20;and&#x20;numbers&#x20;below" class="captcha-img" height="50" src="https://www.thbaker.co.uk/pub/media/captcha/base/63ef906fb74386ededea3e3f11b1666c.png"/>
+                    <button type="button" class="action reload captcha-reload" title="Reload&#x20;captcha"><span>Reload captcha</span></button>
+                </div>
+            </div>
+                    </div>
+    </div>
+</div>
+<!-- /BLOCK captcha_create -->    </fieldset>
+    <div class="actions-toolbar">
+        <div class="primary">
+            <button type="submit" class="action submit primary" title="Create&#x20;an&#x20;Account"><span>Create an Account</span></button>
+        </div>
+        <div class="secondary">
+            <a class="action back" href="https://www.thbaker.co.uk/customer/account/login/"><span>Back</span></a>
+        </div>
+    </div>
+</form>
+<script>
+require([
+    'jquery',
+    'mage/mage'
+], function($){
+
+    var dataForm = $('#form-validate'),
+        ignore = null;
+
+    dataForm.mage('validation', {
+            ignore: ignore ? ':hidden:not(' + ignore + ')' : ':hidden'
+        }).find('input:text').attr('autocomplete', 'off');
+});
+</script>
+
+<script type="text/x-magento-init">
+    {
+        ".field.password": {
+            "passwordStrengthIndicator": {
+                "formSelector": "form.form-create-account"
+            }
+        }
+    }
+</script>
+                    </div>
+                                    </div>
+            </div>
+            <div class="am-tabs-wrapper -forgot" data-am-js="am-tabs-wrapper-forgot">
+                <ul class="am-tablist">
+                    <li class="am-title active">
+                        <a href="#am-forgot-content" class="am-link">
+                            Forgot Your Password?                        </a>
+                    </li>
+                </ul>
+                <div id="am-forgot-content" class="am-content am-forgot-content">
+                    <p class="am-error -default" data-am-js="am-default-error"></p>
+                    <div class="am-form">
+                        <form class="form password forget"
+      action="https://www.thbaker.co.uk/amlocator/location/forgotpasswordpost/"
+      method="post"
+      id="form-validate"
+      data-mage-init='{"validation":{}}'>
+    <fieldset class="fieldset" data-hasrequired="&#x2A;&#x20;Required&#x20;Fields">
+        <div class="field note">Please enter your email address below to receive a password reset link.</div>
+        <div class="field email required">
+            <label for="email_address" class="label"><span>Email</span></label>
+            <div class="control">
+                <input type="email" name="email" alt="email" id="email_address" class="input-text" value="" data-mage-init='{"mage/trim-input":{}}' data-validate="{required:true, 'validate-email':true}">
+            </div>
+        </div>
+        <!-- BLOCK captcha_forgot --><div class="field captcha required" role="user_forgotpassword">
+    <label for="captcha_user_forgotpassword" class="label"><span>Please type the letters and numbers below</span></label>
+    <div class="control captcha">
+        <input name="captcha[user_forgotpassword]" type="text" class="input-text required-entry" data-validate="{required:true}" id="captcha_user_forgotpassword" autocomplete="off"/>
+        <div class="nested">
+            <div class="field captcha no-label"
+                 data-captcha="user_forgotpassword"
+                 id="captcha-container-user_forgotpassword"
+                 data-mage-init='{"captcha":{"url": "https://www.thbaker.co.uk/captcha/refresh/",
+                                            "imageLoader": "https://www.thbaker.co.uk/pub/static/version1611326633/frontend/THBaker/theme/en_GB/images/loader-2.gif",
+                                             "type": "user_forgotpassword"}}'>
+                <div class="control captcha-image">
+                    <img alt="Please&#x20;type&#x20;the&#x20;letters&#x20;and&#x20;numbers&#x20;below" class="captcha-img" height="50" src="https://www.thbaker.co.uk/pub/media/captcha/base/cf93f9c57d88286d85d87e6d884d63da.png"/>
+                    <button type="button" class="action reload captcha-reload" title="Reload&#x20;captcha"><span>Reload captcha</span></button>
+                </div>
+            </div>
+                    </div>
+    </div>
+</div>
+<!-- /BLOCK captcha_forgot -->    </fieldset>
+    <div class="actions-toolbar">
+        <div class="primary">
+            <button type="submit" class="action submit primary"><span>Reset My Password</span></button>
+        </div>
+        <div class="secondary">
+            <a class="action back" href="https://www.thbaker.co.uk/customer/account/login/"><span>Go back</span></a>
+        </div>
+    </div>
+</form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/x-magento-init">
+        {
+            "[data-am-js='am-login-popup']" : {
+                "Amasty_SocialLogin/js/am-popup": {"logout_url":"https:\/\/www.thbaker.co.uk\/amsociallogin\/logout\/index\/","header_update":"https:\/\/www.thbaker.co.uk\/amsociallogin\/header\/update\/","reset_pass_url":"https:\/\/www.thbaker.co.uk\/customer\/account\/forgotpasswordpost\/"}            }
+        }
+
+        </script>
+    </div>
+</div>    <script>
+        require(['jquery','weltpixel_persistentLayer', 'weltpixel_gtm', 'Magento_Customer/js/customer-data'],
+            function ($, wpPersDl, wpgtm, customerData) {
+                $( document ).ajaxComplete(function( event, xhr, settings ) {
+                    if (settings.url.search('/customer\/section\/load/') > 0) {
+                        var response = xhr.responseJSON;
+                        if (response.gtm) {
+                            var dataLayerData = $.parseJSON(response.gtm.datalayer);
+                            for (index in dataLayerData) {
+                                window.dataLayer.push(dataLayerData[index]);
+                            }
+                        }
+                    }
+                });
+                var wpPersDlOptions = {'storageExpiryTime' : 30 };
+                var wpGtmOptions = {
+                    'enabled' : 1,
+                    'persDataLayer' : wpPersDl
+                };
+                wpPersDl.init(wpPersDlOptions);
+                wpgtm.trackPromotion(wpGtmOptions);
+                customerData.invalidate(['gtm']);
+            });
+    </script>
+    </body>
+</html>
