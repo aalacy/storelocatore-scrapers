@@ -70,6 +70,7 @@ def fetch_data():
         )
         longt = coord[0]
         lat = coord[1]
+        store = temp["properties"]["branch"]
         title = temp["properties"]["name"]
         street1 = temp["properties"]["addressLine1"]
         street2 = temp["properties"]["addressLine2"]
