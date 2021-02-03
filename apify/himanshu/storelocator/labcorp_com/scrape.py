@@ -71,9 +71,6 @@ def fetch_data():
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
-                current_results_len = len(
-                    json_data["lc_psc_locator"]["psc_locator_app"]["settings"]["labs"]
-                )
 
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
@@ -252,10 +249,9 @@ def fetch_data():
                     addresses.append(store[2])
                     yield store
             else:
-                current_results_len = 0
+
                 pass
         else:
-            current_results_len = 0
             pass
 
 
