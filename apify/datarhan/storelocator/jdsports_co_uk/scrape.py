@@ -100,7 +100,11 @@ def fetch_data():
 
         location_name = poi["name"]
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("&amp;", "&") if street_address else "<MISSING>"
+        )
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = poi["address"]["addressLocality"]
         city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]

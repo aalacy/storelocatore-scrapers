@@ -37,6 +37,7 @@ def write_output(data):
 
 
 def fetch_data():
+    address = []
     for index, url in enumerate(
         [
             "https://ca.kuehne-nagel.com/en_gb/other-links/our-locations-in-canada/",
@@ -104,6 +105,9 @@ def fetch_data():
                 store.append(hours)
                 store.append(url)
                 store = [str(x).strip() if x else "<MISSING>" for x in store]
+                if store[2] in address:
+                    continue
+                address.append(store[2])
                 yield store
         elif index == 1:
             soup = BS(session.get(url).text, "lxml")
@@ -167,6 +171,9 @@ def fetch_data():
                             .replace("\n", "")
                             .replace("\t", "")
                             .replace("Mo  Fr:", "Mo-Fr")
+                            .replace("Opening Hours", "")
+                            if hours_of_operation
+                            else "<MISSING>"
                         )
                         store.append("<MISSING>")
                         store = [
@@ -175,6 +182,9 @@ def fetch_data():
                             else "<MISSING>"
                             for x in store
                         ]
+                        if store[2] in address:
+                            continue
+                        address.append(store[2])
                         yield store
 
 

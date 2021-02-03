@@ -82,7 +82,7 @@ def fetch_data():
             lat = latlng[0]
             lng = latlng[1]
             store_num = el
-            phone = content[-1]
+            phone = content[-1].replace("x22", "")
             res.append(
                 {
                     "locator_domain": locator_domain,
