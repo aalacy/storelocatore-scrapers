@@ -3,7 +3,6 @@ import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
 import usaddress
 import us
 
@@ -115,7 +114,6 @@ def fetch_data():
         phone = store["phone"]
 
         location_type = "<MISSING>"
-        hours_list = []
         hours_of_operation = ""
         if store["hours"] is not None and len(store["hours"]) > 0:
             hours_of_operation = store["hours"]
