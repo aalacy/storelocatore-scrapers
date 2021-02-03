@@ -58,15 +58,15 @@ def get_data(url):
         street_address = (
             f"{j.get('streetAddress1')} {j.get('streetAddress2')}" or "<MISSING>"
         )
-        city = ''.join(j.get("locationCity"))
-        state = ''.join(j.get("locationState"))
+        city = "".join(j.get("locationCity"))
+        state = "".join(j.get("locationState"))
         postal = j.get("locationPostalCode")
         country_code = "US"
         page_url = j.get("storeURL") or "<MISSING>"
-        if page_url.find('plainfieldsouth') != -1:
-            page_url = f'https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}'
-        if page_url.find('plainfieldnorth') != -1:
-            page_url = f'https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}'
+        if page_url.find("plainfieldsouth") != -1:
+            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
+        if page_url.find("plainfieldnorth") != -1:
+            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
         phone = j.get("phone")
         latitude = j.get("lat")
         longitude = j.get("lng")
