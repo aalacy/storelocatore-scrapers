@@ -87,9 +87,13 @@ def fetch_data():
                 )
             if not street_address:
                 street_address = loc_dom.xpath("//div[@data-packed]/p[1]/span/text()")
-            if "|" in street_address[0]:
+            if street_address and "|" in street_address[0]:
                 street_address = loc_dom.xpath(
                     "//div[@data-packed]/p[1]/span/span/text()"
+                )
+            if not street_address:
+                street_address = loc_dom.xpath(
+                    "//div[@data-packed]/p[3]/span/span/span/text()"
                 )
             street_address = street_address[0] if street_address else "<MISSING>"
             alt = loc_dom.xpath("//div[@data-packed]/p[3]/text()")

@@ -67,7 +67,8 @@ def fetch_data():
             state, pcode = state.lstrip().replace(", ", "").split(" ", 1)
         except:
             try:
-                city, state = content[-2].split(", Tampa - ", 1)[0].split(", ")
+                street = "14463 N. Dale Mabry Highway"
+                city, state = content[-2].split(", Tampa", 1)[0].split(", ")
             except:
                 phone = street = pcode = "<MISSING>"
                 city = "Middle Village"
@@ -84,7 +85,7 @@ def fetch_data():
                 "https://www.imxpilates.com/",
                 link,
                 title,
-                street.lstrip().replace(",", "").replace("-", ""),
+                street.lstrip().replace(",", "").replace("-", "").replace("&amp;", "&"),
                 city.lstrip().replace(",", ""),
                 state.lstrip().replace(",", ""),
                 pcode.lstrip().replace(",", ""),
