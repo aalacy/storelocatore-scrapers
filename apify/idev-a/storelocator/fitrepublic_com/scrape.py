@@ -98,8 +98,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        myutil._check_duplicate_by_loc(data, _item)
-
+        data.append(_item)
     return data
 
 

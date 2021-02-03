@@ -54,9 +54,15 @@ def fetch_data():
         longt = loc["Longitude"]
         street = loc["Address1"]
         try:
+            hours = loc["Schedule"].replace("<br />", " ").replace("\t", " ").strip()
+        except:
+            hours = "<MISSING>"
+        try:
             street = street + " " + str(loc["Address2"])
         except:
             pass
+        if len(hours) < 3:
+            hours = "<MISSING>"
         city = loc["City"]
         state = loc["State"]
         pcode = loc["PostalCode"]
@@ -64,6 +70,7 @@ def fetch_data():
         if len(phone) < 7:
             phone = "<MISSING>"
         link = "https://www.southmoonunder.com/store?LocationID=" + str(store)
+
         data.append(
             [
                 "https://www.southmoonunder.com/",
@@ -79,7 +86,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                "<MISSING>",
+                hours,
             ]
         )
 
