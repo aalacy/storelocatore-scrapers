@@ -91,6 +91,8 @@ def fetch_data():
             .replace("}", "")
             .replace("[[", "")
             .replace("]]", "")
+            .replace("'", "")
+            .replace(",", " ")
         )
         if "[]" in hours:
             hours = hours.replace("[]", " Closed")
