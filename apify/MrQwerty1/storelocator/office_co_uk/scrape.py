@@ -83,7 +83,11 @@ def get_data(page_url):
         city = postal
         postal = "<MISSING>"
 
-    if city.lower().find("dublin") != -1 or city.lower().find("cork") != -1:
+    if (
+        city.lower().find("dublin") != -1
+        or city.lower().find("cork") != -1
+        or postal.lower().find("dublin") != -1
+    ):
         return
     state = "<MISSING>"
     country_code = "GB"

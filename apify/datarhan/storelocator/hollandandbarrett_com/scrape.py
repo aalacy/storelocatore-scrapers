@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -72,12 +73,20 @@ def fetch_data():
     for poi in data["features"]:
         base_url = "https://www.hollandandbarrett.com"
         store_url = urljoin(base_url, poi["properties"]["user_properties"]["storePath"])
+        loc_reponse = session.get(store_url)
+        loc_dom = etree.HTML(loc_reponse.text)
+
         location_name = poi["properties"]["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = " ".join(poi["properties"]["address"]["lines"])
+        street_address = " ".join(poi["properties"]["address"]["lines"]).lower()
         city = poi["properties"]["address"]["city"]
+        if street_address.endswith(city.lower()):
+            street_address = " ".join(street_address.split(city.lower())[:-1])
+        street_address = street_address.upper()
         state = "<MISSING>"
-        zip_code = poi["properties"]["address"]["zipcode"]
+        zip_code = loc_dom.xpath(
+            '//div[@class="StoreDetails-module--StoreAddress--1Hr1L"]/text()'
+        )[0].split(", ")[-1]
         country_code = poi["properties"]["address"]["country_code"]
         store_number = poi["properties"]["store_id"]
         phone = poi["properties"]["contact"]["phone"]

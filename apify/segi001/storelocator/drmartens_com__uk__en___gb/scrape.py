@@ -1,6 +1,7 @@
 import csv
 import sgrequests
 import json
+import itertools
 
 
 def write_output(data):
@@ -36,25 +37,40 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     locator_domain = "https://www.drmartens.com/uk/en_gb/"
-    api = "https://www.drmartens.com/uk/en_gb/store-finder?q=London&page="
     missingString = "<MISSING>"
-
-    pages = 4
 
     data = []
 
-    for p in range(pages):
-        sess = sgrequests.SgRequests()
-        req = json.loads(sess.get("{}{}".format(api, p)).text)
-        for d in req["data"]:
-            data.append(d)
+    def endpoint(city, pages, data):
+        api = "https://www.drmartens.com/intl/en/store-finder?q={}&page=".format(city)
+        for p in range(pages):
+            sess = sgrequests.SgRequests()
+            req = json.loads(sess.get("{}{}".format(api, p)).text)
+            for d in req["data"]:
+                data.append(json.dumps(d))
+
+    endpoint("London", 4, data)
+    endpoint("Paris", 2, data)
+    endpoint("Dublin", 1, data)
+    endpoint("UK", 1, data)
+    endpoint("France", 2, data)
+    endpoint("all", 24, data)
 
     result = []
 
-    for s in data:
+    def hasHours(stri):
+        return any(char.isdigit() for char in stri)
+
+    for ss in set(data):
+        s = json.loads(ss)
         name = s["name"]
-        url = "{}{}".format("https://www.drmartens.com/uk/en_gb", s["url"])
-        phone = s["phone"].replace("Phone: ", "").replace('"Tel.: ', "")
+        url = "{}{}".format("https://www.drmartens.com/intl/en/", s["url"])
+        phone = (
+            s["phone"]
+            .replace("Phone: ", "")
+            .replace('"Tel.: ', "")
+            .replace("Tél. : +", "")
+        )
         city = s["town"]
         zp = s["postalCode"]
         if not zp:
@@ -65,9 +81,17 @@ def fetch_data():
         lng = s["longitude"]
         street = "{} {}".format(s["line1"], s["line2"])
         timeArray = []
-        for hour in s["openings"]:
-            timeArray.append("{} : {}".format(hour, s["openings"][hour]))
-        hours = ", ".join(timeArray)
+        hours = missingString
+        typ = missingString
+        if "openings" in s:
+            for hour in s["openings"]:
+                timeArray.append("{} : {}".format(hour, s["openings"][hour]))
+            hours = ", ".join(timeArray)
+        if not hasHours(hours):
+            hours = missingString
+            typ = "Temporary Closed"
+        if city == "":
+            city = missingString
         result.append(
             [
                 locator_domain,
@@ -80,12 +104,13 @@ def fetch_data():
                 missingString,
                 missingString,
                 phone,
-                missingString,
+                typ,
                 lat,
                 lng,
                 hours,
             ]
         )
+    result = list(result for result, _ in itertools.groupby(result))
     return result
 
 

@@ -40,7 +40,6 @@ search = DynamicGeoSearch(
     max_search_results=250,
 )
 
-session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 }
@@ -53,7 +52,8 @@ def fetch_data():
     if BFound:
         BFound = False
         url = "https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500"
-        r = session.get(url, headers=headers, verify=False)
+        session = SgRequests()
+        r = session.get(url, headers=headers, verify=False, timeout=30)
         for item in json.loads(r.content)["stores"]:
             store = item["storeNo8Digit"]
             typ = item["storeType"]
@@ -71,6 +71,8 @@ def fetch_data():
             if name == "":
                 name = typ
             city = item["storeAddress"]["city"]
+            if "London" in city:
+                city = "London"
             state = "<MISSING>"
             zc = item["storeAddress"]["postCode"]
             country = "GB"
@@ -138,26 +140,26 @@ def fetch_data():
             loc = "<MISSING>"
             if city == "<MISSING>":
                 city = name
-                if "Belfast" in name:
-                    city = "Belfast"
-                if "Knightswick" in name:
-                    city = "Knightswick"
-                if "Lewes" in name:
-                    city = "Lewes"
-                if "Belper" in name:
-                    city = "Belper"
-                if "Barrow in Furness" in name:
-                    city = "Barrow in Furness"
-                if "Washington" in name:
-                    city = "Washington"
-                if "Purfleet" in add:
-                    city = "Purfleet"
-                if "Taunton" in name:
-                    city = "Taunton"
-                if "Hempstead Valley" in name:
-                    city = "Hempstead Valley"
-                if "Belfast" in add:
-                    city = "Belfast"
+            if "Belfast" in name:
+                city = "Belfast"
+            if "Knightswick" in name:
+                city = "Knightswick"
+            if "Lewes" in name:
+                city = "Lewes"
+            if "Belper" in name:
+                city = "Belper"
+            if "Barrow in Furness" in name:
+                city = "Barrow in Furness"
+            if "Washington" in name:
+                city = "Washington"
+            if "Purfleet" in add:
+                city = "Purfleet"
+            if "Taunton" in name:
+                city = "Taunton"
+            if "Hempstead Valley" in name:
+                city = "Hempstead Valley"
+            if "Belfast" in add:
+                city = "Belfast"
             addinfo = add + city + zc
             if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                 hours = "<MISSING>"
@@ -183,7 +185,6 @@ def fetch_data():
     for lat, lng in search:
         x = lat
         y = lng
-        logger.info("%s - %s..." % (str(x), str(y)))
         url = (
             "https://www.costa.co.uk/api/locations/stores?latitude="
             + str(x)
@@ -192,7 +193,8 @@ def fetch_data():
             + "&maxrec=500"
         )
         try:
-            r = session.get(url, headers=headers, verify=False)
+            session = SgRequests()
+            r = session.get(url, headers=headers, verify=False, timeout=30)
             for item in json.loads(r.content)["stores"]:
                 store = item["storeNo8Digit"]
                 typ = item["storeType"]
@@ -277,26 +279,26 @@ def fetch_data():
                 loc = "<MISSING>"
                 if city == "<MISSING>":
                     city = name
-                    if "Belfast" in name:
-                        city = "Belfast"
-                    if "Knightswick" in name:
-                        city = "Knightswick"
-                    if "Lewes" in name:
-                        city = "Lewes"
-                    if "Belper" in name:
-                        city = "Belper"
-                    if "Barrow in Furness" in name:
-                        city = "Barrow in Furness"
-                    if "Washington" in name:
-                        city = "Washington"
-                    if "Purfleet" in add:
-                        city = "Purfleet"
-                    if "Taunton" in name:
-                        city = "Taunton"
-                    if "Hempstead Valley" in name:
-                        city = "Hempstead Valley"
-                    if "Belfast" in add:
-                        city = "Belfast"
+                if "Belfast" in name:
+                    city = "Belfast"
+                if "Knightswick" in name:
+                    city = "Knightswick"
+                if "Lewes" in name:
+                    city = "Lewes"
+                if "Belper" in name:
+                    city = "Belper"
+                if "Barrow in Furness" in name:
+                    city = "Barrow in Furness"
+                if "Washington" in name:
+                    city = "Washington"
+                if "Purfleet" in add:
+                    city = "Purfleet"
+                if "Taunton" in name:
+                    city = "Taunton"
+                if "Hempstead Valley" in name:
+                    city = "Hempstead Valley"
+                if "Belfast" in add:
+                    city = "Belfast"
                 addinfo = add + city + zc
                 if "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -" in hours:
                     hours = "<MISSING>"

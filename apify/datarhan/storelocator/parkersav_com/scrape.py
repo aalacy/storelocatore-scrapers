@@ -57,7 +57,15 @@ def fetch_data():
 
         store_number = poi["id"]
         location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = loc_dom.xpath(
+            '//p[strong[contains(text(), "Business Hours:")]]/text()'
+        )
+        hours_of_operation = [
+            elem.strip() for elem in hours_of_operation[:2] if elem.strip()
+        ]
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
         location_name = poi["name"].replace("&#8217;", "'")
         street_address = poi["address"]
         if poi["address2"]:
