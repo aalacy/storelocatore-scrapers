@@ -39,6 +39,7 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     DOMAIN = "loumalnatis.com"
     start_urls = [
@@ -80,6 +81,8 @@ def fetch_data():
             location_type = loc_dom.xpath('//div[@id="contentArea"]/span/@itemtype')[
                 0
             ].split("/")[-1]
+            if "Coming" in location_name:
+                location_type = "coming soon"
             store_number = "<MISSING>"
             phone = loc_dom.xpath('//label[@itemprop="telephone"]/text()')
             phone = phone[0] if phone else "<MISSING>"
@@ -111,8 +114,10 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-
-            items.append(item)
+            check = f"{location_name} {street_address}"
+            if check not in scraped_items:
+                scraped_items.append(check)
+                items.append(item)
 
     return items
 
