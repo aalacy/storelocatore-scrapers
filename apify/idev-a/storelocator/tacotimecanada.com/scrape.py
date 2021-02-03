@@ -40,6 +40,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def fetch_list(url, data):
     r = session.get(url)
     soup = bs(r.text, "lxml")
@@ -54,31 +55,32 @@ def fetch_list(url, data):
     else:
         fetch_detail(soup, url, data)
 
+
 def fetch_detail(soup, page_url, data):
     locator_domain = "http://tacotimecanada.com/"
-    location_name = soup.select_one('h1#page-title').text.strip()
-    store_number = '<MISSING>'
-    rows = soup.select('div#block-system-main div.row')
-    street_address = ''
-    city = ''
-    state = ''
-    country_code = 'US'
-    phone = ''
-    latitude = '<MISSING>'
-    longitude = '<MISSING>'
-    location_type = '<MISSING>'
-    hours_of_operation = '<MISSING>'
+    location_name = soup.select_one("h1#page-title").text.strip()
+    store_number = "<MISSING>"
+    rows = soup.select("div#block-system-main div.row")
+    street_address = ""
+    city = ""
+    state = ""
+    country_code = "US"
+    phone = ""
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = "<MISSING>"
     for row in rows:
-        label = row.select_one('.label').text
-        if label == 'Address:':
-            address = [_ for _ in row.select_one('.text').stripped_strings]
+        label = row.select_one(".label").text
+        if label == "Address:":
+            address = [_ for _ in row.select_one(".text").stripped_strings]
             street_address = address[0]
             city = address[1].split(",")[0]
             state = address[1].split(",")[1].strip()
             zip = "<MISSING>"
 
-        if label == 'Phone:':
-            phone = myutil._valid(row.select_one('.text').text)
+        if label == "Phone:":
+            phone = myutil._valid(row.select_one(".text").text)
 
     _item = [
         locator_domain,
@@ -99,6 +101,7 @@ def fetch_detail(soup, page_url, data):
 
     data.append(_item)
 
+
 def fetch_data():
     data = []
 
@@ -106,6 +109,7 @@ def fetch_data():
     fetch_list(base_url, data)
 
     return data
+
 
 def scrape():
     data = fetch_data()
