@@ -1,5 +1,6 @@
 import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 
@@ -60,9 +61,11 @@ def fetch_data():
     for poi in data:
         store_url = poi["schemaEmbed"]["url"]
         store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["schemaEmbed"]["name"]
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["schemaEmbed"]["address"]["streetAddress"]
+        street_address = poi["schemaEmbed"]["address"]["streetAddress"].split(
+            "Terminal"
+        )[0]
         city = poi["schemaEmbed"]["address"]["addressLocality"]
         state = poi["schemaEmbed"]["address"]["addressRegion"]
         zip_code = poi["schemaEmbed"]["address"]["postalCode"]
@@ -73,14 +76,11 @@ def fetch_data():
         location_type = poi["schemaEmbed"]["@type"]
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hoo = []
-        for elem in poi["schemaEmbed"]["openingHoursSpecification"]:
-            if not elem.get("dayOfWeek"):
-                continue
-            day = elem["dayOfWeek"].split("/")[-1]
-            opens = elem["opens"]
-            closes = elem["closes"]
-            hoo.append(f"{day} {opens} - {closes}")
+        hoo = ""
+        if poi["hours"]:
+            hoo = etree.HTML(poi["hours"])
+            hoo = hoo.xpath("//text()")
+            hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
