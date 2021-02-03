@@ -1,9 +1,6 @@
-import json
 import csv
-import urllib.request, urllib.error, urllib.parse
+import json
 from sgrequests import SgRequests
-import gzip
-import os
 
 session = SgRequests()
 headers = {
