@@ -103,6 +103,11 @@ def fetch_data():
                     .split("Phone: ")[0]
                     .replace("–", "-")
                     .replace("\n", " ")
+                    .replace("for your convenience!", "")
+                    .replace("New COVID-19 Hours", "")
+                    .replace("New Covid-19 Hours", "")
+                    .replace("COVID-19 Hours", "")
+                    .strip()
                 )
 
             data.append(
