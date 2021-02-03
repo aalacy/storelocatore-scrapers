@@ -79,18 +79,33 @@ def fetch_data():
                 '//h3[contains(text(), "Store Hours")]/following-sibling::p/text()'
             )
             hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hoo = " ".join(hoo) if hoo else "<MISSING>"
         else:
             street_address = loc_dom.xpath('//span[@class="address1"]/text()')
             if not street_address:
-                continue
-            street_address = street_address[0].replace("|", "").strip()
-            city = loc_dom.xpath('//span[@class="city"]/text()')[0][:-1].strip()
-            state = loc_dom.xpath('//span[@class="region"]/text()')[0].strip()
-            zip_code = loc_dom.xpath('//span[@class="postalcode"]/text()')[0]
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath('//div[@class="phone"]/a/text()')[-1]
-            hoo = "<MISSING>"
+                street_address = dom.xpath(
+                    '//td[@class="views-field views-field-field-address" and a[@href="{}"]]/a/text()'.format(
+                        store_url
+                    )
+                )[0]
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zip_code = "<MISSING>"
+                store_number = "<MISSING>"
+                phone = dom.xpath(
+                    '//td[@class="views-field views-field-field-home-phone" and a[@href="{}"]]/a/text()'.format(
+                        store_url
+                    )
+                )[0]
+                hoo = "<MISSING>"
+            else:
+                street_address = street_address[0].replace("|", "").strip()
+                city = loc_dom.xpath('//span[@class="city"]/text()')[0][:-1].strip()
+                state = loc_dom.xpath('//span[@class="region"]/text()')[0].strip()
+                zip_code = loc_dom.xpath('//span[@class="postalcode"]/text()')[0]
+                store_number = "<MISSING>"
+                phone = loc_dom.xpath('//div[@class="phone"]/a/text()')[-1]
+                hoo = "<MISSING>"
         country_code = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
@@ -110,7 +125,7 @@ def fetch_data():
             location_type,
             latitude,
             longitude,
-            hours_of_operation,
+            hoo,
         ]
 
         items.append(item)
