@@ -98,6 +98,7 @@ def fetch_data():
                         store.xpath('p[@class="p1"]/text()')
                     ).strip()
 
+            street_address = " ".join(street_address.split("\n")).strip()
             if len(add_list[0].split(",")[1].strip().split(" ")) < 2:
                 continue
             city = add_list[0].split(",")[0].strip()

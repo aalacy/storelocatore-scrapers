@@ -55,6 +55,8 @@ def fetch_data():
     loclist = r.text.split(" locations = ", 1)[1].split(";", 1)[0]
     loclist = json.loads(loclist)
     for loc in loclist:
+        if "coming" in loc["status"] or "soon" in loc["status"]:
+            continue
         link = loc["link"]
         r = session.get(link, headers=HEADERS)
         title = loc["title"]
