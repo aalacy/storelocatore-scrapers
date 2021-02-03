@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import html5lib
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -15,6 +16,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -33,6 +35,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -44,7 +47,9 @@ def fetch_data():
         max_radius_miles=84,
         max_search_results=75,
     )
+    MAX_RESULTS = 100
     MAX_DISTANCE = 50
+    current_results_len = 0
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
@@ -63,12 +68,16 @@ def fetch_data():
             r = session.get(location_url, headers=headers)
         except:
             r = ""
-            continue
-        soup = BeautifulSoup(r.text, "lxml")
+            pass
+        soup = BeautifulSoup(r.text, "html5lib")
         data = soup.find("script", {"type": "application/json"}).text
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
             if "psc_locator_app" in json_data["lc_psc_locator"]:
+                current_results_len = len(
+                    json_data["lc_psc_locator"]["psc_locator_app"]["settings"]["labs"]
+                )
+
                 for i in json_data["lc_psc_locator"]["psc_locator_app"]["settings"][
                     "labs"
                 ]:
@@ -245,6 +254,12 @@ def fetch_data():
                         continue
                     addresses.append(store[2])
                     yield store
+            else:
+                current_results_len = 0
+                pass
+        else:
+            current_results_len = 0
+            pass
 
 
 def scrape():
